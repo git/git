@@ -27,7 +27,7 @@ add_line_into_file()
     fi
 
     test_tick
-    git commit --quiet -m "$MSG" $_file
+    git cummit --quiet -m "$MSG" $_file
 }
 
 HASH1=
@@ -35,7 +35,7 @@ HASH2=
 HASH3=
 HASH4=
 
-test_expect_success 'set up basic repo with 1 file (hello) and 4 commits' '
+test_expect_success 'set up basic repo with 1 file (hello) and 4 cummits' '
 	add_line_into_file "1: Hello World" hello &&
 	HASH1=$(git rev-parse --verify HEAD) &&
 	add_line_into_file "2: A new day for git" hello &&

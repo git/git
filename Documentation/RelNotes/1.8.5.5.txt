@@ -24,7 +24,7 @@ Fixes since v1.8.5.4
    validation paths do different things on such a refname.  Loosen the
    client side's validation to allow such a ref.
 
- * "git log --left-right A...B" lost the "leftness" of commits
+ * "git log --left-right A...B" lost the "leftness" of cummits
    reachable from A when A is a tag as a side effect of a recent
    bugfix.  This is a regression in 1.8.4.x series.
 

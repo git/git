@@ -252,7 +252,7 @@ test_expect_success 'submit works with no p4/master' '
 	git p4 clone --branch=b1 //depot@1,2 --destination="$git" &&
 	(
 		cd "$git" &&
-		test_commit submit-1-branch &&
+		test_cummit submit-1-branch &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --branch=b1
 	)
@@ -266,7 +266,7 @@ test_expect_success 'submit works with two branches' '
 	(
 		cd "$git" &&
 		git p4 sync --branch=b2 //depot@1,3 &&
-		test_commit submit-2-branches &&
+		test_cummit submit-2-branches &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit
 	)
@@ -278,7 +278,7 @@ test_expect_success 'use --git-dir option and GIT_DIR' '
 	(
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
-		test_commit first-change &&
+		test_cummit first-change &&
 		git p4 submit --git-dir "$git"
 	) &&
 	(

@@ -2,7 +2,7 @@
 #include "config.h"
 #include "string-list.h"
 #include "run-command.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tempfile.h"
 #include "trailer.h"
 #include "list.h"
@@ -49,7 +49,7 @@ static int configured;
 
 static const char *git_generated_prefixes[] = {
 	"Signed-off-by: ",
-	"(cherry picked from commit ",
+	"(cherry picked from cummit ",
 	NULL
 };
 
@@ -1198,7 +1198,7 @@ static void format_trailer_info(struct strbuf *out,
 
 }
 
-void format_trailers_from_commit(struct strbuf *out, const char *msg,
+void format_trailers_from_cummit(struct strbuf *out, const char *msg,
 				 const struct process_trailer_options *opts)
 {
 	struct trailer_info info;

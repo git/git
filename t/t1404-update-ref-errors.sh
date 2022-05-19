@@ -109,11 +109,11 @@ df_test() {
 
 test_expect_success 'setup' '
 
-	git commit --allow-empty -m Initial &&
+	git cummit --allow-empty -m Initial &&
 	C=$(git rev-parse HEAD) &&
-	git commit --allow-empty -m Second &&
+	git cummit --allow-empty -m Second &&
 	D=$(git rev-parse HEAD) &&
-	git commit --allow-empty -m Third &&
+	git cummit --allow-empty -m Third &&
 	E=$(git rev-parse HEAD)
 '
 

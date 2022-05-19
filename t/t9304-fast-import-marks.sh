@@ -4,7 +4,7 @@ test_description='test exotic situations with marks'
 . ./test-lib.sh
 
 test_expect_success 'setup dump of basic history' '
-	test_commit one &&
+	test_cummit one &&
 	git fast-export --export-marks=marks HEAD >dump
 '
 
@@ -26,7 +26,7 @@ test_expect_success 'import with large marks file' '
 
 test_expect_success 'setup dump with submodule' '
 	git submodule add "$PWD" sub &&
-	git commit -m "add submodule" &&
+	git cummit -m "add submodule" &&
 	git fast-export HEAD >dump
 '
 

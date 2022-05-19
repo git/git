@@ -8,7 +8,7 @@ ZEROS=$ZERO_OID
 
 test_expect_success setup '
 	MISSING=$(test_oid deadbeef) &&
-	git commit --allow-empty -m "Initial" &&
+	git cummit --allow-empty -m "Initial" &&
 	git tag testtag &&
 	git for-each-ref >full-list &&
 	git for-each-ref --format="%(objectname) %(refname)" >brief-list

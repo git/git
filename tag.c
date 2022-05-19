@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "tag.h"
 #include "object-store.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tree.h"
 #include "blob.h"
 #include "alloc.h"
@@ -173,8 +173,8 @@ int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, u
 		item->tagged = (struct object *)lookup_blob(r, &oid);
 	} else if (!strcmp(type, tree_type)) {
 		item->tagged = (struct object *)lookup_tree(r, &oid);
-	} else if (!strcmp(type, commit_type)) {
-		item->tagged = (struct object *)lookup_commit(r, &oid);
+	} else if (!strcmp(type, cummit_type)) {
+		item->tagged = (struct object *)lookup_cummit(r, &oid);
 	} else if (!strcmp(type, tag_type)) {
 		item->tagged = (struct object *)lookup_tag(r, &oid);
 	} else {

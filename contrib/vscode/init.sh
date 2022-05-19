@@ -17,7 +17,7 @@ cat >.vscode/settings.json.new <<\EOF ||
 {
     "C_Cpp.intelliSenseEngine": "Default",
     "C_Cpp.intelliSenseEngineFallback": "Disabled",
-    "[git-commit]": {
+    "[git-cummit]": {
         "editor.wordWrap": "wordWrapColumn",
         "editor.wordWrapColumn": 72
     },
@@ -66,7 +66,7 @@ cat >.vscode/settings.json.new <<\EOF ||
         "YESNO",
         "argcp",
         "beginthreadex",
-        "committish",
+        "cummittish",
         "contentp",
         "cpath",
         "cpidx",

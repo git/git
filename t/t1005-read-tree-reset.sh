@@ -13,14 +13,14 @@ test_expect_success 'setup' '
 	mkdir df &&
 	echo content >df/file &&
 	git add df/file &&
-	git commit -m one &&
+	git cummit -m one &&
 	git ls-files >expect &&
 	rm -rf df &&
 	echo content >df &&
 	git add df &&
 	echo content >new &&
 	git add new &&
-	git commit -m two
+	git cummit -m two
 '
 
 test_expect_success 'reset should work' '

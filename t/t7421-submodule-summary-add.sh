@@ -14,18 +14,18 @@ while making sure to add submodules using `git submodule add` instead of
 
 test_expect_success 'summary test environment setup' '
 	git init sm &&
-	test_commit -C sm "add file" file file-content file-tag &&
+	test_cummit -C sm "add file" file file-content file-tag &&
 
 	git submodule add ./sm my-subm &&
 	test_tick &&
-	git commit -m "add submodule"
+	git cummit -m "add submodule"
 '
 
 test_expect_success 'submodule summary output for initialized submodule' '
-	test_commit -C sm "add file2" file2 file2-content file2-tag &&
+	test_cummit -C sm "add file2" file2 file2-content file2-tag &&
 	git submodule update --remote &&
 	test_tick &&
-	git commit -m "update submodule" my-subm &&
+	git cummit -m "update submodule" my-subm &&
 	git submodule summary HEAD^ >actual &&
 	rev1=$(git -C sm rev-parse --short HEAD^) &&
 	rev2=$(git -C sm rev-parse --short HEAD) &&
@@ -55,7 +55,7 @@ test_expect_success 'submodule summary output for deinitialized submodule' '
 
 test_expect_success 'submodule summary output for submodules with changed paths' '
 	git mv my-subm subm &&
-	git commit -m "change submodule path" &&
+	git cummit -m "change submodule path" &&
 	rev=$(git -C sm rev-parse --short HEAD^) &&
 	git submodule summary HEAD^^ -- my-subm >actual 2>err &&
 	test_must_be_empty err &&

@@ -3,12 +3,12 @@
 test_description='format-patch mime headers and extra headers do not conflict'
 . ./test-lib.sh
 
-test_expect_success 'create commit with utf-8 body' '
+test_expect_success 'create cummit with utf-8 body' '
 	echo content >file &&
 	git add file &&
-	git commit -m one &&
+	git cummit -m one &&
 	echo more >>file &&
-	git commit -a -m "two
+	git cummit -a -m "two
 
 	utf-8 body: ñ"
 '

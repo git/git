@@ -1,7 +1,7 @@
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "string-list.h"
 #include "revision.h"
@@ -116,7 +116,7 @@ static void read_from_stdin(struct shortlog *log)
 	struct strbuf mapped_ident = STRBUF_INIT;
 	struct strbuf oneline = STRBUF_INIT;
 	static const char *author_match[2] = { "Author: ", "author " };
-	static const char *committer_match[2] = { "Commit: ", "committer " };
+	static const char *cummitter_match[2] = { "cummit: ", "cummitter " };
 	const char **match;
 
 	if (HAS_MULTI_BITS(log->groups))
@@ -126,8 +126,8 @@ static void read_from_stdin(struct shortlog *log)
 	case SHORTLOG_GROUP_AUTHOR:
 		match = author_match;
 		break;
-	case SHORTLOG_GROUP_COMMITTER:
-		match = committer_match;
+	case SHORTLOG_GROUP_cummitTER:
+		match = cummitter_match;
 		break;
 	case SHORTLOG_GROUP_TRAILER:
 		die(_("using --group=trailer with stdin is not supported"));
@@ -160,20 +160,20 @@ static void read_from_stdin(struct shortlog *log)
 
 static void insert_records_from_trailers(struct shortlog *log,
 					 struct strset *dups,
-					 struct commit *commit,
+					 struct cummit *cummit,
 					 struct pretty_print_context *ctx,
 					 const char *oneline)
 {
 	struct trailer_iterator iter;
-	const char *commit_buffer, *body;
+	const char *cummit_buffer, *body;
 	struct strbuf ident = STRBUF_INIT;
 
 	/*
-	 * Using format_commit_message("%B") would be simpler here, but
+	 * Using format_cummit_message("%B") would be simpler here, but
 	 * this saves us copying the message.
 	 */
-	commit_buffer = logmsg_reencode(commit, NULL, ctx->output_encoding);
-	body = strstr(commit_buffer, "\n\n");
+	cummit_buffer = logmsg_reencode(cummit, NULL, ctx->output_encoding);
+	body = strstr(cummit_buffer, "\n\n");
 	if (!body)
 		return;
 
@@ -195,10 +195,10 @@ static void insert_records_from_trailers(struct shortlog *log,
 	trailer_iterator_release(&iter);
 
 	strbuf_release(&ident);
-	unuse_commit_buffer(commit, commit_buffer);
+	unuse_cummit_buffer(cummit, cummit_buffer);
 }
 
-void shortlog_add_commit(struct shortlog *log, struct commit *commit)
+void shortlog_add_cummit(struct shortlog *log, struct cummit *cummit)
 {
 	struct strbuf ident = STRBUF_INIT;
 	struct strbuf oneline = STRBUF_INIT;
@@ -214,24 +214,24 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 
 	if (!log->summary) {
 		if (log->user_format)
-			pretty_print_commit(&ctx, commit, &oneline);
+			pretty_print_cummit(&ctx, cummit, &oneline);
 		else
-			format_commit_message(commit, "%s", &oneline, &ctx);
+			format_cummit_message(cummit, "%s", &oneline, &ctx);
 	}
 	oneline_str = oneline.len ? oneline.buf : "<none>";
 
 	if (log->groups & SHORTLOG_GROUP_AUTHOR) {
 		strbuf_reset(&ident);
-		format_commit_message(commit,
+		format_cummit_message(cummit,
 				      log->email ? "%aN <%aE>" : "%aN",
 				      &ident, &ctx);
 		if (!HAS_MULTI_BITS(log->groups) ||
 		    strset_add(&dups, ident.buf))
 			insert_one_record(log, ident.buf, oneline_str);
 	}
-	if (log->groups & SHORTLOG_GROUP_COMMITTER) {
+	if (log->groups & SHORTLOG_GROUP_cummitTER) {
 		strbuf_reset(&ident);
-		format_commit_message(commit,
+		format_cummit_message(cummit,
 				      log->email ? "%cN <%cE>" : "%cN",
 				      &ident, &ctx);
 		if (!HAS_MULTI_BITS(log->groups) ||
@@ -239,7 +239,7 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 			insert_one_record(log, ident.buf, oneline_str);
 	}
 	if (log->groups & SHORTLOG_GROUP_TRAILER) {
-		insert_records_from_trailers(log, &dups, commit, &ctx, oneline_str);
+		insert_records_from_trailers(log, &dups, cummit, &ctx, oneline_str);
 	}
 
 	strset_clear(&dups);
@@ -249,12 +249,12 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 
 static void get_from_rev(struct rev_info *rev, struct shortlog *log)
 {
-	struct commit *commit;
+	struct cummit *cummit;
 
 	if (prepare_revision_walk(rev))
 		die(_("revision walk setup failed"));
-	while ((commit = get_revision(rev)) != NULL)
-		shortlog_add_commit(log, commit);
+	while ((cummit = get_revision(rev)) != NULL)
+		shortlog_add_cummit(log, cummit);
 }
 
 static int parse_uint(char const **arg, int comma, int defval)
@@ -314,8 +314,8 @@ static int parse_group_option(const struct option *opt, const char *arg, int uns
 		string_list_clear(&log->trailers, 0);
 	} else if (!strcasecmp(arg, "author"))
 		log->groups |= SHORTLOG_GROUP_AUTHOR;
-	else if (!strcasecmp(arg, "committer"))
-		log->groups |= SHORTLOG_GROUP_COMMITTER;
+	else if (!strcasecmp(arg, "cummitter"))
+		log->groups |= SHORTLOG_GROUP_cummitTER;
 	else if (skip_prefix(arg, "trailer:", &field)) {
 		log->groups |= SHORTLOG_GROUP_TRAILER;
 		string_list_append(&log->trailers, field);
@@ -347,13 +347,13 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 	int nongit = !startup_info->have_repository;
 
 	const struct option options[] = {
-		OPT_BIT('c', "committer", &log.groups,
-			N_("group by committer rather than author"),
-			SHORTLOG_GROUP_COMMITTER),
+		OPT_BIT('c', "cummitter", &log.groups,
+			N_("group by cummitter rather than author"),
+			SHORTLOG_GROUP_cummitTER),
 		OPT_BOOL('n', "numbered", &log.sort_by_number,
-			 N_("sort output according to the number of commits per author")),
+			 N_("sort output according to the number of cummits per author")),
 		OPT_BOOL('s', "summary", &log.summary,
-			 N_("suppress commit descriptions, only provides commit count")),
+			 N_("suppress cummit descriptions, only provides cummit count")),
 		OPT_BOOL('e', "email", &log.email,
 			 N_("show the email address of each author")),
 		OPT_CALLBACK_F('w', NULL, &log, N_("<w>[,<i1>[,<i2>]]"),
@@ -401,7 +401,7 @@ parse_done:
 		usage_with_options(shortlog_usage, options);
 	}
 
-	log.user_format = rev.commit_format == CMIT_FMT_USERFORMAT;
+	log.user_format = rev.cummit_format == CMIT_FMT_USERFORMAT;
 	log.abbrev = rev.abbrev;
 	log.file = rev.diffopt.file;
 

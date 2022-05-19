@@ -13,7 +13,7 @@ test_expect_success 'setup' '
 	PAGER="cat >paginated.out" &&
 	export PAGER &&
 
-	test_commit initial
+	test_cummit initial
 '
 
 test_expect_success TTY 'some commands use a pager' '
@@ -287,8 +287,8 @@ test_expect_success TTY 'git config --list defaults to paging' '
 '
 
 
-# A colored commit log will begin with an appropriate ANSI escape
-# for the first color; the text "commit" comes later.
+# A colored cummit log will begin with an appropriate ANSI escape
+# for the first color; the text "cummit" comes later.
 colorful() {
 	read firstline <$1
 	! expr "$firstline" : "[a-zA-Z]" >/dev/null
@@ -643,11 +643,11 @@ test_expect_success 'command with underscores does not complain' '
 '
 
 test_expect_success TTY 'git tag with auto-columns ' '
-	test_commit one &&
-	test_commit two &&
-	test_commit three &&
-	test_commit four &&
-	test_commit five &&
+	test_cummit one &&
+	test_cummit two &&
+	test_cummit three &&
+	test_cummit four &&
+	test_cummit five &&
 	cat >expect <<-\EOF &&
 	initial  one      two      three    four     five
 	EOF
@@ -663,9 +663,9 @@ test_expect_success 'setup trace2' '
 
 test_expect_success 'setup large log output' '
 	perl -e "
-		print \"this is a long commit message\" x 50000
-	" >commit-msg &&
-	git commit --allow-empty -F commit-msg
+		print \"this is a long cummit message\" x 50000
+	" >cummit-msg &&
+	git cummit --allow-empty -F cummit-msg
 '
 
 test_expect_success TTY 'git returns SIGPIPE on early pager exit' '

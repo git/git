@@ -8,9 +8,9 @@ use Git qw(command
            command_close_pipe
            get_tz_offset);
 use POSIX qw/strftime/;
-use constant commit_log_separator => ('-' x 72) . "\n";
+use constant cummit_log_separator => ('-' x 72) . "\n";
 use vars qw/$TZ $limit $color $pager $non_recursive $verbose $oneline
-            %rusers $show_commit $incremental/;
+            %rusers $show_cummit $incremental/;
 
 # Option set in git-svn
 our $_git_format;
@@ -19,11 +19,11 @@ sub cmt_showable {
 	my ($c) = @_;
 	return 1 if defined $c->{r};
 
-	# big commit message got truncated by the 16k pretty buffer in rev-list
+	# big cummit message got truncated by the 16k pretty buffer in rev-list
 	if ($c->{l} && $c->{l}->[-1] eq "...\n" &&
 				$c->{a_raw} =~ /\@([a-f\d\-]+)>$/) {
 		@{$c->{l}} = ();
-		my @log = command(qw/cat-file commit/, $c->{c});
+		my @log = command(qw/cat-file cummit/, $c->{c});
 
 		# shift off the headers
 		shift @log while ($log[0] ne '');
@@ -62,7 +62,7 @@ sub git_svn_log_cmd {
 
 	require Git::SVN;
 	$gs ||= Git::SVN->_new;
-	my @cmd = (qw/log --abbrev-commit --pretty=raw --default/,
+	my @cmd = (qw/log --abbrev-cummit --pretty=raw --default/,
 	           $gs->refname);
 	push @cmd, '-r' unless $non_recursive;
 	push @cmd, qw/--raw --name-status/ if $verbose;
@@ -79,8 +79,8 @@ sub git_svn_log_cmd {
 		}
 		my (undef, $c_max) = $gs->find_rev_before($r_max, 1, $r_min);
 		my (undef, $c_min) = $gs->find_rev_after($r_min, 1, $r_max);
-		# If there are no commits in the range, both $c_max and $c_min
-		# will be undefined.  If there is at least 1 commit in the
+		# If there are no cummits in the range, both $c_max and $c_min
+		# will be undefined.  If there is at least 1 cummit in the
 		# range, both will be defined.
 		return () if !defined $c_min || !defined $c_max;
 		if ($c_min eq $c_max) {
@@ -170,11 +170,11 @@ sub get_author_info {
 	$dest->{t_utc} = parse_git_date($t, $tz);
 }
 
-sub process_commit {
+sub process_cummit {
 	my ($c, $r_min, $r_max, $defer) = @_;
 	if (defined $r_min && defined $r_max) {
 		if ($r_min == $c->{r} && $r_min == $r_max) {
-			show_commit($c);
+			show_cummit($c);
 			return 0;
 		}
 		return 1 if $r_min == $r_max;
@@ -190,12 +190,12 @@ sub process_commit {
 		}
 	}
 	return 0 if (defined $limit && --$limit < 0);
-	show_commit($c);
+	show_cummit($c);
 	return 1;
 }
 
 my $l_fmt;
-sub show_commit {
+sub show_cummit {
 	my $c = shift;
 	if ($oneline) {
 		my $x = "\n";
@@ -205,23 +205,23 @@ sub show_commit {
 		}
 		$l_fmt ||= 'A' . length($c->{r});
 		print 'r',pack($l_fmt, $c->{r}),' | ';
-		print "$c->{c} | " if $show_commit;
+		print "$c->{c} | " if $show_cummit;
 		print $x;
 	} else {
-		show_commit_normal($c);
+		show_cummit_normal($c);
 	}
 }
 
-sub show_commit_changed_paths {
+sub show_cummit_changed_paths {
 	my ($c) = @_;
 	return unless $c->{changed};
 	print "Changed paths:\n", @{$c->{changed}};
 }
 
-sub show_commit_normal {
+sub show_cummit_normal {
 	my ($c) = @_;
-	print commit_log_separator, "r$c->{r} | ";
-	print "$c->{c} | " if $show_commit;
+	print cummit_log_separator, "r$c->{r} | ";
+	print "$c->{c} | " if $show_cummit;
 	print "$c->{a} | ", format_svn_date($c->{t_utc}), ' | ';
 	my $nr_line = 0;
 
@@ -240,13 +240,13 @@ sub show_commit_normal {
 				$nr_line .= ' lines';
 			}
 			print $nr_line, "\n";
-			show_commit_changed_paths($c);
+			show_cummit_changed_paths($c);
 			print "\n";
 			print $_ foreach @$l;
 		}
 	} else {
 		print "1 line\n";
-		show_commit_changed_paths($c);
+		show_cummit_changed_paths($c);
 		print "\n";
 
 	}
@@ -277,7 +277,7 @@ sub cmd_show_log {
 	config_pager();
 	@args = git_svn_log_cmd($r_min, $r_max, @args);
 	if (!@args) {
-		print commit_log_separator unless $incremental || $oneline;
+		print cummit_log_separator unless $incremental || $oneline;
 		return;
 	}
 	my $log = command_output_pipe(@args);
@@ -285,18 +285,18 @@ sub cmd_show_log {
 	my (@k, $c, $d, $stat);
 	my $esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
 	while (<$log>) {
-		if (/^${esc_color}commit (?:- )?($::oid_short)/o) {
+		if (/^${esc_color}cummit (?:- )?($::oid_short)/o) {
 			my $cmt = $1;
 			if ($c && cmt_showable($c) && $c->{r} != $r_last) {
 				$r_last = $c->{r};
-				process_commit($c, $r_min, $r_max, \@k) or
+				process_cummit($c, $r_min, $r_max, \@k) or
 								goto out;
 			}
 			$d = undef;
 			$c = { c => $cmt };
 		} elsif (/^${esc_color}author (.+) (\d+) ([\-\+]?\d+)$/o) {
 			get_author_info($c, $1, $2, $3);
-		} elsif (/^${esc_color}(?:tree|parent|committer) /o) {
+		} elsif (/^${esc_color}(?:tree|parent|cummitter) /o) {
 			# ignore
 		} elsif (/^${esc_color}:\d{6} \d{6} $::oid_short/o) {
 			push @{$c->{raw}}, $_;
@@ -325,15 +325,15 @@ sub cmd_show_log {
 	}
 	if ($c && defined $c->{r} && $c->{r} != $r_last) {
 		$r_last = $c->{r};
-		process_commit($c, $r_min, $r_max, \@k);
+		process_cummit($c, $r_min, $r_max, \@k);
 	}
 	if (@k) {
 		($r_min, $r_max) = ($r_max, $r_min);
-		process_commit($_, $r_min, $r_max) foreach reverse @k;
+		process_cummit($_, $r_min, $r_max) foreach reverse @k;
 	}
 out:
 	close $log;
-	print commit_log_separator unless $incremental || $oneline;
+	print cummit_log_separator unless $incremental || $oneline;
 }
 
 sub cmd_blame {
@@ -348,7 +348,7 @@ sub cmd_blame {
 		($fh, $ctx) = command_output_pipe('blame', @_, $path);
 		while (my $line = <$fh>) {
 			if ($line =~ /^\^?([[:xdigit:]]+)\s/) {
-				# Uncommitted edits show up as a rev ID of
+				# Uncummitted edits show up as a rev ID of
 				# all zeros, which we can't look up with
 				# cmt_metadata
 				if ($1 !~ /^0+$/) {

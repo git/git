@@ -76,13 +76,13 @@ $ git add .
 
 This snapshot is now stored in a temporary staging area which Git calls
 the "index".  You can permanently store the contents of the index in the
-repository with 'git commit':
+repository with 'git cummit':
 
 ------------------------------------------------
-$ git commit
+$ git cummit
 ------------------------------------------------
 
-This will prompt you for a commit message.  You've now stored the first
+This will prompt you for a cummit message.  You've now stored the first
 version of your project in Git.
 
 Making changes
@@ -94,7 +94,7 @@ Modify some files, then add their updated contents to the index:
 $ git add file1 file2 file3
 ------------------------------------------------
 
-You are now ready to commit.  You can see what is about to be committed
+You are now ready to cummit.  You can see what is about to be cummitted
 using 'git diff' with the --cached option:
 
 ------------------------------------------------
@@ -108,7 +108,7 @@ summary of the situation with 'git status':
 ------------------------------------------------
 $ git status
 On branch master
-Changes to be committed:
+Changes to be cummitted:
 Your branch is up to date with 'origin/master'.
   (use "git restore --staged <file>..." to unstage)
 
@@ -119,10 +119,10 @@ Your branch is up to date with 'origin/master'.
 ------------------------------------------------
 
 If you need to make any further adjustments, do so now, and then add any
-newly modified content to the index.  Finally, commit your changes with:
+newly modified content to the index.  Finally, cummit your changes with:
 
 ------------------------------------------------
-$ git commit
+$ git cummit
 ------------------------------------------------
 
 This will again prompt you for a message describing the change, and then
@@ -131,20 +131,20 @@ record a new version of the project.
 Alternatively, instead of running 'git add' beforehand, you can use
 
 ------------------------------------------------
-$ git commit -a
+$ git cummit -a
 ------------------------------------------------
 
 which will automatically notice any modified (but not new) files, add
-them to the index, and commit, all in one step.
+them to the index, and cummit, all in one step.
 
-A note on commit messages: Though not required, it's a good idea to
-begin the commit message with a single short (less than 50 character)
+A note on cummit messages: Though not required, it's a good idea to
+begin the cummit message with a single short (less than 50 character)
 line summarizing the change, followed by a blank line and then a more
-thorough description. The text up to the first blank line in a commit
-message is treated as the commit title, and that title is used
+thorough description. The text up to the first blank line in a cummit
+message is treated as the cummit title, and that title is used
 throughout Git.  For example, linkgit:git-format-patch[1] turns a
-commit into email, and it uses the title on the Subject line and the
-rest of the commit in the body.
+cummit into email, and it uses the title on the Subject line and the
+rest of the cummit in the body.
 
 Git tracks content not files
 ----------------------------
@@ -154,7 +154,7 @@ system to start tracking changes to a new file.  Git's `add` command
 does something simpler and more powerful: 'git add' is used both for new
 and newly modified files, and in both cases it takes a snapshot of the
 given files and stages that content in the index, ready for inclusion in
-the next commit.
+the next cummit.
 
 Viewing project history
 -----------------------
@@ -210,12 +210,12 @@ type
 $ git switch experimental
 ------------------------------------------------
 
-to switch to the experimental branch.  Now edit a file, commit the
+to switch to the experimental branch.  Now edit a file, cummit the
 change, and switch back to the master branch:
 
 ------------------------------------------------
 (edit file)
-$ git commit -a
+$ git cummit -a
 $ git switch master
 ------------------------------------------------
 
@@ -226,7 +226,7 @@ You can make a different change on the master branch:
 
 ------------------------------------------------
 (edit file)
-$ git commit -a
+$ git cummit -a
 ------------------------------------------------
 
 at this point the two branches have diverged, with different changes
@@ -247,10 +247,10 @@ will show this.  Once you've edited the files to resolve the
 conflicts,
 
 ------------------------------------------------
-$ git commit -a
+$ git cummit -a
 ------------------------------------------------
 
-will commit the result of the merge. Finally,
+will cummit the result of the merge. Finally,
 
 ------------------------------------------------
 $ gitk
@@ -294,11 +294,11 @@ This creates a new directory "myrepo" containing a clone of Alice's
 repository.  The clone is on an equal footing with the original
 project, possessing its own copy of the original project's history.
 
-Bob then makes some changes and commits them:
+Bob then makes some changes and cummits them:
 
 ------------------------------------------------
 (edit files)
-bob$ git commit -a
+bob$ git cummit -a
 (repeat as necessary)
 ------------------------------------------------
 
@@ -317,7 +317,7 @@ then she may need to manually fix any conflicts.
 The "pull" command thus performs two operations: it fetches changes
 from a remote branch, then merges them into the current branch.
 
-Note that in general, Alice would want her local changes committed before
+Note that in general, Alice would want her local changes cummitted before
 initiating this "pull".  If Bob's work conflicts with what Alice did since
 their histories forked, Alice will use her working tree and the index to
 resolve conflicts, and existing local changes will interfere with the
@@ -335,7 +335,7 @@ alice$ git fetch /home/bob/myrepo master
 alice$ git log -p HEAD..FETCH_HEAD
 ------------------------------------------------
 
-This operation is safe even if Alice has uncommitted local changes.
+This operation is safe even if Alice has uncummitted local changes.
 The range notation "HEAD..FETCH_HEAD" means "show everything that is reachable
 from the FETCH_HEAD but exclude anything that is reachable from HEAD".
 Alice already knows everything that leads to her current state (HEAD),
@@ -461,14 +461,14 @@ linkgit:gitcvs-migration[7].
 Exploring history
 -----------------
 
-Git history is represented as a series of interrelated commits.  We
-have already seen that the 'git log' command can list those commits.
+Git history is represented as a series of interrelated cummits.  We
+have already seen that the 'git log' command can list those cummits.
 Note that first line of each git log entry also gives a name for the
-commit:
+cummit:
 
 -------------------------------------
 $ git log
-commit c82a22c39cbc32576f64f5c6b3f24b99ea8149c7
+cummit c82a22c39cbc32576f64f5c6b3f24b99ea8149c7
 Author: Junio C Hamano <junkio@cox.net>
 Date:   Tue May 16 17:18:22 2006 -0700
 
@@ -476,14 +476,14 @@ Date:   Tue May 16 17:18:22 2006 -0700
 -------------------------------------
 
 We can give this name to 'git show' to see the details about this
-commit.
+cummit.
 
 -------------------------------------
 $ git show c82a22c39cbc32576f64f5c6b3f24b99ea8149c7
 -------------------------------------
 
-But there are other ways to refer to commits.  You can use any initial
-part of the name that is long enough to uniquely identify the commit:
+But there are other ways to refer to cummits.  You can use any initial
+part of the name that is long enough to uniquely identify the cummit:
 
 -------------------------------------
 $ git show c82a22c39c	# the first few characters of the name are
@@ -492,7 +492,7 @@ $ git show HEAD		# the tip of the current branch
 $ git show experimental	# the tip of the "experimental" branch
 -------------------------------------
 
-Every commit usually has one "parent" commit
+Every cummit usually has one "parent" cummit
 which points to the previous state of the project:
 
 -------------------------------------
@@ -501,14 +501,14 @@ $ git show HEAD^^ # to see the grandparent of HEAD
 $ git show HEAD~4 # to see the great-great grandparent of HEAD
 -------------------------------------
 
-Note that merge commits may have more than one parent:
+Note that merge cummits may have more than one parent:
 
 -------------------------------------
 $ git show HEAD^1 # show the first parent of HEAD (same as HEAD^)
 $ git show HEAD^2 # show the second parent of HEAD
 -------------------------------------
 
-You can also give commits names of your own; after running
+You can also give cummits names of your own; after running
 
 -------------------------------------
 $ git tag v2.5 1b2e1d63ff
@@ -519,7 +519,7 @@ share this name with other people (for example, to identify a release
 version), you should create a "tag" object, and perhaps sign it; see
 linkgit:git-tag[1] for details.
 
-Any Git command that needs to know a commit can take any of these
+Any Git command that needs to know a cummit can take any of these
 names.  For example:
 
 -------------------------------------
@@ -531,9 +531,9 @@ $ git reset --hard HEAD^ # reset your current branch and working
 -------------------------------------
 
 Be careful with that last command: in addition to losing any changes
-in the working directory, it will also remove all later commits from
+in the working directory, it will also remove all later cummits from
 this branch.  If this branch is the only branch containing those
-commits, they will be lost.  Also, don't use 'git reset' on a
+cummits, they will be lost.  Also, don't use 'git reset' on a
 publicly-visible branch that other developers pull from, as it will
 force needless merges on other developers to clean up the history.
 If you need to undo changes that you have pushed, use 'git revert'
@@ -548,7 +548,7 @@ $ git grep "hello" v2.5
 
 searches for all occurrences of "hello" in v2.5.
 
-If you leave out the commit name, 'git grep' will search any of the
+If you leave out the cummit name, 'git grep' will search any of the
 files it manages in your current directory.  So
 
 -------------------------------------
@@ -557,40 +557,40 @@ $ git grep "hello"
 
 is a quick way to search just the files that are tracked by Git.
 
-Many Git commands also take sets of commits, which can be specified
+Many Git commands also take sets of cummits, which can be specified
 in a number of ways.  Here are some examples with 'git log':
 
 -------------------------------------
-$ git log v2.5..v2.6            # commits between v2.5 and v2.6
-$ git log v2.5..                # commits since v2.5
-$ git log --since="2 weeks ago" # commits from the last 2 weeks
-$ git log v2.5.. Makefile       # commits since v2.5 which modify
+$ git log v2.5..v2.6            # cummits between v2.5 and v2.6
+$ git log v2.5..                # cummits since v2.5
+$ git log --since="2 weeks ago" # cummits from the last 2 weeks
+$ git log v2.5.. Makefile       # cummits since v2.5 which modify
 				# Makefile
 -------------------------------------
 
-You can also give 'git log' a "range" of commits where the first is not
+You can also give 'git log' a "range" of cummits where the first is not
 necessarily an ancestor of the second; for example, if the tips of
 the branches "stable" and "master" diverged from a common
-commit some time ago, then
+cummit some time ago, then
 
 -------------------------------------
 $ git log stable..master
 -------------------------------------
 
-will list commits made in the master branch but not in the
+will list cummits made in the master branch but not in the
 stable branch, while
 
 -------------------------------------
 $ git log master..stable
 -------------------------------------
 
-will show the list of commits made on the stable branch but not
+will show the list of cummits made on the stable branch but not
 the master branch.
 
-The 'git log' command has a weakness: it must present commits in a
+The 'git log' command has a weakness: it must present cummits in a
 list.  When the history has lines of development that diverged and
 then merged back together, the order in which 'git log' presents
-those commits is meaningless.
+those cummits is meaningless.
 
 Most projects with multiple contributors (such as the Linux kernel,
 or Git itself) have frequent merges, and 'gitk' does a better job of
@@ -600,13 +600,13 @@ visualizing their history.  For example,
 $ gitk --since="2 weeks ago" drivers/
 -------------------------------------
 
-allows you to browse any commits from the last 2 weeks of commits
+allows you to browse any cummits from the last 2 weeks of cummits
 that modified files under the "drivers" directory.  (Note: you can
 adjust gitk's fonts by holding down the control key while pressing
 "-" or "+".)
 
 Finally, most commands that take filenames will optionally allow you
-to precede any filename by a commit, to specify a particular version
+to precede any filename by a cummit, to specify a particular version
 of the file:
 
 -------------------------------------
@@ -629,10 +629,10 @@ is based:
 
   * The object database is the rather elegant system used to
     store the history of your project--files, directories, and
-    commits.
+    cummits.
 
   * The index file is a cache of the state of a directory tree,
-    used to create commits, check out working directories, and
+    used to create cummits, check out working directories, and
     hold the various trees involved in a merge.
 
 Part two of this tutorial explains the object
@@ -643,14 +643,14 @@ If you don't want to continue with that right away, a few other
 digressions that may be interesting at this point are:
 
   * linkgit:git-format-patch[1], linkgit:git-am[1]: These convert
-    series of git commits into emailed patches, and vice versa,
+    series of git cummits into emailed patches, and vice versa,
     useful for projects such as the Linux kernel which rely heavily
     on emailed patches.
 
   * linkgit:git-bisect[1]: When there is a regression in your
     project, one way to track down the bug is by searching through
-    the history to find the exact commit that's to blame.  Git bisect
-    can help you perform a binary search for that commit.  It is
+    the history to find the exact cummit that's to blame.  Git bisect
+    can help you perform a binary search for that cummit.  It is
     smart enough to perform a close-to-optimal search even in the
     case of complex non-linear history with lots of merged branches.
 

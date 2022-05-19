@@ -10,17 +10,17 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'setup' '
 	echo 1 >file &&
 	git add file &&
-	git commit -m 1 &&
+	git cummit -m 1 &&
 	git branch b1 &&
 	git branch b2 &&
 	git branch b3 &&
 	git clone . aa &&
 	git checkout b1 &&
 	echo b1 >>file &&
-	git commit -a -m b1 &&
+	git cummit -a -m b1 &&
 	git checkout b2 &&
 	echo b2 >>file &&
-	git commit -a -m b2
+	git cummit -a -m b2
 '
 
 test_expect_success 'prepare pushable branches' '
@@ -29,13 +29,13 @@ test_expect_success 'prepare pushable branches' '
 	b2=$(git rev-parse origin/b2) &&
 	git checkout -b b1 origin/b1 &&
 	echo aa-b1 >>file &&
-	git commit -a -m aa-b1 &&
+	git cummit -a -m aa-b1 &&
 	git checkout -b b2 origin/b2 &&
 	echo aa-b2 >>file &&
-	git commit -a -m aa-b2 &&
+	git cummit -a -m aa-b2 &&
 	git checkout main &&
 	echo aa-main >>file &&
-	git commit -a -m aa-main
+	git cummit -a -m aa-main
 '
 
 test_expect_success 'mixed-success push returns error' '

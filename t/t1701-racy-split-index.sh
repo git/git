@@ -14,7 +14,7 @@ test_expect_success 'setup' '
 
 	echo "cached content" >racy-file &&
 	git add racy-file &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	echo something >other-file &&
 	# No raciness with this file.

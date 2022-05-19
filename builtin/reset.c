@@ -30,7 +30,7 @@
 #define REFRESH_INDEX_DELAY_WARNING_IN_MS (2 * 1000)
 
 static const char * const git_reset_usage[] = {
-	N_("git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"),
+	N_("git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"),
 	N_("git reset [-q] [<tree-ish>] [--] <pathspec>..."),
 	N_("git reset [-q] [--pathspec-from-file [--pathspec-file-nul]] [<tree-ish>]"),
 	N_("git reset --patch [<tree-ish>] [--] [<pathspec>...]"),
@@ -116,14 +116,14 @@ out:
 	return ret;
 }
 
-static void print_new_head_line(struct commit *commit)
+static void print_new_head_line(struct cummit *cummit)
 {
 	struct strbuf buf = STRBUF_INIT;
 
 	printf(_("HEAD is now at %s"),
-		find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
+		find_unique_abbrev(&cummit->object.oid, DEFAULT_ABBREV));
 
-	pp_commit_easy(CMIT_FMT_ONELINE, commit, &buf);
+	pp_cummit_easy(CMIT_FMT_ONELINE, cummit, &buf);
 	if (buf.len > 0)
 		printf(" %s", buf.buf);
 	putchar('\n');
@@ -337,10 +337,10 @@ static void parse_args(struct pathspec *pathspec,
 		 * has to be unambiguous. If there is a single argument, it
 		 * can not be a tree
 		 */
-		else if ((!argv[1] && !get_oid_committish(argv[0], &unused)) ||
+		else if ((!argv[1] && !get_oid_cummittish(argv[0], &unused)) ||
 			 (argv[1] && !get_oid_treeish(argv[0], &unused))) {
 			/*
-			 * Ok, argv[0] looks like a commit/tree; it should not
+			 * Ok, argv[0] looks like a cummit/tree; it should not
 			 * be a filename.
 			 */
 			verify_non_filename(prefix, argv[0]);
@@ -447,13 +447,13 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		/* reset on unborn branch: treat as reset to empty tree */
 		oidcpy(&oid, the_hash_algo->empty_tree);
 	} else if (!pathspec.nr && !patch_mode) {
-		struct commit *commit;
-		if (get_oid_committish(rev, &oid))
+		struct cummit *cummit;
+		if (get_oid_cummittish(rev, &oid))
 			die(_("Failed to resolve '%s' as a valid revision."), rev);
-		commit = lookup_commit_reference(the_repository, &oid);
-		if (!commit)
+		cummit = lookup_cummit_reference(the_repository, &oid);
+		if (!cummit)
 			die(_("Could not parse object '%s'."), rev);
-		oidcpy(&oid, &commit->object.oid);
+		oidcpy(&oid, &cummit->object.oid);
 	} else {
 		struct tree *tree;
 		if (get_oid_treeish(rev, &oid))
@@ -548,7 +548,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 			free(ref);
 		}
 
-		if (write_locked_index(&the_index, &lock, COMMIT_LOCK))
+		if (write_locked_index(&the_index, &lock, cummit_LOCK))
 			die(_("Could not write new index file."));
 	}
 
@@ -558,7 +558,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 		update_ref_status = reset_refs(rev, &oid);
 
 		if (reset_type == HARD && !update_ref_status && !quiet)
-			print_new_head_line(lookup_commit_reference(the_repository, &oid));
+			print_new_head_line(lookup_cummit_reference(the_repository, &oid));
 	}
 	if (!pathspec.nr)
 		remove_branch_state(the_repository, 0);

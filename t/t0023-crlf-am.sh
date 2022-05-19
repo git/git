@@ -30,7 +30,7 @@ test_expect_success 'setup' '
 	echo foo >bar &&
 	git add bar &&
 	test_tick &&
-	git commit -m initial
+	git cummit -m initial
 
 '
 

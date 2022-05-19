@@ -34,9 +34,9 @@ Fixes since v2.30
  * Newline characters in the host and path part of git:// URL are
    now forbidden.
 
- * When more than one commit with the same patch ID appears on one
+ * When more than one cummit with the same patch ID appears on one
    side, "git log --cherry-pick A...B" did not exclude them all when a
-   commit with the same patch ID appears on the other side.  Now it
+   cummit with the same patch ID appears on the other side.  Now it
    does.
 
  * Documentation for "git fsck" lost stale bits that has become

@@ -63,11 +63,11 @@ msgid "Reading"
 msgstr "読み込み中"
 
 #: gitk:496 gitk:4526
-msgid "Reading commits..."
+msgid "Reading cummits..."
 msgstr "コミット読み込み中..."
 
 #: gitk:499 gitk:1637 gitk:4529
-msgid "No commits selected"
+msgid "No cummits selected"
 msgstr "コミットが選択されていません"
 
 #: gitk:1445 gitk:4046 gitk:12447
@@ -79,7 +79,7 @@ msgid "Can't parse git log output:"
 msgstr "git log の出力を解析できません:"
 
 #: gitk:1740
-msgid "No commit information available"
+msgid "No cummit information available"
 msgstr "有効なコミットの情報がありません"
 
 #: gitk:1903 gitk:1932 gitk:4316 gitk:9684 gitk:11256 gitk:11536
@@ -172,7 +172,7 @@ msgid "Find"
 msgstr "検索"
 
 #: gitk:2295
-msgid "commit"
+msgid "cummit"
 msgstr "コミット"
 
 #: gitk:2299 gitk:2301 gitk:4688 gitk:4711 gitk:4735 gitk:6756 gitk:6828
@@ -222,7 +222,7 @@ msgid "Author"
 msgstr "作者"
 
 #: gitk:2319 gitk:4872 gitk:6787 gitk:7327
-msgid "Committer"
+msgid "cummitter"
 msgstr "コミット者"
 
 #: gitk:2350
@@ -278,11 +278,11 @@ msgid "Create tag"
 msgstr "タグ生成"
 
 #: gitk:2621
-msgid "Copy commit summary"
+msgid "Copy cummit summary"
 msgstr "コミットの要約をコピーする"
 
 #: gitk:2622 gitk:9386
-msgid "Write commit to file"
+msgid "Write cummit to file"
 msgstr "コミットをファイルに書き出す"
 
 #: gitk:2623 gitk:9443
@@ -290,7 +290,7 @@ msgid "Create new branch"
 msgstr "新規ブランチ生成"
 
 #: gitk:2624
-msgid "Cherry-pick this commit"
+msgid "Cherry-pick this cummit"
 msgstr "このコミットをチェリーピックする"
 
 #: gitk:2625
@@ -298,7 +298,7 @@ msgid "Reset HEAD branch to here"
 msgstr "ブランチのHEADをここにリセットする"
 
 #: gitk:2626
-msgid "Mark this commit"
+msgid "Mark this cummit"
 msgstr "このコミットにマークをつける"
 
 #: gitk:2627
@@ -310,19 +310,19 @@ msgid "Find descendant of this and mark"
 msgstr "これとマークをつけた所との子孫を見つける"
 
 #: gitk:2629
-msgid "Compare with marked commit"
+msgid "Compare with marked cummit"
 msgstr "マークを付けたコミットと比較する"
 
 #: gitk:2630 gitk:2641
-msgid "Diff this -> marked commit"
+msgid "Diff this -> marked cummit"
 msgstr "これとマークを付けたコミットのdiffを見る"
 
 #: gitk:2631 gitk:2642
-msgid "Diff marked commit -> this"
+msgid "Diff marked cummit -> this"
 msgstr "マークを付けたコミットとこれのdiffを見る"
 
 #: gitk:2632
-msgid "Revert this commit"
+msgid "Revert this cummit"
 msgstr "このコミットを撤回する"
 
 #: gitk:2648
@@ -350,7 +350,7 @@ msgid "External diff"
 msgstr "外部diffツール"
 
 #: gitk:2660
-msgid "Blame parent commit"
+msgid "Blame parent cummit"
 msgstr "親コミットから blame をかける"
 
 #: gitk:2661
@@ -372,7 +372,7 @@ msgstr "gitk について"
 #: gitk:3015
 msgid ""
 "\n"
-"Gitk - a commit viewer for git\n"
+"Gitk - a cummit viewer for git\n"
 "\n"
 "Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
@@ -408,19 +408,19 @@ msgid "<%s-W>\t\tClose window"
 msgstr "<%s-W>\t\tウィンドウを閉じる"
 
 #: gitk:3051
-msgid "<Home>\t\tMove to first commit"
+msgid "<Home>\t\tMove to first cummit"
 msgstr "<Home>\t\t最初のコミットに移動"
 
 #: gitk:3052
-msgid "<End>\t\tMove to last commit"
+msgid "<End>\t\tMove to last cummit"
 msgstr "<End>\t\t最後のコミットに移動"
 
 #: gitk:3053
-msgid "<Up>, p, k\tMove up one commit"
+msgid "<Up>, p, k\tMove up one cummit"
 msgstr "<Up>, p, k\t一つ上のコミットに移動"
 
 #: gitk:3054
-msgid "<Down>, n, j\tMove down one commit"
+msgid "<Down>, n, j\tMove down one cummit"
 msgstr "<Down>, n, j\t一つ下のコミットに移動"
 
 #: gitk:3055
@@ -433,53 +433,53 @@ msgstr "<Right>, x, l\t履歴の次へ進む"
 
 #: gitk:3057
 #, tcl-format
-msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgid "<%s-n>\tGo to n-th parent of current cummit in history list"
 msgstr "<%s-n(数字)>\t履歴上で現在のコミットの親コミットの内のn(数字)番目のコミットへ移動"
 
 #: gitk:3058
-msgid "<PageUp>\tMove up one page in commit list"
+msgid "<PageUp>\tMove up one page in cummit list"
 msgstr "<PageUp>\tコミットリストの一つ上のページに移動"
 
 #: gitk:3059
-msgid "<PageDown>\tMove down one page in commit list"
+msgid "<PageDown>\tMove down one page in cummit list"
 msgstr "<PageDown>\tコミットリストの一つ下のページに移動"
 
 #: gitk:3060
 #, tcl-format
-msgid "<%s-Home>\tScroll to top of commit list"
+msgid "<%s-Home>\tScroll to top of cummit list"
 msgstr "<%s-Home>\tコミットリストの一番上にスクロールする"
 
 #: gitk:3061
 #, tcl-format
-msgid "<%s-End>\tScroll to bottom of commit list"
+msgid "<%s-End>\tScroll to bottom of cummit list"
 msgstr "<%s-End>\tコミットリストの一番下にスクロールする"
 
 #: gitk:3062
 #, tcl-format
-msgid "<%s-Up>\tScroll commit list up one line"
+msgid "<%s-Up>\tScroll cummit list up one line"
 msgstr "<%s-Up>\tコミットリストの一つ下の行にスクロールする"
 
 #: gitk:3063
 #, tcl-format
-msgid "<%s-Down>\tScroll commit list down one line"
+msgid "<%s-Down>\tScroll cummit list down one line"
 msgstr "<%s-Down>\tコミットリストの一つ下の行にスクロールする"
 
 #: gitk:3064
 #, tcl-format
-msgid "<%s-PageUp>\tScroll commit list up one page"
+msgid "<%s-PageUp>\tScroll cummit list up one page"
 msgstr "<%s-PageUp>\tコミットリストの上のページにスクロールする"
 
 #: gitk:3065
 #, tcl-format
-msgid "<%s-PageDown>\tScroll commit list down one page"
+msgid "<%s-PageDown>\tScroll cummit list down one page"
 msgstr "<%s-PageDown>\tコミットリストの下のページにスクロールする"
 
 #: gitk:3066
-msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgid "<Shift-Up>\tFind backwards (upwards, later cummits)"
 msgstr "<Shift-Up>\t後方を検索 (上方の・新しいコミット)"
 
 #: gitk:3067
-msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgid "<Shift-Down>\tFind forwards (downwards, earlier cummits)"
 msgstr "<Shift-Down>\t前方を検索（下方の・古いコミット）"
 
 #: gitk:3068
@@ -517,7 +517,7 @@ msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\t次を検索して移動"
 
 #: gitk:3076
-msgid "g\t\tGo to commit"
+msgid "g\t\tGo to cummit"
 msgstr "g\t\t指定してコミットに移動"
 
 #: gitk:3077
@@ -581,7 +581,7 @@ msgid "command failed:"
 msgstr "コマンド失敗:"
 
 #: gitk:3785
-msgid "No such commit"
+msgid "No such cummit"
 msgstr "そのようなコミットはありません"
 
 #: gitk:3799
@@ -614,7 +614,7 @@ msgstr "git blame 実行エラー: %s"
 
 #: gitk:3926
 #, tcl-format
-msgid "That line comes from commit %s,  which is not in this view"
+msgid "That line comes from cummit %s,  which is not in this view"
 msgstr "コミット %s に由来するその行は、このビューに表示されていません"
 
 #: gitk:3940
@@ -662,7 +662,7 @@ msgid "All remote-tracking branches"
 msgstr "全てのリモート追跡ブランチ"
 
 #: gitk:4082
-msgid "Commit Info (regular expressions):"
+msgid "cummit Info (regular expressions):"
 msgstr "コミット情報（正規表現）:"
 
 #: gitk:4083
@@ -670,19 +670,19 @@ msgid "Author:"
 msgstr "作者:"
 
 #: gitk:4084
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "コミット者:"
 
 #: gitk:4085
-msgid "Commit Message:"
+msgid "cummit Message:"
 msgstr "コミットメッセージ:"
 
 #: gitk:4086
-msgid "Matches all Commit Info criteria"
+msgid "Matches all cummit Info criteria"
 msgstr "コミット情報の全ての条件に一致"
 
 #: gitk:4087
-msgid "Matches no Commit Info criteria"
+msgid "Matches no cummit Info criteria"
 msgstr "コミット情報の全ての条件に不一致"
 
 #: gitk:4088
@@ -703,7 +703,7 @@ msgstr "検索文字列:"
 
 #: gitk:4092
 msgid ""
-"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"cummit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 msgstr ""
 "コミット日時 (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
@@ -758,7 +758,7 @@ msgid "Enter files and directories to include, one per line:"
 msgstr "含まれるファイル・ディレクトリを一行ごとに入力:"
 
 #: gitk:4105
-msgid "Command to generate more commits to include:"
+msgid "Command to generate more cummits to include:"
 msgstr "コミット追加コマンド:"
 
 #: gitk:4229
@@ -778,7 +778,7 @@ msgid "Apply (F5)"
 msgstr "適用 (F5)"
 
 #: gitk:4355
-msgid "Error in commit selection arguments:"
+msgid "Error in cummit selection arguments:"
 msgstr "コミット選択引数のエラー:"
 
 #: gitk:4410 gitk:4463 gitk:4925 gitk:4939 gitk:6209 gitk:12388 gitk:12389
@@ -802,11 +802,11 @@ msgid "Not ancestor"
 msgstr "非祖先"
 
 #: gitk:5325
-msgid "Local changes checked in to index but not committed"
+msgid "Local changes checked in to index but not cummitted"
 msgstr "ステージされた、コミット前のローカルな変更"
 
 #: gitk:5361
-msgid "Local uncommitted changes, not checked in to index"
+msgid "Local uncummitted changes, not checked in to index"
 msgstr "ステージされていない、コミット前のローカルな変更"
 
 #: gitk:7135
@@ -888,7 +888,7 @@ msgid "Detached head: can't reset"
 msgstr "切り離されたHEAD: リセットできません"
 
 #: gitk:9006 gitk:9012
-msgid "Skipping merge commit "
+msgid "Skipping merge cummit "
 msgstr "コミットマージをスキップ: "
 
 #: gitk:9021 gitk:9026
@@ -900,7 +900,7 @@ msgid " - stopping\n"
 msgstr " - 停止\n"
 
 #: gitk:9032 gitk:9035 gitk:9043 gitk:9057 gitk:9066
-msgid "Commit "
+msgid "cummit "
 msgstr "コミット "
 
 #: gitk:9036
@@ -921,7 +921,7 @@ msgstr ""
 
 #: gitk:9046
 msgid ""
-"Diff of commits:\n"
+"Diff of cummits:\n"
 "\n"
 msgstr ""
 "コミットのdiff:\n"
@@ -934,12 +934,12 @@ msgstr " には %s の子があります - 停止\n"
 
 #: gitk:9086
 #, tcl-format
-msgid "Error writing commit to file: %s"
+msgid "Error writing cummit to file: %s"
 msgstr "ファイルへのコミット書き出しエラー: %s"
 
 #: gitk:9092
 #, tcl-format
-msgid "Error diffing commits: %s"
+msgid "Error diffing cummits: %s"
 msgstr "コミットのdiff実行エラー: %s"
 
 #: gitk:9138
@@ -1024,7 +1024,7 @@ msgid "Write"
 msgstr "書き出し"
 
 #: gitk:9423
-msgid "Error writing commit:"
+msgid "Error writing cummit:"
 msgstr "コミット書き出しエラー:"
 
 #: gitk:9450
@@ -1042,7 +1042,7 @@ msgstr "ブランチ '%s' は既に存在します。上書きしますか？"
 
 #: gitk:9545
 #, tcl-format
-msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgid "cummit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
 "コミット %s は既にブランチ %s に含まれています ― 本当にこれを再適用しますか？"
 
@@ -1054,10 +1054,10 @@ msgstr "チェリーピック中"
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
-"Please commit, reset or stash your changes and try again."
+"Please cummit, reset or stash your changes and try again."
 msgstr ""
 "ファイル '%s' のローカルな変更のためにチェリーピックは失敗しました。\n"
-"あなたの変更に commit, reset, stash のいずれかを行ってからやり直してくださ"
+"あなたの変更に cummit, reset, stash のいずれかを行ってからやり直してくださ"
 "い。"
 
 #: gitk:9565
@@ -1069,12 +1069,12 @@ msgstr ""
 "この解決のために git citool を実行したいですか？"
 
 #: gitk:9581 gitk:9639
-msgid "No changes committed"
+msgid "No changes cummitted"
 msgstr "何の変更もコミットされていません"
 
 #: gitk:9608
 #, tcl-format
-msgid "Commit %s is not included in branch %s -- really revert it?"
+msgid "cummit %s is not included in branch %s -- really revert it?"
 msgstr "コミット %s は既にブランチ %s に含まれています ― 本当にこれを撤回しますか？"
 
 #: gitk:9613
@@ -1085,8 +1085,8 @@ msgstr "撤回中"
 #, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
-"commit, reset or stash  your changes and try again."
-msgstr "ファイル '%s' のローカルな変更のために撤回は失敗しました。 あなたの変更に commit, reset, stash のいずれかを行ってからやり直してください。"
+"cummit, reset or stash  your changes and try again."
+msgstr "ファイル '%s' のローカルな変更のために撤回は失敗しました。 あなたの変更に cummit, reset, stash のいずれかを行ってからやり直してください。"
 
 #: gitk:9625
 msgid ""
@@ -1140,7 +1140,7 @@ msgstr "現在チェックアウトされているブランチを削除するこ
 #: gitk:9817
 #, tcl-format
 msgid ""
-"The commits on branch %s aren't on any other branch.\n"
+"The cummits on branch %s aren't on any other branch.\n"
 "Really delete branch %s?"
 msgstr ""
 "ブランチ %s には他のブランチに存在しないコミットがあります。\n"
@@ -1157,7 +1157,7 @@ msgstr "フィルター"
 
 #: gitk:10161
 msgid ""
-"Error reading commit topology information; branch and preceding/following "
+"Error reading cummit topology information; branch and preceding/following "
 "tag information will be incomplete."
 msgstr ""
 "コミット構造情報読み込みエラー; ブランチ及び上位/下位のタグ情報が不完全である"
@@ -1184,7 +1184,7 @@ msgid "I"
 msgstr "I"
 
 #: gitk:11363
-msgid "Commit list display options"
+msgid "cummit list display options"
 msgstr "コミットリスト表示オプション"
 
 #: gitk:11366

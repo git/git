@@ -40,7 +40,7 @@ test_expect_success 'setup' '
 		cp a deep/deeper2 &&
 		cp a deep/deeper1/deepest &&
 		git add . &&
-		git commit -m "initial commit"
+		git cummit -m "initial cummit"
 	)
 '
 
@@ -158,7 +158,7 @@ test_expect_success 'set enables config' '
 	git init worktree-config &&
 	(
 		cd worktree-config &&
-		test_commit test file &&
+		test_cummit test file &&
 		test_path_is_missing .git/config.worktree &&
 		git sparse-checkout set nothing &&
 		test_path_is_file .git/config.worktree &&
@@ -398,7 +398,7 @@ test_expect_success 'revert to old sparse-checkout on empty update' '
 	(
 		echo >file &&
 		git add file &&
-		git commit -m "test" &&
+		git cummit -m "test" &&
 		git sparse-checkout set nothing 2>err &&
 		test_i18ngrep ! "Sparse checkout leaves no entry on working directory" err &&
 		test_i18ngrep ! ".git/index.lock" err &&
@@ -561,7 +561,7 @@ test_expect_success 'interaction with submodules' '
 		mkdir modules &&
 		git submodule add ../repo modules/child &&
 		git add . &&
-		git commit -m "add submodule" &&
+		git cummit -m "add submodule" &&
 		git sparse-checkout init --cone &&
 		git sparse-checkout set folder1
 	) &&
@@ -687,8 +687,8 @@ test_expect_success BSLASHPSPEC 'pattern-checks: escaped characters' '
 	040000 tree $TREEOID	zglob[!a]?
 	EOF
 	) &&
-	COMMIT=$(git -C escaped commit-tree $NEWTREE -p HEAD) &&
-	git -C escaped reset --hard $COMMIT &&
+	cummit=$(git -C escaped cummit-tree $NEWTREE -p HEAD) &&
+	git -C escaped reset --hard $cummit &&
 	check_files escaped "a deep folder1 folder2 zbad\\dir zdoes*exist" zglob[!a]? &&
 	git -C escaped sparse-checkout init --cone &&
 	git -C escaped sparse-checkout set --skip-checks zbad\\dir/bogus "zdoes*not*exist" "zdoes*exist" "zglob[!a]?" &&
@@ -748,7 +748,7 @@ test_expect_success 'cone mode clears ignored subdirectories' '
 	EOF
 
 	git -C repo add .gitignore &&
-	git -C repo commit -m ".gitignore" &&
+	git -C repo cummit -m ".gitignore" &&
 
 	mkdir -p repo/obj repo/folder1/obj repo/deep/deeper2/obj &&
 	for file in folder1/obj/a obj/a folder1/file.o folder1.o \

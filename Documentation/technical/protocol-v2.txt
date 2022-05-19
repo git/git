@@ -283,22 +283,22 @@ included in the clients request as well as the potential addition of the
 'shallow-info' section in the server's response as explained below.
 
     shallow <oid>
-	A client must notify the server of all commits for which it only
+	A client must notify the server of all cummits for which it only
 	has shallow copies (meaning that it doesn't have the parents of
-	a commit) by supplying a 'shallow <oid>' line for each such
+	a cummit) by supplying a 'shallow <oid>' line for each such
 	object so that the server is aware of the limitations of the
 	client's history.  This is so that the server is aware that the
-	client may not have all objects reachable from such commits.
+	client may not have all objects reachable from such cummits.
 
     deepen <depth>
-	Requests that the fetch/clone should be shallow having a commit
+	Requests that the fetch/clone should be shallow having a cummit
 	depth of <depth> relative to the remote side.
 
     deepen-relative
 	Requests that the semantics of the "deepen" command be changed
 	to indicate that the depth requested is relative to the client's
 	current shallow boundary, instead of relative to the requested
-	commits.
+	cummits.
 
     deepen-since <timestamp>
 	Requests that the shallow clone/fetch should be cut at a
@@ -439,12 +439,12 @@ header. Most sections are sent only when the packfile is sent.
 	* Always begins with the section header "shallow-info"
 
 	* If a positive depth is requested, the server will compute the
-	  set of commits which are no deeper than the desired depth.
+	  set of cummits which are no deeper than the desired depth.
 
-	* The server sends a "shallow obj-id" line for each commit whose
+	* The server sends a "shallow obj-id" line for each cummit whose
 	  parents will not be sent in the following packfile.
 
-	* The server sends an "unshallow obj-id" line for each commit
+	* The server sends an "unshallow obj-id" line for each cummit
 	  which the client has indicated is shallow, but is no longer
 	  shallow as a result of the fetch (due to its parents being
 	  sent in the following packfile).

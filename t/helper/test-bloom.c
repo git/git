@@ -1,7 +1,7 @@
 #include "git-compat-util.h"
 #include "bloom.h"
 #include "test-tool.h"
-#include "commit.h"
+#include "cummit.h"
 
 static struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 
@@ -33,12 +33,12 @@ static void print_bloom_filter(struct bloom_filter *filter) {
 	printf("\n");
 }
 
-static void get_bloom_filter_for_commit(const struct object_id *commit_oid)
+static void get_bloom_filter_for_cummit(const struct object_id *cummit_oid)
 {
-	struct commit *c;
+	struct cummit *c;
 	struct bloom_filter *filter;
 	setup_git_directory();
-	c = lookup_commit(the_repository, commit_oid);
+	c = lookup_cummit(the_repository, cummit_oid);
 	filter = get_or_compute_bloom_filter(the_repository, c, 1,
 					     &settings,
 					     NULL);
@@ -48,7 +48,7 @@ static void get_bloom_filter_for_commit(const struct object_id *commit_oid)
 static const char *bloom_usage = "\n"
 "  test-tool bloom get_murmur3 <string>\n"
 "  test-tool bloom generate_filter <string> [<string>...]\n"
-"  test-tool bloom get_filter_for_commit <commit-hex>\n";
+"  test-tool bloom get_filter_for_cummit <commit-hex>\n";
 
 int cmd__bloom(int argc, const char **argv)
 {
@@ -82,7 +82,7 @@ int cmd__bloom(int argc, const char **argv)
 		print_bloom_filter(&filter);
 	}
 
-	if (!strcmp(argv[1], "get_filter_for_commit")) {
+	if (!strcmp(argv[1], "get_filter_for_cummit")) {
 		struct object_id oid;
 		const char *end;
 		if (argc < 3)
@@ -90,7 +90,7 @@ int cmd__bloom(int argc, const char **argv)
 		if (parse_oid_hex(argv[2], &oid, &end))
 			die("cannot parse oid '%s'", argv[2]);
 		init_bloom_filters();
-		get_bloom_filter_for_commit(&oid);
+		get_bloom_filter_for_cummit(&oid);
 	}
 
 	return 0;

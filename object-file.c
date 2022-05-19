@@ -13,7 +13,7 @@
 #include "delta.h"
 #include "pack.h"
 #include "blob.h"
-#include "commit.h"
+#include "cummit.h"
 #include "run-command.h"
 #include "tag.h"
 #include "tree.h"
@@ -660,7 +660,7 @@ void add_to_alternates_file(const char *reference)
 		rollback_lock_file(&lock);
 	} else {
 		fprintf_or_die(out, "%s\n", reference);
-		if (commit_lock_file(&lock))
+		if (cummit_lock_file(&lock))
 			die_errno(_("unable to move new alternates file into place"));
 		if (the_repository->objects->loaded_alternates)
 			link_alt_odb_entries(the_repository, reference,
@@ -1762,7 +1762,7 @@ void *read_object_with_reference(struct repository *r,
 			return buffer;
 		}
 		/* Handle references */
-		else if (type == OBJ_COMMIT)
+		else if (type == OBJ_cummit)
 			ref_type = "tree ";
 		else if (type == OBJ_TAG)
 			ref_type = "object ";
@@ -2143,12 +2143,12 @@ static void check_tree(const void *buf, size_t size)
 		;
 }
 
-static void check_commit(const void *buf, size_t size)
+static void check_cummit(const void *buf, size_t size)
 {
-	struct commit c;
+	struct cummit c;
 	memset(&c, 0, sizeof(c));
-	if (parse_commit_buffer(the_repository, &c, buf, size, 0))
-		die(_("corrupt commit"));
+	if (parse_cummit_buffer(the_repository, &c, buf, size, 0))
+		die(_("corrupt cummit"));
 }
 
 static void check_tag(const void *buf, size_t size)
@@ -2185,8 +2185,8 @@ static int index_mem(struct index_state *istate,
 	if (flags & HASH_FORMAT_CHECK) {
 		if (type == OBJ_TREE)
 			check_tree(buf, size);
-		if (type == OBJ_COMMIT)
-			check_commit(buf, size);
+		if (type == OBJ_cummit)
+			check_cummit(buf, size);
 		if (type == OBJ_TAG)
 			check_tag(buf, size);
 	}

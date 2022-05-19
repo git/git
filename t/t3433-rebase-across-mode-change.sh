@@ -8,7 +8,7 @@ test_expect_success 'setup' '
 	mkdir DS &&
 	>DS/whatever &&
 	git add DS &&
-	git commit -m base &&
+	git cummit -m base &&
 
 	git branch side1 &&
 	git branch side2 &&
@@ -16,15 +16,15 @@ test_expect_success 'setup' '
 	git checkout side1 &&
 	git rm -rf DS &&
 	test_ln_s_add unrelated DS &&
-	git commit -m side1 &&
+	git cummit -m side1 &&
 
 	git checkout side2 &&
 	>unrelated &&
 	git add unrelated &&
-	git commit -m commit1 &&
+	git cummit -m cummit1 &&
 
 	echo >>unrelated &&
-	git commit -am commit2
+	git cummit -am cummit2
 '
 
 test_expect_success 'rebase changes with the apply backend' '

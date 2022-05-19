@@ -21,7 +21,7 @@
 static const char * const git_replace_usage[] = {
 	N_("git replace [-f] <object> <replacement>"),
 	N_("git replace [-f] --edit <object>"),
-	N_("git replace [-f] --graft <commit> [<parent>...]"),
+	N_("git replace [-f] --graft <cummit> [<parent>...]"),
 	"git replace [-f] --convert-graft-file",
 	N_("git replace -d <object>..."),
 	N_("git replace [--format=<format>] [-l [<pattern>]]"),
@@ -191,7 +191,7 @@ static int replace_object_oid(const char *object_ref,
 	if (!transaction ||
 	    ref_transaction_update(transaction, ref.buf, repl, &prev,
 				   0, NULL, &err) ||
-	    ref_transaction_commit(transaction, &err))
+	    ref_transaction_cummit(transaction, &err))
 		res = error("%s", err.buf);
 
 	ref_transaction_free(transaction);
@@ -370,19 +370,19 @@ static int replace_parents(struct strbuf *buf, int argc, const char **argv)
 	/* prepare new parents */
 	for (i = 0; i < argc; i++) {
 		struct object_id oid;
-		struct commit *commit;
+		struct cummit *cummit;
 
 		if (get_oid(argv[i], &oid) < 0) {
 			strbuf_release(&new_parents);
 			return error(_("not a valid object name: '%s'"),
 				     argv[i]);
 		}
-		commit = lookup_commit_reference(the_repository, &oid);
-		if (!commit) {
+		cummit = lookup_cummit_reference(the_repository, &oid);
+		if (!cummit) {
 			strbuf_release(&new_parents);
-			return error(_("could not parse %s as a commit"), argv[i]);
+			return error(_("could not parse %s as a cummit"), argv[i]);
 		}
-		strbuf_addf(&new_parents, "parent %s\n", oid_to_hex(&commit->object.oid));
+		strbuf_addf(&new_parents, "parent %s\n", oid_to_hex(&cummit->object.oid));
 	}
 
 	/* replace existing parents with new ones */
@@ -398,8 +398,8 @@ struct check_mergetag_data {
 	const char **argv;
 };
 
-static int check_one_mergetag(struct commit *commit,
-			       struct commit_extra_header *extra,
+static int check_one_mergetag(struct cummit *cummit,
+			       struct cummit_extra_header *extra,
 			       void *data)
 {
 	struct check_mergetag_data *mergetag_data = (struct check_mergetag_data *)data;
@@ -412,9 +412,9 @@ static int check_one_mergetag(struct commit *commit,
 			 OBJ_TAG, &tag_oid);
 	tag = lookup_tag(the_repository, &tag_oid);
 	if (!tag)
-		return error(_("bad mergetag in commit '%s'"), ref);
+		return error(_("bad mergetag in cummit '%s'"), ref);
 	if (parse_tag_buffer(the_repository, tag, extra->value, extra->len))
-		return error(_("malformed mergetag in commit '%s'"), ref);
+		return error(_("malformed mergetag in cummit '%s'"), ref);
 
 	/* iterate over new parents */
 	for (i = 1; i < mergetag_data->argc; i++) {
@@ -426,38 +426,38 @@ static int check_one_mergetag(struct commit *commit,
 			return 0; /* found */
 	}
 
-	return error(_("original commit '%s' contains mergetag '%s' that is "
+	return error(_("original cummit '%s' contains mergetag '%s' that is "
 		       "discarded; use --edit instead of --graft"), ref,
 		     oid_to_hex(&tag_oid));
 }
 
-static int check_mergetags(struct commit *commit, int argc, const char **argv)
+static int check_mergetags(struct cummit *cummit, int argc, const char **argv)
 {
 	struct check_mergetag_data mergetag_data;
 
 	mergetag_data.argc = argc;
 	mergetag_data.argv = argv;
-	return for_each_mergetag(check_one_mergetag, commit, &mergetag_data);
+	return for_each_mergetag(check_one_mergetag, cummit, &mergetag_data);
 }
 
 static int create_graft(int argc, const char **argv, int force, int gentle)
 {
 	struct object_id old_oid, new_oid;
 	const char *old_ref = argv[0];
-	struct commit *commit;
+	struct cummit *cummit;
 	struct strbuf buf = STRBUF_INIT;
 	const char *buffer;
 	unsigned long size;
 
 	if (get_oid(old_ref, &old_oid) < 0)
 		return error(_("not a valid object name: '%s'"), old_ref);
-	commit = lookup_commit_reference(the_repository, &old_oid);
-	if (!commit)
+	cummit = lookup_cummit_reference(the_repository, &old_oid);
+	if (!cummit)
 		return error(_("could not parse %s"), old_ref);
 
-	buffer = get_commit_buffer(commit, &size);
+	buffer = get_cummit_buffer(cummit, &size);
 	strbuf_add(&buf, buffer, size);
-	unuse_commit_buffer(commit, buffer);
+	unuse_cummit_buffer(cummit, buffer);
 
 	if (replace_parents(&buf, argc - 1, &argv[1]) < 0) {
 		strbuf_release(&buf);
@@ -465,34 +465,34 @@ static int create_graft(int argc, const char **argv, int force, int gentle)
 	}
 
 	if (remove_signature(&buf)) {
-		warning(_("the original commit '%s' has a gpg signature"), old_ref);
-		warning(_("the signature will be removed in the replacement commit!"));
+		warning(_("the original cummit '%s' has a gpg signature"), old_ref);
+		warning(_("the signature will be removed in the replacement cummit!"));
 	}
 
-	if (check_mergetags(commit, argc, argv)) {
+	if (check_mergetags(cummit, argc, argv)) {
 		strbuf_release(&buf);
 		return -1;
 	}
 
-	if (write_object_file(buf.buf, buf.len, OBJ_COMMIT, &new_oid)) {
+	if (write_object_file(buf.buf, buf.len, OBJ_cummit, &new_oid)) {
 		strbuf_release(&buf);
-		return error(_("could not write replacement commit for: '%s'"),
+		return error(_("could not write replacement cummit for: '%s'"),
 			     old_ref);
 	}
 
 	strbuf_release(&buf);
 
-	if (oideq(&commit->object.oid, &new_oid)) {
+	if (oideq(&cummit->object.oid, &new_oid)) {
 		if (gentle) {
 			warning(_("graft for '%s' unnecessary"),
-				oid_to_hex(&commit->object.oid));
+				oid_to_hex(&cummit->object.oid));
 			return 0;
 		}
-		return error(_("new commit is the same as the old one: '%s'"),
-			     oid_to_hex(&commit->object.oid));
+		return error(_("new cummit is the same as the old one: '%s'"),
+			     oid_to_hex(&cummit->object.oid));
 	}
 
-	return replace_object_oid(old_ref, &commit->object.oid,
+	return replace_object_oid(old_ref, &cummit->object.oid,
 				  "replacement", &new_oid, force);
 }
 
@@ -547,7 +547,7 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE('l', "list", &cmdmode, N_("list replace refs"), MODE_LIST),
 		OPT_CMDMODE('d', "delete", &cmdmode, N_("delete replace refs"), MODE_DELETE),
 		OPT_CMDMODE('e', "edit", &cmdmode, N_("edit existing object"), MODE_EDIT),
-		OPT_CMDMODE('g', "graft", &cmdmode, N_("change a commit's parents"), MODE_GRAFT),
+		OPT_CMDMODE('g', "graft", &cmdmode, N_("change a cummit's parents"), MODE_GRAFT),
 		OPT_CMDMODE(0, "convert-graft-file", &cmdmode, N_("convert existing graft file"), MODE_CONVERT_GRAFT_FILE),
 		OPT_BOOL_F('f', "force", &force, N_("replace the ref if it exists"),
 			   PARSE_OPT_NOCOMPLETE),

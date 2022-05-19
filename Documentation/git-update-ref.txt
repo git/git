@@ -68,7 +68,7 @@ performs all modifications together.  Specify commands of the form:
 	option SP <opt> LF
 	start LF
 	prepare LF
-	commit LF
+	cummit LF
 	abort LF
 
 With `--create-reflog`, update-ref will create a reflog for each ref
@@ -89,7 +89,7 @@ quoting:
 	option SP <opt> NUL
 	start NUL
 	prepare NUL
-	commit NUL
+	cummit NUL
 	abort NUL
 
 In this format, use 40 "0" to specify a zero value, and use the empty
@@ -125,16 +125,16 @@ option::
 start::
 	Start a transaction. In contrast to a non-transactional session, a
 	transaction will automatically abort if the session ends without an
-	explicit commit. This command may create a new empty transaction when
-	the current one has been committed or aborted already.
+	explicit cummit. This command may create a new empty transaction when
+	the current one has been cummitted or aborted already.
 
 prepare::
-	Prepare to commit the transaction. This will create lock files for all
+	Prepare to cummit the transaction. This will create lock files for all
 	queued reference updates. If one reference could not be locked, the
 	transaction will be aborted.
 
-commit::
-	Commit all reference updates queued for the transaction, ending the
+cummit::
+	cummit all reference updates queued for the transaction, ending the
 	transaction.
 
 abort::
@@ -157,23 +157,23 @@ like HEAD or ORIG_HEAD; or the file "$GIT_DIR/logs/<ref>" exists then
 the log name) describing the change in ref value.  Log lines are
 formatted as:
 
-    oldsha1 SP newsha1 SP committer LF
+    oldsha1 SP newsha1 SP cummitter LF
 
 Where "oldsha1" is the 40 character hexadecimal value previously
 stored in <ref>, "newsha1" is the 40 character hexadecimal value of
-<newvalue> and "committer" is the committer's name, email address
-and date in the standard Git committer ident format.
+<newvalue> and "cummitter" is the cummitter's name, email address
+and date in the standard Git cummitter ident format.
 
 Optionally with -m:
 
-    oldsha1 SP newsha1 SP committer TAB message LF
+    oldsha1 SP newsha1 SP cummitter TAB message LF
 
 Where all fields are as described above and "message" is the
 value supplied to the -m option.
 
 An update will fail (without changing <ref>) if the current user is
 unable to create a new log file, append to the existing log file
-or does not have committer information available.
+or does not have cummitter information available.
 
 GIT
 ---

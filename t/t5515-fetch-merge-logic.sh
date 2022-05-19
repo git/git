@@ -33,8 +33,8 @@ convert_expected () {
 
 test_expect_success setup '
 	GIT_AUTHOR_DATE="2006-06-26 00:00:00 +0000" &&
-	GIT_COMMITTER_DATE="2006-06-26 00:00:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
+	GIT_cummitTER_DATE="2006-06-26 00:00:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
 
 	test_oid_cache <<-EOF &&
 	one sha1:8e32a6d901327a23ef831511badce7bf3bf46689
@@ -67,24 +67,24 @@ test_expect_success setup '
 
 	echo >file original &&
 	git add file &&
-	git commit -a -m One &&
+	git cummit -a -m One &&
 	git tag tag-one &&
 	git tag tag-one-tree HEAD^{tree} &&
 	git branch one &&
 
 	echo two >> file &&
-	git commit -a -m Two &&
+	git cummit -a -m Two &&
 	git tag -a -m "Tag Two" tag-two &&
 	git branch two &&
 
 	echo three >> file &&
-	git commit -a -m Three &&
+	git cummit -a -m Three &&
 	git tag -a -m "Tag Three" tag-three &&
 	git tag -a -m "Tag Three file" tag-three-file HEAD^{tree}:file &&
 	git branch three &&
 
 	echo main >> file &&
-	git commit -a -m Main &&
+	git cummit -a -m Main &&
 	git tag -a -m "Tag Main" tag-main &&
 
 	git checkout three &&

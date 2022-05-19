@@ -59,7 +59,7 @@ case "$projectdesc" in
 esac
 
 # --- Check types
-# if $newrev is 0000...0000, it's a commit to delete a ref.
+# if $newrev is 0000...0000, it's a cummit to delete a ref.
 zero=$(git hash-object --stdin </dev/null | tr '[0-9a-f]' '0')
 if [ "$newrev" = "$zero" ]; then
 	newrev_type=delete
@@ -68,7 +68,7 @@ else
 fi
 
 case "$refname","$newrev_type" in
-	refs/tags/*,commit)
+	refs/tags/*,cummit)
 		# un-annotated tag
 		short_refname=${refname##refs/tags/}
 		if [ "$allowunannotated" != "true" ]; then
@@ -93,7 +93,7 @@ case "$refname","$newrev_type" in
 			exit 1
 		fi
 		;;
-	refs/heads/*,commit)
+	refs/heads/*,cummit)
 		# branch
 		if [ "$oldrev" = "$zero" -a "$denycreatebranch" = "true" ]; then
 			echo "*** Creating a branch is not allowed in this repository" >&2
@@ -107,7 +107,7 @@ case "$refname","$newrev_type" in
 			exit 1
 		fi
 		;;
-	refs/remotes/*,commit)
+	refs/remotes/*,cummit)
 		# tracking branch
 		;;
 	refs/remotes/*,delete)

@@ -19,31 +19,31 @@ test_expect_success setup '
 	echo one >one &&
 	git add one &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	echo ichi >one &&
 	git add one &&
 	test_tick &&
-	git commit -m second &&
+	git cummit -m second &&
 
 	git mv one ichi &&
 	test_tick &&
-	git commit -m third &&
+	git cummit -m third &&
 
 	cp ichi ein &&
 	git add ein &&
 	test_tick &&
-	git commit -m fourth &&
+	git cummit -m fourth &&
 
 	mkdir a &&
 	echo ni >a/two &&
 	git add a/two &&
 	test_tick &&
-	git commit -m fifth  &&
+	git cummit -m fifth  &&
 
 	git rm a/two &&
 	test_tick &&
-	git commit -m sixth
+	git cummit -m sixth
 
 '
 
@@ -76,21 +76,21 @@ test_expect_success 'format' '
 cat > expect << EOF
  This is
   the sixth
-  commit.
+  cummit.
  This is
   the fifth
-  commit.
+  cummit.
 EOF
 
 test_expect_success 'format %w(11,1,2)' '
 
-	git log -2 --format="%w(11,1,2)This is the %s commit." > actual &&
+	git log -2 --format="%w(11,1,2)This is the %s cummit." > actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'format %w(,1,2)' '
 
-	git log -2 --format="%w(,1,2)This is%nthe %s%ncommit." > actual &&
+	git log -2 --format="%w(,1,2)This is%nthe %s%ncummit." > actual &&
 	test_cmp expect actual
 '
 
@@ -194,19 +194,19 @@ test_expect_success 'git config log.follow is overridden by --no-follow' '
 	test_cmp expect actual
 '
 
-# Note that these commits are intentionally listed out of order.
+# Note that these cummits are intentionally listed out of order.
 last_three="$(git rev-parse :/fourth :/sixth :/fifth)"
 cat > expect << EOF
 $(git rev-parse --short :/sixth ) sixth
 $(git rev-parse --short :/fifth ) fifth
 $(git rev-parse --short :/fourth) fourth
 EOF
-test_expect_success 'git log --no-walk <commits> sorts by commit time' '
+test_expect_success 'git log --no-walk <cummits> sorts by cummit time' '
 	git log --no-walk --oneline $last_three > actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git log --no-walk=sorted <commits> sorts by commit time' '
+test_expect_success 'git log --no-walk=sorted <cummits> sorts by cummit time' '
 	git log --no-walk=sorted --oneline $last_three > actual &&
 	test_cmp expect actual
 '
@@ -216,7 +216,7 @@ cat > expect << EOF
 === $(git rev-parse --short :/fifth ) fifth
 === $(git rev-parse --short :/fourth) fourth
 EOF
-test_expect_success 'git log --line-prefix="=== " --no-walk <commits> sorts by commit time' '
+test_expect_success 'git log --line-prefix="=== " --no-walk <cummits> sorts by cummit time' '
 	git log --line-prefix="=== " --no-walk --oneline $last_three > actual &&
 	test_cmp expect actual
 '
@@ -226,12 +226,12 @@ $(git rev-parse --short :/fourth) fourth
 $(git rev-parse --short :/sixth ) sixth
 $(git rev-parse --short :/fifth ) fifth
 EOF
-test_expect_success 'git log --no-walk=unsorted <commits> leaves list of commits as given' '
+test_expect_success 'git log --no-walk=unsorted <cummits> leaves list of cummits as given' '
 	git log --no-walk=unsorted --oneline $last_three > actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'git show <commits> leaves list of commits as given' '
+test_expect_success 'git show <cummits> leaves list of cummits as given' '
 	git show --oneline -s $last_three > actual &&
 	test_cmp expect actual
 '
@@ -240,7 +240,7 @@ test_expect_success 'setup case sensitivity tests' '
 	echo case >one &&
 	test_tick &&
 	git add one &&
-	git commit -a -m Second
+	git cummit -a -m Second
 '
 
 test_expect_success 'log --grep' '
@@ -341,24 +341,24 @@ test_expect_success 'log -F -E --grep=<ere> uses ere' '
 '
 
 test_expect_success PCRE 'log -F -E --perl-regexp --grep=<pcre> uses PCRE' '
-	test_when_finished "rm -rf num_commits" &&
-	git init num_commits &&
+	test_when_finished "rm -rf num_cummits" &&
+	git init num_cummits &&
 	(
-		cd num_commits &&
-		test_commit 1d &&
-		test_commit 2e
+		cd num_cummits &&
+		test_cummit 1d &&
+		test_cummit 2e
 	) &&
 
 	# In PCRE \d in [\d] is like saying "0-9", and matches the 2
 	# in 2e...
 	echo 2e >expect &&
-	git -C num_commits log -1 --pretty="tformat:%s" -F -E --perl-regexp --grep="[\d]" >actual &&
+	git -C num_cummits log -1 --pretty="tformat:%s" -F -E --perl-regexp --grep="[\d]" >actual &&
 	test_cmp expect actual &&
 
 	# ...in POSIX basic and extended it is the same as [d],
 	# i.e. "d", which matches 1d, but does not match 2e.
 	echo 1d >expect &&
-	git -C num_commits log -1 --pretty="tformat:%s" -F -E --grep="[\d]" >actual &&
+	git -C num_cummits log -1 --pretty="tformat:%s" -F -E --grep="[\d]" >actual &&
 	test_cmp expect actual
 '
 
@@ -379,12 +379,12 @@ test_expect_success !FAIL_PREREQS 'log with various grep.patternType configurati
 	git init pattern-type &&
 	(
 		cd pattern-type &&
-		test_commit 1 file A &&
+		test_cummit 1 file A &&
 
 		# The tagname is overridden here because creating a
-		# tag called "(1|2)" as test_commit would otherwise
+		# tag called "(1|2)" as test_cummit would otherwise
 		# implicitly do would fail on e.g. MINGW.
-		test_commit "(1|2)" file B 2 &&
+		test_cummit "(1|2)" file B 2 &&
 
 		echo "(1|2)" >expect.fixed &&
 		cp expect.fixed expect.basic &&
@@ -473,8 +473,8 @@ do
 		git init "pattern-type-$cmd" &&
 		(
 			cd "pattern-type-$cmd" &&
-			test_commit 1 file A &&
-			test_commit "(1|2)" file B 2 &&
+			test_cummit 1 file A &&
+			test_cummit "(1|2)" file B 2 &&
 
 			git -c grep.patternType=fixed $cmd --grep="..." $myarg >actual &&
 			test_must_be_empty actual &&
@@ -495,12 +495,12 @@ test_expect_success 'log --author' '
 	test_cmp expect actual
 '
 
-test_expect_success 'log --committer' '
+test_expect_success 'log --cummitter' '
 	cat >expect <<-\EOF &&
-	Commit:     C O Mitter <committer@<BOLD;RED>example<RESET>.com>
+	cummit:     C O Mitter <cummitter@<BOLD;RED>example<RESET>.com>
 	EOF
-	git log -1 --color=always --pretty=fuller --committer="example" >log &&
-	grep "Commit:" log >actual.raw &&
+	git log -1 --color=always --pretty=fuller --cummitter="example" >log &&
+	grep "cummit:" log >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	test_cmp expect actual
 '
@@ -566,8 +566,8 @@ test_expect_success 'simple log --graph --line-prefix="123 "' '
 
 test_expect_success 'set up merge history' '
 	git checkout -b side HEAD~4 &&
-	test_commit side-1 1 1 &&
-	test_commit side-2 2 2 &&
+	test_cummit side-1 1 1 &&
+	test_cummit side-2 2 2 &&
 	git checkout main &&
 	git merge side
 '
@@ -641,53 +641,53 @@ test_expect_success 'diff-tree --graph' '
 '
 
 cat > expect <<\EOF
-*   commit main
+*   cummit main
 |\  Merge: A B
 | | Author: A U Thor <author@example.com>
 | |
 | |     Merge branch 'side'
 | |
-| * commit tags/side-2
+| * cummit tags/side-2
 | | Author: A U Thor <author@example.com>
 | |
 | |     side-2
 | |
-| * commit tags/side-1
+| * cummit tags/side-1
 | | Author: A U Thor <author@example.com>
 | |
 | |     side-1
 | |
-* | commit main~1
+* | cummit main~1
 | | Author: A U Thor <author@example.com>
 | |
 | |     Second
 | |
-* | commit main~2
+* | cummit main~2
 | | Author: A U Thor <author@example.com>
 | |
 | |     sixth
 | |
-* | commit main~3
+* | cummit main~3
 | | Author: A U Thor <author@example.com>
 | |
 | |     fifth
 | |
-* | commit main~4
+* | cummit main~4
 |/  Author: A U Thor <author@example.com>
 |
 |       fourth
 |
-* commit tags/side-1~1
+* cummit tags/side-1~1
 | Author: A U Thor <author@example.com>
 |
 |     third
 |
-* commit tags/side-1~2
+* cummit tags/side-1~2
 | Author: A U Thor <author@example.com>
 |
 |     second
 |
-* commit tags/side-1~3
+* cummit tags/side-1~3
   Author: A U Thor <author@example.com>
 
       initial
@@ -702,21 +702,21 @@ test_expect_success 'log --graph with full output' '
 
 test_expect_success 'set up more tangled history' '
 	git checkout -b tangle HEAD~6 &&
-	test_commit tangle-a tangle-a a &&
+	test_cummit tangle-a tangle-a a &&
 	git merge main~3 &&
 	git merge side~1 &&
 	git checkout main &&
 	git merge tangle &&
 	git checkout -b reach &&
-	test_commit reach &&
+	test_cummit reach &&
 	git checkout main &&
 	git checkout -b octopus-a &&
-	test_commit octopus-a &&
+	test_cummit octopus-a &&
 	git checkout main &&
 	git checkout -b octopus-b &&
-	test_commit octopus-b &&
+	test_cummit octopus-b &&
 	git checkout main &&
-	test_commit seventh &&
+	test_cummit seventh &&
 	git merge octopus-a octopus-b &&
 	git merge reach
 '
@@ -1045,7 +1045,7 @@ test_expect_success TTY 'log output on a TTY' '
 '
 
 test_expect_success 'reflog is expected format' '
-	git log -g --abbrev-commit --pretty=oneline >expect &&
+	git log -g --abbrev-cummit --pretty=oneline >expect &&
 	git reflog >actual &&
 	test_cmp expect actual
 '
@@ -1056,20 +1056,20 @@ test_expect_success 'whatchanged is expected format' '
 	test_cmp expect actual
 '
 
-test_expect_success 'log.abbrevCommit configuration' '
-	git log --abbrev-commit >expect.log.abbrev &&
-	git log --no-abbrev-commit >expect.log.full &&
+test_expect_success 'log.abbrevcummit configuration' '
+	git log --abbrev-cummit >expect.log.abbrev &&
+	git log --no-abbrev-cummit >expect.log.full &&
 	git log --pretty=raw >expect.log.raw &&
-	git reflog --abbrev-commit >expect.reflog.abbrev &&
-	git reflog --no-abbrev-commit >expect.reflog.full &&
-	git whatchanged --abbrev-commit >expect.whatchanged.abbrev &&
-	git whatchanged --no-abbrev-commit >expect.whatchanged.full &&
+	git reflog --abbrev-cummit >expect.reflog.abbrev &&
+	git reflog --no-abbrev-cummit >expect.reflog.full &&
+	git whatchanged --abbrev-cummit >expect.whatchanged.abbrev &&
+	git whatchanged --no-abbrev-cummit >expect.whatchanged.full &&
 
-	test_config log.abbrevCommit true &&
+	test_config log.abbrevcummit true &&
 
 	git log >actual &&
 	test_cmp expect.log.abbrev actual &&
-	git log --no-abbrev-commit >actual &&
+	git log --no-abbrev-cummit >actual &&
 	test_cmp expect.log.full actual &&
 
 	git log --pretty=raw >actual &&
@@ -1077,12 +1077,12 @@ test_expect_success 'log.abbrevCommit configuration' '
 
 	git reflog >actual &&
 	test_cmp expect.reflog.abbrev actual &&
-	git reflog --no-abbrev-commit >actual &&
+	git reflog --no-abbrev-cummit >actual &&
 	test_cmp expect.reflog.full actual &&
 
 	git whatchanged >actual &&
 	test_cmp expect.whatchanged.abbrev actual &&
-	git whatchanged --no-abbrev-commit >actual &&
+	git whatchanged --no-abbrev-cummit >actual &&
 	test_cmp expect.whatchanged.full actual
 '
 
@@ -1091,8 +1091,8 @@ test_expect_success 'show added path under "--follow -M"' '
 	test_create_repo regression &&
 	(
 		cd regression &&
-		test_commit needs-another-commit &&
-		test_commit foo.bar &&
+		test_cummit needs-another-cummit &&
+		test_cummit foo.bar &&
 		git log -M --follow -p foo.bar.t &&
 		git log -M --follow --stat foo.bar.t &&
 		git log -M --follow --name-only foo.bar.t
@@ -1103,24 +1103,24 @@ test_expect_success 'git log -c --follow' '
 	test_create_repo follow-c &&
 	(
 		cd follow-c &&
-		test_commit initial file original &&
+		test_cummit initial file original &&
 		git rm file &&
-		test_commit rename file2 original &&
+		test_cummit rename file2 original &&
 		git reset --hard initial &&
-		test_commit modify file foo &&
+		test_cummit modify file foo &&
 		git merge -m merge rename &&
 		git log -c --follow file2
 	)
 '
 
 cat >expect <<\EOF
-*   commit COMMIT_OBJECT_NAME
+*   cummit cummit_OBJECT_NAME
 |\  Merge: MERGE_PARENTS
 | | Author: A U Thor <author@example.com>
 | |
 | |     Merge HEADS DESCRIPTION
 | |
-| * commit COMMIT_OBJECT_NAME
+| * cummit cummit_OBJECT_NAME
 | | Author: A U Thor <author@example.com>
 | |
 | |     reach
@@ -1137,13 +1137,13 @@ cat >expect <<\EOF
 | | +reach
 | |
 |  \
-*-. \   commit COMMIT_OBJECT_NAME
+*-. \   cummit cummit_OBJECT_NAME
 |\ \ \  Merge: MERGE_PARENTS
 | | | | Author: A U Thor <author@example.com>
 | | | |
 | | | |     Merge HEADS DESCRIPTION
 | | | |
-| | * | commit COMMIT_OBJECT_NAME
+| | * | cummit cummit_OBJECT_NAME
 | | |/  Author: A U Thor <author@example.com>
 | | |
 | | |       octopus-b
@@ -1159,7 +1159,7 @@ cat >expect <<\EOF
 | | |   @@ -0,0 +1 @@
 | | |   +octopus-b
 | | |
-| * | commit COMMIT_OBJECT_NAME
+| * | cummit cummit_OBJECT_NAME
 | |/  Author: A U Thor <author@example.com>
 | |
 | |       octopus-a
@@ -1175,7 +1175,7 @@ cat >expect <<\EOF
 | |   @@ -0,0 +1 @@
 | |   +octopus-a
 | |
-* | commit COMMIT_OBJECT_NAME
+* | cummit cummit_OBJECT_NAME
 |/  Author: A U Thor <author@example.com>
 |
 |       seventh
@@ -1191,25 +1191,25 @@ cat >expect <<\EOF
 |   @@ -0,0 +1 @@
 |   +seventh
 |
-*   commit COMMIT_OBJECT_NAME
+*   cummit cummit_OBJECT_NAME
 |\  Merge: MERGE_PARENTS
 | | Author: A U Thor <author@example.com>
 | |
 | |     Merge branch 'tangle'
 | |
-| *   commit COMMIT_OBJECT_NAME
+| *   cummit cummit_OBJECT_NAME
 | |\  Merge: MERGE_PARENTS
 | | | Author: A U Thor <author@example.com>
 | | |
 | | |     Merge branch 'side' (early part) into tangle
 | | |
-| * |   commit COMMIT_OBJECT_NAME
+| * |   cummit cummit_OBJECT_NAME
 | |\ \  Merge: MERGE_PARENTS
 | | | | Author: A U Thor <author@example.com>
 | | | |
 | | | |     Merge branch 'main' (early part) into tangle
 | | | |
-| * | | commit COMMIT_OBJECT_NAME
+| * | | cummit cummit_OBJECT_NAME
 | | | | Author: A U Thor <author@example.com>
 | | | |
 | | | |     tangle-a
@@ -1225,13 +1225,13 @@ cat >expect <<\EOF
 | | | | @@ -0,0 +1 @@
 | | | | +a
 | | | |
-* | | |   commit COMMIT_OBJECT_NAME
+* | | |   cummit cummit_OBJECT_NAME
 |\ \ \ \  Merge: MERGE_PARENTS
 | | | | | Author: A U Thor <author@example.com>
 | | | | |
 | | | | |     Merge branch 'side'
 | | | | |
-| * | | | commit COMMIT_OBJECT_NAME
+| * | | | cummit cummit_OBJECT_NAME
 | | |_|/  Author: A U Thor <author@example.com>
 | |/| |
 | | | |       side-2
@@ -1247,7 +1247,7 @@ cat >expect <<\EOF
 | | | |   @@ -0,0 +1 @@
 | | | |   +2
 | | | |
-| * | | commit COMMIT_OBJECT_NAME
+| * | | cummit cummit_OBJECT_NAME
 | | | | Author: A U Thor <author@example.com>
 | | | |
 | | | |     side-1
@@ -1263,7 +1263,7 @@ cat >expect <<\EOF
 | | | | @@ -0,0 +1 @@
 | | | | +1
 | | | |
-* | | | commit COMMIT_OBJECT_NAME
+* | | | cummit cummit_OBJECT_NAME
 | | | | Author: A U Thor <author@example.com>
 | | | |
 | | | |     Second
@@ -1279,7 +1279,7 @@ cat >expect <<\EOF
 | | | | @@ -0,0 +1 @@
 | | | | +case
 | | | |
-* | | | commit COMMIT_OBJECT_NAME
+* | | | cummit cummit_OBJECT_NAME
 | |_|/  Author: A U Thor <author@example.com>
 |/| |
 | | |       sixth
@@ -1295,7 +1295,7 @@ cat >expect <<\EOF
 | | |   @@ -1 +0,0 @@
 | | |   -ni
 | | |
-* | | commit COMMIT_OBJECT_NAME
+* | | cummit cummit_OBJECT_NAME
 | | | Author: A U Thor <author@example.com>
 | | |
 | | |     fifth
@@ -1311,7 +1311,7 @@ cat >expect <<\EOF
 | | | @@ -0,0 +1 @@
 | | | +ni
 | | |
-* | | commit COMMIT_OBJECT_NAME
+* | | cummit cummit_OBJECT_NAME
 |/ /  Author: A U Thor <author@example.com>
 | |
 | |       fourth
@@ -1327,7 +1327,7 @@ cat >expect <<\EOF
 | |   @@ -0,0 +1 @@
 | |   +ichi
 | |
-* | commit COMMIT_OBJECT_NAME
+* | cummit cummit_OBJECT_NAME
 |/  Author: A U Thor <author@example.com>
 |
 |       third
@@ -1351,7 +1351,7 @@ cat >expect <<\EOF
 |   @@ -1 +0,0 @@
 |   -ichi
 |
-* commit COMMIT_OBJECT_NAME
+* cummit cummit_OBJECT_NAME
 | Author: A U Thor <author@example.com>
 |
 |     second
@@ -1367,7 +1367,7 @@ cat >expect <<\EOF
 | -one
 | +ichi
 |
-* commit COMMIT_OBJECT_NAME
+* cummit cummit_OBJECT_NAME
   Author: A U Thor <author@example.com>
 
       initial
@@ -1389,13 +1389,13 @@ test_expect_success 'log --graph with diff and stats' '
 '
 
 cat >expect <<\EOF
-*** *   commit COMMIT_OBJECT_NAME
+*** *   cummit cummit_OBJECT_NAME
 *** |\  Merge: MERGE_PARENTS
 *** | | Author: A U Thor <author@example.com>
 *** | |
 *** | |     Merge HEADS DESCRIPTION
 *** | |
-*** | * commit COMMIT_OBJECT_NAME
+*** | * cummit cummit_OBJECT_NAME
 *** | | Author: A U Thor <author@example.com>
 *** | |
 *** | |     reach
@@ -1412,13 +1412,13 @@ cat >expect <<\EOF
 *** | | +reach
 *** | |
 *** |  \
-*** *-. \   commit COMMIT_OBJECT_NAME
+*** *-. \   cummit cummit_OBJECT_NAME
 *** |\ \ \  Merge: MERGE_PARENTS
 *** | | | | Author: A U Thor <author@example.com>
 *** | | | |
 *** | | | |     Merge HEADS DESCRIPTION
 *** | | | |
-*** | | * | commit COMMIT_OBJECT_NAME
+*** | | * | cummit cummit_OBJECT_NAME
 *** | | |/  Author: A U Thor <author@example.com>
 *** | | |
 *** | | |       octopus-b
@@ -1434,7 +1434,7 @@ cat >expect <<\EOF
 *** | | |   @@ -0,0 +1 @@
 *** | | |   +octopus-b
 *** | | |
-*** | * | commit COMMIT_OBJECT_NAME
+*** | * | cummit cummit_OBJECT_NAME
 *** | |/  Author: A U Thor <author@example.com>
 *** | |
 *** | |       octopus-a
@@ -1450,7 +1450,7 @@ cat >expect <<\EOF
 *** | |   @@ -0,0 +1 @@
 *** | |   +octopus-a
 *** | |
-*** * | commit COMMIT_OBJECT_NAME
+*** * | cummit cummit_OBJECT_NAME
 *** |/  Author: A U Thor <author@example.com>
 *** |
 *** |       seventh
@@ -1466,25 +1466,25 @@ cat >expect <<\EOF
 *** |   @@ -0,0 +1 @@
 *** |   +seventh
 *** |
-*** *   commit COMMIT_OBJECT_NAME
+*** *   cummit cummit_OBJECT_NAME
 *** |\  Merge: MERGE_PARENTS
 *** | | Author: A U Thor <author@example.com>
 *** | |
 *** | |     Merge branch 'tangle'
 *** | |
-*** | *   commit COMMIT_OBJECT_NAME
+*** | *   cummit cummit_OBJECT_NAME
 *** | |\  Merge: MERGE_PARENTS
 *** | | | Author: A U Thor <author@example.com>
 *** | | |
 *** | | |     Merge branch 'side' (early part) into tangle
 *** | | |
-*** | * |   commit COMMIT_OBJECT_NAME
+*** | * |   cummit cummit_OBJECT_NAME
 *** | |\ \  Merge: MERGE_PARENTS
 *** | | | | Author: A U Thor <author@example.com>
 *** | | | |
 *** | | | |     Merge branch 'main' (early part) into tangle
 *** | | | |
-*** | * | | commit COMMIT_OBJECT_NAME
+*** | * | | cummit cummit_OBJECT_NAME
 *** | | | | Author: A U Thor <author@example.com>
 *** | | | |
 *** | | | |     tangle-a
@@ -1500,13 +1500,13 @@ cat >expect <<\EOF
 *** | | | | @@ -0,0 +1 @@
 *** | | | | +a
 *** | | | |
-*** * | | |   commit COMMIT_OBJECT_NAME
+*** * | | |   cummit cummit_OBJECT_NAME
 *** |\ \ \ \  Merge: MERGE_PARENTS
 *** | | | | | Author: A U Thor <author@example.com>
 *** | | | | |
 *** | | | | |     Merge branch 'side'
 *** | | | | |
-*** | * | | | commit COMMIT_OBJECT_NAME
+*** | * | | | cummit cummit_OBJECT_NAME
 *** | | |_|/  Author: A U Thor <author@example.com>
 *** | |/| |
 *** | | | |       side-2
@@ -1522,7 +1522,7 @@ cat >expect <<\EOF
 *** | | | |   @@ -0,0 +1 @@
 *** | | | |   +2
 *** | | | |
-*** | * | | commit COMMIT_OBJECT_NAME
+*** | * | | cummit cummit_OBJECT_NAME
 *** | | | | Author: A U Thor <author@example.com>
 *** | | | |
 *** | | | |     side-1
@@ -1538,7 +1538,7 @@ cat >expect <<\EOF
 *** | | | | @@ -0,0 +1 @@
 *** | | | | +1
 *** | | | |
-*** * | | | commit COMMIT_OBJECT_NAME
+*** * | | | cummit cummit_OBJECT_NAME
 *** | | | | Author: A U Thor <author@example.com>
 *** | | | |
 *** | | | |     Second
@@ -1554,7 +1554,7 @@ cat >expect <<\EOF
 *** | | | | @@ -0,0 +1 @@
 *** | | | | +case
 *** | | | |
-*** * | | | commit COMMIT_OBJECT_NAME
+*** * | | | cummit cummit_OBJECT_NAME
 *** | |_|/  Author: A U Thor <author@example.com>
 *** |/| |
 *** | | |       sixth
@@ -1570,7 +1570,7 @@ cat >expect <<\EOF
 *** | | |   @@ -1 +0,0 @@
 *** | | |   -ni
 *** | | |
-*** * | | commit COMMIT_OBJECT_NAME
+*** * | | cummit cummit_OBJECT_NAME
 *** | | | Author: A U Thor <author@example.com>
 *** | | |
 *** | | |     fifth
@@ -1586,7 +1586,7 @@ cat >expect <<\EOF
 *** | | | @@ -0,0 +1 @@
 *** | | | +ni
 *** | | |
-*** * | | commit COMMIT_OBJECT_NAME
+*** * | | cummit cummit_OBJECT_NAME
 *** |/ /  Author: A U Thor <author@example.com>
 *** | |
 *** | |       fourth
@@ -1602,7 +1602,7 @@ cat >expect <<\EOF
 *** | |   @@ -0,0 +1 @@
 *** | |   +ichi
 *** | |
-*** * | commit COMMIT_OBJECT_NAME
+*** * | cummit cummit_OBJECT_NAME
 *** |/  Author: A U Thor <author@example.com>
 *** |
 *** |       third
@@ -1626,7 +1626,7 @@ cat >expect <<\EOF
 *** |   @@ -1 +0,0 @@
 *** |   -ichi
 *** |
-*** * commit COMMIT_OBJECT_NAME
+*** * cummit cummit_OBJECT_NAME
 *** | Author: A U Thor <author@example.com>
 *** |
 *** |     second
@@ -1642,7 +1642,7 @@ cat >expect <<\EOF
 *** | -one
 *** | +ichi
 *** |
-*** * commit COMMIT_OBJECT_NAME
+*** * cummit cummit_OBJECT_NAME
 ***   Author: A U Thor <author@example.com>
 ***
 ***       initial
@@ -1788,7 +1788,7 @@ test_expect_success GPG 'setup signed branch' '
 	git checkout -b signed main &&
 	echo foo >foo &&
 	git add foo &&
-	git commit -S -m signed_commit
+	git cummit -S -m signed_cummit
 '
 
 test_expect_success GPG 'setup signed branch with subkey' '
@@ -1796,7 +1796,7 @@ test_expect_success GPG 'setup signed branch with subkey' '
 	git checkout -b signed-subkey main &&
 	echo foo >foo &&
 	git add foo &&
-	git commit -SB7227189 -m signed_commit
+	git cummit -SB7227189 -m signed_cummit
 '
 
 test_expect_success GPGSM 'setup signed branch x509' '
@@ -1805,8 +1805,8 @@ test_expect_success GPGSM 'setup signed branch x509' '
 	echo foo >foo &&
 	git add foo &&
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
-	git commit -S -m signed_commit
+	test_config user.signingkey $GIT_cummitTER_EMAIL &&
+	git cummit -S -m signed_cummit
 '
 
 test_expect_success GPGSSH 'setup sshkey signed branch' '
@@ -1816,24 +1816,24 @@ test_expect_success GPGSSH 'setup sshkey signed branch' '
 	git checkout -b signed-ssh main &&
 	echo foo >foo &&
 	git add foo &&
-	git commit -S -m signed_commit
+	git cummit -S -m signed_cummit
 '
 
-test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'create signed commits with keys having defined lifetimes' '
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'create signed cummits with keys having defined lifetimes' '
 	test_config gpg.format ssh &&
 	touch file &&
 	git add file &&
 
-	echo expired >file && test_tick && git commit -a -m expired -S"${GPGSSH_KEY_EXPIRED}" &&
+	echo expired >file && test_tick && git cummit -a -m expired -S"${GPGSSH_KEY_EXPIRED}" &&
 	git tag expired-signed &&
 
-	echo notyetvalid >file && test_tick && git commit -a -m notyetvalid -S"${GPGSSH_KEY_NOTYETVALID}" &&
+	echo notyetvalid >file && test_tick && git cummit -a -m notyetvalid -S"${GPGSSH_KEY_NOTYETVALID}" &&
 	git tag notyetvalid-signed &&
 
-	echo timeboxedvalid >file && test_tick && git commit -a -m timeboxedvalid -S"${GPGSSH_KEY_TIMEBOXEDVALID}" &&
+	echo timeboxedvalid >file && test_tick && git cummit -a -m timeboxedvalid -S"${GPGSSH_KEY_TIMEBOXEDVALID}" &&
 	git tag timeboxedvalid-signed &&
 
-	echo timeboxedinvalid >file && test_tick && git commit -a -m timeboxedinvalid -S"${GPGSSH_KEY_TIMEBOXEDINVALID}" &&
+	echo timeboxedinvalid >file && test_tick && git cummit -a -m timeboxedinvalid -S"${GPGSSH_KEY_TIMEBOXEDINVALID}" &&
 	git tag timeboxedinvalid-signed
 '
 
@@ -1886,14 +1886,14 @@ test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'log shows failure on not yet valid
 	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
-test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'log show success with commit date and key validity matching' '
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'log show success with cummit date and key validity matching' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git log --graph --show-signature -n1 timeboxedvalid-signed >actual &&
 	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
 	! grep "${GPGSSH_BAD_SIGNATURE}" actual
 '
 
-test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'log shows failure with commit date outside of key validity' '
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'log shows failure with cummit date outside of key validity' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git log --graph --show-signature -n1 timeboxedinvalid-signed >actual &&
 	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
@@ -1904,11 +1904,11 @@ test_expect_success GPG 'log --graph --show-signature for merged tag' '
 	git checkout -b plain main &&
 	echo aaa >bar &&
 	git add bar &&
-	git commit -m bar_commit &&
+	git cummit -m bar_cummit &&
 	git checkout -b tagged main &&
 	echo bbb >baz &&
 	git add baz &&
-	git commit -m baz_commit &&
+	git cummit -m baz_cummit &&
 	git tag -s -m signed_tag_msg signed_tag &&
 	git checkout plain &&
 	git merge --no-ff -m msg signed_tag &&
@@ -1923,11 +1923,11 @@ test_expect_success GPG 'log --graph --show-signature for merged tag in shallow 
 	git checkout -b plain-shallow main &&
 	echo aaa >bar &&
 	git add bar &&
-	git commit -m bar_commit &&
+	git cummit -m bar_cummit &&
 	git checkout --detach main &&
 	echo bbb >baz &&
 	git add baz &&
-	git commit -m baz_commit &&
+	git cummit -m baz_cummit &&
 	git tag -s -m signed_tag_msg signed_tag_shallow &&
 	hash=$(git rev-parse HEAD) &&
 	git checkout plain-shallow &&
@@ -1943,11 +1943,11 @@ test_expect_success GPG 'log --graph --show-signature for merged tag with missin
 	git checkout -b plain-nokey main &&
 	echo aaa >bar &&
 	git add bar &&
-	git commit -m bar_commit &&
+	git cummit -m bar_cummit &&
 	git checkout -b tagged-nokey main &&
 	echo bbb >baz &&
 	git add baz &&
-	git commit -m baz_commit &&
+	git cummit -m baz_cummit &&
 	git tag -s -m signed_tag_msg signed_tag_nokey &&
 	git checkout plain-nokey &&
 	git merge --no-ff -m msg signed_tag_nokey &&
@@ -1962,11 +1962,11 @@ test_expect_success GPG 'log --graph --show-signature for merged tag with bad si
 	git checkout -b plain-bad main &&
 	echo aaa >bar &&
 	git add bar &&
-	git commit -m bar_commit &&
+	git cummit -m bar_cummit &&
 	git checkout -b tagged-bad main &&
 	echo bbb >baz &&
 	git add baz &&
-	git commit -m baz_commit &&
+	git cummit -m baz_cummit &&
 	git tag -s -m signed_tag_msg signed_tag_bad &&
 	git cat-file tag signed_tag_bad >raw &&
 	sed -e "s/signed_tag_msg/forged/" raw >forged &&
@@ -1984,11 +1984,11 @@ test_expect_success GPG 'log --show-signature for merged tag with GPG failure' '
 	git checkout -b plain-fail main &&
 	echo aaa >bar &&
 	git add bar &&
-	git commit -m bar_commit &&
+	git cummit -m bar_cummit &&
 	git checkout -b tagged-fail main &&
 	echo bbb >baz &&
 	git add baz &&
-	git commit -m baz_commit &&
+	git cummit -m baz_cummit &&
 	git tag -s -m signed_tag_msg signed_tag_fail &&
 	git checkout plain-fail &&
 	git merge --no-ff -m msg signed_tag_fail &&
@@ -2001,15 +2001,15 @@ test_expect_success GPG 'log --show-signature for merged tag with GPG failure' '
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
 	test_when_finished "git reset --hard && git checkout main" &&
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	test_config user.signingkey $GIT_cummitTER_EMAIL &&
 	git checkout -b plain-x509 main &&
 	echo aaa >bar &&
 	git add bar &&
-	git commit -m bar_commit &&
+	git cummit -m bar_cummit &&
 	git checkout -b tagged-x509 main &&
 	echo bbb >baz &&
 	git add baz &&
-	git commit -m baz_commit &&
+	git cummit -m baz_cummit &&
 	git tag -s -m signed_tag_msg signed_tag_x509 &&
 	git checkout plain-x509 &&
 	git merge --no-ff -m msg signed_tag_x509 &&
@@ -2022,15 +2022,15 @@ test_expect_success GPGSM 'log --graph --show-signature for merged tag x509' '
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 missing key' '
 	test_when_finished "git reset --hard && git checkout main" &&
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	test_config user.signingkey $GIT_cummitTER_EMAIL &&
 	git checkout -b plain-x509-nokey main &&
 	echo aaa >bar &&
 	git add bar &&
-	git commit -m bar_commit &&
+	git cummit -m bar_cummit &&
 	git checkout -b tagged-x509-nokey main &&
 	echo bbb >baz &&
 	git add baz &&
-	git commit -m baz_commit &&
+	git cummit -m baz_cummit &&
 	git tag -s -m signed_tag_msg signed_tag_x509_nokey &&
 	git checkout plain-x509-nokey &&
 	git merge --no-ff -m msg signed_tag_x509_nokey &&
@@ -2043,15 +2043,15 @@ test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 miss
 test_expect_success GPGSM 'log --graph --show-signature for merged tag x509 bad signature' '
 	test_when_finished "git reset --hard && git checkout main" &&
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	test_config user.signingkey $GIT_cummitTER_EMAIL &&
 	git checkout -b plain-x509-bad main &&
 	echo aaa >bar &&
 	git add bar &&
-	git commit -m bar_commit &&
+	git cummit -m bar_cummit &&
 	git checkout -b tagged-x509-bad main &&
 	echo bbb >baz &&
 	git add baz &&
-	git commit -m baz_commit &&
+	git cummit -m baz_cummit &&
 	git tag -s -m signed_tag_msg signed_tag_x509_bad &&
 	git cat-file tag signed_tag_x509_bad >raw &&
 	sed -e "s/signed_tag_msg/forged/" raw >forged &&
@@ -2098,7 +2098,7 @@ test_expect_success 'log on empty repo fails' '
 	git init empty &&
 	test_when_finished "rm -rf empty" &&
 	test_must_fail git -C empty log 2>stderr &&
-	test_i18ngrep does.not.have.any.commits stderr
+	test_i18ngrep does.not.have.any.cummits stderr
 '
 
 test_expect_success REFFILES 'log diagnoses bogus HEAD hash' '
@@ -2135,10 +2135,10 @@ test_expect_success 'do not default to HEAD with ignored object on stdin' '
 
 test_expect_success 'set up --source tests' '
 	git checkout --orphan source-a &&
-	test_commit one &&
-	test_commit two &&
+	test_cummit one &&
+	test_cummit two &&
 	git checkout -b source-b HEAD^ &&
-	test_commit three
+	test_cummit three
 '
 
 test_expect_success 'log --source paints branch names' '
@@ -2177,7 +2177,7 @@ test_expect_success '--exclude-promisor-objects does not BUG-crash' '
 
 test_expect_success 'log --decorate includes all levels of tag annotated tags' '
 	git checkout -b branch &&
-	git commit --allow-empty -m "new commit" &&
+	git cummit --allow-empty -m "new cummit" &&
 	git tag lightweight HEAD &&
 	git tag -m annotated annotated HEAD &&
 	git tag -m double-0 double-0 HEAD &&
@@ -2196,14 +2196,14 @@ test_expect_success 'log --end-of-options' '
        test_cmp expect actual
 '
 
-test_expect_success 'set up commits with different authors' '
+test_expect_success 'set up cummits with different authors' '
 	git checkout --orphan authors &&
-	test_commit --author "Jim <jim@example.com>" jim_1 &&
-	test_commit --author "Val <val@example.com>" val_1 &&
-	test_commit --author "Val <val@example.com>" val_2 &&
-	test_commit --author "Jim <jim@example.com>" jim_2 &&
-	test_commit --author "Val <val@example.com>" val_3 &&
-	test_commit --author "Jim <jim@example.com>" jim_3
+	test_cummit --author "Jim <jim@example.com>" jim_1 &&
+	test_cummit --author "Val <val@example.com>" val_1 &&
+	test_cummit --author "Val <val@example.com>" val_2 &&
+	test_cummit --author "Jim <jim@example.com>" jim_2 &&
+	test_cummit --author "Val <val@example.com>" val_3 &&
+	test_cummit --author "Jim <jim@example.com>" jim_3
 '
 
 test_expect_success 'log --invert-grep --grep --author' '

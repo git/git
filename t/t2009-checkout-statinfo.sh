@@ -12,11 +12,11 @@ test_expect_success 'setup' '
 
 	echo hello >world &&
 	git update-index --add world &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git branch side &&
 	echo goodbye >world &&
 	git update-index --add world &&
-	git commit -m second
+	git cummit -m second
 
 '
 

@@ -1,9 +1,9 @@
 #include "cache.h"
-#include "commit.h"
+#include "cummit.h"
 #include "sequencer.h"
 #include "rebase-interactive.h"
 #include "strbuf.h"
-#include "commit-slab.h"
+#include "cummit-slab.h"
 #include "config.h"
 #include "dir.h"
 
@@ -13,26 +13,26 @@ N_("You can fix this with 'git rebase --edit-todo' "
 "Or you can abort the rebase with 'git rebase"
 " --abort'.\n");
 
-enum missing_commit_check_level {
-	MISSING_COMMIT_CHECK_IGNORE = 0,
-	MISSING_COMMIT_CHECK_WARN,
-	MISSING_COMMIT_CHECK_ERROR
+enum missing_cummit_check_level {
+	MISSING_cummit_CHECK_IGNORE = 0,
+	MISSING_cummit_CHECK_WARN,
+	MISSING_cummit_CHECK_ERROR
 };
 
-static enum missing_commit_check_level get_missing_commit_check_level(void)
+static enum missing_cummit_check_level get_missing_cummit_check_level(void)
 {
 	const char *value;
 
-	if (git_config_get_value("rebase.missingcommitscheck", &value) ||
+	if (git_config_get_value("rebase.missingcummitscheck", &value) ||
 			!strcasecmp("ignore", value))
-		return MISSING_COMMIT_CHECK_IGNORE;
+		return MISSING_cummit_CHECK_IGNORE;
 	if (!strcasecmp("warn", value))
-		return MISSING_COMMIT_CHECK_WARN;
+		return MISSING_cummit_CHECK_WARN;
 	if (!strcasecmp("error", value))
-		return MISSING_COMMIT_CHECK_ERROR;
+		return MISSING_cummit_CHECK_ERROR;
 	warning(_("unrecognized setting %s for option "
-		  "rebase.missingCommitsCheck. Ignoring."), value);
-	return MISSING_COMMIT_CHECK_IGNORE;
+		  "rebase.missingcummitsCheck. Ignoring."), value);
+	return MISSING_cummit_CHECK_IGNORE;
 }
 
 void append_todo_help(int command_count,
@@ -40,23 +40,23 @@ void append_todo_help(int command_count,
 		      struct strbuf *buf)
 {
 	const char *msg = _("\nCommands:\n"
-"p, pick <commit> = use commit\n"
-"r, reword <commit> = use commit, but edit the commit message\n"
-"e, edit <commit> = use commit, but stop for amending\n"
-"s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup [-C | -c] <commit> = like \"squash\" but keep only the previous\n"
-"                   commit's log message, unless -C is used, in which case\n"
-"                   keep only this commit's message; -c is same as -C but\n"
+"p, pick <cummit> = use cummit\n"
+"r, reword <cummit> = use cummit, but edit the cummit message\n"
+"e, edit <cummit> = use cummit, but stop for amending\n"
+"s, squash <cummit> = use cummit, but meld into previous cummit\n"
+"f, fixup [-C | -c] <cummit> = like \"squash\" but keep only the previous\n"
+"                   cummit's log message, unless -C is used, in which case\n"
+"                   keep only this cummit's message; -c is same as -C but\n"
 "                   opens the editor\n"
 "x, exec <command> = run command (the rest of the line) using shell\n"
 "b, break = stop here (continue rebase later with 'git rebase --continue')\n"
-"d, drop <commit> = remove commit\n"
+"d, drop <cummit> = remove cummit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified); use -c <commit> to reword the commit message\n"
+"m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+".       create a merge cummit using the original merge cummit's\n"
+".       message (or the oneline, if no original merge cummit was\n"
+".       specified); use -c <cummit> to reword the cummit message\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n");
 	unsigned edit_todo = !(shortrevisions && shortonto);
@@ -71,12 +71,12 @@ void append_todo_help(int command_count,
 
 	strbuf_add_commented_lines(buf, msg, strlen(msg));
 
-	if (get_missing_commit_check_level() == MISSING_COMMIT_CHECK_ERROR)
+	if (get_missing_cummit_check_level() == MISSING_cummit_CHECK_ERROR)
 		msg = _("\nDo not remove any line. Use 'drop' "
-			 "explicitly to remove a commit.\n");
+			 "explicitly to remove a cummit.\n");
 	else
 		msg = _("\nIf you remove a line here "
-			 "THAT COMMIT WILL BE LOST.\n");
+			 "THAT cummit WILL BE LOST.\n");
 
 	strbuf_add_commented_lines(buf, msg, strlen(msg));
 
@@ -146,70 +146,70 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 	return 0;
 }
 
-define_commit_slab(commit_seen, unsigned char);
+define_cummit_slab(cummit_seen, unsigned char);
 /*
- * Check if the user dropped some commits by mistake
- * Behaviour determined by rebase.missingCommitsCheck.
+ * Check if the user dropped some cummits by mistake
+ * Behaviour determined by rebase.missingcummitsCheck.
  * Check if there is an unrecognized command or a
  * bad SHA-1 in a command.
  */
 int todo_list_check(struct todo_list *old_todo, struct todo_list *new_todo)
 {
-	enum missing_commit_check_level check_level = get_missing_commit_check_level();
+	enum missing_cummit_check_level check_level = get_missing_cummit_check_level();
 	struct strbuf missing = STRBUF_INIT;
 	int res = 0, i;
-	struct commit_seen commit_seen;
+	struct cummit_seen cummit_seen;
 
-	init_commit_seen(&commit_seen);
+	init_cummit_seen(&cummit_seen);
 
-	if (check_level == MISSING_COMMIT_CHECK_IGNORE)
+	if (check_level == MISSING_cummit_CHECK_IGNORE)
 		goto leave_check;
 
-	/* Mark the commits in git-rebase-todo as seen */
+	/* Mark the cummits in git-rebase-todo as seen */
 	for (i = 0; i < new_todo->nr; i++) {
-		struct commit *commit = new_todo->items[i].commit;
-		if (commit)
-			*commit_seen_at(&commit_seen, commit) = 1;
+		struct cummit *cummit = new_todo->items[i].cummit;
+		if (cummit)
+			*cummit_seen_at(&cummit_seen, cummit) = 1;
 	}
 
-	/* Find commits in git-rebase-todo.backup yet unseen */
+	/* Find cummits in git-rebase-todo.backup yet unseen */
 	for (i = old_todo->nr - 1; i >= 0; i--) {
 		struct todo_item *item = old_todo->items + i;
-		struct commit *commit = item->commit;
-		if (commit && !*commit_seen_at(&commit_seen, commit)) {
+		struct cummit *cummit = item->cummit;
+		if (cummit && !*cummit_seen_at(&cummit_seen, cummit)) {
 			strbuf_addf(&missing, " - %s %.*s\n",
-				    find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV),
+				    find_unique_abbrev(&cummit->object.oid, DEFAULT_ABBREV),
 				    item->arg_len,
 				    todo_item_get_arg(old_todo, item));
-			*commit_seen_at(&commit_seen, commit) = 1;
+			*cummit_seen_at(&cummit_seen, cummit) = 1;
 		}
 	}
 
-	/* Warn about missing commits */
+	/* Warn about missing cummits */
 	if (!missing.len)
 		goto leave_check;
 
-	if (check_level == MISSING_COMMIT_CHECK_ERROR)
+	if (check_level == MISSING_cummit_CHECK_ERROR)
 		res = 1;
 
 	fprintf(stderr,
-		_("Warning: some commits may have been dropped accidentally.\n"
-		"Dropped commits (newer to older):\n"));
+		_("Warning: some cummits may have been dropped accidentally.\n"
+		"Dropped cummits (newer to older):\n"));
 
 	/* Make the list user-friendly and display */
 	fputs(missing.buf, stderr);
 	strbuf_release(&missing);
 
 	fprintf(stderr, _("To avoid this message, use \"drop\" to "
-		"explicitly remove a commit.\n\n"
-		"Use 'git config rebase.missingCommitsCheck' to change "
+		"explicitly remove a cummit.\n\n"
+		"Use 'git config rebase.missingcummitsCheck' to change "
 		"the level of warnings.\n"
 		"The possible behaviours are: ignore, warn, error.\n\n"));
 
 	fprintf(stderr, _(edit_todo_list_advice));
 
 leave_check:
-	clear_commit_seen(&commit_seen);
+	clear_cummit_seen(&cummit_seen);
 	return res;
 }
 

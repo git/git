@@ -9,26 +9,26 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success setup '
 	test_tick &&
-	git commit --allow-empty -m one &&
+	git cummit --allow-empty -m one &&
 	one=$(git rev-parse HEAD) &&
 	git for-each-ref >actual &&
-	echo "$one commit	refs/heads/main" >expect &&
+	echo "$one cummit	refs/heads/main" >expect &&
 	test_cmp expect actual &&
 
 	git pack-refs --all &&
 	git for-each-ref >actual &&
-	echo "$one commit	refs/heads/main" >expect &&
+	echo "$one cummit	refs/heads/main" >expect &&
 	test_cmp expect actual &&
 
 	git checkout --orphan another &&
 	test_tick &&
-	git commit --allow-empty -m two &&
+	git cummit --allow-empty -m two &&
 	two=$(git rev-parse HEAD) &&
 	git checkout -B main &&
 	git branch -D another &&
 
 	git for-each-ref >actual &&
-	echo "$two commit	refs/heads/main" >expect &&
+	echo "$two cummit	refs/heads/main" >expect &&
 	test_cmp expect actual &&
 
 	git reflog expire --expire=now --all &&

@@ -1070,30 +1070,30 @@ test_expect_success 'no diff after checkout and git update-index --refresh' '
 ################################################################
 P=$(test_oid root)
 
-test_expect_success 'git commit-tree records the correct tree in a commit' '
-	commit0=$(echo NO | git commit-tree $P) &&
-	git show --pretty=raw $commit0 >out &&
+test_expect_success 'git cummit-tree records the correct tree in a cummit' '
+	cummit0=$(echo NO | git cummit-tree $P) &&
+	git show --pretty=raw $cummit0 >out &&
 	tree=$(sed -n -e "s/^tree //p" -e "/^author /q" out) &&
 	test "z$tree" = "z$P"
 '
 
-test_expect_success 'git commit-tree records the correct parent in a commit' '
-	commit1=$(echo NO | git commit-tree $P -p $commit0) &&
-	git show --pretty=raw $commit1 >out &&
+test_expect_success 'git cummit-tree records the correct parent in a cummit' '
+	cummit1=$(echo NO | git cummit-tree $P -p $cummit0) &&
+	git show --pretty=raw $cummit1 >out &&
 	parent=$(sed -n -e "s/^parent //p" -e "/^author /q" out) &&
-	test "z$commit0" = "z$parent"
+	test "z$cummit0" = "z$parent"
 '
 
-test_expect_success 'git commit-tree omits duplicated parent in a commit' '
-	commit2=$(echo NO | git commit-tree $P -p $commit0 -p $commit0) &&
-	git show --pretty=raw $commit2 >out &&
+test_expect_success 'git cummit-tree omits duplicated parent in a cummit' '
+	cummit2=$(echo NO | git cummit-tree $P -p $cummit0 -p $cummit0) &&
+	git show --pretty=raw $cummit2 >out &&
 	cat >match.sed <<-\EOF &&
 	s/^parent //p
 	/^author /q
 	EOF
 	parent=$(sed -n -f match.sed out | sort -u) &&
-	test "z$commit0" = "z$parent" &&
-	git show --pretty=raw $commit2 >out &&
+	test "z$cummit0" = "z$parent" &&
+	git show --pretty=raw $cummit2 >out &&
 	test_stdout_line_count = 1 sed -n -f match.sed out
 '
 

@@ -24,33 +24,33 @@ test_expect_success 'initialize source svn repo containing empty dirs' '
 		echo "Third non-empty file"  > 3/a/file1.txt &&
 		echo "Fourth non-empty file" > 3/b/file1.txt &&
 		svn_cmd add 1 2 3 4 5 6 &&
-		svn_cmd commit -m "initial commit" &&
+		svn_cmd cummit -m "initial cummit" &&
 
 		mkdir 4/a &&
 		svn_cmd add 4/a &&
-		svn_cmd commit -m "nested empty directory" &&
+		svn_cmd cummit -m "nested empty directory" &&
 		mkdir 4/a/b &&
 		svn_cmd add 4/a/b &&
-		svn_cmd commit -m "deeply nested empty directory" &&
+		svn_cmd cummit -m "deeply nested empty directory" &&
 		mkdir 4/a/b/c &&
 		svn_cmd add 4/a/b/c &&
-		svn_cmd commit -m "really deeply nested empty directory" &&
+		svn_cmd cummit -m "really deeply nested empty directory" &&
 		echo "Kill the placeholder file" > 4/a/b/c/foo &&
 		svn_cmd add 4/a/b/c/foo &&
-		svn_cmd commit -m "Regular file to remove placeholder" &&
+		svn_cmd cummit -m "Regular file to remove placeholder" &&
 
 		svn_cmd del 2/file2.txt &&
 		svn_cmd del 3/b &&
-		svn_cmd commit -m "delete non-last entry in directory" &&
+		svn_cmd cummit -m "delete non-last entry in directory" &&
 
 		svn_cmd del 2/file1.txt &&
 		svn_cmd del 3/a &&
-		svn_cmd commit -m "delete last entry in directory" &&
+		svn_cmd cummit -m "delete last entry in directory" &&
 
 		echo "Conflict file" > 5/.placeholder &&
 		mkdir 6/.placeholder &&
 		svn_cmd add 5/.placeholder 6/.placeholder &&
-		svn_cmd commit -m "Placeholder Namespace conflict"
+		svn_cmd cummit -m "Placeholder Namespace conflict"
 	) &&
 	rm -rf "$SVN_TREE"
 '
@@ -66,7 +66,7 @@ test_expect_success 'directory empty from inception' '
 '
 
 # "$GIT_REPO"/2 and "$GIT_REPO"/3 should only contain the placeholder file.
-test_expect_success 'directory empty from subsequent svn commit' '
+test_expect_success 'directory empty from subsequent svn cummit' '
 	test -f "$GIT_REPO"/2/.gitignore &&
 	test $(find "$GIT_REPO"/2 -type f | wc -l) = "1" &&
 	test -f "$GIT_REPO"/3/.gitignore &&
@@ -80,7 +80,7 @@ test_expect_success 'add entry to previously empty directory' '
 	test -f "$GIT_REPO"/4/a/b/c/foo
 '
 
-# The HEAD~2 commit should not have introduced .gitignore placeholder files.
+# The HEAD~2 cummit should not have introduced .gitignore placeholder files.
 test_expect_success 'remove non-last entry from directory' '
 	(
 		cd "$GIT_REPO" &&
@@ -113,8 +113,8 @@ test_expect_success 'placeholder namespace conflict with directory' '
 	test $(find "$GIT_REPO"/6 -type f | wc -l) = "1"
 '
 
-# Prepare a second set of svn commits to test persistence during rebase.
-test_expect_success 'second set of svn commits and rebase' '
+# Prepare a second set of svn cummits to test persistence during rebase.
+test_expect_success 'second set of svn cummits and rebase' '
 	svn_cmd co "$svnrepo"/trunk "$SVN_TREE" &&
 	(
 		cd "$SVN_TREE" &&
@@ -122,7 +122,7 @@ test_expect_success 'second set of svn commits and rebase' '
 		echo "This should remove placeholder" > 1/file1.txt &&
 		echo "This should not remove placeholder" > 5/file1.txt &&
 		svn_cmd add 7 1/file1.txt 5/file1.txt &&
-		svn_cmd commit -m "subsequent svn commit for persistence tests"
+		svn_cmd cummit -m "subsequent svn cummit for persistence tests"
 	) &&
 	rm -rf "$SVN_TREE" &&
 	(

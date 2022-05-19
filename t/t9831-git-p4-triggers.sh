@@ -82,7 +82,7 @@ test_expect_success 'submit description with extra info lines from verbose p4 ch
 		git config git-p4.skipSubmitEdit true &&
 		echo file4 >file4 &&
 		git add file4 &&
-		git commit -m file4 &&
+		git cummit -m file4 &&
 		git p4 submit
 	) &&
 	(

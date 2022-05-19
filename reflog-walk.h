@@ -3,13 +3,13 @@
 
 #include "cache.h"
 
-struct commit;
+struct cummit;
 struct reflog_walk_info;
 struct date_mode;
 
 void init_reflog_walk(struct reflog_walk_info **info);
 int add_reflog_for_walk(struct reflog_walk_info *info,
-			struct commit *commit, const char *name);
+			struct cummit *cummit, const char *name);
 void show_reflog_message(struct reflog_walk_info *info, int,
 			 const struct date_mode *, int force_date);
 void get_reflog_message(struct strbuf *sb,
@@ -23,6 +23,6 @@ void get_reflog_selector(struct strbuf *sb,
 
 int reflog_walk_empty(struct reflog_walk_info *walk);
 
-struct commit *next_reflog_entry(struct reflog_walk_info *reflog_info);
+struct cummit *next_reflog_entry(struct reflog_walk_info *reflog_info);
 
 #endif

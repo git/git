@@ -42,11 +42,11 @@ UI, Workflows & Features
    arguments to give to "git sparse-checkout" command.
 
  * "git log --remerge-diff" shows the difference from mechanical merge
-   result and the result that is actually recorded in a merge commit.
+   result and the result that is actually recorded in a merge cummit.
 
  * "git log" and friends learned an option --exclude-first-parent-only
    to propagate UNINTERESTING bit down only along the first-parent
-   chain, just like --first-parent option shows commits that lack the
+   chain, just like --first-parent option shows cummits that lack the
    UNINTERESTING bit only along the first-parent chain.
 
  * The command line completion script (in contrib/) learned to
@@ -176,8 +176,8 @@ Performance, Internal Implementation, Development Support etc.
    output.
 
  * "git name-rev" learned to use the generation numbers when setting
-   the lower bound of searching commits used to explain the revision,
-   when available, instead of committer time.
+   the lower bound of searching cummits used to explain the revision,
+   when available, instead of cummitter time.
 
  * Replace core.fsyncObjectFiles with two new configuration variables,
    core.fsync and core.fsyncMethod.
@@ -362,22 +362,22 @@ Fixes since v2.35
  * "git config -h" did not describe the "--type" option correctly.
    (merge 5445124fad mf/fix-type-in-config-h later to maint).
 
- * The way generation number v2 in the commit-graph files are
+ * The way generation number v2 in the cummit-graph files are
    (not) handled has been corrected.
-   (merge 6dbf4b8172 ds/commit-graph-gen-v2-fixes later to maint).
+   (merge 6dbf4b8172 ds/cummit-graph-gen-v2-fixes later to maint).
 
  * The method to trigger malloc check used in our tests no longer work
    with newer versions of glibc.
    (merge baedc59543 ep/test-malloc-check-with-glibc-2.34 later to maint).
 
- * When "git fetch --recurse-submodules" grabbed submodule commits
-   that would be needed to recursively check out newly fetched commits
+ * When "git fetch --recurse-submodules" grabbed submodule cummits
+   that would be needed to recursively check out newly fetched cummits
    in the superproject, it only paid attention to submodules that are
    in the current checkout of the superproject.  We now do so for all
    submodules that have been run "git submodule init" on.
 
- * "git rebase $base $non_branch_commit", when $base is an ancestor or
-   the $non_branch_commit, modified the current branch, which has been
+ * "git rebase $base $non_branch_cummit", when $base is an ancestor or
+   the $non_branch_cummit, modified the current branch, which has been
    corrected.
 
  * When "shallow" information is updated, we forgot to update the

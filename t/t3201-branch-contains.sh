@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='branch --contains <commit>, --no-contains <commit> --merged, and --no-merged'
+test_description='branch --contains <cummit>, --no-contains <cummit> --merged, and --no-merged'
 
 . ./test-lib.sh
 
@@ -9,18 +9,18 @@ test_expect_success setup '
 	>file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git branch -M main &&
 	git branch side &&
 
 	echo 1 >file &&
 	test_tick &&
-	git commit -a -m "second on main" &&
+	git cummit -a -m "second on main" &&
 
 	git checkout side &&
 	echo 1 >file &&
 	test_tick &&
-	git commit -a -m "second on side" &&
+	git cummit -a -m "second on side" &&
 
 	git merge main
 
@@ -162,7 +162,7 @@ test_expect_success 'implicit --list conflicts with modification options' '
 
 '
 
-test_expect_success 'Assert that --contains only works on commits, not trees & blobs' '
+test_expect_success 'Assert that --contains only works on cummits, not trees & blobs' '
 	test_must_fail git branch --contains main^{tree} &&
 	blob=$(git hash-object -w --stdin <<-\EOF
 	Some blob
@@ -176,7 +176,7 @@ test_expect_success 'multiple branch --contains' '
 	git checkout -b side2 main &&
 	>feature &&
 	git add feature &&
-	git commit -m "add feature" &&
+	git cummit -m "add feature" &&
 	git checkout -b next main &&
 	git merge side &&
 	git branch --contains side --contains side2 >actual &&
@@ -240,14 +240,14 @@ test_expect_success 'branch --merged combined with --no-merged' '
 # that the latter walk does not mess up our flag to see if it was
 # merged).
 #
-# Here "topic" tracks "main" with one extra commit, and "zzz" points to the
+# Here "topic" tracks "main" with one extra cummit, and "zzz" points to the
 # same tip as main The name "zzz" must come alphabetically after "topic"
 # as we process them in that order.
 test_expect_success 'branch --merged with --verbose' '
 	git branch --track topic main &&
 	git branch zzz topic &&
 	git checkout topic &&
-	test_commit foo &&
+	test_cummit foo &&
 	git branch --merged topic >actual &&
 	cat >expect <<-\EOF &&
 	  main

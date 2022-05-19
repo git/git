@@ -7,11 +7,11 @@
 #include "urlmatch.h"
 
 static const char http_fetch_usage[] = "git http-fetch "
-"[-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin | --packfile=hash | commit-id] url";
+"[-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin | --packfile=hash | cummit-id] url";
 
 static int fetch_using_walker(const char *raw_url, int get_verbosely,
-			      int get_recover, int commits, char **commit_id,
-			      const char **write_ref, int commits_on_stdin)
+			      int get_recover, int cummits, char **cummit_id,
+			      const char **write_ref, int cummits_on_stdin)
 {
 	char *url = NULL;
 	struct walker *walker;
@@ -26,10 +26,10 @@ static int fetch_using_walker(const char *raw_url, int get_verbosely,
 	walker->get_recover = get_recover;
 	walker->get_progress = 0;
 
-	rc = walker_fetch(walker, commits, commit_id, write_ref, url);
+	rc = walker_fetch(walker, cummits, cummit_id, write_ref, url);
 
-	if (commits_on_stdin)
-		walker_targets_free(commits, commit_id, write_ref);
+	if (cummits_on_stdin)
+		walker_targets_free(cummits, cummit_id, write_ref);
 
 	if (walker->corrupt_object_found) {
 		fprintf(stderr,
@@ -89,10 +89,10 @@ static void fetch_single_packfile(struct object_id *packfile_hash,
 
 int cmd_main(int argc, const char **argv)
 {
-	int commits_on_stdin = 0;
-	int commits;
+	int cummits_on_stdin = 0;
+	int cummits;
 	const char **write_ref = NULL;
-	char **commit_id;
+	char **cummit_id;
 	int arg = 1;
 	int get_verbosely = 0;
 	int get_recover = 0;
@@ -119,7 +119,7 @@ int cmd_main(int argc, const char **argv)
 		} else if (!strcmp(argv[arg], "--recover")) {
 			get_recover = 1;
 		} else if (!strcmp(argv[arg], "--stdin")) {
-			commits_on_stdin = 1;
+			cummits_on_stdin = 1;
 		} else if (skip_prefix(argv[arg], "--packfile=", &p)) {
 			const char *end;
 
@@ -131,7 +131,7 @@ int cmd_main(int argc, const char **argv)
 		}
 		arg++;
 	}
-	if (argc != arg + 2 - (commits_on_stdin || packfile))
+	if (argc != arg + 2 - (cummits_on_stdin || packfile))
 		usage(http_fetch_usage);
 
 	if (nongit)
@@ -152,13 +152,13 @@ int cmd_main(int argc, const char **argv)
 	if (index_pack_args.nr)
 		die(_("the option '%s' requires '%s'"), "--index-pack-args", "--packfile");
 
-	if (commits_on_stdin) {
-		commits = walker_targets_stdin(&commit_id, &write_ref);
+	if (cummits_on_stdin) {
+		cummits = walker_targets_stdin(&cummit_id, &write_ref);
 	} else {
-		commit_id = (char **) &argv[arg++];
-		commits = 1;
+		cummit_id = (char **) &argv[arg++];
+		cummits = 1;
 	}
 	return fetch_using_walker(argv[arg], get_verbosely, get_recover,
-				  commits, commit_id, write_ref,
-				  commits_on_stdin);
+				  cummits, cummit_id, write_ref,
+				  cummits_on_stdin);
 }

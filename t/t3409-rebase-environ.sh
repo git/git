@@ -5,9 +5,9 @@ test_description='git rebase interactive environment'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit one &&
-	test_commit two &&
-	test_commit three
+	test_cummit one &&
+	test_cummit two &&
+	test_cummit three
 '
 
 test_expect_success 'rebase --exec does not muck with GIT_DIR' '

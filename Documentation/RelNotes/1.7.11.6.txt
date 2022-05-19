@@ -36,8 +36,8 @@ Fixes since v1.7.11.5
    the default order) options to "rev-list" and "log" family of
    commands were poorly described in the documentation.
 
- * "git commit --amend" let the user edit the log message and then
-   died when the human-readable committer name was given
+ * "git cummit --amend" let the user edit the log message and then
+   died when the human-readable cummitter name was given
    insufficiently by getpwent(3).
 
  * The exit status code from "git config" was way overspecified while

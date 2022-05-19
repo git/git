@@ -1,22 +1,22 @@
 #ifndef BISECT_H
 #define BISECT_H
 
-struct commit_list;
+struct cummit_list;
 struct repository;
 struct object_id;
 
 /*
  * Find bisection. If something is found, `reaches` will be the number of
- * commits that the best commit reaches. `all` will be the count of
- * non-SAMETREE commits. If nothing is found, `list` will be NULL.
- * Otherwise, it will be either all non-SAMETREE commits or the single
- * best commit, as chosen by `find_all`.
+ * cummits that the best cummit reaches. `all` will be the count of
+ * non-SAMETREE cummits. If nothing is found, `list` will be NULL.
+ * Otherwise, it will be either all non-SAMETREE cummits or the single
+ * best cummit, as chosen by `find_all`.
  */
-void find_bisection(struct commit_list **list, int *reaches, int *all,
+void find_bisection(struct cummit_list **list, int *reaches, int *all,
 		    unsigned bisect_flags);
 
-struct commit_list *filter_skipped(struct commit_list *list,
-				   struct commit_list **tried,
+struct cummit_list *filter_skipped(struct cummit_list *list,
+				   struct cummit_list **tried,
 				   int show_all,
 				   int *count,
 				   int *skipped_first);
@@ -42,11 +42,11 @@ struct rev_list_info {
  * should be tested.
  * BISECT_FAILED error code: default error code.
  * BISECT_ONLY_SKIPPED_LEFT error code: only skipped
- * commits left to be tested.
+ * cummits left to be tested.
  * BISECT_MERGE_BASE_CHECK error code: merge base check failed.
- * BISECT_NO_TESTABLE_COMMIT error code: no testable commit found.
+ * BISECT_NO_TESTABLE_cummit error code: no testable cummit found.
  * BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND early success code:
- * first term_bad commit found.
+ * first term_bad cummit found.
  * BISECT_INTERNAL_SUCCESS_MERGE_BASE early success
  * code: found merge base that should be tested.
  * Early success codes BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND and
@@ -57,7 +57,7 @@ enum bisect_error {
 	BISECT_FAILED = -1,
 	BISECT_ONLY_SKIPPED_LEFT = -2,
 	BISECT_MERGE_BASE_CHECK = -3,
-	BISECT_NO_TESTABLE_COMMIT = -4,
+	BISECT_NO_TESTABLE_cummit = -4,
 	BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND = -10,
 	BISECT_INTERNAL_SUCCESS_MERGE_BASE = -11
 };

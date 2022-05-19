@@ -17,7 +17,7 @@ daemon_parent=$GIT_DAEMON_DOCUMENT_ROOT_PATH/parent
 
 test_expect_success 'create repo to be served by git-daemon' '
 	git init "$daemon_parent" &&
-	test_commit -C "$daemon_parent" one
+	test_cummit -C "$daemon_parent" one
 '
 
 test_expect_success 'list refs with git:// using protocol v2' '
@@ -67,7 +67,7 @@ test_expect_success 'clone with git:// using protocol v2' '
 test_expect_success 'fetch with git:// using protocol v2' '
 	test_when_finished "rm -f log" &&
 
-	test_commit -C "$daemon_parent" two &&
+	test_cummit -C "$daemon_parent" two &&
 
 	GIT_TRACE_PACKET="$(pwd)/log" git -C daemon_child -c protocol.version=2 \
 		fetch &&
@@ -85,7 +85,7 @@ test_expect_success 'fetch with git:// using protocol v2' '
 test_expect_success 'fetch by hash without tag following with protocol v2 does not list refs' '
 	test_when_finished "rm -f log" &&
 
-	test_commit -C "$daemon_parent" two_a &&
+	test_cummit -C "$daemon_parent" two_a &&
 	git -C "$daemon_parent" rev-parse two_a >two_a_hash &&
 
 	GIT_TRACE_PACKET="$(pwd)/log" git -C daemon_child -c protocol.version=2 \
@@ -118,7 +118,7 @@ test_expect_success 'push with git:// and a config of v2 does not request v2' '
 	# protocol.version configured to use v2, that the client instead falls
 	# back and uses v0.
 
-	test_commit -C daemon_child three &&
+	test_cummit -C daemon_child three &&
 
 	# Push to another branch, as the target repository has the
 	# main branch checked out and we cannot push into it.
@@ -141,7 +141,7 @@ stop_git_daemon
 #
 test_expect_success 'create repo to be served by file:// transport' '
 	git init file_parent &&
-	test_commit -C file_parent one
+	test_cummit -C file_parent one
 '
 
 test_expect_success 'list refs with file:// using protocol v2' '
@@ -253,7 +253,7 @@ test_expect_success 'bare clone propagates empty default branch' '
 test_expect_success 'fetch with file:// using protocol v2' '
 	test_when_finished "rm -f log" &&
 
-	test_commit -C file_parent two &&
+	test_cummit -C file_parent two &&
 
 	GIT_TRACE_PACKET="$(pwd)/log" git -C file_child -c protocol.version=2 \
 		fetch origin &&
@@ -269,7 +269,7 @@ test_expect_success 'fetch with file:// using protocol v2' '
 test_expect_success 'ref advertisement is filtered during fetch using protocol v2' '
 	test_when_finished "rm -f log" &&
 
-	test_commit -C file_parent three &&
+	test_cummit -C file_parent three &&
 	git -C file_parent branch unwanted-branch three &&
 
 	GIT_TRACE_PACKET="$(pwd)/log" git -C file_child -c protocol.version=2 \
@@ -286,7 +286,7 @@ test_expect_success 'ref advertisement is filtered during fetch using protocol v
 test_expect_success 'server-options are sent when fetching' '
 	test_when_finished "rm -f log" &&
 
-	test_commit -C file_parent four &&
+	test_cummit -C file_parent four &&
 
 	GIT_TRACE_PACKET="$(pwd)/log" git -C file_child -c protocol.version=2 \
 		fetch -o hello -o world origin main &&
@@ -339,7 +339,7 @@ test_expect_success 'upload-pack respects config using protocol v2' '
 		touch hookout
 		"$@"
 	EOF
-	test_commit -C server one &&
+	test_cummit -C server one &&
 
 	test_config_global uploadpack.packobjectshook ./hook &&
 	test_path_is_missing server/.git/hookout &&
@@ -351,9 +351,9 @@ test_expect_success 'setup filter tests' '
 	rm -rf server client &&
 	git init server &&
 
-	# 1 commit to create a file, and 1 commit to modify it
-	test_commit -C server message1 a.txt &&
-	test_commit -C server message2 a.txt &&
+	# 1 cummit to create a file, and 1 cummit to modify it
+	test_cummit -C server message1 a.txt &&
+	test_cummit -C server message2 a.txt &&
 	git -C server config protocol.version 2 &&
 	git -C server config uploadpack.allowfilter 1 &&
 	git -C server config uploadpack.allowanysha1inwant 1 &&
@@ -467,22 +467,22 @@ test_expect_success 'default refspec is used to filter ref when fetchcing' '
 test_expect_success 'fetch supports various ways of have lines' '
 	rm -rf server client trace &&
 	git init server &&
-	test_commit -C server dwim &&
+	test_cummit -C server dwim &&
 	TREE=$(git -C server rev-parse HEAD^{tree}) &&
 	git -C server tag exact \
-		$(git -C server commit-tree -m a "$TREE") &&
+		$(git -C server cummit-tree -m a "$TREE") &&
 	git -C server tag dwim-unwanted \
-		$(git -C server commit-tree -m b "$TREE") &&
+		$(git -C server cummit-tree -m b "$TREE") &&
 	git -C server tag exact-unwanted \
-		$(git -C server commit-tree -m c "$TREE") &&
+		$(git -C server cummit-tree -m c "$TREE") &&
 	git -C server tag prefix1 \
-		$(git -C server commit-tree -m d "$TREE") &&
+		$(git -C server cummit-tree -m d "$TREE") &&
 	git -C server tag prefix2 \
-		$(git -C server commit-tree -m e "$TREE") &&
+		$(git -C server cummit-tree -m e "$TREE") &&
 	git -C server tag fetch-by-sha1 \
-		$(git -C server commit-tree -m f "$TREE") &&
+		$(git -C server cummit-tree -m f "$TREE") &&
 	git -C server tag completely-unrelated \
-		$(git -C server commit-tree -m g "$TREE") &&
+		$(git -C server cummit-tree -m g "$TREE") &&
 
 	git init client &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
@@ -515,7 +515,7 @@ test_expect_success 'fetch supports include-tag and tag following' '
 	rm -rf server client trace &&
 	git init server &&
 
-	test_commit -C server to_fetch &&
+	test_cummit -C server to_fetch &&
 	git -C server tag -a annotated_tag -m message &&
 
 	git init client &&
@@ -533,17 +533,17 @@ test_expect_success 'upload-pack respects client shallows' '
 	rm -rf server client trace &&
 
 	git init server &&
-	test_commit -C server base &&
-	test_commit -C server client_has &&
+	test_cummit -C server base &&
+	test_cummit -C server client_has &&
 
 	git clone --depth=1 "file://$(pwd)/server" client &&
 
-	# Add extra commits to the client so that the whole fetch takes more
+	# Add extra cummits to the client so that the whole fetch takes more
 	# than 1 request (due to negotiation)
-	test_commit_bulk -C client --id=c 32 &&
+	test_cummit_bulk -C client --id=c 32 &&
 
 	git -C server checkout -b newbranch base &&
-	test_commit -C server client_wants &&
+	test_cummit -C server client_wants &&
 
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
 		fetch origin newbranch &&
@@ -555,9 +555,9 @@ test_expect_success 'ensure that multiple fetches in same process from a shallow
 	rm -rf server client trace &&
 
 	test_create_repo server &&
-	test_commit -C server one &&
-	test_commit -C server two &&
-	test_commit -C server three &&
+	test_cummit -C server one &&
+	test_cummit -C server two &&
+	test_cummit -C server three &&
 	git clone --shallow-exclude two "file://$(pwd)/server" client &&
 
 	git -C server tag -a -m "an annotated tag" twotag two &&
@@ -573,11 +573,11 @@ test_expect_success 'deepen-relative' '
 	rm -rf server client trace &&
 
 	test_create_repo server &&
-	test_commit -C server one &&
-	test_commit -C server two &&
-	test_commit -C server three &&
+	test_cummit -C server one &&
+	test_cummit -C server two &&
+	test_cummit -C server three &&
 	git clone --depth 1 "file://$(pwd)/server" client &&
-	test_commit -C server four &&
+	test_cummit -C server four &&
 
 	# Sanity check that only "three" is downloaded
 	git -C client log --pretty=tformat:%s main >actual &&
@@ -605,11 +605,11 @@ setup_negotiate_only () {
 	rm -rf "$SERVER" client
 
 	git init "$SERVER"
-	test_commit -C "$SERVER" one
-	test_commit -C "$SERVER" two
+	test_cummit -C "$SERVER" one
+	test_cummit -C "$SERVER" two
 
 	git clone "$URI" client
-	test_commit -C client three
+	test_cummit -C client three
 }
 
 test_expect_success 'usage: --negotiate-only without --negotiation-tip' '
@@ -677,7 +677,7 @@ start_httpd
 test_expect_success 'create repo to be served by http:// transport' '
 	git init "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
 	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" config http.receivepack true &&
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" one
+	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" one
 '
 
 test_expect_success 'clone with http:// using protocol v2' '
@@ -702,7 +702,7 @@ test_expect_success 'clone repository with http:// using protocol v2 with incomp
 	test_when_finished "rm -f log" &&
 
 	git init "$HTTPD_DOCUMENT_ROOT_PATH/incomplete_length" &&
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/incomplete_length" file &&
+	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/incomplete_length" file &&
 
 	test_must_fail env GIT_TRACE_PACKET="$(pwd)/log" GIT_TRACE_CURL="$(pwd)/log" git -c protocol.version=2 \
 		clone "$HTTPD_URL/smart/incomplete_length" incomplete_length_child 2>err &&
@@ -719,7 +719,7 @@ test_expect_success 'clone repository with http:// using protocol v2 with incomp
 	test_when_finished "rm -f log" &&
 
 	git init "$HTTPD_DOCUMENT_ROOT_PATH/incomplete_body" &&
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/incomplete_body" file &&
+	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/incomplete_body" file &&
 
 	test_must_fail env GIT_TRACE_PACKET="$(pwd)/log" GIT_TRACE_CURL="$(pwd)/log" git -c protocol.version=2 \
 		clone "$HTTPD_URL/smart/incomplete_body" incomplete_body_child 2>err &&
@@ -754,8 +754,8 @@ test_expect_success 'clone big repository with http:// using protocol v2' '
 	do
 		# do not use here-doc, because it requires a process
 		# per loop iteration
-		echo "commit refs/heads/too-many-refs-$i" &&
-		echo "committer git <git@example.com> $i +0000" &&
+		echo "cummit refs/heads/too-many-refs-$i" &&
+		echo "cummitter git <git@example.com> $i +0000" &&
 		echo "data 0" &&
 		echo "M 644 inline bla.txt" &&
 		echo "data 4" &&
@@ -777,7 +777,7 @@ test_expect_success 'clone big repository with http:// using protocol v2' '
 test_expect_success 'fetch with http:// using protocol v2' '
 	test_when_finished "rm -f log" &&
 
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two &&
+	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two &&
 
 	GIT_TRACE_PACKET="$(pwd)/log" git -C http_child -c protocol.version=2 \
 		fetch &&
@@ -793,7 +793,7 @@ test_expect_success 'fetch with http:// using protocol v2' '
 test_expect_success 'fetch with http:// by hash without tag following with protocol v2 does not list refs' '
 	test_when_finished "rm -f log" &&
 
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two_a &&
+	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two_a &&
 	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" rev-parse two_a >two_a_hash &&
 
 	GIT_TRACE_PACKET="$(pwd)/log" git -C http_child -c protocol.version=2 \
@@ -807,8 +807,8 @@ test_expect_success 'fetch from namespaced repo respects namespaces' '
 	test_when_finished "rm -f log" &&
 
 	git init "$HTTPD_DOCUMENT_ROOT_PATH/nsrepo" &&
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/nsrepo" one &&
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/nsrepo" two &&
+	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/nsrepo" one &&
+	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/nsrepo" two &&
 	git -C "$HTTPD_DOCUMENT_ROOT_PATH/nsrepo" \
 		update-ref refs/namespaces/ns/refs/heads/main one &&
 
@@ -842,7 +842,7 @@ test_expect_success 'push with http:// and a config of v2 does not request v2' '
 	# protocol.version configured to use v2, that the client instead falls
 	# back and uses v0.
 
-	test_commit -C http_child three &&
+	test_cummit -C http_child three &&
 
 	# Push to another branch, as the target repository has the
 	# main branch checked out and we cannot push into it.
@@ -863,11 +863,11 @@ test_expect_success 'when server sends "ready", expect DELIM' '
 	rm -rf "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" http_child &&
 
 	git init "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" one &&
+	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" one &&
 
 	git clone "$HTTPD_URL/smart/http_parent" http_child &&
 
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two &&
+	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two &&
 
 	# After "ready" in the acknowledgments section, pretend that a FLUSH
 	# (0000) was sent instead of a DELIM (0001).
@@ -883,16 +883,16 @@ test_expect_success 'when server does not send "ready", expect FLUSH' '
 	rm -rf "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" http_child log &&
 
 	git init "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" one &&
+	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" one &&
 
 	git clone "$HTTPD_URL/smart/http_parent" http_child &&
 
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two &&
+	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two &&
 
-	# Create many commits to extend the negotiation phase across multiple
+	# Create many cummits to extend the negotiation phase across multiple
 	# requests, so that the server does not send "ready" in the first
 	# request.
-	test_commit_bulk -C http_child --id=c 32 &&
+	test_cummit_bulk -C http_child --id=c 32 &&
 
 	# After the acknowledgments section, pretend that a DELIM
 	# (0001) was sent instead of a FLUSH (0000).
@@ -927,7 +927,7 @@ test_expect_success 'part of packfile response provided as URI' '
 	git -C "$P" add my-blob &&
 	echo other-blob >"$P/other-blob" &&
 	git -C "$P" add other-blob &&
-	git -C "$P" commit -m x &&
+	git -C "$P" cummit -m x &&
 
 	configure_exclusion "$P" my-blob >h &&
 	configure_exclusion "$P" other-blob >h2 &&
@@ -974,7 +974,7 @@ test_expect_success 'packfile URIs with fetch instead of clone' '
 
 	echo my-blob >"$P/my-blob" &&
 	git -C "$P" add my-blob &&
-	git -C "$P" commit -m x &&
+	git -C "$P" cummit -m x &&
 
 	configure_exclusion "$P" my-blob >h &&
 
@@ -997,7 +997,7 @@ test_expect_success 'fetching with valid packfile URI but invalid hash fails' '
 	git -C "$P" add my-blob &&
 	echo other-blob >"$P/other-blob" &&
 	git -C "$P" add other-blob &&
-	git -C "$P" commit -m x &&
+	git -C "$P" cummit -m x &&
 
 	configure_exclusion "$P" my-blob >h &&
 	# Configure a URL for other-blob. Just reuse the hash of the object as
@@ -1026,7 +1026,7 @@ test_expect_success 'packfile-uri with transfer.fsckobjects' '
 
 	echo my-blob >"$P/my-blob" &&
 	git -C "$P" add my-blob &&
-	git -C "$P" commit -m x &&
+	git -C "$P" cummit -m x &&
 
 	configure_exclusion "$P" my-blob >h &&
 
@@ -1048,19 +1048,19 @@ test_expect_success 'packfile-uri with transfer.fsckobjects fails on bad object'
 	git init "$P" &&
 	git -C "$P" config "uploadpack.allowsidebandall" "true" &&
 
-	cat >bogus-commit <<-EOF &&
+	cat >bogus-cummit <<-EOF &&
 	tree $EMPTY_TREE
 	author Bugs Bunny 1234567890 +0000
-	committer Bugs Bunny <bugs@bun.ni> 1234567890 +0000
+	cummitter Bugs Bunny <bugs@bun.ni> 1234567890 +0000
 
-	This commit object intentionally broken
+	This cummit object intentionally broken
 	EOF
-	BOGUS=$(git -C "$P" hash-object -t commit -w --stdin <bogus-commit) &&
+	BOGUS=$(git -C "$P" hash-object -t cummit -w --stdin <bogus-cummit) &&
 	git -C "$P" branch bogus-branch "$BOGUS" &&
 
 	echo my-blob >"$P/my-blob" &&
 	git -C "$P" add my-blob &&
-	git -C "$P" commit -m x &&
+	git -C "$P" cummit -m x &&
 
 	configure_exclusion "$P" my-blob >h &&
 
@@ -1068,7 +1068,7 @@ test_expect_success 'packfile-uri with transfer.fsckobjects fails on bad object'
 	test_must_fail git -c protocol.version=2 -c transfer.fsckobjects=1 \
 		-c fetch.uriprotocols=http,https \
 		clone "$HTTPD_URL/smart/http_parent" http_child 2>error &&
-	test_i18ngrep "invalid author/committer line - missing email" error
+	test_i18ngrep "invalid author/cummitter line - missing email" error
 '
 
 test_expect_success 'packfile-uri with transfer.fsckobjects succeeds when .gitmodules is separate from tree' '
@@ -1082,7 +1082,7 @@ test_expect_success 'packfile-uri with transfer.fsckobjects succeeds when .gitmo
 	echo "path = include/foo" >>"$P/.gitmodules" &&
 	echo "url = git://example.com/git/lib.git" >>"$P/.gitmodules" &&
 	git -C "$P" add .gitmodules &&
-	git -C "$P" commit -m x &&
+	git -C "$P" cummit -m x &&
 
 	configure_exclusion "$P" .gitmodules >h &&
 
@@ -1108,7 +1108,7 @@ test_expect_success 'packfile-uri with transfer.fsckobjects fails when .gitmodul
 	echo "path = include/foo" >>"$P/.gitmodules" &&
 	echo "url = git://example.com/git/lib.git" >>"$P/.gitmodules" &&
 	git -C "$P" add .gitmodules &&
-	git -C "$P" commit -m x &&
+	git -C "$P" cummit -m x &&
 
 	configure_exclusion "$P" .gitmodules >h &&
 
@@ -1128,7 +1128,7 @@ test_expect_success 'packfile-uri path redacted in trace' '
 
 	echo my-blob >"$P/my-blob" &&
 	git -C "$P" add my-blob &&
-	git -C "$P" commit -m x &&
+	git -C "$P" cummit -m x &&
 
 	git -C "$P" hash-object my-blob >objh &&
 	git -C "$P" pack-objects "$HTTPD_DOCUMENT_ROOT_PATH/mypack" <objh >packh &&
@@ -1153,7 +1153,7 @@ test_expect_success 'packfile-uri path not redacted in trace when GIT_TRACE_REDA
 
 	echo my-blob >"$P/my-blob" &&
 	git -C "$P" add my-blob &&
-	git -C "$P" commit -m x &&
+	git -C "$P" cummit -m x &&
 
 	git -C "$P" hash-object my-blob >objh &&
 	git -C "$P" pack-objects "$HTTPD_DOCUMENT_ROOT_PATH/mypack" <objh >packh &&

@@ -38,7 +38,7 @@ struct git_var {
 	const char *(*read)(int);
 };
 static struct git_var git_vars[] = {
-	{ "GIT_COMMITTER_IDENT", git_committer_info },
+	{ "GIT_cummitTER_IDENT", git_cummitter_info },
 	{ "GIT_AUTHOR_IDENT",   git_author_info },
 	{ "GIT_EDITOR", editor },
 	{ "GIT_PAGER", pager },

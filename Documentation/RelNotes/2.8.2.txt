@@ -24,7 +24,7 @@ Fixes since v2.8.1
    rev-parse" failed to work outside a repository when the command's
    option parsing was rewritten in 1.8.5 era.
 
- * Fetching of history by naming a commit object name directly didn't
+ * Fetching of history by naming a cummit object name directly didn't
    work across remote-curl transport.
 
  * A small memory leak in an error codepath has been plugged in xdiff
@@ -45,8 +45,8 @@ Fixes since v2.8.1
    when lines in it had trailing whitespaces on them.
 
  * When "git merge --squash" stopped due to conflict, the concluding
-   "git commit" failed to read in the SQUASH_MSG that shows the log
-   messages from all the squashed commits.
+   "git cummit" failed to read in the SQUASH_MSG that shows the log
+   messages from all the squashed cummits.
 
  * "git merge FETCH_HEAD" dereferenced NULL pointer when merging
    nothing into an unborn history (which is arguably unusual usage,

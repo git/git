@@ -22,7 +22,7 @@ Fixes since v1.6.5.3
  * "git merge foo HEAD" was misparsed as an old-style invocation of the
    command and produced a confusing error message.  As it does not specify
    any other branch to merge, it shouldn't be mistaken as such.  We will
-   remove the old style "git merge <message> HEAD <commit>..."  syntax in
+   remove the old style "git merge <message> HEAD <cummit>..."  syntax in
    future versions, but not in this release,
 
  * "git merge -m <message> <branch>..." added the standard merge message

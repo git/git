@@ -34,7 +34,7 @@ VARIABLES
 GIT_AUTHOR_IDENT::
     The author of a piece of code.
 
-GIT_COMMITTER_IDENT::
+GIT_cummitTER_IDENT::
     The person who put a piece of code into Git.
 
 GIT_EDITOR::
@@ -64,7 +64,7 @@ GIT_DEFAULT_BRANCH::
 
 SEE ALSO
 --------
-linkgit:git-commit-tree[1]
+linkgit:git-cummit-tree[1]
 linkgit:git-tag[1]
 linkgit:git-config[1]
 

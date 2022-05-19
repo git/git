@@ -4,7 +4,7 @@ Git v1.7.11.4 Release Notes
 Fixes since v1.7.11.3
 ---------------------
 
- * "$GIT_DIR/COMMIT_EDITMSG" file that is used to hold the commit log
+ * "$GIT_DIR/cummit_EDITMSG" file that is used to hold the cummit log
    message user edits was not documented.
 
  * The advise() function did not use varargs correctly to format
@@ -13,7 +13,7 @@ Fixes since v1.7.11.3
  * When "git am" failed, old timers knew to check .git/rebase-apply/patch
    to see what went wrong, but we never told the users about it.
 
- * "git commit-tree" learned a more natural "-p <parent> <tree>" order
+ * "git cummit-tree" learned a more natural "-p <parent> <tree>" order
    of arguments long time ago, but recently forgot it by mistake.
 
  * "git diff --no-ext-diff" did not output anything for a typechange

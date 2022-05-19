@@ -19,7 +19,7 @@ test_expect_success setup '
 	test_write_lines I am very very fine thank you >two &&
 	git add . &&
 
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	one=$(git rev-parse HEAD:one) &&
 	two=$(git rev-parse HEAD:two) &&
@@ -93,7 +93,7 @@ test_expect_success NATIVE_CRLF 'eol native is crlf' '
 		git config core.autocrlf false &&
 		git config core.eol native &&
 		git add filedos.txt fileunix.txt &&
-		git commit -m "first" &&
+		git cummit -m "first" &&
 		rm file*.txt &&
 		git reset --hard HEAD &&
 		has_cr filedos.txt &&

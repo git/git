@@ -10,15 +10,15 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success setup '
-	echo Data for commit0. >a &&
+	echo Data for cummit0. >a &&
 	git update-index --add a &&
 	tree0=$(git write-tree) &&
-	commit0=$(echo setup | git commit-tree $tree0) &&
-	echo Changed data for commit1. >a &&
+	cummit0=$(echo setup | git cummit-tree $tree0) &&
+	echo Changed data for cummit1. >a &&
 	git update-index a &&
 	tree1=$(git write-tree) &&
-	commit1=$(echo modify | git commit-tree $tree1 -p $commit0) &&
-	git update-ref refs/heads/main $commit0 &&
+	cummit1=$(echo modify | git cummit-tree $tree1 -p $cummit0) &&
+	git update-ref refs/heads/main $cummit0 &&
 	git clone ./. clone1 &&
 	GIT_DIR=clone1/.git git update-index --add a &&
 	git clone ./. clone2 &&
@@ -36,12 +36,12 @@ test_expect_success 'setup clone hooks' '
 '
 
 test_expect_success 'post-merge does not run for up-to-date ' '
-	GIT_DIR=clone1/.git git merge $commit0 &&
+	GIT_DIR=clone1/.git git merge $cummit0 &&
 	! test -f clone1/.git/post-merge.args
 '
 
 test_expect_success 'post-merge runs as expected ' '
-	GIT_DIR=clone1/.git git merge $commit1 &&
+	GIT_DIR=clone1/.git git merge $cummit1 &&
 	test -e clone1/.git/post-merge.args
 '
 
@@ -50,7 +50,7 @@ test_expect_success 'post-merge from normal merge receives the right argument ' 
 '
 
 test_expect_success 'post-merge from squash merge runs as expected ' '
-	GIT_DIR=clone2/.git git merge --squash $commit1 &&
+	GIT_DIR=clone2/.git git merge --squash $cummit1 &&
 	test -e clone2/.git/post-merge.args
 '
 

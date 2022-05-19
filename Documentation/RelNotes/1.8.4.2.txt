@@ -12,7 +12,7 @@ Fixes since v1.8.4.1
    from line, i.e. when <whom> is the same as the real author.
 
  * "git shortlog" used to choke and die when there is a malformed
-   commit (e.g. missing authors); it now simply ignore such a commit
+   cummit (e.g. missing authors); it now simply ignore such a cummit
    and keeps going.
 
  * "git merge-recursive" did not parse its "--diff-algorithm=" command
@@ -56,14 +56,14 @@ Fixes since v1.8.4.1
    prevent racing with a concurrent repacker; teach the same logic to
    has_sha1_file().
 
- * "git commit --author=$name", when $name is not in the canonical
+ * "git cummit --author=$name", when $name is not in the canonical
    "A. U. Thor <au.thor@example.xz>" format, looks for a matching name
    from existing history, but did not consult mailmap to grab the
    preferred author name.
 
- * The commit object names in the insn sheet that was prepared at the
+ * The cummit object names in the insn sheet that was prepared at the
    beginning of "rebase -i" session can become ambiguous as the
-   rebasing progresses and the repository gains more commits. Make
+   rebasing progresses and the repository gains more cummits. Make
    sure the internal record is kept with full 40-hex object names.
 
  * "git rebase --preserve-merges" internally used the merge machinery

@@ -98,15 +98,15 @@ msgid "Modified, not staged"
 msgstr "Τροποποιημένο, μη σταδιοποιημένο"
 
 #: git-gui.sh:1593 git-gui.sh:1598
-msgid "Staged for commit"
+msgid "Staged for cummit"
 msgstr "Σταδιοποιημένο προς υποβολή"
 
 #: git-gui.sh:1594 git-gui.sh:1599
-msgid "Portions staged for commit"
+msgid "Portions staged for cummit"
 msgstr "Μέρη σταδιοποιημένα προς υποβολή"
 
 #: git-gui.sh:1595 git-gui.sh:1600
-msgid "Staged for commit, missing"
+msgid "Staged for cummit, missing"
 msgstr "Σταδιοποιημένο προς υποβολή, λείπει"
 
 #: git-gui.sh:1597
@@ -157,7 +157,7 @@ msgid "Branch"
 msgstr "Κλάδος"
 
 #: git-gui.sh:1866 lib/choose_rev.tcl:548
-msgid "Commit@@noun"
+msgid "cummit@@noun"
 msgstr "Υποβολή@@noun"
 
 #: git-gui.sh:1869 lib/merge.tcl:120 lib/merge.tcl:149 lib/merge.tcl:167
@@ -266,11 +266,11 @@ msgid "Reset..."
 msgstr "Επαναφορά..."
 
 #: git-gui.sh:2002 git-gui.sh:2389
-msgid "New Commit"
+msgid "New cummit"
 msgstr "Νέα Υποβολή"
 
 #: git-gui.sh:2010 git-gui.sh:2396
-msgid "Amend Last Commit"
+msgid "Amend Last cummit"
 msgstr "Διόρθωση Τελευταίας Υποβολής"
 
 #: git-gui.sh:2019 git-gui.sh:2356 lib/remote_branch_delete.tcl:99
@@ -278,15 +278,15 @@ msgid "Rescan"
 msgstr "Επανανίχνευση"
 
 #: git-gui.sh:2025
-msgid "Stage To Commit"
+msgid "Stage To cummit"
 msgstr "Σταδιοποίηση Προς Υποβολή"
 
 #: git-gui.sh:2031
-msgid "Stage Changed Files To Commit"
+msgid "Stage Changed Files To cummit"
 msgstr "Σταδιοποίηση Αλλαγμένων Αρχείων Προς Υποβολή"
 
 #: git-gui.sh:2037
-msgid "Unstage From Commit"
+msgid "Unstage From cummit"
 msgstr "Αποσταδιοποίηση Από Υποβολή"
 
 #: git-gui.sh:2042 lib/index.tcl:395
@@ -298,7 +298,7 @@ msgid "Sign Off"
 msgstr "Αποσύνδεση"
 
 #: git-gui.sh:2053 git-gui.sh:2372
-msgid "Commit@@verb"
+msgid "cummit@@verb"
 msgstr "Υποβολή@@verb"
 
 #: git-gui.sh:2064
@@ -350,7 +350,7 @@ msgid "Current Branch:"
 msgstr "Τρέχων Κλάδος:"
 
 #: git-gui.sh:2292
-msgid "Staged Changes (Will Commit)"
+msgid "Staged Changes (Will cummit)"
 msgstr "Σταδιοποιημένες Αλλαγές (Θα Υποβληθούν)"
 
 #: git-gui.sh:2312
@@ -366,27 +366,27 @@ msgid "Push"
 msgstr "Ώθηση"
 
 #: git-gui.sh:2408
-msgid "Initial Commit Message:"
+msgid "Initial cummit Message:"
 msgstr "Αρχικό Μήνυμα Υποβολής:"
 
 #: git-gui.sh:2409
-msgid "Amended Commit Message:"
+msgid "Amended cummit Message:"
 msgstr "Διορθωμένο Μήνυμα Υποβολής:"
 
 #: git-gui.sh:2410
-msgid "Amended Initial Commit Message:"
+msgid "Amended Initial cummit Message:"
 msgstr "Διορθωμένο Αρχικό Μήνυμα Υποβολής:"
 
 #: git-gui.sh:2411
-msgid "Amended Merge Commit Message:"
+msgid "Amended Merge cummit Message:"
 msgstr "Διορθωμένο Μήνυμα Υποβολής Συγχώνευσης:"
 
 #: git-gui.sh:2412
-msgid "Merge Commit Message:"
+msgid "Merge cummit Message:"
 msgstr "Μήνυμα Υποβολής Συγχώνευσης:"
 
 #: git-gui.sh:2413
-msgid "Commit Message:"
+msgid "cummit Message:"
 msgstr "Μήνυμα Υποβολής:"
 
 #: git-gui.sh:2459 git-gui.sh:2622 lib/console.tcl:73
@@ -422,11 +422,11 @@ msgid "Increase Font Size"
 msgstr "Αύξηση Μεγέθους Γραμματοσειράς"
 
 #: git-gui.sh:2646
-msgid "Unstage Hunk From Commit"
+msgid "Unstage Hunk From cummit"
 msgstr "Αποσταδιοποίηση Κομματιού Από Υποβολή"
 
 #: git-gui.sh:2648
-msgid "Stage Hunk For Commit"
+msgid "Stage Hunk For cummit"
 msgstr "Σταδιοποίηση Κομματιού Προς Υποβολή"
 
 #: git-gui.sh:2667
@@ -486,11 +486,11 @@ msgid "File Viewer"
 msgstr "Εφαρμογή Προβολής Αρχείου"
 
 #: lib/blame.tcl:81
-msgid "Commit:"
+msgid "cummit:"
 msgstr "Υποβολή:"
 
 #: lib/blame.tcl:264
-msgid "Copy Commit"
+msgid "Copy cummit"
 msgstr "Αντιγραφή Υποβολής"
 
 #: lib/blame.tcl:384
@@ -523,7 +523,7 @@ msgid "Author:"
 msgstr "Δημιουργός:"
 
 #: lib/blame.tcl:806
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "Υποβολέας:"
 
 #: lib/blame.tcl:811
@@ -850,11 +850,11 @@ msgstr "Έγινε εξαγωγή του '%s'."
 
 #: lib/checkout_op.tcl:478
 #, tcl-format
-msgid "Resetting '%s' to '%s' will lose the following commits:"
+msgid "Resetting '%s' to '%s' will lose the following cummits:"
 msgstr "Η επαναφορά '%s' στο '%s' θα χάσει τις εξής υποβολές:"
 
 #: lib/checkout_op.tcl:500
-msgid "Recovering lost commits may not be easy."
+msgid "Recovering lost cummits may not be easy."
 msgstr "Η ανάκτηση χαμένων υποβολών μπορεί να είναι δύσκολη."
 
 #: lib/checkout_op.tcl:505
@@ -1112,7 +1112,7 @@ msgstr "Δεν έγινε ανάκτηση προεπιλεγμένου κλάδ
 
 #: lib/choose_repository.tcl:913
 #, tcl-format
-msgid "Cannot resolve %s as a commit."
+msgid "Cannot resolve %s as a cummit."
 msgstr "Δε μπόρεσε να επιλυθεί το %s ως υποβολή."
 
 #: lib/choose_repository.tcl:925
@@ -1184,11 +1184,11 @@ msgstr "Ενημερωμένο"
 msgid "URL"
 msgstr ""
 
-#: lib/commit.tcl:9
+#: lib/cummit.tcl:9
 msgid ""
 "There is nothing to amend.\n"
 "\n"
-"You are about to create the initial commit.  There is no commit before this "
+"You are about to create the initial cummit.  There is no cummit before this "
 "to amend.\n"
 msgstr ""
 "Δεν υπάρχει κάτι προς διόρθωση.\n"
@@ -1196,12 +1196,12 @@ msgstr ""
 "Πρόκειται να δημιουργήσετε την αρχική υποβολή. Δεν υπάρχει υποβολή πριν από "
 "αυτή για να διορθώσετε.\n"
 
-#: lib/commit.tcl:18
+#: lib/cummit.tcl:18
 msgid ""
 "Cannot amend while merging.\n"
 "\n"
 "You are currently in the middle of a merge that has not been fully "
-"completed.  You cannot amend the prior commit unless you first abort the "
+"completed.  You cannot amend the prior cummit unless you first abort the "
 "current merge activity.\n"
 msgstr ""
 "Δε γίνεται διόρθωση καθώς συγχωνεύετε.\n"
@@ -1210,24 +1210,24 @@ msgstr ""
 "διορθώσετε την προηγούμενη υποβολή εκτός εάν ακυρώσετε την τρέχουσα ενέργεια "
 "συγχώνευσης.\n"
 
-#: lib/commit.tcl:49
-msgid "Error loading commit data for amend:"
+#: lib/cummit.tcl:49
+msgid "Error loading cummit data for amend:"
 msgstr "Σφάλμα φόρτωσης δεδομένων υποβολής προς διόρθωση:"
 
-#: lib/commit.tcl:76
+#: lib/cummit.tcl:76
 msgid "Unable to obtain your identity:"
 msgstr "Αδυναμία ανάκτησης της ταυτότητάς σας:"
 
-#: lib/commit.tcl:81
-msgid "Invalid GIT_COMMITTER_IDENT:"
-msgstr "Μη έγκυρο GIT_COMMITTER_IDENT:"
+#: lib/cummit.tcl:81
+msgid "Invalid GIT_cummitTER_IDENT:"
+msgstr "Μη έγκυρο GIT_cummitTER_IDENT:"
 
-#: lib/commit.tcl:133
+#: lib/cummit.tcl:133
 msgid ""
 "Last scanned state does not match repository state.\n"
 "\n"
 "Another Git program has modified this repository since the last scan.  A "
-"rescan must be performed before another commit can be created.\n"
+"rescan must be performed before another cummit can be created.\n"
 "\n"
 "The rescan will be automatically started now.\n"
 msgstr ""
@@ -1239,45 +1239,45 @@ msgstr ""
 "\n"
 "Η επανανίχνευση θα ξεκινήσει αυτόματα τώρα.\n"
 
-#: lib/commit.tcl:154
+#: lib/cummit.tcl:154
 #, tcl-format
 msgid ""
-"Unmerged files cannot be committed.\n"
+"Unmerged files cannot be cummitted.\n"
 "\n"
 "File %s has merge conflicts.  You must resolve them and stage the file "
-"before committing.\n"
+"before cummitting.\n"
 msgstr ""
 "Τα μη συγχωνευμένα αρχεία δε μπορούν να υποβληθούν.\n"
 "\n"
 "Το αρχείο %s έχει συγκρούσεις συγχώνευσης. Πρέπει να τις επιλύσετε και να "
 "σταδιοποιήσετε το αρχείο πριν την υποβολή.\n"
 
-#: lib/commit.tcl:162
+#: lib/cummit.tcl:162
 #, tcl-format
 msgid ""
 "Unknown file state %s detected.\n"
 "\n"
-"File %s cannot be committed by this program.\n"
+"File %s cannot be cummitted by this program.\n"
 msgstr ""
 "Άγνωστη κατάσταση αρχείου %s ανιχνεύθηκε.\n"
 "\n"
 "Το αρχείο %s δε μπορεί να υποβληθεί από αυτό το πρόγραμμα.\n"
 
-#: lib/commit.tcl:170
+#: lib/cummit.tcl:170
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"You must stage at least 1 file before you can commit.\n"
+"You must stage at least 1 file before you can cummit.\n"
 msgstr ""
 "Δεν υπάρχουν αλλαγές προς υποβολή.\n"
 "\n "
 "Πρέπει να σταδιοποιήσετε τουλάχιστον 1 αρχείο πριν να κάνετε υποβολή.\n"
 
-#: lib/commit.tcl:183
+#: lib/cummit.tcl:183
 msgid ""
-"Please supply a commit message.\n"
+"Please supply a cummit message.\n"
 "\n"
-"A good commit message has the following format:\n"
+"A good cummit message has the following format:\n"
 "\n"
 "- First line: Describe in one sentence what you did.\n"
 "- Second line: Blank\n"
@@ -1291,49 +1291,49 @@ msgstr ""
 "- Δεύτερη γραμμή: Κενή\n"
 "- Υπόλοιπες γραμμές: Περιγραφή του γιατί αυτή η αλλαγή είναι σωστή.\n"
 
-#: lib/commit.tcl:207
+#: lib/cummit.tcl:207
 #, tcl-format
 msgid "warning: Tcl does not support encoding '%s'."
 msgstr "προειδοποίηση: H Tcl δεν υποστηρίζει την κωδικοποίηση '%s'."
 
-#: lib/commit.tcl:221
+#: lib/cummit.tcl:221
 msgid "Calling pre-commit hook..."
 msgstr "Γίνεται κλήση του pre-commit hook..."
 
-#: lib/commit.tcl:236
-msgid "Commit declined by pre-commit hook."
+#: lib/cummit.tcl:236
+msgid "cummit declined by pre-commit hook."
 msgstr "Η υποβολή απορρίφθηκε από το pre-commit hook."
 
-#: lib/commit.tcl:259
-msgid "Calling commit-msg hook..."
-msgstr "Γίνεται κλήση του commit-msg hook..."
+#: lib/cummit.tcl:259
+msgid "Calling cummit-msg hook..."
+msgstr "Γίνεται κλήση του cummit-msg hook..."
 
-#: lib/commit.tcl:274
-msgid "Commit declined by commit-msg hook."
-msgstr "Η υποβολή απορρίφθηκε από το commit-msg hook."
+#: lib/cummit.tcl:274
+msgid "cummit declined by cummit-msg hook."
+msgstr "Η υποβολή απορρίφθηκε από το cummit-msg hook."
 
-#: lib/commit.tcl:287
-msgid "Committing changes..."
+#: lib/cummit.tcl:287
+msgid "cummitting changes..."
 msgstr "Γίνεται υποβολή των αλλαγών..."
 
-#: lib/commit.tcl:303
+#: lib/cummit.tcl:303
 msgid "write-tree failed:"
 msgstr "το write-tree απέτυχε:"
 
-#: lib/commit.tcl:304 lib/commit.tcl:348 lib/commit.tcl:368
-msgid "Commit failed."
+#: lib/cummit.tcl:304 lib/cummit.tcl:348 lib/cummit.tcl:368
+msgid "cummit failed."
 msgstr "Η υποβολή απέτυχε."
 
-#: lib/commit.tcl:321
+#: lib/cummit.tcl:321
 #, tcl-format
-msgid "Commit %s appears to be corrupt"
+msgid "cummit %s appears to be corrupt"
 msgstr "Η υποβολή %s δείχνει κατεστραμμένη"
 
-#: lib/commit.tcl:326
+#: lib/cummit.tcl:326
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"No files were modified by this commit and it was not a merge commit.\n"
+"No files were modified by this cummit and it was not a merge cummit.\n"
 "\n"
 "A rescan will be automatically started now.\n"
 msgstr ""
@@ -1344,21 +1344,21 @@ msgstr ""
 "\n"
 "Θα ξεκινήσει αυτόματα επανανίχνευση τώρα.\n"
 
-#: lib/commit.tcl:333
-msgid "No changes to commit."
+#: lib/cummit.tcl:333
+msgid "No changes to cummit."
 msgstr "Δεν υπάρχουν αλλαγές προς υποβολή."
 
-#: lib/commit.tcl:347
-msgid "commit-tree failed:"
-msgstr "το commit-tree απέτυχε:"
+#: lib/cummit.tcl:347
+msgid "cummit-tree failed:"
+msgstr "το cummit-tree απέτυχε:"
 
-#: lib/commit.tcl:367
+#: lib/cummit.tcl:367
 msgid "update-ref failed:"
 msgstr "το update-ref απέτυχε:"
 
-#: lib/commit.tcl:454
+#: lib/cummit.tcl:454
 #, tcl-format
-msgid "Created commit %s: %s"
+msgid "Created cummit %s: %s"
 msgstr "Δημιουργήθηκε υποβολή %s: %s"
 
 #: lib/console.tcl:59
@@ -1498,7 +1498,7 @@ msgid "warning"
 msgstr "προειδοποίηση"
 
 #: lib/error.tcl:94
-msgid "You must correct the above errors before committing."
+msgid "You must correct the above errors before cummitting."
 msgstr "Πρέπει να διορθώσετε τα παραπάνω λάθη πριν την υποβολή."
 
 #: lib/index.tcl:6
@@ -1527,11 +1527,11 @@ msgstr "Ξεκλείδωμα Ευρετηρίου"
 
 #: lib/index.tcl:282
 #, tcl-format
-msgid "Unstaging %s from commit"
+msgid "Unstaging %s from cummit"
 msgstr "Αποσταδιοποίηση %s από υποβολή"
 
 #: lib/index.tcl:313
-msgid "Ready to commit."
+msgid "Ready to cummit."
 msgstr "Έτοιμο προς υποβολή."
 
 #: lib/index.tcl:326
@@ -1562,7 +1562,7 @@ msgstr "Καμία Ενέργεια"
 msgid ""
 "Cannot merge while amending.\n"
 "\n"
-"You must finish amending this commit before starting any type of merge.\n"
+"You must finish amending this cummit before starting any type of merge.\n"
 msgstr ""
 "Δε γίνεται συγχώνευση καθώς διορθώνετε.\n"
 "\n"
@@ -1593,7 +1593,7 @@ msgid ""
 "\n"
 "File %s has merge conflicts.\n"
 "\n"
-"You must resolve them, stage the file, and commit to complete the current "
+"You must resolve them, stage the file, and cummit to complete the current "
 "merge.  Only then can you begin another merge.\n"
 msgstr ""
 "Βρίσκεστε στο μέσο μιας συγκρουόμενης συγχώνευσης.\n"
@@ -1611,7 +1611,7 @@ msgid ""
 "\n"
 "File %s is modified.\n"
 "\n"
-"You should complete the current commit before starting a merge.  Doing so "
+"You should complete the current cummit before starting a merge.  Doing so "
 "will help you abort a failed merge, should the need arise.\n"
 msgstr ""
 "Βρίσκεστε στο μέσο μιας αλλαγής.\n"
@@ -1652,7 +1652,7 @@ msgstr "Αναθεώρηση Προς Συγχώνευση"
 msgid ""
 "Cannot abort while amending.\n"
 "\n"
-"You must finish amending this commit.\n"
+"You must finish amending this cummit.\n"
 msgstr ""
 "Δε γίνεται ακύρωση καθώς διορθώνετε.\n"
 "\n"
@@ -1662,7 +1662,7 @@ msgstr ""
 msgid ""
 "Abort merge?\n"
 "\n"
-"Aborting the current merge will cause *ALL* uncommitted changes to be lost.\n"
+"Aborting the current merge will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with aborting the current merge?"
 msgstr ""
@@ -1677,7 +1677,7 @@ msgstr ""
 msgid ""
 "Reset changes?\n"
 "\n"
-"Resetting the changes will cause *ALL* uncommitted changes to be lost.\n"
+"Resetting the changes will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with resetting the current changes?"
 msgstr ""
@@ -1730,7 +1730,7 @@ msgid "Email Address"
 msgstr "Διεύθυνση Email"
 
 #: lib/option.tcl:119
-msgid "Summarize Merge Commits"
+msgid "Summarize Merge cummits"
 msgstr "Περίληψη Υποβολών Συγχώνευσης"
 
 #: lib/option.tcl:120
@@ -1758,7 +1758,7 @@ msgid "Number of Diff Context Lines"
 msgstr "Αριθμός Γραμμών Εννοιολογικού Πλαισίου Διαφοράς"
 
 #: lib/option.tcl:127
-msgid "Commit Message Text Width"
+msgid "cummit Message Text Width"
 msgstr "Πλάτος Κειμένου Μηνύματος Υποβολής"
 
 #: lib/option.tcl:128
@@ -1843,7 +1843,7 @@ msgstr ""
 #, tcl-format
 msgid ""
 "One or more of the merge tests failed because you have not fetched the "
-"necessary commits.  Try fetching from %s first."
+"necessary cummits.  Try fetching from %s first."
 msgstr ""
 "Μία ή περισσότερες από τις δοκιμές συγχώνευσης απέτυχαν επειδή δεν έχετε "
 "φέρει τις αναγκαίες υποβολές. Δοκιμάστε ανάκτηση από το %s πρώτα."

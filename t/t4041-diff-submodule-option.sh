@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Copyright (c) 2009 Jens Lehmann, based on t7401 by Ping Yin
-# Copyright (c) 2011 Alexey Shumkin (+ non-UTF-8 commit encoding tests)
+# Copyright (c) 2011 Alexey Shumkin (+ non-UTF-8 cummit encoding tests)
 #
 
 test_description='Support for verbose submodule differences in git diff
@@ -18,7 +18,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_encoding="ISO8859-1"
 
 # String "added" in German (translated with Google Translate), encoded in UTF-8,
-# used in sample commit log messages in add_file() function below.
+# used in sample cummit log messages in add_file() function below.
 added=$(printf "hinzugef\303\274gt")
 add_file () {
 	(
@@ -29,17 +29,17 @@ add_file () {
 			echo "$name" >"$name" &&
 			git add "$name" &&
 			test_tick &&
-			# "git commit -m" would break MinGW, as Windows refuse to pass
+			# "git cummit -m" would break MinGW, as Windows refuse to pass
 			# $test_encoding encoded parameter to git.
 			echo "Add $name ($added $name)" | iconv -f utf-8 -t $test_encoding |
-			git -c "i18n.commitEncoding=$test_encoding" commit -F -
+			git -c "i18n.cummitEncoding=$test_encoding" cummit -F -
 		done >/dev/null &&
 		git rev-parse --short --verify HEAD
 	)
 }
-commit_file () {
+cummit_file () {
 	test_tick &&
-	git commit "$@" -m "Commit $*" >/dev/null
+	git cummit "$@" -m "cummit $*" >/dev/null
 }
 
 test_create_repo sm1 &&
@@ -79,7 +79,7 @@ test_expect_success '--submodule=short overrides diff.submodule' '
 	--- /dev/null
 	+++ b/sm1
 	@@ -0,0 +1 @@
-	+Subproject commit $fullhead1
+	+Subproject cummit $fullhead1
 	EOF
 	test_cmp expected actual
 '
@@ -94,12 +94,12 @@ test_expect_success 'diff.submodule does not affect plumbing' '
 	--- /dev/null
 	+++ b/sm1
 	@@ -0,0 +1 @@
-	+Subproject commit $fullhead1
+	+Subproject cummit $fullhead1
 	EOF
 	test_cmp expected actual
 '
 
-commit_file sm1 &&
+cummit_file sm1 &&
 head2=$(add_file sm1 foo3)
 
 test_expect_success 'modified submodule(forward)' '
@@ -138,13 +138,13 @@ test_expect_success 'modified submodule(forward) --submodule=short' '
 	--- a/sm1
 	+++ b/sm1
 	@@ -1 +1 @@
-	-Subproject commit $fullhead1
-	+Subproject commit $fullhead2
+	-Subproject cummit $fullhead1
+	+Subproject cummit $fullhead2
 	EOF
 	test_cmp expected actual
 '
 
-commit_file sm1 &&
+cummit_file sm1 &&
 head3=$(
 	cd sm1 &&
 	git reset --hard HEAD~2 >/dev/null &&
@@ -174,7 +174,7 @@ test_expect_success 'modified submodule(backward and forward)' '
 	test_cmp expected actual
 '
 
-commit_file sm1 &&
+cummit_file sm1 &&
 mv sm1 sm1-bak &&
 echo sm1 >sm1 &&
 head5=$(git hash-object sm1 | cut -c1-7) &&
@@ -233,15 +233,15 @@ rm -f sm1 &&
 test_create_repo sm1 &&
 head6=$(add_file sm1 foo6 foo7)
 fullhead6=$(cd sm1; git rev-parse --verify HEAD)
-test_expect_success 'nonexistent commit' '
+test_expect_success 'nonexistent cummit' '
 	git diff-index -p --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
-	Submodule sm1 $head4...$head6 (commits not present)
+	Submodule sm1 $head4...$head6 (cummits not present)
 	EOF
 	test_cmp expected actual
 '
 
-commit_file
+cummit_file
 test_expect_success 'typechanged submodule(blob->submodule)' '
 	git diff-index -p --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
@@ -257,7 +257,7 @@ test_expect_success 'typechanged submodule(blob->submodule)' '
 	test_cmp expected actual
 '
 
-commit_file sm1 &&
+cummit_file sm1 &&
 test_expect_success 'submodule is up to date' '
 	git diff-index -p --submodule=log HEAD >actual &&
 	test_must_be_empty actual
@@ -327,7 +327,7 @@ test_expect_success 'submodule contains modified content' '
 	test_cmp expected actual
 '
 
-(cd sm1; git commit -mchange foo6 >/dev/null) &&
+(cd sm1; git cummit -mchange foo6 >/dev/null) &&
 head8=$(cd sm1; git rev-parse --short --verify HEAD) &&
 test_expect_success 'submodule is modified' '
 	git diff-index -p --submodule=log HEAD >actual &&
@@ -454,8 +454,8 @@ test_expect_success 'path filter' '
 	test_cmp expected actual
 '
 
-commit_file sm2
-test_expect_success 'given commit' '
+cummit_file sm2
+test_expect_success 'given cummit' '
 	git diff-index -p --submodule=log HEAD^ >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm1 $head6...0000000 (submodule deleted)
@@ -464,7 +464,7 @@ test_expect_success 'given commit' '
 	test_cmp expected actual
 '
 
-test_expect_success 'given commit --submodule' '
+test_expect_success 'given cummit --submodule' '
 	git diff-index -p --submodule HEAD^ >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm1 $head6...0000000 (submodule deleted)
@@ -475,7 +475,7 @@ test_expect_success 'given commit --submodule' '
 
 fullhead7=$(cd sm2; git rev-parse --verify HEAD)
 
-test_expect_success 'given commit --submodule=short' '
+test_expect_success 'given cummit --submodule=short' '
 	git diff-index -p --submodule=short HEAD^ >actual &&
 	cat >expected <<-EOF &&
 	diff --git a/sm1 b/sm1
@@ -484,14 +484,14 @@ test_expect_success 'given commit --submodule=short' '
 	--- a/sm1
 	+++ /dev/null
 	@@ -1 +0,0 @@
-	-Subproject commit $fullhead6
+	-Subproject cummit $fullhead6
 	diff --git a/sm2 b/sm2
 	new file mode 160000
 	index 0000000..$head7
 	--- /dev/null
 	+++ b/sm2
 	@@ -0,0 +1 @@
-	+Subproject commit $fullhead7
+	+Subproject cummit $fullhead7
 	EOF
 	test_cmp expected actual
 '
@@ -518,20 +518,20 @@ test_expect_success 'diff --submodule with objects referenced by alternates' '
 		git init &&
 		echo a >a &&
 		git add a &&
-		git commit -m a
+		git cummit -m a
 	) &&
 	mkdir super &&
 	(cd super &&
 		git clone -s ../sub_alt sub &&
 		git init &&
 		git add sub &&
-		git commit -m "sub a"
+		git cummit -m "sub a"
 	) &&
 	(cd sub_alt &&
 		sha1_before=$(git rev-parse --short HEAD) &&
 		echo b >b &&
 		git add b &&
-		git commit -m b &&
+		git cummit -m b &&
 		sha1_after=$(git rev-parse --short HEAD) &&
 		{
 			echo "Submodule sub $sha1_before..$sha1_after:" &&

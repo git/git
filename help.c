@@ -706,11 +706,11 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 
 	if (show_build_options) {
 		strbuf_addf(buf, "cpu: %s\n", GIT_HOST_CPU);
-		if (git_built_from_commit_string[0])
-			strbuf_addf(buf, "built from commit: %s\n",
-			       git_built_from_commit_string);
+		if (git_built_from_cummit_string[0])
+			strbuf_addf(buf, "built from cummit: %s\n",
+			       git_built_from_cummit_string);
 		else
-			strbuf_addstr(buf, "no commit associated with this build\n");
+			strbuf_addstr(buf, "no cummit associated with this build\n");
 		strbuf_addf(buf, "sizeof-long: %d\n", (int)sizeof(long));
 		strbuf_addf(buf, "sizeof-size_t: %d\n", (int)sizeof(size_t));
 		strbuf_addf(buf, "shell-path: %s\n", SHELL_PATH);

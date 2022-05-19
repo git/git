@@ -25,9 +25,9 @@
 #
 # If you use complex aliases of form '!f() { ... }; f', you can use the null
 # command ':' as the first command in the function body to declare the desired
-# completion style.  For example '!f() { : git commit ; ... }; f' will
-# tell the completion to use commit completion.  This also works with aliases
-# of form "!sh -c '...'".  For example, "!sh -c ': git commit ; ... '".
+# completion style.  For example '!f() { : git cummit ; ... }; f' will
+# tell the completion to use cummit completion.  This also works with aliases
+# of form "!sh -c '...'".  For example, "!sh -c ': git cummit ; ... '".
 #
 # If you have a command that is not part of git, but you would still
 # like completion, you can use __git_complete:
@@ -57,7 +57,7 @@
 #   GIT_COMPLETION_SHOW_ALL
 #
 #     When set to "1" suggest all options, including options which are
-#     typically hidden (e.g. '--allow-empty' for 'git commit').
+#     typically hidden (e.g. '--allow-empty' for 'git cummit').
 
 case "$COMP_WORDBREAKS" in
 *:*) : great ;;
@@ -514,13 +514,13 @@ __gitcomp_file ()
 	true
 }
 
-# Execute 'git ls-files', unless the --committable option is specified, in
+# Execute 'git ls-files', unless the --cummittable option is specified, in
 # which case it runs 'git diff-index' to find out the files that can be
-# committed.  It return paths relative to the directory specified in the first
+# cummitted.  It return paths relative to the directory specified in the first
 # argument, and using the options specified in the second argument.
 __git_ls_files_helper ()
 {
-	if [ "$2" = "--committable" ]; then
+	if [ "$2" = "--cummittable" ]; then
 		__git -C "$1" -c core.quotePath=false diff-index \
 			--name-only --relative HEAD -- "${3//\\/\\\\}*"
 	else
@@ -617,7 +617,7 @@ __git_index_files ()
 # __git_complete_index_file requires 1 argument:
 # 1: the options to pass to ls-file
 #
-# The exception is --committable, which finds the files appropriate commit.
+# The exception is --cummittable, which finds the files appropriate cummit.
 __git_complete_index_file ()
 {
 	local dequoted_word pfx="" cur_
@@ -1657,7 +1657,7 @@ _git_clone ()
 
 __git_untracked_file_modes="all no normal"
 
-_git_commit ()
+_git_cummit ()
 {
 	case "$prev" in
 	-c|-C)
@@ -1682,14 +1682,14 @@ _git_commit ()
 		return
 		;;
 	--*)
-		__gitcomp_builtin commit
+		__gitcomp_builtin cummit
 		return
 	esac
 
 	if __git rev-parse --verify --quiet HEAD >/dev/null; then
-		__git_complete_index_file "--committable"
+		__git_complete_index_file "--cummittable"
 	else
-		# This is the first commit
+		# This is the first cummit
 		__git_complete_index_file "--cached"
 	fi
 }
@@ -2001,7 +2001,7 @@ __git_log_gitk_options="
 "
 # Options that go well for log and shortlog (not gitk)
 __git_log_shortlog_options="
-	--author= --committer= --grep=
+	--author= --cummitter= --grep=
 	--all-match --invert-grep
 "
 
@@ -2063,7 +2063,7 @@ _git_log ()
 			$__git_log_gitk_options
 			--root --topo-order --date-order --reverse
 			--follow --full-diff
-			--abbrev-commit --no-abbrev-commit --abbrev=
+			--abbrev-cummit --no-abbrev-cummit --abbrev=
 			--relative-date --date=
 			--pretty= --format= --oneline
 			--show-signature
@@ -2973,7 +2973,7 @@ _git_show ()
 		return
 		;;
 	--*)
-		__gitcomp "--pretty= --format= --abbrev-commit --no-abbrev-commit
+		__gitcomp "--pretty= --format= --abbrev-cummit --no-abbrev-cummit
 			--oneline --show-signature
 			--expand-tabs --expand-tabs= --no-expand-tabs
 			$__git_diff_common_options
@@ -3142,8 +3142,8 @@ _git_submodule ()
 _git_svn ()
 {
 	local subcommands="
-		init fetch clone rebase dcommit log find-rev
-		set-tree commit-diff info create-ignore propget
+		init fetch clone rebase dcummit log find-rev
+		set-tree cummit-diff info create-ignore propget
 		proplist show-ignore show-externals branch tag blame
 		migrate mkdirs reset gc
 		"
@@ -3181,10 +3181,10 @@ _git_svn ()
 		init,--*)
 			__gitcomp "$init_opts"
 			;;
-		dcommit,--*)
+		dcummit,--*)
 			__gitcomp "
 				--merge --strategy= --verbose --dry-run
-				--fetch-all --no-rebase --commit-url
+				--fetch-all --no-rebase --cummit-url
 				--revision --interactive $cmt_opts $fc_opts
 				"
 			;;
@@ -3198,7 +3198,7 @@ _git_svn ()
 		log,--*)
 			__gitcomp "
 				--limit= --revision= --verbose --incremental
-				--oneline --show-commit --non-recursive
+				--oneline --show-cummit --non-recursive
 				--authors-file= --color
 				"
 			;;
@@ -3208,7 +3208,7 @@ _git_svn ()
 				--fetch-all --dry-run $fc_opts
 				"
 			;;
-		commit-diff,--*)
+		cummit-diff,--*)
 			__gitcomp "--message= --file= --revision= $cmt_opts"
 			;;
 		info,--*)
@@ -3306,7 +3306,7 @@ _git_worktree ()
 	*,--*)
 		__gitcomp_builtin worktree_$subcommand
 		;;
-	add,*)	# usage: git worktree add [<options>] <path> [<commit-ish>]
+	add,*)	# usage: git worktree add [<options>] <path> [<cummit-ish>]
 		# Here we are not completing an --option, it's either the
 		# path or a ref.
 		case "$prev" in

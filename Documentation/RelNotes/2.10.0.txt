@@ -75,7 +75,7 @@ UI, Workflows & Features
    to pass GETTEXT_POISON tests.
 
  * "git archive" learned to handle files that are larger than 8GB and
-   commits far in the future than expressible by the traditional US-TAR
+   cummits far in the future than expressible by the traditional US-TAR
    format.
    (merge 560b0e8 jk/big-and-future-archive-tar later to maint).
 
@@ -106,7 +106,7 @@ UI, Workflows & Features
  * An entry "git log --decorate" for the tip of the current branch is
    shown as "HEAD -> name" (where "name" is the name of the branch);
    the arrow is now painted in the same color as "HEAD", not in the
-   color for commits.
+   color for cummits.
 
  * "git format-patch" learned format.from configuration variable to
    specify the default settings for its "--from" option.
@@ -414,7 +414,7 @@ notes for details).
    Update it to point to https://git.github.io/htmldocs/git.html
    instead.
 
- * A helper function that takes the contents of a commit object and
+ * A helper function that takes the contents of a cummit object and
    finds its subject line did not ignore leading blank lines, as is
    commonly done by other codepaths.  Make it ignore leading blank
    lines to match.
@@ -433,9 +433,9 @@ notes for details).
  * More mark-up updates to typeset strings that are expected to
    literally typed by the end user in fixed-width font.
 
- * "git commit --amend --allow-empty-message -S" for a commit without
+ * "git cummit --amend --allow-empty-message -S" for a cummit without
    any message body could have misidentified where the header of the
-   commit object ends.
+   cummit object ends.
 
  * "git rebase -i --autostash" did not restore the auto-stashed change
    when the operation was aborted.
@@ -481,11 +481,11 @@ notes for details).
    the system where outside stuff is usually called "theirs" in
    contrast to "ours".
 
- * "git blame file" allowed the lineage of lines in the uncommitted,
+ * "git blame file" allowed the lineage of lines in the uncummitted,
    unadded contents of "file" to be inspected, but it refused when
-   "file" did not appear in the current commit.  When "file" was
+   "file" did not appear in the current cummit.  When "file" was
    created by renaming an existing file (but the change has not been
-   committed), this restriction was unnecessarily tight.
+   cummitted), this restriction was unnecessarily tight.
 
  * "git add -N dir/file && git write-tree" produced an incorrect tree
    when there are other paths in the same directory that sorts after
@@ -523,9 +523,9 @@ notes for details).
    switch the default the built-in path to /usr/local/bin/perl on not
    too ancient FreeBSD releases.
 
- * "git commit --help" said "--no-verify" is only about skipping the
+ * "git cummit --help" said "--no-verify" is only about skipping the
    pre-commit hook, and failed to say that it also skipped the
-   commit-msg hook.
+   cummit-msg hook.
 
  * "git merge" in Git v2.9 was taught to forbid merging an unrelated
    lines of history by default, but that is exactly the kind of thing
@@ -563,7 +563,7 @@ notes for details).
    interpret the paths relative to that directory, which has been
    fixed.
 
- * The characters in the label shown for tags/refs for commits in
+ * The characters in the label shown for tags/refs for cummits in
    "gitweb" output are now properly escaped for proper HTML output.
 
  * FreeBSD can lie when asked mtime of a directory, which made the
@@ -581,9 +581,9 @@ notes for details).
    that it is safe to do so.
 
  * Not-so-recent rewrite of "git am" that started making internal
-   calls into the commit machinery had an unintended regression, in
+   calls into the cummit machinery had an unintended regression, in
    that no matter how many seconds it took to apply many patches, the
-   resulting committer timestamp for the resulting commits were all
+   resulting cummitter timestamp for the resulting cummits were all
    the same.
 
  * "git push --force-with-lease" already had enough logic to allow
@@ -672,4 +672,4 @@ notes for details).
    (merge ddd0bfa jk/tighten-alloc later to maint).
    (merge ecf30b2 rs/mailinfo-lib later to maint).
    (merge 0eb75ce sg/reflog-past-root later to maint).
-   (merge 4369523 hv/doc-commit-reference-style later to maint).
+   (merge 4369523 hv/doc-cummit-reference-style later to maint).

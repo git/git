@@ -17,10 +17,10 @@ test_expect_success 'setup and corrupt repository' '
 	echo file >file &&
 	git add file &&
 	git rev-parse :file &&
-	git commit -a -m original &&
+	git cummit -a -m original &&
 	test_tick &&
 	echo changed >file &&
-	git commit -a -m changed &&
+	git cummit -a -m changed &&
 	corrupt_repo HEAD:file
 
 '
@@ -89,7 +89,7 @@ test_expect_success 'upload-pack fails due to error in pack-objects enumeration'
 '
 
 test_expect_success 'upload-pack tolerates EOF just after stateless client wants' '
-	test_commit initial &&
+	test_cummit initial &&
 	head=$(git rev-parse HEAD) &&
 
 	{

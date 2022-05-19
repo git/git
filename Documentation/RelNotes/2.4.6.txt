@@ -17,7 +17,7 @@ Fixes since v2.4.5
    is on the AC power in the sample pre-auto-gc script.
 
  * "git format-patch --ignore-if-upstream A..B" did not like to be fed
-   tags as boundary commits.
+   tags as boundary cummits.
 
 Also contains typofixes, documentation updates and trivial code
 clean-ups.

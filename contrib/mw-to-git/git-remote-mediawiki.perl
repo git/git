@@ -159,7 +159,7 @@ sub exit_error_usage {
             "module directly.\n" .
 	    "This module can be used the following way:\n" .
 	    "\tgit clone mediawiki://<address of a mediawiki>\n" .
-	    "Then, use git commit, push and pull as with every normal git repository.\n";
+	    "Then, use git cummit, push and pull as with every normal git repository.\n";
 }
 
 sub parse_command {
@@ -738,8 +738,8 @@ sub fe_escape_path {
 }
 
 sub import_file_revision {
-	my $commit = shift;
-	my %commit = %{$commit};
+	my $cummit = shift;
+	my %cummit = %{$cummit};
 	my $full_import = shift;
 	my $n = shift;
 	my $mediafile = shift;
@@ -748,15 +748,15 @@ sub import_file_revision {
 		%mediafile = %{$mediafile};
 	}
 
-	my $title = $commit{title};
-	my $comment = $commit{comment};
-	my $content = $commit{content};
-	my $author = $commit{author};
-	my $date = $commit{date};
+	my $title = $cummit{title};
+	my $comment = $cummit{comment};
+	my $content = $cummit{content};
+	my $author = $cummit{author};
+	my $date = $cummit{date};
 
-	print {*STDOUT} "commit refs/mediawiki/${remotename}/master\n";
+	print {*STDOUT} "cummit refs/mediawiki/${remotename}/master\n";
 	print {*STDOUT} "mark :${n}\n";
-	print {*STDOUT} "committer ${author} <${author}\@${wiki_name}> " . $date->epoch . " +0000\n";
+	print {*STDOUT} "cummitter ${author} <${author}\@${wiki_name}> " . $date->epoch . " +0000\n";
 	literal_data($comment);
 
 	# If it's not a clone, we need to know where to start from
@@ -781,14 +781,14 @@ sub import_file_revision {
 	if ($full_import && $n == 1) {
 		print {*STDOUT} "reset refs/notes/${remotename}/mediawiki\n";
 	}
-	print {*STDOUT} "commit refs/notes/${remotename}/mediawiki\n";
-	print {*STDOUT} "committer ${author} <${author}\@${wiki_name}> " . $date->epoch . " +0000\n";
+	print {*STDOUT} "cummit refs/notes/${remotename}/mediawiki\n";
+	print {*STDOUT} "cummitter ${author} <${author}\@${wiki_name}> " . $date->epoch . " +0000\n";
 	literal_data('Note added by git-mediawiki during import');
 	if (!$full_import && $n == 1) {
 		print {*STDOUT} "from refs/notes/${remotename}/mediawiki^0\n";
 	}
 	print {*STDOUT} "N inline :${n}\n";
-	literal_data("mediawiki_revision: $commit{mw_revision}");
+	literal_data("mediawiki_revision: $cummit{mw_revision}");
 	print {*STDOUT} "\n\n";
 	return;
 }
@@ -949,19 +949,19 @@ sub mw_import_revids {
 
 		$n_actual++;
 
-		my %commit;
-		$commit{author} = $rev->{user} || 'Anonymous';
-		$commit{comment} = $rev->{comment} || EMPTY_MESSAGE;
-		$commit{title} = smudge_filename($page_title);
-		$commit{mw_revision} = $rev->{revid};
-		$commit{content} = mediawiki_smudge($rev->{'*'});
+		my %cummit;
+		$cummit{author} = $rev->{user} || 'Anonymous';
+		$cummit{comment} = $rev->{comment} || EMPTY_MESSAGE;
+		$cummit{title} = smudge_filename($page_title);
+		$cummit{mw_revision} = $rev->{revid};
+		$cummit{content} = mediawiki_smudge($rev->{'*'});
 
 		if (!defined($rev->{timestamp})) {
 			$last_timestamp++;
 		} else {
 			$last_timestamp = $rev->{timestamp};
 		}
-		$commit{date} = DateTime::Format::ISO8601->parse_datetime($last_timestamp);
+		$cummit{date} = DateTime::Format::ISO8601->parse_datetime($last_timestamp);
 
 		# Differentiates classic pages and media files.
 		my ($namespace, $filename) = $page_title =~ /^([^:]*):(.*)$/;
@@ -973,10 +973,10 @@ sub mw_import_revids {
 			}
 		}
 		# If this is a revision of the media page for new version
-		# of a file do one common commit for both file and media page.
-		# Else do commit only for that page.
-		print {*STDERR} "${n}/", scalar(@{$revision_ids}), ": Revision #$rev->{revid} of $commit{title}\n";
-		import_file_revision(\%commit, ($fetch_from == 1), $n_actual, \%mediafile);
+		# of a file do one common cummit for both file and media page.
+		# Else do cummit only for that page.
+		print {*STDERR} "${n}/", scalar(@{$revision_ids}), ": Revision #$rev->{revid} of $cummit{title}\n";
+		import_file_revision(\%cummit, ($fetch_from == 1), $n_actual, \%mediafile);
 	}
 
 	return $n_actual;
@@ -1057,12 +1057,12 @@ sub mw_upload_file {
 sub mw_push_file {
 	my $diff_info = shift;
 	# $diff_info contains a string in this format:
-	# 100644 100644 <sha1_of_blob_before_commit> <sha1_of_blob_now> <status>
+	# 100644 100644 <sha1_of_blob_before_cummit> <sha1_of_blob_now> <status>
 	my @diff_info_split = split(/[ \t]/, $diff_info);
 
 	# Filename, including .mw extension
 	my $complete_file_name = shift;
-	# Commit message
+	# cummit message
 	my $summary = shift;
 	# MediaWiki revision number. Keep the previous one by default,
 	# in case there's no edit to perform.
@@ -1170,7 +1170,7 @@ sub mw_push {
 	if ($pushed && $dumb_push) {
 		print {*STDERR} "Just pushed some revisions to MediaWiki.\n";
 		print {*STDERR} "The pushed revisions now have to be re-imported, and your current branch\n";
-		print {*STDERR} "needs to be updated with these re-imported commits. You can do this with\n";
+		print {*STDERR} "needs to be updated with these re-imported cummits. You can do this with\n";
 		print {*STDERR} "\n";
 		print {*STDERR} "  git pull --rebase\n";
 		print {*STDERR} "\n";
@@ -1186,10 +1186,10 @@ sub mw_push_revision {
 	my $last_remote_revid = get_last_remote_revision();
 	my $mw_revision = $last_remote_revid;
 
-	# Get sha1 of commit pointed by local HEAD
+	# Get sha1 of cummit pointed by local HEAD
 	my $HEAD_sha1 = run_git_quoted_nostderr(["rev-parse", $local]);
 	chomp($HEAD_sha1);
-	# Get sha1 of commit pointed by remotes/$remotename/master
+	# Get sha1 of cummit pointed by remotes/$remotename/master
 	my $remoteorigin_sha1 = run_git_quoted_nostderr(["rev-parse", "refs/remotes/${remotename}/master"]);
 	chomp($remoteorigin_sha1);
 
@@ -1203,12 +1203,12 @@ sub mw_push_revision {
 		return 0;
 	}
 
-	# Get every commit in between HEAD and refs/remotes/origin/master,
+	# Get every cummit in between HEAD and refs/remotes/origin/master,
 	# including HEAD and refs/remotes/origin/master
-	my @commit_pairs = ();
+	my @cummit_pairs = ();
 	if ($last_local_revid > 0) {
 		my $parsed_sha1 = $remoteorigin_sha1;
-		# Find a path from last MediaWiki commit to pushed commit
+		# Find a path from last MediaWiki cummit to pushed cummit
 		print {*STDERR} "Computing path from local to remote ...\n";
 		my @local_ancestry = split(/\n/, run_git_quoted(["rev-list", "--boundary", "--parents", $local, "^${parsed_sha1}"]));
 		my %local_ancestry;
@@ -1224,10 +1224,10 @@ sub mw_push_revision {
 		while ($parsed_sha1 ne $HEAD_sha1) {
 			my $child = $local_ancestry{$parsed_sha1};
 			if (!$child) {
-				print {*STDERR} "Cannot find a path in history from remote commit to last commit\n";
+				print {*STDERR} "Cannot find a path in history from remote cummit to last cummit\n";
 				return error_non_fast_forward($remote);
 			}
-			push(@commit_pairs, [$parsed_sha1, $child]);
+			push(@cummit_pairs, [$parsed_sha1, $child]);
 			$parsed_sha1 = $child;
 		}
 	} else {
@@ -1238,21 +1238,21 @@ sub mw_push_revision {
 		my @history = split(/\n/, $history);
 		@history = @history[1..$#history];
 		foreach my $line (reverse @history) {
-			my @commit_info_split = split(/[ \n]/, $line);
-			push(@commit_pairs, \@commit_info_split);
+			my @cummit_info_split = split(/[ \n]/, $line);
+			push(@cummit_pairs, \@cummit_info_split);
 		}
 	}
 
-	foreach my $commit_info_split (@commit_pairs) {
-		my $sha1_child = @{$commit_info_split}[0];
-		my $sha1_commit = @{$commit_info_split}[1];
-		my $diff_infos = run_git_quoted(["diff-tree", "-r", "--raw", "-z", $sha1_child, $sha1_commit]);
+	foreach my $cummit_info_split (@cummit_pairs) {
+		my $sha1_child = @{$cummit_info_split}[0];
+		my $sha1_cummit = @{$cummit_info_split}[1];
+		my $diff_infos = run_git_quoted(["diff-tree", "-r", "--raw", "-z", $sha1_child, $sha1_cummit]);
 		# TODO: we could detect rename, and encode them with a #redirect on the wiki.
 		# TODO: for now, it's just a delete+add
 		my @diff_info_list = split(/\0/, $diff_infos);
-		# Keep the subject line of the commit message as mediawiki comment for the revision
-		my $commit_msg = run_git_quoted(["log", "--no-walk", '--format="%s"', $sha1_commit]);
-		chomp($commit_msg);
+		# Keep the subject line of the cummit message as mediawiki comment for the revision
+		my $cummit_msg = run_git_quoted(["log", "--no-walk", '--format="%s"', $sha1_cummit]);
+		chomp($cummit_msg);
 		# Push every blob
 		while (@diff_info_list) {
 			my $status;
@@ -1262,10 +1262,10 @@ sub mw_push_revision {
 			# and we've split on \0.
 			my $info = shift(@diff_info_list);
 			my $file = shift(@diff_info_list);
-			($mw_revision, $status) = mw_push_file($info, $file, $commit_msg, $mw_revision);
+			($mw_revision, $status) = mw_push_file($info, $file, $cummit_msg, $mw_revision);
 			if ($status eq 'non-fast-forward') {
 				# we may already have sent part of the
-				# commit to MediaWiki, but it's too
+				# cummit to MediaWiki, but it's too
 				# late to cancel it. Stop the push in
 				# the middle, but still give an
 				# accurate error message.
@@ -1279,7 +1279,7 @@ sub mw_push_revision {
 			run_git_quoted(["notes", "--ref=${remotename}/mediawiki",
 					"add", "-f", "-m",
 					"mediawiki_revision: ${mw_revision}",
-					$sha1_commit]);
+					$sha1_cummit]);
 		}
 	}
 

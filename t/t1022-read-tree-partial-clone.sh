@@ -13,7 +13,7 @@ test_expect_success 'read-tree in partial clone prefetches in one batch' '
 	echo foo >server/one &&
 	echo bar >server/two &&
 	git -C server add one two &&
-	git -C server commit -m "initial commit" &&
+	git -C server cummit -m "initial cummit" &&
 	TREE=$(git -C server rev-parse HEAD^{tree}) &&
 
 	git -C server config uploadpack.allowfilter 1 &&

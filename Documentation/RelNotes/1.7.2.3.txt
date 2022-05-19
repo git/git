@@ -7,7 +7,7 @@ Fixes since v1.7.2.2
  * When people try insane things such as delta-compressing 4GiB files, we
    threw an assertion failure.
 
- * "git archive" gave the full commit ID for "$Format:%h$".
+ * "git archive" gave the full cummit ID for "$Format:%h$".
 
  * "git fetch --tags" did not fetch tags when remote.<nick>.tagopt was set
    to --no-tags.  The command line option now overrides the configuration

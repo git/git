@@ -78,7 +78,7 @@ Updates in v1.5.0 since v1.4.4 series
 * Index manipulation
 
  - git-add is to add contents to the index (aka "staging area"
-   for the next commit), whether the file the contents happen to
+   for the next cummit), whether the file the contents happen to
    be is an existing one or a newly created one.
 
  - git-add without any argument does not add everything
@@ -88,7 +88,7 @@ Updates in v1.5.0 since v1.4.4 series
  - git-add tries to be more friendly to users by offering an
    interactive mode ("git-add -i").
 
- - git-commit <path> used to refuse to commit if <path> was
+ - git-cummit <path> used to refuse to cummit if <path> was
    different between HEAD and the index (i.e. update-index was
    used on it earlier).  This check was removed.
 
@@ -231,29 +231,29 @@ Updates in v1.5.0 since v1.4.4 series
 
  - In addition to the reflog support in v1.4.4 series, HEAD
    reference maintains its own log.  "HEAD@{5.minutes.ago}"
-   means the commit you were at 5 minutes ago, which takes
+   means the cummit you were at 5 minutes ago, which takes
    branch switching into account.  If you want to know where the
    tip of your current branch was at 5 minutes ago, you need to
    explicitly say its name (e.g. "master@{5.minutes.ago}") or
    omit the refname altogether i.e. "@{5.minutes.ago}".
 
- - The commits referred to by reflog entries are now protected
+ - The cummits referred to by reflog entries are now protected
    against pruning.  The new command "git reflog expire" can be
    used to truncate older reflog entries and entries that refer
-   to commits that have been pruned away previously with older
+   to cummits that have been pruned away previously with older
    versions of git.
 
    Existing repositories that have been using reflog may get
    complaints from fsck-objects and may not be able to run
    git-repack, if you had run git-prune from older git; please
    run "git reflog expire --stale-fix --all" first to remove
-   reflog entries that refer to commits that are no longer in
+   reflog entries that refer to cummits that are no longer in
    the repository when that happens.
 
 
 * Cruft removal
 
- - We used to say "old commits are retrievable using reflog and
+ - We used to say "old cummits are retrievable using reflog and
    'master@{yesterday}' syntax as long as you haven't run
    git-prune".  We no longer have to say the latter half of the
    above sentence, as git-prune does not remove things reachable
@@ -287,11 +287,11 @@ Updates in v1.5.0 since v1.4.4 series
  - After detaching your HEAD, you can go back to an existing
    branch with usual "git checkout $branch".  Also you can
    start a new branch using "git checkout -b $newbranch" to
-   start a new branch at that commit.
+   start a new branch at that cummit.
 
  - You can even pull from other repositories, make merges and
-   commits while your HEAD is detached.  Also you can use "git
-   reset" to jump to arbitrary commit, while still keeping your
+   cummits while your HEAD is detached.  Also you can use "git
+   reset" to jump to arbitrary cummit, while still keeping your
    HEAD detached.
 
    Remember that a detached state is volatile, i.e. it will be forgotten
@@ -327,18 +327,18 @@ Updates in v1.5.0 since v1.4.4 series
  - git-describe uses better criteria to pick a base ref.  It
    used to pick the one with the newest timestamp, but now it
    picks the one that is topologically the closest (that is,
-   among ancestors of commit C, the ref T that has the shortest
+   among ancestors of cummit C, the ref T that has the shortest
    output from "git-rev-list T..C" is chosen).
 
- - git-describe gives the number of commits since the base ref
-   between the refname and the hash suffix.  E.g. the commit one
+ - git-describe gives the number of cummits since the base ref
+   between the refname and the hash suffix.  E.g. the cummit one
    before v2.6.20-rc6 in the kernel repository is:
 
 	v2.6.20-rc5-306-ga21b069
 
    which tells you that its object name begins with a21b069,
-   v2.6.20-rc5 is an ancestor of it (meaning, the commit
-   contains everything -rc5 has), and there are 306 commits
+   v2.6.20-rc5 is an ancestor of it (meaning, the cummit
+   contains everything -rc5 has), and there are 306 cummits
    since v2.6.20-rc5.
 
  - git-describe with --abbrev=0 can be used to show only the
@@ -367,30 +367,30 @@ Updates in v1.5.0 since v1.4.4 series
 
 * I18n
 
- - We have always encouraged the commit message to be encoded in
+ - We have always encouraged the cummit message to be encoded in
    UTF-8, but the users are allowed to use legacy encoding as
    appropriate for their projects.  This will continue to be the
-   case.  However, a non UTF-8 commit encoding _must_ be
-   explicitly set with i18n.commitencoding in the repository
-   where a commit is made; otherwise git-commit-tree will
+   case.  However, a non UTF-8 cummit encoding _must_ be
+   explicitly set with i18n.cummitencoding in the repository
+   where a cummit is made; otherwise git-cummit-tree will
    complain if the log message does not look like a valid UTF-8
    string.
 
- - The value of i18n.commitencoding in the originating
-   repository is recorded in the commit object on the "encoding"
+ - The value of i18n.cummitencoding in the originating
+   repository is recorded in the cummit object on the "encoding"
    header, if it is not UTF-8.  git-log and friends notice this,
    and re-encodes the message to the log output encoding when
    displaying, if they are different.  The log output encoding
    is determined by "git log --encoding=<encoding>",
-   i18n.logoutputencoding configuration, or i18n.commitencoding
+   i18n.logoutputencoding configuration, or i18n.cummitencoding
    configuration, in the decreasing order of preference, and
    defaults to UTF-8.
 
  - Tools for e-mailed patch application now default to -u
    behavior; i.e. it always re-codes from the e-mailed encoding
-   to the encoding specified with i18n.commitencoding.  This
+   to the encoding specified with i18n.cummitencoding.  This
    unfortunately forces projects that have happily been using a
-   legacy encoding without setting i18n.commitencoding to set
+   legacy encoding without setting i18n.cummitencoding to set
    the configuration, but taken with other improvement, please
    excuse us for this very minor one-time inconvenience.
 
@@ -415,8 +415,8 @@ Updates in v1.5.0 since v1.4.4 series
  - git-svn now requires the Perl SVN:: libraries, the
    command-line backend was too slow and limited.
 
- - the 'commit' subcommand of git-svn has been renamed to
-   'set-tree', and 'dcommit' is the recommended replacement for
+ - the 'cummit' subcommand of git-svn has been renamed to
+   'set-tree', and 'dcummit' is the recommended replacement for
    day-to-day work.
 
  - git fast-import backend.

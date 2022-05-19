@@ -1,5 +1,5 @@
 $ git diff-tree --pretty --notes note
-commit a6f364368ca320bc5a92e18912e16fa6b3dff598
+cummit a6f364368ca320bc5a92e18912e16fa6b3dff598
 Author: A U Thor <author@example.com>
 Date:   Mon Jun 26 00:06:00 2006 +0000
 

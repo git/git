@@ -56,7 +56,7 @@ UI, Workflows & Features
    for "bisect visualize".
 
  * "git bisect run" that did not specify any command to run used to go
-   ahead and treated all commits to be tested as 'good'.  This has
+   ahead and treated all cummits to be tested as 'good'.  This has
    been corrected by making the command error out.
 
  * The SubmittingPatches document has been converted to produce an
@@ -99,7 +99,7 @@ UI, Workflows & Features
  * The shell completion (in contrib/) learned that "git pull" can take
    the "--autostash" option.
 
- * The tagnames "git log --decorate" uses to annotate the commits can
+ * The tagnames "git log --decorate" uses to annotate the cummits can
    now be limited to subset of available refs with the two additional
    options, --decorate-refs[-exclude]=<pattern>.
 
@@ -130,7 +130,7 @@ UI, Workflows & Features
  * "git worktree add" learned to run the post-checkout hook, just like
    "git checkout" does, after the initial checkout.
 
- * "git svn" has been updated to strip CRs in the commit messages, as
+ * "git svn" has been updated to strip CRs in the cummit messages, as
    recent versions of Subversion rejects them.
 
  * "git imap-send" did not correctly quote the folder name when
@@ -146,7 +146,7 @@ UI, Workflows & Features
    option was given from the command line.
 
  * "git describe" was taught to dig trees deeper to find a
-   <commit-ish>:<path> that refers to a given blob object.
+   <cummit-ish>:<path> that refers to a given blob object.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -226,7 +226,7 @@ Performance, Internal Implementation, Development Support etc.
    expects either "--key" or "--key=<something>".
 
  * "git version --build-options" learned to report the host CPU and
-   the exact commit object name the binary was built from.
+   the exact cummit object name the binary was built from.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -251,8 +251,8 @@ Fixes since v2.15
  * Some codepaths did not check for errors when asking what branch the
    HEAD points at, which have been fixed.
 
- * "git commit", after making a commit, did not check for errors when
-   asking on what branch it made the commit, which has been corrected.
+ * "git cummit", after making a cummit, did not check for errors when
+   asking on what branch it made the cummit, which has been corrected.
 
  * "git status --ignored -u" did not stop at a working tree of a
    separate project that is embedded in an ignored directory and
@@ -335,7 +335,7 @@ Fixes since v2.15
    fixed (or "papered over").
 
  * The sequencer machinery (used by "git cherry-pick A..B", and "git
-   rebase -i", among other things) would have lost a commit if stopped
+   rebase -i", among other things) would have lost a cummit if stopped
    due to an unlockable index file, which has been fixed.
 
  * "git apply --inaccurate-eof" when used with "--ignore-space-change"
@@ -406,7 +406,7 @@ Fixes since v2.15
    into submodule tree even when it is not desired, has been fixed.
    (merge eef3df5a93 bw/pathspec-match-submodule-boundary later to maint).
 
- * Amending commits in git-gui broke the author name that is non-ascii
+ * Amending cummits in git-gui broke the author name that is non-ascii
    due to incorrect encoding conversion.
 
  * Recent update to the submodule configuration code broke "diff-tree"

@@ -4,7 +4,7 @@
 #include "replace-object.h"
 #include "refs.h"
 #include "repository.h"
-#include "commit.h"
+#include "cummit.h"
 
 static int register_replace_ref(struct repository *r,
 				const char *refname,

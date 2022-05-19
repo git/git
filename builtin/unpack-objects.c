@@ -6,7 +6,7 @@
 #include "delta.h"
 #include "pack.h"
 #include "blob.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -467,7 +467,7 @@ static void unpack_one(unsigned nr)
 	}
 
 	switch (type) {
-	case OBJ_COMMIT:
+	case OBJ_cummit:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:

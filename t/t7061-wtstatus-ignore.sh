@@ -16,7 +16,7 @@ test_expect_success 'status untracked directory with --ignored' '
 	echo "ignored" >.gitignore &&
 	mkdir untracked &&
 	: >untracked/ignored &&
-	: >untracked/uncommitted &&
+	: >untracked/uncummitted &&
 	git status --porcelain --ignored >actual &&
 	test_cmp expected actual
 '
@@ -25,7 +25,7 @@ test_expect_success 'same with gitignore starting with BOM' '
 	printf "\357\273\277ignored\n" >.gitignore &&
 	mkdir -p untracked &&
 	: >untracked/ignored &&
-	: >untracked/uncommitted &&
+	: >untracked/uncummitted &&
 	git status --porcelain --ignored >actual &&
 	test_cmp expected actual
 '
@@ -41,8 +41,8 @@ test_expect_success 'status untracked files --ignored with pathspec (literal mat
 	git status --porcelain --ignored -- untracked/ignored >actual &&
 	echo "!! untracked/ignored" >expected &&
 	test_cmp expected actual &&
-	git status --porcelain --ignored -- untracked/uncommitted >actual &&
-	echo "?? untracked/uncommitted" >expected &&
+	git status --porcelain --ignored -- untracked/uncummitted >actual &&
+	echo "?? untracked/uncummitted" >expected &&
 	test_cmp expected actual
 '
 
@@ -51,7 +51,7 @@ test_expect_success 'status untracked files --ignored with pathspec (glob match)
 	echo "!! untracked/ignored" >expected &&
 	test_cmp expected actual &&
 	git status --porcelain --ignored -- untracked/u\* >actual &&
-	echo "?? untracked/uncommitted" >expected &&
+	echo "?? untracked/uncummitted" >expected &&
 	test_cmp expected actual
 '
 
@@ -59,7 +59,7 @@ cat >expected <<\EOF
 ?? .gitignore
 ?? actual
 ?? expected
-?? untracked/uncommitted
+?? untracked/uncummitted
 !! untracked/ignored
 EOF
 
@@ -83,7 +83,7 @@ test_expect_success 'status of untracked directory with --ignored works with or 
 '
 
 cat >expected <<\EOF
-?? untracked/uncommitted
+?? untracked/uncummitted
 !! untracked/ignored
 EOF
 
@@ -102,7 +102,7 @@ EOF
 test_expect_success 'status ignored directory with --ignore' '
 	rm -rf untracked &&
 	mkdir ignored &&
-	: >ignored/uncommitted &&
+	: >ignored/uncummitted &&
 	git status --porcelain --ignored >actual &&
 	test_cmp expected actual
 '
@@ -111,7 +111,7 @@ cat >expected <<\EOF
 ?? .gitignore
 ?? actual
 ?? expected
-!! ignored/uncommitted
+!! ignored/uncummitted
 EOF
 
 test_expect_success 'status ignored directory with --ignore -u' '
@@ -180,9 +180,9 @@ EOF
 test_expect_success 'status ignored tracked directory with --ignore' '
 	rm -rf untracked-ignored &&
 	mkdir tracked &&
-	: >tracked/committed &&
-	git add tracked/committed &&
-	git commit -m. &&
+	: >tracked/cummitted &&
+	git add tracked/cummitted &&
+	git cummit -m. &&
 	echo "tracked" >.gitignore &&
 	git status --porcelain --ignored >actual &&
 	test_cmp expected actual
@@ -206,7 +206,7 @@ cat >expected <<\EOF
 EOF
 
 test_expect_success 'status ignored tracked directory and ignored file with --ignore' '
-	echo "committed" >>.gitignore &&
+	echo "cummitted" >>.gitignore &&
 	git status --porcelain --ignored >actual &&
 	test_cmp expected actual
 '
@@ -226,12 +226,12 @@ cat >expected <<\EOF
 ?? .gitignore
 ?? actual
 ?? expected
-!! tracked/uncommitted
+!! tracked/uncummitted
 EOF
 
-test_expect_success 'status ignored tracked directory and uncommitted file with --ignore' '
+test_expect_success 'status ignored tracked directory and uncummitted file with --ignore' '
 	echo "tracked" >.gitignore &&
-	: >tracked/uncommitted &&
+	: >tracked/uncummitted &&
 	git status --porcelain --ignored >actual &&
 	test_cmp expected actual
 '
@@ -240,10 +240,10 @@ cat >expected <<\EOF
 ?? .gitignore
 ?? actual
 ?? expected
-!! tracked/uncommitted
+!! tracked/uncummitted
 EOF
 
-test_expect_success 'status ignored tracked directory and uncommitted file with --ignore -u' '
+test_expect_success 'status ignored tracked directory and uncummitted file with --ignore -u' '
 	git status --porcelain --ignored -u >actual &&
 	test_cmp expected actual
 '
@@ -255,10 +255,10 @@ cat >expected <<\EOF
 !! tracked/ignored/
 EOF
 
-test_expect_success 'status ignored tracked directory with uncommitted file in untracked subdir with --ignore' '
-	rm -rf tracked/uncommitted &&
+test_expect_success 'status ignored tracked directory with uncummitted file in untracked subdir with --ignore' '
+	rm -rf tracked/uncummitted &&
 	mkdir tracked/ignored &&
-	: >tracked/ignored/uncommitted &&
+	: >tracked/ignored/uncummitted &&
 	git status --porcelain --ignored >actual &&
 	test_cmp expected actual
 '
@@ -267,10 +267,10 @@ cat >expected <<\EOF
 ?? .gitignore
 ?? actual
 ?? expected
-!! tracked/ignored/uncommitted
+!! tracked/ignored/uncummitted
 EOF
 
-test_expect_success 'status ignored tracked directory with uncommitted file in untracked subdir with --ignore -u' '
+test_expect_success 'status ignored tracked directory with uncummitted file in untracked subdir with --ignore -u' '
 	git status --porcelain --ignored -u >actual &&
 	test_cmp expected actual
 '
@@ -279,13 +279,13 @@ cat >expected <<\EOF
 ?? .gitignore
 ?? actual
 ?? expected
-!! tracked/ignored/uncommitted
+!! tracked/ignored/uncummitted
 EOF
 
-test_expect_success 'status ignored tracked directory with uncommitted file in tracked subdir with --ignore' '
-	: >tracked/ignored/committed &&
-	git add -f tracked/ignored/committed &&
-	git commit -m. &&
+test_expect_success 'status ignored tracked directory with uncummitted file in tracked subdir with --ignore' '
+	: >tracked/ignored/cummitted &&
+	git add -f tracked/ignored/cummitted &&
+	git cummit -m. &&
 	git status --porcelain --ignored >actual &&
 	test_cmp expected actual
 '
@@ -294,10 +294,10 @@ cat >expected <<\EOF
 ?? .gitignore
 ?? actual
 ?? expected
-!! tracked/ignored/uncommitted
+!! tracked/ignored/uncummitted
 EOF
 
-test_expect_success 'status ignored tracked directory with uncommitted file in tracked subdir with --ignore -u' '
+test_expect_success 'status ignored tracked directory with uncummitted file in tracked subdir with --ignore -u' '
 	git status --porcelain --ignored -u >actual &&
 	test_cmp expected actual
 '
@@ -308,7 +308,7 @@ EOF
 
 test_expect_success 'status ignores submodule in excluded directory' '
 	git init tracked/submodule &&
-	test_commit -C tracked/submodule initial &&
+	test_cummit -C tracked/submodule initial &&
 	git status --porcelain --ignored -u tracked/submodule >actual &&
 	test_cmp expected actual
 '

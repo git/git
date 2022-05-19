@@ -5,20 +5,20 @@ Fixes since v2.19.1
 -------------------
 
  * "git interpret-trailers" and its underlying machinery had a buggy
-   code that attempted to ignore patch text after commit log message,
+   code that attempted to ignore patch text after cummit log message,
    which triggered in various codepaths that will always get the log
    message alone and never get such an input.
 
  * "git rebase -i" did not clear the state files correctly when a run
    of "squash/fixup" is aborted and then the user manually amended the
-   commit instead, which has been corrected.
+   cummit instead, which has been corrected.
 
  * When fsmonitor is in use, after operation on submodules updates
    .gitmodules, we lost track of the fact that we did so and relied on
    stale fsmonitor data.
 
  * Fix for a long-standing bug that leaves the index file corrupt when
-   it shrinks during a partial commit.
+   it shrinks during a partial cummit.
 
  * Further fix for O_APPEND emulation on Windows
 
@@ -29,7 +29,7 @@ Fixes since v2.19.1
    to reject such a command line upfront.
 
  * "git rebase" etc. in Git 2.19 fails to abort when given an empty
-   commit log message as result of editing, which has been corrected.
+   cummit log message as result of editing, which has been corrected.
 
  * The code to backfill objects in lazily cloned repository did not
    work correctly, which has been corrected.
@@ -42,10 +42,10 @@ Fixes since v2.19.1
  * Recently added "range-diff" had a corner-case bug to cause it
    segfault, which has been corrected.
 
- * The recently introduced commit-graph auxiliary data is incompatible
+ * The recently introduced cummit-graph auxiliary data is incompatible
    with mechanisms such as replace & grafts that "breaks" immutable
    nature of the object reference relationship.  Disable optimizations
-   based on its use (and updating existing commit-graph) when these
+   based on its use (and updating existing cummit-graph) when these
    incompatible features are in use in the repository.
 
  * The mailmap file update.
@@ -68,7 +68,7 @@ Fixes since v2.19.1
 
  * "git log --graph" showing an octopus merge sometimes miscounted the
    number of display columns it is consuming to show the merge and its
-   parent commits, which has been corrected.
+   parent cummits, which has been corrected.
 
  * The implementation of run_command() API on the UNIX platforms had a
    bug that caused a command not on $PATH to be found in the current

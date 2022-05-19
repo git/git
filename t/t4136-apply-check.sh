@@ -7,7 +7,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit 1
+	test_cummit 1
 '
 
 test_expect_success 'apply --check exits non-zero with unrecognized input' '

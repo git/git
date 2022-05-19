@@ -24,7 +24,7 @@ Notes on behaviour change
    only thing this release does is to change the default when you haven't
    configured that variable.
 
- * "git status" is not "git commit --dry-run" anymore.  This change does
+ * "git status" is not "git cummit --dry-run" anymore.  This change does
    not affect you if you run the command without argument.
 
  * "git diff" traditionally treated various "ignore whitespace" options
@@ -118,14 +118,14 @@ Updates since v1.6.6
    conflicted state works even when you already ran "git add path" and
    resolved the conflicts.
 
- * "git commit --date='<date>'" can be used to override the author date
-   just like "git commit --author='<name> <email>'" can be used to
+ * "git cummit --date='<date>'" can be used to override the author date
+   just like "git cummit --author='<name> <email>'" can be used to
    override the author identity.
 
- * "git commit --no-status" can be used to omit the listing of the index
+ * "git cummit --no-status" can be used to omit the listing of the index
    and the work tree status in the editor used to prepare the log message.
 
- * "git commit" warns a bit more aggressively until you configure user.email,
+ * "git cummit" warns a bit more aggressively until you configure user.email,
    whose default value almost always is not (and fundamentally cannot be)
    what you want.
 
@@ -202,13 +202,13 @@ release, unless otherwise noted.
    the branch is fully merged to its upstream branch if it is not merged
    to the current branch.  It now deletes it in such a case.
 
- * "filter-branch" command incorrectly said --prune-empty and --filter-commit
-   were incompatible; the latter should be read as --commit-filter.
+ * "filter-branch" command incorrectly said --prune-empty and --filter-cummit
+   were incompatible; the latter should be read as --cummit-filter.
 
  * When using "git status" or asking "git diff" to compare the work tree
    with something, they used to consider that a checked-out submodule with
-   uncommitted changes is not modified; this could cause people to forget
-   committing these changes in the submodule before committing in the
+   uncummitted changes is not modified; this could cause people to forget
+   cummitting these changes in the submodule before cummitting in the
    superproject. They now consider such a change as a modification and
    "git diff" will append a "-dirty" to the work tree side when generating
    patch output or when used with the --submodule option.

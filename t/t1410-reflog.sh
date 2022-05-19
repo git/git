@@ -63,7 +63,7 @@ test_expect_success setup '
 	echo tiger >A/B/E &&
 	git add . &&
 
-	test_tick && git commit -m rabbit &&
+	test_tick && git cummit -m rabbit &&
 	H=$(git rev-parse --verify HEAD) &&
 	A=$(git rev-parse --verify HEAD:A) &&
 	B=$(git rev-parse --verify HEAD:A/B) &&
@@ -74,7 +74,7 @@ test_expect_success setup '
 
 	test_chmod +x C &&
 	git add C &&
-	test_tick && git commit -m dragon &&
+	test_tick && git cummit -m dragon &&
 	L=$(git rev-parse --verify HEAD) &&
 	check_fsck &&
 
@@ -82,7 +82,7 @@ test_expect_success setup '
 	echo snake >F &&
 	echo horse >A/G &&
 	git add F A/G &&
-	test_tick && git commit -a -m sheep &&
+	test_tick && git cummit -a -m sheep &&
 	F=$(git rev-parse --verify HEAD:F) &&
 	G=$(git rev-parse --verify HEAD:A/G) &&
 	I=$(git rev-parse --verify HEAD:A) &&
@@ -90,7 +90,7 @@ test_expect_success setup '
 	check_fsck &&
 
 	rm -f A/G &&
-	test_tick && git commit -a -m monkey &&
+	test_tick && git cummit -a -m monkey &&
 	K=$(git rev-parse --verify HEAD) &&
 	check_fsck &&
 
@@ -119,7 +119,7 @@ test_expect_success 'correct usage on "git reflog show -h"' '
 test_expect_success 'pass through -- to sub-command' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
-	test_commit -C repo message --a-file contents dash-tag &&
+	test_cummit -C repo message --a-file contents dash-tag &&
 
 	git -C repo reflog show -- --does-not-exist >out &&
 	test_must_be_empty out &&
@@ -177,14 +177,14 @@ test_expect_success 'reflog expire' '
 	git reflog refs/heads/main >output &&
 	test_line_count = 2 output &&
 
-	check_fsck "dangling commit $K"
+	check_fsck "dangling cummit $K"
 '
 
 test_expect_success '--stale-fix handles missing objects generously' '
 	git -c core.logAllRefUpdates=false fast-import --date-format=now <<-EOS &&
-	commit refs/heads/stale-fix
+	cummit refs/heads/stale-fix
 	mark :1
-	committer Author <a@uth.or> now
+	cummitter Author <a@uth.or> now
 	data <<EOF
 	start stale fix
 	EOF
@@ -192,8 +192,8 @@ test_expect_success '--stale-fix handles missing objects generously' '
 	data <<EOF
 	contents
 	EOF
-	commit refs/heads/stale-fix
-	committer Author <a@uth.or> now
+	cummit refs/heads/stale-fix
+	cummitter Author <a@uth.or> now
 	data <<EOF
 	stale fix branch tip
 	EOF
@@ -226,15 +226,15 @@ test_expect_success 'recover and check' '
 test_expect_success 'delete' '
 	echo 1 > C &&
 	test_tick &&
-	git commit -m rat C &&
+	git cummit -m rat C &&
 
 	echo 2 > C &&
 	test_tick &&
-	git commit -m ox C &&
+	git cummit -m ox C &&
 
 	echo 3 > C &&
 	test_tick &&
-	git commit -m tiger C &&
+	git cummit -m tiger C &&
 
 	HEAD_entry_count=$(git reflog | wc -l) &&
 	main_entry_count=$(git reflog show main | wc -l) &&
@@ -383,15 +383,15 @@ test_expect_success REFFILES,SHA1 'parsing reverse reflogs at BUFSIZ boundaries'
 	test_cmp expect actual
 '
 
-test_expect_success 'no segfaults for reflog containing non-commit sha1s' '
+test_expect_success 'no segfaults for reflog containing non-cummit sha1s' '
 	git update-ref --create-reflog -m "Creating ref" \
 		refs/tests/tree-in-reflog HEAD &&
 	git update-ref -m "Forcing tree" refs/tests/tree-in-reflog HEAD^{tree} &&
-	git update-ref -m "Restoring to commit" refs/tests/tree-in-reflog HEAD &&
+	git update-ref -m "Restoring to cummit" refs/tests/tree-in-reflog HEAD &&
 	git reflog refs/tests/tree-in-reflog
 '
 
-test_expect_failure 'reflog with non-commit entries displays all entries' '
+test_expect_failure 'reflog with non-cummit entries displays all entries' '
 	git reflog refs/tests/tree-in-reflog >actual &&
 	test_line_count = 3 actual
 '
@@ -408,22 +408,22 @@ test_expect_success REFFILES 'reflog expire operates on symref not referrent' '
 	git reflog expire --expire=all the_symref
 '
 
-test_expect_success 'continue walking past root commits' '
+test_expect_success 'continue walking past root cummits' '
 	git init orphanage &&
 	(
 		cd orphanage &&
 		cat >expect <<-\EOF &&
-		HEAD@{0} commit (initial): orphan2-1
-		HEAD@{1} commit: orphan1-2
-		HEAD@{2} commit (initial): orphan1-1
-		HEAD@{3} commit (initial): initial
+		HEAD@{0} cummit (initial): orphan2-1
+		HEAD@{1} cummit: orphan1-2
+		HEAD@{2} cummit (initial): orphan1-1
+		HEAD@{3} cummit (initial): initial
 		EOF
-		test_commit initial &&
+		test_cummit initial &&
 		git checkout --orphan orphan1 &&
-		test_commit orphan1-1 &&
-		test_commit orphan1-2 &&
+		test_cummit orphan1-1 &&
+		test_cummit orphan1-2 &&
 		git checkout --orphan orphan2 &&
-		test_commit orphan2-1 &&
+		test_cummit orphan2-1 &&
 		git log -g --format="%gd %gs" >actual &&
 		test_cmp expect actual
 	)
@@ -434,10 +434,10 @@ test_expect_success 'expire with multiple worktrees' '
 	(
 		cd main-wt &&
 		test_tick &&
-		test_commit foo &&
+		test_cummit foo &&
 		git  worktree add link-wt &&
 		test_tick &&
-		test_commit -C link-wt foobar &&
+		test_cummit -C link-wt foobar &&
 		test_tick &&
 		git reflog expire --verbose --all --expire=$test_tick &&
 		test-tool ref-store worktree:link-wt for-each-reflog-ent HEAD >actual &&
@@ -448,7 +448,7 @@ test_expect_success 'expire with multiple worktrees' '
 test_expect_success REFFILES 'empty reflog' '
 	test_when_finished "rm -rf empty" &&
 	git init empty &&
-	test_commit -C empty A &&
+	test_cummit -C empty A &&
 	>empty/.git/logs/refs/heads/foo &&
 	git -C empty reflog expire --all 2>err &&
 	test_must_be_empty err

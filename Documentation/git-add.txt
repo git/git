@@ -17,25 +17,25 @@ SYNOPSIS
 DESCRIPTION
 -----------
 This command updates the index using the current content found in
-the working tree, to prepare the content staged for the next commit.
+the working tree, to prepare the content staged for the next cummit.
 It typically adds the current content of existing paths as a whole,
 but with some options it can also be used to add content with
 only part of the changes made to the working tree files applied, or
 remove paths that do not exist in the working tree anymore.
 
 The "index" holds a snapshot of the content of the working tree, and it
-is this snapshot that is taken as the contents of the next commit.  Thus
+is this snapshot that is taken as the contents of the next cummit.  Thus
 after making any changes to the working tree, and before running
-the commit command, you must use the `add` command to add any new or
+the cummit command, you must use the `add` command to add any new or
 modified files to the index.
 
-This command can be performed multiple times before a commit.  It only
+This command can be performed multiple times before a cummit.  It only
 adds the content of the specified file(s) at the time the add command is
-run; if you want subsequent changes included in the next commit, then
+run; if you want subsequent changes included in the next cummit, then
 you must run `git add` again to add the new content to the index.
 
 The `git status` command can be used to obtain a summary of which
-files have changes that are staged for the next commit.
+files have changes that are staged for the next cummit.
 
 The `git add` command will not add ignored files by default.  If any
 ignored files were explicitly specified on the command line, `git add`
@@ -44,8 +44,8 @@ directory recursion or filename globbing performed by Git (quote your
 globs before the shell) will be silently ignored.  The 'git add' command can
 be used to add ignored files with the `-f` (force) option.
 
-Please see linkgit:git-commit[1] for alternative ways to add content to a
-commit.
+Please see linkgit:git-cummit[1] for alternative ways to add content to a
+cummit.
 
 
 OPTIONS
@@ -156,7 +156,7 @@ for "git add --no-all <pathspec>...", i.e. ignored removed files.
 	Record only the fact that the path will be added later. An entry
 	for the path is placed in the index with no content. This is
 	useful for, among other things, showing the unstaged content of
-	such files with `git diff` and committing them with `git commit
+	such files with `git diff` and cummitting them with `git cummit
 	-a`.
 
 --refresh::
@@ -264,9 +264,9 @@ The main command loop has 6 subcommands (plus help and quit).
 status::
 
    This shows the change between HEAD and index (i.e. what will be
-   committed if you say `git commit`), and between index and
+   cummitted if you say `git cummit`), and between index and
    working tree files (i.e. what you could stage further before
-   `git commit` using `git add`) for each path.  A sample output
+   `git cummit` using `git add`) for each path.  A sample output
    looks like this:
 +
 ------------
@@ -281,7 +281,7 @@ difference between indexed copy and the working tree
 version (if the working tree version were also different,
 'binary' would have been shown in place of 'nothing').  The
 other file, git-add{litdd}interactive.perl, has 403 lines added
-and 35 lines deleted if you commit what is in the index, but
+and 35 lines deleted if you cummit what is in the index, but
 working tree file has further modifications (one addition and
 one deletion).
 
@@ -356,7 +356,7 @@ variable `interactive.singleKey` to `true`.
 
 diff::
 
-  This lets you review what will be committed (i.e. between
+  This lets you review what will be cummitted (i.e. between
   HEAD and index).
 
 
@@ -396,7 +396,7 @@ There are also more complex operations that can be performed. But beware
 that because the patch is applied only to the index and not the working
 tree, the working tree will appear to "undo" the change in the index.
 For example, introducing a new line into the index that is in neither
-the HEAD nor the working tree will stage the new line for commit, but
+the HEAD nor the working tree will stage the new line for cummit, but
 the line will appear to be reverted in the working tree.
 
 Avoid using these constructs, or do so with extreme caution.
@@ -437,7 +437,7 @@ linkgit:git-status[1]
 linkgit:git-rm[1]
 linkgit:git-reset[1]
 linkgit:git-mv[1]
-linkgit:git-commit[1]
+linkgit:git-cummit[1]
 linkgit:git-update-index[1]
 
 GIT

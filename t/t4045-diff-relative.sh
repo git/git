@@ -4,14 +4,14 @@ test_description='diff --relative tests'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	git commit --allow-empty -m empty &&
+	git cummit --allow-empty -m empty &&
 	echo content >file1 &&
 	mkdir subdir &&
 	echo other content >subdir/file2 &&
 	blob_file1=$(git hash-object file1) &&
 	blob_file2=$(git hash-object subdir/file2) &&
 	git add . &&
-	git commit -m one
+	git cummit -m one
 '
 
 check_diff () {
@@ -163,15 +163,15 @@ check_diff_relative_option . file2 false --no-relative --relative=subdir
 check_diff_relative_option . file2 true --no-relative --relative=subdir
 
 test_expect_success 'setup diff --relative unmerged' '
-	test_commit zero file0 &&
-	test_commit base subdir/file0 &&
+	test_cummit zero file0 &&
+	test_cummit base subdir/file0 &&
 	git switch -c br1 &&
-	test_commit one file0 &&
-	test_commit sub1 subdir/file0 &&
+	test_cummit one file0 &&
+	test_cummit sub1 subdir/file0 &&
 	git switch -c br2 base &&
-	test_commit two file0 &&
+	test_cummit two file0 &&
 	git switch -c br3 &&
-	test_commit sub3 subdir/file0
+	test_cummit sub3 subdir/file0
 '
 
 test_expect_success 'diff --relative without change in subdir' '

@@ -14,7 +14,7 @@ merge.conflictStyle::
 	the beginning or end of a conflict region.
 
 merge.defaultToUpstream::
-	If merge is called without any commit argument, merge the upstream
+	If merge is called without any cummit argument, merge the upstream
 	branches configured for the current branch by using their last
 	observed values stored in their remote-tracking branches.
 	The values of the `branch.<current branch>.merge` that name the
@@ -24,10 +24,10 @@ merge.defaultToUpstream::
 	these tracking branches are merged. Defaults to true.
 
 merge.ff::
-	By default, Git does not create an extra merge commit when merging
-	a commit that is a descendant of the current commit. Instead, the
+	By default, Git does not create an extra merge cummit when merging
+	a cummit that is a descendant of the current cummit. Instead, the
 	tip of the current branch is fast-forwarded. When set to `false`,
-	this variable tells Git to create an extra merge commit in such
+	this variable tells Git to create an extra merge cummit in such
 	a case (equivalent to giving the `--no-ff` option from the command
 	line). When set to `only`, only such fast-forward merges are
 	allowed (equivalent to giving the `--ff-only` option from the
@@ -67,10 +67,10 @@ merge.directoryRenames::
 
 merge.renormalize::
 	Tell Git that canonical representation of files in the
-	repository has changed over time (e.g. earlier commits record
+	repository has changed over time (e.g. earlier cummits record
 	text files with CRLF line endings, but recent ones use LF line
 	endings).  In such a repository, Git can convert the data
-	recorded in commits to a canonical form before performing a
+	recorded in cummits to a canonical form before performing a
 	merge to reduce unnecessary conflicts.  For more information,
 	see section "Merging branches with differing checkin/checkout
 	attributes" in linkgit:gitattributes[5].

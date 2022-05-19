@@ -7,10 +7,10 @@ Fixes since v1.7.0.4
  * "git daemon" failed to compile on platforms without sockaddr_storage type.
 
  * Output from "git rev-list --pretty=oneline" was unparsable when a
-   commit did not have any message, which is abnormal but possible in a
+   cummit did not have any message, which is abnormal but possible in a
    repository converted from foreign scm.
 
- * "git stash show <commit-that-is-not-a-stash>" gave an error message
+ * "git stash show <cummit-that-is-not-a-stash>" gave an error message
    that was not so useful.  Reworded the message to "<it> is not a
    stash".
 

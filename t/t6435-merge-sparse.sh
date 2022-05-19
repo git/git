@@ -10,21 +10,21 @@ test_file () {
 	git add "$1"
 }
 
-# test_commit_this $message_and_tag
-test_commit_this () {
-	git commit -m "$1" &&
+# test_cummit_this $message_and_tag
+test_cummit_this () {
+	git cummit -m "$1" &&
 	git tag "$1"
 }
 
 test_expect_success 'setup' '
 	test_file checked-out init &&
 	test_file modify_delete modify_delete_init &&
-	test_commit_this init &&
+	test_cummit_this init &&
 	test_file modify_delete modify_delete_theirs &&
-	test_commit_this theirs &&
+	test_cummit_this theirs &&
 	git reset --hard init &&
 	git rm modify_delete &&
-	test_commit_this ours &&
+	test_cummit_this ours &&
 	git config core.sparseCheckout true &&
 	echo "/checked-out" >.git/info/sparse-checkout &&
 	git reset --hard &&

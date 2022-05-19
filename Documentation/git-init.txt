@@ -21,7 +21,7 @@ DESCRIPTION
 This command creates an empty Git repository - basically a `.git`
 directory with subdirectories for `objects`, `refs/heads`,
 `refs/tags`, and template files.  An initial branch without any
-commits will be created (see the `--initial-branch` option below
+cummits will be created (see the `--initial-branch` option below
 for its name).
 
 If the `$GIT_DIR` environment variable is set then it specifies a path
@@ -162,12 +162,12 @@ Start a new Git repository for an existing code base::
 $ cd /path/to/my/codebase
 $ git init      <1>
 $ git add .     <2>
-$ git commit    <3>
+$ git cummit    <3>
 ----------------
 +
 <1> Create a /path/to/my/codebase/.git directory.
 <2> Add all existing files to the index.
-<3> Record the pristine state as the first commit in the history.
+<3> Record the pristine state as the first cummit in the history.
 
 GIT
 ---

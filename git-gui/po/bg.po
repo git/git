@@ -88,12 +88,12 @@ msgid "Scanning for modified files ..."
 msgstr "Проверка за променени файлове…"
 
 #: git-gui.sh:1645
-msgid "Calling prepare-commit-msg hook..."
-msgstr "Куката „prepare-commit-msg“ се изпълнява в момента…"
+msgid "Calling prepare-cummit-msg hook..."
+msgstr "Куката „prepare-cummit-msg“ се изпълнява в момента…"
 
 #: git-gui.sh:1662
-msgid "Commit declined by prepare-commit-msg hook."
-msgstr "Подаването е отхвърлено от куката „prepare-commit-msg“."
+msgid "cummit declined by prepare-cummit-msg hook."
+msgstr "Подаването е отхвърлено от куката „prepare-cummit-msg“."
 
 #: git-gui.sh:1820 lib/browser.tcl:252
 msgid "Ready."
@@ -116,15 +116,15 @@ msgid "Modified, not staged"
 msgstr "Променен, но не е в индекса"
 
 #: git-gui.sh:2110 git-gui.sh:2122
-msgid "Staged for commit"
+msgid "Staged for cummit"
 msgstr "В индекса за подаване"
 
 #: git-gui.sh:2111 git-gui.sh:2123
-msgid "Portions staged for commit"
+msgid "Portions staged for cummit"
 msgstr "Части са в индекса за подаване"
 
 #: git-gui.sh:2112 git-gui.sh:2124
-msgid "Staged for commit, missing"
+msgid "Staged for cummit, missing"
 msgstr "В индекса за подаване, но липсва"
 
 #: git-gui.sh:2114
@@ -132,7 +132,7 @@ msgid "File type changed, not staged"
 msgstr "Видът на файла е сменен, но не е в индекса"
 
 #: git-gui.sh:2115 git-gui.sh:2116
-msgid "File type changed, old type staged for commit"
+msgid "File type changed, old type staged for cummit"
 msgstr "Видът на файла е сменен, но новият вид не е в индекса"
 
 #: git-gui.sh:2117
@@ -194,7 +194,7 @@ msgid "Branch"
 msgstr "Клон"
 
 #: git-gui.sh:2682 lib/choose_rev.tcl:554
-msgid "Commit@@noun"
+msgid "cummit@@noun"
 msgstr "Подаване"
 
 #: git-gui.sh:2685 lib/merge.tcl:127 lib/merge.tcl:174
@@ -318,15 +318,15 @@ msgid "Done"
 msgstr "Готово"
 
 #: git-gui.sh:2841
-msgid "Commit@@verb"
+msgid "cummit@@verb"
 msgstr "Подаване"
 
 #: git-gui.sh:2850 git-gui.sh:3335
-msgid "New Commit"
+msgid "New cummit"
 msgstr "Ново подаване"
 
 #: git-gui.sh:2858 git-gui.sh:3342
-msgid "Amend Last Commit"
+msgid "Amend Last cummit"
 msgstr "Поправяне на последното подаване"
 
 #: git-gui.sh:2868 git-gui.sh:3296 lib/remote_branch_delete.tcl:101
@@ -334,15 +334,15 @@ msgid "Rescan"
 msgstr "Обновяване"
 
 #: git-gui.sh:2874
-msgid "Stage To Commit"
+msgid "Stage To cummit"
 msgstr "Към индекса за подаване"
 
 #: git-gui.sh:2880
-msgid "Stage Changed Files To Commit"
+msgid "Stage Changed Files To cummit"
 msgstr "Всички променени файлове към индекса за подаване"
 
 #: git-gui.sh:2886
-msgid "Unstage From Commit"
+msgid "Unstage From cummit"
 msgstr "Изваждане от индекса за подаване"
 
 #: git-gui.sh:2892 lib/index.tcl:442
@@ -435,7 +435,7 @@ msgid "Unstaged Changes"
 msgstr "Промени извън индекса"
 
 #: git-gui.sh:3228
-msgid "Staged Changes (Will Commit)"
+msgid "Staged Changes (Will cummit)"
 msgstr "Промени в индекса (за подаване)"
 
 #: git-gui.sh:3302
@@ -447,27 +447,27 @@ msgid "Push"
 msgstr "Изтласкване"
 
 #: git-gui.sh:3356
-msgid "Initial Commit Message:"
+msgid "Initial cummit Message:"
 msgstr "Първоначално съобщение при подаване:"
 
 #: git-gui.sh:3357
-msgid "Amended Commit Message:"
+msgid "Amended cummit Message:"
 msgstr "Поправено съобщение при подаване:"
 
 #: git-gui.sh:3358
-msgid "Amended Initial Commit Message:"
+msgid "Amended Initial cummit Message:"
 msgstr "Поправено първоначално съобщение при подаване:"
 
 #: git-gui.sh:3359
-msgid "Amended Merge Commit Message:"
+msgid "Amended Merge cummit Message:"
 msgstr "Поправено съобщение при подаване със сливане:"
 
 #: git-gui.sh:3360
-msgid "Merge Commit Message:"
+msgid "Merge cummit Message:"
 msgstr "Съобщение при подаване със сливане:"
 
 #: git-gui.sh:3361
-msgid "Commit Message:"
+msgid "cummit Message:"
 msgstr "Съобщение при подаване:"
 
 #: git-gui.sh:3415 git-gui.sh:3570 lib/console.tcl:73
@@ -535,27 +535,27 @@ msgid "Start git gui In The Submodule"
 msgstr "Стартиране на „git gui“ за подмодула"
 
 #: git-gui.sh:3705
-msgid "Unstage Hunk From Commit"
+msgid "Unstage Hunk From cummit"
 msgstr "Изваждане на парчето от подаването"
 
 #: git-gui.sh:3707
-msgid "Unstage Lines From Commit"
+msgid "Unstage Lines From cummit"
 msgstr "Изваждане на редовете от подаването"
 
 #: git-gui.sh:3709
-msgid "Unstage Line From Commit"
+msgid "Unstage Line From cummit"
 msgstr "Изваждане на реда от подаването"
 
 #: git-gui.sh:3712
-msgid "Stage Hunk For Commit"
+msgid "Stage Hunk For cummit"
 msgstr "Добавяне на парчето за подаване"
 
 #: git-gui.sh:3714
-msgid "Stage Lines For Commit"
+msgid "Stage Lines For cummit"
 msgstr "Добавяне на редовете за подаване"
 
 #: git-gui.sh:3716
-msgid "Stage Line For Commit"
+msgid "Stage Line For cummit"
 msgstr "Добавяне на реда за подаване"
 
 #: git-gui.sh:3741
@@ -615,11 +615,11 @@ msgid "%s (%s): File Viewer"
 msgstr "%s (%s): Преглед на файлове"
 
 #: lib/blame.tcl:79
-msgid "Commit:"
+msgid "cummit:"
 msgstr "Подаване:"
 
 #: lib/blame.tcl:280
-msgid "Copy Commit"
+msgid "Copy cummit"
 msgstr "Копиране на подаване"
 
 #: lib/blame.tcl:284
@@ -639,7 +639,7 @@ msgid "Show History Context"
 msgstr "Показване на контекста от историята"
 
 #: lib/blame.tcl:304
-msgid "Blame Parent Commit"
+msgid "Blame Parent cummit"
 msgstr "Анотиране на родителското подаване"
 
 #: lib/blame.tcl:466
@@ -684,7 +684,7 @@ msgid "Author:"
 msgstr "Автор:"
 
 #: lib/blame.tcl:1004
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "Подал:"
 
 #: lib/blame.tcl:1009
@@ -692,11 +692,11 @@ msgid "Original File:"
 msgstr "Първоначален файл:"
 
 #: lib/blame.tcl:1057
-msgid "Cannot find HEAD commit:"
+msgid "Cannot find HEAD cummit:"
 msgstr "Подаването за връх „HEAD“ не може да се открие:"
 
 #: lib/blame.tcl:1112
-msgid "Cannot find parent commit:"
+msgid "Cannot find parent cummit:"
 msgstr "Родителското подаване не може да бъде открито"
 
 #: lib/blame.tcl:1127
@@ -1052,12 +1052,12 @@ msgstr "„%s“ е изтеглен."
 
 #: lib/checkout_op.tcl:535
 #, tcl-format
-msgid "Resetting '%s' to '%s' will lose the following commits:"
+msgid "Resetting '%s' to '%s' will lose the following cummits:"
 msgstr ""
 "Зануляването на „%s“ към „%s“ ще доведе до загубването на следните подавания:"
 
 #: lib/checkout_op.tcl:557
-msgid "Recovering lost commits may not be easy."
+msgid "Recovering lost cummits may not be easy."
 msgstr "Възстановяването на загубените подавания може да е трудно."
 
 #: lib/checkout_op.tcl:562
@@ -1319,7 +1319,7 @@ msgstr "Не е получен клон по подразбиране."
 
 #: lib/choose_repository.tcl:949
 #, tcl-format
-msgid "Cannot resolve %s as a commit."
+msgid "Cannot resolve %s as a cummit."
 msgstr "Няма подаване отговарящо на „%s“."
 
 #: lib/choose_repository.tcl:961
@@ -1397,11 +1397,11 @@ msgstr "Обновен"
 msgid "URL"
 msgstr "Адрес"
 
-#: lib/commit.tcl:9
+#: lib/cummit.tcl:9
 msgid ""
 "There is nothing to amend.\n"
 "\n"
-"You are about to create the initial commit.  There is no commit before this "
+"You are about to create the initial cummit.  There is no cummit before this "
 "to amend.\n"
 msgstr ""
 "Няма какво да се поправи.\n"
@@ -1409,12 +1409,12 @@ msgstr ""
 "Ще създадете първоначалното подаване. Преди него няма други подавания, които "
 "да поправите.\n"
 
-#: lib/commit.tcl:18
+#: lib/cummit.tcl:18
 msgid ""
 "Cannot amend while merging.\n"
 "\n"
 "You are currently in the middle of a merge that has not been fully "
-"completed.  You cannot amend the prior commit unless you first abort the "
+"completed.  You cannot amend the prior cummit unless you first abort the "
 "current merge activity.\n"
 msgstr ""
 "По време на сливане не може да поправяте.\n"
@@ -1422,29 +1422,29 @@ msgstr ""
 "В момента все още не сте завършили операция по сливане. Не може да поправите "
 "предишното подаване, освен ако първо не преустановите текущото сливане.\n"
 
-#: lib/commit.tcl:48
-msgid "Error loading commit data for amend:"
+#: lib/cummit.tcl:48
+msgid "Error loading cummit data for amend:"
 msgstr "Грешка при зареждане на данните от подаване, които да се поправят:"
 
-#: lib/commit.tcl:75
+#: lib/cummit.tcl:75
 msgid "Unable to obtain your identity:"
 msgstr "Идентификацията ви не може да бъде определена:"
 
-#: lib/commit.tcl:80
-msgid "Invalid GIT_COMMITTER_IDENT:"
-msgstr "Неправилно поле „GIT_COMMITTER_IDENT“:"
+#: lib/cummit.tcl:80
+msgid "Invalid GIT_cummitTER_IDENT:"
+msgstr "Неправилно поле „GIT_cummitTER_IDENT“:"
 
-#: lib/commit.tcl:129
+#: lib/cummit.tcl:129
 #, tcl-format
 msgid "warning: Tcl does not support encoding '%s'."
 msgstr "предупреждение: Tcl не поддържа кодирането „%s“."
 
-#: lib/commit.tcl:149
+#: lib/cummit.tcl:149
 msgid ""
 "Last scanned state does not match repository state.\n"
 "\n"
 "Another Git program has modified this repository since the last scan.  A "
-"rescan must be performed before another commit can be created.\n"
+"rescan must be performed before another cummit can be created.\n"
 "\n"
 "The rescan will be automatically started now.\n"
 msgstr ""
@@ -1456,45 +1456,45 @@ msgstr ""
 "\n"
 "Автоматично ще започне нова проверка.\n"
 
-#: lib/commit.tcl:173
+#: lib/cummit.tcl:173
 #, tcl-format
 msgid ""
-"Unmerged files cannot be committed.\n"
+"Unmerged files cannot be cummitted.\n"
 "\n"
 "File %s has merge conflicts.  You must resolve them and stage the file "
-"before committing.\n"
+"before cummitting.\n"
 msgstr ""
 "Неслетите файлове не могат да бъдат подавани.\n"
 "\n"
 "Във файла „%s“ има конфликти при сливане. За да го подадете, трябва първо да "
 "коригирате конфликтите и да добавите файла към индекса за подаване.\n"
 
-#: lib/commit.tcl:181
+#: lib/cummit.tcl:181
 #, tcl-format
 msgid ""
 "Unknown file state %s detected.\n"
 "\n"
-"File %s cannot be committed by this program.\n"
+"File %s cannot be cummitted by this program.\n"
 msgstr ""
 "Непознато състояние на файл „%s“.\n"
 "\n"
 "Файлът „%s“ не може да бъде подаден чрез текущата програма.\n"
 
-#: lib/commit.tcl:189
+#: lib/cummit.tcl:189
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"You must stage at least 1 file before you can commit.\n"
+"You must stage at least 1 file before you can cummit.\n"
 msgstr ""
 "Няма промени за подаване.\n"
 "\n"
 "Трябва да добавите поне един файл към индекса, за да подадете.\n"
 
-#: lib/commit.tcl:204
+#: lib/cummit.tcl:204
 msgid ""
-"Please supply a commit message.\n"
+"Please supply a cummit message.\n"
 "\n"
-"A good commit message has the following format:\n"
+"A good cummit message has the following format:\n"
 "\n"
 "- First line: Describe in one sentence what you did.\n"
 "- Second line: Blank\n"
@@ -1508,22 +1508,22 @@ msgstr ""
 "● Втори ред: празен.\n"
 "● Останалите редове: опишете защо се налага тази промяна.\n"
 
-#: lib/commit.tcl:235
+#: lib/cummit.tcl:235
 msgid "Calling pre-commit hook..."
 msgstr "Изпълняване на куката преди подаване…"
 
-#: lib/commit.tcl:250
-msgid "Commit declined by pre-commit hook."
+#: lib/cummit.tcl:250
+msgid "cummit declined by pre-commit hook."
 msgstr "Подаването е отхвърлено от куката преди подаване."
 
-#: lib/commit.tcl:269
+#: lib/cummit.tcl:269
 msgid ""
-"You are about to commit on a detached head. This is a potentially dangerous "
+"You are about to cummit on a detached head. This is a potentially dangerous "
 "thing to do because if you switch to another branch you will lose your "
 "changes and it can be difficult to retrieve them later from the reflog. You "
-"should probably cancel this commit and create a new branch to continue.\n"
+"should probably cancel this cummit and create a new branch to continue.\n"
 " \n"
-" Do you really want to proceed with your Commit?"
+" Do you really want to proceed with your cummit?"
 msgstr ""
 "Ще подадете към несвързан, отделѐн указател „HEAD“. Това е опасно, защото "
 "при преминаването към клон ще загубите промените си, като единственият начин "
@@ -1532,36 +1532,36 @@ msgstr ""
 " \n"
 "Сигурни ли сте, че искате да извършите текущото подаване?"
 
-#: lib/commit.tcl:290
-msgid "Calling commit-msg hook..."
+#: lib/cummit.tcl:290
+msgid "Calling cummit-msg hook..."
 msgstr "Изпълняване на куката за съобщението при подаване…"
 
-#: lib/commit.tcl:305
-msgid "Commit declined by commit-msg hook."
+#: lib/cummit.tcl:305
+msgid "cummit declined by cummit-msg hook."
 msgstr "Подаването е отхвърлено от куката за съобщението при подаване."
 
-#: lib/commit.tcl:318
-msgid "Committing changes..."
+#: lib/cummit.tcl:318
+msgid "cummitting changes..."
 msgstr "Подаване на промените…"
 
-#: lib/commit.tcl:334
+#: lib/cummit.tcl:334
 msgid "write-tree failed:"
 msgstr "неуспешно запазване на дървото (write-tree):"
 
-#: lib/commit.tcl:335 lib/commit.tcl:382 lib/commit.tcl:403
-msgid "Commit failed."
+#: lib/cummit.tcl:335 lib/cummit.tcl:382 lib/cummit.tcl:403
+msgid "cummit failed."
 msgstr "Неуспешно подаване."
 
-#: lib/commit.tcl:352
+#: lib/cummit.tcl:352
 #, tcl-format
-msgid "Commit %s appears to be corrupt"
+msgid "cummit %s appears to be corrupt"
 msgstr "Подаването „%s“ изглежда повредено"
 
-#: lib/commit.tcl:357
+#: lib/cummit.tcl:357
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"No files were modified by this commit and it was not a merge commit.\n"
+"No files were modified by this cummit and it was not a merge cummit.\n"
 "\n"
 "A rescan will be automatically started now.\n"
 msgstr ""
@@ -1572,21 +1572,21 @@ msgstr ""
 "\n"
 "Автоматично ще започне нова проверка.\n"
 
-#: lib/commit.tcl:364
-msgid "No changes to commit."
+#: lib/cummit.tcl:364
+msgid "No changes to cummit."
 msgstr "Няма промени за подаване."
 
-#: lib/commit.tcl:381
-msgid "commit-tree failed:"
-msgstr "неуспешно подаване на дървото (commit-tree):"
+#: lib/cummit.tcl:381
+msgid "cummit-tree failed:"
+msgstr "неуспешно подаване на дървото (cummit-tree):"
 
-#: lib/commit.tcl:402
+#: lib/cummit.tcl:402
 msgid "update-ref failed:"
 msgstr "неуспешно обновяване на указателите (update-ref):"
 
-#: lib/commit.tcl:495
+#: lib/cummit.tcl:495
 #, tcl-format
-msgid "Created commit %s: %s"
+msgid "Created cummit %s: %s"
 msgstr "Успешно подаване %s: %s"
 
 #: lib/console.tcl:59
@@ -1804,7 +1804,7 @@ msgid "%s hook failed:"
 msgstr "%s: грешка от куката"
 
 #: lib/error.tcl:96
-msgid "You must correct the above errors before committing."
+msgid "You must correct the above errors before cummitting."
 msgstr "Преди да можете да подадете, коригирайте горните грешки."
 
 #: lib/error.tcl:116
@@ -1837,16 +1837,16 @@ msgid "Unlock Index"
 msgstr "Отключване на индекса"
 
 #: lib/index.tcl:294
-msgid "Unstaging selected files from commit"
+msgid "Unstaging selected files from cummit"
 msgstr "Изваждане на избраните файлове от подаването"
 
 #: lib/index.tcl:298
 #, tcl-format
-msgid "Unstaging %s from commit"
+msgid "Unstaging %s from cummit"
 msgstr "Изваждане на „%s“ от подаването"
 
 #: lib/index.tcl:337
-msgid "Ready to commit."
+msgid "Ready to cummit."
 msgstr "Готовност за подаване."
 
 #: lib/index.tcl:346
@@ -1908,7 +1908,7 @@ msgstr "Придвижване"
 msgid ""
 "Cannot merge while amending.\n"
 "\n"
-"You must finish amending this commit before starting any type of merge.\n"
+"You must finish amending this cummit before starting any type of merge.\n"
 msgstr ""
 "По време на поправяне не може да сливане.\n"
 "\n"
@@ -1939,7 +1939,7 @@ msgid ""
 "\n"
 "File %s has merge conflicts.\n"
 "\n"
-"You must resolve them, stage the file, and commit to complete the current "
+"You must resolve them, stage the file, and cummit to complete the current "
 "merge.  Only then can you begin another merge.\n"
 msgstr ""
 "В момента тече сливане, но има конфликти.\n"
@@ -1957,7 +1957,7 @@ msgid ""
 "\n"
 "File %s is modified.\n"
 "\n"
-"You should complete the current commit before starting a merge.  Doing so "
+"You should complete the current cummit before starting a merge.  Doing so "
 "will help you abort a failed merge, should the need arise.\n"
 msgstr ""
 "В момента тече подаване.\n"
@@ -2003,7 +2003,7 @@ msgstr "Версия за сливане"
 msgid ""
 "Cannot abort while amending.\n"
 "\n"
-"You must finish amending this commit.\n"
+"You must finish amending this cummit.\n"
 msgstr ""
 "Поправянето не може да бъде преустановено.\n"
 "\n"
@@ -2013,7 +2013,7 @@ msgstr ""
 msgid ""
 "Abort merge?\n"
 "\n"
-"Aborting the current merge will cause *ALL* uncommitted changes to be lost.\n"
+"Aborting the current merge will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with aborting the current merge?"
 msgstr ""
@@ -2027,7 +2027,7 @@ msgstr ""
 msgid ""
 "Reset changes?\n"
 "\n"
-"Resetting the changes will cause *ALL* uncommitted changes to be lost.\n"
+"Resetting the changes will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with resetting the current changes?"
 msgstr ""
@@ -2180,7 +2180,7 @@ msgid "Email Address"
 msgstr "Адрес на е-поща"
 
 #: lib/option.tcl:143
-msgid "Summarize Merge Commits"
+msgid "Summarize Merge cummits"
 msgstr "Обобщаване на подаванията при сливане"
 
 #: lib/option.tcl:144
@@ -2236,7 +2236,7 @@ msgid "Additional Diff Parameters"
 msgstr "Аргументи към командата за разликите"
 
 #: lib/option.tcl:158
-msgid "Commit Message Text Width"
+msgid "cummit Message Text Width"
 msgstr "Широчина на текста на съобщението при подаване"
 
 #: lib/option.tcl:159
@@ -2248,7 +2248,7 @@ msgid "Default File Contents Encoding"
 msgstr "Кодиране на файловете"
 
 #: lib/option.tcl:161
-msgid "Warn before committing to a detached head"
+msgid "Warn before cummitting to a detached head"
 msgstr "Предупреждаване при подаване към несвързан указател"
 
 #: lib/option.tcl:162
@@ -2441,7 +2441,7 @@ msgstr ""
 #, tcl-format
 msgid ""
 "One or more of the merge tests failed because you have not fetched the "
-"necessary commits.  Try fetching from %s first."
+"necessary cummits.  Try fetching from %s first."
 msgstr ""
 "Поне една от пробите за сливане е неуспешна, защото не сте доставили всички "
 "необходими подавания. Пробвайте първо да доставите подаванията от „%s“."

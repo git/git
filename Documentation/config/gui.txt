@@ -1,5 +1,5 @@
-gui.commitMsgWidth::
-	Defines how wide the commit message window is in the
+gui.cummitMsgWidth::
+	Defines how wide the cummit message window is in the
 	linkgit:git-gui[1]. "75" is the default.
 
 gui.diffContext::
@@ -36,7 +36,7 @@ gui.trustmtime::
 	timestamp or not. By default the timestamps are not trusted.
 
 gui.spellingDictionary::
-	Specifies the dictionary used for spell checking commit messages in
+	Specifies the dictionary used for spell checking cummit messages in
 	the linkgit:git-gui[1]. When set to "none" spell checking is turned
 	off.
 
@@ -52,6 +52,6 @@ gui.copyBlameThreshold::
 
 gui.blamehistoryctx::
 	Specifies the radius of history context in days to show in
-	linkgit:gitk[1] for the selected commit, when the `Show History
+	linkgit:gitk[1] for the selected cummit, when the `Show History
 	Context` menu item is invoked from 'git gui blame'. If this
 	variable is set to zero, the whole history is shown.

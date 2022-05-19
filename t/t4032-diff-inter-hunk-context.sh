@@ -33,7 +33,7 @@ t() {
 	then
 		f A $1 B >$file
 		git add $file
-		git commit -q -m. $file
+		git cummit -q -m. $file
 		f X $1 Y >$file
 	fi
 

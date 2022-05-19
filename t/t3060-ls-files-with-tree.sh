@@ -29,13 +29,13 @@ test_expect_success setup '
 		done
 	done &&
 	git add . &&
-	git commit -m "add a bunch of files" &&
+	git cummit -m "add a bunch of files" &&
 
 	# We remove them all so that we will have something to add
 	# back with --with-tree and so that we will definitely be
 	# under the realloc size to trigger the bug.
 	rm -rf sub &&
-	git commit -a -m "remove them all" &&
+	git cummit -a -m "remove them all" &&
 
 	# The bug also requires some entry before our directory so that
 	# prune_path will modify the_index.cache
@@ -74,10 +74,10 @@ test_expect_success 'no duplicates in --with-tree output' '
 
 test_expect_success 'setup: output in a conflict' '
 	test_create_repo conflict &&
-	test_commit -C conflict BASE file &&
-	test_commit -C conflict A file foo &&
+	test_cummit -C conflict BASE file &&
+	test_cummit -C conflict A file foo &&
 	git -C conflict reset --hard BASE &&
-	test_commit -C conflict B file bar
+	test_cummit -C conflict B file bar
 '
 
 test_expect_success 'output in a conflict' '

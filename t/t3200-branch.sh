@@ -14,11 +14,11 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'prepare a trivial repository' '
 	echo Hello >A &&
 	git update-index --add A &&
-	git commit -m "Initial commit." &&
+	git cummit -m "Initial cummit." &&
 	git branch -M main &&
 	echo World >>A &&
 	git update-index --add A &&
-	git commit -m "Second commit." &&
+	git cummit -m "Second cummit." &&
 	HEAD=$(git rev-parse --verify HEAD)
 '
 
@@ -72,10 +72,10 @@ test_expect_success 'git branch HEAD should fail' '
 '
 
 cat >expect <<EOF
-$ZERO_OID $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
+$ZERO_OID $HEAD $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150200 +0000	branch: Created from main
 EOF
 test_expect_success 'git branch --create-reflog d/e/f should create a branch and a log' '
-	GIT_COMMITTER_DATE="2005-05-26 23:30" \
+	GIT_cummitTER_DATE="2005-05-26 23:30" \
 	git -c core.logallrefupdates=false branch --create-reflog d/e/f &&
 	test_path_is_file .git/refs/heads/d/e/f &&
 	test_path_is_file .git/logs/refs/heads/d/e/f &&
@@ -133,7 +133,7 @@ test_expect_success 'git branch -m bbb should rename checked out branch' '
 	test_when_finished git branch -D bbb &&
 	test_when_finished git checkout main &&
 	git checkout -b aaa &&
-	git commit --allow-empty -m "a new commit" &&
+	git cummit --allow-empty -m "a new cummit" &&
 	git rev-parse aaa@{0} >expect &&
 	git branch -m bbb &&
 	git rev-parse bbb@{1} >actual &&
@@ -209,7 +209,7 @@ test_expect_success 'git branch -M should leave orphaned HEAD alone' '
 	git init -b main orphan &&
 	(
 		cd orphan &&
-		test_commit initial &&
+		test_cummit initial &&
 		git checkout --orphan lonely &&
 		grep lonely .git/HEAD &&
 		test_path_is_missing .git/refs/head/lonely &&
@@ -305,9 +305,9 @@ test_expect_success 'deleting checked-out branch from repo that is a submodule' 
 
 	git init repo1 &&
 	git init repo1/sub &&
-	test_commit -C repo1/sub x &&
+	test_cummit -C repo1/sub x &&
 	git -C repo1 submodule add ./sub &&
-	git -C repo1 commit -m "adding sub" &&
+	git -C repo1 cummit -m "adding sub" &&
 
 	git clone --recurse-submodules repo1 repo2 &&
 	git -C repo2/sub checkout -b work &&
@@ -318,7 +318,7 @@ test_expect_success 'bare main worktree has HEAD at branch deleted by secondary 
 	test_when_finished "rm -rf nonbare base secondary" &&
 
 	git init -b main nonbare &&
-	test_commit -C nonbare x &&
+	test_cummit -C nonbare x &&
 	git clone --bare nonbare bare &&
 	git -C bare worktree add --detach ../secondary main &&
 	git -C secondary branch -D main
@@ -1008,10 +1008,10 @@ test_expect_success '--set-upstream-to notices an error to set branch as own ups
 
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
-$ZERO_OID $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from main
+$ZERO_OID $HEAD $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150200 +0000	branch: Created from main
 EOF
 test_expect_success 'git checkout -b g/h/i -l should create a branch and a log' '
-	GIT_COMMITTER_DATE="2005-05-26 23:30" \
+	GIT_cummitTER_DATE="2005-05-26 23:30" \
 	git checkout -b g/h/i -l main &&
 	test_path_is_file .git/refs/heads/g/h/i &&
 	test_path_is_file .git/logs/refs/heads/g/h/i &&
@@ -1313,7 +1313,7 @@ test_expect_success 'attempt to delete a branch without base and unmerged to HEA
 '
 
 test_expect_success 'attempt to delete a branch merged to its base' '
-	# we are on my9 which is the initial commit; traditionally
+	# we are on my9 which is the initial cummit; traditionally
 	# we would not have allowed deleting my8 that is not merged
 	# to my9, but it is set to track main that already has my8
 	git config branch.my8.merge refs/heads/main &&
@@ -1323,10 +1323,10 @@ test_expect_success 'attempt to delete a branch merged to its base' '
 test_expect_success 'attempt to delete a branch merged to its base' '
 	git checkout main &&
 	echo Third >>A &&
-	git commit -m "Third commit" A &&
+	git cummit -m "Third cummit" A &&
 	git branch -t my10 my9 &&
 	git branch -f my10 HEAD^ &&
-	# we are on main which is at the third commit, and my10
+	# we are on main which is at the third cummit, and my10
 	# is behind us, so traditionally we would have allowed deleting
 	# it; but my10 is set to track my9 that is further behind.
 	test_must_fail git branch -d my10
@@ -1334,7 +1334,7 @@ test_expect_success 'attempt to delete a branch merged to its base' '
 
 test_expect_success 'branch --delete --force removes dangling branch' '
 	git checkout main &&
-	test_commit unstable &&
+	test_cummit unstable &&
 	hash=$(git rev-parse HEAD) &&
 	objpath=$(echo $hash | sed -e "s|^..|.git/objects/&/|") &&
 	git branch --no-track dangling &&
@@ -1406,17 +1406,17 @@ test_expect_success 'tracking with unexpected .fetch refspec' '
 	git init -b main a &&
 	(
 		cd a &&
-		test_commit a
+		test_cummit a
 	) &&
 	git init -b main b &&
 	(
 		cd b &&
-		test_commit b
+		test_cummit b
 	) &&
 	git init -b main c &&
 	(
 		cd c &&
-		test_commit c &&
+		test_cummit c &&
 		git remote add a ../a &&
 		git remote add b ../b &&
 		git fetch --all
@@ -1436,18 +1436,18 @@ test_expect_success 'tracking with unexpected .fetch refspec' '
 	)
 '
 
-test_expect_success 'configured committerdate sort' '
+test_expect_success 'configured cummitterdate sort' '
 	git init -b main sort &&
 	(
 		cd sort &&
-		git config branch.sort committerdate &&
-		test_commit initial &&
+		git config branch.sort cummitterdate &&
+		test_cummit initial &&
 		git checkout -b a &&
-		test_commit a &&
+		test_cummit a &&
 		git checkout -b c &&
-		test_commit c &&
+		test_cummit c &&
 		git checkout -b b &&
-		test_commit b &&
+		test_cummit b &&
 		git branch >actual &&
 		cat >expect <<-\EOF &&
 		  main
@@ -1462,7 +1462,7 @@ test_expect_success 'configured committerdate sort' '
 test_expect_success 'option override configured sort' '
 	(
 		cd sort &&
-		git config branch.sort committerdate &&
+		git config branch.sort cummitterdate &&
 		git branch --sort=refname >actual &&
 		cat >expect <<-\EOF &&
 		  a

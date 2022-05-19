@@ -16,7 +16,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Displays references available in a remote repository along with the associated
-commit IDs.
+cummit IDs.
 
 
 OPTIONS
@@ -68,7 +68,7 @@ OPTIONS
 	are treated as versions). The "version:refname" sort order can also
 	be affected by the "versionsort.suffix" configuration variable.
 	See linkgit:git-for-each-ref[1] for more sort options, but be aware
-	keys like `committerdate` that require access to the objects
+	keys like `cummitterdate` that require access to the objects
 	themselves will not work for refs whose objects have not yet been
 	fetched from the remote, and will give a `missing object` error.
 

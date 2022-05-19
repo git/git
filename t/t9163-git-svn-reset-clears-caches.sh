@@ -21,7 +21,7 @@ esac
 #      \       /
 #       ... c       <- branch1
 #
-# SVN Commits not interesting for this test are abbreviated with "..."
+# SVN cummits not interesting for this test are abbreviated with "..."
 #
 test_expect_success 'initialize source svn repo' '
 	svn_cmd mkdir -m "create trunk" "$svnrepo"/trunk &&
@@ -31,19 +31,19 @@ test_expect_success 'initialize source svn repo' '
 		cd "$SVN_TREE" &&
 		touch foo &&
 		svn_cmd add foo &&
-		svn_cmd commit -m "a" &&
+		svn_cmd cummit -m "a" &&
 		svn_cmd cp -m branch "$svnrepo"/trunk "$svnrepo"/branches/branch1 &&
 		svn_cmd switch "$svnrepo"/branches/branch1 &&
 		touch bar &&
 		svn_cmd add bar &&
-		svn_cmd commit -m b &&
+		svn_cmd cummit -m b &&
 		svn_cmd switch "$svnrepo"/trunk &&
 		touch baz &&
 		svn_cmd add baz &&
-		svn_cmd commit -m c &&
+		svn_cmd cummit -m c &&
 		svn_cmd up &&
 		svn_cmd merge "$svnrepo"/branches/branch1 &&
-		svn_cmd commit -m "m"
+		svn_cmd cummit -m "m"
 	) &&
 	rm -rf "$SVN_TREE"
 '
@@ -53,7 +53,7 @@ test_expect_success 'fetch to merge-base (a)' '
 	git svn fetch --revision BASE:3
 '
 
-# git svn rebase looses the merge commit
+# git svn rebase looses the merge cummit
 #
 # ... a  -  b - m  <- trunk
 #      \
@@ -65,7 +65,7 @@ test_expect_success 'rebase looses SVN merge (m)' '
 	test 1 = $(git cat-file -p main|grep parent|wc -l)
 '
 
-# git svn fetch creates correct history with merge commit
+# git svn fetch creates correct history with merge cummit
 #
 # ... a  -  b - m  <- trunk
 #      \       /

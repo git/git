@@ -36,7 +36,7 @@ subcommands are available to perform operations on the submodules.
 
 add [-b <branch>] [-f|--force] [--name <name>] [--reference <repository>] [--depth <depth>] [--] <repository> [<path>]::
 	Add the given repository as a submodule at the given path
-	to the changeset to be committed next to the current
+	to the changeset to be cummitted next to the current
 	project: the current project is termed the "superproject".
 +
 <repository> is the URL of the new submodule's origin repository.
@@ -60,7 +60,7 @@ submodule to exist in the superproject. If <path> is not given, the
 canonical part of the source repository is used ("repo" for
 "/path/to/repo.git" and "foo" for "host.xz:foo/.git"). If <path>
 exists and is already a valid Git repository, then it is staged
-for commit without cloning. The <path> is also used as the submodule's
+for cummit without cloning. The <path> is also used as the submodule's
 logical name in its configuration entries unless `--name` is used
 to specify a logical name.
 +
@@ -74,10 +74,10 @@ URL in `.gitmodules`.
 
 status [--cached] [--recursive] [--] [<path>...]::
 	Show the status of the submodules. This will print the SHA-1 of the
-	currently checked out commit for each submodule, along with the
+	currently checked out cummit for each submodule, along with the
 	submodule path and the output of 'git describe' for the
 	SHA-1. Each SHA-1 will possibly be prefixed with `-` if the submodule is
-	not initialized, `+` if the currently checked out submodule commit
+	not initialized, `+` if the currently checked out submodule cummit
 	does not match the SHA-1 found in the index of the containing
 	repository and `U` if the submodule has merge conflicts.
 +
@@ -88,13 +88,13 @@ If `--recursive` is specified, this command will recurse into nested
 submodules, and show their status as well.
 +
 If you are only interested in changes of the currently initialized
-submodules with respect to the commit recorded in the index or the HEAD,
+submodules with respect to the cummit recorded in the index or the HEAD,
 linkgit:git-status[1] and linkgit:git-diff[1] will provide that information
 too (and can also report changes to a submodule's work tree).
 
 init [--] [<path>...]::
 	Initialize the submodules recorded in the index (which were
-	added and committed elsewhere) by setting `submodule.$name.url`
+	added and cummitted elsewhere) by setting `submodule.$name.url`
 	in .git/config. It uses the same setting from `.gitmodules` as
 	a template. If the URL is relative, it will be resolved using
 	the default remote. If there is no default remote, the current
@@ -129,7 +129,7 @@ instead of deinit-ing everything, to prevent mistakes.
 If `--force` is specified, the submodule's working tree will
 be removed even if it contains local modifications.
 +
-If you really want to remove a submodule from the repository and commit
+If you really want to remove a submodule from the repository and cummit
 that use linkgit:git-rm[1] instead. See linkgit:gitsubmodules[7] for removal
 options.
 
@@ -137,7 +137,7 @@ update [--init] [--remote] [-N|--no-fetch] [--[no-]recommend-shallow] [-f|--forc
 +
 --
 Update the registered submodules to match what the superproject
-expects by cloning missing submodules, fetching missing commits
+expects by cloning missing submodules, fetching missing cummits
 in submodules and updating the working tree of
 the submodules. The "updating" can be done in several ways depending
 on command line options and the value of `submodule.<name>.update`
@@ -146,25 +146,25 @@ the configuration variable. If neither is given, a 'checkout' is performed.
 The 'update' procedures supported both from the command line as well as
 through the `submodule.<name>.update` configuration are:
 
-	checkout;; the commit recorded in the superproject will be
+	checkout;; the cummit recorded in the superproject will be
 	    checked out in the submodule on a detached HEAD.
 +
 If `--force` is specified, the submodule will be checked out (using
-`git checkout --force`), even if the commit specified
-in the index of the containing repository already matches the commit
+`git checkout --force`), even if the cummit specified
+in the index of the containing repository already matches the cummit
 checked out in the submodule.
 
 	rebase;; the current branch of the submodule will be rebased
-	    onto the commit recorded in the superproject.
+	    onto the cummit recorded in the superproject.
 
-	merge;; the commit recorded in the superproject will be merged
+	merge;; the cummit recorded in the superproject will be merged
 	    into the current branch in the submodule.
 
 The following 'update' procedures are only available via the
 `submodule.<name>.update` configuration variable:
 
 	custom command;; arbitrary shell command that takes a single
-	    argument (the sha1 of the commit recorded in the
+	    argument (the sha1 of the cummit recorded in the
 	    superproject) is executed. When `submodule.<name>.update`
 	    is set to '!command', the remainder after the exclamation mark
 	    is the custom command.
@@ -194,15 +194,15 @@ set-url [--] <path> <newurl>::
 	automatically synchronize the submodule's new remote URL
 	configuration.
 
-summary [--cached|--files] [(-n|--summary-limit) <n>] [commit] [--] [<path>...]::
-	Show commit summary between the given commit (defaults to HEAD) and
-	working tree/index. For a submodule in question, a series of commits
-	in the submodule between the given super project commit and the
+summary [--cached|--files] [(-n|--summary-limit) <n>] [cummit] [--] [<path>...]::
+	Show cummit summary between the given cummit (defaults to HEAD) and
+	working tree/index. For a submodule in question, a series of cummits
+	in the submodule between the given super project cummit and the
 	index or working tree (switched by `--cached`) are shown. If the option
-	`--files` is given, show the series of commits in the submodule between
+	`--files` is given, show the series of cummits in the submodule between
 	the index of the super project and the working tree of the submodule
 	(this option doesn't allow to use the `--cached` option or to provide an
-	explicit commit).
+	explicit cummit).
 +
 Using the `--submodule=log` option with linkgit:git-diff[1] will provide that
 information too.
@@ -215,7 +215,7 @@ foreach [--recursive] <command>::
 	$sm_path is the path of the submodule as recorded in the immediate
 	superproject, $displaypath contains the relative path from the
 	current working directory to the submodules root directory,
-	$sha1 is the commit as recorded in the immediate
+	$sha1 is the cummit as recorded in the immediate
 	superproject, and $toplevel is the absolute path to the top-level
 	of the immediate superproject.
 	Note that to avoid conflicts with '$PATH' on Windows, the '$path'
@@ -230,7 +230,7 @@ foreach [--recursive] <command>::
 	to the end of the command.
 +
 As an example, the command below will show the path and currently
-checked out commit for each submodule:
+checked out cummit for each submodule:
 +
 --------------
 git submodule foreach 'echo $sm_path `git rev-parse HEAD`'
@@ -298,25 +298,25 @@ OPTIONS
 	if they contain local changes.
 	When running update (only effective with the checkout procedure),
 	throw away local changes in submodules when switching to a
-	different commit; and always run a checkout operation in the
-	submodule, even if the commit listed in the index of the
-	containing repository matches the commit checked out in the
+	different cummit; and always run a checkout operation in the
+	submodule, even if the cummit listed in the index of the
+	containing repository matches the cummit checked out in the
 	submodule.
 
 --cached::
 	This option is only valid for status and summary commands.  These
-	commands typically use the commit found in the submodule HEAD, but
-	with this option, the commit stored in the index is used instead.
+	commands typically use the cummit found in the submodule HEAD, but
+	with this option, the cummit stored in the index is used instead.
 
 --files::
 	This option is only valid for the summary command. This command
-	compares the commit in the index with that in the submodule HEAD
+	compares the cummit in the index with that in the submodule HEAD
 	when this option is used.
 
 -n::
 --summary-limit::
 	This option is only valid for the summary command.
-	Limit the summary size (number of commits shown in total).
+	Limit the summary size (number of cummits shown in total).
 	Giving 0 will disable the summary; a negative number means unlimited
 	(the default). This limit only applies to modified submodules. The
 	size is always limited to 1 for added/deleted/typechanged submodules.
@@ -359,7 +359,7 @@ the submodule itself.
 
 --checkout::
 	This option is only valid for the update command.
-	Checkout the commit recorded in the superproject on a detached HEAD
+	Checkout the cummit recorded in the superproject on a detached HEAD
 	in the submodule. This is the default behavior, the main use of
 	this option is to override `submodule.$name.update` when set to
 	a value other than `checkout`.
@@ -368,7 +368,7 @@ the submodule itself.
 
 --merge::
 	This option is only valid for the update command.
-	Merge the commit recorded in the superproject into the current branch
+	Merge the cummit recorded in the superproject into the current branch
 	of the submodule. If this option is given, the submodule's HEAD will
 	not be detached. If a merge failure prevents this process, you will
 	have to resolve the resulting conflicts within the submodule with the
@@ -378,7 +378,7 @@ the submodule itself.
 
 --rebase::
 	This option is only valid for the update command.
-	Rebase the current branch onto the commit recorded in the
+	Rebase the current branch onto the cummit recorded in the
 	superproject. If this option is given, the submodule's HEAD will not
 	be detached. If a merge failure prevents this process, you will have
 	to resolve these failures with linkgit:git-rebase[1].

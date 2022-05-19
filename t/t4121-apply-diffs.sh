@@ -18,15 +18,15 @@ echo '1
 
 test_expect_success 'setup' \
 	'git add file &&
-	git commit -q -m 1 &&
+	git cummit -q -m 1 &&
 	git checkout -b test &&
 	mv file file.tmp &&
 	echo 0 >file &&
 	cat file.tmp >>file &&
 	rm file.tmp &&
-	git commit -a -q -m 2 &&
+	git cummit -a -q -m 2 &&
 	echo 9 >>file &&
-	git commit -a -q -m 3 &&
+	git cummit -a -q -m 3 &&
 	git checkout main'
 
 test_expect_success \

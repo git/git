@@ -40,12 +40,12 @@
 #   chunk                            |  fragmento
 #   clean                            |  limpa
 #   clone                            |  clone
-#   commit                           |  memorizar
-#   commit-graph                     |  grafo-memória
-#   commit message                   |  mensagem de memória
-#   commit object                    |  objeto de memória
-#   commit-ish                       |  mnemónica
-#   committer                        |  memorizador
+#   cummit                           |  memorizar
+#   cummit-graph                     |  grafo-memória
+#   cummit message                   |  mensagem de memória
+#   cummit object                    |  objeto de memória
+#   cummit-ish                       |  mnemónica
+#   cummitter                        |  memorizador
 #   conflict                         |  conflito
 #   cover letter                     |  carta de apresentação
 #   DAG                              |  DAG
@@ -124,7 +124,7 @@
 #   revert                           |  reverter
 #   revision                         |  revisão
 #   rewind                           |  rebobinar
-#   root commit                      |  memória-raiz
+#   root cummit                      |  memória-raiz
 #   scheduler                        |  agendador
 #   SCM                              |  SCM
 #   SHA-1                            |  SHA-1
@@ -998,7 +998,7 @@ msgid "Cherry-picking is not possible because you have unmerged files."
 msgstr "Cherry-picking é impossível porque tem ficheiros em separado."
 
 #: advice.c:183
-msgid "Committing is not possible because you have unmerged files."
+msgid "cummitting is not possible because you have unmerged files."
 msgstr "Cometer é impossível porque tem ficheiros em separado."
 
 #: advice.c:185
@@ -1021,7 +1021,7 @@ msgstr "É impossível fazer %s porque tem ficheiros em separado."
 #: advice.c:199
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
-"as appropriate to mark resolution and make a commit."
+"as appropriate to mark resolution and make a cummit."
 msgstr ""
 "Conserte-os na árvore-trabalho, e usa 'git add/rm <ficheiro>'\n"
 "apropriadamente para marcar resolução e fazer uma memória."
@@ -1035,7 +1035,7 @@ msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "O teu juntar ficou por concluir (MERGE_HEAD presente)."
 
 #: advice.c:214
-msgid "Please, commit your changes before merging."
+msgid "Please, cummit your changes before merging."
 msgstr "Por favor, memoriza as tuas modificações antes de juntar."
 
 #: advice.c:215
@@ -1067,10 +1067,10 @@ msgid ""
 "Note: switching to '%s'.\n"
 "\n"
 "You are in 'detached HEAD' state. You can look around, make experimental\n"
-"changes and commit them, and you can discard any commits you make in this\n"
+"changes and cummit them, and you can discard any cummits you make in this\n"
 "state without impacting any branches by switching back to a branch.\n"
 "\n"
-"If you want to create a new branch to retain commits you create, you may\n"
+"If you want to create a new branch to retain cummits you create, you may\n"
 "do so (now or later) by using -c with the switch command. Example:\n"
 "\n"
 "  git switch -c <new-branch-name>\n"
@@ -1127,8 +1127,8 @@ msgstr "opção de ignorar whitespace desconhecida '%s'"
 #: builtin/add.c:515 builtin/add.c:527 builtin/branch.c:755
 #: builtin/checkout.c:472 builtin/checkout.c:475 builtin/checkout.c:1663
 #: builtin/checkout.c:1773 builtin/checkout.c:1776 builtin/clone.c:921
-#: builtin/commit.c:359 builtin/commit.c:362 builtin/commit.c:1200
-#: builtin/commit.c:1256 builtin/commit.c:1273 builtin/describe.c:593
+#: builtin/cummit.c:359 builtin/cummit.c:362 builtin/cummit.c:1200
+#: builtin/cummit.c:1256 builtin/cummit.c:1273 builtin/describe.c:593
 #: builtin/diff-tree.c:155 builtin/difftool.c:733 builtin/fast-export.c:1245
 #: builtin/fetch.c:2141 builtin/fetch.c:2162 builtin/fetch.c:2167
 #: builtin/help.c:602 builtin/index-pack.c:1858 builtin/init-db.c:560
@@ -1866,7 +1866,7 @@ msgid "prepend prefix to each pathname in the archive"
 msgstr "preceder o prefixo a cada nome de caminho dentro do arquivo"
 
 #: archive.c:554 archive.c:557 builtin/blame.c:881 builtin/blame.c:885
-#: builtin/blame.c:886 builtin/commit-tree.c:115 builtin/config.c:135
+#: builtin/blame.c:886 builtin/cummit-tree.c:115 builtin/config.c:135
 #: builtin/fast-export.c:1181 builtin/fast-export.c:1183
 #: builtin/fast-export.c:1187 builtin/grep.c:936 builtin/hash-object.c:104
 #: builtin/ls-files.c:654 builtin/ls-files.c:657 builtin/notes.c:410
@@ -1922,7 +1922,7 @@ msgstr "Opção inesperada --remote"
 
 #: archive.c:580 fetch-pack.c:300 revision.c:2914 builtin/add.c:530
 #: builtin/add.c:562 builtin/checkout.c:1782 builtin/clone.c:1099
-#: builtin/clone.c:1102 builtin/commit.c:371 builtin/fast-export.c:1230
+#: builtin/clone.c:1102 builtin/cummit.c:371 builtin/fast-export.c:1230
 #: builtin/index-pack.c:1854 builtin/log.c:2140 builtin/reset.c:442
 #: builtin/reset.c:500 builtin/rm.c:281 builtin/stash.c:1708
 #: builtin/worktree.c:580 builtin/worktree.c:781 http-fetch.c:144
@@ -1975,7 +1975,7 @@ msgstr "Conseguimos bissetar mais nada!\n"
 
 #: bisect.c:765
 #, c-format
-msgid "Not a valid commit name %s"
+msgid "Not a valid cummit name %s"
 msgstr "Nome de memória inválido %s"
 
 #: bisect.c:790
@@ -2000,7 +2000,7 @@ msgstr ""
 #, c-format
 msgid ""
 "The merge base %s is %s.\n"
-"This means the first '%s' commit is between %s and [%s].\n"
+"This means the first '%s' cummit is between %s and [%s].\n"
 msgstr ""
 "A base de junção %s é %s.\n"
 "Significa que o primeira memória '%s' está entre %s e [%s].\n"
@@ -2020,7 +2020,7 @@ msgstr ""
 #, c-format
 msgid ""
 "the merge base between %s and [%s] must be skipped.\n"
-"So we cannot be sure the first %s commit is between %s and %s.\n"
+"So we cannot be sure the first %s cummit is between %s and %s.\n"
 "We continue anyway."
 msgstr ""
 "a base de junção entre %s e [%s] tem de ser saltada.\n"
@@ -2059,7 +2059,7 @@ msgstr "%s era %s e %s em simultâneo\n"
 #: bisect.c:1065
 #, c-format
 msgid ""
-"No testable commit found.\n"
+"No testable cummit found.\n"
 "Maybe you started with bad path arguments?\n"
 msgstr ""
 "Nenhuma memória testável encontrada.\n"
@@ -2087,16 +2087,16 @@ msgid "--contents and --reverse do not blend well."
 msgstr "--contents e --reverse são imiscíveis."
 
 #: blame.c:2787
-msgid "cannot use --contents with final commit object name"
+msgid "cannot use --contents with final cummit object name"
 msgstr "incapaz usar --contents com nome de objeto de memória final"
 
 #: blame.c:2808
-msgid "--reverse and --first-parent together require specified latest commit"
+msgid "--reverse and --first-parent together require specified latest cummit"
 msgstr ""
 "--reverse e --first-parent juntos exige que se especifique a última memória"
 
 #: blame.c:2817 bundle.c:231 midx.c:1058 ref-filter.c:2371 remote.c:2157
-#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/commit.c:1118
+#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/cummit.c:1118
 #: builtin/log.c:437 builtin/log.c:1055 builtin/log.c:1663 builtin/log.c:2096
 #: builtin/log.c:2387 builtin/merge.c:431 builtin/pack-objects.c:3381
 #: builtin/pack-objects.c:3781 builtin/pack-objects.c:3796
@@ -2330,13 +2330,13 @@ msgid "unrecognized header: %s%s (%d)"
 msgstr "cabeçalho irreconhecível: %s%s (%d)"
 
 #: bundle.c:145 rerere.c:464 rerere.c:675 sequencer.c:2616 sequencer.c:3402
-#: builtin/commit.c:865
+#: builtin/cummit.c:865
 #, c-format
 msgid "could not open '%s'"
 msgstr "incapaz abrir '%s'"
 
 #: bundle.c:203
-msgid "Repository lacks these prerequisite commits:"
+msgid "Repository lacks these prerequisite cummits:"
 msgstr "Falta ao repositório estas memórias de pré-requisito:"
 
 #: bundle.c:206
@@ -2430,265 +2430,265 @@ msgstr "fragmento final tem id %<PRIx32> diferente de zero"
 msgid "invalid color value: %.*s"
 msgstr "valor de cor inválido: %.*s"
 
-#: commit-graph.c:204 midx.c:52
+#: cummit-graph.c:204 midx.c:52
 msgid "invalid hash version"
 msgstr "versão de hash inválida"
 
-#: commit-graph.c:262
-msgid "commit-graph file is too small"
+#: cummit-graph.c:262
+msgid "cummit-graph file is too small"
 msgstr "ficheiro grafo-memória é demasiado pequeno"
 
-#: commit-graph.c:355
+#: cummit-graph.c:355
 #, c-format
-msgid "commit-graph signature %X does not match signature %X"
+msgid "cummit-graph signature %X does not match signature %X"
 msgstr "assinatura de grafo-memória %X corresponde a assinatura %X nenhuma"
 
-#: commit-graph.c:362
+#: cummit-graph.c:362
 #, c-format
-msgid "commit-graph version %X does not match version %X"
+msgid "cummit-graph version %X does not match version %X"
 msgstr "grafo-memória versão %X corresponde a versão %X nenhuma"
 
-#: commit-graph.c:369
+#: cummit-graph.c:369
 #, c-format
-msgid "commit-graph hash version %X does not match version %X"
+msgid "cummit-graph hash version %X does not match version %X"
 msgstr "versão de hash de grafo-memória %X corresponde a nenhuma versão %X"
 
-#: commit-graph.c:386
+#: cummit-graph.c:386
 #, c-format
-msgid "commit-graph file is too small to hold %u chunks"
+msgid "cummit-graph file is too small to hold %u chunks"
 msgstr "ficheiro grafo-memória é demasiado pequeno para ter %u fragmentos"
 
-#: commit-graph.c:485
-msgid "commit-graph has no base graphs chunk"
+#: cummit-graph.c:485
+msgid "cummit-graph has no base graphs chunk"
 msgstr "grafo-memória tem nenhuns fragmentos de base de grafos"
 
-#: commit-graph.c:495
-msgid "commit-graph chain does not match"
+#: cummit-graph.c:495
+msgid "cummit-graph chain does not match"
 msgstr "série grafo-memória tem correspondência nenhuma"
 
-#: commit-graph.c:543
+#: cummit-graph.c:543
 #, c-format
-msgid "invalid commit-graph chain: line '%s' not a hash"
+msgid "invalid cummit-graph chain: line '%s' not a hash"
 msgstr "série grafo-memória inválida: linha '%s' é hash nenhum"
 
-#: commit-graph.c:567
-msgid "unable to find all commit-graph files"
+#: cummit-graph.c:567
+msgid "unable to find all cummit-graph files"
 msgstr "incapaz de encontrar todos ficheiros grafo-memória"
 
-#: commit-graph.c:752 commit-graph.c:789
-msgid "invalid commit position. commit-graph is likely corrupt"
+#: cummit-graph.c:752 cummit-graph.c:789
+msgid "invalid cummit position. cummit-graph is likely corrupt"
 msgstr "posição de memória inválida. provavelmente grafo-memória está rompido"
 
-#: commit-graph.c:773
+#: cummit-graph.c:773
 #, c-format
-msgid "could not find commit %s"
+msgid "could not find cummit %s"
 msgstr "incapaz encontrar memória %s"
 
-#: commit-graph.c:806
-msgid "commit-graph requires overflow generation data but has none"
+#: cummit-graph.c:806
+msgid "cummit-graph requires overflow generation data but has none"
 msgstr "grafo-memória exige informação de geração de overflow mas tem nenhuma"
 
-#: commit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
+#: cummit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
 #: builtin/clone.c:705
 #, c-format
-msgid "unable to parse commit %s"
+msgid "unable to parse cummit %s"
 msgstr "incapaz processar memória %s"
 
-#: commit-graph.c:1373 builtin/pack-objects.c:3078
+#: cummit-graph.c:1373 builtin/pack-objects.c:3078
 #, c-format
 msgid "unable to get type of object %s"
 msgstr "incapaz obter tipo de objeto %s"
 
-#: commit-graph.c:1404
-msgid "Loading known commits in commit graph"
+#: cummit-graph.c:1404
+msgid "Loading known cummits in cummit graph"
 msgstr "Carregando memórias conhecidas em grafo de memória"
 
-#: commit-graph.c:1421
-msgid "Expanding reachable commits in commit graph"
+#: cummit-graph.c:1421
+msgid "Expanding reachable cummits in cummit graph"
 msgstr "Expandindo memórias alcançáveis em grafo de memória"
 
-#: commit-graph.c:1441
-msgid "Clearing commit marks in commit graph"
+#: cummit-graph.c:1441
+msgid "Clearing cummit marks in cummit graph"
 msgstr "Limpando marcas de memórias em grafo de memória"
 
-#: commit-graph.c:1460
-msgid "Computing commit graph topological levels"
+#: cummit-graph.c:1460
+msgid "Computing cummit graph topological levels"
 msgstr "Processando níveis topológicos de grafo de memória"
 
-#: commit-graph.c:1513
-msgid "Computing commit graph generation numbers"
+#: cummit-graph.c:1513
+msgid "Computing cummit graph generation numbers"
 msgstr "Processando geração de números de grafo de memória"
 
-#: commit-graph.c:1598
-msgid "Computing commit changed paths Bloom filters"
+#: cummit-graph.c:1598
+msgid "Computing cummit changed paths Bloom filters"
 msgstr "Processando mudança de caminhos de memória de filtros de Bloom"
 
-#: commit-graph.c:1675
-msgid "Collecting referenced commits"
+#: cummit-graph.c:1675
+msgid "Collecting referenced cummits"
 msgstr "Recolhendo memórias referenciadas"
 
-#: commit-graph.c:1701
+#: cummit-graph.c:1701
 #, c-format
-msgid "Finding commits for commit graph in %<PRIuMAX> pack"
-msgid_plural "Finding commits for commit graph in %<PRIuMAX> packs"
+msgid "Finding cummits for cummit graph in %<PRIuMAX> pack"
+msgid_plural "Finding cummits for cummit graph in %<PRIuMAX> packs"
 msgstr[0] "Encontrando memórias para grafo de memória em %<PRIuMAX> pacote"
 msgstr[1] "Encontrando memórias para grafo de memória em %<PRIuMAX> pacotes"
 
-#: commit-graph.c:1714
+#: cummit-graph.c:1714
 #, c-format
 msgid "error adding pack %s"
 msgstr "error adicionando pacote %s"
 
-#: commit-graph.c:1718
+#: cummit-graph.c:1718
 #, c-format
 msgid "error opening index for %s"
 msgstr "erro ao abrir cenário para %s"
 
-#: commit-graph.c:1756
-msgid "Finding commits for commit graph among packed objects"
+#: cummit-graph.c:1756
+msgid "Finding cummits for cummit graph among packed objects"
 msgstr "Encontrando, entre objetos de pacote, memórias para grafo de memória"
 
-#: commit-graph.c:1774
-msgid "Finding extra edges in commit graph"
+#: cummit-graph.c:1774
+msgid "Finding extra edges in cummit graph"
 msgstr "Encontrando pontas extra em grafo de memória"
 
-#: commit-graph.c:1823
+#: cummit-graph.c:1823
 msgid "failed to write correct number of base graph ids"
 msgstr "falhou ao escrever números corretos em ids de base grafo"
 
-#: commit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
+#: cummit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
 #, c-format
 msgid "unable to create leading directories of %s"
 msgstr "incapaz criar as pastas superiores a %s"
 
-#: commit-graph.c:1868
+#: cummit-graph.c:1868
 msgid "unable to create temporary graph layer"
 msgstr "incapaz criar camada de grafo temporária"
 
-#: commit-graph.c:1873
+#: cummit-graph.c:1873
 #, c-format
 msgid "unable to adjust shared permissions for '%s'"
 msgstr "incapaz de ajustar permissão partilhada para '%s'"
 
-#: commit-graph.c:1930
+#: cummit-graph.c:1930
 #, c-format
-msgid "Writing out commit graph in %d pass"
-msgid_plural "Writing out commit graph in %d passes"
+msgid "Writing out cummit graph in %d pass"
+msgid_plural "Writing out cummit graph in %d passes"
 msgstr[0] "Escrevendo grafo de memória em %d passagem"
 msgstr[1] "Escrevendo grafo de memória em %d passagens"
 
-#: commit-graph.c:1967
-msgid "unable to open commit-graph chain file"
+#: cummit-graph.c:1967
+msgid "unable to open cummit-graph chain file"
 msgstr "incapaz abrir ficheiro de série de grafo-memória"
 
-#: commit-graph.c:1983
-msgid "failed to rename base commit-graph file"
+#: cummit-graph.c:1983
+msgid "failed to rename base cummit-graph file"
 msgstr "falhou renomear ficheiro grafo-memória base"
 
-#: commit-graph.c:2004
-msgid "failed to rename temporary commit-graph file"
+#: cummit-graph.c:2004
+msgid "failed to rename temporary cummit-graph file"
 msgstr "falha a renomear ficheiro grafo-memória temporário"
 
-#: commit-graph.c:2137
-msgid "Scanning merged commits"
+#: cummit-graph.c:2137
+msgid "Scanning merged cummits"
 msgstr "Procurando memórias de junção"
 
-#: commit-graph.c:2181
-msgid "Merging commit-graph"
+#: cummit-graph.c:2181
+msgid "Merging cummit-graph"
 msgstr "Juntando grafo-memória"
 
-#: commit-graph.c:2289
-msgid "attempting to write a commit-graph, but 'core.commitGraph' is disabled"
+#: cummit-graph.c:2289
+msgid "attempting to write a cummit-graph, but 'core.cummitGraph' is disabled"
 msgstr ""
-"tentando escrever um grafo-memória, mas 'core.commitGraph' está desativado"
+"tentando escrever um grafo-memória, mas 'core.cummitGraph' está desativado"
 
-#: commit-graph.c:2396
-msgid "too many commits to write graph"
+#: cummit-graph.c:2396
+msgid "too many cummits to write graph"
 msgstr "demasiadas memórias para escrever grafo"
 
-#: commit-graph.c:2494
-msgid "the commit-graph file has incorrect checksum and is likely corrupt"
+#: cummit-graph.c:2494
+msgid "the cummit-graph file has incorrect checksum and is likely corrupt"
 msgstr ""
 "ficheiro grafo-memória tem checksum incorreto e provavelmente está rompido"
 
-#: commit-graph.c:2504
+#: cummit-graph.c:2504
 #, c-format
-msgid "commit-graph has incorrect OID order: %s then %s"
+msgid "cummit-graph has incorrect OID order: %s then %s"
 msgstr "grafo-memória tem ordem de OID incorreta: %s e depois %s"
 
-#: commit-graph.c:2514 commit-graph.c:2529
+#: cummit-graph.c:2514 cummit-graph.c:2529
 #, c-format
-msgid "commit-graph has incorrect fanout value: fanout[%d] = %u != %u"
+msgid "cummit-graph has incorrect fanout value: fanout[%d] = %u != %u"
 msgstr "grafo-memória tem valor de fanout incorreto: fanout[%d] = %u != %u"
 
-#: commit-graph.c:2521
+#: cummit-graph.c:2521
 #, c-format
-msgid "failed to parse commit %s from commit-graph"
+msgid "failed to parse cummit %s from cummit-graph"
 msgstr "incapaz processar memória %s de grafo-memória"
 
-#: commit-graph.c:2539
-msgid "Verifying commits in commit graph"
+#: cummit-graph.c:2539
+msgid "Verifying cummits in cummit graph"
 msgstr "Verificando memórias em grafo de memória"
 
-#: commit-graph.c:2554
+#: cummit-graph.c:2554
 #, c-format
-msgid "failed to parse commit %s from object database for commit-graph"
+msgid "failed to parse cummit %s from object database for cummit-graph"
 msgstr ""
 
-#: commit-graph.c:2561
+#: cummit-graph.c:2561
 #, c-format
-msgid "root tree OID for commit %s in commit-graph is %s != %s"
+msgid "root tree OID for cummit %s in cummit-graph is %s != %s"
 msgstr ""
 
-#: commit-graph.c:2571
+#: cummit-graph.c:2571
 #, c-format
-msgid "commit-graph parent list for commit %s is too long"
+msgid "cummit-graph parent list for cummit %s is too long"
 msgstr ""
 
-#: commit-graph.c:2580
+#: cummit-graph.c:2580
 #, c-format
-msgid "commit-graph parent for %s is %s != %s"
+msgid "cummit-graph parent for %s is %s != %s"
 msgstr ""
 
-#: commit-graph.c:2594
+#: cummit-graph.c:2594
 #, c-format
-msgid "commit-graph parent list for commit %s terminates early"
+msgid "cummit-graph parent list for cummit %s terminates early"
 msgstr ""
 
-#: commit-graph.c:2599
-#, c-format
-msgid ""
-"commit-graph has generation number zero for commit %s, but non-zero elsewhere"
-msgstr ""
-
-#: commit-graph.c:2603
+#: cummit-graph.c:2599
 #, c-format
 msgid ""
-"commit-graph has non-zero generation number for commit %s, but zero elsewhere"
+"cummit-graph has generation number zero for cummit %s, but non-zero elsewhere"
 msgstr ""
 
-#: commit-graph.c:2620
+#: cummit-graph.c:2603
 #, c-format
-msgid "commit-graph generation for commit %s is %<PRIuMAX> < %<PRIuMAX>"
+msgid ""
+"cummit-graph has non-zero generation number for cummit %s, but zero elsewhere"
 msgstr ""
 
-#: commit-graph.c:2626
+#: cummit-graph.c:2620
 #, c-format
-msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
+msgid "cummit-graph generation for cummit %s is %<PRIuMAX> < %<PRIuMAX>"
 msgstr ""
 
-#: commit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
+#: cummit-graph.c:2626
+#, c-format
+msgid "cummit date for cummit %s in cummit-graph is %<PRIuMAX> != %<PRIuMAX>"
+msgstr ""
+
+#: cummit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
 #: builtin/am.c:450 builtin/am.c:1449 builtin/am.c:2124 builtin/replace.c:456
 #, c-format
 msgid "could not parse %s"
 msgstr "incapaz analisar %s"
 
-#: commit.c:56
+#: cummit.c:56
 #, c-format
-msgid "%s %s is not a commit!"
+msgid "%s %s is not a cummit!"
 msgstr "%s %s é memória nenhuma!"
 
-#: commit.c:197
+#: cummit.c:197
 msgid ""
 "Support for <GIT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
@@ -2708,35 +2708,35 @@ msgstr ""
 "Desliga esta mensagem executando\n"
 "\"git config advice.graftFileDeprecated false\""
 
-#: commit.c:1252
+#: cummit.c:1252
 #, c-format
-msgid "Commit %s has an untrusted GPG signature, allegedly by %s."
-msgstr "Commit %s tem assinatura GPG desconfiada, alegadamente por %s."
+msgid "cummit %s has an untrusted GPG signature, allegedly by %s."
+msgstr "cummit %s tem assinatura GPG desconfiada, alegadamente por %s."
 
-#: commit.c:1256
+#: cummit.c:1256
 #, c-format
-msgid "Commit %s has a bad GPG signature allegedly by %s."
-msgstr "Commit %s tem assinatura GPG incorreta, alegadamente por %s."
+msgid "cummit %s has a bad GPG signature allegedly by %s."
+msgstr "cummit %s tem assinatura GPG incorreta, alegadamente por %s."
 
-#: commit.c:1259
+#: cummit.c:1259
 #, c-format
-msgid "Commit %s does not have a GPG signature."
-msgstr "Commit %s tem assinatura GPG nenhuma."
+msgid "cummit %s does not have a GPG signature."
+msgstr "cummit %s tem assinatura GPG nenhuma."
 
-#: commit.c:1262
+#: cummit.c:1262
 #, c-format
-msgid "Commit %s has a good GPG signature by %s\n"
-msgstr "Commit %s tem assinatura correta, por %s\n"
+msgid "cummit %s has a good GPG signature by %s\n"
+msgstr "cummit %s tem assinatura correta, por %s\n"
 
-#: commit.c:1516
+#: cummit.c:1516
 msgid ""
-"Warning: commit message did not conform to UTF-8.\n"
+"Warning: cummit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
-"variable i18n.commitencoding to the encoding your project uses.\n"
+"variable i18n.cummitencoding to the encoding your project uses.\n"
 msgstr ""
 "Aviso: mensagem de memória é incompatível com UTF-8.\n"
 "Podes querer emendá-lo depois de corrigires a mensagem, ou definir a\n"
-"variável de config i18n.commitencoding para a codificação que o teu\n"
+"variável de config i18n.cummitencoding para a codificação que o teu\n"
 "projeto usa.\n"
 
 #: compat/obstack.c:406 compat/obstack.c:408
@@ -3566,7 +3566,7 @@ msgid "--merge-base does not work with ranges"
 msgstr "--merge-base é incompatível com intervalos"
 
 #: diff-lib.c:563
-msgid "--merge-base only works with commits"
+msgid "--merge-base only works with cummits"
 msgstr "--merge-base apenas funciona com memórias"
 
 #: diff-lib.c:580
@@ -4365,7 +4365,7 @@ msgstr "obtive %s %d %s"
 
 #: fetch-pack.c:470
 #, c-format
-msgid "invalid commit %s"
+msgid "invalid cummit %s"
 msgstr "memória inválida %s"
 
 #: fetch-pack.c:501
@@ -4451,7 +4451,7 @@ msgid "Server does not support this repository's object format"
 msgstr "Servidor insustenta formato de objeto deste repositório"
 
 #: fetch-pack.c:1142
-msgid "no common commits"
+msgid "no common cummits"
 msgstr "memórias comuns nenhumas"
 
 #: fetch-pack.c:1151 fetch-pack.c:1506 builtin/clone.c:1166
@@ -4867,7 +4867,7 @@ msgid "Author identity unknown\n"
 msgstr ""
 
 #: ident.c:357
-msgid "Committer identity unknown\n"
+msgid "cummitter identity unknown\n"
 msgstr ""
 
 #: ident.c:363
@@ -4924,7 +4924,7 @@ msgstr "nome de identação vazio (para <%s>) proíbido"
 msgid "name consists only of disallowed characters: %s"
 msgstr "nome consiste apenas de caracteres proíbidos: %s"
 
-#: ident.c:455 builtin/commit.c:649
+#: ident.c:455 builtin/cummit.c:649
 #, c-format
 msgid "invalid date format: %s"
 msgstr "formato de data inválido: %s"
@@ -4986,7 +4986,7 @@ msgstr ""
 
 #: list-objects.c:415
 #, c-format
-msgid "unable to load root tree for commit %s"
+msgid "unable to load root tree for cummit %s"
 msgstr "incapaz carregar raiz de árvore para memória %s"
 
 #: lockfile.c:152
@@ -4995,7 +4995,7 @@ msgid ""
 "Unable to create '%s.lock': %s.\n"
 "\n"
 "Another git process seems to be running in this repository, e.g.\n"
-"an editor opened by 'git commit'. Please make sure all processes\n"
+"an editor opened by 'git cummit'. Please make sure all processes\n"
 "are terminated then try again. If it still fails, a git process\n"
 "may have crashed in this repository earlier:\n"
 "remove the file manually to continue."
@@ -5003,7 +5003,7 @@ msgstr ""
 "Incapaz de criar '%s.lock': %s.\n"
 "\n"
 "Outro processo git parece estar a correr neste repositório, e.g.\n"
-"um editor aberto por 'git commit'. Por favor, certifica-te que todos\n"
+"um editor aberto por 'git cummit'. Por favor, certifica-te que todos\n"
 "os processos são terminados e tenta de novo. Se ainda assim falhar,\n"
 "um processo git anterior pode ter crashado neste repositório:\n"
 "remove o ficheiro manualmente para continuar."
@@ -5038,12 +5038,12 @@ msgstr ""
 
 #: merge-ort.c:1639 merge-recursive.c:1221
 #, c-format
-msgid "Failed to merge submodule %s (commits not present)"
+msgid "Failed to merge submodule %s (cummits not present)"
 msgstr ""
 
 #: merge-ort.c:1648 merge-recursive.c:1228
 #, c-format
-msgid "Failed to merge submodule %s (commits don't follow merge-base)"
+msgid "Failed to merge submodule %s (cummits don't follow merge-base)"
 msgstr ""
 
 #: merge-ort.c:1658 merge-ort.c:1666
@@ -5259,7 +5259,7 @@ msgid "Already up to date."
 msgstr "Já está atualizado."
 
 #: merge-recursive.c:353
-msgid "(bad commit)\n"
+msgid "(bad cummit)\n"
 msgstr "(memória incorreta)\n"
 
 #: merge-recursive.c:381
@@ -5318,7 +5318,7 @@ msgstr "desconheço que fazer com %06o %s '%s'"
 
 #: merge-recursive.c:1236 merge-recursive.c:1249
 #, c-format
-msgid "Fast-forwarding submodule %s to the following commit:"
+msgid "Fast-forwarding submodule %s to the following cummit:"
 msgstr "Avançando submódulo %s para a seguinte memória:"
 
 #: merge-recursive.c:1239 merge-recursive.c:1252
@@ -5328,7 +5328,7 @@ msgstr "Avançando submódulo %s"
 
 #: merge-recursive.c:1276
 #, c-format
-msgid "Failed to merge submodule %s (merge following commits not found)"
+msgid "Failed to merge submodule %s (merge following cummits not found)"
 msgstr ""
 
 #: merge-recursive.c:1280
@@ -5525,7 +5525,7 @@ msgstr[0] "%u antecessor comum encontrado:"
 msgstr[1] "%u antecessores comuns encontrados:"
 
 #: merge-recursive.c:3651
-msgid "merge returned no commit"
+msgid "merge returned no cummit"
 msgstr "junção retornou memória nenhuma"
 
 #: merge-recursive.c:3823
@@ -5783,11 +5783,11 @@ msgstr "incapaz juntar a thread lazy_name: %s"
 #, c-format
 msgid ""
 "You have not concluded your previous notes merge (%s exists).\n"
-"Please, use 'git notes merge --commit' or 'git notes merge --abort' to "
-"commit/abort the previous merge before you start a new notes merge."
+"Please, use 'git notes merge --cummit' or 'git notes merge --abort' to "
+"cummit/abort the previous merge before you start a new notes merge."
 msgstr ""
 "Ficou por concluir a anterior junção de notas (%s existe).\n"
-"Por favor, usa 'git notes merge --commit' ou 'git notes merge --abort' para "
+"Por favor, usa 'git notes merge --cummit' ou 'git notes merge --abort' para "
 "memorizar/abortar a junção anterior antes de começares uma nova junção de "
 "notas."
 
@@ -5797,7 +5797,7 @@ msgid "You have not concluded your notes merge (%s exists)."
 msgstr "Ficou por concluír a tua junção de notas (%s existe)."
 
 #: notes-utils.c:46
-msgid "Cannot commit uninitialized/unreferenced notes tree"
+msgid "Cannot cummit uninitialized/unreferenced notes tree"
 msgstr ""
 "incapaz memorizar notas de árvore que estejam por iniciar/por referenciar"
 
@@ -6009,7 +6009,7 @@ msgid "cannot read object for %s"
 msgstr "incapaz ler objeto para %s"
 
 #: object-file.c:2151
-msgid "corrupt commit"
+msgid "corrupt cummit"
 msgstr "memória de Git rota"
 
 #: object-file.c:2159
@@ -6085,14 +6085,14 @@ msgstr "incapaz desempacotar conteúdo de %s"
 msgid "%s [bad object]"
 msgstr "%s [objeto inválido]"
 
-#. TRANSLATORS: This is a line of ambiguous commit
+#. TRANSLATORS: This is a line of ambiguous cummit
 #. object output. E.g.:
 #. *
-#.    "deadbeef commit 2021-01-01 - Some Commit Message"
+#.    "deadbeef cummit 2021-01-01 - Some cummit Message"
 #.
 #: object-name.c:407
 #, c-format
-msgid "%s commit %s - %s"
+msgid "%s cummit %s - %s"
 msgstr "memória %s %s - %s"
 
 #. TRANSLATORS: This is a line of ambiguous
@@ -6354,7 +6354,7 @@ msgstr "offset antes do início do índice do pacote %s (índice corrompido?)"
 msgid "offset beyond end of pack index for %s (truncated index?)"
 msgstr "offset depois do fim do índice do pacote %s (índice truncado?)"
 
-#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/commit-graph.c:175
+#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/cummit-graph.c:175
 #, c-format
 msgid "option `%s' expects a numerical value"
 msgstr ""
@@ -6679,13 +6679,13 @@ msgstr "incapaz ler output de `log`"
 
 #: range-diff.c:98 sequencer.c:5575
 #, c-format
-msgid "could not parse commit '%s'"
+msgid "could not parse cummit '%s'"
 msgstr "incapaz processar memória '%s'"
 
 #: range-diff.c:109
 #, c-format
 msgid ""
-"could not parse first line of `log` output: did not start with 'commit ': "
+"could not parse first line of `log` output: did not start with 'cummit ': "
 "'%s'"
 msgstr ""
 
@@ -6719,7 +6719,7 @@ msgstr ""
 
 #: read-cache.c:780 builtin/submodule--helper.c:3359
 #, c-format
-msgid "'%s' does not have a commit checked out"
+msgid "'%s' does not have a cummit checked out"
 msgstr "'%s' tem memória nenhuma em observação"
 
 #: read-cache.c:832
@@ -6815,7 +6815,7 @@ msgstr "entradas de cenário desordenadas para '%s'"
 #: read-cache.c:2096 read-cache.c:2402 rerere.c:549 rerere.c:583 rerere.c:1096
 #: submodule.c:1831 builtin/add.c:586 builtin/check-ignore.c:183
 #: builtin/checkout.c:532 builtin/checkout.c:724 builtin/clean.c:1016
-#: builtin/commit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
+#: builtin/cummit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
 #: builtin/mv.c:148 builtin/reset.c:506 builtin/rm.c:293
 #: builtin/submodule--helper.c:335 builtin/submodule--helper.c:3319
 msgid "index file corrupt"
@@ -6922,31 +6922,31 @@ msgstr ""
 #: rebase-interactive.c:33
 #, c-format
 msgid ""
-"unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
+"unrecognized setting %s for option rebase.missingcummitsCheck. Ignoring."
 msgstr ""
-"definição %s desconhecida da opção rebase.missingCommitsCheck. Ignorando."
+"definição %s desconhecida da opção rebase.missingcummitsCheck. Ignorando."
 
 #: rebase-interactive.c:42
 msgid ""
 "\n"
 "Commands:\n"
-"p, pick <commit> = use commit\n"
-"r, reword <commit> = use commit, but edit the commit message\n"
-"e, edit <commit> = use commit, but stop for amending\n"
-"s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup [-C | -c] <commit> = like \"squash\" but keep only the previous\n"
-"                   commit's log message, unless -C is used, in which case\n"
-"                   keep only this commit's message; -c is same as -C but\n"
+"p, pick <cummit> = use cummit\n"
+"r, reword <cummit> = use cummit, but edit the cummit message\n"
+"e, edit <cummit> = use cummit, but stop for amending\n"
+"s, squash <cummit> = use cummit, but meld into previous cummit\n"
+"f, fixup [-C | -c] <cummit> = like \"squash\" but keep only the previous\n"
+"                   cummit's log message, unless -C is used, in which case\n"
+"                   keep only this cummit's message; -c is same as -C but\n"
 "                   opens the editor\n"
 "x, exec <command> = run command (the rest of the line) using shell\n"
 "b, break = stop here (continue rebase later with 'git rebase --continue')\n"
-"d, drop <commit> = remove commit\n"
+"d, drop <cummit> = remove cummit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified); use -c <commit> to reword the commit message\n"
+"m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+".       create a merge cummit using the original merge cummit's\n"
+".       message (or the oneline, if no original merge cummit was\n"
+".       specified); use -c <cummit> to reword the cummit message\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
@@ -6984,7 +6984,7 @@ msgstr[1] "Rebasear %s sobre %s (%d comandos)"
 #: rebase-interactive.c:75
 msgid ""
 "\n"
-"Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
+"Do not remove any line. Use 'drop' explicitly to remove a cummit.\n"
 msgstr ""
 "\n"
 "Remove linha nenhuma. Usa explicitamente 'drop' para remover uma memória.\n"
@@ -6992,10 +6992,10 @@ msgstr ""
 #: rebase-interactive.c:78
 msgid ""
 "\n"
-"If you remove a line here THAT COMMIT WILL BE LOST.\n"
+"If you remove a line here THAT cummit WILL BE LOST.\n"
 msgstr ""
 "\n"
-"Se remover uma linha daqui AQUELE COMMIT SERÁ PERDIDO.\n"
+"Se remover uma linha daqui AQUELE cummit SERÁ PERDIDO.\n"
 
 #: rebase-interactive.c:84
 msgid ""
@@ -7036,8 +7036,8 @@ msgstr "incapaz escrever '%s'."
 #: rebase-interactive.c:196
 #, c-format
 msgid ""
-"Warning: some commits may have been dropped accidentally.\n"
-"Dropped commits (newer to older):\n"
+"Warning: some cummits may have been dropped accidentally.\n"
+"Dropped cummits (newer to older):\n"
 msgstr ""
 "Aviso: algumas memórias podem ter sido descartadas acidentalmente.\n"
 "Memórias descartadas (de nova para mais velha):\n"
@@ -7045,9 +7045,9 @@ msgstr ""
 #: rebase-interactive.c:203
 #, c-format
 msgid ""
-"To avoid this message, use \"drop\" to explicitly remove a commit.\n"
+"To avoid this message, use \"drop\" to explicitly remove a cummit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
+"Use 'git config rebase.missingcummitsCheck' to change the level of "
 "warnings.\n"
 "The possible behaviours are: ignore, warn, error.\n"
 "\n"
@@ -7055,7 +7055,7 @@ msgstr ""
 "Para evitar esta mensagem, usa \"drop\" para remover uma memória "
 "explicitamente.\n"
 "\n"
-"Usa 'git config rebase.missingCommitsCheck' para mudar o nível de avisos.\n"
+"Usa 'git config rebase.missingcummitsCheck' para mudar o nível de avisos.\n"
 "Comportamentos possíveis são: ignore, warn, error.\n"
 "\n"
 
@@ -7296,7 +7296,7 @@ msgstr "nome de objeto malformado %s"
 
 #: ref-filter.c:2746
 #, c-format
-msgid "option `%s' must point to a commit"
+msgid "option `%s' must point to a cummit"
 msgstr "opção `%s' tem de apontar para uma memória"
 
 #: reflog.c:407
@@ -7482,7 +7482,7 @@ msgstr ""
 #: remote.c:1231
 #, c-format
 msgid ""
-"The <src> part of the refspec is a commit object.\n"
+"The <src> part of the refspec is a cummit object.\n"
 "Did you mean to create a new branch by pushing to\n"
 "'%s:refs/heads/%s'?"
 msgstr ""
@@ -7600,7 +7600,7 @@ msgstr "Teu ramo está atualizado com '%s'.\n"
 
 #: remote.c:2246
 #, c-format
-msgid "Your branch and '%s' refer to different commits.\n"
+msgid "Your branch and '%s' refer to different cummits.\n"
 msgstr "Teu ramo e '%s' referem-se a memórias diferentes.\n"
 
 #: remote.c:2249
@@ -7610,20 +7610,20 @@ msgstr " (para detalhes usa \"%s\")\n"
 
 #: remote.c:2253
 #, c-format
-msgid "Your branch is ahead of '%s' by %d commit.\n"
-msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
+msgid "Your branch is ahead of '%s' by %d cummit.\n"
+msgid_plural "Your branch is ahead of '%s' by %d cummits.\n"
 msgstr[0] "Teu ramo está à frente de '%s' por %d memória.\n"
 msgstr[1] "Teu ramo está à frente de '%s' por %d memórias.\n"
 
 #: remote.c:2259
-msgid "  (use \"git push\" to publish your local commits)\n"
+msgid "  (use \"git push\" to publish your local cummits)\n"
 msgstr "  (usa \"git push\" para publicar tuas memórias locais)\n"
 
 #: remote.c:2262
 #, c-format
-msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
+msgid "Your branch is behind '%s' by %d cummit, and can be fast-forwarded.\n"
 msgid_plural ""
-"Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
+"Your branch is behind '%s' by %d cummits, and can be fast-forwarded.\n"
 msgstr[0] "Teu ramo está atrás de '%s' por %d memória, e pode ser avançado.\n"
 msgstr[1] "Teu ramo está atrás de '%s' por %d memórias, e pode ser avançado.\n"
 
@@ -7635,10 +7635,10 @@ msgstr "  (usa \"git pull\" para atualizar teu ramo local)\n"
 #, c-format
 msgid ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commit each, respectively.\n"
+"and have %d and %d different cummit each, respectively.\n"
 msgid_plural ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commits each, respectively.\n"
+"and have %d and %d different cummits each, respectively.\n"
 msgstr[0] ""
 "Teu ramo e '%s' divergiram,\n"
 "tendo cada um %d e %d memória diferente, respetivamente.\n"
@@ -7782,7 +7782,7 @@ msgstr "teu ramo atual parece estar danificado"
 
 #: revision.c:2715
 #, c-format
-msgid "your current branch '%s' does not have any commits yet"
+msgid "your current branch '%s' does not have any cummits yet"
 msgstr "teu ramo atual '%s' tem memórias nenhumas, por enquanto"
 
 #: revision.c:2901
@@ -7850,7 +7850,7 @@ msgstr "o lado receptor insustenta opções de atiro"
 
 #: sequencer.c:197
 #, c-format
-msgid "invalid commit message cleanup mode '%s'"
+msgid "invalid cummit message cleanup mode '%s'"
 msgstr "mensagem de memória de modo de limpeza '%s' inválida"
 
 #: sequencer.c:325
@@ -7894,7 +7894,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git cherry-pick --continue\".\n"
-"You can instead skip this commit with \"git cherry-pick --skip\".\n"
+"You can instead skip this cummit with \"git cherry-pick --skip\".\n"
 "To abort and get back to the state before \"git cherry-pick\",\n"
 "run \"git cherry-pick --abort\"."
 msgstr ""
@@ -7910,7 +7910,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git revert --continue\".\n"
-"You can instead skip this commit with \"git revert --skip\".\n"
+"You can instead skip this cummit with \"git revert --skip\".\n"
 "To abort and get back to the state before \"git revert\",\n"
 "run \"git revert --abort\"."
 msgstr ""
@@ -7944,7 +7944,7 @@ msgid "failed to finalize '%s'"
 msgstr "falhou finalizar '%s'"
 
 #: sequencer.c:473 sequencer.c:1930 sequencer.c:3112 sequencer.c:3547
-#: sequencer.c:3675 builtin/am.c:290 builtin/commit.c:837 builtin/merge.c:1154
+#: sequencer.c:3675 builtin/am.c:290 builtin/cummit.c:837 builtin/merge.c:1154
 #, c-format
 msgid "could not read '%s'"
 msgstr "incapaz ler '%s'"
@@ -7955,7 +7955,7 @@ msgid "your local changes would be overwritten by %s."
 msgstr "tuas alterações locais serão sobrescritas ao %s."
 
 #: sequencer.c:503
-msgid "commit your changes or stash them to proceed."
+msgid "cummit your changes or stash them to proceed."
 msgstr "memoriza tuas alterações ou esconde-as para continuar."
 
 #: sequencer.c:535
@@ -7981,7 +7981,7 @@ msgid "unable to update cache tree"
 msgstr "incapaz atualizar árvore de cenário"
 
 #: sequencer.c:713
-msgid "could not resolve HEAD commit"
+msgid "could not resolve HEAD cummit"
 msgstr "incapaz resolver memória HEAD"
 
 #: sequencer.c:793
@@ -8033,13 +8033,13 @@ msgstr "faltando 'GIT_AUTHOR_DATE'"
 #, c-format
 msgid ""
 "you have staged changes in your working tree\n"
-"If these changes are meant to be squashed into the previous commit, run:\n"
+"If these changes are meant to be squashed into the previous cummit, run:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
-"If they are meant to go into a new commit, run:\n"
+"If they are meant to go into a new cummit, run:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
@@ -8048,19 +8048,19 @@ msgstr ""
 "tens alterações encenadas na tua árvore-trabalho\n"
 "Se tencionas esmagar estas alterações para a memória anterior, executa:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Se tencionas pô-las numa nova memória, executa:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "Em ambos os casos, quando estiver pronto, continua com:\n"
 "\n"
 "  git rebase --continue\n"
 
 #: sequencer.c:1225
-msgid "'prepare-commit-msg' hook failed"
-msgstr "gancho 'prepare-commit-msg' falhou"
+msgid "'prepare-cummit-msg' hook failed"
+msgstr "gancho 'prepare-cummit-msg' falhou"
 
 #: sequencer.c:1231
 msgid ""
@@ -8072,9 +8072,9 @@ msgid ""
 "\n"
 "    git config --global --edit\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Teu nome e endereço de email foram configurados automaticamente com base\n"
 "no teu nome de utilizador e nome de máquina. Por favor, verifica se estão\n"
@@ -8087,7 +8087,7 @@ msgstr ""
 "\n"
 "Após fazer isto, podes corrigir a identidade usada nesta memória com:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1244
 msgid ""
@@ -8098,9 +8098,9 @@ msgid ""
 "    git config --global user.name \"Your Name\"\n"
 "    git config --global user.email you@example.com\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Teu nome e endereço de email foram configurados automaticamente com base\n"
 "no teu nome de utilizador e nome de máquina. Por favor, verifica se estão\n"
@@ -8112,18 +8112,18 @@ msgstr ""
 "\n"
 "Após fazer isto, podes corrigir a identidade usada nesta memória com:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1287
-msgid "couldn't look up newly created commit"
+msgid "couldn't look up newly created cummit"
 msgstr "incapaz consultar memória recém-criada"
 
 #: sequencer.c:1289
-msgid "could not parse newly created commit"
+msgid "could not parse newly created cummit"
 msgstr "incapaz processar memória recém-criada"
 
 #: sequencer.c:1336
-msgid "unable to resolve HEAD after creating commit"
+msgid "unable to resolve HEAD after creating cummit"
 msgstr "incapaz resolver HEAD após criar memória"
 
 #: sequencer.c:1338
@@ -8131,7 +8131,7 @@ msgid "detached HEAD"
 msgstr "HEAD desanexada"
 
 #: sequencer.c:1342
-msgid " (root-commit)"
+msgid " (root-cummit)"
 msgstr " (memória-raiz)"
 
 #: sequencer.c:1363
@@ -8140,15 +8140,15 @@ msgstr "incapaz processar HEAD"
 
 #: sequencer.c:1365
 #, c-format
-msgid "HEAD %s is not a commit!"
+msgid "HEAD %s is not a cummit!"
 msgstr "HEAD %s é memória nenhuma!"
 
-#: sequencer.c:1369 sequencer.c:1447 builtin/commit.c:1707
-msgid "could not parse HEAD commit"
+#: sequencer.c:1369 sequencer.c:1447 builtin/cummit.c:1707
+msgid "could not parse HEAD cummit"
 msgstr "incapaz processar memória HEAD"
 
 #: sequencer.c:1425 sequencer.c:2310
-msgid "unable to parse commit author"
+msgid "unable to parse cummit author"
 msgstr "incapaz processar autor de memória"
 
 #: sequencer.c:1436 builtin/am.c:1644 builtin/merge.c:710
@@ -8157,7 +8157,7 @@ msgstr "git write-tree falhou a escrever uma árvore"
 
 #: sequencer.c:1469 sequencer.c:1589
 #, c-format
-msgid "unable to read commit message from '%s'"
+msgid "unable to read cummit message from '%s'"
 msgstr "incapaz ler mensagem de memória de '%s'"
 
 #: sequencer.c:1500 sequencer.c:1532
@@ -8169,9 +8169,9 @@ msgstr "identidade de autor '%s' inválida"
 msgid "corrupt author: missing date information"
 msgstr "author rompido: faltando informação de data"
 
-#: sequencer.c:1545 builtin/am.c:1671 builtin/commit.c:1821 builtin/merge.c:921
+#: sequencer.c:1545 builtin/am.c:1671 builtin/cummit.c:1821 builtin/merge.c:921
 #: builtin/merge.c:946 t/helper/test-fast-rebase.c:78
-msgid "failed to write commit object"
+msgid "failed to write cummit object"
 msgstr "falhou escrever objeto de memória"
 
 #: sequencer.c:1572 sequencer.c:4496 t/helper/test-fast-rebase.c:199
@@ -8182,12 +8182,12 @@ msgstr "incapaz atualizar %s"
 
 #: sequencer.c:1621
 #, c-format
-msgid "could not parse commit %s"
+msgid "could not parse cummit %s"
 msgstr "incapaz processar memória %s"
 
 #: sequencer.c:1626
 #, c-format
-msgid "could not parse parent commit %s"
+msgid "could not parse parent cummit %s"
 msgstr "incapaz processar memória parente %s"
 
 #: sequencer.c:1709 sequencer.c:1990
@@ -8196,26 +8196,26 @@ msgid "unknown command: %d"
 msgstr "comando desconhecido: %d"
 
 #: sequencer.c:1751
-msgid "This is the 1st commit message:"
+msgid "This is the 1st cummit message:"
 msgstr "Esta é a 1ª mensagem de memória:"
 
 #: sequencer.c:1752
 #, c-format
-msgid "This is the commit message #%d:"
+msgid "This is the cummit message #%d:"
 msgstr "Esta é a mensagem de memória #%d:"
 
 #: sequencer.c:1753
-msgid "The 1st commit message will be skipped:"
+msgid "The 1st cummit message will be skipped:"
 msgstr "A 1ª mensagem de memória será saltada:"
 
 #: sequencer.c:1754
 #, c-format
-msgid "The commit message #%d will be skipped:"
+msgid "The cummit message #%d will be skipped:"
 msgstr "A mensagem de memória #%d será saltada:"
 
 #: sequencer.c:1755
 #, c-format
-msgid "This is a combination of %d commits."
+msgid "This is a combination of %d cummits."
 msgstr "Isto é a combinação de %d memórias."
 
 #: sequencer.c:1902 sequencer.c:1959
@@ -8232,12 +8232,12 @@ msgid "could not read HEAD"
 msgstr "incapaz ler HEAD"
 
 #: sequencer.c:1953
-msgid "could not read HEAD's commit message"
+msgid "could not read HEAD's cummit message"
 msgstr "incapaz ler mensagem de memória de HEAD"
 
 #: sequencer.c:1977
 #, c-format
-msgid "could not read commit message of %s"
+msgid "could not read cummit message of %s"
 msgstr "incapaz ler mensagem de memória de %s"
 
 #: sequencer.c:2087
@@ -8245,29 +8245,29 @@ msgid "your index file is unmerged."
 msgstr "teu ficheiro de cenário está por juntar."
 
 #: sequencer.c:2094
-msgid "cannot fixup root commit"
+msgid "cannot fixup root cummit"
 msgstr "incapaz consertar memória-raiz"
 
 #: sequencer.c:2113
 #, c-format
-msgid "commit %s is a merge but no -m option was given."
+msgid "cummit %s is a merge but no -m option was given."
 msgstr "memória %s é uma junção mas foi fornecida opção -m nenhuma."
 
 #: sequencer.c:2121 sequencer.c:2129
 #, c-format
-msgid "commit %s does not have parent %d"
+msgid "cummit %s does not have parent %d"
 msgstr "memória %s tem parente %d nenhum"
 
 #: sequencer.c:2135
 #, c-format
-msgid "cannot get commit message for %s"
+msgid "cannot get cummit message for %s"
 msgstr "incapaz obter mensagem de memória para %s"
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
 #: sequencer.c:2154
 #, c-format
-msgid "%s: cannot parse parent commit %s"
+msgid "%s: cannot parse parent cummit %s"
 msgstr "%s: incapaz processar memória parente %s"
 
 #: sequencer.c:2220
@@ -8322,7 +8322,7 @@ msgstr "linha %d inválida: %.*s"
 
 #: sequencer.c:2572
 #, c-format
-msgid "cannot '%s' without a previous commit"
+msgid "cannot '%s' without a previous cummit"
 msgstr "incapaz '%s' sem uma memória anterior"
 
 #: sequencer.c:2620 builtin/rebase.c:185
@@ -8348,7 +8348,7 @@ msgid "unusable instruction sheet: '%s'"
 msgstr "folha de instruções inutilizável: '%s'"
 
 #: sequencer.c:2714
-msgid "no commits parsed."
+msgid "no cummits parsed."
 msgstr "memórias nenhumas processadas."
 
 #: sequencer.c:2725
@@ -8369,7 +8369,7 @@ msgid "malformed options sheet: '%s'"
 msgstr "folha de opções malformada: '%s'"
 
 #: sequencer.c:3029 sequencer.c:4875
-msgid "empty commit set passed"
+msgid "empty cummit set passed"
 msgstr "passou conjunto de memórias vazias"
 
 #: sequencer.c:3046
@@ -8444,7 +8444,7 @@ msgid "no cherry-pick in progress"
 msgstr "em curso apanha nenhuma"
 
 #: sequencer.c:3256
-msgid "failed to skip the commit"
+msgid "failed to skip the cummit"
 msgstr "falhou saltar memória"
 
 #: sequencer.c:3263
@@ -8454,7 +8454,7 @@ msgstr "há nada a saltar"
 #: sequencer.c:3266
 #, c-format
 msgid ""
-"have you committed already?\n"
+"have you cummitted already?\n"
 "try \"git %s --continue\""
 msgstr ""
 "já memorizaste?\n"
@@ -8472,9 +8472,9 @@ msgstr "incapaz copiar '%s' para '%s'"
 #: sequencer.c:3453
 #, c-format
 msgid ""
-"You can amend the commit now, with\n"
+"You can amend the cummit now, with\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
@@ -8482,7 +8482,7 @@ msgid ""
 msgstr ""
 "Podes emendar a memória agora, com\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Assim que estiveres satisfeito com as tuas alterações, executa\n"
 "\n"
@@ -8532,7 +8532,7 @@ msgstr "e fiz alterações ao cenário e/ou à árvore-trabalho\n"
 msgid ""
 "execution succeeded: %s\n"
 "but left changes to the index and/or the working tree\n"
-"Commit or stash your changes, and then run\n"
+"cummit or stash your changes, and then run\n"
 "\n"
 "  git rebase --continue\n"
 "\n"
@@ -8550,7 +8550,7 @@ msgid "illegal label name: '%.*s'"
 msgstr "nome de rótulo ilegal: '%.*s'"
 
 #: sequencer.c:3655
-msgid "writing fake root commit"
+msgid "writing fake root cummit"
 msgstr "escrevendo memória de raiz falsa"
 
 #: sequencer.c:3660
@@ -8582,7 +8582,7 @@ msgstr "incapaz de executar junção polvinho em cima de [nova raiz]"
 
 #: sequencer.c:3869
 #, c-format
-msgid "could not get commit message of '%s'"
+msgid "could not get cummit message of '%s'"
 msgstr "incapaz obter mensagem de memória de '%s'"
 
 #: sequencer.c:4013
@@ -8711,7 +8711,7 @@ msgid "cannot rebase: You have unstaged changes."
 msgstr "incapaz rebasear: tem alterações desencenadas."
 
 #: sequencer.c:4624
-msgid "cannot amend non-existing commit"
+msgid "cannot amend non-existing cummit"
 msgstr "incapaz emendar memória inexistente"
 
 #: sequencer.c:4626
@@ -8727,7 +8727,7 @@ msgstr "conteúdo inválido: '%s'"
 #: sequencer.c:4631
 msgid ""
 "\n"
-"You have uncommitted changes in your working tree. Please, commit them\n"
+"You have uncummitted changes in your working tree. Please, cummit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 "\n"
@@ -8745,7 +8745,7 @@ msgid "could not remove CHERRY_PICK_HEAD"
 msgstr "incapaz remover CHERRY_PICK_HEAD"
 
 #: sequencer.c:4732
-msgid "could not commit staged changes."
+msgid "could not cummit staged changes."
 msgstr "incapaz memorizar alterações encenadas."
 
 #: sequencer.c:4852
@@ -8759,16 +8759,16 @@ msgid "%s: bad revision"
 msgstr "%s: revisão incorreta"
 
 #: sequencer.c:4891
-msgid "can't revert as initial commit"
+msgid "can't revert as initial cummit"
 msgstr "incapaz reverter como memória inicial"
 
 #: sequencer.c:5162 sequencer.c:5391
 #, c-format
-msgid "skipped previously applied commit %s"
+msgid "skipped previously applied cummit %s"
 msgstr "saltei memória previamente aplicada %s"
 
 #: sequencer.c:5232 sequencer.c:5407
-msgid "use --reapply-cherry-picks to include skipped commits"
+msgid "use --reapply-cherry-picks to include skipped cummits"
 msgstr ""
 
 #: sequencer.c:5378
@@ -9097,19 +9097,19 @@ msgstr ""
 #: submodule.c:866
 #, c-format
 msgid ""
-"Submodule in commit %s at path: '%s' collides with a submodule named the "
+"Submodule in cummit %s at path: '%s' collides with a submodule named the "
 "same. Skipping it."
 msgstr ""
 
 #: submodule.c:987
 #, c-format
-msgid "submodule entry '%s' (%s) is a %s, not a commit"
+msgid "submodule entry '%s' (%s) is a %s, not a cummit"
 msgstr "entrada submódulo '%s' (%s) é um(a) %s, não uma memória"
 
 #: submodule.c:1069
 #, c-format
 msgid ""
-"Could not run 'git rev-list <commits> --not --remotes -n 1' command in "
+"Could not run 'git rev-list <cummits> --not --remotes -n 1' command in "
 "submodule %s"
 msgstr ""
 "Incapaz executar comando 'git rev-list <memórias> --not --remotes -n 1' em "
@@ -9146,12 +9146,12 @@ msgstr "Submódulo '%s' inacessível\n"
 
 #: submodule.c:1618
 #, c-format
-msgid "Could not access submodule '%s' at commit %s\n"
+msgid "Could not access submodule '%s' at cummit %s\n"
 msgstr "Incapaz de aceder submódulo '%s' em memória %s\n"
 
 #: submodule.c:1629
 #, c-format
-msgid "Fetching submodule %s%s at commit %s\n"
+msgid "Fetching submodule %s%s at cummit %s\n"
 msgstr "Buscando submódulo %s%s em memória %s\n"
 
 #: submodule.c:1849
@@ -9620,7 +9620,7 @@ msgstr "ficheiro de árvore demasiado curto"
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by checkout:\n"
-"%%sPlease commit your changes or stash them before you switch branches."
+"%%sPlease cummit your changes or stash them before you switch branches."
 msgstr ""
 "Tuas alterações locais nos seguintes ficheiros seriam sobrescritas ao fazer "
 "observação:\n"
@@ -9641,7 +9641,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
-"%%sPlease commit your changes or stash them before you merge."
+"%%sPlease cummit your changes or stash them before you merge."
 msgstr ""
 "Tuas alterações locais nos seguintes ficheiros seriam sobrescritas ao fazer "
 "junção:\n"
@@ -9662,7 +9662,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by %s:\n"
-"%%sPlease commit your changes or stash them before you %s."
+"%%sPlease cummit your changes or stash them before you %s."
 msgstr ""
 "Tuas alterações locais nos seguintes ficheiros seriam sobrescritas ao fazer "
 "%s:\n"
@@ -10096,19 +10096,19 @@ msgid "  (use \"git rm <file>...\" to mark resolution)"
 msgstr "  (usa \"git rm <ficheiro>...\" para marcar como resolvido)"
 
 #: wt-status.c:211 wt-status.c:1140
-msgid "Changes to be committed:"
+msgid "Changes to be cummitted:"
 msgstr "Alterações para serem memorizadas:"
 
 #: wt-status.c:234 wt-status.c:1149
-msgid "Changes not staged for commit:"
+msgid "Changes not staged for cummit:"
 msgstr "Alterações por encenar para memória:"
 
 #: wt-status.c:238
-msgid "  (use \"git add <file>...\" to update what will be committed)"
+msgid "  (use \"git add <file>...\" to update what will be cummitted)"
 msgstr "  (usa \"git add <ficheiro>...\" para atualizar o que será memorizado)"
 
 #: wt-status.c:240
-msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
+msgid "  (use \"git add/rm <file>...\" to update what will be cummitted)"
 msgstr ""
 "  (usa \"git add/rm <ficheiro>...\" para atualizar o que será memorizado)"
 
@@ -10120,14 +10120,14 @@ msgstr ""
 "trabalho)"
 
 #: wt-status.c:243
-msgid "  (commit or discard the untracked or modified content in submodules)"
+msgid "  (cummit or discard the untracked or modified content in submodules)"
 msgstr ""
 "  (memoriza ou descarta os desmonitorizados ou o conteúdo modificado de "
 "submódulos)"
 
 #: wt-status.c:254
 #, c-format
-msgid "  (use \"git %s <file>...\" to include in what will be committed)"
+msgid "  (use \"git %s <file>...\" to include in what will be cummitted)"
 msgstr "  (usa \"git %s <ficheiro>...\" para incluir o que será memorizado)"
 
 #: wt-status.c:266
@@ -10191,7 +10191,7 @@ msgid "unmerged:"
 msgstr "por juntar:"
 
 #: wt-status.c:382
-msgid "new commits, "
+msgid "new cummits, "
 msgstr "novas memórias, "
 
 #: wt-status.c:384
@@ -10214,7 +10214,7 @@ msgid "Submodules changed but not updated:"
 msgstr "Submódulos alterados mas desatualizados:"
 
 #: wt-status.c:1006
-msgid "Submodule changes to be committed:"
+msgid "Submodule changes to be cummitted:"
 msgstr "Alterações em submódulos para serem memorizadas:"
 
 #: wt-status.c:1088
@@ -10241,8 +10241,8 @@ msgid "You have unmerged paths."
 msgstr "Tens caminhos por juntar."
 
 #: wt-status.c:1213
-msgid "  (fix conflicts and run \"git commit\")"
-msgstr "  (corrige conflitos e executa \"git commit\")"
+msgid "  (fix conflicts and run \"git cummit\")"
+msgstr "  (corrige conflitos e executa \"git cummit\")"
 
 #: wt-status.c:1215
 msgid "  (use \"git merge --abort\" to abort the merge)"
@@ -10253,8 +10253,8 @@ msgid "All conflicts fixed but you are still merging."
 msgstr "Todos os conflitos foram corrigidos mas ainda estás juntando."
 
 #: wt-status.c:1222
-msgid "  (use \"git commit\" to conclude merge)"
-msgstr "  (usa \"git commit\" para concluir a junção)"
+msgid "  (use \"git cummit\" to conclude merge)"
+msgstr "  (usa \"git cummit\" para concluir a junção)"
 
 #: wt-status.c:1233
 msgid "You are in the middle of an am session."
@@ -10274,7 +10274,7 @@ msgstr "  (usa \"git am --skip\" para ignorar este remendo)"
 
 #: wt-status.c:1246
 msgid ""
-"  (use \"git am --allow-empty\" to record this patch as an empty commit)"
+"  (use \"git am --allow-empty\" to record this patch as an empty cummit)"
 msgstr ""
 "  (usa \"git am --allow-empty\" para gravar este remendo como uma memória "
 "vazia)"
@@ -10346,11 +10346,11 @@ msgstr "  (todos conflitos corrigidos: executa \"git rebase --continue\")"
 #: wt-status.c:1458
 #, c-format
 msgid ""
-"You are currently splitting a commit while rebasing branch '%s' on '%s'."
+"You are currently splitting a cummit while rebasing branch '%s' on '%s'."
 msgstr "Estás dividindo uma memória enquanto rebaseas ramo '%s' sobre '%s'."
 
 #: wt-status.c:1463
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a cummit during a rebase."
 msgstr "Está dividindo uma memória durante um rebaseamento."
 
 #: wt-status.c:1466
@@ -10361,16 +10361,16 @@ msgstr ""
 
 #: wt-status.c:1470
 #, c-format
-msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
+msgid "You are currently editing a cummit while rebasing branch '%s' on '%s'."
 msgstr "Estás a editar uma memória enquanto rebaseas o ramo '%s' sobre '%s'."
 
 #: wt-status.c:1475
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a cummit during a rebase."
 msgstr "Está a editar uma memória durante um rebaseamento."
 
 #: wt-status.c:1478
-msgid "  (use \"git commit --amend\" to amend the current commit)"
-msgstr "  (usa \"git commit --amend\" para emendar a memória atual)"
+msgid "  (use \"git cummit --amend\" to amend the current cummit)"
+msgstr "  (usa \"git cummit --amend\" para emendar a memória atual)"
 
 #: wt-status.c:1480
 msgid ""
@@ -10385,7 +10385,7 @@ msgstr "Cherry-pick atualmente em curso"
 
 #: wt-status.c:1494
 #, c-format
-msgid "You are currently cherry-picking commit %s."
+msgid "You are currently cherry-picking cummit %s."
 msgstr "Estás apanhando memória %s."
 
 #: wt-status.c:1501
@@ -10414,7 +10414,7 @@ msgstr "Reversão atualmente em curso."
 
 #: wt-status.c:1524
 #, c-format
-msgid "You are currently reverting commit %s."
+msgid "You are currently reverting cummit %s."
 msgstr "Estás atualmente revertendo memória %s."
 
 #: wt-status.c:1530
@@ -10484,11 +10484,11 @@ msgid "Not currently on any branch."
 msgstr "Atualmente em ramo nenhum."
 
 #: wt-status.c:1851
-msgid "Initial commit"
+msgid "Initial cummit"
 msgstr "Memória inicial"
 
 #: wt-status.c:1852
-msgid "No commits yet"
+msgid "No cummits yet"
 msgstr "Ainda sem memórias"
 
 #: wt-status.c:1866
@@ -10525,20 +10525,20 @@ msgstr "Sem alterações"
 
 #: wt-status.c:1891
 #, c-format
-msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
+msgid "no changes added to cummit (use \"git add\" and/or \"git cummit -a\")\n"
 msgstr ""
 "foi adicionado a memória alteração nenhuma (usa \"git add\" e/ou \"git "
-"commit -a\")\n"
+"cummit -a\")\n"
 
 #: wt-status.c:1895
 #, c-format
-msgid "no changes added to commit\n"
+msgid "no changes added to cummit\n"
 msgstr "foi adicionado a memória alteração nenhuma\n"
 
 #: wt-status.c:1899
 #, c-format
 msgid ""
-"nothing added to commit but untracked files present (use \"git add\" to "
+"nothing added to cummit but untracked files present (use \"git add\" to "
 "track)\n"
 msgstr ""
 "nada adicionado a memória mas há ficheiros desmonitorizados presentes (usa "
@@ -10546,33 +10546,33 @@ msgstr ""
 
 #: wt-status.c:1903
 #, c-format
-msgid "nothing added to commit but untracked files present\n"
+msgid "nothing added to cummit but untracked files present\n"
 msgstr ""
 "nada adicionado a memória mas há ficheiros desmonitorizados presentes\n"
 
 #: wt-status.c:1907
 #, c-format
-msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
+msgid "nothing to cummit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
 "nada a memorizar (cria/copia ficheiros e usa \"git add\" para monitorizar)\n"
 
 #: wt-status.c:1911 wt-status.c:1917
 #, c-format
-msgid "nothing to commit\n"
+msgid "nothing to cummit\n"
 msgstr "nada a memorizar\n"
 
 #: wt-status.c:1914
 #, c-format
-msgid "nothing to commit (use -u to show untracked files)\n"
+msgid "nothing to cummit (use -u to show untracked files)\n"
 msgstr "nada a memorizar (usa -u para mostrar ficheiros desmonitorizados)\n"
 
 #: wt-status.c:1919
 #, c-format
-msgid "nothing to commit, working tree clean\n"
+msgid "nothing to cummit, working tree clean\n"
 msgstr "nada a memorizar, árvore-trabalho limpa\n"
 
 #: wt-status.c:2024
-msgid "No commits yet on "
+msgid "No cummits yet on "
 msgstr "Memórias nenhumas em "
 
 #: wt-status.c:2028
@@ -10598,12 +10598,12 @@ msgid "cannot %s: You have unstaged changes."
 msgstr "incapaz efetuar %s: Tens alterações desencenadas."
 
 #: wt-status.c:2611
-msgid "additionally, your index contains uncommitted changes."
+msgid "additionally, your index contains uncummitted changes."
 msgstr "além disso, teu cenário contém alterações por memorizar."
 
 #: wt-status.c:2613
 #, c-format
-msgid "cannot %s: Your index contains uncommitted changes."
+msgid "cannot %s: Your index contains uncummitted changes."
 msgstr "incapaz efetuar %s: Teu cenário contém alterações por memorizar."
 
 #: compat/simple-ipc/ipc-unix-socket.c:205
@@ -10651,7 +10651,7 @@ msgstr "incapaz chmod %cx '%s'"
 msgid "unexpected diff status %c"
 msgstr "diff status inesperado %c"
 
-#: builtin/add.c:110 builtin/commit.c:299
+#: builtin/add.c:110 builtin/cummit.c:299
 msgid "updating files failed"
 msgstr "falhou ao atualizar ficheiros"
 
@@ -10700,7 +10700,7 @@ msgstr "Os seguintes caminhos estão ignorados por algum ficheiro .gitignore:\n"
 msgid "dry run"
 msgstr "simular ação"
 
-#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/commit.c:1483
+#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/cummit.c:1483
 #: builtin/count-objects.c:98 builtin/fsck.c:789 builtin/log.c:2338
 #: builtin/mv.c:123 builtin/read-tree.c:120
 msgid "be verbose"
@@ -10806,7 +10806,7 @@ msgstr "falhou adicionar ficheiros"
 msgid "--chmod param '%s' must be either -x or +x"
 msgstr "parâmetro '%s' de --chmod tem de ser -x ou +x"
 
-#: builtin/add.c:555 builtin/checkout.c:1770 builtin/commit.c:365
+#: builtin/add.c:555 builtin/checkout.c:1770 builtin/cummit.c:365
 #: builtin/reset.c:436 builtin/rm.c:275 builtin/stash.c:1702
 #, c-format
 msgid "'%s' and pathspec arguments cannot be used together"
@@ -10893,7 +10893,7 @@ msgstr "Se preferes ignorar este remendo, executa \"%s --skip\" invés."
 
 #: builtin/am.c:1160
 #, c-format
-msgid "To record the empty patch as an empty commit, run \"%s --allow-empty\"."
+msgid "To record the empty patch as an empty cummit, run \"%s --allow-empty\"."
 msgstr ""
 "Para gravar o remendo vazio como memória vazia, executa \"%s --allow-empty\"."
 
@@ -10909,7 +10909,7 @@ msgstr ""
 
 #: builtin/am.c:1345
 #, c-format
-msgid "missing author line in commit %s"
+msgid "missing author line in cummit %s"
 msgstr "faltando linha de autor em memória %s"
 
 #: builtin/am.c:1348
@@ -10951,7 +10951,7 @@ msgid "cannot resume: %s does not exist."
 msgstr "incapaz continuar: %s é inexistente."
 
 #: builtin/am.c:1726
-msgid "Commit Body is:"
+msgid "cummit Body is:"
 msgstr "Corpo da Memória é:"
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
@@ -10963,7 +10963,7 @@ msgstr "Corpo da Memória é:"
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "
 msgstr "Aplicar? [y]sim/[n]ão/[e]ditar/[v]er remendo/[a]ceitar todos: "
 
-#: builtin/am.c:1782 builtin/commit.c:410
+#: builtin/am.c:1782 builtin/cummit.c:410
 msgid "unable to write index file"
 msgstr "incapaz escrever ficheiro de cenário"
 
@@ -10979,7 +10979,7 @@ msgstr "Saltando: %.*s"
 
 #: builtin/am.c:1833
 #, c-format
-msgid "Creating an empty commit: %.*s"
+msgid "Creating an empty cummit: %.*s"
 msgstr "Criando memória vazia: %.*s"
 
 #: builtin/am.c:1837
@@ -11005,7 +11005,7 @@ msgid "Use 'git am --show-current-patch=diff' to see the failed patch"
 msgstr ""
 
 #: builtin/am.c:1921
-msgid "No changes - recorded it as an empty commit."
+msgid "No changes - recorded it as an empty cummit."
 msgstr "Sem alterações - gravado como uma memória vazia."
 
 #: builtin/am.c:1923
@@ -11075,7 +11075,7 @@ msgid "be quiet"
 msgstr "ficar silencioso"
 
 #: builtin/am.c:2337
-msgid "add a Signed-off-by trailer to the commit message"
+msgid "add a Signed-off-by trailer to the cummit message"
 msgstr "adicionar atribuição Signed-off-by para a mensagem de memória"
 
 #: builtin/am.c:2340
@@ -11117,7 +11117,7 @@ msgstr "passa-o pelo git-mailinfo"
 msgid "pass it through git-apply"
 msgstr "passa-o pelo git-apply"
 
-#: builtin/am.c:2376 builtin/commit.c:1514 builtin/fmt-merge-msg.c:18
+#: builtin/am.c:2376 builtin/cummit.c:1514 builtin/fmt-merge-msg.c:18
 #: builtin/fmt-merge-msg.c:21 builtin/grep.c:920 builtin/merge.c:263
 #: builtin/pull.c:142 builtin/pull.c:204 builtin/pull.c:221
 #: builtin/rebase.c:1074 builtin/repack.c:657 builtin/repack.c:661
@@ -11167,25 +11167,25 @@ msgid "show the patch being applied"
 msgstr "mostrar linhas sendo submetidas"
 
 #: builtin/am.c:2411
-msgid "record the empty patch as an empty commit"
+msgid "record the empty patch as an empty cummit"
 msgstr ""
 
 #: builtin/am.c:2415
-msgid "lie about committer date"
+msgid "lie about cummitter date"
 msgstr "mentir sobre a data de memorizador"
 
 #: builtin/am.c:2417
 msgid "use current timestamp for author date"
 msgstr "usar a data e hora atual como data de autor"
 
-#: builtin/am.c:2419 builtin/commit-tree.c:118 builtin/commit.c:1642
+#: builtin/am.c:2419 builtin/cummit-tree.c:118 builtin/cummit.c:1642
 #: builtin/merge.c:302 builtin/pull.c:179 builtin/rebase.c:1127
 #: builtin/revert.c:117 builtin/tag.c:461
 msgid "key-id"
 msgstr "id-chave"
 
 #: builtin/am.c:2420 builtin/rebase.c:1128
-msgid "GPG-sign commits"
+msgid "GPG-sign cummits"
 msgstr "assinar memórias com GPG"
 
 #: builtin/am.c:2423
@@ -11261,7 +11261,7 @@ msgid "git archive: expected a flush"
 msgstr "git archive: esperado um flush"
 
 #: builtin/bisect--helper.c:24
-msgid "git bisect--helper --bisect-reset [<commit>]"
+msgid "git bisect--helper --bisect-reset [<cummit>]"
 msgstr "git bisect--helper --bisect-reset [<memória>]"
 
 #: builtin/bisect--helper.c:26
@@ -11335,13 +11335,13 @@ msgstr "Estamos bissetando nada.\n"
 
 #: builtin/bisect--helper.c:218
 #, c-format
-msgid "'%s' is not a valid commit"
+msgid "'%s' is not a valid cummit"
 msgstr "'%s' é uma memória inválida"
 
 #: builtin/bisect--helper.c:227
 #, c-format
 msgid ""
-"could not check out original HEAD '%s'. Try 'git bisect reset <commit>'."
+"could not check out original HEAD '%s'. Try 'git bisect reset <cummit>'."
 msgstr ""
 "incapaz observar HEAD original '%s'. Tenta 'git bisect reset <memória>'."
 
@@ -11387,7 +11387,7 @@ msgstr ""
 
 #: builtin/bisect--helper.c:365
 #, c-format
-msgid "bisecting only with a %s commit"
+msgid "bisecting only with a %s cummit"
 msgstr "bissetando apenas com uma memória %s"
 
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -11493,7 +11493,7 @@ msgstr "Entrada de rev inválida: %s"
 
 #: builtin/bisect--helper.c:904
 #, c-format
-msgid "Bad rev input (not a commit): %s"
+msgid "Bad rev input (not a cummit): %s"
 msgstr "Entrada de rev inválida (é memória nenhuma): %s"
 
 #: builtin/bisect--helper.c:936
@@ -11550,7 +11550,7 @@ msgstr "sucesso na execução bisseção"
 
 #: builtin/bisect--helper.c:1218
 #, c-format
-msgid "bisect found first bad commit"
+msgid "bisect found first bad cummit"
 msgstr "bisseção encontrou primeira memória má"
 
 #: builtin/bisect--helper.c:1221
@@ -11579,7 +11579,7 @@ msgid "start the bisect session"
 msgstr "começar a sessão de bisseção"
 
 #: builtin/bisect--helper.c:1261
-msgid "find the next bisection commit"
+msgid "find the next bisection cummit"
 msgstr "encontrar próxima memória de bissecção"
 
 #: builtin/bisect--helper.c:1263
@@ -11595,7 +11595,7 @@ msgid "replay the bisection process from the given file"
 msgstr "refazer o processo de bisseção a partir de o ficheiro dado"
 
 #: builtin/bisect--helper.c:1269
-msgid "skip some commits for checkout"
+msgid "skip some cummits for checkout"
 msgstr "saltar algumas memórias para uma observação"
 
 #: builtin/bisect--helper.c:1271
@@ -11611,7 +11611,7 @@ msgid "no log for BISECT_WRITE"
 msgstr "nenhum registo para BISECT_WRITE"
 
 #: builtin/bisect--helper.c:1290
-msgid "--bisect-reset requires either no argument or a commit"
+msgid "--bisect-reset requires either no argument or a cummit"
 msgstr "--bisect-reset exige quer argumento nenhum ou uma memória"
 
 #: builtin/bisect--helper.c:1295
@@ -11658,13 +11658,13 @@ msgstr ""
 "mostrar entradas de culpa à medida que forem encontradas, incrementalmente"
 
 #: builtin/blame.c:865
-msgid "do not show object names of boundary commits (Default: off)"
+msgid "do not show object names of boundary cummits (Default: off)"
 msgstr ""
 "mostrar nenhuns nomes de objeto de memórias fronteira (Predefinição: "
 "desativado)"
 
 #: builtin/blame.c:866
-msgid "do not treat root commits as boundaries (Default: off)"
+msgid "do not treat root cummits as boundaries (Default: off)"
 msgstr ""
 "tratar nenhumas memórias raiz como fronteira (Predefinição: desativado)"
 
@@ -11673,7 +11673,7 @@ msgid "show work cost statistics"
 msgstr "mostrar estatísticas de custo de trabalho"
 
 #: builtin/blame.c:868 builtin/checkout.c:1554 builtin/clone.c:98
-#: builtin/commit-graph.c:75 builtin/commit-graph.c:228 builtin/fetch.c:181
+#: builtin/cummit-graph.c:75 builtin/cummit-graph.c:228 builtin/fetch.c:181
 #: builtin/merge.c:301 builtin/multi-pack-index.c:103
 #: builtin/multi-pack-index.c:154 builtin/multi-pack-index.c:180
 #: builtin/multi-pack-index.c:208 builtin/pull.c:120 builtin/push.c:566
@@ -11698,7 +11698,7 @@ msgid "show in a format designed for machine consumption"
 msgstr "mostrar em formato próprio para consumo por máquina"
 
 #: builtin/blame.c:873
-msgid "show porcelain format with per-line commit information"
+msgid "show porcelain format with per-line cummit information"
 msgstr "mostrar em formato de porcelana com informações de memória por linha"
 
 #: builtin/blame.c:874
@@ -11710,7 +11710,7 @@ msgid "show raw timestamp (Default: off)"
 msgstr "mostrar carimbo cronológico em bruto (Predefinição: desativado)"
 
 #: builtin/blame.c:876
-msgid "show long commit SHA1 (Default: off)"
+msgid "show long cummit SHA1 (Default: off)"
 msgstr "mostrar SHA1 longo de memória (Predefinição: desativado)"
 
 #: builtin/blame.c:877
@@ -11862,7 +11862,7 @@ msgstr ""
 
 #: builtin/branch.c:183
 #, c-format
-msgid "Couldn't look up commit object for '%s'"
+msgid "Couldn't look up cummit object for '%s'"
 msgstr "Incapaz encontrar objeto memória para '%s'"
 
 #: builtin/branch.c:187
@@ -11883,7 +11883,7 @@ msgid "cannot use -a with -d"
 msgstr "incapaz usar -a com -d"
 
 #: builtin/branch.c:242
-msgid "Couldn't look up commit object for HEAD"
+msgid "Couldn't look up cummit object for HEAD"
 msgstr "Incapaz de encontrar objeto memória para HEAD"
 
 #: builtin/branch.c:259
@@ -12032,11 +12032,11 @@ msgid "act on remote-tracking branches"
 msgstr "atuar sobre ramos remotos de monitorização"
 
 #: builtin/branch.c:666 builtin/branch.c:668
-msgid "print only branches that contain the commit"
+msgid "print only branches that contain the cummit"
 msgstr "mostrar apenas ramos que contenham a memória"
 
 #: builtin/branch.c:667 builtin/branch.c:669
-msgid "print only branches that don't contain the commit"
+msgid "print only branches that don't contain the cummit"
 msgstr "mostrar apenas ramos a que falte a memória"
 
 #: builtin/branch.c:672
@@ -12154,7 +12154,7 @@ msgstr "incapaz editar descrição de mais do que um ramo"
 
 #: builtin/branch.c:814
 #, c-format
-msgid "No commit on branch '%s' yet."
+msgid "No cummit on branch '%s' yet."
 msgstr "Ainda sem memórias em ramo '%s'."
 
 #: builtin/branch.c:817
@@ -12439,7 +12439,7 @@ msgid "Emit [broken] object attributes"
 msgstr ""
 
 #: builtin/cat-file.c:842
-msgid "show object type (one of 'blob', 'tree', 'commit', 'tag', ...)"
+msgid "show object type (one of 'blob', 'tree', 'cummit', 'tag', ...)"
 msgstr ""
 "mostrar tipo de objeto (um de 'blob', 'árvore', 'memória', 'etiqueta', ...)"
 
@@ -12848,12 +12848,12 @@ msgstr " ... e mais %d.\n"
 #: builtin/checkout.c:1023
 #, c-format
 msgid ""
-"Warning: you are leaving %d commit behind, not connected to\n"
+"Warning: you are leaving %d cummit behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"Warning: you are leaving %d commits behind, not connected to\n"
+"Warning: you are leaving %d cummits behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
@@ -12967,12 +12967,12 @@ msgstr "esperado um ramo, recebi '%s'"
 
 #: builtin/checkout.c:1420
 #, c-format
-msgid "a branch is expected, got commit '%s'"
+msgid "a branch is expected, got cummit '%s'"
 msgstr "esperado um ramo, recebi memória '%s'"
 
 #: builtin/checkout.c:1429
 msgid ""
-"If you want to detach HEAD at the commit, try again with the --detach option."
+"If you want to detach HEAD at the cummit, try again with the --detach option."
 msgstr ""
 
 #: builtin/checkout.c:1442
@@ -13031,11 +13031,11 @@ msgstr "'%s' incapaz de receber <ponto-inicial>"
 
 #: builtin/checkout.c:1505
 #, c-format
-msgid "Cannot switch branch to a non-commit '%s'"
+msgid "Cannot switch branch to a non-cummit '%s'"
 msgstr "Apenas posso trocar ramo para uma memória, não para '%s'"
 
 #: builtin/checkout.c:1512
-msgid "missing branch or commit argument"
+msgid "missing branch or cummit argument"
 msgstr "faltando argumento de ramo ou memória"
 
 #: builtin/checkout.c:1555
@@ -13051,7 +13051,7 @@ msgid "conflict style (merge, diff3, or zdiff3)"
 msgstr "estilo de conflito (merge, diff3 ou zdiff3)"
 
 #: builtin/checkout.c:1569 builtin/worktree.c:560
-msgid "detach HEAD at named commit"
+msgid "detach HEAD at named cummit"
 msgstr "desanexar HEAD na memória indicada"
 
 #: builtin/checkout.c:1574
@@ -13111,7 +13111,7 @@ msgstr "especificação de caminho inválida"
 
 #: builtin/checkout.c:1760
 #, c-format
-msgid "'%s' is not a commit and a branch '%s' cannot be created from it"
+msgid "'%s' is not a cummit and a branch '%s' cannot be created from it"
 msgstr ""
 
 #: builtin/checkout.c:1764
@@ -13771,371 +13771,371 @@ msgstr "espaço de preenchimento entre colunas"
 msgid "--command must be the first argument"
 msgstr "--command deve ser o primeiro argumento"
 
-#: builtin/commit-graph.c:13
+#: builtin/cummit-graph.c:13
 msgid ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
+"git cummit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
 msgstr ""
-"git commit-graph verify [--object-dir <pasta-de-obj>] [--shallow] [--"
+"git cummit-graph verify [--object-dir <pasta-de-obj>] [--shallow] [--"
 "[no-]progress]"
 
-#: builtin/commit-graph.c:16
+#: builtin/cummit-graph.c:16
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--"
-"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
+"git cummit-graph write [--object-dir <objdir>] [--append] [--"
+"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-cummits] [--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
 msgstr ""
-"git commit-graph write [--object-dir <pasta-de-obj>] [--append] [--"
-"split[=<estratégia>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
+"git cummit-graph write [--object-dir <pasta-de-obj>] [--append] [--"
+"split[=<estratégia>]] [--reachable|--stdin-packs|--stdin-cummits] [--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] <opções de divisão>"
 
-#: builtin/commit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
+#: builtin/cummit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
 msgid "dir"
 msgstr "pasta"
 
-#: builtin/commit-graph.c:52
+#: builtin/cummit-graph.c:52
 msgid "the object directory to store the graph"
 msgstr ""
 
-#: builtin/commit-graph.c:73
-msgid "if the commit-graph is split, only verify the tip file"
+#: builtin/cummit-graph.c:73
+msgid "if the cummit-graph is split, only verify the tip file"
 msgstr ""
 
-#: builtin/commit-graph.c:100
+#: builtin/cummit-graph.c:100
 #, c-format
-msgid "Could not open commit-graph '%s'"
+msgid "Could not open cummit-graph '%s'"
 msgstr "Incapaz abrir grafo-memória '%s'"
 
-#: builtin/commit-graph.c:137
+#: builtin/cummit-graph.c:137
 #, c-format
 msgid "unrecognized --split argument, %s"
 msgstr "argumento --split desconhecido, %s"
 
-#: builtin/commit-graph.c:150
+#: builtin/cummit-graph.c:150
 #, c-format
 msgid "unexpected non-hex object ID: %s"
 msgstr "ID não-hex de objeto inesperado: %s"
 
-#: builtin/commit-graph.c:155
+#: builtin/cummit-graph.c:155
 #, c-format
 msgid "invalid object: %s"
 msgstr ""
 
-#: builtin/commit-graph.c:205
+#: builtin/cummit-graph.c:205
 msgid "start walk at all refs"
 msgstr ""
 
-#: builtin/commit-graph.c:207
-msgid "scan pack-indexes listed by stdin for commits"
+#: builtin/cummit-graph.c:207
+msgid "scan pack-indexes listed by stdin for cummits"
 msgstr ""
 
-#: builtin/commit-graph.c:209
-msgid "start walk at commits listed by stdin"
+#: builtin/cummit-graph.c:209
+msgid "start walk at cummits listed by stdin"
 msgstr ""
 
-#: builtin/commit-graph.c:211
-msgid "include all commits already in the commit-graph file"
+#: builtin/cummit-graph.c:211
+msgid "include all cummits already in the cummit-graph file"
 msgstr ""
 
-#: builtin/commit-graph.c:213
+#: builtin/cummit-graph.c:213
 msgid "enable computation for changed paths"
 msgstr ""
 
-#: builtin/commit-graph.c:215
-msgid "allow writing an incremental commit-graph file"
+#: builtin/cummit-graph.c:215
+msgid "allow writing an incremental cummit-graph file"
 msgstr ""
 
-#: builtin/commit-graph.c:219
-msgid "maximum number of commits in a non-base split commit-graph"
+#: builtin/cummit-graph.c:219
+msgid "maximum number of cummits in a non-base split cummit-graph"
 msgstr ""
 
-#: builtin/commit-graph.c:221
-msgid "maximum ratio between two levels of a split commit-graph"
+#: builtin/cummit-graph.c:221
+msgid "maximum ratio between two levels of a split cummit-graph"
 msgstr ""
 
-#: builtin/commit-graph.c:223
+#: builtin/cummit-graph.c:223
 msgid "only expire files older than a given date-time"
 msgstr "apenas expirar ficheiros fornecidos mais velhos que data"
 
-#: builtin/commit-graph.c:225
+#: builtin/cummit-graph.c:225
 msgid "maximum number of changed-path Bloom filters to compute"
 msgstr ""
 
-#: builtin/commit-graph.c:251
-msgid "use at most one of --reachable, --stdin-commits, or --stdin-packs"
+#: builtin/cummit-graph.c:251
+msgid "use at most one of --reachable, --stdin-cummits, or --stdin-packs"
 msgstr ""
 
-#: builtin/commit-graph.c:282
-msgid "Collecting commits from input"
+#: builtin/cummit-graph.c:282
+msgid "Collecting cummits from input"
 msgstr ""
 
-#: builtin/commit-graph.c:328 builtin/multi-pack-index.c:259
+#: builtin/cummit-graph.c:328 builtin/multi-pack-index.c:259
 #, c-format
 msgid "unrecognized subcommand: %s"
 msgstr "subcomando desconhecido: %s"
 
-#: builtin/commit-tree.c:18
+#: builtin/cummit-tree.c:18
 msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
+"git cummit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
 "<file>)...] <tree>"
 msgstr ""
 
-#: builtin/commit-tree.c:31
+#: builtin/cummit-tree.c:31
 #, c-format
 msgid "duplicate parent %s ignored"
 msgstr ""
 
-#: builtin/commit-tree.c:56 builtin/commit-tree.c:134 builtin/log.c:590
+#: builtin/cummit-tree.c:56 builtin/cummit-tree.c:134 builtin/log.c:590
 #, c-format
 msgid "not a valid object name %s"
 msgstr "nome de objeto inválido %s"
 
-#: builtin/commit-tree.c:94
+#: builtin/cummit-tree.c:94
 #, c-format
-msgid "git commit-tree: failed to read '%s'"
+msgid "git cummit-tree: failed to read '%s'"
 msgstr ""
 
-#: builtin/commit-tree.c:96
+#: builtin/cummit-tree.c:96
 #, c-format
-msgid "git commit-tree: failed to close '%s'"
+msgid "git cummit-tree: failed to close '%s'"
 msgstr ""
 
-#: builtin/commit-tree.c:109
+#: builtin/cummit-tree.c:109
 msgid "parent"
 msgstr "parente"
 
-#: builtin/commit-tree.c:110
-msgid "id of a parent commit object"
+#: builtin/cummit-tree.c:110
+msgid "id of a parent cummit object"
 msgstr ""
 
-#: builtin/commit-tree.c:112 builtin/commit.c:1626 builtin/merge.c:284
+#: builtin/cummit-tree.c:112 builtin/cummit.c:1626 builtin/merge.c:284
 #: builtin/notes.c:407 builtin/notes.c:573 builtin/stash.c:1666
 #: builtin/tag.c:455
 msgid "message"
 msgstr "mensagem"
 
-#: builtin/commit-tree.c:113 builtin/commit.c:1626
-msgid "commit message"
+#: builtin/cummit-tree.c:113 builtin/cummit.c:1626
+msgid "cummit message"
 msgstr "mensagem de memória"
 
-#: builtin/commit-tree.c:116
-msgid "read commit log message from file"
+#: builtin/cummit-tree.c:116
+msgid "read cummit log message from file"
 msgstr ""
 
-#: builtin/commit-tree.c:119 builtin/commit.c:1643 builtin/merge.c:303
+#: builtin/cummit-tree.c:119 builtin/cummit.c:1643 builtin/merge.c:303
 #: builtin/pull.c:180 builtin/revert.c:118
-msgid "GPG sign commit"
+msgid "GPG sign cummit"
 msgstr "assinar memória com GPG"
 
-#: builtin/commit-tree.c:131
+#: builtin/cummit-tree.c:131
 msgid "must give exactly one tree"
 msgstr ""
 
-#: builtin/commit-tree.c:138
-msgid "git commit-tree: failed to read"
+#: builtin/cummit-tree.c:138
+msgid "git cummit-tree: failed to read"
 msgstr ""
 
-#: builtin/commit.c:43
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<opções>] [--] <espetro-caminho>..."
+#: builtin/cummit.c:43
+msgid "git cummit [<options>] [--] <pathspec>..."
+msgstr "git cummit [<opções>] [--] <espetro-caminho>..."
 
-#: builtin/commit.c:48
+#: builtin/cummit.c:48
 msgid "git status [<options>] [--] <pathspec>..."
 msgstr "git status [<opções>] [--] <espetro-caminho>..."
 
-#: builtin/commit.c:53
+#: builtin/cummit.c:53
 msgid ""
-"You asked to amend the most recent commit, but doing so would make\n"
+"You asked to amend the most recent cummit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
-"remove the commit entirely with \"git reset HEAD^\".\n"
+"remove the cummit entirely with \"git reset HEAD^\".\n"
 msgstr ""
 "Pediste para emendar a memória mais recente, mas ao fazê-lo torná-la-ia\n"
 "vazia. Podes repetir o teu comando com --allow-empty, ou podes remover a\n"
 "memória completamente com \"git reset HEAD^\".\n"
 
-#: builtin/commit.c:58
+#: builtin/cummit.c:58
 msgid ""
 "The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
-"If you wish to commit it anyway, use:\n"
+"If you wish to cummit it anyway, use:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 msgstr ""
 "A apanha anterior está vazia, possivelmente devido à resolução de conflito.\n"
 "Se, mesmo assim, desejas memorizá-la, usa:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 
-#: builtin/commit.c:65
+#: builtin/cummit.c:65
 msgid "Otherwise, please use 'git rebase --skip'\n"
 msgstr "Caso contrário, por favor usa 'git rebase --skip'\n"
 
-#: builtin/commit.c:68
+#: builtin/cummit.c:68
 msgid "Otherwise, please use 'git cherry-pick --skip'\n"
 msgstr "Caso contrário, por favor usa 'git cherry-pick --skip'\n"
 
-#: builtin/commit.c:71
+#: builtin/cummit.c:71
 msgid ""
 "and then use:\n"
 "\n"
 "    git cherry-pick --continue\n"
 "\n"
-"to resume cherry-picking the remaining commits.\n"
-"If you wish to skip this commit, use:\n"
+"to resume cherry-picking the remaining cummits.\n"
+"If you wish to skip this cummit, use:\n"
 "\n"
 "    git cherry-pick --skip\n"
 "\n"
 msgstr ""
 
-#: builtin/commit.c:326
+#: builtin/cummit.c:326
 msgid "failed to unpack HEAD tree object"
 msgstr "falhou desempacotar o objeto árvore HEAD"
 
-#: builtin/commit.c:376
+#: builtin/cummit.c:376
 msgid "No paths with --include/--only does not make sense."
 msgstr "--include/--only só fazem sentido, indicando caminhos."
 
-#: builtin/commit.c:388
+#: builtin/cummit.c:388
 msgid "unable to create temporary index"
 msgstr "incapaz criar cenário temporário"
 
-#: builtin/commit.c:397
+#: builtin/cummit.c:397
 msgid "interactive add failed"
 msgstr "falha ao adicionar interativamente"
 
-#: builtin/commit.c:412
+#: builtin/cummit.c:412
 msgid "unable to update temporary index"
 msgstr "incapaz atualizar cenário temporário"
 
-#: builtin/commit.c:414
+#: builtin/cummit.c:414
 msgid "Failed to update main cache tree"
 msgstr "Falhou atualizar a árvore de cenário principal"
 
-#: builtin/commit.c:439 builtin/commit.c:462 builtin/commit.c:510
+#: builtin/cummit.c:439 builtin/cummit.c:462 builtin/cummit.c:510
 msgid "unable to write new_index file"
 msgstr "incapaz escrever ficheiro new_index"
 
-#: builtin/commit.c:491
-msgid "cannot do a partial commit during a merge."
+#: builtin/cummit.c:491
+msgid "cannot do a partial cummit during a merge."
 msgstr "incapaz fazer memória parcial durante uma junção."
 
-#: builtin/commit.c:493
-msgid "cannot do a partial commit during a cherry-pick."
+#: builtin/cummit.c:493
+msgid "cannot do a partial cummit during a cherry-pick."
 msgstr "incapaz fazer memória parcial durante uma apanha."
 
-#: builtin/commit.c:495
-msgid "cannot do a partial commit during a rebase."
+#: builtin/cummit.c:495
+msgid "cannot do a partial cummit during a rebase."
 msgstr "incapaz fazer memória parcial durante um rebaseamento."
 
-#: builtin/commit.c:503
+#: builtin/cummit.c:503
 msgid "cannot read the index"
 msgstr "incapaz ler cenário"
 
-#: builtin/commit.c:522
+#: builtin/cummit.c:522
 msgid "unable to write temporary index file"
 msgstr "incapaz escrever ficheiro de cenário temporário"
 
-#: builtin/commit.c:620
+#: builtin/cummit.c:620
 #, c-format
-msgid "commit '%s' lacks author header"
+msgid "cummit '%s' lacks author header"
 msgstr "memória '%s' falta cabeçalho de autor"
 
-#: builtin/commit.c:622
+#: builtin/cummit.c:622
 #, c-format
-msgid "commit '%s' has malformed author line"
+msgid "cummit '%s' has malformed author line"
 msgstr "memória '%s' tem a linha de autor malformada"
 
-#: builtin/commit.c:641
+#: builtin/cummit.c:641
 msgid "malformed --author parameter"
 msgstr "parâmetro --author malformado"
 
-#: builtin/commit.c:694
+#: builtin/cummit.c:694
 msgid ""
 "unable to select a comment character that is not used\n"
-"in the current commit message"
+"in the current cummit message"
 msgstr ""
 "apenas sou capaz de selecionar carácter de comentário usado\n"
 "na mensagem de memória atual"
 
-#: builtin/commit.c:750 builtin/commit.c:784 builtin/commit.c:1170
+#: builtin/cummit.c:750 builtin/cummit.c:784 builtin/cummit.c:1170
 #, c-format
-msgid "could not lookup commit %s"
+msgid "could not lookup cummit %s"
 msgstr "incapaz procurar memória %s"
 
-#: builtin/commit.c:762 builtin/shortlog.c:417
+#: builtin/cummit.c:762 builtin/shortlog.c:417
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr "(a ler mensagem de log da entrada padrão)\n"
 
-#: builtin/commit.c:764
+#: builtin/cummit.c:764
 msgid "could not read log from standard input"
 msgstr "incapaz ler log da entrada padrão"
 
-#: builtin/commit.c:768
+#: builtin/cummit.c:768
 #, c-format
 msgid "could not read log file '%s'"
 msgstr "incapaz ler ficheiro de log '%s'"
 
-#: builtin/commit.c:805
+#: builtin/cummit.c:805
 #, c-format
 msgid "options '%s' and '%s:%s' cannot be used together"
 msgstr "opções '%s' e '%s:%s' incapaz serem usadas juntas"
 
-#: builtin/commit.c:817 builtin/commit.c:833
+#: builtin/cummit.c:817 builtin/cummit.c:833
 msgid "could not read SQUASH_MSG"
 msgstr "incapaz ler SQUASH_MSG"
 
-#: builtin/commit.c:824
+#: builtin/cummit.c:824
 msgid "could not read MERGE_MSG"
 msgstr "incapaz ler MERGE_MSG"
 
-#: builtin/commit.c:884
-msgid "could not write commit template"
+#: builtin/cummit.c:884
+msgid "could not write cummit template"
 msgstr "incapaz escrever modelo de memória"
 
-#: builtin/commit.c:897
+#: builtin/cummit.c:897
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be ignored.\n"
 msgstr ""
 "Por favor, introduz a mensagem de memória das tuas alterações.\n"
 "Linhas começadas com '%c' serão ignoradas.\n"
 
-#: builtin/commit.c:899
+#: builtin/cummit.c:899
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be ignored, and an empty message aborts the commit.\n"
+"Please enter the cummit message for your changes. Lines starting\n"
+"with '%c' will be ignored, and an empty message aborts the cummit.\n"
 msgstr ""
 "Por favor, introduz a mensagem de memória das tuas alterações.\n"
 "Linhas começadas com '%c' serão ignoradas, e uma mensagem vazia\n"
 "aborta a memorização.\n"
 
-#: builtin/commit.c:903
+#: builtin/cummit.c:903
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
 msgstr ""
 "Por favor, introduz a mensagem de memória das tuas alterações.\n"
 "Linhas começadas com '%c' serão mantidas; podes removê-las se quiseres.\n"
 
-#: builtin/commit.c:907
+#: builtin/cummit.c:907
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
-"An empty message aborts the commit.\n"
+"An empty message aborts the cummit.\n"
 msgstr ""
 "Por favor, introduz a mensagem de memória das tuas alterações.\n"
 "Linhas começadas com '%c' serão mantidas; podes removê-las se quiseres.\n"
 "Uma mensagem vazia aborta a memorização.\n"
 
-#: builtin/commit.c:919
+#: builtin/cummit.c:919
 msgid ""
 "\n"
-"It looks like you may be committing a merge.\n"
+"It looks like you may be cummitting a merge.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d MERGE_HEAD\n"
 "and try again.\n"
@@ -14146,10 +14146,10 @@ msgstr ""
 "\tgit update-ref -d MERGE_HEAD\n"
 "e tenta de novo.\n"
 
-#: builtin/commit.c:924
+#: builtin/cummit.c:924
 msgid ""
 "\n"
-"It looks like you may be committing a cherry-pick.\n"
+"It looks like you may be cummitting a cherry-pick.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "and try again.\n"
@@ -14160,149 +14160,149 @@ msgstr ""
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "e tenta de novo.\n"
 
-#: builtin/commit.c:951
+#: builtin/cummit.c:951
 #, c-format
 msgid "%sAuthor:    %.*s <%.*s>"
 msgstr "%sAutor:    %.*s <%.*s>"
 
-#: builtin/commit.c:959
+#: builtin/cummit.c:959
 #, c-format
 msgid "%sDate:      %s"
 msgstr "%sData:      %s"
 
-#: builtin/commit.c:966
+#: builtin/cummit.c:966
 #, c-format
-msgid "%sCommitter: %.*s <%.*s>"
+msgid "%scummitter: %.*s <%.*s>"
 msgstr "%sMemorizador: %.*s <%.*s>"
 
-#: builtin/commit.c:984
+#: builtin/cummit.c:984
 msgid "Cannot read index"
 msgstr "Incapaz ler cenário"
 
-#: builtin/commit.c:1029
+#: builtin/cummit.c:1029
 msgid "unable to pass trailers to --trailers"
 msgstr "incapaz passar atribuições para --trailers"
 
-#: builtin/commit.c:1069
+#: builtin/cummit.c:1069
 msgid "Error building trees"
 msgstr "Erro ao construir árvores"
 
-#: builtin/commit.c:1083 builtin/tag.c:317
+#: builtin/cummit.c:1083 builtin/tag.c:317
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr "Indique a mensagem usando apenas as opções -m ou -F.\n"
 
-#: builtin/commit.c:1128
+#: builtin/cummit.c:1128
 #, c-format
 msgid "--author '%s' is not 'Name <email>' and matches no existing author"
 msgstr ""
 "--author '%s' é diferente de 'Nome <email>' e corresponde a autor inexistente"
 
-#: builtin/commit.c:1142
+#: builtin/cummit.c:1142
 #, c-format
 msgid "Invalid ignored mode '%s'"
 msgstr "Modo de ignorar inválido '%s'"
 
-#: builtin/commit.c:1160 builtin/commit.c:1450
+#: builtin/cummit.c:1160 builtin/cummit.c:1450
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr "Modo '%s' inválido de ficheiros desmonitorizados"
 
-#: builtin/commit.c:1231
+#: builtin/cummit.c:1231
 msgid "You are in the middle of a merge -- cannot reword."
 msgstr "Estás no meio de uma junção -- incapaz refrasear."
 
-#: builtin/commit.c:1233
+#: builtin/cummit.c:1233
 msgid "You are in the middle of a cherry-pick -- cannot reword."
 msgstr "Estás no meio de uma apanha -- incapaz refrasear."
 
-#: builtin/commit.c:1236
+#: builtin/cummit.c:1236
 #, c-format
 msgid "reword option of '%s' and path '%s' cannot be used together"
 msgstr ""
 "opção de renomeamento de '%s' e caminho '%s' incapaz serem usadas juntas"
 
-#: builtin/commit.c:1238
+#: builtin/cummit.c:1238
 #, c-format
 msgid "reword option of '%s' and '%s' cannot be used together"
 msgstr "opção de renomeamento de '%s' e '%s' incapaz serem usadas juntas"
 
-#: builtin/commit.c:1263
+#: builtin/cummit.c:1263
 msgid "You have nothing to amend."
 msgstr "Tens nada para emendar."
 
-#: builtin/commit.c:1266
+#: builtin/cummit.c:1266
 msgid "You are in the middle of a merge -- cannot amend."
 msgstr "Estás no meio de uma junção -- incapaz emendar."
 
-#: builtin/commit.c:1268
+#: builtin/cummit.c:1268
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Estás no meio de uma apanha -- incapaz emendar."
 
-#: builtin/commit.c:1270
+#: builtin/cummit.c:1270
 msgid "You are in the middle of a rebase -- cannot amend."
 msgstr "Estás no meio de rebase -- incapaz emendar."
 
-#: builtin/commit.c:1290
+#: builtin/cummit.c:1290
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "--reset-author só pode ser usado com -C, -c ou --amend."
 
-#: builtin/commit.c:1337
+#: builtin/cummit.c:1337
 #, c-format
 msgid "unknown option: --fixup=%s:%s"
 msgstr "opção desconhecida: --fixup=%s:%s"
 
-#: builtin/commit.c:1354
+#: builtin/cummit.c:1354
 #, c-format
 msgid "paths '%s ...' with -a does not make sense"
 msgstr "paths '%s ...' com -a faz sentido nenhum"
 
-#: builtin/commit.c:1485 builtin/commit.c:1654
+#: builtin/cummit.c:1485 builtin/cummit.c:1654
 msgid "show status concisely"
 msgstr "mostrar status de forma concisa"
 
-#: builtin/commit.c:1487 builtin/commit.c:1656
+#: builtin/cummit.c:1487 builtin/cummit.c:1656
 msgid "show branch information"
 msgstr "mostrar informação de ramo"
 
-#: builtin/commit.c:1489
+#: builtin/cummit.c:1489
 msgid "show stash information"
 msgstr "mostrar informação de esconderijo"
 
-#: builtin/commit.c:1491 builtin/commit.c:1658
+#: builtin/cummit.c:1491 builtin/cummit.c:1658
 msgid "compute full ahead/behind values"
 msgstr ""
 
-#: builtin/commit.c:1493
+#: builtin/cummit.c:1493
 msgid "version"
 msgstr "versão"
 
-#: builtin/commit.c:1493 builtin/commit.c:1660 builtin/push.c:551
+#: builtin/cummit.c:1493 builtin/cummit.c:1660 builtin/push.c:551
 #: builtin/worktree.c:765
 msgid "machine-readable output"
 msgstr "saída inteligível a máquina"
 
-#: builtin/commit.c:1496 builtin/commit.c:1662
+#: builtin/cummit.c:1496 builtin/cummit.c:1662
 msgid "show status in long format (default)"
 msgstr "apresentar status em formato longo (predefinição)"
 
-#: builtin/commit.c:1499 builtin/commit.c:1665
+#: builtin/cummit.c:1499 builtin/cummit.c:1665
 msgid "terminate entries with NUL"
 msgstr "terminar entradas com NUL"
 
-#: builtin/commit.c:1501 builtin/commit.c:1505 builtin/commit.c:1668
+#: builtin/cummit.c:1501 builtin/cummit.c:1505 builtin/cummit.c:1668
 #: builtin/fast-export.c:1172 builtin/fast-export.c:1175
 #: builtin/fast-export.c:1178 builtin/rebase.c:1139 parse-options.h:368
 msgid "mode"
 msgstr "modo"
 
-#: builtin/commit.c:1502 builtin/commit.c:1668
+#: builtin/cummit.c:1502 builtin/cummit.c:1668
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
 "mostrar ficheiros desmonitorizados, modos opcionais: all, normal, no. "
 "Predefinição: all)"
 
-#: builtin/commit.c:1506
+#: builtin/cummit.c:1506
 msgid ""
 "show ignored files, optional modes: traditional, matching, no. (Default: "
 "traditional)"
@@ -14310,11 +14310,11 @@ msgstr ""
 "mostrar ficheiros ignorados, modo opcional: traditional, matching, no. "
 "(Predefinição: tradicional)"
 
-#: builtin/commit.c:1508 parse-options.h:197
+#: builtin/cummit.c:1508 parse-options.h:197
 msgid "when"
 msgstr "quando"
 
-#: builtin/commit.c:1509
+#: builtin/cummit.c:1509
 msgid ""
 "ignore changes to submodules, optional when: all, dirty, untracked. "
 "(Default: all)"
@@ -14322,192 +14322,192 @@ msgstr ""
 "ignorar alterações em submódulos, opcional quando: all, dirty, untracked. "
 "(Predefinição: all)"
 
-#: builtin/commit.c:1511
+#: builtin/cummit.c:1511
 msgid "list untracked files in columns"
 msgstr "listar ficheiros desmonitorizados em colunas"
 
-#: builtin/commit.c:1512
+#: builtin/cummit.c:1512
 msgid "do not detect renames"
 msgstr "detecção renomeação nenhuma"
 
-#: builtin/commit.c:1514
+#: builtin/cummit.c:1514
 msgid "detect renames, optionally set similarity index"
 msgstr ""
 
-#: builtin/commit.c:1537
+#: builtin/cummit.c:1537
 msgid "Unsupported combination of ignored and untracked-files arguments"
 msgstr ""
 
-#: builtin/commit.c:1619
-msgid "suppress summary after successful commit"
+#: builtin/cummit.c:1619
+msgid "suppress summary after successful cummit"
 msgstr "suprimir resumo depois de memorizar com sucesso"
 
-#: builtin/commit.c:1620
-msgid "show diff in commit message template"
+#: builtin/cummit.c:1620
+msgid "show diff in cummit message template"
 msgstr "mostrar diff no modelo da mensagem de memória"
 
-#: builtin/commit.c:1622
-msgid "Commit message options"
+#: builtin/cummit.c:1622
+msgid "cummit message options"
 msgstr "Opções de mensagem de memória"
 
-#: builtin/commit.c:1623 builtin/merge.c:288 builtin/tag.c:457
+#: builtin/cummit.c:1623 builtin/merge.c:288 builtin/tag.c:457
 msgid "read message from file"
 msgstr "ler mensagem de ficheiro"
 
-#: builtin/commit.c:1624
+#: builtin/cummit.c:1624
 msgid "author"
 msgstr "autor"
 
-#: builtin/commit.c:1624
-msgid "override author for commit"
+#: builtin/cummit.c:1624
+msgid "override author for cummit"
 msgstr "sobrepor autor de memória"
 
-#: builtin/commit.c:1625 builtin/gc.c:551
+#: builtin/cummit.c:1625 builtin/gc.c:551
 msgid "date"
 msgstr "data"
 
-#: builtin/commit.c:1625
-msgid "override date for commit"
+#: builtin/cummit.c:1625
+msgid "override date for cummit"
 msgstr "sobrepor data de memória"
 
-#: builtin/commit.c:1627 builtin/commit.c:1628 builtin/commit.c:1634
+#: builtin/cummit.c:1627 builtin/cummit.c:1628 builtin/cummit.c:1634
 #: parse-options.h:360 ref-filter.h:89
-msgid "commit"
+msgid "cummit"
 msgstr "memória"
 
-#: builtin/commit.c:1627
-msgid "reuse and edit message from specified commit"
+#: builtin/cummit.c:1627
+msgid "reuse and edit message from specified cummit"
 msgstr "reutilizar e editar mensagem de memória especificada"
 
-#: builtin/commit.c:1628
-msgid "reuse message from specified commit"
+#: builtin/cummit.c:1628
+msgid "reuse message from specified cummit"
 msgstr "reutilizar mensagem de memória especificada"
 
 #. TRANSLATORS: Leave "[(amend|reword):]" as-is,
-#. and only translate <commit>.
+#. and only translate <cummit>.
 #.
-#: builtin/commit.c:1633
-msgid "[(amend|reword):]commit"
+#: builtin/cummit.c:1633
+msgid "[(amend|reword):]cummit"
 msgstr "[(amend|reword):]memória"
 
-#: builtin/commit.c:1633
+#: builtin/cummit.c:1633
 msgid ""
-"use autosquash formatted message to fixup or amend/reword specified commit"
+"use autosquash formatted message to fixup or amend/reword specified cummit"
 msgstr ""
 "usar mensagem com formato autosquash para consertar ou emendar/refrasear "
 "memória especificada"
 
-#: builtin/commit.c:1634
-msgid "use autosquash formatted message to squash specified commit"
+#: builtin/cummit.c:1634
+msgid "use autosquash formatted message to squash specified cummit"
 msgstr "usar mensagem com formato autosquash para esmagar memória especificada"
 
-#: builtin/commit.c:1635
-msgid "the commit is authored by me now (used with -C/-c/--amend)"
+#: builtin/cummit.c:1635
+msgid "the cummit is authored by me now (used with -C/-c/--amend)"
 msgstr "o autor da memória agora sou eu (usado com -C/-c/--amend)"
 
-#: builtin/commit.c:1636 builtin/interpret-trailers.c:111
+#: builtin/cummit.c:1636 builtin/interpret-trailers.c:111
 msgid "trailer"
 msgstr "atribuição"
 
-#: builtin/commit.c:1636
+#: builtin/cummit.c:1636
 msgid "add custom trailer(s)"
 msgstr "adicionar atribuição(ões) customizada(s)"
 
-#: builtin/commit.c:1637 builtin/log.c:1788 builtin/merge.c:306
+#: builtin/cummit.c:1637 builtin/log.c:1788 builtin/merge.c:306
 #: builtin/pull.c:146 builtin/revert.c:110
 msgid "add a Signed-off-by trailer"
 msgstr "adicionar atribuição Signed-off-by"
 
-#: builtin/commit.c:1638
+#: builtin/cummit.c:1638
 msgid "use specified template file"
 msgstr "usar ficheiro de modelo especificado"
 
-#: builtin/commit.c:1639
-msgid "force edit of commit"
+#: builtin/cummit.c:1639
+msgid "force edit of cummit"
 msgstr "forçar edição de memória"
 
-#: builtin/commit.c:1641
-msgid "include status in commit message template"
+#: builtin/cummit.c:1641
+msgid "include status in cummit message template"
 msgstr "incluir status no modelo da mensagem de memória"
 
-#: builtin/commit.c:1646
-msgid "Commit contents options"
+#: builtin/cummit.c:1646
+msgid "cummit contents options"
 msgstr "Opções de conteúdo de memória"
 
-#: builtin/commit.c:1647
-msgid "commit all changed files"
+#: builtin/cummit.c:1647
+msgid "cummit all changed files"
 msgstr "memorizar todos os ficheiros alterados"
 
-#: builtin/commit.c:1648
-msgid "add specified files to index for commit"
+#: builtin/cummit.c:1648
+msgid "add specified files to index for cummit"
 msgstr "adicionar ficheiros especificados ao cenário para a memória"
 
-#: builtin/commit.c:1649
+#: builtin/cummit.c:1649
 msgid "interactively add files"
 msgstr "adicionar ficheiros interativamente"
 
-#: builtin/commit.c:1650
+#: builtin/cummit.c:1650
 msgid "interactively add changes"
 msgstr "adicionar alterações interativamente"
 
-#: builtin/commit.c:1651
-msgid "commit only specified files"
+#: builtin/cummit.c:1651
+msgid "cummit only specified files"
 msgstr "memorizar somente ficheiros especificados"
 
-#: builtin/commit.c:1652
-msgid "bypass pre-commit and commit-msg hooks"
-msgstr "contornar ganchos pre-commit e commit-msg"
+#: builtin/cummit.c:1652
+msgid "bypass pre-cummit and cummit-msg hooks"
+msgstr "contornar ganchos pre-cummit e cummit-msg"
 
-#: builtin/commit.c:1653
-msgid "show what would be committed"
+#: builtin/cummit.c:1653
+msgid "show what would be cummitted"
 msgstr "mostrar o que seria memorizado"
 
-#: builtin/commit.c:1666
-msgid "amend previous commit"
+#: builtin/cummit.c:1666
+msgid "amend previous cummit"
 msgstr "emendar memória anterior"
 
-#: builtin/commit.c:1667
+#: builtin/cummit.c:1667
 msgid "bypass post-rewrite hook"
 msgstr "contornar gancho post-rewrite"
 
-#: builtin/commit.c:1674
+#: builtin/cummit.c:1674
 msgid "ok to record an empty change"
 msgstr "ok a gravar uma alteração vazia"
 
-#: builtin/commit.c:1676
+#: builtin/cummit.c:1676
 msgid "ok to record a change with an empty message"
 msgstr "ok a gravar uma alteração com uma mensagem vazia"
 
-#: builtin/commit.c:1752
+#: builtin/cummit.c:1752
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "Ficheiro MERGE_HEAD roto (%s)"
 
-#: builtin/commit.c:1759
+#: builtin/cummit.c:1759
 msgid "could not read MERGE_MODE"
 msgstr "incapaz ler MERGE_MODE"
 
-#: builtin/commit.c:1780
+#: builtin/cummit.c:1780
 #, c-format
-msgid "could not read commit message: %s"
+msgid "could not read cummit message: %s"
 msgstr "incapaz ler mensagem de memória: %s"
 
-#: builtin/commit.c:1787
+#: builtin/cummit.c:1787
 #, c-format
-msgid "Aborting commit due to empty commit message.\n"
+msgid "Aborting cummit due to empty cummit message.\n"
 msgstr "Abortando a memorização devido a mensagem de memória vazia.\n"
 
-#: builtin/commit.c:1792
+#: builtin/cummit.c:1792
 #, c-format
-msgid "Aborting commit; you did not edit the message.\n"
+msgid "Aborting cummit; you did not edit the message.\n"
 msgstr "Abortando memorização; mensagem ficou por editar.\n"
 
-#: builtin/commit.c:1803
+#: builtin/cummit.c:1803
 #, c-format
-msgid "Aborting commit due to empty commit message body.\n"
+msgid "Aborting cummit due to empty cummit message body.\n"
 msgstr "Abortando memorização devido a corpo de mensagem de memória vazia.\n"
 
-#: builtin/commit.c:1839
+#: builtin/cummit.c:1839
 msgid ""
 "repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -14878,7 +14878,7 @@ msgid "unable to get credential storage lock in %d ms"
 msgstr "incapaz obter bloqueio de armazenamento de credenciais em %d ms"
 
 #: builtin/describe.c:26
-msgid "git describe [<options>] [<commit-ish>...]"
+msgid "git describe [<options>] [<cummit-ish>...]"
 msgstr "git describe [<opções>] [<mnemónica>...]"
 
 #: builtin/describe.c:27
@@ -14942,7 +14942,7 @@ msgstr ""
 
 #: builtin/describe.c:458
 #, c-format
-msgid "traversed %lu commits\n"
+msgid "traversed %lu cummits\n"
 msgstr "%lu memórias percorridas\n"
 
 #: builtin/describe.c:461
@@ -14966,11 +14966,11 @@ msgstr "%s é nome de objeto inválido"
 
 #: builtin/describe.c:540
 #, c-format
-msgid "%s is neither a commit nor blob"
+msgid "%s is neither a cummit nor blob"
 msgstr "'%s' é nem memória nem blob"
 
 #: builtin/describe.c:554
-msgid "find the tag that comes after the commit"
+msgid "find the tag that comes after the cummit"
 msgstr "encontrar a etiqueta que vem após a memória"
 
 #: builtin/describe.c:555
@@ -15010,7 +15010,7 @@ msgid "do not consider tags matching <pattern>"
 msgstr "descarta etiquetas correspondentes a <padrão>"
 
 #: builtin/describe.c:570 builtin/name-rev.c:595
-msgid "show abbreviated commit object as fallback"
+msgid "show abbreviated cummit object as fallback"
 msgstr "mostrar objeto de memória abreviado como recurso"
 
 #: builtin/describe.c:571 builtin/describe.c:574
@@ -15032,11 +15032,11 @@ msgstr "Nenhum nome encontrado, incapaz descrever qualquer coisa."
 
 #: builtin/describe.c:673 builtin/describe.c:675
 #, c-format
-msgid "option '%s' and commit-ishes cannot be used together"
+msgid "option '%s' and cummit-ishes cannot be used together"
 msgstr "opção '%s' e mnemónicas incapaz serem usadas juntas"
 
 #: builtin/diff-tree.c:157
-msgid "--merge-base only works with two commits"
+msgid "--merge-base only works with two cummits"
 msgstr ""
 
 #: builtin/diff.c:92
@@ -15079,7 +15079,7 @@ msgid "%s...%s: multiple merge bases, using %s"
 msgstr ""
 
 #: builtin/difftool.c:31
-msgid "git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"
+msgid "git difftool [<options>] [<cummit> [<cummit>]] [--] [<path>...]"
 msgstr "git difftool [<opções>] [<memória> [<memória>]] [--] [<caminho>...]"
 
 #: builtin/difftool.c:287
@@ -15234,7 +15234,7 @@ msgid "select handling of tags that tag filtered objects"
 msgstr "selecionar como lidar as etiquetas que marcam objetos filtrados"
 
 #: builtin/fast-export.c:1179
-msgid "select handling of commit messages in an alternate encoding"
+msgid "select handling of cummit messages in an alternate encoding"
 msgstr ""
 "selecionar como lidar as mensagens de memória com codificação alternativa"
 
@@ -15255,7 +15255,7 @@ msgid "fake a tagger when tags lack one"
 msgstr "Falsear um etiquetador quando faltar um para etiquetas"
 
 #: builtin/fast-export.c:1192
-msgid "output full tree for each commit"
+msgid "output full tree for each cummit"
 msgstr "mostrar árvore completa para cada memória"
 
 #: builtin/fast-export.c:1194
@@ -15291,7 +15291,7 @@ msgid "reference parents which are not in fast-export stream by object id"
 msgstr ""
 
 #: builtin/fast-export.c:1205
-msgid "show original object ids of blobs/commits"
+msgid "show original object ids of blobs/cummits"
 msgstr ""
 
 #: builtin/fast-export.c:1207
@@ -15439,7 +15439,7 @@ msgid "convert to a complete repository"
 msgstr "converter num repositório completo"
 
 #: builtin/fetch.c:194
-msgid "re-fetch without negotiating common commits"
+msgid "re-fetch without negotiating common cummits"
 msgstr "voltar a buscar com negociação nenhuma de memórias comuns"
 
 #: builtin/fetch.c:197
@@ -15484,7 +15484,7 @@ msgid "check for forced-updates on all updated branches"
 msgstr "verificar em todos os ramos atualizados por atualizações forçadas"
 
 #: builtin/fetch.c:224
-msgid "write the commit-graph after fetching"
+msgid "write the cummit-graph after fetching"
 msgstr "escrever grafo-memória após buscar"
 
 #: builtin/fetch.c:226
@@ -15788,11 +15788,11 @@ msgid "git for-each-ref [--points-at <object>]"
 msgstr "git for-each-ref [--points-at <objeto>]"
 
 #: builtin/for-each-ref.c:12
-msgid "git for-each-ref [--merged [<commit>]] [--no-merged [<commit>]]"
+msgid "git for-each-ref [--merged [<cummit>]] [--no-merged [<cummit>]]"
 msgstr "git for-each-ref [--merged [<memória>]] [--no-merged [<memória>]]"
 
 #: builtin/for-each-ref.c:13
-msgid "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
+msgid "git for-each-ref [--contains [<cummit>]] [--no-contains [<cummit>]]"
 msgstr "git for-each-ref [--contains [<memória>]] [--no-contains [<memória>]]"
 
 #: builtin/for-each-ref.c:31
@@ -15835,11 +15835,11 @@ msgid "print only refs that are not merged"
 msgstr "imprimir apenas refs que estão por juntar"
 
 #: builtin/for-each-ref.c:49
-msgid "print only refs which contain the commit"
+msgid "print only refs which contain the cummit"
 msgstr "imprimir apenas refs que contenham a memória"
 
 #: builtin/for-each-ref.c:50
-msgid "print only refs which don't contain the commit"
+msgid "print only refs which don't contain the cummit"
 msgstr "imprimir apenas refs que contenham outras memórias"
 
 #: builtin/for-each-repo.c:9
@@ -15965,7 +15965,7 @@ msgstr "%s: ponteiro sha1 inválido %s"
 
 #: builtin/fsck.c:537
 #, c-format
-msgid "%s: not a commit"
+msgid "%s: not a cummit"
 msgstr "%s: é memória nenhuma"
 
 #: builtin/fsck.c:591
@@ -16330,7 +16330,7 @@ msgid "unrecognized --schedule argument '%s'"
 msgstr "argumento --schedule desconhecido: '%s'"
 
 #: builtin/gc.c:870
-msgid "failed to write commit-graph"
+msgid "failed to write cummit-graph"
 msgstr ""
 
 #: builtin/gc.c:906
@@ -17550,7 +17550,7 @@ msgstr "duas pastas de saída?"
 
 #: builtin/log.c:1536 builtin/log.c:2369 builtin/log.c:2371 builtin/log.c:2383
 #, c-format
-msgid "unknown commit %s"
+msgid "unknown cummit %s"
 msgstr "memória %s desconhecida"
 
 #: builtin/log.c:1547 builtin/replace.c:58 builtin/replace.c:207
@@ -17565,9 +17565,9 @@ msgstr "incapaz encontrar a exata base de junção."
 
 #: builtin/log.c:1566
 msgid ""
-"failed to get upstream, if you want to record base commit automatically,\n"
+"failed to get upstream, if you want to record base cummit automatically,\n"
 "please use git branch --set-upstream-to to track a remote branch.\n"
-"Or you could specify base commit by --base=<base-commit-id> manually"
+"Or you could specify base cummit by --base=<base-cummit-id> manually"
 msgstr ""
 "falhou obter upstream, se queres gravar a memória base automaticamente,\n"
 "por favor, usa git branch --set-upstream-to para monitorizar um ramo "
@@ -17579,11 +17579,11 @@ msgid "failed to find exact merge base"
 msgstr "Falha ao encontrar base de junção exata"
 
 #: builtin/log.c:1606
-msgid "base commit should be the ancestor of revision list"
+msgid "base cummit should be the ancestor of revision list"
 msgstr "memória base tem de ser o antecessor da lista de revisões"
 
 #: builtin/log.c:1616
-msgid "base commit shouldn't be in revision list"
+msgid "base cummit shouldn't be in revision list"
 msgstr "memória base tem de estar fora da lista de revisões"
 
 #: builtin/log.c:1674
@@ -17677,7 +17677,7 @@ msgid "output all-zero hash in From header"
 msgstr "preencher o cabeçalho From com hash de zeros"
 
 #: builtin/log.c:1823
-msgid "don't include a patch matching a commit upstream"
+msgid "don't include a patch matching a cummit upstream"
 msgstr "incluir nenhum remendo correspondente a memória upstream"
 
 #: builtin/log.c:1825
@@ -17714,7 +17714,7 @@ msgid "ident"
 msgstr "identidade"
 
 #: builtin/log.c:1833
-msgid "set From address to <ident> (or committer ident if absent)"
+msgid "set From address to <ident> (or cummitter ident if absent)"
 msgstr ""
 "definir endereço From para <identidade> (ou identidade de memorizador caso "
 "ausente)"
@@ -17753,7 +17753,7 @@ msgid "add a signature"
 msgstr "adicionar uma assinatura"
 
 #: builtin/log.c:1849
-msgid "base-commit"
+msgid "base-cummit"
 msgstr "memória-base"
 
 #: builtin/log.c:1850
@@ -18096,11 +18096,11 @@ msgid "keep non patch brackets in subject"
 msgstr ""
 
 #: builtin/mailinfo.c:62
-msgid "copy Message-ID to the end of commit message"
+msgid "copy Message-ID to the end of cummit message"
 msgstr "copia Message-ID para o fim da mensagem de memória"
 
 #: builtin/mailinfo.c:64
-msgid "re-code metadata to i18n.commitEncoding"
+msgid "re-code metadata to i18n.cummitEncoding"
 msgstr ""
 
 #: builtin/mailinfo.c:67
@@ -18141,23 +18141,23 @@ msgid "empty mbox: '%s'"
 msgstr ""
 
 #: builtin/merge-base.c:32
-msgid "git merge-base [-a | --all] <commit> <commit>..."
+msgid "git merge-base [-a | --all] <cummit> <cummit>..."
 msgstr "git merge-base [-a | --all] <memória> <memória>..."
 
 #: builtin/merge-base.c:33
-msgid "git merge-base [-a | --all] --octopus <commit>..."
+msgid "git merge-base [-a | --all] --octopus <cummit>..."
 msgstr "git merge-base [-a | --all] --octopus <memória>..."
 
 #: builtin/merge-base.c:34
-msgid "git merge-base --independent <commit>..."
+msgid "git merge-base --independent <cummit>..."
 msgstr "git merge-base --independent <memória>..."
 
 #: builtin/merge-base.c:35
-msgid "git merge-base --is-ancestor <commit> <commit>"
+msgid "git merge-base --is-ancestor <cummit> <cummit>"
 msgstr "git merge-base --is-ancestor <memória> <memória>"
 
 #: builtin/merge-base.c:36
-msgid "git merge-base --fork-point <ref> [<commit>]"
+msgid "git merge-base --fork-point <ref> [<cummit>]"
 msgstr "git merge-base --fork-point <ref> [<memória>]"
 
 #: builtin/merge-base.c:144
@@ -18177,7 +18177,7 @@ msgid "is the first one ancestor of the other?"
 msgstr "é o primeiro, antecessor do outro?"
 
 #: builtin/merge-base.c:152
-msgid "find where <commit> forked from reflog of <ref>"
+msgid "find where <cummit> forked from reflog of <ref>"
 msgstr "descobrir onde <memória> forqueou a partir de registo-ref da <ref>"
 
 #: builtin/merge-file.c:9
@@ -18256,7 +18256,7 @@ msgid "Merging %s with %s\n"
 msgstr "Juntando %s com %s\n"
 
 #: builtin/merge.c:59
-msgid "git merge [<options>] [<commit>...]"
+msgid "git merge [<options>] [<cummit>...]"
 msgstr "git merge [<opções>] [<memória>...]"
 
 #: builtin/merge.c:125
@@ -18296,21 +18296,21 @@ msgid "(synonym to --stat)"
 msgstr "(sinónimo de --stat)"
 
 #: builtin/merge.c:264 builtin/pull.c:143
-msgid "add (at most <n>) entries from shortlog to merge commit message"
+msgid "add (at most <n>) entries from shortlog to merge cummit message"
 msgstr ""
 "adicionar (no máximo <n>) entradas de shortlog à mensagem de memória da "
 "junção"
 
 #: builtin/merge.c:267 builtin/pull.c:149
-msgid "create a single commit instead of doing a merge"
+msgid "create a single cummit instead of doing a merge"
 msgstr "criar uma única memória em vez de realizar uma junção"
 
 #: builtin/merge.c:269 builtin/pull.c:152
-msgid "perform a commit if the merge succeeds (default)"
+msgid "perform a cummit if the merge succeeds (default)"
 msgstr "realizar uma memorização se a junção suceder (predefinição)"
 
 #: builtin/merge.c:271 builtin/pull.c:155
-msgid "edit message before committing"
+msgid "edit message before cummitting"
 msgstr "editar a mensagem antes de memorizar"
 
 #: builtin/merge.c:273
@@ -18343,7 +18343,7 @@ msgid "option for selected merge strategy"
 msgstr "opção para estratégia de junção selecionada"
 
 #: builtin/merge.c:285
-msgid "merge commit message (for a non-fast-forward merge)"
+msgid "merge cummit message (for a non-fast-forward merge)"
 msgstr "mensagem de memória de junção (para junções diferentes de avanço)"
 
 #: builtin/merge.c:291
@@ -18367,8 +18367,8 @@ msgid "allow merging unrelated histories"
 msgstr "permitir junção de históricos diferentes"
 
 #: builtin/merge.c:307
-msgid "bypass pre-merge-commit and commit-msg hooks"
-msgstr "contornar ganchos pre-merge-commit e commit-msg"
+msgid "bypass pre-merge-cummit and cummit-msg hooks"
+msgstr "contornar ganchos pre-merge-cummit e cummit-msg"
 
 #: builtin/merge.c:323
 msgid "could not run stash."
@@ -18393,7 +18393,7 @@ msgstr "Já está atualizado. (nada para esmagar)"
 
 #: builtin/merge.c:417
 #, c-format
-msgid "Squash commit -- not updating HEAD\n"
+msgid "Squash cummit -- not updating HEAD\n"
 msgstr "Esmagar memória -- deixando HEAD por atualizar\n"
 
 #: builtin/merge.c:467
@@ -18403,7 +18403,7 @@ msgstr "Mensagem de junção nenhuma -- deixando HEAD por atualizar\n"
 
 #: builtin/merge.c:517
 #, c-format
-msgid "'%s' does not point to a commit"
+msgid "'%s' does not point to a cummit"
 msgstr "'%s' aponta para memória nenhuma"
 
 #: builtin/merge.c:605
@@ -18432,13 +18432,13 @@ msgstr "Incapaz ler de '%s'"
 
 #: builtin/merge.c:825
 #, c-format
-msgid "Not committing merge; use 'git commit' to complete the merge.\n"
+msgid "Not cummitting merge; use 'git cummit' to complete the merge.\n"
 msgstr ""
-"Memorizando junção nenhuma; usa 'git commit' para completar a junção.\n"
+"Memorizando junção nenhuma; usa 'git cummit' para completar a junção.\n"
 
 #: builtin/merge.c:831
 msgid ""
-"Please enter a commit message to explain why this merge is necessary,\n"
+"Please enter a cummit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
 "\n"
 msgstr ""
@@ -18448,20 +18448,20 @@ msgstr ""
 "\n"
 
 #: builtin/merge.c:836
-msgid "An empty message aborts the commit.\n"
+msgid "An empty message aborts the cummit.\n"
 msgstr "Uma mensagem vazia aborta a memorização.\n"
 
 #: builtin/merge.c:839
 #, c-format
 msgid ""
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
-"the commit.\n"
+"the cummit.\n"
 msgstr ""
 "Linhas começadas com '%c' são ignoradas, e uma mensagem vazia aborta\n"
 "a memorização.\n"
 
 #: builtin/merge.c:900
-msgid "Empty commit message."
+msgid "Empty cummit message."
 msgstr "Mensagem de memória vazia."
 
 #: builtin/merge.c:915
@@ -18471,7 +18471,7 @@ msgstr "Maravilhoso.\n"
 
 #: builtin/merge.c:976
 #, c-format
-msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
+msgid "Automatic merge failed; fix conflicts and then cummit the result.\n"
 msgstr ""
 "Junção automática falhou; conserta os conflitos e depois podes memorizar\n"
 "o resultado.\n"
@@ -18530,7 +18530,7 @@ msgstr "Há junção nenhuma em curso (MERGE_HEAD faltando)."
 #: builtin/merge.c:1385
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Junção está por concluir (MERGE_HEAD existe).\n"
 "Por favor, memoriza tuas alterações antes de juntar."
@@ -18538,7 +18538,7 @@ msgstr ""
 #: builtin/merge.c:1392
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Apanha por concluir (existe CHERRY_PICK_HEAD).\n"
 "Por favor, memoriza tuas alterações antes de juntares."
@@ -18548,15 +18548,15 @@ msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
 msgstr "Apanha por concluir (existe CHERRY_PICK_HEAD)."
 
 #: builtin/merge.c:1427
-msgid "No commit specified and merge.defaultToUpstream not set."
+msgid "No cummit specified and merge.defaultToUpstream not set."
 msgstr "Especificada memória nenhuma e merge.defaultToUpstream indefinido."
 
 #: builtin/merge.c:1444
-msgid "Squash commit into empty head not supported yet"
+msgid "Squash cummit into empty head not supported yet"
 msgstr "Esmagar memória para uma cabeça vazia por enquanto é insustentado"
 
 #: builtin/merge.c:1446
-msgid "Non-fast-forward commit does not make sense into an empty head"
+msgid "Non-fast-forward cummit does not make sense into an empty head"
 msgstr ""
 "Memorização diferente de avanço para uma cabeça vazia faz sentido nenhum"
 
@@ -18566,7 +18566,7 @@ msgid "%s - not something we can merge"
 msgstr "%s - nada que se pode juntar"
 
 #: builtin/merge.c:1453
-msgid "Can merge only exactly one commit into empty head"
+msgid "Can merge only exactly one cummit into empty head"
 msgstr "Podendo apenas juntar exatamente uma memória para uma cabeça vazia"
 
 #: builtin/merge.c:1540
@@ -18615,7 +18615,7 @@ msgstr "Usando estratégia %s para preparar resolução manual.\n"
 
 #: builtin/merge.c:1753
 #, c-format
-msgid "Automatic merge went well; stopped before committing as requested\n"
+msgid "Automatic merge went well; stopped before cummitting as requested\n"
 msgstr "Junção automática correu bem; parei antes de memorizar, como pedido\n"
 
 #: builtin/mktag.c:27
@@ -18708,7 +18708,7 @@ msgid "write multi-pack index containing only given indexes"
 msgstr "escrita multi-pack em cenário contendo apenas cenários dados"
 
 #: builtin/multi-pack-index.c:107
-msgid "refs snapshot for selecting bitmap commits"
+msgid "refs snapshot for selecting bitmap cummits"
 msgstr ""
 
 #: builtin/multi-pack-index.c:206
@@ -18815,8 +18815,8 @@ msgid "renaming '%s' failed"
 msgstr "renomear '%s' falhou"
 
 #: builtin/name-rev.c:524
-msgid "git name-rev [<options>] <commit>..."
-msgstr "git name-rev [<opções>] <commit>..."
+msgid "git name-rev [<options>] <cummit>..."
+msgstr "git name-rev [<opções>] <cummit>..."
 
 #: builtin/name-rev.c:525
 msgid "git name-rev [<options>] --all"
@@ -18831,7 +18831,7 @@ msgid "print only ref-based names (no object names)"
 msgstr "imprimir apenas nomes baseados em ref (nomes de objeto nenhum)"
 
 #: builtin/name-rev.c:584
-msgid "only use tags to name the commits"
+msgid "only use tags to name the cummits"
 msgstr "usar apenas etiquetas para designar memórias"
 
 #: builtin/name-rev.c:586
@@ -18843,7 +18843,7 @@ msgid "ignore refs matching <pattern>"
 msgstr "ignorar refs que correspondam ao <padrão>"
 
 #: builtin/name-rev.c:590
-msgid "list all commits reachable from all refs"
+msgid "list all cummits reachable from all refs"
 msgstr "listar todas as memórias alcançáveis de todas as refs"
 
 #: builtin/name-rev.c:591
@@ -18945,8 +18945,8 @@ msgid "git notes merge [<options>] <notes-ref>"
 msgstr "git notes merge [<opções>] <notas-ref>"
 
 #: builtin/notes.c:76
-msgid "git notes merge --commit [<options>]"
-msgstr "git notes merge --commit [<opções>]"
+msgid "git notes merge --cummit [<options>]"
+msgstr "git notes merge --cummit [<opções>]"
 
 #: builtin/notes.c:77
 msgid "git notes merge --abort [<options>]"
@@ -19131,11 +19131,11 @@ msgid "failed to read ref NOTES_MERGE_PARTIAL"
 msgstr "falha ao ler ref NOTES_MERGE_PARTIAL"
 
 #: builtin/notes.c:722
-msgid "could not find commit from NOTES_MERGE_PARTIAL."
+msgid "could not find cummit from NOTES_MERGE_PARTIAL."
 msgstr "incapaz encontrar memória a partir de NOTES_MERGE_PARTIAL."
 
 #: builtin/notes.c:724
-msgid "could not parse commit from NOTES_MERGE_PARTIAL."
+msgid "could not parse cummit from NOTES_MERGE_PARTIAL."
 msgstr "incapaz processar memória a partir de NOTES_MERGE_PARTIAL."
 
 #: builtin/notes.c:737
@@ -19168,11 +19168,11 @@ msgstr ""
 "theirs/union/cat_sort_uniq)"
 
 #: builtin/notes.c:788
-msgid "Committing unmerged notes"
+msgid "cummitting unmerged notes"
 msgstr "Memorizando notas por juntar"
 
 #: builtin/notes.c:790
-msgid "finalize notes merge by committing unmerged notes"
+msgid "finalize notes merge by cummitting unmerged notes"
 msgstr "finaliza junção de notas, memorizando notas por juntar"
 
 #: builtin/notes.c:792
@@ -19184,8 +19184,8 @@ msgid "abort notes merge"
 msgstr "abortar junção das notas"
 
 #: builtin/notes.c:805
-msgid "cannot mix --commit, --abort or -s/--strategy"
-msgstr "incapaz misturar --commit, --abort ou -s/--strategy"
+msgid "cannot mix --cummit, --abort or -s/--strategy"
+msgstr "incapaz misturar --cummit, --abort ou -s/--strategy"
 
 #: builtin/notes.c:810
 msgid "must specify a notes ref to merge"
@@ -19209,12 +19209,12 @@ msgstr "falhou ao guardar ligação à ref de notas atual (%s)"
 #: builtin/notes.c:880
 #, c-format
 msgid ""
-"Automatic notes merge failed. Fix conflicts in %s and commit the result with "
-"'git notes merge --commit', or abort the merge with 'git notes merge --"
+"Automatic notes merge failed. Fix conflicts in %s and cummit the result with "
+"'git notes merge --cummit', or abort the merge with 'git notes merge --"
 "abort'.\n"
 msgstr ""
 "Junção automática de notas falhou. Conserta os conflitos em %s e memoriza o "
-"resultado com 'git notes merge --commit', ou aborta a junção com 'git notes "
+"resultado com 'git notes merge --cummit', ou aborta a junção com 'git notes "
 "merge --abort'.\n"
 
 #: builtin/notes.c:899 builtin/tag.c:595
@@ -19582,7 +19582,7 @@ msgid "pack compression level"
 msgstr "nível de compressão de pacote"
 
 #: builtin/pack-objects.c:3972
-msgid "do not hide commits by grafts"
+msgid "do not hide cummits by grafts"
 msgstr "esconder nenhumas memórias por enxertos"
 
 #: builtin/pack-objects.c:3974
@@ -19725,8 +19725,8 @@ msgid "allow fast-forward"
 msgstr "permitir avanço"
 
 #: builtin/pull.c:165
-msgid "control use of pre-merge-commit and commit-msg hooks"
-msgstr "uso controlado de ganchos pre-merge-commit e commit-msg"
+msgid "control use of pre-merge-cummit and cummit-msg hooks"
+msgstr "uso controlado de ganchos pre-merge-cummit e cummit-msg"
 
 #: builtin/pull.c:171 parse-options.h:371
 msgid "automatically stash/stash pop before and after"
@@ -19822,7 +19822,7 @@ msgstr ""
 
 #: builtin/pull.c:600
 #, c-format
-msgid "unable to access commit %s"
+msgid "unable to access cummit %s"
 msgstr "incapaz acessar memória %s"
 
 #: builtin/pull.c:908
@@ -19856,7 +19856,7 @@ msgid "pull with rebase"
 msgstr "pull com rebase"
 
 #: builtin/pull.c:1052
-msgid "please commit or stash them."
+msgid "please cummit or stash them."
 msgstr "por favor, memoriza ou esconde-as."
 
 #: builtin/pull.c:1077
@@ -19864,7 +19864,7 @@ msgstr "por favor, memoriza ou esconde-as."
 msgid ""
 "fetch updated the current branch head.\n"
 "fast-forwarding your working tree from\n"
-"commit %s."
+"cummit %s."
 msgstr ""
 "a busca atualizou a cabeça de ramo atual.\n"
 "avançando tua árvore-trabalho da memória\n"
@@ -20046,8 +20046,8 @@ msgstr ""
 
 #: builtin/push.c:280
 msgid ""
-"You cannot update a remote ref that points at a non-commit object,\n"
-"or update a remote ref to make it point at a non-commit object,\n"
+"You cannot update a remote ref that points at a non-cummit object,\n"
+"or update a remote ref to make it point at a non-cummit object,\n"
 "without using the '--force' option.\n"
 msgstr ""
 "Apenas podes atualizar uma ref remota que aponte para um objecto\n"
@@ -20226,7 +20226,7 @@ msgstr "apenas emitir saída relativa ao segundo intervalo"
 
 #: builtin/range-diff.c:60 builtin/range-diff.c:64
 #, c-format
-msgid "not a commit range: '%s'"
+msgid "not a cummit range: '%s'"
 msgstr "intervalo de memórias nenhum: '%s'"
 
 #: builtin/range-diff.c:74
@@ -20234,7 +20234,7 @@ msgid "single arg format must be symmetric range"
 msgstr ""
 
 #: builtin/range-diff.c:89
-msgid "need two commit ranges"
+msgid "need two cummit ranges"
 msgstr "preciso dois intervalos de memórias"
 
 #: builtin/read-tree.c:41
@@ -20347,7 +20347,7 @@ msgid "could not generate todo list"
 msgstr "incapaz gerar lista de tarefas"
 
 #: builtin/rebase.c:332
-msgid "a base commit must be provided with --upstream or --onto"
+msgid "a base cummit must be provided with --upstream or --onto"
 msgstr ""
 
 #: builtin/rebase.c:391
@@ -20374,7 +20374,7 @@ msgstr ""
 msgid ""
 "Resolve all conflicts manually, mark them as resolved with\n"
 "\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
+"You can instead skip this cummit: run \"git rebase --skip\".\n"
 "To abort and get back to the state before \"git rebase\", run \"git rebase --"
 "abort\"."
 msgstr ""
@@ -20480,11 +20480,11 @@ msgid "do not show diffstat of what changed upstream"
 msgstr "esconder diffstat das alterações upstream"
 
 #: builtin/rebase.c:1066
-msgid "add a Signed-off-by trailer to each commit"
+msgid "add a Signed-off-by trailer to each cummit"
 msgstr "adicionar a atribuição Signed-off-by para cada memória"
 
 #: builtin/rebase.c:1069
-msgid "make committer date match author date"
+msgid "make cummitter date match author date"
 msgstr "fazer data de memorizador corresponder à data de autor"
 
 #: builtin/rebase.c:1071
@@ -20504,7 +20504,7 @@ msgid "ignore changes in whitespace"
 msgstr "ignorar alterações de espaços-em-branco"
 
 #: builtin/rebase.c:1081 builtin/rebase.c:1084
-msgid "cherry-pick all commits, even if unchanged"
+msgid "cherry-pick all cummits, even if unchanged"
 msgstr "apanhar todas as memórias, mesmo se inalteradas"
 
 #: builtin/rebase.c:1086
@@ -20540,7 +20540,7 @@ msgid "use merging strategies to rebase"
 msgstr "usar estratégias de junção para rebasear"
 
 #: builtin/rebase.c:1109
-msgid "let the user edit the list of commits to rebase"
+msgid "let the user edit the list of cummits to rebase"
 msgstr "deixar o utilizador editar a lista de memórias a rebasear"
 
 #: builtin/rebase.c:1113
@@ -20548,23 +20548,23 @@ msgid "(DEPRECATED) try to recreate merges instead of ignoring them"
 msgstr "(OBSOLETO) tenta recriar junções em vez de ignorá-las"
 
 #: builtin/rebase.c:1118
-msgid "how to handle commits that become empty"
+msgid "how to handle cummits that become empty"
 msgstr "como lidar com memórias que ficam vazias"
 
 #: builtin/rebase.c:1121
-msgid "keep commits which start empty"
+msgid "keep cummits which start empty"
 msgstr "manter memórias que começaram como vazias"
 
 #: builtin/rebase.c:1125
-msgid "move commits that begin with squash!/fixup! under -i"
+msgid "move cummits that begin with squash!/fixup! under -i"
 msgstr "mover para -i as memórias que começam com squash!/fixup!"
 
 #: builtin/rebase.c:1132
-msgid "add exec lines after each commit of the editable list"
+msgid "add exec lines after each cummit of the editable list"
 msgstr "adicionar linhas exec após cada memória da lista editável"
 
 #: builtin/rebase.c:1136
-msgid "allow rebasing commits with empty messages"
+msgid "allow rebasing cummits with empty messages"
 msgstr "permitir rebasear memórias com mensagens vazias"
 
 #: builtin/rebase.c:1140
@@ -20588,7 +20588,7 @@ msgid "pass the argument through to the merge strategy"
 msgstr ""
 
 #: builtin/rebase.c:1151
-msgid "rebase all reachable commits up to the root(s)"
+msgid "rebase all reachable cummits up to the root(s)"
 msgstr ""
 
 #: builtin/rebase.c:1154
@@ -20689,7 +20689,7 @@ msgid "invalid upstream '%s'"
 msgstr ""
 
 #: builtin/rebase.c:1571
-msgid "Could not create new root commit"
+msgid "Could not create new root cummit"
 msgstr "Incapaz criar nova memória raiz"
 
 #: builtin/rebase.c:1597
@@ -20704,12 +20704,12 @@ msgstr "'%s': preciso exatamente de uma base de junção"
 
 #: builtin/rebase.c:1609
 #, c-format
-msgid "Does not point to a valid commit '%s'"
+msgid "Does not point to a valid cummit '%s'"
 msgstr "Aponta para fora de memória válida '%s'"
 
 #: builtin/rebase.c:1636
 #, c-format
-msgid "no such branch/commit '%s'"
+msgid "no such branch/cummit '%s'"
 msgstr "nenhum ramo/memória '%s'"
 
 #: builtin/rebase.c:1647 builtin/submodule--helper.c:43
@@ -20723,7 +20723,7 @@ msgid "Could not resolve HEAD to a revision"
 msgstr "Foi impossível resolver HEAD para uma revisão"
 
 #: builtin/rebase.c:1679
-msgid "Please commit or stash them."
+msgid "Please cummit or stash them."
 msgstr "Por favor, memoriza ou esconde-as."
 
 #: builtin/rebase.c:1714
@@ -20894,7 +20894,7 @@ msgid ""
 msgstr ""
 
 #: builtin/reflog.c:258
-msgid "prune any reflog entries that point to broken commits"
+msgid "prune any reflog entries that point to broken cummits"
 msgstr ""
 "podar qualquer entrada de registo-ref que aponte para memórias quebradas"
 
@@ -21613,7 +21613,7 @@ msgid "git replace [-f] --edit <object>"
 msgstr "git replace [-f] --edit <objeto>"
 
 #: builtin/replace.c:24
-msgid "git replace [-f] --graft <commit> [<parent>...]"
+msgid "git replace [-f] --graft <cummit> [<parent>...]"
 msgstr "git replace [-f] --graft <memória> [<parente>...]"
 
 #: builtin/replace.c:26
@@ -21714,23 +21714,23 @@ msgstr ""
 
 #: builtin/replace.c:383
 #, c-format
-msgid "could not parse %s as a commit"
+msgid "could not parse %s as a cummit"
 msgstr "incapaz processar %s como memória"
 
 #: builtin/replace.c:415
 #, c-format
-msgid "bad mergetag in commit '%s'"
+msgid "bad mergetag in cummit '%s'"
 msgstr "mergetag inválida na memória '%s'"
 
 #: builtin/replace.c:417
 #, c-format
-msgid "malformed mergetag in commit '%s'"
+msgid "malformed mergetag in cummit '%s'"
 msgstr "mergetag malformada na memória '%s'"
 
 #: builtin/replace.c:429
 #, c-format
 msgid ""
-"original commit '%s' contains mergetag '%s' that is discarded; use --edit "
+"original cummit '%s' contains mergetag '%s' that is discarded; use --edit "
 "instead of --graft"
 msgstr ""
 "memória original '%s' contém a etiqueta-junção '%s' que foi descartada; usa --edit "
@@ -21738,16 +21738,16 @@ msgstr ""
 
 #: builtin/replace.c:468
 #, c-format
-msgid "the original commit '%s' has a gpg signature"
+msgid "the original cummit '%s' has a gpg signature"
 msgstr "a memória original '%s' tem uma assinatura gpg."
 
 #: builtin/replace.c:469
-msgid "the signature will be removed in the replacement commit!"
+msgid "the signature will be removed in the replacement cummit!"
 msgstr "a assinatura será removida na memória substituta!"
 
 #: builtin/replace.c:479
 #, c-format
-msgid "could not write replacement commit for: '%s'"
+msgid "could not write replacement cummit for: '%s'"
 msgstr "incapaz escrever a memória substituta para: '%s'"
 
 #: builtin/replace.c:487
@@ -21757,7 +21757,7 @@ msgstr "desnecessário enxerto para '%s'"
 
 #: builtin/replace.c:491
 #, c-format
-msgid "new commit is the same as the old one: '%s'"
+msgid "new cummit is the same as the old one: '%s'"
 msgstr ""
 
 #: builtin/replace.c:526
@@ -21782,7 +21782,7 @@ msgid "edit existing object"
 msgstr "editar objeto existente"
 
 #: builtin/replace.c:550
-msgid "change a commit's parents"
+msgid "change a cummit's parents"
 msgstr "alterar parentes da memória"
 
 #: builtin/replace.c:551
@@ -21857,7 +21857,7 @@ msgstr "incapaz gerar diff para '%s'"
 
 #: builtin/reset.c:33
 msgid ""
-"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
+"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"
 msgstr ""
 "git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<memória>]"
 
@@ -22092,7 +22092,7 @@ msgid "unknown mode for --show-object-format: %s"
 msgstr "modo desconhecido para --show-object-format: %s"
 
 #: builtin/revert.c:24
-msgid "git revert [<options>] <commit-ish>..."
+msgid "git revert [<options>] <cummit-ish>..."
 msgstr "git revert [<opções>] <mnemónica>..."
 
 #: builtin/revert.c:25
@@ -22100,7 +22100,7 @@ msgid "git revert <subcommand>"
 msgstr "git revert <subcommando>"
 
 #: builtin/revert.c:30
-msgid "git cherry-pick [<options>] <commit-ish>..."
+msgid "git cherry-pick [<options>] <cummit-ish>..."
 msgstr "git cherry-pick [<opções>] <mnemónica>..."
 
 #: builtin/revert.c:31
@@ -22130,15 +22130,15 @@ msgid "cancel revert or cherry-pick sequence"
 msgstr "cancelar sequência de reversão ou apanha"
 
 #: builtin/revert.c:105
-msgid "skip current commit and continue"
+msgid "skip current cummit and continue"
 msgstr ""
 
 #: builtin/revert.c:107
-msgid "don't automatically commit"
+msgid "don't automatically cummit"
 msgstr "memorizar nada automaticamente"
 
 #: builtin/revert.c:108
-msgid "edit the commit message"
+msgid "edit the cummit message"
 msgstr "editar mensagem de memória"
 
 #: builtin/revert.c:111
@@ -22158,19 +22158,19 @@ msgid "option for merge strategy"
 msgstr "opção para estratégia de junção"
 
 #: builtin/revert.c:125
-msgid "append commit name"
+msgid "append cummit name"
 msgstr "acrescentar nome de memória"
 
 #: builtin/revert.c:127
-msgid "preserve initially empty commits"
+msgid "preserve initially empty cummits"
 msgstr "preservar memórias inicialmente vazias"
 
 #: builtin/revert.c:128
-msgid "allow commits with empty messages"
+msgid "allow cummits with empty messages"
 msgstr "permitir memórias com mensagens vazias"
 
 #: builtin/revert.c:129
-msgid "keep redundant, empty commits"
+msgid "keep redundant, empty cummits"
 msgstr "manter memórias redundantes e vazias"
 
 #: builtin/revert.c:241
@@ -22316,15 +22316,15 @@ msgid "unknown group type: %s"
 msgstr "tipo de grupo desconhecido: %s"
 
 #: builtin/shortlog.c:351
-msgid "group by committer rather than author"
+msgid "group by cummitter rather than author"
 msgstr "agrupar por memorizador em vez de autor"
 
 #: builtin/shortlog.c:354
-msgid "sort output according to the number of commits per author"
+msgid "sort output according to the number of cummits per author"
 msgstr "ordenar saída de acordo com o número de memórias por autor"
 
 #: builtin/shortlog.c:356
-msgid "suppress commit descriptions, only provides commit count"
+msgid "suppress cummit descriptions, only provides cummit count"
 msgstr "suprimir a descrição de memórias, fornecer apenas o número de memórias"
 
 #: builtin/shortlog.c:358
@@ -22393,7 +22393,7 @@ msgid "color '*!+-' corresponding to the branch"
 msgstr "colorir '*!+-' correspondendo ao ramo"
 
 #: builtin/show-branch.c:651
-msgid "show <n> more commits after the common ancestor"
+msgid "show <n> more cummits after the common ancestor"
 msgstr "mostrar mais <n> memórias após a antecessora comum"
 
 #: builtin/show-branch.c:653
@@ -22409,7 +22409,7 @@ msgid "include the current branch"
 msgstr "incluir o ramo atual"
 
 #: builtin/show-branch.c:658
-msgid "name commits with their object names"
+msgid "name cummits with their object names"
 msgstr "designar memórias pelos seus nomes de objeto"
 
 #: builtin/show-branch.c:660
@@ -22421,11 +22421,11 @@ msgid "show refs unreachable from any other ref"
 msgstr "mostrar refs inalcançáveis a partir de outras refs"
 
 #: builtin/show-branch.c:664
-msgid "show commits in topological order"
+msgid "show cummits in topological order"
 msgstr "mostrar memórias em ordem topológica"
 
 #: builtin/show-branch.c:667
-msgid "show only commits not on the first branch"
+msgid "show only cummits not on the first branch"
 msgstr "mostrar apenas memórias fora do primeiro ramo"
 
 #: builtin/show-branch.c:669
@@ -22479,7 +22479,7 @@ msgstr "'%s' é uma ref inválida."
 
 #: builtin/show-branch.c:838
 #, c-format
-msgid "cannot find commit %s (%s)"
+msgid "cannot find cummit %s (%s)"
 msgstr "incapaz encontrar memória %s (%s)"
 
 #: builtin/show-index.c:21
@@ -22723,7 +22723,7 @@ msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
 msgstr "git stash apply [--index] [-q|--quiet] [<esconderijo>]"
 
 #: builtin/stash.c:75
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
+msgid "git stash store [-m|--message <message>] [-q|--quiet] <cummit>"
 msgstr "git stash store [-m|--message <mensagem>] [-q|--quiet] <memória>"
 
 #: builtin/stash.c:80
@@ -22746,7 +22746,7 @@ msgstr ""
 
 #: builtin/stash.c:130
 #, c-format
-msgid "'%s' is not a stash-like commit"
+msgid "'%s' is not a stash-like cummit"
 msgstr "'%s' é memória tipo esconderijo nenhuma"
 
 #: builtin/stash.c:150
@@ -22858,7 +22858,7 @@ msgid "stash message"
 msgstr "mensagem de esconderijo"
 
 #: builtin/stash.c:958
-msgid "\"git stash store\" requires one <commit> argument"
+msgid "\"git stash store\" requires one <cummit> argument"
 msgstr "\"git stash store\" exige um argumento <memória>"
 
 #: builtin/stash.c:1143
@@ -22870,7 +22870,7 @@ msgid "No changes selected"
 msgstr "Nenhuma alteração selecionada"
 
 #: builtin/stash.c:1304
-msgid "You do not have the initial commit yet"
+msgid "You do not have the initial cummit yet"
 msgstr "Memória inicial ainda é inexistente"
 
 #: builtin/stash.c:1331
@@ -23075,7 +23075,7 @@ msgstr "suprimir saída de status de submódulo"
 
 #: builtin/submodule--helper.c:875
 msgid ""
-"use commit stored in the index instead of the one stored in the submodule "
+"use cummit stored in the index instead of the one stored in the submodule "
 "HEAD"
 msgstr ""
 
@@ -23113,11 +23113,11 @@ msgid "unexpected mode %o\n"
 msgstr "modo inesperado %o\n"
 
 #: builtin/submodule--helper.c:1288
-msgid "use the commit stored in the index instead of the submodule HEAD"
+msgid "use the cummit stored in the index instead of the submodule HEAD"
 msgstr ""
 
 #: builtin/submodule--helper.c:1290
-msgid "compare the commit in the index with that in the submodule HEAD"
+msgid "compare the cummit in the index with that in the submodule HEAD"
 msgstr "compara a memória do cenário com aquela do submódulo HEAD"
 
 #: builtin/submodule--helper.c:1292
@@ -23129,7 +23129,7 @@ msgid "limit the summary size"
 msgstr "limitar tamanho de sumário"
 
 #: builtin/submodule--helper.c:1299
-msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
+msgid "git submodule--helper summary [<options>] [<cummit>] [--] [<path>]"
 msgstr ""
 
 #: builtin/submodule--helper.c:1323
@@ -23388,7 +23388,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Fetched in submodule path '%s', but it did not contain %s. Direct fetching "
-"of that commit failed."
+"of that cummit failed."
 msgstr ""
 "Buscado no caminho de submódulo '%s', mas continha nenhum %s. Falhou ao "
 "buscar essa memória diretamente."
@@ -23728,9 +23728,9 @@ msgstr "git tag -d <nome-etiqueta>..."
 
 #: builtin/tag.c:29
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
+"git tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--"
 "points-at <object>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] "
+"        [--format=<format>] [--merged <cummit>] [--no-merged <cummit>] "
 "[<pattern>...]"
 msgstr ""
 "git tag -l [-n[<num>]] [--contains <memória>] [--no-contains <memória>] [--"
@@ -23862,11 +23862,11 @@ msgid "show tag list in columns"
 msgstr "mostrar a lista de etiquetas em colunas"
 
 #: builtin/tag.c:468 builtin/tag.c:470
-msgid "print only tags that contain the commit"
+msgid "print only tags that contain the cummit"
 msgstr "mostrar apenas etiquetas que contenham a memória"
 
 #: builtin/tag.c:469 builtin/tag.c:471
-msgid "print only tags that don't contain the commit"
+msgid "print only tags that don't contain the cummit"
 msgstr "mostrar apenas etiquetas a que falte a memória"
 
 #: builtin/tag.c:472
@@ -24212,15 +24212,15 @@ msgstr "tentar <pasta>/.git/ apenas se <pasta> for pasta Git"
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "interromper transferência depois de <n> segundos de inatividade"
 
-#: builtin/verify-commit.c:19
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] <memória>..."
+#: builtin/verify-cummit.c:19
+msgid "git verify-cummit [-v | --verbose] <cummit>..."
+msgstr "git verify-cummit [-v | --verbose] <memória>..."
 
-#: builtin/verify-commit.c:68
-msgid "print commit contents"
+#: builtin/verify-cummit.c:68
+msgid "print cummit contents"
 msgstr "imprimir conteúdo de memória"
 
-#: builtin/verify-commit.c:69 builtin/verify-tag.c:37
+#: builtin/verify-cummit.c:69 builtin/verify-tag.c:37
 msgid "print raw gpg status output"
 msgstr "imprimir informação do gpg em bruto"
 
@@ -24245,7 +24245,7 @@ msgid "print tag contents"
 msgstr "imprimir conteúdo da etiqueta"
 
 #: builtin/worktree.c:19
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
+msgid "git worktree add [<options>] <path> [<cummit-ish>]"
 msgstr "git worktree add [<opções>] <caminho> [<mnemónica>]"
 
 #: builtin/worktree.c:20
@@ -24674,11 +24674,11 @@ msgstr "erro preparando revisões"
 
 #: t/helper/test-reach.c:154
 #, c-format
-msgid "commit %s is not marked reachable"
+msgid "cummit %s is not marked reachable"
 msgstr "memória %s está marcada como inalcançável"
 
 #: t/helper/test-reach.c:164
-msgid "too many commits marked reachable"
+msgid "too many cummits marked reachable"
 msgstr ""
 
 #: t/helper/test-serve-v2.c:7
@@ -25193,7 +25193,7 @@ msgid "Apply a series of patches from a mailbox"
 msgstr ""
 
 #: command-list.h:52
-msgid "Annotate file lines with commit information"
+msgid "Annotate file lines with cummit information"
 msgstr "Anotar linha de ficheiro com informação de memória"
 
 #: command-list.h:53
@@ -25209,7 +25209,7 @@ msgid "Create an archive of files from a named tree"
 msgstr "Criar arquivo de ficheiros a partir de árvore nomeada"
 
 #: command-list.h:56
-msgid "Use binary search to find the commit that introduced a bug"
+msgid "Use binary search to find the cummit that introduced a bug"
 msgstr "Usar procura binário para encontrar a memória que introduziu um bug"
 
 #: command-list.h:57
@@ -25257,15 +25257,15 @@ msgid "Copy files from the index to the working tree"
 msgstr ""
 
 #: command-list.h:68
-msgid "Find commits yet to be applied to upstream"
+msgid "Find cummits yet to be applied to upstream"
 msgstr ""
 
 #: command-list.h:69
-msgid "Apply the changes introduced by some existing commits"
+msgid "Apply the changes introduced by some existing cummits"
 msgstr ""
 
 #: command-list.h:70
-msgid "Graphical alternative to git-commit"
+msgid "Graphical alternative to git-cummit"
 msgstr ""
 
 #: command-list.h:71
@@ -25285,11 +25285,11 @@ msgid "Record changes to the repository"
 msgstr "Gravar alterações para o repositório"
 
 #: command-list.h:75
-msgid "Write and verify Git commit-graph files"
+msgid "Write and verify Git cummit-graph files"
 msgstr ""
 
 #: command-list.h:76
-msgid "Create a new commit object"
+msgid "Create a new cummit object"
 msgstr "Criar um novo objeto de memória"
 
 #: command-list.h:77
@@ -25313,7 +25313,7 @@ msgid "Helper to store credentials on disk"
 msgstr ""
 
 #: command-list.h:82
-msgid "Export a single commit to a CVS checkout"
+msgid "Export a single cummit to a CVS checkout"
 msgstr ""
 
 #: command-list.h:83
@@ -25333,7 +25333,7 @@ msgid "Give an object a human readable name based on an available ref"
 msgstr ""
 
 #: command-list.h:87
-msgid "Show changes between commits, commit and working tree, etc"
+msgid "Show changes between cummits, cummit and working tree, etc"
 msgstr "Mostrar alterações entre memórias, memória e árvore-trabalho, etc"
 
 #: command-list.h:88
@@ -25373,7 +25373,7 @@ msgid "Rewrite branches"
 msgstr "Reescrever ramos"
 
 #: command-list.h:97
-msgid "Produce a merge commit message"
+msgid "Produce a merge cummit message"
 msgstr "Produzir uma mensagem de memória de junção"
 
 #: command-list.h:98
@@ -25397,7 +25397,7 @@ msgid "Cleanup unnecessary files and optimize the local repository"
 msgstr ""
 
 #: command-list.h:103
-msgid "Extract commit ID from an archive created using git-archive"
+msgid "Extract cummit ID from an archive created using git-archive"
 msgstr ""
 
 #: command-list.h:104
@@ -25449,11 +25449,11 @@ msgid "Instantly browse your working repository in gitweb"
 msgstr "Navegar instantaneamente pelo teu repositório-trabalho em gitweb"
 
 #: command-list.h:116
-msgid "Add or parse structured information in commit messages"
+msgid "Add or parse structured information in cummit messages"
 msgstr "Adiciona ou processa informação estruturada em mensagem de memória"
 
 #: command-list.h:117
-msgid "Show commit logs"
+msgid "Show cummit logs"
 msgstr "Mostrar registro de memórias"
 
 #: command-list.h:118
@@ -25575,7 +25575,7 @@ msgid "Applies a quilt patchset onto the current branch"
 msgstr "Aplica-se uma mistura de patchset para o ramo atual."
 
 #: command-list.h:147
-msgid "Compare two commit ranges (e.g. two versions of a branch)"
+msgid "Compare two cummit ranges (e.g. two versions of a branch)"
 msgstr "Comparar os dois intervalos de memórias (e.g. duas versões de ramo)"
 
 #: command-list.h:148
@@ -25583,7 +25583,7 @@ msgid "Reads tree information into the index"
 msgstr ""
 
 #: command-list.h:149
-msgid "Reapply commits on top of another base tip"
+msgid "Reapply cummits on top of another base tip"
 msgstr "Reaplicar memórias no topo de outra ponta"
 
 #: command-list.h:150
@@ -25623,7 +25623,7 @@ msgid "Restore working tree files"
 msgstr "Restaurar ficheiros de árvore-trabalho"
 
 #: command-list.h:159
-msgid "Lists commit objects in reverse chronological order"
+msgid "Lists cummit objects in reverse chronological order"
 msgstr "Listar objetos de memória em ordem cronológica inversa"
 
 #: command-list.h:160
@@ -25631,7 +25631,7 @@ msgid "Pick out and massage parameters"
 msgstr "demasiados parâmetros"
 
 #: command-list.h:161
-msgid "Revert some existing commits"
+msgid "Revert some existing cummits"
 msgstr "Reverter algumas memórias existentes"
 
 #: command-list.h:162
@@ -25667,7 +25667,7 @@ msgid "Show various types of objects"
 msgstr "Mostrar vários tipos objetos"
 
 #: command-list.h:170
-msgid "Show branches and their commits"
+msgid "Show branches and their cummits"
 msgstr "Mostrar ramos e suas memórias"
 
 #: command-list.h:171
@@ -25753,7 +25753,7 @@ msgid "Show a Git logical variable"
 msgstr ""
 
 #: command-list.h:191
-msgid "Check the GPG signature of commits"
+msgid "Check the GPG signature of cummits"
 msgstr "Verifica assinatura GPG de memórias"
 
 #: command-list.h:192
@@ -25765,7 +25765,7 @@ msgid "Check the GPG signature of tags"
 msgstr "Verifica assinatura GPG de etiquetas"
 
 #: command-list.h:194
-msgid "Show logs with difference each commit introduces"
+msgid "Show logs with difference each cummit introduces"
 msgstr "Mostrar registro com as diferenças que cada memória introduz"
 
 #: command-list.h:195
@@ -25826,7 +25826,7 @@ msgid "The Git repository browser"
 msgstr "O browser de repositórios Git"
 
 #: command-list.h:209
-msgid "Map author/committer names and/or E-Mail addresses"
+msgid "Map author/cummitter names and/or E-Mail addresses"
 msgstr "Mapear nomes de autor/memorizador e/ou endereços de E-Mail"
 
 #: command-list.h:210
@@ -25887,7 +25887,7 @@ msgstr "Deverias estar a fazer polvo nenhum."
 
 #: git-merge-octopus.sh:73
 #, sh-format
-msgid "Unable to find common commit with $pretty_name"
+msgid "Unable to find common cummit with $pretty_name"
 msgstr "Incapaz de encontrar memória comum com $pretty_name"
 
 #: git-merge-octopus.sh:77
@@ -25935,11 +25935,11 @@ msgstr "Incapaz $action: Tens alterações desencenadas."
 
 #: git-sh-setup.sh:226
 #, sh-format
-msgid "Cannot $action: Your index contains uncommitted changes."
+msgid "Cannot $action: Your index contains uncummitted changes."
 msgstr "Incapaz $action: Teu cenário contém alterações por memorizar."
 
 #: git-sh-setup.sh:228
-msgid "Additionally, your index contains uncommitted changes."
+msgid "Additionally, your index contains uncummitted changes."
 msgstr "Além disso, teu cenário contém alterações por memorizar."
 
 #: git-sh-setup.sh:348
@@ -26369,7 +26369,7 @@ msgstr "aviso: linha sendmail está por reconhecer: %s\n"
 #: git-send-email.perl:747
 #, perl-format
 msgid ""
-"File '%s' exists but it could also be the range of commits\n"
+"File '%s' exists but it could also be the range of cummits\n"
 "to produce patches for.  Please disambiguate by...\n"
 "\n"
 "    * Saying \"./%s\" if you mean a file; or\n"
@@ -26500,7 +26500,7 @@ msgstr "Path CA \"%s\" é inexistente"
 #: git-send-email.perl:1565
 msgid ""
 "    The Cc list above has been expanded by additional\n"
-"    addresses found in the patch commit message. By default\n"
+"    addresses found in the patch cummit message. By default\n"
 "    send-email prompts before sending whenever this occurs.\n"
 "    This behavior is controlled by the sendemail.confirm\n"
 "    configuration setting.\n"

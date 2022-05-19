@@ -12,7 +12,7 @@ int cmd__write_cache(int argc, const char **argv)
 	read_cache();
 	for (i = 0; i < cnt; i++) {
 		hold_locked_index(&index_lock, LOCK_DIE_ON_ERROR);
-		if (write_locked_index(&the_index, &index_lock, COMMIT_LOCK))
+		if (write_locked_index(&the_index, &index_lock, cummit_LOCK))
 			die("unable to write index file");
 	}
 

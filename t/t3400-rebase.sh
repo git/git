@@ -18,26 +18,26 @@ GIT_AUTHOR_EMAIL=bogus@email@address
 export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 
 test_expect_success 'prepare repository with topic branches' '
-	test_commit "Add A." A First First &&
+	test_cummit "Add A." A First First &&
 	git checkout -b force-3way &&
 	echo Dummy >Y &&
 	git update-index --add Y &&
-	git commit -m "Add Y." &&
+	git cummit -m "Add Y." &&
 	git checkout -b filemove &&
 	git reset --soft main &&
 	mkdir D &&
 	git mv A D/A &&
-	git commit -m "Move A." &&
+	git cummit -m "Move A." &&
 	git checkout -b my-topic-branch main &&
-	test_commit "Add B." B Second Second &&
+	test_cummit "Add B." B Second Second &&
 	git checkout -f main &&
 	echo Third >>A &&
 	git update-index A &&
-	git commit -m "Modify A." &&
+	git cummit -m "Modify A." &&
 	git checkout -b side my-topic-branch &&
 	echo Side >>C &&
 	git add C &&
-	git commit -m "Add C" &&
+	git cummit -m "Add C" &&
 	git checkout -f my-topic-branch &&
 	git tag topic
 '
@@ -117,13 +117,13 @@ test_expect_success 'rebase a single mode change' '
 	echo 1 >X &&
 	git add X &&
 	test_tick &&
-	git commit -m prepare &&
+	git cummit -m prepare &&
 	git checkout -b modechange HEAD^ &&
 	echo 1 >X &&
 	git add X &&
 	test_chmod +x A &&
 	test_tick &&
-	git commit -m modechange &&
+	git cummit -m modechange &&
 	GIT_TRACE=1 git rebase main
 '
 
@@ -199,18 +199,18 @@ test_expect_success 'default to common base in @{upstream}s reflog if no upstrea
 	test_cmp expect actual
 '
 
-test_expect_success 'cherry-picked commits and fork-point work together' '
+test_expect_success 'cherry-picked cummits and fork-point work together' '
 	git checkout default-base &&
 	echo Amended >A &&
-	git commit -a --no-edit --amend &&
-	test_commit B B &&
-	test_commit new_B B "New B" &&
-	test_commit C C &&
+	git cummit -a --no-edit --amend &&
+	test_cummit B B &&
+	test_cummit new_B B "New B" &&
+	test_cummit C C &&
 	git checkout default &&
 	git reset --hard default-base@{4} &&
-	test_commit D D &&
+	test_cummit D D &&
 	git cherry-pick -2 default-base^ &&
-	test_commit final_B B "Final B" &&
+	test_cummit final_B B "Final B" &&
 	git rebase &&
 	echo Amended >expect &&
 	test_cmp expect A &&
@@ -234,7 +234,7 @@ test_expect_success 'rebase --merge -q is quiet' '
 	test_must_be_empty output.out
 '
 
-test_expect_success 'Rebase a commit that sprinkles CRs in' '
+test_expect_success 'Rebase a cummit that sprinkles CRs in' '
 	(
 		echo "One" &&
 		echo "TwoQ" &&
@@ -244,7 +244,7 @@ test_expect_success 'Rebase a commit that sprinkles CRs in' '
 	) | q_to_cr >CR &&
 	git add CR &&
 	test_tick &&
-	git commit -a -m "A file with a line with CR" &&
+	git cummit -a -m "A file with a line with CR" &&
 	git tag file-with-cr &&
 	git checkout HEAD^0 &&
 	git rebase --onto HEAD^^ HEAD^ &&
@@ -254,9 +254,9 @@ test_expect_success 'Rebase a commit that sprinkles CRs in' '
 test_expect_success 'rebase can copy notes' '
 	git config notes.rewrite.rebase true &&
 	git config notes.rewriteRef "refs/notes/*" &&
-	test_commit n1 &&
-	test_commit n2 &&
-	test_commit n3 &&
+	test_cummit n1 &&
+	test_cummit n2 &&
+	test_cummit n3 &&
 	git notes add -m"a note" n3 &&
 	git rebase --onto n1 n2 &&
 	test "a note" = "$(git notes show HEAD)"
@@ -268,15 +268,15 @@ test_expect_success 'rebase -m can copy notes' '
 	test "a note" = "$(git notes show HEAD)"
 '
 
-test_expect_success 'rebase commit with an ancient timestamp' '
+test_expect_success 'rebase cummit with an ancient timestamp' '
 	git reset --hard &&
 
 	>old.one && git add old.one && test_tick &&
-	git commit --date="@12345 +0400" -m "Old one" &&
+	git cummit --date="@12345 +0400" -m "Old one" &&
 	>old.two && git add old.two && test_tick &&
-	git commit --date="@23456 +0500" -m "Old two" &&
+	git cummit --date="@23456 +0500" -m "Old two" &&
 	>old.three && git add old.three && test_tick &&
-	git commit --date="@34567 +0600" -m "Old three" &&
+	git cummit --date="@34567 +0600" -m "Old three" &&
 
 	git cat-file commit HEAD^^ >actual &&
 	grep "author .* 12345 +0400$" actual &&
@@ -291,10 +291,10 @@ test_expect_success 'rebase commit with an ancient timestamp' '
 	grep "author .* 34567 +0600$" actual
 '
 
-test_expect_success 'rebase with "From " line in commit message' '
+test_expect_success 'rebase with "From " line in cummit message' '
 	git checkout -b preserve-from main~1 &&
 	cat >From_.msg <<EOF &&
-Somebody embedded an mbox in a commit message
+Somebody embedded an mbox in a cummit message
 
 This is from so-and-so:
 
@@ -307,7 +307,7 @@ something
 EOF
 	>From_ &&
 	git add From_ &&
-	git commit -F From_.msg &&
+	git cummit -F From_.msg &&
 	git rebase main &&
 	git log -1 --pretty=format:%B >out &&
 	test_cmp From_.msg out
@@ -317,11 +317,11 @@ test_expect_success 'rebase --apply and --show-current-patch' '
 	test_create_repo conflict-apply &&
 	(
 		cd conflict-apply &&
-		test_commit init &&
+		test_cummit init &&
 		echo one >>init.t &&
-		git commit -a -m one &&
+		git cummit -a -m one &&
 		echo two >>init.t &&
-		git commit -a -m two &&
+		git cummit -a -m two &&
 		git tag two &&
 		test_must_fail git rebase --apply -f --onto init HEAD^ &&
 		GIT_TRACE=1 git rebase --show-current-patch >/dev/null 2>stderr &&
@@ -333,25 +333,25 @@ test_expect_success 'rebase --apply and .gitattributes' '
 	test_create_repo attributes &&
 	(
 		cd attributes &&
-		test_commit init &&
+		test_cummit init &&
 		git config filter.test.clean "sed -e '\''s/smudged/clean/g'\''" &&
 		git config filter.test.smudge "sed -e '\''s/clean/smudged/g'\''" &&
 
-		test_commit second &&
+		test_cummit second &&
 		git checkout -b test HEAD^ &&
 
 		echo "*.txt filter=test" >.gitattributes &&
 		git add .gitattributes &&
-		test_commit third &&
+		test_cummit third &&
 
 		echo "This text is smudged." >a.txt &&
 		git add a.txt &&
-		test_commit fourth &&
+		test_cummit fourth &&
 
 		git checkout -b removal HEAD^ &&
 		git rm .gitattributes &&
 		git add -u &&
-		test_commit fifth &&
+		test_cummit fifth &&
 		git cherry-pick test &&
 
 		git checkout test &&
@@ -369,11 +369,11 @@ test_expect_success 'rebase--merge.sh and --show-current-patch' '
 	test_create_repo conflict-merge &&
 	(
 		cd conflict-merge &&
-		test_commit init &&
+		test_cummit init &&
 		echo one >>init.t &&
-		git commit -a -m one &&
+		git cummit -a -m one &&
 		echo two >>init.t &&
-		git commit -a -m two &&
+		git cummit -a -m two &&
 		git tag two &&
 		test_must_fail git rebase --merge --onto init HEAD^ &&
 		git rebase --show-current-patch >actual.patch &&
@@ -424,11 +424,11 @@ test_expect_success 'rebase when inside worktree subdirectory' '
 	git init main-wt &&
 	(
 		cd main-wt &&
-		git commit --allow-empty -m "initial" &&
+		git cummit --allow-empty -m "initial" &&
 		mkdir -p foo/bar &&
-		test_commit foo/bar/baz &&
+		test_cummit foo/bar/baz &&
 		mkdir -p a/b &&
-		test_commit a/b/c &&
+		test_cummit a/b/c &&
 		# create another branch for our other worktree
 		git branch other &&
 		git worktree add ../other-wt other &&
@@ -437,7 +437,7 @@ test_expect_success 'rebase when inside worktree subdirectory' '
 		mkdir -p random/dir &&
 		cd random/dir &&
 		# now do the rebase
-		git rebase --onto HEAD^^ HEAD^  # drops the HEAD^ commit
+		git rebase --onto HEAD^^ HEAD^  # drops the HEAD^ cummit
 	)
 '
 

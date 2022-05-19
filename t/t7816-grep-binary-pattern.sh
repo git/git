@@ -57,7 +57,7 @@ nul_match () {
 test_expect_success 'setup' "
 	echo 'binaryQfileQm[*]cQ*æQð' | q_to_nul >a &&
 	git add a &&
-	git commit -m.
+	git cummit -m.
 "
 
 # Simple fixed-string matching

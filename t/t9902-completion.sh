@@ -622,13 +622,13 @@ test_expect_success '__git_is_configured_remote' '
 '
 
 test_expect_success 'setup for ref completion' '
-	git commit --allow-empty -m initial &&
+	git cummit --allow-empty -m initial &&
 	git branch -M main &&
 	git branch matching-branch &&
 	git tag matching-tag &&
 	(
 		cd otherrepo &&
-		git commit --allow-empty -m initial &&
+		git cummit --allow-empty -m initial &&
 		git branch -m main main-in-other &&
 		git branch branch-in-other &&
 		git tag tag-in-other
@@ -1454,7 +1454,7 @@ test_expect_success 'setup sparse-checkout tests' '
 		touch folder2/0/t.txt &&
 		touch folder3/t.txt &&
 		git add . &&
-		git commit -am "Initial commit"
+		git cummit -am "Initial cummit"
 	)
 '
 
@@ -1515,7 +1515,7 @@ test_expect_success 'cone mode sparse-checkout completes directory names with sp
 		>"directory with spaces/randomfile" &&
 		>"directory-with-áccent/randomfile" &&
 		git add . &&
-		git commit -m "Add directory with spaces and directory with accent" &&
+		git cummit -m "Add directory with spaces and directory with accent" &&
 		git sparse-checkout set --cone "directory with spaces" \
 			"directory-with-áccent" &&
 		test_completion "git sparse-checkout add dir" <<-\EOF &&
@@ -1525,7 +1525,7 @@ test_expect_success 'cone mode sparse-checkout completes directory names with sp
 		rm -rf "directory with spaces" &&
 		rm -rf "directory-with-áccent" &&
 		git add . &&
-		git commit -m "Remove directory with spaces and directory with accent"
+		git cummit -m "Remove directory with spaces and directory with accent"
 	)
 '
 
@@ -1538,7 +1538,7 @@ test_expect_success FUNNYNAMES 'cone mode sparse-checkout completes directory na
 		mkdir "$(printf "directory\twith\ttabs")" &&
 		>"$(printf "directory\twith\ttabs")/randomfile" &&
 		git add . &&
-		git commit -m "Add directory with tabs" &&
+		git cummit -m "Add directory with tabs" &&
 		git sparse-checkout set --cone \
 			"$(printf "directory\twith\ttabs")" &&
 		test_completion "git sparse-checkout add dir" <<-\EOF &&
@@ -1546,7 +1546,7 @@ test_expect_success FUNNYNAMES 'cone mode sparse-checkout completes directory na
 		EOF
 		rm -rf "$(printf "directory\twith\ttabs")" &&
 		git add . &&
-		git commit -m "Remove directory with tabs"
+		git cummit -m "Remove directory with tabs"
 	)
 '
 
@@ -1559,7 +1559,7 @@ test_expect_success FUNNYNAMES,!CYGWIN 'cone mode sparse-checkout completes dire
 		mkdir "directory\with\backslashes" &&
 		>"directory\with\backslashes/randomfile" &&
 		git add . &&
-		git commit -m "Add directory with backslashes" &&
+		git cummit -m "Add directory with backslashes" &&
 		git sparse-checkout set --cone \
 			"directory\with\backslashes" &&
 		test_completion "git sparse-checkout add dir" <<-\EOF &&
@@ -1567,7 +1567,7 @@ test_expect_success FUNNYNAMES,!CYGWIN 'cone mode sparse-checkout completes dire
 		EOF
 		rm -rf "directory\with\backslashes" &&
 		git add . &&
-		git commit -m "Remove directory with backslashes"
+		git cummit -m "Remove directory with backslashes"
 	)
 '
 
@@ -2242,7 +2242,7 @@ test_expect_success 'setup for integration tests' '
 	echo content >file1 &&
 	echo more >file2 &&
 	git add file1 file2 &&
-	git commit -m one &&
+	git cummit -m one &&
 	git branch mybranch &&
 	git tag mytag
 '
@@ -2279,7 +2279,7 @@ test_expect_success '<ref>: completes paths' '
 test_expect_success 'complete tree filename with spaces' '
 	echo content >"name with spaces" &&
 	git add "name with spaces" &&
-	git commit -m spaces &&
+	git cummit -m spaces &&
 	test_completion "git show HEAD:nam" <<-\EOF
 	name with spacesZ
 	EOF
@@ -2288,7 +2288,7 @@ test_expect_success 'complete tree filename with spaces' '
 test_expect_success 'complete tree filename with metacharacters' '
 	echo content >"name with \${meta}" &&
 	git add "name with \${meta}" &&
-	git commit -m meta &&
+	git cummit -m meta &&
 	test_completion "git show HEAD:nam" <<-\EOF
 	name with ${meta}Z
 	name with spacesZ
@@ -2315,15 +2315,15 @@ test_expect_success 'complete files' '
 	echo "out_sorted" >> .gitignore &&
 
 	git add .gitignore &&
-	test_completion "git commit " ".gitignore" &&
+	test_completion "git cummit " ".gitignore" &&
 
-	git commit -m ignore &&
+	git cummit -m ignore &&
 
 	touch new &&
 	test_completion "git add " "new" &&
 
 	git add new &&
-	git commit -a -m new &&
+	git cummit -a -m new &&
 	test_completion "git add " "" &&
 
 	git mv new modified &&
@@ -2354,7 +2354,7 @@ test_expect_success 'complete files' '
 	mkdir dir &&
 	touch dir/file-in-dir &&
 	git add dir/file-in-dir &&
-	git commit -m dir &&
+	git cummit -m dir &&
 
 	mkdir untracked-dir &&
 
@@ -2367,7 +2367,7 @@ test_expect_success 'complete files' '
 	untracked-dir
 	EOF
 
-	test_completion "git commit " "modified" &&
+	test_completion "git cummit " "modified" &&
 
 	: TODO .gitignore should not be here &&
 	test_completion "git ls-files " <<-\EOF &&
@@ -2622,7 +2622,7 @@ test_expect_success 'all commands are shown with GIT_COMPLETION_SHOW_ALL_COMMAND
 		# Check "gitk", a "main" command, but not a built-in + more plumbing
 		run_completion "git g" &&
 		grep gitk out &&
-		grep get-tar-commit-id out
+		grep get-tar-cummit-id out
 	)
 '
 

@@ -345,7 +345,7 @@ test_expect_success 'implicit bare & --separate-git-dir incompatible' '
 
 test_expect_success 'bare & --separate-git-dir incompatible within worktree' '
 	test_when_finished "rm -rf bare.git linkwt seprepo" &&
-	test_commit gumby &&
+	test_cummit gumby &&
 	git clone --bare . bare.git &&
 	git -C bare.git worktree add --detach ../linkwt &&
 	test_must_fail git -C linkwt init --separate-git-dir seprepo 2>err &&
@@ -434,7 +434,7 @@ test_expect_success SYMLINKS 're-init to move gitdir symlink' '
 sep_git_dir_worktree ()  {
 	test_when_finished "rm -rf mainwt linkwt seprepo" &&
 	git init mainwt &&
-	test_commit -C mainwt gumby &&
+	test_cummit -C mainwt gumby &&
 	git -C mainwt worktree add --detach ../linkwt &&
 	git -C "$1" init --separate-git-dir ../seprepo &&
 	git -C mainwt rev-parse --git-common-dir >expect &&
@@ -486,7 +486,7 @@ test_expect_success 're-init from a linked worktree' '
 	git init main-worktree &&
 	(
 		cd main-worktree &&
-		test_commit first &&
+		test_cummit first &&
 		git worktree add ../linked-worktree &&
 		mv .git/info/exclude expected-exclude &&
 		cp .git/config expected-config &&

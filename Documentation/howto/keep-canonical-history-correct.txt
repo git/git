@@ -19,11 +19,11 @@ Suppose that that central repository has this history:
     ---o---o---A
 ------------
 
-which ends at commit `A` (time flows from left to right and each node
-in the graph is a commit, lines between them indicating parent-child
+which ends at cummit `A` (time flows from left to right and each node
+in the graph is a cummit, lines between them indicating parent-child
 relationship).
 
-Then you clone it and work on your own commits, which leads you to
+Then you clone it and work on your own cummits, which leads you to
 have this history in *your* repository:
 
 ------------
@@ -62,11 +62,11 @@ you will create a merge `M` and make the history look like this:
 ------------
 
 `M` is a descendant of `Z`, so you can push to update the central
-repository.  Such a merge `M` does not lose any commit in both
+repository.  Such a merge `M` does not lose any cummit in both
 histories, so in that sense it may not be wrong, but when people want
 to talk about "the authoritative canonical history that is shared
 among the project participants", i.e. "the trunk", they often view
-it as "commits you see by following the first-parent chain", and use
+it as "cummits you see by following the first-parent chain", and use
 this command to view it:
 
 ------------
@@ -74,7 +74,7 @@ this command to view it:
 ------------
 
 For all other people who observed the central repository after your
-coworker pushed `Z` but before you pushed `M`, the commit on the trunk
+coworker pushed `Z` but before you pushed `M`, the cummit on the trunk
 used to be `o-o-A-X-Y-Z`.  But because you made `M` while you were on
 `C`, `M`'s first parent is `C`, so by pushing `M` to advance the
 central repository, you made `X-Y-Z` a side branch, not on the trunk.
@@ -89,7 +89,7 @@ You would rather want to have a history of this shape:
 
 so that in the first-parent chain, it is clear that the project first
 did `X` and then `Y` and then `Z` and merged a change that consists of
-two commits `B` and `C` that achieves a single goal.  You may have
+two cummits `B` and `C` that achieves a single goal.  You may have
 worked on fixing the bug #12345 with these two patches, and the merge
 `M'` with swapped parents can say in its log message "Merge
 fix-bug-12345". Having a way to tell `git pull` to create a merge
@@ -119,12 +119,12 @@ with `git pull --rebase` or something.
     merges.  To them, swapping the merge order does not hurt, but
     it is unnecessary.
 
- 3. Some projects want each commit on the "trunk" to do one single
+ 3. Some projects want each cummit on the "trunk" to do one single
     thing.  The output of `git log --first-parent` in such a project
     would show either a merge of a side branch that completes a single
-    theme, or a single commit that completes a single theme by itself.
-    If your two commits `B` and `C` (or they may even be two groups of
-    commits) were solving two independent issues, then the merge `M'`
+    theme, or a single cummit that completes a single theme by itself.
+    If your two cummits `B` and `C` (or they may even be two groups of
+    cummits) were solving two independent issues, then the merge `M'`
     we made in the earlier example by swapping the merge order is
     still not up to the project standard.  It merges two unrelated
     efforts `B` and `C` at the same time.

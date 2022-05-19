@@ -11,7 +11,7 @@ advance () {
 	echo "$1" >"$1" &&
 	git add "$1" &&
 	test_tick &&
-	git commit -m "$1"
+	git cummit -m "$1"
 }
 
 test_expect_success setup '
@@ -110,8 +110,8 @@ test_expect_success 'status (diverged from upstream)' '
 	(
 		cd test &&
 		git checkout b1 >/dev/null &&
-		# reports nothing to commit
-		test_must_fail git commit --dry-run
+		# reports nothing to cummit
+		test_must_fail git cummit --dry-run
 	) >actual &&
 	test_i18ngrep "have 1 and 1 different" actual
 '
@@ -120,8 +120,8 @@ test_expect_success 'status (upstream is gone)' '
 	(
 		cd test &&
 		git checkout b5 >/dev/null &&
-		# reports nothing to commit
-		test_must_fail git commit --dry-run
+		# reports nothing to cummit
+		test_must_fail git cummit --dry-run
 	) >actual &&
 	test_i18ngrep "is based on .*, but the upstream is gone." actual
 '
@@ -130,8 +130,8 @@ test_expect_success 'status (up-to-date with upstream)' '
 	(
 		cd test &&
 		git checkout b6 >/dev/null &&
-		# reports nothing to commit
-		test_must_fail git commit --dry-run
+		# reports nothing to cummit
+		test_must_fail git cummit --dry-run
 	) >actual &&
 	test_i18ngrep "Your branch is up to date with .origin/main" actual
 '
@@ -178,7 +178,7 @@ test_expect_success 'status.aheadbehind=false status -s -b (diverged from upstre
 cat >expect <<\EOF
 On branch b1
 Your branch and 'origin/main' have diverged,
-and have 1 and 1 different commits each, respectively.
+and have 1 and 1 different cummits each, respectively.
 EOF
 
 test_expect_success 'status --long --branch' '
@@ -201,7 +201,7 @@ test_expect_success 'status --long --branch' '
 
 cat >expect <<\EOF
 On branch b1
-Your branch and 'origin/main' refer to different commits.
+Your branch and 'origin/main' refer to different cummits.
 EOF
 
 test_expect_success 'status --long --branch --no-ahead-behind' '

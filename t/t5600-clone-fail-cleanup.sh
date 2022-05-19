@@ -35,9 +35,9 @@ test_expect_success 'create a repo to clone' '
 '
 
 test_expect_success 'create objects in repo for later corruption' '
-	test_commit -C foo file &&
+	test_cummit -C foo file &&
 	git -C foo checkout --detach &&
-	test_commit -C foo detached
+	test_cummit -C foo detached
 '
 
 # source repository given to git clone should be relative to the

@@ -20,7 +20,7 @@ test_expect_success 'setup' '
 	echo 3 >other &&
 
 	test_tick &&
-	git commit --allow-empty -m basis
+	git cummit --allow-empty -m basis
 '
 
 test_expect_success 'setup: subdir' '

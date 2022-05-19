@@ -13,30 +13,30 @@ test_description='Test criss-cross merge'
 test_expect_success 'prepare repository' '
 	test_write_lines 1 2 3 4 5 6 7 8 9 >file &&
 	git add file &&
-	git commit -m "Initial commit" file &&
+	git cummit -m "Initial cummit" file &&
 
 	git branch A &&
 	git branch B &&
 	git checkout A &&
 
 	test_write_lines 1 2 3 4 5 6 7 "8 changed in B8, branch A" 9 >file &&
-	git commit -m "B8" file &&
+	git cummit -m "B8" file &&
 	git checkout B &&
 
 	test_write_lines 1 2 "3 changed in C3, branch B" 4 5 6 7 8 9 >file &&
-	git commit -m "C3" file &&
+	git cummit -m "C3" file &&
 	git branch C3 &&
 
 	git merge -m "pre E3 merge" A &&
 
 	test_write_lines 1 2 "3 changed in E3, branch B. New file size" 4 5 6 7 "8 changed in B8, branch A" 9 >file &&
-	git commit -m "E3" file &&
+	git cummit -m "E3" file &&
 
 	git checkout A &&
 	git merge -m "pre D8 merge" C3 &&
 	test_write_lines 1 2 "3 changed in C3, branch B" 4 5 6 7 "8 changed in D8, branch A. New file size 2" 9 >file &&
 
-	git commit -m D8 file
+	git cummit -m D8 file
 '
 
 test_expect_success 'Criss-cross merge' '

@@ -8,19 +8,19 @@ test_expect_success setup '
 	>file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag c0 &&
 
 	echo second >file &&
 	git add file &&
 	test_tick &&
-	git commit -m second &&
+	git cummit -m second &&
 	git tag c1 &&
 	git branch test &&
 	echo third >file &&
 	git add file &&
 	test_tick &&
-	git commit -m third &&
+	git cummit -m third &&
 	git tag c2
 '
 

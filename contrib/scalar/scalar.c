@@ -155,13 +155,13 @@ static int set_recommended_config(int reconfigure)
 		{ "feature.manyFiles", "false", 1 },
 		{ "feature.experimental", "false", 1 },
 		{ "fetch.unpackLimit", "1", 1 },
-		{ "fetch.writeCommitGraph", "false", 1 },
+		{ "fetch.writecummitGraph", "false", 1 },
 #ifdef WIN32
 		{ "http.sslBackend", "schannel", 1 },
 #endif
 		/* Optional */
 		{ "status.aheadBehind", "false" },
-		{ "commitGraph.generationVersion", "1" },
+		{ "cummitGraph.generationVersion", "1" },
 		{ "core.autoCRLF", "false" },
 		{ "core.safeCRLF", "false" },
 		{ "fetch.showForcedUpdates", "false" },
@@ -608,7 +608,7 @@ static int cmd_run(int argc, const char **argv)
 		const char *arg, *task;
 	} tasks[] = {
 		{ "config", NULL },
-		{ "commit-graph", "commit-graph" },
+		{ "cummit-graph", "cummit-graph" },
 		{ "fetch", "prefetch" },
 		{ "loose-objects", "loose-objects" },
 		{ "pack-files", "incremental-repack" },

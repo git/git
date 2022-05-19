@@ -29,9 +29,9 @@
 #  | bundle       | 번들                                         |
 #  | branch       | 브랜치                                       |
 #  | cherry-pick  | (커밋) 빼오기                                |
-#  | commit       | 커밋                                         |
-#  | commit-ish   | 커밋-따위                                    |
-#  | committer    | 커미터                                       |
+#  | cummit       | 커밋                                         |
+#  | cummit-ish   | 커밋-따위                                    |
+#  | cummitter    | 커미터                                       |
 #  | conflict     | 충돌                                         |
 #  | fast-forward | 정방향 진행                                  |
 #  | fsmonitor    | 파일 시스템 모니터                           |
@@ -86,7 +86,7 @@ msgid "Cherry-picking is not possible because you have unmerged files."
 msgstr "병합하지 않은 파일이 있으므로, 커밋 빼오기를 할 수 없습니다."
 
 #: advice.c:139
-msgid "Committing is not possible because you have unmerged files."
+msgid "cummitting is not possible because you have unmerged files."
 msgstr "병합하지 않은 파일이 있으므로, 커밋할 수 없습니다."
 
 #: advice.c:141
@@ -109,7 +109,7 @@ msgstr "병합하지 않은 파일이 있으므로, %s 할 수 없습니다."
 #: advice.c:155
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
-"as appropriate to mark resolution and make a commit."
+"as appropriate to mark resolution and make a cummit."
 msgstr ""
 "작업 폴더에서 문제를 바로잡은 다음, 'git add/rm <파일>'을 적절히\n"
 "사용해 해결 표시하고 커밋하십시오."
@@ -123,7 +123,7 @@ msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "병합 작업을 다 마치지 않았습니다 (MERGE_HEAD 파일이 있습니다)."
 
 #: advice.c:170
-msgid "Please, commit your changes before merging."
+msgid "Please, cummit your changes before merging."
 msgstr "병합하기 전에 변경 사항을 커밋하십시오."
 
 #: advice.c:171
@@ -136,10 +136,10 @@ msgid ""
 "Note: checking out '%s'.\n"
 "\n"
 "You are in 'detached HEAD' state. You can look around, make experimental\n"
-"changes and commit them, and you can discard any commits you make in this\n"
+"changes and cummit them, and you can discard any cummits you make in this\n"
 "state without impacting any branches by performing another checkout.\n"
 "\n"
-"If you want to create a new branch to retain commits you create, you may\n"
+"If you want to create a new branch to retain cummits you create, you may\n"
 "do so (now or later) by using -b with the checkout command again. Example:\n"
 "\n"
 "  git checkout -b <new-branch-name>\n"
@@ -757,7 +757,7 @@ msgid "allow overlapping hunks"
 msgstr "패치 부분이 겹쳐도 허용합니다"
 
 #: apply.c:4977 builtin/add.c:290 builtin/check-ignore.c:21
-#: builtin/commit.c:1301 builtin/count-objects.c:98 builtin/fsck.c:666
+#: builtin/cummit.c:1301 builtin/count-objects.c:98 builtin/fsck.c:666
 #: builtin/log.c:1901 builtin/mv.c:122 builtin/read-tree.c:124
 msgid "be verbose"
 msgstr "자세히 표시"
@@ -918,7 +918,7 @@ msgstr "더 이상 이등분할 수 없습니다!\n"
 
 #: bisect.c:723
 #, c-format
-msgid "Not a valid commit name %s"
+msgid "Not a valid cummit name %s"
 msgstr "올바른 커밋 이름이 아닙니다 (%s)"
 
 #: bisect.c:747
@@ -943,7 +943,7 @@ msgstr ""
 #, c-format
 msgid ""
 "The merge base %s is %s.\n"
-"This means the first '%s' commit is between %s and [%s].\n"
+"This means the first '%s' cummit is between %s and [%s].\n"
 msgstr ""
 "%s 병합 베이스가 %s입니다.\n"
 "처음 '%s' 커밋이 %s 및 [%s] 사이라는 뜻입니다.\n"
@@ -963,7 +963,7 @@ msgstr ""
 #, c-format
 msgid ""
 "the merge base between %s and [%s] must be skipped.\n"
-"So we cannot be sure the first %s commit is between %s and %s.\n"
+"So we cannot be sure the first %s cummit is between %s and %s.\n"
 "We continue anyway."
 msgstr ""
 "%s 및 %s 사이의 병합 베이스를 건너뜁니다.\n"
@@ -1002,7 +1002,7 @@ msgstr "%s은(는) %s 및 %s 모두에 해당됩니다\n"
 #: bisect.c:978
 #, c-format
 msgid ""
-"No testable commit found.\n"
+"No testable cummit found.\n"
 "Maybe you started with bad path parameters?\n"
 msgstr ""
 "시험 가능한 커밋이 없습니다.\n"
@@ -1028,16 +1028,16 @@ msgid "--contents and --reverse do not blend well."
 msgstr "--contents 및 --reverse 옵션은 호환되지 않습니다."
 
 #: blame.c:1767
-msgid "cannot use --contents with final commit object name"
+msgid "cannot use --contents with final cummit object name"
 msgstr "--contents 옵션을 마지막 오브젝트 이름에 사용할 수 없습니다"
 
 #: blame.c:1787
-msgid "--reverse and --first-parent together require specified latest commit"
+msgid "--reverse and --first-parent together require specified latest cummit"
 msgstr ""
 "--reverse 및 --first-parent 옵션을 같이 쓰면 최근 커밋을 지정해야 합니다"
 
 #: blame.c:1796 bundle.c:160 ref-filter.c:2075 sequencer.c:1861
-#: sequencer.c:3632 builtin/commit.c:981 builtin/log.c:366 builtin/log.c:920
+#: sequencer.c:3632 builtin/cummit.c:981 builtin/log.c:366 builtin/log.c:920
 #: builtin/log.c:1371 builtin/log.c:1702 builtin/log.c:1950 builtin/merge.c:372
 #: builtin/shortlog.c:192
 msgid "revision walk setup failed"
@@ -1214,13 +1214,13 @@ msgstr "'%s' 파일이 버전2 번들 파일로 보이지 않습니다"
 msgid "unrecognized header: %s%s (%d)"
 msgstr "인식할 수 없는 헤더: %s%s (%d)"
 
-#: bundle.c:88 sequencer.c:2081 sequencer.c:2558 builtin/commit.c:755
+#: bundle.c:88 sequencer.c:2081 sequencer.c:2558 builtin/cummit.c:755
 #, c-format
 msgid "could not open '%s'"
 msgstr "'%s'을(를) 열 수 없습니다"
 
 #: bundle.c:139
-msgid "Repository lacks these prerequisite commits:"
+msgid "Repository lacks these prerequisite cummits:"
 msgstr "저장소에 필수적인 다음 커밋이 없습니다:"
 
 #: bundle.c:190
@@ -1279,19 +1279,19 @@ msgstr "index-pack 명령이 죽었습니다"
 msgid "invalid color value: %.*s"
 msgstr "잘못된 색 값: %.*s"
 
-#: commit.c:43 sequencer.c:2364 builtin/am.c:421 builtin/am.c:465
+#: cummit.c:43 sequencer.c:2364 builtin/am.c:421 builtin/am.c:465
 #: builtin/am.c:1436 builtin/am.c:2072 builtin/replace.c:376
 #: builtin/replace.c:448
 #, c-format
 msgid "could not parse %s"
 msgstr "parse %s을(를) 파싱할 수 없습니다"
 
-#: commit.c:45
+#: cummit.c:45
 #, c-format
-msgid "%s %s is not a commit!"
+msgid "%s %s is not a cummit!"
 msgstr "%s %s, 커밋이 아닙니다"
 
-#: commit.c:182
+#: cummit.c:182
 msgid ""
 "Support for <GIT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
@@ -1313,26 +1313,26 @@ msgstr ""
 "\"git config advice.graftFileDeprecated false\"\n"
 "명령을 사용하십시오"
 
-#: commit.c:1540
+#: cummit.c:1540
 msgid ""
-"Warning: commit message did not conform to UTF-8.\n"
+"Warning: cummit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
-"variable i18n.commitencoding to the encoding your project uses.\n"
+"variable i18n.cummitencoding to the encoding your project uses.\n"
 msgstr ""
 "경고: 커밋 메시지가 UTF-8 인코딩에 맞지 않습니다.\n"
-"메시지를 수정한 다음 커밋을 수정하거나, 설정의 i18n.commitencoding\n"
+"메시지를 수정한 다음 커밋을 수정하거나, 설정의 i18n.cummitencoding\n"
 "변수를 프로젝트가 사용 중인 인코딩으로 맞추십시오.\n"
 
-#: commit-graph.c:669
+#: cummit-graph.c:669
 #, c-format
-msgid "the commit graph format cannot write %d commits"
+msgid "the cummit graph format cannot write %d cummits"
 msgstr "커밋 그래프 포맷에서 커밋 %d개를 쓸 수 없습니다"
 
-#: commit-graph.c:696
-msgid "too many commits to write graph"
+#: cummit-graph.c:696
+msgid "too many cummits to write graph"
 msgstr "그래프를 쓰기에는 커밋 수가 너무 많습니다"
 
-#: commit-graph.c:707 builtin/init-db.c:516 builtin/init-db.c:521
+#: cummit-graph.c:707 builtin/init-db.c:516 builtin/init-db.c:521
 #, c-format
 msgid "cannot mkdir %s"
 msgstr "%s에 대해 mkdir를 할 수 없습니다"
@@ -1851,7 +1851,7 @@ msgstr "받음: %s %d %s"
 
 #: fetch-pack.c:500
 #, c-format
-msgid "invalid commit %s"
+msgid "invalid cummit %s"
 msgstr "잘못된 커밋 %s"
 
 #: fetch-pack.c:533
@@ -1957,7 +1957,7 @@ msgid "Server does not support --deepen"
 msgstr "서버에서 --deepen 옵션을 지원하지 않습니다"
 
 #: fetch-pack.c:1065
-msgid "no common commits"
+msgid "no common cummits"
 msgstr "공통 커밋 없음"
 
 #: fetch-pack.c:1077 fetch-pack.c:1414
@@ -2208,7 +2208,7 @@ msgstr "빈 이름의 신원 정보는 (<%s>에 대해) 허용하지 않습니�
 msgid "name consists only of disallowed characters: %s"
 msgstr "이름이 허용하지 않는 문자로만 이루어져 있습니다: %s"
 
-#: ident.c:416 builtin/commit.c:587
+#: ident.c:416 builtin/cummit.c:587
 #, c-format
 msgid "invalid date format: %s"
 msgstr "시각 형식이 잘못되었습니다: %s"
@@ -2227,7 +2227,7 @@ msgid ""
 "Unable to create '%s.lock': %s.\n"
 "\n"
 "Another git process seems to be running in this repository, e.g.\n"
-"an editor opened by 'git commit'. Please make sure all processes\n"
+"an editor opened by 'git cummit'. Please make sure all processes\n"
 "are terminated then try again. If it still fails, a git process\n"
 "may have crashed in this repository earlier:\n"
 "remove the file manually to continue."
@@ -2235,7 +2235,7 @@ msgstr ""
 "'%s.lock' 파일을 만들 수 없습니다: %s.\n"
 "\n"
 "이 저장소에서 다른 깃 프로세스가 실행 중인 것으로 보입니다. (예를\n"
-"들어 'git commit' 명령으로 편집기가 열려 있다든지.) 모든 프로세스를\n"
+"들어 'git cummit' 명령으로 편집기가 열려 있다든지.) 모든 프로세스를\n"
 "끝냈는지 확인하시고 다시 시도해 보십시오. 그래도 계속 실패하면, 이\n"
 "저장소에서 깃 프로세스가 전에 이상 종료했을 수도 있습니다:\n"
 "수동으로 해당 파일을 제거하고 계속하십시오."
@@ -2255,7 +2255,7 @@ msgid "unable to write new index file"
 msgstr "새 인덱스 파일을 쓸 수 없습니다"
 
 #: merge-recursive.c:298
-msgid "(bad commit)\n"
+msgid "(bad cummit)\n"
 msgstr "(잘못된 커밋)\n"
 
 #: merge-recursive.c:320
@@ -2323,17 +2323,17 @@ msgstr "%s 하위 모듈 병합 실패 (가져오지 않음)"
 
 #: merge-recursive.c:1193
 #, c-format
-msgid "Failed to merge submodule %s (commits not present)"
+msgid "Failed to merge submodule %s (cummits not present)"
 msgstr "%s 하위 모듈 병합 실패 (커밋이 없습니다)"
 
 #: merge-recursive.c:1200
 #, c-format
-msgid "Failed to merge submodule %s (commits don't follow merge-base)"
+msgid "Failed to merge submodule %s (cummits don't follow merge-base)"
 msgstr "%s 하위 모듈 병합 실패 (커밋이 병합 베이스를 따르지 않습니다)"
 
 #: merge-recursive.c:1208 merge-recursive.c:1220
 #, c-format
-msgid "Fast-forwarding submodule %s to the following commit:"
+msgid "Fast-forwarding submodule %s to the following cummit:"
 msgstr "%s 하위 모듈을 다음 커밋으로 정방향 진행:"
 
 #: merge-recursive.c:1211 merge-recursive.c:1223
@@ -2343,7 +2343,7 @@ msgstr "%s 하위 모듈을 정방향 진행"
 
 #: merge-recursive.c:1245
 #, c-format
-msgid "Failed to merge submodule %s (merge following commits not found)"
+msgid "Failed to merge submodule %s (merge following cummits not found)"
 msgstr "%s 하위 모듈 병합 실패 (병합할 때 따라갈 커밋이 없습니다)"
 
 #: merge-recursive.c:1249
@@ -2639,7 +2639,7 @@ msgid_plural "found %u common ancestors:"
 msgstr[0] "과거의 공통 커밋 %u개 발견:"
 
 #: merge-recursive.c:3431
-msgid "merge returned no commit"
+msgid "merge returned no cummit"
 msgstr "병합 결과에 커밋이 없습니다"
 
 #: merge-recursive.c:3495
@@ -2655,11 +2655,11 @@ msgstr "인덱스를 쓸 수 없습니다."
 #, c-format
 msgid ""
 "You have not concluded your previous notes merge (%s exists).\n"
-"Please, use 'git notes merge --commit' or 'git notes merge --abort' to "
-"commit/abort the previous merge before you start a new notes merge."
+"Please, use 'git notes merge --cummit' or 'git notes merge --abort' to "
+"cummit/abort the previous merge before you start a new notes merge."
 msgstr ""
 "이전의 노트 병합을 다 마치지 않았습니다 (%s 있음).\n"
-"새로 노트 병합을 시작하기 전에 'git notes merge --commit'\n"
+"새로 노트 병합을 시작하기 전에 'git notes merge --cummit'\n"
 "또는 'git notes merge --abort'로 이전 병합을 커밋/중지하십시오."
 
 #: notes-merge.c:279
@@ -2668,7 +2668,7 @@ msgid "You have not concluded your notes merge (%s exists)."
 msgstr "노트 병합 작업을 다 마치지 않았습니다. (%s 있음)"
 
 #: notes-utils.c:43
-msgid "Cannot commit uninitialized/unreferenced notes tree"
+msgid "Cannot cummit uninitialized/unreferenced notes tree"
 msgstr "초기화하지 않았거나 레퍼런스하지 않은 notes 트리를 커밋할 수 없습니다"
 
 #: notes-utils.c:102
@@ -3201,7 +3201,7 @@ msgstr "브랜치가 '%s'에 맞게 업데이트된 상태입니다.\n"
 
 #: remote.c:1950
 #, c-format
-msgid "Your branch and '%s' refer to different commits.\n"
+msgid "Your branch and '%s' refer to different cummits.\n"
 msgstr "현재 브랜치와 '%s'이(가) 다른 커밋을 레퍼런스합니다.\n"
 
 #: remote.c:1953
@@ -3211,19 +3211,19 @@ msgstr " (자세한 정보를 위해 \"%s\"을(를) 사용하십시오)\n"
 
 #: remote.c:1957
 #, c-format
-msgid "Your branch is ahead of '%s' by %d commit.\n"
-msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
+msgid "Your branch is ahead of '%s' by %d cummit.\n"
+msgid_plural "Your branch is ahead of '%s' by %d cummits.\n"
 msgstr[0] "브랜치가 '%s'보다 %d개 커밋만큼 앞에 있습니다.\n"
 
 #: remote.c:1963
-msgid "  (use \"git push\" to publish your local commits)\n"
+msgid "  (use \"git push\" to publish your local cummits)\n"
 msgstr "  (로컬에 있는 커밋을 제출하려면 \"git push\"를 사용하십시오)\n"
 
 #: remote.c:1966
 #, c-format
-msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
+msgid "Your branch is behind '%s' by %d cummit, and can be fast-forwarded.\n"
 msgid_plural ""
-"Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
+"Your branch is behind '%s' by %d cummits, and can be fast-forwarded.\n"
 msgstr[0] "브랜치가 '%s'보다 %d개 커밋 뒤에 있고, 앞으로 돌릴 수 있습니다.\n"
 
 #: remote.c:1974
@@ -3234,10 +3234,10 @@ msgstr "  (로컬 브랜치를 업데이트하려면 \"git pull\"을 사용하�
 #, c-format
 msgid ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commit each, respectively.\n"
+"and have %d and %d different cummit each, respectively.\n"
 msgid_plural ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commits each, respectively.\n"
+"and have %d and %d different cummits each, respectively.\n"
 msgstr[0] ""
 "현재 브랜치와 '%s'이(가) 갈라졌습니다,\n"
 "다른 커밋이 각각 %d개와 %d개 있습니다.\n"
@@ -3253,7 +3253,7 @@ msgstr "현재 브랜치가 망가진 것처럼 보입니다"
 
 #: revision.c:2292
 #, c-format
-msgid "your current branch '%s' does not have any commits yet"
+msgid "your current branch '%s' does not have any cummits yet"
 msgstr "현재 '%s' 브랜치에 아직 아무 커밋도 없습니다"
 
 #: revision.c:2489
@@ -3312,7 +3312,7 @@ msgstr "받는 쪽에서 푸시 옵션을 지원하지 않습니다"
 
 #: sequencer.c:175
 #, c-format
-msgid "invalid commit message cleanup mode '%s'"
+msgid "invalid cummit message cleanup mode '%s'"
 msgstr "잘못된 커밋 메시지 정리 모드 '%s'"
 
 #: sequencer.c:275
@@ -3349,11 +3349,11 @@ msgstr ""
 msgid ""
 "after resolving the conflicts, mark the corrected paths\n"
 "with 'git add <paths>' or 'git rm <paths>'\n"
-"and commit the result with 'git commit'"
+"and cummit the result with 'git cummit'"
 msgstr ""
 "이 충돌을 해결한 뒤에, 바로잡은 경로를\n"
 "'git add <경로>' 또는 'git rm <경로>'로 표시하십시오.\n"
-"그리고 결과물을 'git commit'으로 커밋하십시오"
+"그리고 결과물을 'git cummit'으로 커밋하십시오"
 
 #: sequencer.c:380 sequencer.c:2468
 #, c-format
@@ -3378,7 +3378,7 @@ msgid "failed to finalize '%s'"
 msgstr "'%s' 마치는데 실패했습니다"
 
 #: sequencer.c:415 sequencer.c:804 sequencer.c:1493 sequencer.c:2371
-#: sequencer.c:2684 sequencer.c:2788 builtin/am.c:259 builtin/commit.c:727
+#: sequencer.c:2684 sequencer.c:2788 builtin/am.c:259 builtin/cummit.c:727
 #: builtin/merge.c:1046
 #, c-format
 msgid "could not read '%s'"
@@ -3390,7 +3390,7 @@ msgid "your local changes would be overwritten by %s."
 msgstr "로컬 변경 사항을 %s 때문에 덮어 쓰게 됩니다."
 
 #: sequencer.c:445
-msgid "commit your changes or stash them to proceed."
+msgid "cummit your changes or stash them to proceed."
 msgstr "변경 사항을 커밋하거나 스태시한 다음 계속하십시오."
 
 #: sequencer.c:474
@@ -3411,20 +3411,20 @@ msgid "unable to update cache tree"
 msgstr "캐시 트리를 업데이트할 수 없습니다"
 
 #: sequencer.c:592
-msgid "could not resolve HEAD commit"
+msgid "could not resolve HEAD cummit"
 msgstr "HEAD 커밋을 찾을 수 없습니다"
 
 #: sequencer.c:749
 #, c-format
 msgid ""
 "you have staged changes in your working tree\n"
-"If these changes are meant to be squashed into the previous commit, run:\n"
+"If these changes are meant to be squashed into the previous cummit, run:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
-"If they are meant to go into a new commit, run:\n"
+"If they are meant to go into a new cummit, run:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
@@ -3434,23 +3434,23 @@ msgstr ""
 "이 변경 사항을 이전 커밋에 합치려면,\n"
 "다음을 실행하십시오:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "새 커밋으로 만드려면 다음을 실행하십시오:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "어떤 경우이든, 마친 다음에 다음 명령으로 계속합니다:\n"
 "\n"
 "  git rebase --continue\n"
 
 #: sequencer.c:818
-msgid "writing root commit"
+msgid "writing root cummit"
 msgstr "최상위 커밋을 씁니다"
 
 #: sequencer.c:1043
-msgid "'prepare-commit-msg' hook failed"
-msgstr "'prepare-commit-msg' 후크가 실패했습니다"
+msgid "'prepare-cummit-msg' hook failed"
+msgstr "'prepare-cummit-msg' 후크가 실패했습니다"
 
 #: sequencer.c:1050
 msgid ""
@@ -3462,9 +3462,9 @@ msgid ""
 "\n"
 "    git config --global --edit\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "이름과 전자메일 주소를 사용자 이름과 호스트 이름을 이용해서 자동으로\n"
 "설정했습니다. 이 정보가 맞는지 확인하십시오. 이 메시지를 보지 않으려면 정보"
@@ -3477,7 +3477,7 @@ msgstr ""
 "이렇게 한 다음, 이 커밋에 사용한 신원 정보를 다음과 같이 해서 바꿀 수 있습니"
 "다:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1063
 msgid ""
@@ -3488,9 +3488,9 @@ msgid ""
 "    git config --global user.name \"Your Name\"\n"
 "    git config --global user.email you@example.com\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "이름과 전자메일 주소를 사용자 이름과 호스트 이름을 이용해서\n"
 "자동으로 설정했습니다. 이 정보가 맞는지 확인하십시오. 이 메시지를\n"
@@ -3502,18 +3502,18 @@ msgstr ""
 "이렇게 한 다음, 이 커밋에 사용한 신원 정보를 다음과 같이 해서 바꿀 수 있습니"
 "다:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1103
-msgid "couldn't look up newly created commit"
+msgid "couldn't look up newly created cummit"
 msgstr "새로 만든 커밋을 찾아볼 수 없습니다"
 
 #: sequencer.c:1105
-msgid "could not parse newly created commit"
+msgid "could not parse newly created cummit"
 msgstr "새로 만든 커밋을 파싱할 수 없습니다"
 
 #: sequencer.c:1151
-msgid "unable to resolve HEAD after creating commit"
+msgid "unable to resolve HEAD after creating cummit"
 msgstr "커밋을 만든 후 HEAD를 찾을 수 없습니다"
 
 #: sequencer.c:1153
@@ -3521,7 +3521,7 @@ msgid "detached HEAD"
 msgstr "HEAD 분리됨"
 
 #: sequencer.c:1157
-msgid " (root-commit)"
+msgid " (root-cummit)"
 msgstr " (최상위-커밋)"
 
 #: sequencer.c:1178
@@ -3530,15 +3530,15 @@ msgstr "HEAD를 파싱할 수 없습니다"
 
 #: sequencer.c:1180
 #, c-format
-msgid "HEAD %s is not a commit!"
+msgid "HEAD %s is not a cummit!"
 msgstr "HEAD %s은(는) 커밋이 아닙니다!"
 
-#: sequencer.c:1184 builtin/commit.c:1528
-msgid "could not parse HEAD commit"
+#: sequencer.c:1184 builtin/cummit.c:1528
+msgid "could not parse HEAD cummit"
 msgstr "HEAD 커밋을 파싱할 수 없습니다"
 
 #: sequencer.c:1235 sequencer.c:1832
-msgid "unable to parse commit author"
+msgid "unable to parse cummit author"
 msgstr "커밋 작성자를 파싱할 수 없습니다"
 
 #: sequencer.c:1245 builtin/am.c:1630 builtin/merge.c:645
@@ -3547,27 +3547,27 @@ msgstr "git write-tree가 트리를 쓰는데 실패했습니다"
 
 #: sequencer.c:1262 sequencer.c:1317
 #, c-format
-msgid "unable to read commit message from '%s'"
+msgid "unable to read cummit message from '%s'"
 msgstr " '%s'의 커밋 메시지를 읽을 수 없습니다"
 
-#: sequencer.c:1284 builtin/am.c:1650 builtin/commit.c:1631 builtin/merge.c:825
+#: sequencer.c:1284 builtin/am.c:1650 builtin/cummit.c:1631 builtin/merge.c:825
 #: builtin/merge.c:850
-msgid "failed to write commit object"
+msgid "failed to write cummit object"
 msgstr "커밋 오브젝트를 쓰는데 실패했습니다"
 
 #: sequencer.c:1344
 #, c-format
-msgid "could not parse commit %s"
+msgid "could not parse cummit %s"
 msgstr "%s 커밋을 파싱할 수 없습니다"
 
 #: sequencer.c:1349
 #, c-format
-msgid "could not parse parent commit %s"
+msgid "could not parse parent cummit %s"
 msgstr "%s 이전 커밋을 파싱할 수 없습니다"
 
 #: sequencer.c:1500 sequencer.c:1525
 #, c-format
-msgid "This is a combination of %d commits."
+msgid "This is a combination of %d cummits."
 msgstr "커밋 %d개가 섞인 결과입니다."
 
 #: sequencer.c:1510 sequencer.c:4355
@@ -3579,7 +3579,7 @@ msgid "could not read HEAD"
 msgstr "HEAD를 읽을 수 없습니다"
 
 #: sequencer.c:1514
-msgid "could not read HEAD's commit message"
+msgid "could not read HEAD's cummit message"
 msgstr "HEAD의 커밋 메시지를 읽을 수 없습니다"
 
 #: sequencer.c:1520
@@ -3588,22 +3588,22 @@ msgid "cannot write '%s'"
 msgstr "'%s'을(를) 쓸 수 없습니다"
 
 #: sequencer.c:1527 git-rebase--interactive.sh:457
-msgid "This is the 1st commit message:"
+msgid "This is the 1st cummit message:"
 msgstr "1번째 커밋 메시지입니다:"
 
 #: sequencer.c:1535
 #, c-format
-msgid "could not read commit message of %s"
+msgid "could not read cummit message of %s"
 msgstr "%s의 커밋 메시지를 읽을 수 없습니다"
 
 #: sequencer.c:1542
 #, c-format
-msgid "This is the commit message #%d:"
+msgid "This is the cummit message #%d:"
 msgstr "커밋 메시지 #%d번입니다:"
 
 #: sequencer.c:1548
 #, c-format
-msgid "The commit message #%d will be skipped:"
+msgid "The cummit message #%d will be skipped:"
 msgstr "커밋 메시지 #%d번을 건너뜁니다:"
 
 #: sequencer.c:1553
@@ -3616,35 +3616,35 @@ msgid "your index file is unmerged."
 msgstr "인덱스 파일이 병합되지 않았습니다."
 
 #: sequencer.c:1638
-msgid "cannot fixup root commit"
+msgid "cannot fixup root cummit"
 msgstr "최상위 커밋을 바로잡을 수 없습니다"
 
 #: sequencer.c:1657
 #, c-format
-msgid "commit %s is a merge but no -m option was given."
+msgid "cummit %s is a merge but no -m option was given."
 msgstr "%s 커밋은 병합이지만 -m 옵션이 주어지지 않았습니다."
 
 # FIXME: "parent %d" 번호가 무슨 의미?
 #: sequencer.c:1665
 #, c-format
-msgid "commit %s does not have parent %d"
+msgid "cummit %s does not have parent %d"
 msgstr "%s 커밋에 이전 커밋 %d이(가) 없습니다"
 
 #: sequencer.c:1669
 #, c-format
-msgid "mainline was specified but commit %s is not a merge."
+msgid "mainline was specified but cummit %s is not a merge."
 msgstr "메인라인을 지정했지만 %s 커밋이 병합 커밋이 아닙니다."
 
 #: sequencer.c:1675
 #, c-format
-msgid "cannot get commit message for %s"
+msgid "cannot get cummit message for %s"
 msgstr "%s에 대한 커밋 메시지를 가져올 수 없습니다"
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
 #: sequencer.c:1694
 #, c-format
-msgid "%s: cannot parse parent commit %s"
+msgid "%s: cannot parse parent cummit %s"
 msgstr "%s: %s 이전 커밋을 파싱할 수 없습니다"
 
 #: sequencer.c:1759
@@ -3663,7 +3663,7 @@ msgid "could not apply %s... %s"
 msgstr "다음을 적용할(apply) 수 없습니다: %s... %s"
 
 #: sequencer.c:1864
-msgid "empty commit set passed"
+msgid "empty cummit set passed"
 msgstr "빈 커밋 모음을 건너 뜁니다"
 
 #: sequencer.c:1874
@@ -3693,7 +3693,7 @@ msgstr "잘못된 줄 %d: %.*s"
 
 #: sequencer.c:2037
 #, c-format
-msgid "cannot '%s' without a previous commit"
+msgid "cannot '%s' without a previous cummit"
 msgstr "이전 커밋 없이 '%s' 수행할 수 없습니다"
 
 #: sequencer.c:2085 sequencer.c:4138 sequencer.c:4173
@@ -3711,7 +3711,7 @@ msgid "unusable instruction sheet: '%s'"
 msgstr "사용 불가능 인스트럭션 시트: '%s'"
 
 #: sequencer.c:2115
-msgid "no commits parsed."
+msgid "no cummits parsed."
 msgstr "파싱한 커밋이 없습니다."
 
 #: sequencer.c:2126
@@ -3835,7 +3835,7 @@ msgstr "그리고 인덱스 그리고/또는 작업 폴더에 변경 사항이 �
 msgid ""
 "execution succeeded: %s\n"
 "but left changes to the index and/or the working tree\n"
-"Commit or stash your changes, and then run\n"
+"cummit or stash your changes, and then run\n"
 "\n"
 "  git rebase --continue\n"
 "\n"
@@ -3848,7 +3848,7 @@ msgstr ""
 "\n"
 
 #: sequencer.c:2771
-msgid "writing fake root commit"
+msgid "writing fake root cummit"
 msgstr "가짜 최상위 커밋을 씁니다"
 
 #: sequencer.c:2776
@@ -3875,7 +3875,7 @@ msgstr "'%s' 해결할 수 없습니다"
 
 #: sequencer.c:2906
 #, c-format
-msgid "could not get commit message of '%s'"
+msgid "could not get cummit message of '%s'"
 msgstr "'%s'의 커밋 메시지를 읽을 수 없습니다"
 
 #: sequencer.c:2916 sequencer.c:2941
@@ -3962,7 +3962,7 @@ msgid "cannot rebase: You have unstaged changes."
 msgstr "리베이스할 수 없습니다: 스테이징하지 않은 변경 사항이 있습니다."
 
 #: sequencer.c:3423
-msgid "cannot amend non-existing commit"
+msgid "cannot amend non-existing cummit"
 msgstr "없는 커밋을 수정할 수 없습니다"
 
 #: sequencer.c:3425
@@ -3978,7 +3978,7 @@ msgstr "잘못된 내용: '%s'"
 #: sequencer.c:3430
 msgid ""
 "\n"
-"You have uncommitted changes in your working tree. Please, commit them\n"
+"You have uncummitted changes in your working tree. Please, cummit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 "\n"
@@ -3995,7 +3995,7 @@ msgid "could not remove CHERRY_PICK_HEAD"
 msgstr "CHERRY_PICK_HEAD를 제거할 수 없습니다"
 
 #: sequencer.c:3515
-msgid "could not commit staged changes."
+msgid "could not cummit staged changes."
 msgstr "스테이징한 변경 사항을 커밋할 수 없습니다."
 
 #: sequencer.c:3612
@@ -4009,7 +4009,7 @@ msgid "%s: bad revision"
 msgstr "%s: 잘못된 리비전"
 
 #: sequencer.c:3649
-msgid "can't revert as initial commit"
+msgid "can't revert as initial cummit"
 msgstr "최초의 커밋으로 되돌릴 수 없습니다"
 
 #: sequencer.c:4098
@@ -4028,15 +4028,15 @@ msgstr "사용할 수 없는 할 일 목록: %s"
 #: sequencer.c:4236
 #, c-format
 msgid ""
-"unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
+"unrecognized setting %s for option rebase.missingcummitsCheck. Ignoring."
 msgstr ""
-"rebase.missingCommitsCheck 옵션에 대해 인식할 수 없는 %s 설정. 무시합니다."
+"rebase.missingcummitsCheck 옵션에 대해 인식할 수 없는 %s 설정. 무시합니다."
 
 #: sequencer.c:4302
 #, c-format
 msgid ""
-"Warning: some commits may have been dropped accidentally.\n"
-"Dropped commits (newer to older):\n"
+"Warning: some cummits may have been dropped accidentally.\n"
+"Dropped cummits (newer to older):\n"
 msgstr ""
 "경고: 일부 커밋이 의도치 않게 버려졌을 수도 있습니다.\n"
 "버려진 커밋 (최근에서 과거 순서):\n"
@@ -4044,9 +4044,9 @@ msgstr ""
 #: sequencer.c:4309
 #, c-format
 msgid ""
-"To avoid this message, use \"drop\" to explicitly remove a commit.\n"
+"To avoid this message, use \"drop\" to explicitly remove a cummit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
+"Use 'git config rebase.missingcummitsCheck' to change the level of "
 "warnings.\n"
 "The possible behaviours are: ignore, warn, error.\n"
 "\n"
@@ -4054,7 +4054,7 @@ msgstr ""
 "이 메시지를 보지 않으려면, \"drop\"을 사용해 명시적으로 커밋을 제거하십시"
 "오.\n"
 "\n"
-"'git config rebase.missingCommitsCheck' 명령으로 경고 단계를 바꿀 수 있습니"
+"'git config rebase.missingcummitsCheck' 명령으로 경고 단계를 바꿀 수 있습니"
 "다.\n"
 "가능한 동작은: ignore, warn, error\n"
 "\n"
@@ -4072,7 +4072,7 @@ msgstr ""
 
 #: sequencer.c:4375
 #, c-format
-msgid "could not parse commit '%s'"
+msgid "could not parse cummit '%s'"
 msgstr "'%s' 커밋을 파싱할 수 없습니다"
 
 #: sequencer.c:4490
@@ -4330,7 +4330,7 @@ msgstr "경로명세 '%s'은(는) ''%.*s' 하위 모듈 안에 있습니다"
 
 #: submodule.c:837
 #, c-format
-msgid "submodule entry '%s' (%s) is a %s, not a commit"
+msgid "submodule entry '%s' (%s) is a %s, not a cummit"
 msgstr "서브모듈 항목 '%s'(%s)은(는) %s이고, 커밋이 아닙니다"
 
 #: submodule.c:1069 builtin/branch.c:651 builtin/submodule--helper.c:1743
@@ -4548,7 +4548,7 @@ msgstr "너무 짧은 트리 파일"
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by checkout:\n"
-"%%sPlease commit your changes or stash them before you switch branches."
+"%%sPlease cummit your changes or stash them before you switch branches."
 msgstr ""
 "다음 파일의 로컬 변경 사항을 체크아웃 때문에 덮어 쓰게 됩니다:\n"
 "%%s브랜치를 전환하기 전에 변경 사항을 커밋하거나 스태시하십시오."
@@ -4566,7 +4566,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
-"%%sPlease commit your changes or stash them before you merge."
+"%%sPlease cummit your changes or stash them before you merge."
 msgstr ""
 "다음 파일의 로컬 변경 사항을 병합 때문에 덮어 쓰게 됩니다:\n"
 "%%s병합하기 전에 변경 사항을 커밋하거나 스태시하십시오."
@@ -4582,7 +4582,7 @@ msgstr "다음 파일의 로컬 변경 사항을 병합 때문에 덮어 쓰게 
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by %s:\n"
-"%%sPlease commit your changes or stash them before you %s."
+"%%sPlease cummit your changes or stash them before you %s."
 msgstr ""
 "다음 파일의 로컬 변경 사항을 %s 때문에 덮어 쓰게 됩니다:\n"
 "%%s%s 전에 변경 사항을 커밋하거나 스태시하십시오."
@@ -4876,19 +4876,19 @@ msgid "  (use \"git rm <file>...\" to mark resolution)"
 msgstr "  (해결했다고 표시하려면 \"git rm <파일>...\"을 사용하십시오)"
 
 #: wt-status.c:202 wt-status.c:1015
-msgid "Changes to be committed:"
+msgid "Changes to be cummitted:"
 msgstr "커밋할 변경 사항:"
 
 #: wt-status.c:220 wt-status.c:1024
-msgid "Changes not staged for commit:"
+msgid "Changes not staged for cummit:"
 msgstr "커밋하도록 정하지 않은 변경 사항:"
 
 #: wt-status.c:224
-msgid "  (use \"git add <file>...\" to update what will be committed)"
+msgid "  (use \"git add <file>...\" to update what will be cummitted)"
 msgstr "  (무엇을 커밋할지 바꾸려면 \"git add <파일>...\"을 사용하십시오)"
 
 #: wt-status.c:226
-msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
+msgid "  (use \"git add/rm <file>...\" to update what will be cummitted)"
 msgstr "  (무엇을 커밋할지 바꾸려면 \"git add/rm <파일>...\"을 사용하십시오)"
 
 #: wt-status.c:227
@@ -4899,13 +4899,13 @@ msgstr ""
 "시오)"
 
 #: wt-status.c:229
-msgid "  (commit or discard the untracked or modified content in submodules)"
+msgid "  (cummit or discard the untracked or modified content in submodules)"
 msgstr ""
 "  (하위 모듈의 추적되지 않는 파일이나 수정된 내용을 커밋하거나 버리십시오)"
 
 #: wt-status.c:241
 #, c-format
-msgid "  (use \"git %s <file>...\" to include in what will be committed)"
+msgid "  (use \"git %s <file>...\" to include in what will be cummitted)"
 msgstr "  (커밋할 사항에 포함하려면 \"git %s <파일>...\"을 사용하십시오)"
 
 #: wt-status.c:256
@@ -4969,7 +4969,7 @@ msgid "unmerged:"
 msgstr "병합하지 않음:"
 
 #: wt-status.c:372
-msgid "new commits, "
+msgid "new cummits, "
 msgstr "새 커밋, "
 
 #: wt-status.c:374
@@ -4991,7 +4991,7 @@ msgid "Submodules changed but not updated:"
 msgstr "변경되었지만 업데이트하지 않은 하위 모듈:"
 
 #: wt-status.c:887
-msgid "Submodule changes to be committed:"
+msgid "Submodule changes to be cummitted:"
 msgstr "커밋할 하위 모듈의 변경 사항:"
 
 #: wt-status.c:969
@@ -5007,8 +5007,8 @@ msgid "You have unmerged paths."
 msgstr "병합하지 않은 경로가 있습니다."
 
 #: wt-status.c:1087
-msgid "  (fix conflicts and run \"git commit\")"
-msgstr "  (충돌을 바로잡고 \"git commit\"을 실행하십시오)"
+msgid "  (fix conflicts and run \"git cummit\")"
+msgstr "  (충돌을 바로잡고 \"git cummit\"을 실행하십시오)"
 
 #: wt-status.c:1089
 msgid "  (use \"git merge --abort\" to abort the merge)"
@@ -5019,8 +5019,8 @@ msgid "All conflicts fixed but you are still merging."
 msgstr "모든 충돌을 바로잡았지만 아직 병합하는 중입니다."
 
 #: wt-status.c:1097
-msgid "  (use \"git commit\" to conclude merge)"
-msgstr "  (병합을 마무리하려면 \"git commit\"을 사용하십시오)"
+msgid "  (use \"git cummit\" to conclude merge)"
+msgstr "  (병합을 마무리하려면 \"git cummit\"을 사용하십시오)"
 
 #: wt-status.c:1107
 msgid "You are in the middle of an am session."
@@ -5104,11 +5104,11 @@ msgstr ""
 #: wt-status.c:1328
 #, c-format
 msgid ""
-"You are currently splitting a commit while rebasing branch '%s' on '%s'."
+"You are currently splitting a cummit while rebasing branch '%s' on '%s'."
 msgstr "현재 '%s' 브랜치를 '%s' 위로 리베이스하는 중 커밋을 분리하는 중입니다."
 
 #: wt-status.c:1333
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a cummit during a rebase."
 msgstr "현재 리베이스하는 중 커밋을 분리하는 중입니다."
 
 #: wt-status.c:1336
@@ -5117,16 +5117,16 @@ msgstr "  (작업 폴더가 깨끗해지면, \"git rebase --continue\"를 실행
 
 #: wt-status.c:1340
 #, c-format
-msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
+msgid "You are currently editing a cummit while rebasing branch '%s' on '%s'."
 msgstr "'%s' 브랜치를 '%s' 위로 리베이스하는 중 커밋을 편집하는 중입니다."
 
 #: wt-status.c:1345
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a cummit during a rebase."
 msgstr "리베이스 중에 커밋을 편집하는 중입니다."
 
 #: wt-status.c:1348
-msgid "  (use \"git commit --amend\" to amend the current commit)"
-msgstr "  (현재 커밋을 수정하려면 \"git commit --amend\"을 사용하십시오)"
+msgid "  (use \"git cummit --amend\" to amend the current cummit)"
+msgstr "  (현재 커밋을 수정하려면 \"git cummit --amend\"을 사용하십시오)"
 
 #: wt-status.c:1350
 msgid ""
@@ -5135,7 +5135,7 @@ msgstr "  (변경 사항에 만족할 때 \"git rebase --continue\"를 사용하
 
 #: wt-status.c:1360
 #, c-format
-msgid "You are currently cherry-picking commit %s."
+msgid "You are currently cherry-picking cummit %s."
 msgstr "현재 %s 커밋을 뽑아 내고 있습니다."
 
 #: wt-status.c:1365
@@ -5153,7 +5153,7 @@ msgstr "  (뽑기 작업을 취소하려면 \"git cherry-pick --abort\"를 사�
 
 #: wt-status.c:1379
 #, c-format
-msgid "You are currently reverting commit %s."
+msgid "You are currently reverting cummit %s."
 msgstr "현재 %s 커밋을 되돌리는 중입니다."
 
 #: wt-status.c:1384
@@ -5207,11 +5207,11 @@ msgid "Not currently on any branch."
 msgstr "현재 어떤 브랜치도 사용하지 않음."
 
 #: wt-status.c:1642
-msgid "Initial commit"
+msgid "Initial cummit"
 msgstr "최초 커밋"
 
 #: wt-status.c:1643
-msgid "No commits yet"
+msgid "No cummits yet"
 msgstr "아직 커밋이 없습니다"
 
 #: wt-status.c:1657
@@ -5248,21 +5248,21 @@ msgstr "변경 사항 없음"
 
 #: wt-status.c:1682
 #, c-format
-msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
+msgid "no changes added to cummit (use \"git add\" and/or \"git cummit -a\")\n"
 msgstr ""
-"커밋할 변경 사항을 추가하지 않았습니다 (\"git add\" 및/또는 \"git commit -a"
+"커밋할 변경 사항을 추가하지 않았습니다 (\"git add\" 및/또는 \"git cummit -a"
 "\"를\n"
 "사용하십시오)\n"
 
 #: wt-status.c:1685
 #, c-format
-msgid "no changes added to commit\n"
+msgid "no changes added to cummit\n"
 msgstr "커밋할 변경 사항을 추가하지 않았습니다\n"
 
 #: wt-status.c:1688
 #, c-format
 msgid ""
-"nothing added to commit but untracked files present (use \"git add\" to "
+"nothing added to cummit but untracked files present (use \"git add\" to "
 "track)\n"
 msgstr ""
 "커밋할 사항을 추가하지 않았지만 추적하지 않는 파일이 있습니다 (추적하려면 "
@@ -5271,34 +5271,34 @@ msgstr ""
 
 #: wt-status.c:1691
 #, c-format
-msgid "nothing added to commit but untracked files present\n"
+msgid "nothing added to cummit but untracked files present\n"
 msgstr "커밋할 사항을 추가하지 않았지만 추적하지 않는 파일이 있습니다\n"
 
 #: wt-status.c:1694
 #, c-format
-msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
+msgid "nothing to cummit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
 "커밋할 사항 없음 (파일을 만들거나 복사하고 \"git add\"를 사용하면 추적합니"
 "다)\n"
 
 #: wt-status.c:1697 wt-status.c:1702
 #, c-format
-msgid "nothing to commit\n"
+msgid "nothing to cummit\n"
 msgstr "커밋할 사항 없음\n"
 
 #: wt-status.c:1700
 #, c-format
-msgid "nothing to commit (use -u to show untracked files)\n"
+msgid "nothing to cummit (use -u to show untracked files)\n"
 msgstr ""
 "커밋할 사항 없음 (추적하지 않는 파일을 보려면 -u 옵션을 사용하십시오)\n"
 
 #: wt-status.c:1704
 #, c-format
-msgid "nothing to commit, working tree clean\n"
+msgid "nothing to cummit, working tree clean\n"
 msgstr "커밋할 사항 없음, 작업 폴더 깨끗함\n"
 
 #: wt-status.c:1817
-msgid "No commits yet on "
+msgid "No cummits yet on "
 msgstr "아직 커밋이 없습니다, 위치: <"
 
 #: wt-status.c:1821
@@ -5324,12 +5324,12 @@ msgid "cannot %s: You have unstaged changes."
 msgstr "%s 할 수 없습니다: 스테이징하지 않은 변경 사항이 있습니다."
 
 #: wt-status.c:2372
-msgid "additionally, your index contains uncommitted changes."
+msgid "additionally, your index contains uncummitted changes."
 msgstr "추가로, 인덱스에 커밋하지 않은 변경 사항이 있습니다."
 
 #: wt-status.c:2374
 #, c-format
-msgid "cannot %s: Your index contains uncommitted changes."
+msgid "cannot %s: Your index contains uncummitted changes."
 msgstr "%s 할 수 없습니다: 인덱스에 커밋하지 않은 변경 사항이 있습니다."
 
 #: compat/precompose_utf8.c:58 builtin/clone.c:442
@@ -5346,7 +5346,7 @@ msgstr "git add [<옵션>] [--] <경로명세>..."
 msgid "unexpected diff status %c"
 msgstr "예상치 못한 diff 상태 %c"
 
-#: builtin/add.c:88 builtin/commit.c:266
+#: builtin/add.c:88 builtin/cummit.c:266
 msgid "updating files failed"
 msgstr "파일 업데이트가 실패했습니다"
 
@@ -5529,7 +5529,7 @@ msgid "Maybe you wanted to say 'git add .'?\n"
 msgstr "'git add .' 명령을 실행하려고 한 것 아니었습니까?\n"
 
 #: builtin/add.c:448 builtin/check-ignore.c:177 builtin/checkout.c:280
-#: builtin/checkout.c:483 builtin/clean.c:958 builtin/commit.c:325
+#: builtin/checkout.c:483 builtin/clean.c:958 builtin/cummit.c:325
 #: builtin/diff-tree.c:114 builtin/mv.c:144 builtin/reset.c:241
 #: builtin/rm.c:270 builtin/submodule--helper.c:328
 msgid "index file corrupt"
@@ -5592,7 +5592,7 @@ msgstr "'%s' 디렉터리 만들기가 실패했습니다"
 msgid "Failed to split patches."
 msgstr "패치를 쪼개는데 실패했습니다."
 
-#: builtin/am.c:1148 builtin/commit.c:351
+#: builtin/am.c:1148 builtin/cummit.c:351
 msgid "unable to write index file"
 msgstr "인덱스 파일을 쓸 수 없습니다"
 
@@ -5623,7 +5623,7 @@ msgstr "잘못된 신원 줄: %.*s"
 
 #: builtin/am.c:1359
 #, c-format
-msgid "unable to parse commit %s"
+msgid "unable to parse cummit %s"
 msgstr "%s 커밋을 파싱할 수 없습니다"
 
 #: builtin/am.c:1554
@@ -5665,7 +5665,7 @@ msgstr ""
 "터미널에 표준 입력이 연결되지 않은 상태에서 대화형으로 실행할 수 없습니다."
 
 #: builtin/am.c:1708
-msgid "Commit Body is:"
+msgid "cummit Body is:"
 msgstr "커밋 본문은:"
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
@@ -5769,7 +5769,7 @@ msgid "be quiet"
 msgstr "간략히 표시합니다"
 
 #: builtin/am.c:2224
-msgid "add a Signed-off-by line to the commit message"
+msgid "add a Signed-off-by line to the cummit message"
 msgstr "커밋 메시지에 Signed-off-by 줄을 남깁니다"
 
 #: builtin/am.c:2227
@@ -5807,7 +5807,7 @@ msgstr "절취선 앞의 모든 사항을 무시합니다"
 msgid "pass it through git-apply"
 msgstr "git-apply에 넘깁니다"
 
-#: builtin/am.c:2260 builtin/commit.c:1332 builtin/fmt-merge-msg.c:665
+#: builtin/am.c:2260 builtin/cummit.c:1332 builtin/fmt-merge-msg.c:665
 #: builtin/fmt-merge-msg.c:668 builtin/grep.c:853 builtin/merge.c:208
 #: builtin/pull.c:150 builtin/pull.c:208 builtin/repack.c:201
 #: builtin/repack.c:205 builtin/repack.c:207 builtin/show-branch.c:631
@@ -5854,22 +5854,22 @@ msgid "show the patch being applied."
 msgstr "적용되는 패치를 보여줍니다."
 
 # NOTE: 옵션의 의미는 이게 맞다. 원문에서는 사용자가
-# --committer-date-is-author-date라는 옵션을 보고 의미를 알 수 있다고 가정하고 있다.
+# --cummitter-date-is-author-date라는 옵션을 보고 의미를 알 수 있다고 가정하고 있다.
 #: builtin/am.c:2294
-msgid "lie about committer date"
+msgid "lie about cummitter date"
 msgstr "커미터 시각을 작성자 시각으로 넣습니다"
 
 #: builtin/am.c:2296
 msgid "use current timestamp for author date"
 msgstr "현재 시각을 작성자 시각으로 사용합니다"
 
-#: builtin/am.c:2298 builtin/commit.c:1468 builtin/merge.c:239
+#: builtin/am.c:2298 builtin/cummit.c:1468 builtin/merge.c:239
 #: builtin/pull.c:183 builtin/revert.c:112 builtin/tag.c:399
 msgid "key-id"
 msgstr "키-ID"
 
 #: builtin/am.c:2299
-msgid "GPG-sign commits"
+msgid "GPG-sign cummits"
 msgstr "GPG 서명 커밋"
 
 #: builtin/am.c:2302
@@ -5992,7 +5992,7 @@ msgid "check for expected revs"
 msgstr "예상된 리비전을 확인합니다"
 
 #: builtin/bisect--helper.c:128
-msgid "update BISECT_HEAD instead of checking out the current commit"
+msgid "update BISECT_HEAD instead of checking out the current cummit"
 msgstr "현재 커밋을 가져오는 대신 BISECT_HEAD를 업데이트합니다"
 
 #: builtin/bisect--helper.c:143
@@ -6034,11 +6034,11 @@ msgid "Show blame entries as we find them, incrementally"
 msgstr "블레임 항목을 찾자마자 점진적으로 표시합니다"
 
 #: builtin/blame.c:787
-msgid "Show blank SHA-1 for boundary commits (Default: off)"
+msgid "Show blank SHA-1 for boundary cummits (Default: off)"
 msgstr "가장자리 커밋에 대해 빈 SHA-1을 표시합니다 (기본값: 꺼짐)"
 
 #: builtin/blame.c:788
-msgid "Do not treat root commits as boundaries (Default: off)"
+msgid "Do not treat root cummits as boundaries (Default: off)"
 msgstr "최상위 커밋을 가장자리 커밋으로 취급하지 않습니다 (기본값: 꺼짐)"
 
 #: builtin/blame.c:789
@@ -6066,7 +6066,7 @@ msgid "Show in a format designed for machine consumption"
 msgstr "컴퓨터 처리용으로 설계된 형식으로 표시합니다"
 
 #: builtin/blame.c:795
-msgid "Show porcelain format with per-line commit information"
+msgid "Show porcelain format with per-line cummit information"
 msgstr "줄마다 커밋 정보가 표시되는 사용자용 형식으로 표시합니다"
 
 #: builtin/blame.c:796
@@ -6078,7 +6078,7 @@ msgid "Show raw timestamp (Default: off)"
 msgstr "내부 형식으로 시각을 표시합니다 (기본값: 꺼짐)"
 
 #: builtin/blame.c:798
-msgid "Show long commit SHA1 (Default: off)"
+msgid "Show long cummit SHA1 (Default: off)"
 msgstr "길게 커밋 SHA1을 표시합니다 (기본값: 꺼짐)"
 
 #: builtin/blame.c:799
@@ -6212,7 +6212,7 @@ msgstr ""
 
 #: builtin/branch.c:164
 #, c-format
-msgid "Couldn't look up commit object for '%s'"
+msgid "Couldn't look up cummit object for '%s'"
 msgstr "'%s'에 대한 커밋 오브젝트를 찾아볼 수 없습니다"
 
 #: builtin/branch.c:168
@@ -6233,7 +6233,7 @@ msgid "cannot use -a with -d"
 msgstr "-a 옵션을 -d 옵션과 같이 쓸 수 없습니다"
 
 #: builtin/branch.c:218
-msgid "Couldn't look up commit object for HEAD"
+msgid "Couldn't look up cummit object for HEAD"
 msgstr "HEAD에 대한 커밋 오브젝트를 찾아볼 수 없습니다"
 
 #: builtin/branch.c:232
@@ -6382,11 +6382,11 @@ msgid "act on remote-tracking branches"
 msgstr "리모트 추적 브랜치에 대해 동작합니다"
 
 #: builtin/branch.c:602 builtin/branch.c:604
-msgid "print only branches that contain the commit"
+msgid "print only branches that contain the cummit"
 msgstr "커밋이 있는 브랜치만 표시합니다"
 
 #: builtin/branch.c:603 builtin/branch.c:605
-msgid "print only branches that don't contain the commit"
+msgid "print only branches that don't contain the cummit"
 msgstr "커밋이 들어있지 않은 브랜치만 표시합니다"
 
 #: builtin/branch.c:608
@@ -6500,7 +6500,7 @@ msgstr "여러 브랜치에 대한 설명을 편집할 수 없습니다"
 
 #: builtin/branch.c:733
 #, c-format
-msgid "No commit on branch '%s' yet."
+msgid "No cummit on branch '%s' yet."
 msgstr "아직 '%s' 브랜치에 커밋이 없습니다."
 
 #: builtin/branch.c:736
@@ -6596,8 +6596,8 @@ msgstr ""
 "filters]"
 
 #: builtin/cat-file.c:563
-msgid "<type> can be one of: blob, tree, commit, tag"
-msgstr "<종류>는 다음 중 하나가 될 수 있습니다: blob, tree, commit, tag"
+msgid "<type> can be one of: blob, tree, cummit, tag"
+msgstr "<종류>는 다음 중 하나가 될 수 있습니다: blob, tree, cummit, tag"
 
 #: builtin/cat-file.c:564
 msgid "show object type"
@@ -6893,12 +6893,12 @@ msgstr " ... 그리고 %d개 더.\n"
 #: builtin/checkout.c:760
 #, c-format
 msgid ""
-"Warning: you are leaving %d commit behind, not connected to\n"
+"Warning: you are leaving %d cummit behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"Warning: you are leaving %d commits behind, not connected to\n"
+"Warning: you are leaving %d cummits behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
@@ -6973,7 +6973,7 @@ msgstr "'%s' 옵션은 '%s' 옵션과 같이 쓸 수 없습니다"
 
 #: builtin/checkout.c:1082
 #, c-format
-msgid "Cannot switch branch to a non-commit '%s'"
+msgid "Cannot switch branch to a non-cummit '%s'"
 msgstr "브랜치를 커밋이 아닌 '%s'(으)로 전환할 수 없습니다"
 
 #: builtin/checkout.c:1114 builtin/checkout.c:1116 builtin/clone.c:118
@@ -6995,7 +6995,7 @@ msgid "create reflog for new branch"
 msgstr "새 브랜치에 대한 reflog를 만듭니다"
 
 #: builtin/checkout.c:1119 builtin/worktree.c:437
-msgid "detach HEAD at named commit"
+msgid "detach HEAD at named cummit"
 msgstr "HEAD를 해당 커밋에서 분리합니다"
 
 #: builtin/checkout.c:1120
@@ -7075,7 +7075,7 @@ msgstr "경로 명세가 잘못되었습니다"
 
 #: builtin/checkout.c:1240
 #, c-format
-msgid "'%s' is not a commit and a branch '%s' cannot be created from it"
+msgid "'%s' is not a cummit and a branch '%s' cannot be created from it"
 msgstr "'%s'은(는) 커밋이 아니고 여기에서 '%s' 브랜치를 만들 수 없습니다"
 
 #: builtin/checkout.c:1244
@@ -7640,50 +7640,50 @@ msgstr "열 사이에 채울 공백"
 msgid "--command must be the first argument"
 msgstr "--command는 첫 번째 인자여야 합니다"
 
-#: builtin/commit.c:37
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<옵션>] [--] <경로명세>..."
+#: builtin/cummit.c:37
+msgid "git cummit [<options>] [--] <pathspec>..."
+msgstr "git cummit [<옵션>] [--] <경로명세>..."
 
-#: builtin/commit.c:42
+#: builtin/cummit.c:42
 msgid "git status [<options>] [--] <pathspec>..."
 msgstr "git status [<옵션>] [--] <경로명세>..."
 
-#: builtin/commit.c:47
+#: builtin/cummit.c:47
 msgid ""
-"You asked to amend the most recent commit, but doing so would make\n"
+"You asked to amend the most recent cummit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
-"remove the commit entirely with \"git reset HEAD^\".\n"
+"remove the cummit entirely with \"git reset HEAD^\".\n"
 msgstr ""
 "최초의 커밋을 바꾸려고 하지만, 그렇게 하면 커밋이 비어 있게 됩니다.\n"
 "--allow-empty 옵션과 같이 이 명령을 반복할 수도 있고, \"git reset HEAD\"\n"
 "명령으로 커밋을 완전히 제거할 수도 있습니다.\n"
 
-#: builtin/commit.c:52
+#: builtin/cummit.c:52
 msgid ""
 "The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
-"If you wish to commit it anyway, use:\n"
+"If you wish to cummit it anyway, use:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 msgstr ""
 "이전 커맷 빼오기가 비어 있습니다. 아마도 충돌 해결 과정에서 그렇게 됐을\n"
 "것입니다. 그래도 커밋하려면 다음과 같이 하십시오:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 
-#: builtin/commit.c:59
+#: builtin/cummit.c:59
 msgid "Otherwise, please use 'git reset'\n"
 msgstr "아니면 'git reset'을 사용하십시오\n"
 
-#: builtin/commit.c:62
+#: builtin/cummit.c:62
 msgid ""
-"If you wish to skip this commit, use:\n"
+"If you wish to skip this cummit, use:\n"
 "\n"
 "    git reset\n"
 "\n"
 "Then \"git cherry-pick --continue\" will resume cherry-picking\n"
-"the remaining commits.\n"
+"the remaining cummits.\n"
 msgstr ""
 "이 커밋을 건너뛰려면, 다음을 사용하십시오:\n"
 "\n"
@@ -7692,104 +7692,104 @@ msgstr ""
 "그 다음에 \"git cherry-pick --continue\"를 하면 나머지 커밋에\n"
 "대해 커밋 빼오기를 다시 시작합니다.\n"
 
-#: builtin/commit.c:293
+#: builtin/cummit.c:293
 msgid "failed to unpack HEAD tree object"
 msgstr "HEAD 트리 오브젝트의 묶음을 푸는데 실패했습니다"
 
-#: builtin/commit.c:334
+#: builtin/cummit.c:334
 msgid "unable to create temporary index"
 msgstr "임시 인덱스를 만들 수 없습니다"
 
-#: builtin/commit.c:340
+#: builtin/cummit.c:340
 msgid "interactive add failed"
 msgstr "대화형 추가가 실패했습니다"
 
-#: builtin/commit.c:353
+#: builtin/cummit.c:353
 msgid "unable to update temporary index"
 msgstr "임시 인덱스를 업데이트할 수 없습니다"
 
-#: builtin/commit.c:355
+#: builtin/cummit.c:355
 msgid "Failed to update main cache tree"
 msgstr "주요 캐시 트리를 업데이트하는데 실패했습니다"
 
-#: builtin/commit.c:380 builtin/commit.c:403 builtin/commit.c:449
+#: builtin/cummit.c:380 builtin/cummit.c:403 builtin/cummit.c:449
 msgid "unable to write new_index file"
 msgstr "new_index 파일에 쓸 수 없습니다"
 
-#: builtin/commit.c:432
-msgid "cannot do a partial commit during a merge."
+#: builtin/cummit.c:432
+msgid "cannot do a partial cummit during a merge."
 msgstr "병합하는 중 부분 커밋을 할 수 없습니다."
 
-#: builtin/commit.c:434
-msgid "cannot do a partial commit during a cherry-pick."
+#: builtin/cummit.c:434
+msgid "cannot do a partial cummit during a cherry-pick."
 msgstr "커밋 빼오기를 하는 중 부분 커밋을 할 수 없습니다."
 
-#: builtin/commit.c:442
+#: builtin/cummit.c:442
 msgid "cannot read the index"
 msgstr "인덱스를 읽을 수 없습니다"
 
-#: builtin/commit.c:461
+#: builtin/cummit.c:461
 msgid "unable to write temporary index file"
 msgstr "임시 인덱스 파일을 쓸 수 없습니다"
 
-#: builtin/commit.c:558
+#: builtin/cummit.c:558
 #, c-format
-msgid "commit '%s' lacks author header"
+msgid "cummit '%s' lacks author header"
 msgstr "'%s' 커밋에 작성자 헤더가 없습니다"
 
-#: builtin/commit.c:560
+#: builtin/cummit.c:560
 #, c-format
-msgid "commit '%s' has malformed author line"
+msgid "cummit '%s' has malformed author line"
 msgstr "'%s' 커밋의 작성자 헤더 형식이 잘못되었습니다"
 
-#: builtin/commit.c:579
+#: builtin/cummit.c:579
 msgid "malformed --author parameter"
 msgstr "--author 파라미터 형식이 잘못되었습니다"
 
-#: builtin/commit.c:631
+#: builtin/cummit.c:631
 msgid ""
 "unable to select a comment character that is not used\n"
-"in the current commit message"
+"in the current cummit message"
 msgstr ""
 "현재 커밋 메시지에서 사용되지 않는 주석 문자를\n"
 "선택할 수 없습니다"
 
-#: builtin/commit.c:668 builtin/commit.c:701 builtin/commit.c:1029
+#: builtin/cummit.c:668 builtin/cummit.c:701 builtin/cummit.c:1029
 #, c-format
-msgid "could not lookup commit %s"
+msgid "could not lookup cummit %s"
 msgstr "%s 커밋을 찾아볼 수 없습니다"
 
-#: builtin/commit.c:680 builtin/shortlog.c:316
+#: builtin/cummit.c:680 builtin/shortlog.c:316
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr "(표준 입력에서 로그 메시지를 읽음)\n"
 
-#: builtin/commit.c:682
+#: builtin/cummit.c:682
 msgid "could not read log from standard input"
 msgstr "표준 입력에서 로그 메시지를 읽을 수 없습니다"
 
-#: builtin/commit.c:686
+#: builtin/cummit.c:686
 #, c-format
 msgid "could not read log file '%s'"
 msgstr "'%s' 로그 파일을 읽을 수 없습니다"
 
-#: builtin/commit.c:715 builtin/commit.c:723
+#: builtin/cummit.c:715 builtin/cummit.c:723
 msgid "could not read SQUASH_MSG"
 msgstr "SQUASH_MSG를 읽을 수 없습니다"
 
-#: builtin/commit.c:720
+#: builtin/cummit.c:720
 msgid "could not read MERGE_MSG"
 msgstr "MERGE_MSG를 읽을 수 없습니다"
 
-#: builtin/commit.c:774
-msgid "could not write commit template"
+#: builtin/cummit.c:774
+msgid "could not write cummit template"
 msgstr "커밋 서식을 쓸 수 없습니다"
 
-#: builtin/commit.c:792
+#: builtin/cummit.c:792
 #, c-format
 msgid ""
 "\n"
-"It looks like you may be committing a merge.\n"
+"It looks like you may be cummitting a merge.\n"
 "If this is not correct, please remove the file\n"
 "\t%s\n"
 "and try again.\n"
@@ -7800,11 +7800,11 @@ msgstr ""
 "\t%s\n"
 "다시 시도하십시오.\n"
 
-#: builtin/commit.c:797
+#: builtin/cummit.c:797
 #, c-format
 msgid ""
 "\n"
-"It looks like you may be committing a cherry-pick.\n"
+"It looks like you may be cummitting a cherry-pick.\n"
 "If this is not correct, please remove the file\n"
 "\t%s\n"
 "and try again.\n"
@@ -7815,169 +7815,169 @@ msgstr ""
 "\t%s\n"
 "다시 시도하십시오.\n"
 
-#: builtin/commit.c:810
+#: builtin/cummit.c:810
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be ignored, and an empty message aborts the commit.\n"
+"Please enter the cummit message for your changes. Lines starting\n"
+"with '%c' will be ignored, and an empty message aborts the cummit.\n"
 msgstr ""
 "변경 사항에 대한 커밋 메시지를 입력하십시오. '%c' 문자로 시작하는\n"
 "줄은 무시되고, 메시지를 입력하지 않으면 커밋이 중지됩니다.\n"
 
-#: builtin/commit.c:818
+#: builtin/cummit.c:818
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
-"An empty message aborts the commit.\n"
+"An empty message aborts the cummit.\n"
 msgstr ""
 "변경 사항에 대한 커밋 메시지를 입력하십시오. '%c' 문자로 시작하는\n"
 "줄은 보존되니, 필요하면 직접 제거하십시오. 메시지를 입력하지\n"
 "않으면 커밋이 중지됩니다.\n"
 
-#: builtin/commit.c:835
+#: builtin/cummit.c:835
 #, c-format
 msgid "%sAuthor:    %.*s <%.*s>"
 msgstr "%s작성자:    %.*s <%.*s>"
 
-#: builtin/commit.c:843
+#: builtin/cummit.c:843
 #, c-format
 msgid "%sDate:      %s"
 msgstr "%s시각:      %s"
 
-#: builtin/commit.c:850
+#: builtin/cummit.c:850
 #, c-format
-msgid "%sCommitter: %.*s <%.*s>"
+msgid "%scummitter: %.*s <%.*s>"
 msgstr "%s커미터: %.*s <%.*s>"
 
-#: builtin/commit.c:867
+#: builtin/cummit.c:867
 msgid "Cannot read index"
 msgstr "인덱스를 읽을 수 없습니다"
 
-#: builtin/commit.c:933
+#: builtin/cummit.c:933
 msgid "Error building trees"
 msgstr "트리를 만드는데 오류"
 
-#: builtin/commit.c:947 builtin/tag.c:257
+#: builtin/cummit.c:947 builtin/tag.c:257
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr "메시지를 -m 또는 -F 옵션으로 입력하십시오.\n"
 
-#: builtin/commit.c:991
+#: builtin/cummit.c:991
 #, c-format
 msgid "--author '%s' is not 'Name <email>' and matches no existing author"
 msgstr ""
 "--author '%s' 옵션이 '이름 <전자메일>' 형식이 아니고 기존 작성자에도 없습니다"
 
-#: builtin/commit.c:1005
+#: builtin/cummit.c:1005
 #, c-format
 msgid "Invalid ignored mode '%s'"
 msgstr "무시한 모드가 ('%s') 잘못되었습니다"
 
-#: builtin/commit.c:1019 builtin/commit.c:1269
+#: builtin/cummit.c:1019 builtin/cummit.c:1269
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr "추적되지 않는 파일 모드가 ('%s') 잘못되었습니다"
 
-#: builtin/commit.c:1057
+#: builtin/cummit.c:1057
 msgid "--long and -z are incompatible"
 msgstr "--long 및 -z 옵션은 호환되지 않습니다"
 
-#: builtin/commit.c:1090
+#: builtin/cummit.c:1090
 msgid "Using both --reset-author and --author does not make sense"
 msgstr "--reset-author 및 --author 옵션을 모두 사용하면 앞뒤가 맞지 않습니다"
 
-#: builtin/commit.c:1099
+#: builtin/cummit.c:1099
 msgid "You have nothing to amend."
 msgstr "바꿀 사항이 없습니다."
 
-#: builtin/commit.c:1102
+#: builtin/cummit.c:1102
 msgid "You are in the middle of a merge -- cannot amend."
 msgstr "병합 중에 있습니다 -- 커밋을 바꿀 수 없습니다."
 
-#: builtin/commit.c:1104
+#: builtin/cummit.c:1104
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "커밋 빼오기 중에 있습니다 -- 커밋을 바꿀 수 없습니다."
 
-#: builtin/commit.c:1107
+#: builtin/cummit.c:1107
 msgid "Options --squash and --fixup cannot be used together"
 msgstr "--squash 및 --fixup 옵션은 같이 쓸 수 없습니다"
 
-#: builtin/commit.c:1117
+#: builtin/cummit.c:1117
 msgid "Only one of -c/-C/-F/--fixup can be used."
 msgstr "-c/-C/-F/--fixup 옵션 중에 하나만 사용할 수 있습니다."
 
-#: builtin/commit.c:1119
+#: builtin/cummit.c:1119
 msgid "Option -m cannot be combined with -c/-C/-F."
 msgstr "-m 옵션은 -c/-C/-F 옵션과 같이 쓸 수 없습니다."
 
-#: builtin/commit.c:1127
+#: builtin/cummit.c:1127
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "--reset-author 옵션은 -C, -c 또는 --amend 옵션과 같이 써야 합니다."
 
-#: builtin/commit.c:1144
+#: builtin/cummit.c:1144
 msgid "Only one of --include/--only/--all/--interactive/--patch can be used."
 msgstr ""
 "--include/--only/--all/--interactive/--patch 옵션 중 하나만 사용할 수 있습니"
 "다."
 
-#: builtin/commit.c:1146
+#: builtin/cummit.c:1146
 msgid "No paths with --include/--only does not make sense."
 msgstr "경로가 없이 --include/--only 옵션을 쓰면 앞뒤가 맞지 않습니다."
 
-#: builtin/commit.c:1160 builtin/tag.c:543
+#: builtin/cummit.c:1160 builtin/tag.c:543
 #, c-format
 msgid "Invalid cleanup mode %s"
 msgstr "잘못된 정리 모드 %s"
 
-#: builtin/commit.c:1165
+#: builtin/cummit.c:1165
 msgid "Paths with -a does not make sense."
 msgstr "-a 옵션과 경로를 같이 사용하면 앞뒤가 맞지 않습니다."
 
-#: builtin/commit.c:1303 builtin/commit.c:1480
+#: builtin/cummit.c:1303 builtin/cummit.c:1480
 msgid "show status concisely"
 msgstr "상태를 간략하게 표시합니다"
 
-#: builtin/commit.c:1305 builtin/commit.c:1482
+#: builtin/cummit.c:1305 builtin/cummit.c:1482
 msgid "show branch information"
 msgstr "브랜치 정보를 표시합니다"
 
-#: builtin/commit.c:1307
+#: builtin/cummit.c:1307
 msgid "show stash information"
 msgstr "스태시 정보를 표시합니다"
 
-#: builtin/commit.c:1309 builtin/commit.c:1484
+#: builtin/cummit.c:1309 builtin/cummit.c:1484
 msgid "compute full ahead/behind values"
 msgstr "앞/뒤 값 전체를 계산합니다"
 
-#: builtin/commit.c:1311
+#: builtin/cummit.c:1311
 msgid "version"
 msgstr "버전"
 
-#: builtin/commit.c:1311 builtin/commit.c:1486 builtin/push.c:558
+#: builtin/cummit.c:1311 builtin/cummit.c:1486 builtin/push.c:558
 #: builtin/worktree.c:581
 msgid "machine-readable output"
 msgstr "컴퓨터가 읽을 수 있는 형식"
 
-#: builtin/commit.c:1314 builtin/commit.c:1488
+#: builtin/cummit.c:1314 builtin/cummit.c:1488
 msgid "show status in long format (default)"
 msgstr "긴 형식으로 상태를 표시합니다 (기본값)"
 
-#: builtin/commit.c:1317 builtin/commit.c:1491
+#: builtin/cummit.c:1317 builtin/cummit.c:1491
 msgid "terminate entries with NUL"
 msgstr "NUL 문자로 항목을 끝냅니다"
 
-#: builtin/commit.c:1319 builtin/commit.c:1323 builtin/commit.c:1494
+#: builtin/cummit.c:1319 builtin/cummit.c:1323 builtin/cummit.c:1494
 #: builtin/fast-export.c:1001 builtin/fast-export.c:1004 builtin/tag.c:397
 msgid "mode"
 msgstr "모드"
 
-#: builtin/commit.c:1320 builtin/commit.c:1494
+#: builtin/cummit.c:1320 builtin/cummit.c:1494
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
 "추적되지 않는 파일을 표시합니다. 추가 옵션: all, normal, no (기본값: all)"
 
-#: builtin/commit.c:1324
+#: builtin/cummit.c:1324
 msgid ""
 "show ignored files, optional modes: traditional, matching, no. (Default: "
 "traditional)"
@@ -7985,11 +7985,11 @@ msgstr ""
 "무시된 파일을 표시합니다. 추가 옵션: traditional, matching, no. (기본값: "
 "traditional)"
 
-#: builtin/commit.c:1326 parse-options.h:167
+#: builtin/cummit.c:1326 parse-options.h:167
 msgid "when"
 msgstr "언제"
 
-#: builtin/commit.c:1327
+#: builtin/cummit.c:1327
 msgid ""
 "ignore changes to submodules, optional when: all, dirty, untracked. "
 "(Default: all)"
@@ -7997,191 +7997,191 @@ msgstr ""
 "하위 모듈의 변경을 무시합니다. 추가 옵션: all, dirty, untracked. (기본값: "
 "all)"
 
-#: builtin/commit.c:1329
+#: builtin/cummit.c:1329
 msgid "list untracked files in columns"
 msgstr "추적되지 않는 파일의 목록을 여러 열로 표시합니다"
 
-#: builtin/commit.c:1330
+#: builtin/cummit.c:1330
 msgid "do not detect renames"
 msgstr "이름 바꾸기를 검사하지 않습니다"
 
-#: builtin/commit.c:1332
+#: builtin/cummit.c:1332
 msgid "detect renames, optionally set similarity index"
 msgstr "이름 바꾸기 검사하고, 부가적으로 유사성 인덱스를 설정합니다"
 
-#: builtin/commit.c:1352
+#: builtin/cummit.c:1352
 msgid "Unsupported combination of ignored and untracked-files arguments"
 msgstr "무시한 모드와 추적되지 않는 파일의 인수가 지원되지 않는 조합입니다"
 
-#: builtin/commit.c:1450
-msgid "suppress summary after successful commit"
+#: builtin/cummit.c:1450
+msgid "suppress summary after successful cummit"
 msgstr "성공적인 커밋 후에 요약을 표시하지 않습니다"
 
-#: builtin/commit.c:1451
-msgid "show diff in commit message template"
+#: builtin/cummit.c:1451
+msgid "show diff in cummit message template"
 msgstr "커밋 메시지 서식에 diff를 표시합니다"
 
-#: builtin/commit.c:1453
-msgid "Commit message options"
+#: builtin/cummit.c:1453
+msgid "cummit message options"
 msgstr "커밋 메시지 옵션"
 
-#: builtin/commit.c:1454 builtin/tag.c:394
+#: builtin/cummit.c:1454 builtin/tag.c:394
 msgid "read message from file"
 msgstr "파일에서 메시지를 읽습니다"
 
-#: builtin/commit.c:1455
+#: builtin/cummit.c:1455
 msgid "author"
 msgstr "작성자"
 
-#: builtin/commit.c:1455
-msgid "override author for commit"
+#: builtin/cummit.c:1455
+msgid "override author for cummit"
 msgstr "커밋의 작성자를 지정합니다"
 
-#: builtin/commit.c:1456 builtin/gc.c:501
+#: builtin/cummit.c:1456 builtin/gc.c:501
 msgid "date"
 msgstr "시각"
 
-#: builtin/commit.c:1456
-msgid "override date for commit"
+#: builtin/cummit.c:1456
+msgid "override date for cummit"
 msgstr "커밋의 시각을 지정합니다"
 
-#: builtin/commit.c:1457 builtin/merge.c:228 builtin/notes.c:402
+#: builtin/cummit.c:1457 builtin/merge.c:228 builtin/notes.c:402
 #: builtin/notes.c:565 builtin/tag.c:392
 msgid "message"
 msgstr "메시지"
 
-#: builtin/commit.c:1457
-msgid "commit message"
+#: builtin/cummit.c:1457
+msgid "cummit message"
 msgstr "커밋 메시지"
 
-#: builtin/commit.c:1458 builtin/commit.c:1459 builtin/commit.c:1460
-#: builtin/commit.c:1461 parse-options.h:270 ref-filter.h:92
-msgid "commit"
+#: builtin/cummit.c:1458 builtin/cummit.c:1459 builtin/cummit.c:1460
+#: builtin/cummit.c:1461 parse-options.h:270 ref-filter.h:92
+msgid "cummit"
 msgstr "커밋"
 
-#: builtin/commit.c:1458
-msgid "reuse and edit message from specified commit"
+#: builtin/cummit.c:1458
+msgid "reuse and edit message from specified cummit"
 msgstr "지정한 커밋의 메시지를 재사용하고 편집합니다"
 
-#: builtin/commit.c:1459
-msgid "reuse message from specified commit"
+#: builtin/cummit.c:1459
+msgid "reuse message from specified cummit"
 msgstr "지정한 커밋에서 메시지를 재사용합니다"
 
-#: builtin/commit.c:1460
-msgid "use autosquash formatted message to fixup specified commit"
+#: builtin/cummit.c:1460
+msgid "use autosquash formatted message to fixup specified cummit"
 msgstr "지정한 커밋을 수정하는데 autosquash 형식 메시지를 사용합니다"
 
-#: builtin/commit.c:1461
-msgid "use autosquash formatted message to squash specified commit"
+#: builtin/cummit.c:1461
+msgid "use autosquash formatted message to squash specified cummit"
 msgstr "지정한 커밋을 합치는데 autosquash 형식 메시지를 사용합니다"
 
-#: builtin/commit.c:1462
-msgid "the commit is authored by me now (used with -C/-c/--amend)"
+#: builtin/cummit.c:1462
+msgid "the cummit is authored by me now (used with -C/-c/--amend)"
 msgstr "커밋을 내가 작성한 것으로 만듭니다 (-C/-c/--amend와 같이 사용)"
 
-#: builtin/commit.c:1463 builtin/log.c:1446 builtin/merge.c:242
+#: builtin/cummit.c:1463 builtin/log.c:1446 builtin/merge.c:242
 #: builtin/pull.c:154 builtin/revert.c:105
 msgid "add Signed-off-by:"
 msgstr "Signed-off-by: 줄을 추가합니다"
 
-#: builtin/commit.c:1464
+#: builtin/cummit.c:1464
 msgid "use specified template file"
 msgstr "지정한 서식 파일을 사용합니다"
 
-#: builtin/commit.c:1465
-msgid "force edit of commit"
+#: builtin/cummit.c:1465
+msgid "force edit of cummit"
 msgstr "커밋 편집을 강제합니다"
 
-#: builtin/commit.c:1466
+#: builtin/cummit.c:1466
 msgid "default"
 msgstr "기본값"
 
-#: builtin/commit.c:1466 builtin/tag.c:398
+#: builtin/cummit.c:1466 builtin/tag.c:398
 msgid "how to strip spaces and #comments from message"
 msgstr "메시지에서 공백과 #주석을 지웁니다"
 
-#: builtin/commit.c:1467
-msgid "include status in commit message template"
+#: builtin/cummit.c:1467
+msgid "include status in cummit message template"
 msgstr "커밋 메시지 서식에 상태를 포함합니다"
 
-#: builtin/commit.c:1469 builtin/merge.c:240 builtin/pull.c:184
+#: builtin/cummit.c:1469 builtin/merge.c:240 builtin/pull.c:184
 #: builtin/revert.c:113
-msgid "GPG sign commit"
+msgid "GPG sign cummit"
 msgstr "GPG 서명 커밋"
 
-#: builtin/commit.c:1472
-msgid "Commit contents options"
+#: builtin/cummit.c:1472
+msgid "cummit contents options"
 msgstr "커밋 내용 옵션"
 
-#: builtin/commit.c:1473
-msgid "commit all changed files"
+#: builtin/cummit.c:1473
+msgid "cummit all changed files"
 msgstr "변경된 파일을 모두 커밋합니다"
 
-#: builtin/commit.c:1474
-msgid "add specified files to index for commit"
+#: builtin/cummit.c:1474
+msgid "add specified files to index for cummit"
 msgstr "지정한 파일을 커밋할 인덱스에 추가합니다"
 
-#: builtin/commit.c:1475
+#: builtin/cummit.c:1475
 msgid "interactively add files"
 msgstr "대화형으로 파일을 추가합니다"
 
-#: builtin/commit.c:1476
+#: builtin/cummit.c:1476
 msgid "interactively add changes"
 msgstr "대화형으로 변경 사항을 추가합니다"
 
-#: builtin/commit.c:1477
-msgid "commit only specified files"
+#: builtin/cummit.c:1477
+msgid "cummit only specified files"
 msgstr "지정한 파일만 커밋합니다"
 
-#: builtin/commit.c:1478
-msgid "bypass pre-commit and commit-msg hooks"
+#: builtin/cummit.c:1478
+msgid "bypass pre-cummit and cummit-msg hooks"
 msgstr "커밋 전 후크와 커밋 메시지 후크를 건너뜁니다"
 
-#: builtin/commit.c:1479
-msgid "show what would be committed"
+#: builtin/cummit.c:1479
+msgid "show what would be cummitted"
 msgstr "무엇을 커밋할지 표시합니다"
 
-#: builtin/commit.c:1492
-msgid "amend previous commit"
+#: builtin/cummit.c:1492
+msgid "amend previous cummit"
 msgstr "바로 앞 커밋을 바꿉니다"
 
-#: builtin/commit.c:1493
+#: builtin/cummit.c:1493
 msgid "bypass post-rewrite hook"
 msgstr "다시쓰기 후 후크를 건너뜁니다"
 
-#: builtin/commit.c:1498
+#: builtin/cummit.c:1498
 msgid "ok to record an empty change"
 msgstr "빈 변경 사항을 기록하도록 허용합니다"
 
-#: builtin/commit.c:1500
+#: builtin/cummit.c:1500
 msgid "ok to record a change with an empty message"
 msgstr "빈 메시지와 같이 변경 사항을 기록하도록 허용합니다"
 
-#: builtin/commit.c:1573
+#: builtin/cummit.c:1573
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "손상된 MERGE_HEAD 파일 (%s)"
 
-#: builtin/commit.c:1580
+#: builtin/cummit.c:1580
 msgid "could not read MERGE_MODE"
 msgstr "MERGE_MODE를 읽을 수 없습니다"
 
-#: builtin/commit.c:1599
+#: builtin/cummit.c:1599
 #, c-format
-msgid "could not read commit message: %s"
+msgid "could not read cummit message: %s"
 msgstr "커밋 메시지를 읽을 수 없습니다: %s"
 
-#: builtin/commit.c:1610
+#: builtin/cummit.c:1610
 #, c-format
-msgid "Aborting commit due to empty commit message.\n"
+msgid "Aborting cummit due to empty cummit message.\n"
 msgstr "커밋을 중지합니다. 커밋 메시지가 비어 있습니다.\n"
 
-#: builtin/commit.c:1615
+#: builtin/cummit.c:1615
 #, c-format
-msgid "Aborting commit; you did not edit the message.\n"
+msgid "Aborting cummit; you did not edit the message.\n"
 msgstr "커밋을 중지합니다. 메시지를 편집하지 않았습니다.\n"
 
-#: builtin/commit.c:1650
+#: builtin/cummit.c:1650
 msgid ""
 "Repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -8191,47 +8191,47 @@ msgstr ""
 "없습니다. 디스크가 꽉 차지 않았고 제한 용량을 넘어가지\n"
 "않았는지 확인하십시오. 그리고 'git reset HEAD'로 복구하십시오."
 
-#: builtin/commit-graph.c:9
-msgid "git commit-graph [--object-dir <objdir>]"
-msgstr "git commit-graph [--object-dir <오브젝트디렉터리>]"
+#: builtin/cummit-graph.c:9
+msgid "git cummit-graph [--object-dir <objdir>]"
+msgstr "git cummit-graph [--object-dir <오브젝트디렉터리>]"
 
-#: builtin/commit-graph.c:10 builtin/commit-graph.c:16
-msgid "git commit-graph read [--object-dir <objdir>]"
-msgstr "git commit-graph read [--object-dir <오브젝트디렉터리>]"
+#: builtin/cummit-graph.c:10 builtin/cummit-graph.c:16
+msgid "git cummit-graph read [--object-dir <objdir>]"
+msgstr "git cummit-graph read [--object-dir <오브젝트디렉터리>]"
 
-#: builtin/commit-graph.c:11 builtin/commit-graph.c:21
+#: builtin/cummit-graph.c:11 builtin/cummit-graph.c:21
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--stdin-packs|--"
-"stdin-commits]"
+"git cummit-graph write [--object-dir <objdir>] [--append] [--stdin-packs|--"
+"stdin-cummits]"
 msgstr ""
-"git commit-graph write [--object-dir <오브젝트디렉터리>] [--append] [--stdin-"
-"packs|--stdin-commits]"
+"git cummit-graph write [--object-dir <오브젝트디렉터리>] [--append] [--stdin-"
+"packs|--stdin-cummits]"
 
-#: builtin/commit-graph.c:39 builtin/commit-graph.c:92
-#: builtin/commit-graph.c:147 builtin/fetch.c:161 builtin/log.c:1466
+#: builtin/cummit-graph.c:39 builtin/cummit-graph.c:92
+#: builtin/cummit-graph.c:147 builtin/fetch.c:161 builtin/log.c:1466
 msgid "dir"
 msgstr "디렉터리"
 
-#: builtin/commit-graph.c:40 builtin/commit-graph.c:93
-#: builtin/commit-graph.c:148
+#: builtin/cummit-graph.c:40 builtin/cummit-graph.c:93
+#: builtin/cummit-graph.c:148
 msgid "The object directory to store the graph"
 msgstr "그래프를 저장할 오브젝트 디렉터리"
 
-#: builtin/commit-graph.c:95
-msgid "scan pack-indexes listed by stdin for commits"
+#: builtin/cummit-graph.c:95
+msgid "scan pack-indexes listed by stdin for cummits"
 msgstr "커밋을 찾을 때 표준입력에서 열거한 묶음 인덱스를 검사합니다"
 
-#: builtin/commit-graph.c:97
-msgid "start walk at commits listed by stdin"
+#: builtin/cummit-graph.c:97
+msgid "start walk at cummits listed by stdin"
 msgstr "표준 입력에 열거한 커밋에서부터 그리기를 시작합니다"
 
-#: builtin/commit-graph.c:99
-msgid "include all commits already in the commit-graph file"
-msgstr "commit-graph 파일에 이미 있는 모든 커밋을 포함합니다"
+#: builtin/cummit-graph.c:99
+msgid "include all cummits already in the cummit-graph file"
+msgstr "cummit-graph 파일에 이미 있는 모든 커밋을 포함합니다"
 
-#: builtin/commit-graph.c:108
-msgid "cannot use both --stdin-commits and --stdin-packs"
-msgstr "--stdin-commits 및 --stdin-packs 옵션은 같이 쓸 수 없습니다"
+#: builtin/cummit-graph.c:108
+msgid "cannot use both --stdin-cummits and --stdin-packs"
+msgstr "--stdin-cummits 및 --stdin-packs 옵션은 같이 쓸 수 없습니다"
 
 #: builtin/config.c:10
 msgid "git config [<options>]"
@@ -8442,7 +8442,7 @@ msgid "print sizes in human readable format"
 msgstr "사람이 읽기 좋은 형식으로 크기를 표시합니다"
 
 #: builtin/describe.c:22
-msgid "git describe [<options>] [<commit-ish>...]"
+msgid "git describe [<options>] [<cummit-ish>...]"
 msgstr "git describe [<옵션>] [<커밋-따위>...]"
 
 #: builtin/describe.c:23
@@ -8511,7 +8511,7 @@ msgstr ""
 
 #: builtin/describe.c:426
 #, c-format
-msgid "traversed %lu commits\n"
+msgid "traversed %lu cummits\n"
 msgstr "커밋 %lu개를 가로질렀습니다\n"
 
 #: builtin/describe.c:429
@@ -8535,11 +8535,11 @@ msgstr "올바른 오브젝트 이름이 아닙니다 (%s)"
 
 #: builtin/describe.c:508
 #, c-format
-msgid "%s is neither a commit nor blob"
+msgid "%s is neither a cummit nor blob"
 msgstr "%s(은)는 커밋도 블롭도 아닙니다"
 
 #: builtin/describe.c:522
-msgid "find the tag that comes after the commit"
+msgid "find the tag that comes after the cummit"
 msgstr "커밋 다음에 오는 태그를 찾습니다"
 
 #: builtin/describe.c:523
@@ -8579,7 +8579,7 @@ msgid "do not consider tags matching <pattern>"
 msgstr "<패턴>과 일치하는 태그를 고려하지 않습니다"
 
 #: builtin/describe.c:538 builtin/name-rev.c:406
-msgid "show abbreviated commit object as fallback"
+msgid "show abbreviated cummit object as fallback"
 msgstr "대안으로 요약한 커밋 오브젝트를 표시합니다"
 
 #: builtin/describe.c:539 builtin/describe.c:542
@@ -8603,11 +8603,11 @@ msgid "No names found, cannot describe anything."
 msgstr "이름이 없습니다. 아무것도 설명할 수 없습니다."
 
 #: builtin/describe.c:640
-msgid "--dirty is incompatible with commit-ishes"
+msgid "--dirty is incompatible with cummit-ishes"
 msgstr "--dirty 옵션은 커밋같은 항목과 호환되지 않습니다"
 
 #: builtin/describe.c:642
-msgid "--broken is incompatible with commit-ishes"
+msgid "--broken is incompatible with cummit-ishes"
 msgstr "--broken 옵션은 커밋같은 항목과 호환되지 않습니다"
 
 #: builtin/diff.c:83
@@ -8640,7 +8640,7 @@ msgid "unhandled object '%s' given."
 msgstr "처리하지 않은 '%s' 오브젝트가 주어졌습니다."
 
 #: builtin/difftool.c:29
-msgid "git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"
+msgid "git difftool [<options>] [<cummit> [<cummit>]] [--] [<path>...]"
 msgstr "git difftool [<옵션>] [<커밋> [<커밋>]] [--] [<경로>...]"
 
 #: builtin/difftool.c:259
@@ -8769,7 +8769,7 @@ msgid "Fake a tagger when tags lack one"
 msgstr "태그에 태그붙인 사람이 없을 때 가짜로 만듭니다"
 
 #: builtin/fast-export.c:1014
-msgid "Output full tree for each commit"
+msgid "Output full tree for each cummit"
 msgstr "커밋 마다 전체 트리를 출력합니다"
 
 #: builtin/fast-export.c:1016
@@ -9118,11 +9118,11 @@ msgid "git for-each-ref [--points-at <object>]"
 msgstr "git for-each-ref [--points-at <오브젝트>]"
 
 #: builtin/for-each-ref.c:12
-msgid "git for-each-ref [(--merged | --no-merged) [<commit>]]"
+msgid "git for-each-ref [(--merged | --no-merged) [<cummit>]]"
 msgstr "git for-each-ref [(--merged | --no-merged) [<커밋>]]"
 
 #: builtin/for-each-ref.c:13
-msgid "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
+msgid "git for-each-ref [--contains [<cummit>]] [--no-contains [<cummit>]]"
 msgstr "git for-each-ref [--contains [<커밋>]] [--no-contains [<커밋>]]"
 
 #: builtin/for-each-ref.c:28
@@ -9162,11 +9162,11 @@ msgid "print only refs that are not merged"
 msgstr "병합하지 않는 레퍼런스만 표시합니다"
 
 #: builtin/for-each-ref.c:47
-msgid "print only refs which contain the commit"
+msgid "print only refs which contain the cummit"
 msgstr "커밋이 들어 있는 레퍼런스만 표시합니다"
 
 #: builtin/for-each-ref.c:48
-msgid "print only refs which don't contain the commit"
+msgid "print only refs which don't contain the cummit"
 msgstr "커밋이 들어 있지 않은 레퍼런스만 표시합니다"
 
 #: builtin/fsck.c:569
@@ -10278,7 +10278,7 @@ msgstr "출력 디렉터리가 두개?"
 
 #: builtin/log.c:1279 builtin/log.c:1932 builtin/log.c:1934 builtin/log.c:1946
 #, c-format
-msgid "Unknown commit %s"
+msgid "Unknown cummit %s"
 msgstr "알 수 없는 커밋 %s"
 
 #: builtin/log.c:1289 builtin/notes.c:887 builtin/tag.c:523
@@ -10292,9 +10292,9 @@ msgstr "정확한 병합 기준점을 찾을 수 없습니다."
 
 #: builtin/log.c:1298
 msgid ""
-"Failed to get upstream, if you want to record base commit automatically,\n"
+"Failed to get upstream, if you want to record base cummit automatically,\n"
 "please use git branch --set-upstream-to to track a remote branch.\n"
-"Or you could specify base commit by --base=<base-commit-id> manually."
+"Or you could specify base cummit by --base=<base-cummit-id> manually."
 msgstr ""
 "업스트림을 가져오는데 실패했습니다. 베이스 커밋을 자동으로 기록하려면,\n"
 "'git branch --set-upstream-to' 명령으로 원격 브랜치를 추적하십시오.\n"
@@ -10306,11 +10306,11 @@ msgid "Failed to find exact merge base"
 msgstr "정확한 병합 기준점을 찾는데 실패했습니다"
 
 #: builtin/log.c:1329
-msgid "base commit should be the ancestor of revision list"
+msgid "base cummit should be the ancestor of revision list"
 msgstr "기준점 커밋은 리비전 목록의 상위 커밋이어야 합니다"
 
 #: builtin/log.c:1333
-msgid "base commit shouldn't be in revision list"
+msgid "base cummit shouldn't be in revision list"
 msgstr "기준점 커밋은 리비전 목록에 들어 있으면 안 됩니다"
 
 #: builtin/log.c:1382
@@ -10378,7 +10378,7 @@ msgid "output all-zero hash in From header"
 msgstr "From 헤더에서 모두 0인 해시를 출력합니다"
 
 #: builtin/log.c:1476
-msgid "don't include a patch matching a commit upstream"
+msgid "don't include a patch matching a cummit upstream"
 msgstr "업스트림에 있는 패치를 포함하지 않습니다"
 
 #: builtin/log.c:1478
@@ -10414,7 +10414,7 @@ msgid "ident"
 msgstr "신원"
 
 #: builtin/log.c:1488
-msgid "set From address to <ident> (or committer ident if absent)"
+msgid "set From address to <ident> (or cummitter ident if absent)"
 msgstr "<신원>에서 From 주소를 설정합니다 (없으면 커미터 주소 신원 사용)"
 
 #: builtin/log.c:1490
@@ -10450,7 +10450,7 @@ msgid "add a signature"
 msgstr "서명을 추가합니다"
 
 #: builtin/log.c:1504
-msgid "base-commit"
+msgid "base-cummit"
 msgstr "베이스-커밋"
 
 #: builtin/log.c:1505
@@ -10720,7 +10720,7 @@ msgid "empty mbox: '%s'"
 msgstr "빈 mbox: '%s'"
 
 #: builtin/merge.c:51
-msgid "git merge [<options>] [<commit>...]"
+msgid "git merge [<options>] [<cummit>...]"
 msgstr "git merge [<옵션>] [<커밋>...]"
 
 #: builtin/merge.c:52
@@ -10763,19 +10763,19 @@ msgid "(synonym to --stat)"
 msgstr "(--stat 옵션과 동일)"
 
 #: builtin/merge.c:209 builtin/pull.c:151
-msgid "add (at most <n>) entries from shortlog to merge commit message"
+msgid "add (at most <n>) entries from shortlog to merge cummit message"
 msgstr "병합 커밋의 메시지에 shortlog 항목을 (최대 <n>개) 추가합니다"
 
 #: builtin/merge.c:212 builtin/pull.c:157
-msgid "create a single commit instead of doing a merge"
+msgid "create a single cummit instead of doing a merge"
 msgstr "병합하는 대신 하나의 커밋을 만듭니다"
 
 #: builtin/merge.c:214 builtin/pull.c:160
-msgid "perform a commit if the merge succeeds (default)"
+msgid "perform a cummit if the merge succeeds (default)"
 msgstr "병합이 성공하면 커밋을 합니다 (기본값)"
 
 #: builtin/merge.c:216 builtin/pull.c:163
-msgid "edit message before committing"
+msgid "edit message before cummitting"
 msgstr "커밋 전에 메시지를 편집합니다"
 
 #: builtin/merge.c:217
@@ -10808,7 +10808,7 @@ msgid "option for selected merge strategy"
 msgstr "선택한 병합 전략에 대한 옵션"
 
 #: builtin/merge.c:229
-msgid "merge commit message (for a non-fast-forward merge)"
+msgid "merge cummit message (for a non-fast-forward merge)"
 msgstr "병합 커밋 메시지 (정방향이 아닌 병합에 대해)"
 
 #: builtin/merge.c:233
@@ -10824,7 +10824,7 @@ msgid "allow merging unrelated histories"
 msgstr "관계 없는 커밋 내역의 병합을 허용합니다"
 
 #: builtin/merge.c:243
-msgid "verify commit-msg hook"
+msgid "verify cummit-msg hook"
 msgstr "커밋 메시지 후크를 검증합니다"
 
 #: builtin/merge.c:268
@@ -10850,7 +10850,7 @@ msgstr " (합칠 내용이 없습니다)"
 
 #: builtin/merge.c:358
 #, c-format
-msgid "Squash commit -- not updating HEAD\n"
+msgid "Squash cummit -- not updating HEAD\n"
 msgstr "커밋 합치기 -- HEAD를 업데이트하지 않습니다\n"
 
 #: builtin/merge.c:408
@@ -10860,7 +10860,7 @@ msgstr "병합 메시지가 없습니다 -- HEAD를 업데이트하지 않습니
 
 #: builtin/merge.c:458
 #, c-format
-msgid "'%s' does not point to a commit"
+msgid "'%s' does not point to a cummit"
 msgstr "'%s'이(가) 커밋을 가리키지 않습니다"
 
 #: builtin/merge.c:548
@@ -10889,18 +10889,18 @@ msgstr "'%s'에서 읽을 수 없습니다"
 
 #: builtin/merge.c:758
 #, c-format
-msgid "Not committing merge; use 'git commit' to complete the merge.\n"
+msgid "Not cummitting merge; use 'git cummit' to complete the merge.\n"
 msgstr ""
-"병합을 커밋하지 않습니다. 병합을 마치려면 'git commit'을 사용하십시오.\n"
+"병합을 커밋하지 않습니다. 병합을 마치려면 'git cummit'을 사용하십시오.\n"
 
 #: builtin/merge.c:764
 #, c-format
 msgid ""
-"Please enter a commit message to explain why this merge is necessary,\n"
+"Please enter a cummit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
 "\n"
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
-"the commit.\n"
+"the cummit.\n"
 msgstr ""
 "왜 이 병합이 필요한지를 설명하는 커밋 메시지를 입력하십시오. 특히\n"
 "업스트림 업데이트를 어떤 목적용 브랜치로 병합할 때는 반드시 그렇게\n"
@@ -10910,7 +10910,7 @@ msgstr ""
 "중지합니다.\n"
 
 #: builtin/merge.c:800
-msgid "Empty commit message."
+msgid "Empty cummit message."
 msgstr "빈 커밋 메시지."
 
 #: builtin/merge.c:819
@@ -10920,7 +10920,7 @@ msgstr "훌륭합니다.\n"
 
 #: builtin/merge.c:872
 #, c-format
-msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
+msgid "Automatic merge failed; fix conflicts and then cummit the result.\n"
 msgstr "자동 병합이 실패했습니다. 충돌을 바로잡고 결과물을 커밋하십시오.\n"
 
 #: builtin/merge.c:911
@@ -10973,7 +10973,7 @@ msgstr "진행 중인 병합 작업이 없습니다. (MERGE_HEAD가 없음)"
 #: builtin/merge.c:1247
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "병합을 마치지 않았습니다. (MERGE_HEAD 있음)\n"
 "병합하기 전에 변경 사항을 커밋하십시오."
@@ -10981,7 +10981,7 @@ msgstr ""
 #: builtin/merge.c:1254
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "커밋 빼오기를 마치지 않았습니다. (CHERRY_PICK_HEAD 있음)\n"
 "병합하기 전에 변경 사항을 커밋하십시오."
@@ -10995,15 +10995,15 @@ msgid "You cannot combine --squash with --no-ff."
 msgstr "--squash 옵션을 --no-ff 옵션과 같이 쓸 수 없습니다."
 
 #: builtin/merge.c:1274
-msgid "No commit specified and merge.defaultToUpstream not set."
+msgid "No cummit specified and merge.defaultToUpstream not set."
 msgstr "커밋을 지정하지 않았고  merge.defaultToUpstream를 설정하지 않았습니다."
 
 #: builtin/merge.c:1291
-msgid "Squash commit into empty head not supported yet"
+msgid "Squash cummit into empty head not supported yet"
 msgstr "빈 헤드로 커밋을 합치기는 지원하지 않습니다"
 
 #: builtin/merge.c:1293
-msgid "Non-fast-forward commit does not make sense into an empty head"
+msgid "Non-fast-forward cummit does not make sense into an empty head"
 msgstr "정방향이 아닌 커밋은 빈 헤드에서는 앞뒤가 맞지 않습니다"
 
 #: builtin/merge.c:1298
@@ -11012,27 +11012,27 @@ msgid "%s - not something we can merge"
 msgstr "%s - 병합할 수 있는 항목이 아닙니다"
 
 #: builtin/merge.c:1300
-msgid "Can merge only exactly one commit into empty head"
+msgid "Can merge only exactly one cummit into empty head"
 msgstr "빈 헤드에는 정확히 하나의 커밋만 병합할 수 있습니다"
 
 #: builtin/merge.c:1334
 #, c-format
-msgid "Commit %s has an untrusted GPG signature, allegedly by %s."
+msgid "cummit %s has an untrusted GPG signature, allegedly by %s."
 msgstr "%s 커밋에 신뢰하지 않는 (서명자가 %s라고 하는) GPG 서명이 있습니다."
 
 #: builtin/merge.c:1337
 #, c-format
-msgid "Commit %s has a bad GPG signature allegedly by %s."
+msgid "cummit %s has a bad GPG signature allegedly by %s."
 msgstr "%s 커밋에 잘못된 (서명자가 %s라고 하는) GPG 서명이 있습니다."
 
 #: builtin/merge.c:1340
 #, c-format
-msgid "Commit %s does not have a GPG signature."
+msgid "cummit %s does not have a GPG signature."
 msgstr "%s 커밋에 GPG 서명이 없습니다."
 
 #: builtin/merge.c:1343
 #, c-format
-msgid "Commit %s has a good GPG signature by %s\n"
+msgid "cummit %s has a good GPG signature by %s\n"
 msgstr "%s 커밋에 %s의 올바른 GPG 서명이 없습니다\n"
 
 #: builtin/merge.c:1402
@@ -11093,27 +11093,27 @@ msgstr "수동 해결의 준비를 위해 %s 전략을 사용합니다.\n"
 
 #: builtin/merge.c:1616
 #, c-format
-msgid "Automatic merge went well; stopped before committing as requested\n"
+msgid "Automatic merge went well; stopped before cummitting as requested\n"
 msgstr "자동 병합이 잘 진행되었습니다. 요청한대로 커밋 전에 중지합니다\n"
 
 #: builtin/merge-base.c:30
-msgid "git merge-base [-a | --all] <commit> <commit>..."
+msgid "git merge-base [-a | --all] <cummit> <cummit>..."
 msgstr "git merge-base [-a | --all] <커밋> <커밋>..."
 
 #: builtin/merge-base.c:31
-msgid "git merge-base [-a | --all] --octopus <commit>..."
+msgid "git merge-base [-a | --all] --octopus <cummit>..."
 msgstr "git merge-base [-a | --all] --octopus <커밋>..."
 
 #: builtin/merge-base.c:32
-msgid "git merge-base --independent <commit>..."
+msgid "git merge-base --independent <cummit>..."
 msgstr "git merge-base --independent <커밋>..."
 
 #: builtin/merge-base.c:33
-msgid "git merge-base --is-ancestor <commit> <commit>"
+msgid "git merge-base --is-ancestor <cummit> <cummit>"
 msgstr "git merge-base --is-ancestor <커밋> <커밋>"
 
 #: builtin/merge-base.c:34
-msgid "git merge-base --fork-point <ref> [<commit>]"
+msgid "git merge-base --fork-point <ref> [<cummit>]"
 msgstr "git merge-base --fork-point <레퍼런스> [<커밋>]"
 
 #: builtin/merge-base.c:220
@@ -11133,7 +11133,7 @@ msgid "is the first one ancestor of the other?"
 msgstr "첫번째가 다른 것의 과거 커밋인지 여부?"
 
 #: builtin/merge-base.c:228
-msgid "find where <commit> forked from reflog of <ref>"
+msgid "find where <cummit> forked from reflog of <ref>"
 msgstr "<레퍼런스>의 reflog에서 <커밋>이 분리된 위치를 찾습니다"
 
 #: builtin/merge-file.c:9
@@ -11315,7 +11315,7 @@ msgid "renaming '%s' failed"
 msgstr "'%s'의 이름 바꾸기가 실패했습니다"
 
 #: builtin/name-rev.c:338
-msgid "git name-rev [<options>] <commit>..."
+msgid "git name-rev [<options>] <cummit>..."
 msgstr "git name-rev [<옵션>] <커밋>..."
 
 #: builtin/name-rev.c:339
@@ -11331,7 +11331,7 @@ msgid "print only names (no SHA-1)"
 msgstr "이름만 표시 (SHA-1 없이)"
 
 #: builtin/name-rev.c:396
-msgid "only use tags to name the commits"
+msgid "only use tags to name the cummits"
 msgstr "커밋을 지정할 때 태그만 사용합니다"
 
 #: builtin/name-rev.c:398
@@ -11343,7 +11343,7 @@ msgid "ignore refs matching <pattern>"
 msgstr "<패턴>과 일치하는 레퍼런스를 무시합니다"
 
 #: builtin/name-rev.c:402
-msgid "list all commits reachable from all refs"
+msgid "list all cummits reachable from all refs"
 msgstr "모든 레퍼런스에서 접근 가능한 모든 커밋 목록을 표시합니다"
 
 #: builtin/name-rev.c:403
@@ -11398,8 +11398,8 @@ msgstr ""
 "git notes [--ref <노트-레퍼런스>] merge [-v | -q] [-s <전략>] <노트-레퍼런스>"
 
 #: builtin/notes.c:33
-msgid "git notes merge --commit [-v | -q]"
-msgstr "git notes merge --commit [-v | -q]"
+msgid "git notes merge --cummit [-v | -q]"
+msgstr "git notes merge --cummit [-v | -q]"
 
 #: builtin/notes.c:34
 msgid "git notes merge --abort [-v | -q]"
@@ -11450,8 +11450,8 @@ msgid "git notes merge [<options>] <notes-ref>"
 msgstr "git notes merge [<옵션>] <쪽지-레퍼런스>"
 
 #: builtin/notes.c:74
-msgid "git notes merge --commit [<options>]"
-msgstr "git notes merge --commit [<옵션>]"
+msgid "git notes merge --cummit [<options>]"
+msgstr "git notes merge --cummit [<옵션>]"
 
 #: builtin/notes.c:75
 msgid "git notes merge --abort [<options>]"
@@ -11651,11 +11651,11 @@ msgid "failed to read ref NOTES_MERGE_PARTIAL"
 msgstr "NOTES_MERGE_PARTIAL 레퍼런스 읽기에 실패했습니다"
 
 #: builtin/notes.c:714
-msgid "could not find commit from NOTES_MERGE_PARTIAL."
+msgid "could not find cummit from NOTES_MERGE_PARTIAL."
 msgstr "NOTES_MERGE_PARTIAL에서 커밋을 찾을 수 없습니다."
 
 #: builtin/notes.c:716
-msgid "could not parse commit from NOTES_MERGE_PARTIAL."
+msgid "could not parse cummit from NOTES_MERGE_PARTIAL."
 msgstr "NOTES_MERGE_PARTIAL에서 커밋을 파싱할 수 없습니다."
 
 #: builtin/notes.c:729
@@ -11688,11 +11688,11 @@ msgstr ""
 "cat_sort_uniq)"
 
 #: builtin/notes.c:780
-msgid "Committing unmerged notes"
+msgid "cummitting unmerged notes"
 msgstr "병합하지 않은 노트 커밋"
 
 #: builtin/notes.c:782
-msgid "finalize notes merge by committing unmerged notes"
+msgid "finalize notes merge by cummitting unmerged notes"
 msgstr "병합하지 않은 노트를 커밋해 노트 병합을 마칩니다"
 
 #: builtin/notes.c:784
@@ -11704,8 +11704,8 @@ msgid "abort notes merge"
 msgstr "노트 병합을 중지합니다"
 
 #: builtin/notes.c:797
-msgid "cannot mix --commit, --abort or -s/--strategy"
-msgstr "--commit, --abort, -s/--strategy 옵션을 섞어 쓸 수 없습니다"
+msgid "cannot mix --cummit, --abort or -s/--strategy"
+msgstr "--cummit, --abort, -s/--strategy 옵션을 섞어 쓸 수 없습니다"
 
 #: builtin/notes.c:802
 msgid "must specify a notes ref to merge"
@@ -11729,12 +11729,12 @@ msgstr "현재 노트 레퍼런스의 (%s) 링크를 저장하는데 실패했�
 #: builtin/notes.c:868
 #, c-format
 msgid ""
-"Automatic notes merge failed. Fix conflicts in %s and commit the result with "
-"'git notes merge --commit', or abort the merge with 'git notes merge --"
+"Automatic notes merge failed. Fix conflicts in %s and cummit the result with "
+"'git notes merge --cummit', or abort the merge with 'git notes merge --"
 "abort'.\n"
 msgstr ""
 "자동 노트 병합이 실패했습니다. %s 안의 충돌을 바로잡고 결과를 'git notes "
-"merge --commit' 명령으로 커밋하십시오. 또는 'git notes merge --abort' 명령으"
+"merge --cummit' 명령으로 커밋하십시오. 또는 'git notes merge --abort' 명령으"
 "로 병합을 중지하십시오.\n"
 
 #: builtin/notes.c:890
@@ -11963,7 +11963,7 @@ msgid "pack compression level"
 msgstr "묶음 압축 단계"
 
 #: builtin/pack-objects.c:3171
-msgid "do not hide commits by grafts"
+msgid "do not hide cummits by grafts"
 msgstr "그래프트로 발생한 커밋을 숨기지 않습니다"
 
 #: builtin/pack-objects.c:3173
@@ -12169,7 +12169,7 @@ msgid "pull with rebase"
 msgstr "리베이스로 풀하기"
 
 #: builtin/pull.c:886
-msgid "please commit or stash them."
+msgid "please cummit or stash them."
 msgstr "커밋하거나 스태시에 넣으십시오."
 
 #: builtin/pull.c:911
@@ -12177,7 +12177,7 @@ msgstr "커밋하거나 스태시에 넣으십시오."
 msgid ""
 "fetch updated the current branch head.\n"
 "fast-forwarding your working tree from\n"
-"commit %s."
+"cummit %s."
 msgstr ""
 "현재 브랜치 헤드를 업데이트했습니다.\n"
 "작업 폴더를 %s 커밋에서 정방향\n"
@@ -12357,8 +12357,8 @@ msgstr "리모트에 태그가 이미 있기 때문에 업데이트가 거부되
 
 #: builtin/push.c:296
 msgid ""
-"You cannot update a remote ref that points at a non-commit object,\n"
-"or update a remote ref to make it point at a non-commit object,\n"
+"You cannot update a remote ref that points at a non-cummit object,\n"
+"or update a remote ref to make it point at a non-cummit object,\n"
 "without using the '--force' option.\n"
 msgstr ""
 "'--force' 옵션이 없이 커밋이 아닌 오브젝트를 가리키는 리모트\n"
@@ -12581,15 +12581,15 @@ msgid "git rebase--helper [<options>]"
 msgstr "git rebase--helper [<옵션>]"
 
 #: builtin/rebase--helper.c:24
-msgid "keep empty commits"
+msgid "keep empty cummits"
 msgstr "빈 커밋을 유지합니다"
 
 #: builtin/rebase--helper.c:26 builtin/revert.c:123
-msgid "allow commits with empty messages"
+msgid "allow cummits with empty messages"
 msgstr "빈 메시지로 커밋을 허용합니다"
 
 #: builtin/rebase--helper.c:27
-msgid "rebase merge commits"
+msgid "rebase merge cummits"
 msgstr "병합 커밋을 리베이스합니다"
 
 #: builtin/rebase--helper.c:29
@@ -12609,11 +12609,11 @@ msgid "make rebase script"
 msgstr "리베이스 스크립트를 만듭니다"
 
 #: builtin/rebase--helper.c:37
-msgid "shorten commit ids in the todo list"
+msgid "shorten cummit ids in the todo list"
 msgstr "할 일 목록의 커밋 아이디를 줄입니다."
 
 #: builtin/rebase--helper.c:39
-msgid "expand commit ids in the todo list"
+msgid "expand cummit ids in the todo list"
 msgstr "할 일 목록의 커밋 아이디를 늘입니다."
 
 #: builtin/rebase--helper.c:41
@@ -13319,7 +13319,7 @@ msgid "git replace [-f] --edit <object>"
 msgstr "git replace [-f] --edit <오브젝트>"
 
 #: builtin/replace.c:24
-msgid "git replace [-f] --graft <commit> [<parent>...]"
+msgid "git replace [-f] --graft <cummit> [<parent>...]"
 msgstr "git replace [-f] --graft <커밋> [<상위>...]"
 
 #: builtin/replace.c:25
@@ -13341,18 +13341,18 @@ msgstr "올바른 오브젝트 이름이 아닙니다: '%s'"
 
 #: builtin/replace.c:407
 #, c-format
-msgid "bad mergetag in commit '%s'"
+msgid "bad mergetag in cummit '%s'"
 msgstr "커밋 '%s'에 잘못된 병합태그"
 
 #: builtin/replace.c:409
 #, c-format
-msgid "malformed mergetag in commit '%s'"
+msgid "malformed mergetag in cummit '%s'"
 msgstr "커밋 '%s'에 잘못된 형식의 병합태그"
 
 #: builtin/replace.c:421
 #, c-format
 msgid ""
-"original commit '%s' contains mergetag '%s' that is discarded; use --edit "
+"original cummit '%s' contains mergetag '%s' that is discarded; use --edit "
 "instead of --graft"
 msgstr ""
 "본래 커밋 '%s'에 버려진 병합태그 '%s'이(가) 들어 있습니다. --graft 대신 --"
@@ -13360,16 +13360,16 @@ msgstr ""
 
 #: builtin/replace.c:460
 #, c-format
-msgid "the original commit '%s' has a gpg signature."
+msgid "the original cummit '%s' has a gpg signature."
 msgstr "본래 커밋 '%s'에 GPG 서명이 있습니다."
 
 #: builtin/replace.c:461
-msgid "the signature will be removed in the replacement commit!"
+msgid "the signature will be removed in the replacement cummit!"
 msgstr "대체 커밋에서 서명을 제거합니다!"
 
 #: builtin/replace.c:471
 #, c-format
-msgid "could not write replacement commit for: '%s'"
+msgid "could not write replacement cummit for: '%s'"
 msgstr "다음에 대한 대체 커밋을 쓸 수 없습니다: '%s'"
 
 #: builtin/replace.c:514
@@ -13394,7 +13394,7 @@ msgid "edit existing object"
 msgstr "현재 오브젝트를 편집합니다"
 
 #: builtin/replace.c:538
-msgid "change a commit's parents"
+msgid "change a cummit's parents"
 msgstr "커밋의 상위 항목을 바꿉니다"
 
 #: builtin/replace.c:539
@@ -13423,7 +13423,7 @@ msgstr "인덱스에 깔끔한 해결을 등록합니다"
 
 #: builtin/reset.c:29
 msgid ""
-"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
+"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"
 msgstr "git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<커밋>]"
 
 #: builtin/reset.c:30
@@ -13602,7 +13602,7 @@ msgstr ""
 "실행해 보십시오."
 
 #: builtin/revert.c:23
-msgid "git revert [<options>] <commit-ish>..."
+msgid "git revert [<options>] <cummit-ish>..."
 msgstr "git revert [<옵션>] <커밋-따위>..."
 
 #: builtin/revert.c:24
@@ -13610,7 +13610,7 @@ msgid "git revert <subcommand>"
 msgstr "git revert <하위명령>"
 
 #: builtin/revert.c:29
-msgid "git cherry-pick [<options>] <commit-ish>..."
+msgid "git cherry-pick [<options>] <cummit-ish>..."
 msgstr "git cherry-pick [<옵션>] <커밋-따위>..."
 
 #: builtin/revert.c:30
@@ -13635,11 +13635,11 @@ msgid "cancel revert or cherry-pick sequence"
 msgstr "되돌리기 또는 커밋 빼오기 연속을 취소합니다"
 
 #: builtin/revert.c:102
-msgid "don't automatically commit"
+msgid "don't automatically cummit"
 msgstr "자동으로 커밋하지 않습니다"
 
 #: builtin/revert.c:103
-msgid "edit the commit message"
+msgid "edit the cummit message"
 msgstr "커밋 메시지를 편집합니다"
 
 #: builtin/revert.c:106
@@ -13663,15 +13663,15 @@ msgid "option for merge strategy"
 msgstr "병합 전략 옵션"
 
 #: builtin/revert.c:120
-msgid "append commit name"
+msgid "append cummit name"
 msgstr "커밋 이름을 뒤에 붙입니다"
 
 #: builtin/revert.c:122
-msgid "preserve initially empty commits"
+msgid "preserve initially empty cummits"
 msgstr "최초 빈 커밋을 유지합니다"
 
 #: builtin/revert.c:124
-msgid "keep redundant, empty commits"
+msgid "keep redundant, empty cummits"
 msgstr "여분의 빈 커밋을 유지합니다"
 
 #: builtin/revert.c:214
@@ -13807,15 +13807,15 @@ msgid "git log --pretty=short | git shortlog [<options>]"
 msgstr "git log --pretty=short | git shortlog [<옵션>]"
 
 #: builtin/shortlog.c:264
-msgid "Group by committer rather than author"
+msgid "Group by cummitter rather than author"
 msgstr "작성자가 아닌 커미터로 묶습니다"
 
 #: builtin/shortlog.c:266
-msgid "sort output according to the number of commits per author"
+msgid "sort output according to the number of cummits per author"
 msgstr "작성자별 커밋 수에 따라 정렬합니다"
 
 #: builtin/shortlog.c:268
-msgid "Suppress commit descriptions, only provides commit count"
+msgid "Suppress cummit descriptions, only provides cummit count"
 msgstr "커밋 설명을 생략하고, 커밋 수만 표시합니다"
 
 #: builtin/shortlog.c:270
@@ -13874,7 +13874,7 @@ msgid "color '*!+-' corresponding to the branch"
 msgstr "브랜치에 따른 '*!+-' 표시에 색을 입힙니다"
 
 #: builtin/show-branch.c:632
-msgid "show <n> more commits after the common ancestor"
+msgid "show <n> more cummits after the common ancestor"
 msgstr "공통 이전 커밋 뒤의 <n>개의 커밋을 표시합니다"
 
 #: builtin/show-branch.c:634
@@ -13890,7 +13890,7 @@ msgid "include the current branch"
 msgstr "현재 브랜치를 포함"
 
 #: builtin/show-branch.c:639
-msgid "name commits with their object names"
+msgid "name cummits with their object names"
 msgstr "커밋의 이름을 그 오브젝트 이름으로 붙입니다"
 
 #: builtin/show-branch.c:641
@@ -13902,11 +13902,11 @@ msgid "show refs unreachable from any other ref"
 msgstr "다른 어떤 레퍼런스에서도 접근 불가능한 레퍼런스를 표시합니다"
 
 #: builtin/show-branch.c:645
-msgid "show commits in topological order"
+msgid "show cummits in topological order"
 msgstr "위상 순서에 따라 커밋을 표시합니다"
 
 #: builtin/show-branch.c:648
-msgid "show only commits not on the first branch"
+msgid "show only cummits not on the first branch"
 msgstr "첫 브랜치에 없는 커밋만 표시합니다"
 
 #: builtin/show-branch.c:650
@@ -13964,7 +13964,7 @@ msgstr "'%s'은(는) 올바른 레퍼런스가 아닙니다."
 
 #: builtin/show-branch.c:815
 #, c-format
-msgid "cannot find commit %s (%s)"
+msgid "cannot find cummit %s (%s)"
 msgstr "%s 커밋을 찾을 수 없음 (%s)"
 
 #: builtin/show-ref.c:10
@@ -14116,7 +14116,7 @@ msgstr "하위 모듈 상태를 출력하지 않습니다"
 
 #: builtin/submodule--helper.c:722
 msgid ""
-"Use commit stored in the index instead of the one stored in the submodule "
+"Use cummit stored in the index instead of the one stored in the submodule "
 "HEAD"
 msgstr "하위 모듈 HEAD에 저장된 커밋 대신 인덱스에 저장된 커밋을 사용합니다"
 
@@ -14409,9 +14409,9 @@ msgstr "git tag -d <태그이름>..."
 
 #: builtin/tag.c:26
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
+"git tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--"
 "points-at <object>]\n"
-"\t\t[--format=<format>] [--[no-]merged [<commit>]] [<pattern>...]"
+"\t\t[--format=<format>] [--[no-]merged [<cummit>]] [<pattern>...]"
 msgstr ""
 "git tag -l [-n[<번호>]] [--contains <커밋>] [--no-contains <커밋>] [--points-"
 "at <오브젝트>]\n"
@@ -14536,11 +14536,11 @@ msgid "show tag list in columns"
 msgstr "태그 목록을 여러 열로 표시합니다"
 
 #: builtin/tag.c:406 builtin/tag.c:408
-msgid "print only tags that contain the commit"
+msgid "print only tags that contain the cummit"
 msgstr "해당 커밋이 들어 있는 태그만 표시합니다"
 
 #: builtin/tag.c:407 builtin/tag.c:409
-msgid "print only tags that don't contain the commit"
+msgid "print only tags that don't contain the cummit"
 msgstr "해당 커밋이 들어 있지 않은 태그만 표시합니다"
 
 #: builtin/tag.c:410
@@ -14917,15 +14917,15 @@ msgstr ""
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "<n>초 동안 반응이 없으면 전송을 중지합니다"
 
-#: builtin/verify-commit.c:18
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] <커밋>..."
+#: builtin/verify-cummit.c:18
+msgid "git verify-cummit [-v | --verbose] <cummit>..."
+msgstr "git verify-cummit [-v | --verbose] <커밋>..."
 
-#: builtin/verify-commit.c:73
-msgid "print commit contents"
+#: builtin/verify-cummit.c:73
+msgid "print cummit contents"
 msgstr "커밋 내용을 표시합니다"
 
-#: builtin/verify-commit.c:74 builtin/verify-tag.c:38
+#: builtin/verify-cummit.c:74 builtin/verify-tag.c:38
 msgid "print raw gpg status output"
 msgstr "원본 GPG 상태를 출력합니다"
 
@@ -14950,7 +14950,7 @@ msgid "print tag contents"
 msgstr "태그 내용 표시"
 
 #: builtin/worktree.c:17
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
+msgid "git worktree add [<options>] <path> [<cummit-ish>]"
 msgstr "git worktree add [<옵션>] <경로> [<커밋-따위>]"
 
 #: builtin/worktree.c:18
@@ -15361,7 +15361,7 @@ msgid "Apply a series of patches from a mailbox"
 msgstr "메일함에서 연속된 패치를 적용합니다"
 
 #: command-list.h:52
-msgid "Annotate file lines with commit information"
+msgid "Annotate file lines with cummit information"
 msgstr "파일 줄마다 커밋 정보를 표시합니다"
 
 #: command-list.h:53
@@ -15377,7 +15377,7 @@ msgid "Create an archive of files from a named tree"
 msgstr "지정한 트리에 들어 있는 파일의 아카이브를 만듭니다"
 
 #: command-list.h:56
-msgid "Use binary search to find the commit that introduced a bug"
+msgid "Use binary search to find the cummit that introduced a bug"
 msgstr "이진 탐색으로 버그를 만들어낸 커밋을 찾습니다"
 
 #: command-list.h:57
@@ -15421,16 +15421,16 @@ msgid "Ensures that a reference name is well formed"
 msgstr "레퍼런스 이름의 형식이 올바른지 확인합니다"
 
 #: command-list.h:67
-msgid "Find commits yet to be applied to upstream"
+msgid "Find cummits yet to be applied to upstream"
 msgstr "업스트림에 적용해야 할 커밋을 찾습니다"
 
 #: command-list.h:68
-msgid "Apply the changes introduced by some existing commits"
+msgid "Apply the changes introduced by some existing cummits"
 msgstr "기존 커밋으로 발생한 변경 사항을 적용합니다"
 
 #: command-list.h:69
-msgid "Graphical alternative to git-commit"
-msgstr "git-commit의 그래픽 대체 버전"
+msgid "Graphical alternative to git-cummit"
+msgstr "git-cummit의 그래픽 대체 버전"
 
 #: command-list.h:70
 msgid "Remove untracked files from the working tree"
@@ -15449,11 +15449,11 @@ msgid "Record changes to the repository"
 msgstr "바뀐 사항을 저장소에 기록합니다"
 
 #: command-list.h:74
-msgid "Write and verify Git commit graph files"
+msgid "Write and verify Git cummit graph files"
 msgstr "깃 커밋 그래프 파일을 쓰고 확인합니다"
 
 #: command-list.h:75
-msgid "Create a new commit object"
+msgid "Create a new cummit object"
 msgstr "새 커밋 오브젝트를 만듭니다"
 
 #: command-list.h:76
@@ -15477,7 +15477,7 @@ msgid "Helper to store credentials on disk"
 msgstr "비밀 정보를 디스크에 저장하는 도움 명령"
 
 #: command-list.h:81
-msgid "Export a single commit to a CVS checkout"
+msgid "Export a single cummit to a CVS checkout"
 msgstr "하나의 커밋을 CVS 체크아웃으로 내보냅니다"
 
 # * "people love to hate" 번역은 전달하기 힘들고 빠져도 내용 문제가 없으므로 생략
@@ -15498,7 +15498,7 @@ msgid "Give an object a human readable name based on an available ref"
 msgstr "사용 가능한 레퍼런스를 기준으로 오브젝트에 읽을 수 있는 이름을 부여합니다"
 
 #: command-list.h:86
-msgid "Show changes between commits, commit and working tree, etc"
+msgid "Show changes between cummits, cummit and working tree, etc"
 msgstr "커밋과 커밋 사이, 커밋과 작업 내용 사이 등의 바뀐 점을 봅니다"
 
 #: command-list.h:87
@@ -15538,7 +15538,7 @@ msgid "Rewrite branches"
 msgstr "리모트 브랜치"
 
 #: command-list.h:96
-msgid "Produce a merge commit message"
+msgid "Produce a merge cummit message"
 msgstr "병합 커밋 메시지를 만듭니다"
 
 #: command-list.h:97
@@ -15558,7 +15558,7 @@ msgid "Cleanup unnecessary files and optimize the local repository"
 msgstr "불필요한 파일을 지우고 로컬 저장소를 최적화합니다"
 
 #: command-list.h:101
-msgid "Extract commit ID from an archive created using git-archive"
+msgid "Extract cummit ID from an archive created using git-archive"
 msgstr "git-archive로 만든 아카이브에서 커밋 ID를 추출합니다"
 
 #: command-list.h:102
@@ -15607,7 +15607,7 @@ msgstr "내 작업 저장소를 gitweb에서 즉시 살펴봅니다"
 
 # * "Signed-off-by: name" 같은 정보를 말한다
 #: command-list.h:113
-msgid "add or parse structured information in commit messages"
+msgid "add or parse structured information in cummit messages"
 msgstr "커밋 메시지에 구조화된 정보를 추가하거나 정보를 파싱합니다"
 
 #: command-list.h:114
@@ -15615,7 +15615,7 @@ msgid "The Git repository browser"
 msgstr "깃 저장소 살펴보기"
 
 #: command-list.h:115
-msgid "Show commit logs"
+msgid "Show cummit logs"
 msgstr "커밋 기록을 표시합니다"
 
 #: command-list.h:116
@@ -15735,7 +15735,7 @@ msgid "Reads tree information into the index"
 msgstr "트리 정보를 인덱스로 읽습니다"
 
 #: command-list.h:145
-msgid "Reapply commits on top of another base tip"
+msgid "Reapply cummits on top of another base tip"
 msgstr "커밋을 다른 베이스 끝의 최상위에서 적용합니다"
 
 #: command-list.h:146
@@ -15771,11 +15771,11 @@ msgid "Reset current HEAD to the specified state"
 msgstr "현재 HEAD를 지정한 상태로 재설정화합니다"
 
 #: command-list.h:154
-msgid "Revert some existing commits"
+msgid "Revert some existing cummits"
 msgstr "기존 커밋을 되돌립니다"
 
 #: command-list.h:155
-msgid "Lists commit objects in reverse chronological order"
+msgid "Lists cummit objects in reverse chronological order"
 msgstr "시간 반대 순서에 따라 커밋 오브젝트를 열거합니다"
 
 #: command-list.h:156
@@ -15807,7 +15807,7 @@ msgid "Show various types of objects"
 msgstr "여러가지 종류의 오브젝트를 표시합니다"
 
 #: command-list.h:163
-msgid "Show branches and their commits"
+msgid "Show branches and their cummits"
 msgstr "브랜치 목록과 그 커밋을 표시합니다"
 
 #: command-list.h:164
@@ -15891,7 +15891,7 @@ msgid "Show a Git logical variable"
 msgstr "깃의 논리적 변수를 표시합니다"
 
 #: command-list.h:184
-msgid "Check the GPG signature of commits"
+msgid "Check the GPG signature of cummits"
 msgstr "커밋의 GPG 서명을 확인합니다"
 
 #: command-list.h:185
@@ -15907,7 +15907,7 @@ msgid "Git web interface (web frontend to Git repositories)"
 msgstr "깃 웹 인터페이스 (깃 저장소에 대한 웹 프론트엔드)"
 
 #: command-list.h:188
-msgid "Show logs with difference each commit introduces"
+msgid "Show logs with difference each cummit introduces"
 msgstr "각 커밋으로 발생하는 차이점마다 기록을 표시합니다"
 
 #: command-list.h:189
@@ -16054,7 +16054,7 @@ msgstr "'git bisect $TERM_BAD' 명령은 하나의 인자만 쓸 수 있습니�
 
 #: git-bisect.sh:306
 #, sh-format
-msgid "Warning: bisecting only with a $TERM_BAD commit."
+msgid "Warning: bisecting only with a $TERM_BAD cummit."
 msgstr "경고: 하나의 $TERM_BAD 커밋에 대해서만 이등분."
 
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -16090,14 +16090,14 @@ msgstr "이등분하는 중입니다."
 
 #: git-bisect.sh:405
 #, sh-format
-msgid "'$invalid' is not a valid commit"
+msgid "'$invalid' is not a valid cummit"
 msgstr "'$invalid'은(는) 올바른 커밋이 아닙니다"
 
 #: git-bisect.sh:414
 #, sh-format
 msgid ""
 "Could not check out original HEAD '$branch'.\n"
-"Try 'git bisect reset <commit>'."
+"Try 'git bisect reset <cummit>'."
 msgstr ""
 "본래의 HEAD '$branch'을(를) 체크아웃할 수 없습니다.\n"
 "'git bisect reset <커밋>'을 해 보십시오"
@@ -16184,7 +16184,7 @@ msgstr "옥토퍼스 전략 병합을 할 수 없습니다."
 
 #: git-merge-octopus.sh:73
 #, sh-format
-msgid "Unable to find common commit with $pretty_name"
+msgid "Unable to find common cummit with $pretty_name"
 msgstr "$pretty_name(으)로 공통 커밋을 찾을 수 없습니다"
 
 #: git-merge-octopus.sh:77
@@ -16210,7 +16210,7 @@ msgstr "간단한 병합이 동작하지 않습니다. 자동 병합을 시도�
 msgid ""
 "Resolve all conflicts manually, mark them as resolved with\n"
 "\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
+"You can instead skip this cummit: run \"git rebase --skip\".\n"
 "To abort and get back to the state before \"git rebase\", run \"git rebase --"
 "abort\"."
 msgstr ""
@@ -16307,12 +16307,12 @@ msgstr "$onto_name: 병합 베이스가 없습니다"
 
 #: git-rebase.sh:573
 #, sh-format
-msgid "Does not point to a valid commit: $onto_name"
+msgid "Does not point to a valid cummit: $onto_name"
 msgstr "올바른 커밋을 가리키지 않습니다: $onto_name"
 
 #: git-rebase.sh:599
 #, sh-format
-msgid "fatal: no such branch/commit '$branch_name'"
+msgid "fatal: no such branch/cummit '$branch_name'"
 msgstr "치명적 이상: 그런 브랜치/커밋이 없습니다 '$branch_name'"
 
 #: git-rebase.sh:632
@@ -16325,7 +16325,7 @@ msgid "Created autostash: $stash_abbrev"
 msgstr "자동 스태시를 만들었습니다: $stash_abbrev"
 
 #: git-rebase.sh:641
-msgid "Please commit or stash them."
+msgid "Please cummit or stash them."
 msgstr "커밋하거나 스태시에 넣으십시오."
 
 #: git-rebase.sh:664
@@ -16367,7 +16367,7 @@ msgid "git stash clear with parameters is unimplemented"
 msgstr "git stash clear 명령을 파라미터와 같이 쓰기는 구현되지 않았습니다"
 
 #: git-stash.sh:108
-msgid "You do not have the initial commit yet"
+msgid "You do not have the initial cummit yet"
 msgstr "아직 최초 커밋이 없습니다"
 
 #: git-stash.sh:123
@@ -16396,8 +16396,8 @@ msgstr "작업 폴더 상태를 기록할 수 없습니다"
 
 #: git-stash.sh:229
 #, sh-format
-msgid "Cannot update $ref_stash with $w_commit"
-msgstr "$ref_stash을(를) $w_commit(으)로 업데이트할 수 없습니다"
+msgid "Cannot update $ref_stash with $w_cummit"
+msgstr "$ref_stash을(를) $w_cummit(으)로 업데이트할 수 없습니다"
 
 #: git-stash.sh:281
 #, sh-format
@@ -16451,7 +16451,7 @@ msgstr "$reference은(는) 올바른 레퍼런스가 아닙니다"
 
 #: git-stash.sh:553
 #, sh-format
-msgid "'$args' is not a stash-like commit"
+msgid "'$args' is not a stash-like cummit"
 msgstr "'$args'은(는) 스태시 커밋이 아닙니다"
 
 #: git-stash.sh:564
@@ -16627,7 +16627,7 @@ msgstr "하위 모듈 경로 '$displaypath'에서 가져올 수 없습니다"
 #, sh-format
 msgid ""
 "Fetched in submodule path '$displaypath', but it did not contain $sha1. "
-"Direct fetching of that commit failed."
+"Direct fetching of that cummit failed."
 msgstr ""
 "'$displaypath' 하위 모듈 경로에서 가져왔지만, $sha1 커밋이 들어있지 않습니"
 "다. 이 커밋을 직접 가져오는데 실패했습니다."
@@ -16688,17 +16688,17 @@ msgstr "예상치 못한 모드 $mod_dst"
 
 #: git-submodule.sh:863
 #, sh-format
-msgid "  Warn: $display_name doesn't contain commit $sha1_src"
+msgid "  Warn: $display_name doesn't contain cummit $sha1_src"
 msgstr "  경고: '$display_name'에 '$sha1_src' 커밋이 들어있지 않습니다"
 
 #: git-submodule.sh:866
 #, sh-format
-msgid "  Warn: $display_name doesn't contain commit $sha1_dst"
+msgid "  Warn: $display_name doesn't contain cummit $sha1_dst"
 msgstr "  경고: '$display_name'에 '$sha1_dst' 커밋이 들어있지 않습니다"
 
 #: git-submodule.sh:869
 #, sh-format
-msgid "  Warn: $display_name doesn't contain commits $sha1_src and $sha1_dst"
+msgid "  Warn: $display_name doesn't contain cummits $sha1_src and $sha1_dst"
 msgstr ""
 "  경고: '$display_name'에 '$sha1_src' 및 '$sha1_dst' 커밋이 들어있지 않습니다"
 
@@ -16716,19 +16716,19 @@ msgstr "리베이스중 ($new_count/$total)"
 msgid ""
 "\n"
 "Commands:\n"
-"p, pick <commit> = use commit\n"
-"r, reword <commit> = use commit, but edit the commit message\n"
-"e, edit <commit> = use commit, but stop for amending\n"
-"s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup <commit> = like \"squash\", but discard this commit's log message\n"
+"p, pick <cummit> = use cummit\n"
+"r, reword <cummit> = use cummit, but edit the cummit message\n"
+"e, edit <cummit> = use cummit, but stop for amending\n"
+"s, squash <cummit> = use cummit, but meld into previous cummit\n"
+"f, fixup <cummit> = like \"squash\", but discard this cummit's log message\n"
 "x, exec <command> = run command (the rest of the line) using shell\n"
-"d, drop <commit> = remove commit\n"
+"d, drop <cummit> = remove cummit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified). Use -c <commit> to reword the commit message.\n"
+"m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+".       create a merge cummit using the original merge cummit's\n"
+".       message (or the oneline, if no original merge cummit was\n"
+".       specified). Use -c <cummit> to reword the cummit message.\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
@@ -16753,7 +16753,7 @@ msgstr ""
 #: git-rebase--interactive.sh:179
 msgid ""
 "\n"
-"Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
+"Do not remove any line. Use 'drop' explicitly to remove a cummit.\n"
 msgstr ""
 "\n"
 "줄을 제거하지 않습니다. 커밋을 제거하려면 명시적으로 'drop'을 사용하십시오.\n"
@@ -16761,7 +16761,7 @@ msgstr ""
 #: git-rebase--interactive.sh:183
 msgid ""
 "\n"
-"If you remove a line here THAT COMMIT WILL BE LOST.\n"
+"If you remove a line here THAT cummit WILL BE LOST.\n"
 msgstr ""
 "\n"
 "여기 줄을 제거하면 해당 커밋을 잃어버립니다!\n"
@@ -16769,9 +16769,9 @@ msgstr ""
 #: git-rebase--interactive.sh:221
 #, sh-format
 msgid ""
-"You can amend the commit now, with\n"
+"You can amend the cummit now, with\n"
 "\n"
-"\tgit commit --amend $gpg_sign_opt_quoted\n"
+"\tgit cummit --amend $gpg_sign_opt_quoted\n"
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
@@ -16779,7 +16779,7 @@ msgid ""
 msgstr ""
 "지금 다음 명령으로 커밋을 수정할 수 있습니다:\n"
 "\n"
-"\tgit commit --amend $gpg_sign_opt_quoted\n"
+"\tgit cummit --amend $gpg_sign_opt_quoted\n"
 "\n"
 "변경 사항에 만족하면, 다음을 실행하십시오:\n"
 "\n"
@@ -16787,16 +16787,16 @@ msgstr ""
 
 #: git-rebase--interactive.sh:246
 #, sh-format
-msgid "$sha1: not a commit that can be picked"
+msgid "$sha1: not a cummit that can be picked"
 msgstr "$sha1: 빼오기가 가능한 커밋이 아닙니다"
 
 #: git-rebase--interactive.sh:285
 #, sh-format
-msgid "Invalid commit name: $sha1"
+msgid "Invalid cummit name: $sha1"
 msgstr "잘못된 커밋 이름: $sha1"
 
 #: git-rebase--interactive.sh:325
-msgid "Cannot write current commit's replacement sha1"
+msgid "Cannot write current cummit's replacement sha1"
 msgstr "현재 커밋의 대체 sha1을 쓸 수 없습니다"
 
 #: git-rebase--interactive.sh:376
@@ -16831,18 +16831,18 @@ msgstr "$sha1을 빼오기 할 수 없습니다"
 
 #: git-rebase--interactive.sh:428
 #, sh-format
-msgid "This is the commit message #${n}:"
+msgid "This is the cummit message #${n}:"
 msgstr "커밋 메시지 #${n}번입니다:"
 
 #: git-rebase--interactive.sh:433
 #, sh-format
-msgid "The commit message #${n} will be skipped:"
+msgid "The cummit message #${n} will be skipped:"
 msgstr "#${n}번째 커밋 메시지를 건너뜁니다:"
 
 #: git-rebase--interactive.sh:444
 #, sh-format
-msgid "This is a combination of $count commit."
-msgid_plural "This is a combination of $count commits."
+msgid "This is a combination of $count cummit."
+msgid_plural "This is a combination of $count cummits."
 msgstr[0] "커밋 $count개가 섞인 결과입니다."
 
 #: git-rebase--interactive.sh:453
@@ -16851,7 +16851,7 @@ msgid "Cannot write $fixup_msg"
 msgstr "$fixup_msg를 쓸 수 없습니다"
 
 #: git-rebase--interactive.sh:456
-msgid "This is a combination of 2 commits."
+msgid "This is a combination of 2 cummits."
 msgstr "커밋 2개가 섞인 결과입니다."
 
 #: git-rebase--interactive.sh:497 git-rebase--interactive.sh:540
@@ -16863,11 +16863,11 @@ msgstr "다음을 적용할(apply) 수 없습니다: $sha1... $rest"
 #: git-rebase--interactive.sh:572
 #, sh-format
 msgid ""
-"Could not amend commit after successfully picking $sha1... $rest\n"
-"This is most likely due to an empty commit message, or the pre-commit hook\n"
+"Could not amend cummit after successfully picking $sha1... $rest\n"
+"This is most likely due to an empty cummit message, or the pre-commit hook\n"
 "failed. If the pre-commit hook failed, you may need to resolve the issue "
 "before\n"
-"you are able to reword the commit."
+"you are able to reword the cummit."
 msgstr ""
 "성공적으로 $sha1... $rest 커밋을 빼온 뒤에 커밋을 수정할 수 없습니다.\n"
 "대부분의 경우 빈 커밋 메시지 때문이거나, 또는 커밋 전 후크가 실패했기\n"
@@ -16880,7 +16880,7 @@ msgstr "다음에서 멈춥니다: $sha1_abbrev... $rest"
 
 #: git-rebase--interactive.sh:602
 #, sh-format
-msgid "Cannot '$squash_style' without a previous commit"
+msgid "Cannot '$squash_style' without a previous cummit"
 msgstr "이전 커밋 없이 '$squash_style' 수행할 수 없습니다"
 
 #: git-rebase--interactive.sh:644
@@ -16913,7 +16913,7 @@ msgstr ""
 msgid ""
 "Execution succeeded: $rest\n"
 "but left changes to the index and/or the working tree\n"
-"Commit or stash your changes, and then run\n"
+"cummit or stash your changes, and then run\n"
 "\n"
 "\tgit rebase --continue"
 msgstr ""
@@ -16950,13 +16950,13 @@ msgstr "CHERRY_PICK_HEAD를 제거할 수 없습니다"
 msgid ""
 "You have staged changes in your working tree.\n"
 "If these changes are meant to be\n"
-"squashed into the previous commit, run:\n"
+"squashed into the previous cummit, run:\n"
 "\n"
-"  git commit --amend $gpg_sign_opt_quoted\n"
+"  git cummit --amend $gpg_sign_opt_quoted\n"
 "\n"
-"If they are meant to go into a new commit, run:\n"
+"If they are meant to go into a new cummit, run:\n"
 "\n"
-"  git commit $gpg_sign_opt_quoted\n"
+"  git cummit $gpg_sign_opt_quoted\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
@@ -16966,30 +16966,30 @@ msgstr ""
 "이 변경 사항을 이전 커밋에 합치려면,\n"
 "다음을 실행하십시오:\n"
 "\n"
-"  git commit --amend $gpg_sign_opt_quoted\n"
+"  git cummit --amend $gpg_sign_opt_quoted\n"
 "\n"
 "새 커밋으로 만드려면 다음을 실행하십시오:\n"
 "\n"
-"  git commit $gpg_sign_opt_quoted\n"
+"  git cummit $gpg_sign_opt_quoted\n"
 "\n"
 "어떤 경우이든, 마친 다음에 다음 명령으로 계속합니다:\n"
 "\n"
 "  git rebase --continue\n"
 
 #: git-rebase--interactive.sh:800
-msgid "Error trying to find the author identity to amend commit"
+msgid "Error trying to find the author identity to amend cummit"
 msgstr "커밋을 수정한 작성자 신원을 찾는데 오류"
 
 #: git-rebase--interactive.sh:805
 msgid ""
-"You have uncommitted changes in your working tree. Please commit them\n"
+"You have uncummitted changes in your working tree. Please cummit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 "작업 폴더에 커밋하지 않은 변경 사항이 있습니다. 이 사항을 먼저\n"
 "커밋하고 'git rebase --continue' 명령을 다시 실행하십시오."
 
 #: git-rebase--interactive.sh:810 git-rebase--interactive.sh:814
-msgid "Could not commit staged changes."
+msgid "Could not cummit staged changes."
 msgstr "스테이징한 변경 사항은 커밋할 수 없습니다."
 
 #: git-rebase--interactive.sh:843
@@ -17047,7 +17047,7 @@ msgstr ""
 "\t"
 
 #: git-rebase--interactive.sh:927
-msgid "Note that empty commits are commented out"
+msgid "Note that empty cummits are commented out"
 msgstr "단 빈 커밋은 주석 처리되었습니다."
 
 #: git-rebase--interactive.sh:980
@@ -17055,7 +17055,7 @@ msgid "Could not generate todo list"
 msgstr "할 일 목록을 생성할 수 없습니다"
 
 #: git-rebase--interactive.sh:1001 git-rebase--interactive.sh:1006
-msgid "Could not init rewritten commits"
+msgid "Could not init rewritten cummits"
 msgstr "다시 작성된 커밋을 초기화할 수 없습니다"
 
 #: git-sh-setup.sh:89 git-sh-setup.sh:94
@@ -17092,21 +17092,21 @@ msgid "Cannot $action: You have unstaged changes."
 msgstr "$action 할 수 없습니다: 스테이징하지 않은 변경 사항이 있습니다."
 
 #: git-sh-setup.sh:242
-msgid "Cannot rebase: Your index contains uncommitted changes."
+msgid "Cannot rebase: Your index contains uncummitted changes."
 msgstr "리베이스할 수 없습니다: 인덱스에 커밋하지 않은 변경 사항이 있습니다."
 
 #: git-sh-setup.sh:245
-msgid "Cannot pull with rebase: Your index contains uncommitted changes."
+msgid "Cannot pull with rebase: Your index contains uncummitted changes."
 msgstr ""
 "리베이스로 풀을 할 수 없습니다: 인덱스에 커밋하지 않은 변경 사항이 있습니다."
 
 #: git-sh-setup.sh:248
 #, sh-format
-msgid "Cannot $action: Your index contains uncommitted changes."
+msgid "Cannot $action: Your index contains uncummitted changes."
 msgstr "$action 할 수 없습니다: 인덱스에 커밋하지 않은 변경 사항이 있습니다."
 
 #: git-sh-setup.sh:252
-msgid "Additionally, your index contains uncommitted changes."
+msgid "Additionally, your index contains uncummitted changes."
 msgstr "추가로, 인덱스에 커밋하지 않은 변경 사항이 있습니다."
 
 #: git-sh-setup.sh:372
@@ -17707,7 +17707,7 @@ msgstr "경고: sendmail 줄이 인식되지 않습니다: %s\n"
 #: git-send-email.perl:604
 #, perl-format
 msgid ""
-"File '%s' exists but it could also be the range of commits\n"
+"File '%s' exists but it could also be the range of cummits\n"
 "to produce patches for.  Please disambiguate by...\n"
 "\n"
 "    * Saying \"./%s\" if you mean a file; or\n"
@@ -17846,7 +17846,7 @@ msgstr "\"%s\" CA 경로가 없습니다"
 #: git-send-email.perl:1400
 msgid ""
 "    The Cc list above has been expanded by additional\n"
-"    addresses found in the patch commit message. By default\n"
+"    addresses found in the patch cummit message. By default\n"
 "    send-email prompts before sending whenever this occurs.\n"
 "    This behavior is controlled by the sendemail.confirm\n"
 "    configuration setting.\n"

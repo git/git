@@ -19,6 +19,6 @@ Fixes since v1.7.6.2
  * "git status --ignored" did not show ignored items when there is no
    untracked items.
 
- * "git tag --contains $commit" was unnecessarily inefficient.
+ * "git tag --contains $cummit" was unnecessarily inefficient.
 
 Also contains minor fixes and documentation updates.

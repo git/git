@@ -37,10 +37,10 @@ Fixes since v2.13.1
  * "git describe --contains" penalized light-weight tags so much that
    they were almost never considered.  Instead, give them about the
    same chance to be considered as an annotated tag that is the same
-   age as the underlying commit would.
+   age as the underlying cummit would.
 
  * The result from "git diff" that compares two blobs, e.g. "git diff
-   $commit1:$path $commit2:$path", used to be shown with the full
+   $cummit1:$path $cummit2:$path", used to be shown with the full
    object name as given on the command line, but it is more natural to
    use the $path in the output and use it to look up .gitattributes.
 

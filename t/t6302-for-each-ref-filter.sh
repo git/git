@@ -6,12 +6,12 @@ test_description='test for-each-refs usage of ref-filter APIs'
 . "$TEST_DIRECTORY"/lib-gpg.sh
 
 test_expect_success 'setup some history and refs' '
-	test_commit one &&
+	test_cummit one &&
 	git branch -M main &&
-	test_commit two &&
-	test_commit three &&
+	test_cummit two &&
+	test_cummit three &&
 	git checkout -b side &&
-	test_commit four &&
+	test_cummit four &&
 	git tag -m "An annotated tag" annotated-tag &&
 	git tag -m "Annonated doubly" doubly-annotated-tag annotated-tag &&
 
@@ -119,7 +119,7 @@ test_expect_success '%(color:#aa22ac) must succeed' '
 	git init test &&
 	(
 		cd test &&
-		test_commit initial &&
+		test_cummit initial &&
 		git branch -M main &&
 		cat >expect <<-\EOF &&
 		refs/heads/main
@@ -328,9 +328,9 @@ test_expect_success '`%(contents:lines=-1)` should fail' '
 '
 
 test_expect_success 'setup for version sort' '
-	test_commit foo1.3 &&
-	test_commit foo1.6 &&
-	test_commit foo1.10
+	test_cummit foo1.3 &&
+	test_cummit foo1.6 &&
+	test_cummit foo1.10
 '
 
 test_expect_success 'version sort' '

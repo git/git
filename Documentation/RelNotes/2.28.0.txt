@@ -6,7 +6,7 @@ Updates since v2.27
 
 Backward compatibility notes
 
- * "fetch.writeCommitGraph" is deemed to be still a bit too risky and
+ * "fetch.writecummitGraph" is deemed to be still a bit too risky and
    is no longer part of the "feature.experimental" set.
 
 
@@ -59,7 +59,7 @@ Performance, Internal Implementation, Development Support etc.
    it (the latest sparse has it on by default).
 
  * "git log -L..." now takes advantage of the "which paths are touched
-   by this commit?" info stored in the commit-graph system.
+   by this cummit?" info stored in the cummit-graph system.
 
  * As FreeBSD is not the only platform whose regexp library reports
    a REG_ILLSEQ error when fed invalid UTF-8, add logic to detect that
@@ -82,7 +82,7 @@ Performance, Internal Implementation, Development Support etc.
  * Code clean-up in the codepath that serves "git fetch" continues.
 
  * "git merge-base --is-ancestor" is taught to take advantage of the
-   commit graph.
+   cummit graph.
 
  * Rewrite of parts of the scripted "git submodule" Porcelain command
    continues; this time it is "git submodule set-branch" subcommand's
@@ -96,8 +96,8 @@ Performance, Internal Implementation, Development Support etc.
 
  * SHA-256 migration work continues, including CVS/SVN interface.
 
- * A few fields in "struct commit" that do not have to always be
-   present have been moved to commit slabs.
+ * A few fields in "struct cummit" that do not have to always be
+   present have been moved to cummit slabs.
 
  * API cleanup for get_worktrees()
 
@@ -129,8 +129,8 @@ Fixes since v2.27
  * The error message from "git checkout -b foo -t bar baz" was
    confusing.
 
- * Some repositories in the wild have commits that record nonsense
-   committer timezone (e.g. rails.git); "git fast-import" learned an
+ * Some repositories in the wild have cummits that record nonsense
+   cummitter timezone (e.g. rails.git); "git fast-import" learned an
    option to pass these nonsense timestamps intact to allow recreating
    existing repositories as-is.
    (merge d42a2fb72f en/fast-import-looser-date later to maint).
@@ -191,7 +191,7 @@ Fixes since v2.27
    (merge 6dca5dbf93 js/pu-to-seen later to maint).
 
  * The code to push changes over "dumb" HTTP had a bad interaction
-   with the commit reachability code due to incorrect allocation of
+   with the cummit reachability code due to incorrect allocation of
    object flag bits, which has been corrected.
    (merge 64472d15e9 bc/http-push-flagsfix later to maint).
 
@@ -203,11 +203,11 @@ Fixes since v2.27
 
  * "git log -Lx,y:path --before=date" lost track of where the range
    should be because it didn't take the changes made by the youngest
-   commits that are omitted from the output into account.
+   cummits that are omitted from the output into account.
 
- * When "fetch.writeCommitGraph" configuration is set in a shallow
+ * When "fetch.writecummitGraph" configuration is set in a shallow
    repository and a fetch moves the shallow boundary, we wrote out
-   broken commit-graph files that do not match the reality, which has
+   broken cummit-graph files that do not match the reality, which has
    been corrected.
 
  * "git checkout" failed to catch an error from fstat() after updating
@@ -219,7 +219,7 @@ Fixes since v2.27
    has been corrected (again).
    (merge c0d73a59c9 ta/wait-on-aliased-commands-upon-signal later to maint).
 
- * The code to produce progress output from "git commit-graph --write"
+ * The code to produce progress output from "git cummit-graph --write"
    had a few breakages, which have been fixed.
 
  * Other code cleanup, docfix, build fix, etc.
@@ -229,7 +229,7 @@ Fixes since v2.27
    (merge 45a87a83bb dl/python-2.7-is-the-floor-version later to maint).
    (merge b75a219904 es/advertise-contribution-doc later to maint).
    (merge 0c9a4f638a rs/pull-leakfix later to maint).
-   (merge d546fe2874 rs/commit-reach-leakfix later to maint).
+   (merge d546fe2874 rs/cummit-reach-leakfix later to maint).
    (merge 087bf5409c mk/pb-pretty-email-without-domain-part-fix later to maint).
    (merge 5f4ee57ad9 es/worktree-code-cleanup later to maint).
    (merge 0172f7834a cc/cat-file-usage-update later to maint).

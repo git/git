@@ -4,12 +4,12 @@ GIT v1.5.3.6 Release Notes
 Fixes since v1.5.3.5
 --------------------
 
- * git-cvsexportcommit handles root commits better.
+ * git-cvsexportcommit handles root cummits better.
 
- * git-svn dcommit used to clobber when sending a series of
+ * git-svn dcummit used to clobber when sending a series of
    patches.
 
- * git-svn dcommit failed after attempting to rebase when
+ * git-svn dcummit failed after attempting to rebase when
    started with a dirty index; now it stops upfront.
 
  * git-grep sometimes refused to work when your index was
@@ -25,7 +25,7 @@ Fixes since v1.5.3.5
 
  * atom feeds from git-web said "10" for the month of November.
 
- * a memory leak in commit walker was plugged.
+ * a memory leak in cummit walker was plugged.
 
  * When git-send-email inserted the original author's From:
    address in body, it did not mark the message with

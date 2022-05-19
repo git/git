@@ -1,13 +1,13 @@
 #ifndef REVISION_H
 #define REVISION_H
 
-#include "commit.h"
+#include "cummit.h"
 #include "parse-options.h"
 #include "grep.h"
 #include "notes.h"
 #include "pretty.h"
 #include "diff.h"
-#include "commit-slab-decl.h"
+#include "cummit-slab-decl.h"
 #include "list-objects-filter-options.h"
 
 /**
@@ -36,7 +36,7 @@
 #define PATCHSAME	(1u<<9)
 #define BOTTOM		(1u<<10)
 
-/* WARNING: This is also used as REACHABLE in commit-graph.c. */
+/* WARNING: This is also used as REACHABLE in cummit-graph.c. */
 #define PULL_MERGE	(1u<<15)
 
 #define TOPO_WALK_EXPLORED	(1u<<23)
@@ -60,7 +60,7 @@ struct string_list;
 struct saved_parents;
 struct bloom_key;
 struct bloom_filter_settings;
-define_shared_commit_slab(revision_sources, char *);
+define_shared_cummit_slab(revision_sources, char *);
 
 struct rev_cmdline_info {
 	unsigned int nr;
@@ -85,12 +85,12 @@ struct topo_walk_info;
 
 struct rev_info {
 	/* Starting list */
-	struct commit_list *commits;
+	struct cummit_list *cummits;
 	struct object_array pending;
 	struct repository *repo;
 
-	/* Parents of shown commits */
-	struct object_array boundary_commits;
+	/* Parents of shown cummits */
+	struct object_array boundary_cummits;
 
 	/* The end-points specified by the end user */
 	struct rev_cmdline_info cmdline;
@@ -167,7 +167,7 @@ struct rev_info {
 			first_parent_only:1,
 			exclude_first_parent_only:1,
 			line_level_traverse:1,
-			tree_blobs_in_commit_order:1,
+			tree_blobs_in_cummit_order:1,
 
 			/*
 			 * Blobs are shown without regard for their existence.
@@ -192,7 +192,7 @@ struct rev_info {
 			full_diff:1,
 			show_root_diff:1,
 			match_missing:1,
-			no_commit_id:1,
+			no_cummit_id:1,
 			verbose_header:1,
 			always_show_header:1,
 			/* Diff-merge flags */
@@ -214,9 +214,9 @@ struct rev_info {
 			show_notes_given:1,
 			show_signature:1,
 			pretty_given:1,
-			abbrev_commit:1,
-			abbrev_commit_given:1,
-			zero_commit:1,
+			abbrev_cummit:1,
+			abbrev_cummit_given:1,
+			zero_cummit:1,
 			use_terminator:1,
 			missing_newline:1,
 			date_mode_explicit:1,
@@ -234,7 +234,7 @@ struct rev_info {
 	int		expand_tabs_in_log_default;
 
 	unsigned int	abbrev;
-	enum cmit_fmt	commit_format;
+	enum cmit_fmt	cummit_format;
 	struct log_info *loginfo;
 	int		nr, total;
 	const char	*mime_boundary;
@@ -253,7 +253,7 @@ struct rev_info {
 	int		show_log_size;
 	struct string_list *mailmap;
 
-	/* Filter by commit log message */
+	/* Filter by cummit log message */
 	struct grep_opt	grep_filter;
 
 	/* Display history graph */
@@ -266,7 +266,7 @@ struct rev_info {
 	timestamp_t min_age;
 	int min_parents;
 	int max_parents;
-	int (*include_check)(struct commit *, void *);
+	int (*include_check)(struct cummit *, void *);
 	int (*include_check_obj)(struct object *obj, void *);
 	void *include_check_data;
 
@@ -293,7 +293,7 @@ struct rev_info {
 	int creation_factor;
 	const char *rdiff_title;
 
-	/* commit counts */
+	/* cummit counts */
 	int count_left;
 	int count_right;
 	int count_same;
@@ -304,21 +304,21 @@ struct rev_info {
 	/* copies of the parent lists, for --full-diff display */
 	struct saved_parents *saved_parents_slab;
 
-	struct commit_list *previous_parents;
+	struct cummit_list *previous_parents;
 	const char *break_bar;
 
 	struct revision_sources *sources;
 
 	struct topo_walk_info *topo_walk_info;
 
-	/* Commit graph bloom filter fields */
+	/* cummit graph bloom filter fields */
 	/* The bloom filter key(s) for the pathspec */
 	struct bloom_key *bloom_keys;
 	int bloom_keys_nr;
 
 	/*
 	 * The bloom filter settings used to generate the key.
-	 * This is loaded from the commit-graph being used.
+	 * This is loaded from the cummit-graph being used.
 	 */
 	struct bloom_filter_settings *bloom_filter_settings;
 
@@ -340,7 +340,7 @@ void add_ref_exclusion(struct string_list **, const char *exclude);
 #define REV_TREE_DIFFERENT	3	/* Mixed changes */
 
 /* revision.c */
-typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
+typedef void (*show_early_output_fn_t)(struct rev_info *, struct cummit_list *);
 extern volatile show_early_output_fn_t show_early_output;
 
 struct setup_revision_opt {
@@ -381,7 +381,7 @@ void parse_revision_opt(struct rev_info *revs, struct parse_opt_ctx_t *ctx,
 			const struct option *options,
 			const char * const usagestr[]);
 #define REVARG_CANNOT_BE_FILENAME 01
-#define REVARG_COMMITTISH 02
+#define REVARG_cummitTISH 02
 int handle_revision_arg(const char *arg, struct rev_info *revs,
 			int flags, unsigned revarg_opt);
 void revision_opts_finish(struct rev_info *revs);
@@ -401,29 +401,29 @@ int prepare_revision_walk(struct rev_info *revs);
 
 /**
  * Takes a pointer to a `rev_info` structure and iterates over it, returning a
- * `struct commit *` each time you call it. The end of the revision list is
+ * `struct cummit *` each time you call it. The end of the revision list is
  * indicated by returning a NULL pointer.
  */
-struct commit *get_revision(struct rev_info *revs);
+struct cummit *get_revision(struct rev_info *revs);
 
 const char *get_revision_mark(const struct rev_info *revs,
-			      const struct commit *commit);
+			      const struct cummit *cummit);
 void put_revision_mark(const struct rev_info *revs,
-		       const struct commit *commit);
+		       const struct cummit *cummit);
 
-void mark_parents_uninteresting(struct rev_info *revs, struct commit *commit);
+void mark_parents_uninteresting(struct rev_info *revs, struct cummit *cummit);
 void mark_tree_uninteresting(struct repository *r, struct tree *tree);
 void mark_trees_uninteresting_sparse(struct repository *r, struct oidset *trees);
 
 void show_object_with_name(FILE *, struct object *, const char *);
 
 /**
- * This function can be used if you want to add commit objects as revision
+ * This function can be used if you want to add cummit objects as revision
  * information. You can use the `UNINTERESTING` object flag to indicate if
- * you want to include or exclude the given commit (and commits reachable
- * from the given commit) from the revision list.
+ * you want to include or exclude the given cummit (and cummits reachable
+ * from the given cummit) from the revision list.
  *
- * NOTE: If you have the commits as a string list then you probably want to
+ * NOTE: If you have the cummits as a string list then you probably want to
  * use setup_revisions(), instead of parsing each string and using this
  * function.
  */
@@ -438,16 +438,16 @@ void add_head_to_pending(struct rev_info *);
 void add_reflogs_to_pending(struct rev_info *, unsigned int flags);
 void add_index_objects_to_pending(struct rev_info *, unsigned int flags);
 
-enum commit_action {
-	commit_ignore,
-	commit_show,
-	commit_error
+enum cummit_action {
+	cummit_ignore,
+	cummit_show,
+	cummit_error
 };
 
-enum commit_action get_commit_action(struct rev_info *revs,
-				     struct commit *commit);
-enum commit_action simplify_commit(struct rev_info *revs,
-				   struct commit *commit);
+enum cummit_action get_cummit_action(struct rev_info *revs,
+				     struct cummit *cummit);
+enum cummit_action simplify_cummit(struct rev_info *revs,
+				   struct cummit *cummit);
 
 enum rewrite_result {
 	rewrite_one_ok,
@@ -455,21 +455,21 @@ enum rewrite_result {
 	rewrite_one_error
 };
 
-typedef enum rewrite_result (*rewrite_parent_fn_t)(struct rev_info *revs, struct commit **pp);
+typedef enum rewrite_result (*rewrite_parent_fn_t)(struct rev_info *revs, struct cummit **pp);
 
 int rewrite_parents(struct rev_info *revs,
-		    struct commit *commit,
+		    struct cummit *cummit,
 		    rewrite_parent_fn_t rewrite_parent);
 
 /*
  * The log machinery saves the original parent list so that
  * get_saved_parents() can later tell what the real parents of the
- * commits are, when commit->parents has been modified by history
+ * cummits are, when cummit->parents has been modified by history
  * simpification.
  *
- * get_saved_parents() will transparently return commit->parents if
+ * get_saved_parents() will transparently return cummit->parents if
  * history simplification is off.
  */
-struct commit_list *get_saved_parents(struct rev_info *revs, const struct commit *commit);
+struct cummit_list *get_saved_parents(struct rev_info *revs, const struct cummit *cummit);
 
 #endif

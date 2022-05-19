@@ -17,9 +17,9 @@ name=$name$name$name$name$name$name$name$name$name$name$name$name
 test_expect_success 'preparation' '
 	>"$name" &&
 	git add "$name" &&
-	git commit -m message &&
+	git cummit -m message &&
 	echo a >"$name" &&
-	git commit -m message "$name"
+	git cummit -m message "$name"
 '
 
 cat >expect72 <<-'EOF'
@@ -97,13 +97,13 @@ EOF
 test_expect_success 'preparation for big change tests' '
 	>abcd &&
 	git add abcd &&
-	git commit -m message &&
+	git cummit -m message &&
 	i=0 &&
 	while test $i -lt 1000
 	do
 		echo $i && i=$(($i + 1)) || return 1
 	done >abcd &&
-	git commit -m message abcd
+	git cummit -m message abcd
 '
 
 cat >expect72 <<'EOF'
@@ -256,7 +256,7 @@ EOF
 test_expect_success 'preparation for long filename tests' '
 	cp abcd aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&
 	git add aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&
-	git commit -m message
+	git cummit -m message
 '
 
 cat >expect <<'EOF'

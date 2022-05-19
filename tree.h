@@ -25,7 +25,7 @@ static inline int parse_tree(struct tree *tree)
 }
 void free_tree_buffer(struct tree *tree);
 
-/* Parses and returns the tree in the given ent, chasing tags and commits. */
+/* Parses and returns the tree in the given ent, chasing tags and cummits. */
 struct tree *parse_tree_indirect(const struct object_id *oid);
 
 int cmp_cache_name_compare(const void *a_, const void *b_);

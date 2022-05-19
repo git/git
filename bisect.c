@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "config.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "revision.h"
 #include "refs.h"
@@ -12,8 +12,8 @@
 #include "bisect.h"
 #include "oid-array.h"
 #include "strvec.h"
-#include "commit-slab.h"
-#include "commit-reach.h"
+#include "cummit-slab.h"
+#include "cummit-reach.h"
 #include "object-store.h"
 #include "dir.h"
 
@@ -37,20 +37,20 @@ static const char *term_good;
  * We care just barely enough to avoid recursing for
  * non-merge entries.
  */
-static int count_distance(struct commit_list *entry)
+static int count_distance(struct cummit_list *entry)
 {
 	int nr = 0;
 
 	while (entry) {
-		struct commit *commit = entry->item;
-		struct commit_list *p;
+		struct cummit *cummit = entry->item;
+		struct cummit_list *p;
 
-		if (commit->object.flags & (UNINTERESTING | COUNTED))
+		if (cummit->object.flags & (UNINTERESTING | COUNTED))
 			break;
-		if (!(commit->object.flags & TREESAME))
+		if (!(cummit->object.flags & TREESAME))
 			nr++;
-		commit->object.flags |= COUNTED;
-		p = commit->parents;
+		cummit->object.flags |= COUNTED;
+		p = cummit->parents;
 		entry = p;
 		if (p) {
 			p = p->next;
@@ -64,36 +64,36 @@ static int count_distance(struct commit_list *entry)
 	return nr;
 }
 
-static void clear_distance(struct commit_list *list)
+static void clear_distance(struct cummit_list *list)
 {
 	while (list) {
-		struct commit *commit = list->item;
-		commit->object.flags &= ~COUNTED;
+		struct cummit *cummit = list->item;
+		cummit->object.flags &= ~COUNTED;
 		list = list->next;
 	}
 }
 
-define_commit_slab(commit_weight, int *);
-static struct commit_weight commit_weight;
+define_cummit_slab(cummit_weight, int *);
+static struct cummit_weight cummit_weight;
 
 #define DEBUG_BISECT 0
 
-static inline int weight(struct commit_list *elem)
+static inline int weight(struct cummit_list *elem)
 {
-	return **commit_weight_at(&commit_weight, elem->item);
+	return **cummit_weight_at(&cummit_weight, elem->item);
 }
 
-static inline void weight_set(struct commit_list *elem, int weight)
+static inline void weight_set(struct cummit_list *elem, int weight)
 {
-	**commit_weight_at(&commit_weight, elem->item) = weight;
+	**cummit_weight_at(&cummit_weight, elem->item) = weight;
 }
 
-static int count_interesting_parents(struct commit *commit, unsigned bisect_flags)
+static int count_interesting_parents(struct cummit *cummit, unsigned bisect_flags)
 {
-	struct commit_list *p;
+	struct cummit_list *p;
 	int count;
 
-	for (count = 0, p = commit->parents; p; p = p->next) {
+	for (count = 0, p = cummit->parents; p; p = p->next) {
 		if (!(p->item->object.flags & UNINTERESTING))
 			count++;
 		if (bisect_flags & FIND_BISECTION_FIRST_PARENT_ONLY)
@@ -102,7 +102,7 @@ static int count_interesting_parents(struct commit *commit, unsigned bisect_flag
 	return count;
 }
 
-static inline int approx_halfway(struct commit_list *p, int nr)
+static inline int approx_halfway(struct cummit_list *p, int nr)
 {
 	int diff;
 
@@ -114,7 +114,7 @@ static inline int approx_halfway(struct commit_list *p, int nr)
 	if (DEBUG_BISECT)
 		return 0;
 	/*
-	 * For small number of commits 2 and 3 are halfway of 5, and
+	 * For small number of cummits 2 and 3 are halfway of 5, and
 	 * 3 is halfway of 6 but 2 and 4 are not.
 	 */
 	diff = 2 * weight(p) - nr;
@@ -123,7 +123,7 @@ static inline int approx_halfway(struct commit_list *p, int nr)
 		return 1;
 	default:
 		/*
-		 * For large number of commits we are not so strict, it's
+		 * For large number of cummits we are not so strict, it's
 		 * good enough if it's within ~0.1% of the halfway point,
 		 * e.g. 5000 is exactly halfway of 10000, but we consider
 		 * the values [4996, 5004] as halfway as well.
@@ -135,9 +135,9 @@ static inline int approx_halfway(struct commit_list *p, int nr)
 }
 
 static void show_list(const char *debug, int counted, int nr,
-		      struct commit_list *list)
+		      struct cummit_list *list)
 {
-	struct commit_list *p;
+	struct cummit_list *p;
 
 	if (!DEBUG_BISECT)
 		return;
@@ -145,47 +145,47 @@ static void show_list(const char *debug, int counted, int nr,
 	fprintf(stderr, "%s (%d/%d)\n", debug, counted, nr);
 
 	for (p = list; p; p = p->next) {
-		struct commit_list *pp;
-		struct commit *commit = p->item;
-		unsigned commit_flags = commit->object.flags;
+		struct cummit_list *pp;
+		struct cummit *cummit = p->item;
+		unsigned cummit_flags = cummit->object.flags;
 		enum object_type type;
 		unsigned long size;
-		char *buf = read_object_file(&commit->object.oid, &type,
+		char *buf = read_object_file(&cummit->object.oid, &type,
 					     &size);
 		const char *subject_start;
 		int subject_len;
 
 		fprintf(stderr, "%c%c%c ",
-			(commit_flags & TREESAME) ? ' ' : 'T',
-			(commit_flags & UNINTERESTING) ? 'U' : ' ',
-			(commit_flags & COUNTED) ? 'C' : ' ');
-		if (*commit_weight_at(&commit_weight, p->item))
+			(cummit_flags & TREESAME) ? ' ' : 'T',
+			(cummit_flags & UNINTERESTING) ? 'U' : ' ',
+			(cummit_flags & COUNTED) ? 'C' : ' ');
+		if (*cummit_weight_at(&cummit_weight, p->item))
 			fprintf(stderr, "%3d", weight(p));
 		else
 			fprintf(stderr, "---");
-		fprintf(stderr, " %.*s", 8, oid_to_hex(&commit->object.oid));
-		for (pp = commit->parents; pp; pp = pp->next)
+		fprintf(stderr, " %.*s", 8, oid_to_hex(&cummit->object.oid));
+		for (pp = cummit->parents; pp; pp = pp->next)
 			fprintf(stderr, " %.*s", 8,
 				oid_to_hex(&pp->item->object.oid));
 
-		subject_len = find_commit_subject(buf, &subject_start);
+		subject_len = find_cummit_subject(buf, &subject_start);
 		if (subject_len)
 			fprintf(stderr, " %.*s", subject_len, subject_start);
 		fprintf(stderr, "\n");
 	}
 }
 
-static struct commit_list *best_bisection(struct commit_list *list, int nr)
+static struct cummit_list *best_bisection(struct cummit_list *list, int nr)
 {
-	struct commit_list *p, *best;
+	struct cummit_list *p, *best;
 	int best_distance = -1;
 
 	best = list;
 	for (p = list; p; p = p->next) {
 		int distance;
-		unsigned commit_flags = p->item->object.flags;
+		unsigned cummit_flags = p->item->object.flags;
 
-		if (commit_flags & TREESAME)
+		if (cummit_flags & TREESAME)
 			continue;
 		distance = weight(p);
 		if (nr - distance < distance)
@@ -199,56 +199,56 @@ static struct commit_list *best_bisection(struct commit_list *list, int nr)
 	return best;
 }
 
-struct commit_dist {
-	struct commit *commit;
+struct cummit_dist {
+	struct cummit *cummit;
 	int distance;
 };
 
-static int compare_commit_dist(const void *a_, const void *b_)
+static int compare_cummit_dist(const void *a_, const void *b_)
 {
-	struct commit_dist *a, *b;
+	struct cummit_dist *a, *b;
 
-	a = (struct commit_dist *)a_;
-	b = (struct commit_dist *)b_;
+	a = (struct cummit_dist *)a_;
+	b = (struct cummit_dist *)b_;
 	if (a->distance != b->distance)
 		return b->distance - a->distance; /* desc sort */
-	return oidcmp(&a->commit->object.oid, &b->commit->object.oid);
+	return oidcmp(&a->cummit->object.oid, &b->cummit->object.oid);
 }
 
-static struct commit_list *best_bisection_sorted(struct commit_list *list, int nr)
+static struct cummit_list *best_bisection_sorted(struct cummit_list *list, int nr)
 {
-	struct commit_list *p;
-	struct commit_dist *array = xcalloc(nr, sizeof(*array));
+	struct cummit_list *p;
+	struct cummit_dist *array = xcalloc(nr, sizeof(*array));
 	struct strbuf buf = STRBUF_INIT;
 	int cnt, i;
 
 	for (p = list, cnt = 0; p; p = p->next) {
 		int distance;
-		unsigned commit_flags = p->item->object.flags;
+		unsigned cummit_flags = p->item->object.flags;
 
-		if (commit_flags & TREESAME)
+		if (cummit_flags & TREESAME)
 			continue;
 		distance = weight(p);
 		if (nr - distance < distance)
 			distance = nr - distance;
-		array[cnt].commit = p->item;
+		array[cnt].cummit = p->item;
 		array[cnt].distance = distance;
 		cnt++;
 	}
-	QSORT(array, cnt, compare_commit_dist);
+	QSORT(array, cnt, compare_cummit_dist);
 	for (p = list, i = 0; i < cnt; i++) {
-		struct object *obj = &(array[i].commit->object);
+		struct object *obj = &(array[i].cummit->object);
 
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "dist=%d", array[i].distance);
 		add_name_decoration(DECORATION_NONE, buf.buf, obj);
 
-		p->item = array[i].commit;
+		p->item = array[i].cummit;
 		if (i < cnt - 1)
 			p = p->next;
 	}
 	if (p) {
-		free_commit_list(p->next);
+		free_cummit_list(p->next);
 		p->next = NULL;
 	}
 	strbuf_release(&buf);
@@ -257,9 +257,9 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
 }
 
 /*
- * zero or positive weight is the number of interesting commits it can
+ * zero or positive weight is the number of interesting cummits it can
  * reach, including itself.  Especially, weight = 0 means it does not
- * reach any tree-changing commits (e.g. just above uninteresting one
+ * reach any tree-changing cummits (e.g. just above uninteresting one
  * but traversal is with pathspec).
  *
  * weight = -1 means it has one parent and its distance is yet to
@@ -269,23 +269,23 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
  * unknown.  After running count_distance() first, they will get zero
  * or positive distance.
  */
-static struct commit_list *do_find_bisection(struct commit_list *list,
+static struct cummit_list *do_find_bisection(struct cummit_list *list,
 					     int nr, int *weights,
 					     unsigned bisect_flags)
 {
 	int n, counted;
-	struct commit_list *p;
+	struct cummit_list *p;
 
 	counted = 0;
 
 	for (n = 0, p = list; p; p = p->next) {
-		struct commit *commit = p->item;
-		unsigned commit_flags = commit->object.flags;
+		struct cummit *cummit = p->item;
+		unsigned cummit_flags = cummit->object.flags;
 
-		*commit_weight_at(&commit_weight, p->item) = &weights[n++];
-		switch (count_interesting_parents(commit, bisect_flags)) {
+		*cummit_weight_at(&cummit_weight, p->item) = &weights[n++];
+		switch (count_interesting_parents(cummit, bisect_flags)) {
 		case 0:
-			if (!(commit_flags & TREESAME)) {
+			if (!(cummit_flags & TREESAME)) {
 				weight_set(p, 1);
 				counted++;
 				show_list("bisection 2 count one",
@@ -293,7 +293,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 			}
 			/*
 			 * otherwise, it is known not to reach any
-			 * tree-changing commit and gets weight 0.
+			 * tree-changing cummit and gets weight 0.
 			 */
 			break;
 		case 1:
@@ -309,7 +309,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 
 	/*
 	 * If you have only one parent in the resulting set
-	 * then you can reach one commit more than that parent
+	 * then you can reach one cummit more than that parent
 	 * can reach.  So we do not have to run the expensive
 	 * count_distance() for single strand of pearls.
 	 *
@@ -342,8 +342,8 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 
 	while (counted < nr) {
 		for (p = list; p; p = p->next) {
-			struct commit_list *q;
-			unsigned commit_flags = p->item->object.flags;
+			struct cummit_list *q;
+			unsigned cummit_flags = p->item->object.flags;
 
 			if (0 <= weight(p))
 				continue;
@@ -364,7 +364,7 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 			 * add one for p itself if p is to be counted,
 			 * otherwise inherit it from q directly.
 			 */
-			if (!(commit_flags & TREESAME)) {
+			if (!(cummit_flags & TREESAME)) {
 				weight_set(p, weight(q)+1);
 				counted++;
 				show_list("bisection 2 count one",
@@ -388,33 +388,33 @@ static struct commit_list *do_find_bisection(struct commit_list *list,
 		return best_bisection_sorted(list, nr);
 }
 
-void find_bisection(struct commit_list **commit_list, int *reaches,
+void find_bisection(struct cummit_list **cummit_list, int *reaches,
 		    int *all, unsigned bisect_flags)
 {
 	int nr, on_list;
-	struct commit_list *list, *p, *best, *next, *last;
+	struct cummit_list *list, *p, *best, *next, *last;
 	int *weights;
 
-	show_list("bisection 2 entry", 0, 0, *commit_list);
-	init_commit_weight(&commit_weight);
+	show_list("bisection 2 entry", 0, 0, *cummit_list);
+	init_cummit_weight(&cummit_weight);
 
 	/*
 	 * Count the number of total and tree-changing items on the
 	 * list, while reversing the list.
 	 */
-	for (nr = on_list = 0, last = NULL, p = *commit_list;
+	for (nr = on_list = 0, last = NULL, p = *cummit_list;
 	     p;
 	     p = next) {
-		unsigned commit_flags = p->item->object.flags;
+		unsigned cummit_flags = p->item->object.flags;
 
 		next = p->next;
-		if (commit_flags & UNINTERESTING) {
+		if (cummit_flags & UNINTERESTING) {
 			free(p);
 			continue;
 		}
 		p->next = last;
 		last = p;
-		if (!(commit_flags & TREESAME))
+		if (!(cummit_flags & TREESAME))
 			nr++;
 		on_list++;
 	}
@@ -424,20 +424,20 @@ void find_bisection(struct commit_list **commit_list, int *reaches,
 	*all = nr;
 	CALLOC_ARRAY(weights, on_list);
 
-	/* Do the real work of finding bisection commit. */
+	/* Do the real work of finding bisection cummit. */
 	best = do_find_bisection(list, nr, weights, bisect_flags);
 	if (best) {
 		if (!(bisect_flags & FIND_BISECTION_ALL)) {
 			list->item = best->item;
-			free_commit_list(list->next);
+			free_cummit_list(list->next);
 			best = list;
 			best->next = NULL;
 		}
 		*reaches = weight(best);
 	}
 	free(weights);
-	*commit_list = best;
-	clear_commit_weight(&commit_weight);
+	*cummit_list = best;
+	clear_cummit_weight(&cummit_weight);
 }
 
 static int register_ref(const char *refname, const struct object_id *oid,
@@ -509,24 +509,24 @@ static char *join_oid_array_hex(struct oid_array *array, char delim)
 
 /*
  * In this function, passing a not NULL skipped_first is very special.
- * It means that we want to know if the first commit in the list is
- * skipped because we will want to test a commit away from it if it is
+ * It means that we want to know if the first cummit in the list is
+ * skipped because we will want to test a cummit away from it if it is
  * indeed skipped.
- * So if the first commit is skipped, we cannot take the shortcut to
- * just "return list" when we find the first non skipped commit, we
+ * So if the first cummit is skipped, we cannot take the shortcut to
+ * just "return list" when we find the first non skipped cummit, we
  * have to return a fully filtered list.
  *
  * We use (*skipped_first == -1) to mean "it has been found that the
- * first commit is not skipped". In this case *skipped_first is set back
+ * first cummit is not skipped". In this case *skipped_first is set back
  * to 0 just before the function returns.
  */
-struct commit_list *filter_skipped(struct commit_list *list,
-				   struct commit_list **tried,
+struct cummit_list *filter_skipped(struct cummit_list *list,
+				   struct cummit_list **tried,
 				   int show_all,
 				   int *count,
 				   int *skipped_first)
 {
-	struct commit_list *filtered = NULL, **f = &filtered;
+	struct cummit_list *filtered = NULL, **f = &filtered;
 
 	*tried = NULL;
 
@@ -539,7 +539,7 @@ struct commit_list *filter_skipped(struct commit_list *list,
 		return list;
 
 	while (list) {
-		struct commit_list *next = list->next;
+		struct cummit_list *next = list->next;
 		list->next = NULL;
 		if (0 <= oid_array_lookup(&skipped_revs, &list->item->object.oid)) {
 			if (skipped_first && !*skipped_first)
@@ -604,9 +604,9 @@ static int sqrti(int val)
 	return (int)x;
 }
 
-static struct commit_list *skip_away(struct commit_list *list, int count)
+static struct cummit_list *skip_away(struct cummit_list *list, int count)
 {
-	struct commit_list *cur, *previous;
+	struct cummit_list *cur, *previous;
 	int prn, index, i;
 
 	prn = get_prn(count);
@@ -629,8 +629,8 @@ static struct commit_list *skip_away(struct commit_list *list, int count)
 	return list;
 }
 
-static struct commit_list *managed_skipped(struct commit_list *list,
-					   struct commit_list **tried)
+static struct cummit_list *managed_skipped(struct cummit_list *list,
+					   struct cummit_list **tried)
 {
 	int count, skipped_first;
 
@@ -657,7 +657,7 @@ static void bisect_rev_setup(struct repository *r, struct rev_info *revs,
 
 	repo_init_revisions(r, revs, prefix);
 	revs->abbrev = 0;
-	revs->commit_format = CMIT_FMT_UNSPECIFIED;
+	revs->cummit_format = CMIT_FMT_UNSPECIFIED;
 
 	/* rev_argv.argv[0] will be ignored by setup_revisions */
 	strvec_push(&rev_argv, "bisect_rev_setup");
@@ -681,14 +681,14 @@ static void bisect_common(struct rev_info *revs)
 		mark_edges_uninteresting(revs, NULL, 0);
 }
 
-static enum bisect_error error_if_skipped_commits(struct commit_list *tried,
+static enum bisect_error error_if_skipped_cummits(struct cummit_list *tried,
 				    const struct object_id *bad)
 {
 	if (!tried)
 		return BISECT_OK;
 
-	printf("There are only 'skip'ped commits left to test.\n"
-	       "The first %s commit could be any of:\n", term_bad);
+	printf("There are only 'skip'ped cummits left to test.\n"
+	       "The first %s cummit could be any of:\n", term_bad);
 
 	for ( ; tried; tried = tried->next)
 		printf("%s\n", oid_to_hex(&tried->item->object.oid));
@@ -728,9 +728,9 @@ enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
 				  int no_checkout)
 {
 	char bisect_rev_hex[GIT_MAX_HEXSZ + 1];
-	struct commit *commit;
+	struct cummit *cummit;
 	struct pretty_print_context pp = {0};
-	struct strbuf commit_msg = STRBUF_INIT;
+	struct strbuf cummit_msg = STRBUF_INIT;
 
 	oid_to_hex_r(bisect_rev_hex, bisect_rev);
 	update_ref(NULL, "BISECT_EXPECTED_REV", bisect_rev, NULL, 0, UPDATE_REFS_DIE_ON_ERR);
@@ -749,33 +749,33 @@ enum bisect_error bisect_checkout(const struct object_id *bisect_rev,
 			return BISECT_FAILED;
 	}
 
-	commit = lookup_commit_reference(the_repository, bisect_rev);
-	format_commit_message(commit, "[%H] %s%n", &commit_msg, &pp);
-	fputs(commit_msg.buf, stdout);
-	strbuf_release(&commit_msg);
+	cummit = lookup_cummit_reference(the_repository, bisect_rev);
+	format_cummit_message(cummit, "[%H] %s%n", &cummit_msg, &pp);
+	fputs(cummit_msg.buf, stdout);
+	strbuf_release(&cummit_msg);
 
 	return BISECT_OK;
 }
 
-static struct commit *get_commit_reference(struct repository *r,
+static struct cummit *get_cummit_reference(struct repository *r,
 					   const struct object_id *oid)
 {
-	struct commit *c = lookup_commit_reference(r, oid);
+	struct cummit *c = lookup_cummit_reference(r, oid);
 	if (!c)
-		die(_("Not a valid commit name %s"), oid_to_hex(oid));
+		die(_("Not a valid cummit name %s"), oid_to_hex(oid));
 	return c;
 }
 
-static struct commit **get_bad_and_good_commits(struct repository *r,
+static struct cummit **get_bad_and_good_cummits(struct repository *r,
 						int *rev_nr)
 {
-	struct commit **rev;
+	struct cummit **rev;
 	int i, n = 0;
 
 	ALLOC_ARRAY(rev, 1 + good_revs.nr);
-	rev[n++] = get_commit_reference(r, current_bad_oid);
+	rev[n++] = get_cummit_reference(r, current_bad_oid);
 	for (i = 0; i < good_revs.nr; i++)
-		rev[n++] = get_commit_reference(r, good_revs.oid + i);
+		rev[n++] = get_cummit_reference(r, good_revs.oid + i);
 	*rev_nr = n;
 
 	return rev;
@@ -798,7 +798,7 @@ static enum bisect_error handle_bad_merge_base(void)
 				bad_hex, bad_hex, good_hex);
 		} else {
 			fprintf(stderr, _("The merge base %s is %s.\n"
-				"This means the first '%s' commit is "
+				"This means the first '%s' cummit is "
 				"between %s and [%s].\n"),
 				bad_hex, term_bad, term_good, bad_hex, good_hex);
 		}
@@ -820,7 +820,7 @@ static void handle_skipped_merge_base(const struct object_id *mb)
 
 	warning(_("the merge base between %s and [%s] "
 		"must be skipped.\n"
-		"So we cannot be sure the first %s commit is "
+		"So we cannot be sure the first %s cummit is "
 		"between %s and %s.\n"
 		"We continue anyway."),
 		bad_hex, good_hex, term_bad, mb_hex, bad_hex);
@@ -840,10 +840,10 @@ static void handle_skipped_merge_base(const struct object_id *mb)
  * for early success, this will be converted back to 0 in
  * check_good_are_ancestors_of_bad().
  */
-static enum bisect_error check_merge_bases(int rev_nr, struct commit **rev, int no_checkout)
+static enum bisect_error check_merge_bases(int rev_nr, struct cummit **rev, int no_checkout)
 {
 	enum bisect_error res = BISECT_OK;
-	struct commit_list *result;
+	struct cummit_list *result;
 
 	result = get_merge_bases_many(rev[0], rev_nr - 1, rev + 1);
 
@@ -866,12 +866,12 @@ static enum bisect_error check_merge_bases(int rev_nr, struct commit **rev, int 
 		}
 	}
 
-	free_commit_list(result);
+	free_cummit_list(result);
 	return res;
 }
 
 static int check_ancestors(struct repository *r, int rev_nr,
-			   struct commit **rev, const char *prefix)
+			   struct cummit **rev, const char *prefix)
 {
 	struct rev_info revs;
 	int res;
@@ -879,10 +879,10 @@ static int check_ancestors(struct repository *r, int rev_nr,
 	bisect_rev_setup(r, &revs, prefix, "^%s", "%s", 0);
 
 	bisect_common(&revs);
-	res = (revs.commits != NULL);
+	res = (revs.cummits != NULL);
 
 	/* Clean up objects used, as they will be reused. */
-	clear_commit_marks_many(rev_nr, rev, ALL_REV_FLAGS);
+	clear_cummit_marks_many(rev_nr, rev, ALL_REV_FLAGS);
 
 	return res;
 }
@@ -904,7 +904,7 @@ static enum bisect_error check_good_are_ancestors_of_bad(struct repository *r,
 	struct stat st;
 	int fd, rev_nr;
 	enum bisect_error res = BISECT_OK;
-	struct commit **rev;
+	struct cummit **rev;
 
 	if (!current_bad_oid)
 		return error(_("a %s revision is needed"), term_bad);
@@ -921,7 +921,7 @@ static enum bisect_error check_good_are_ancestors_of_bad(struct repository *r,
 
 	/* Check if all good revs are ancestor of the bad rev. */
 
-	rev = get_bad_and_good_commits(r, &rev_nr);
+	rev = get_bad_and_good_cummits(r, &rev_nr);
 	if (check_ancestors(r, rev_nr, rev, prefix))
 		res = check_merge_bases(rev_nr, rev, no_checkout);
 	free(rev);
@@ -948,11 +948,11 @@ static enum bisect_error check_good_are_ancestors_of_bad(struct repository *r,
 }
 
 /*
- * This does "git diff-tree --pretty COMMIT" without one fork+exec.
+ * This does "git diff-tree --pretty cummit" without one fork+exec.
  */
 static void show_diff_tree(struct repository *r,
 			   const char *prefix,
-			   struct commit *commit)
+			   struct cummit *cummit)
 {
 	const char *argv[] = {
 		"diff-tree", "--pretty", "--stat", "--summary", "--cc", NULL
@@ -963,7 +963,7 @@ static void show_diff_tree(struct repository *r,
 	repo_init_revisions(r, &opt, prefix);
 
 	setup_revisions(ARRAY_SIZE(argv) - 1, argv, &opt, NULL);
-	log_tree_commit(&opt, commit);
+	log_tree_cummit(&opt, cummit);
 }
 
 /*
@@ -1004,19 +1004,19 @@ void read_bisect_terms(const char **read_bad, const char **read_good)
  * Checking BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND
  * in bisect_helper::bisect_next() and only transforming it to 0 at
  * the end of bisect_helper::cmd_bisect__helper() helps bypassing
- * all the code related to finding a commit to test.
+ * all the code related to finding a cummit to test.
  */
 enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 {
 	struct rev_info revs;
-	struct commit_list *tried;
+	struct cummit_list *tried;
 	int reaches = 0, all = 0, nr, steps;
 	enum bisect_error res = BISECT_OK;
 	struct object_id *bisect_rev;
 	char *steps_msg;
 	/*
 	 * If no_checkout is non-zero, the bisection process does not
-	 * checkout the trial commit but instead simply updates BISECT_HEAD.
+	 * checkout the trial cummit but instead simply updates BISECT_HEAD.
 	 */
 	int no_checkout = ref_exists("BISECT_HEAD");
 	unsigned bisect_flags = 0;
@@ -1042,15 +1042,15 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 
 	bisect_common(&revs);
 
-	find_bisection(&revs.commits, &reaches, &all, bisect_flags);
-	revs.commits = managed_skipped(revs.commits, &tried);
+	find_bisection(&revs.cummits, &reaches, &all, bisect_flags);
+	revs.cummits = managed_skipped(revs.cummits, &tried);
 
-	if (!revs.commits) {
+	if (!revs.cummits) {
 		/*
 		 * We should return error here only if the "bad"
-		 * commit is also a "skip" commit.
+		 * cummit is also a "skip" cummit.
 		 */
-		res = error_if_skipped_commits(tried, NULL);
+		res = error_if_skipped_cummits(tried, NULL);
 		if (res < 0)
 			return res;
 		printf(_("%s was both %s and %s\n"),
@@ -1062,22 +1062,22 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 	}
 
 	if (!all) {
-		fprintf(stderr, _("No testable commit found.\n"
+		fprintf(stderr, _("No testable cummit found.\n"
 			"Maybe you started with bad path arguments?\n"));
 
-		return BISECT_NO_TESTABLE_COMMIT;
+		return BISECT_NO_TESTABLE_cummit;
 	}
 
-	bisect_rev = &revs.commits->item->object.oid;
+	bisect_rev = &revs.cummits->item->object.oid;
 
 	if (oideq(bisect_rev, current_bad_oid)) {
-		res = error_if_skipped_commits(tried, current_bad_oid);
+		res = error_if_skipped_cummits(tried, current_bad_oid);
 		if (res)
 			return res;
-		printf("%s is the first %s commit\n", oid_to_hex(bisect_rev),
+		printf("%s is the first %s cummit\n", oid_to_hex(bisect_rev),
 			term_bad);
 
-		show_diff_tree(r, prefix, revs.commits->item);
+		show_diff_tree(r, prefix, revs.cummits->item);
 		/*
 		 * This means the bisection process succeeded.
 		 * Using BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND (-10)
@@ -1102,7 +1102,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 		  nr), nr, steps_msg);
 	free(steps_msg);
 	/* Clean up objects used, as they will be reused. */
-	repo_clear_commit_marks(r, ALL_REV_FLAGS);
+	repo_clear_cummit_marks(r, ALL_REV_FLAGS);
 
 	return bisect_checkout(bisect_rev, no_checkout);
 }
@@ -1177,7 +1177,7 @@ int bisect_clean_state(void)
 	unlink_or_warn(git_path_head_name());
 	/*
 	 * Cleanup BISECT_START last to support the --no-checkout option
-	 * introduced in the commit 4796e823a.
+	 * introduced in the cummit 4796e823a.
 	 */
 	unlink_or_warn(git_path_bisect_start());
 

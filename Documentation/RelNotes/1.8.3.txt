@@ -19,7 +19,7 @@ early, you can set it to "simple" today without waiting for Git 2.0.
 When "git add -u" (and "git add -A") is run inside a subdirectory and
 does not specify which paths to add on the command line, it
 will operate on the entire tree in Git 2.0 for consistency
-with "git commit -a" and other commands.  There will be no
+with "git cummit -a" and other commands.  There will be no
 mechanism to make plain "git add -u" behave like "git add -u .".
 Current users of "git add -u" (without a pathspec) should start
 training their fingers to explicitly say "git add -u ."
@@ -70,7 +70,7 @@ UI, Workflows & Features
    to).
 
  * "git log --format" specifier learned %C(auto) token that tells Git
-   to use color when interpolating %d (decoration), %h (short commit
+   to use color when interpolating %d (decoration), %h (short cummit
    object name), etc. for terminal output.
 
  * "git bisect" leaves the final outcome as a comment in its bisect
@@ -84,7 +84,7 @@ UI, Workflows & Features
 
  * "git cherry-pick $blob" and "git cherry-pick $tree" are nonsense,
    and a more readable error message e.g. "can't cherry-pick a tree"
-   is given (we used to say "expected exactly one commit").
+   is given (we used to say "expected exactly one cummit").
 
  * The "--annotate" option to "git send-email" can be turned on (or
    off) by default with sendemail.annotate configuration variable (you
@@ -130,7 +130,7 @@ UI, Workflows & Features
  * "git status" shows a bit more information during a rebase/bisect
    session.
 
- * "git fetch" learned to fetch a commit at the tip of an unadvertised
+ * "git fetch" learned to fetch a cummit at the tip of an unadvertised
    ref by specifying a raw object name from the command line when the
    server side supports this feature.
 
@@ -156,7 +156,7 @@ UI, Workflows & Features
    annotated tags when pushing branches out.
 
  * "git merge" and "git pull" can optionally be told to inspect and
-   reject when merging a commit that does not carry a trusted GPG
+   reject when merging a cummit that does not carry a trusted GPG
    signature.
 
  * "git mergetool" now feeds files to the "p4merge" backend in the
@@ -254,7 +254,7 @@ details).
  * Zsh completion forgot that the '%' character used to signal untracked
    files needs to be escaped with another '%'.
 
- * A commit object whose author or committer ident are malformed
+ * A cummit object whose author or cummitter ident are malformed
    crashed some code that trusted that a name, an email and a
    timestamp can always be found in it.
 
@@ -269,7 +269,7 @@ details).
    error output.
 
  * Smart-capable HTTP servers were not restricted via the
-   GIT_NAMESPACE mechanism when talking with commit-walking clients,
+   GIT_NAMESPACE mechanism when talking with cummit-walking clients,
    like they are when talking with smart HTTP clients.
    (merge 6130f86 jk/http-dumb-namespaces later to maint).
 
@@ -292,7 +292,7 @@ details).
    places.
 
  * "git bundle" erroneously bailed out when parsing a valid bundle
-   containing a prerequisite commit without a commit message.
+   containing a prerequisite cummit without a cummit message.
 
  * "git log -S/-G" started paying attention to textconv filter, but
    there was no way to disable this.  Make it honor the --no-textconv
@@ -402,7 +402,7 @@ details).
    informational message when the translated version of it was too
    long.
 
- * 'git commit -m "$msg"' used to add an extra newline even when
+ * 'git cummit -m "$msg"' used to add an extra newline even when
    $msg already ended with one.
 
  * The SSL peer verification done by "git imap-send" did not ask for

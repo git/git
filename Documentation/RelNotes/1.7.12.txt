@@ -25,7 +25,7 @@ UI, Workflows & Features
  * Logic to disambiguate abbreviated object names have been taught to
    take advantage of object types that are expected in the context,
    e.g. XXXXXX in the "git describe" output v1.2.3-gXXXXXX must be a
-   commit object, not a blob nor a tree.  This will help us prolong
+   cummit object, not a blob nor a tree.  This will help us prolong
    the lifetime of abbreviated object names.
 
  * "git apply" learned to wiggle the base version and perform three-way
@@ -57,10 +57,10 @@ UI, Workflows & Features
    the variable can even point at a http:// URL.
 
  * "git rebase [-i] --root $tip" can now be used to rewrite all the
-   history leading to "$tip" down to the root commit.
+   history leading to "$tip" down to the root cummit.
 
  * "git rebase -i" learned "-x <cmd>" to insert "exec <cmd>" after
-   each commit in the resulting history.
+   each cummit in the resulting history.
 
  * "git status" gives finer classification to various states of paths
    in conflicted state and offer advice messages in its output.
@@ -74,7 +74,7 @@ UI, Workflows & Features
    completion part while making prompting part always available.
 
  * "gitweb" pays attention to various forms of credits that are
-   similar to "Signed-off-by:" lines in the commit objects and
+   similar to "Signed-off-by:" lines in the cummit objects and
    highlights them accordingly.
 
 
@@ -97,8 +97,8 @@ Performance, Internal Implementation, etc. (please report possible regressions)
    more modern style.
 
  * "git am --rebasing" codepath was taught to grab authorship, log
-   message and the patch text directly out of existing commits.  This
-   will help rebasing commits that have confusing "diff" output in
+   message and the patch text directly out of existing cummits.  This
+   will help rebasing cummits that have confusing "diff" output in
    their log messages.
 
  * "git index-pack" and "git pack-objects" use streaming API to read
@@ -131,6 +131,6 @@ details).
    its repository in its usual place in the working tree and GIT_DIR
    and GIT_WORK_TREE was used to access it.
 
- * "git commit --amend" let the user edit the log message and then died
-   when the human-readable committer name was given insufficiently by
+ * "git cummit --amend" let the user edit the log message and then died
+   when the human-readable cummitter name was given insufficiently by
    getpwent(3).

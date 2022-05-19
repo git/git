@@ -18,7 +18,7 @@ test_description="limiting blob downloads when merging with partial clones"
 #
 # To help make it easier to follow the flow of tests, they have been
 # divided into sections and each test will start with a quick explanation
-# of what commits O, A, and B contain.
+# of what cummits O, A, and B contain.
 #
 # Notation:
 #    z/{b,c}   means  files z/b and z/c both exist
@@ -69,7 +69,7 @@ test_setup_repo () {
 			echo content $i >dir/unchanged/file_$i
 		done &&
 		git add . &&
-		git commit -m "O" &&
+		git cummit -m "O" &&
 
 		git branch O &&
 		git branch A &&
@@ -103,7 +103,7 @@ test_setup_repo () {
 		git mv dir/subdir/e dir/subdir/newsubdir/ &&
 		git mv dir folder &&
 		git add . &&
-		git commit -m "A" &&
+		git cummit -m "A" &&
 
 		git switch B-single &&
 		echo new first line >dir/subdir/Makefile &&
@@ -111,14 +111,14 @@ test_setup_repo () {
 		echo toplevel makefile >>dir/subdir/Makefile &&
 		echo perl code >general/newfile.pl &&
 		git add . &&
-		git commit -m "B-single" &&
+		git cummit -m "B-single" &&
 
 		git switch B-dir &&
 		echo java code >dir/subdir/newfile.java &&
 		echo scala code >dir/subdir/newfile.scala &&
 		echo groovy code >dir/subdir/newfile.groovy &&
 		git add . &&
-		git commit -m "B-dir" &&
+		git cummit -m "B-dir" &&
 
 		git switch B-many &&
 		test_seq 2 10 >general/leap1 &&
@@ -139,20 +139,20 @@ test_setup_repo () {
 		echo c code >dir/subdir/newfile.c &&
 		echo python code >dir/subdir/newsubdir/newfile.py &&
 		git add . &&
-		git commit -m "B-many" &&
+		git cummit -m "B-many" &&
 
 		git switch A
 	)
 }
 
 # Testcase: Objects downloaded for single relevant rename
-#   Commit O:
+#   cummit O:
 #              general/{leap1_O, leap2_O}
 #              basename/{numbers_O, sequence_O, values_O}
 #              dir/subdir/{a,b,c,d,e_O,Makefile_TOP_O}
 #              dir/subdir/tweaked/{f,g,h,Makefile_SUB_O}
 #              dir/unchanged/<LOTS OF FILES>
-#   Commit A:
+#   cummit A:
 #     (Rename leap->jump, rename basename/ -> basename/subdir/, rename dir/
 #      -> folder/, move e into newsubdir, add newfile.rs, remove f, modify
 #      both both Makefiles and jumps)
@@ -162,7 +162,7 @@ test_setup_repo () {
 #              folder/subdir/newsubdir/{e_A,newfile.rs}
 #              folder/subdir/tweaked/{g,h,Makefile_SUB_A}
 #              folder/unchanged/<LOTS OF FILES>
-#   Commit B(-single):
+#   cummit B(-single):
 #     (add newfile.pl, tweak Makefile_TOP)
 #              general/{leap1_O, leap2_O,newfile.pl}
 #              basename/{numbers_O, sequence_O, values_O}
@@ -246,13 +246,13 @@ test_expect_merge_algorithm failure success 'Objects downloaded for single relev
 '
 
 # Testcase: Objects downloaded for directory rename
-#   Commit O:
+#   cummit O:
 #              general/{leap1_O, leap2_O}
 #              basename/{numbers_O, sequence_O, values_O}
 #              dir/subdir/{a,b,c,d,e_O,Makefile_TOP_O}
 #              dir/subdir/tweaked/{f,g,h,Makefile_SUB_O}
 #              dir/unchanged/<LOTS OF FILES>
-#   Commit A:
+#   cummit A:
 #     (Rename leap->jump, rename basename/ -> basename/subdir/, rename dir/ ->
 #      folder/, move e into newsubdir, add newfile.rs, remove f, modify
 #      both Makefiles and jumps)
@@ -262,7 +262,7 @@ test_expect_merge_algorithm failure success 'Objects downloaded for single relev
 #              folder/subdir/newsubdir/{e_A,newfile.rs}
 #              folder/subdir/tweaked/{g,h,Makefile_SUB_A}
 #              folder/unchanged/<LOTS OF FILES>
-#   Commit B(-dir):
+#   cummit B(-dir):
 #     (add dir/subdir/newfile.{java,scala,groovy}
 #              general/{leap1_O, leap2_O}
 #              basename/{numbers_O, sequence_O, values_O}
@@ -334,13 +334,13 @@ test_expect_merge_algorithm failure success 'Objects downloaded when a directory
 '
 
 # Testcase: Objects downloaded with lots of renames and modifications
-#   Commit O:
+#   cummit O:
 #              general/{leap1_O, leap2_O}
 #              basename/{numbers_O, sequence_O, values_O}
 #              dir/subdir/{a,b,c,d,e_O,Makefile_TOP_O}
 #              dir/subdir/tweaked/{f,g,h,Makefile_SUB_O}
 #              dir/unchanged/<LOTS OF FILES>
-#   Commit A:
+#   cummit A:
 #     (Rename leap->jump, rename basename/ -> basename/subdir/, rename dir/
 #      -> folder/, move e into newsubdir, add newfile.rs, remove f, modify
 #      both both Makefiles and jumps)
@@ -350,7 +350,7 @@ test_expect_merge_algorithm failure success 'Objects downloaded when a directory
 #              folder/subdir/newsubdir/{e_A,newfile.rs}
 #              folder/subdir/tweaked/{g,h,Makefile_SUB_A}
 #              folder/unchanged/<LOTS OF FILES>
-#   Commit B(-minimal):
+#   cummit B(-minimal):
 #     (modify both leaps, rename basename/ -> basename/subdir/, add
 #      newfile.{c,py})
 #              general/{leap1_B, leap2_B}

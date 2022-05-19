@@ -10,7 +10,7 @@ test_expect_success setup '
 	cp "$tm/file-2-0" file-2 &&
 	git add file-1 file-2 &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag initial
 '
 

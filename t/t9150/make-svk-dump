@@ -12,35 +12,35 @@ cd foo
 mkdir trunk
 mkdir branches
 svk add trunk branches
-svk commit -m "Setup trunk and branches"
+svk cummit -m "Setup trunk and branches"
 cd trunk
 
 git cat-file blob 6683463e:Makefile > Makefile
 svk add Makefile 
 
-svk commit -m "ancestor"
+svk cummit -m "ancestor"
 cd ..
 svk cp trunk branches/left
 
-svk commit -m "make left branch"
+svk cummit -m "make left branch"
 cd branches/left/
 
 git cat-file blob 5873b67e:Makefile > Makefile
-svk commit -m "left update 1"
+svk cummit -m "left update 1"
 
 cd ../../trunk
 git cat-file blob 75118b13:Makefile > Makefile
-svk commit -m "trunk update"
+svk cummit -m "trunk update"
 
 cd ../branches/left
 git cat-file blob b5039db6:Makefile > Makefile
-svk commit -m "left update 2"
+svk cummit -m "left update 2"
 
 cd ../../trunk
 svk sm /foo/branches/left
 # in theory we could delete the "left" branch here, but it's not
 # required so don't do it, in case people start getting ideas ;)
-svk commit -m "merge branch 'left' into 'trunk'"
+svk cummit -m "merge branch 'left' into 'trunk'"
 
 git cat-file blob b51ad431:Makefile > Makefile
 

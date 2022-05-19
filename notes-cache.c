@@ -2,7 +2,7 @@
 #include "notes-cache.h"
 #include "object-store.h"
 #include "repository.h"
-#include "commit.h"
+#include "cummit.h"
 #include "refs.h"
 
 static int notes_cache_match_validity(struct repository *r,
@@ -10,7 +10,7 @@ static int notes_cache_match_validity(struct repository *r,
 				      const char *validity)
 {
 	struct object_id oid;
-	struct commit *commit;
+	struct cummit *cummit;
 	struct pretty_print_context pretty_ctx;
 	struct strbuf msg = STRBUF_INIT;
 	int ret;
@@ -18,12 +18,12 @@ static int notes_cache_match_validity(struct repository *r,
 	if (read_ref(ref, &oid) < 0)
 		return 0;
 
-	commit = lookup_commit_reference_gently(r, &oid, 1);
-	if (!commit)
+	cummit = lookup_cummit_reference_gently(r, &oid, 1);
+	if (!cummit)
 		return 0;
 
 	memset(&pretty_ctx, 0, sizeof(pretty_ctx));
-	format_commit_message(commit, "%s", &msg, &pretty_ctx);
+	format_cummit_message(cummit, "%s", &msg, &pretty_ctx);
 	strbuf_trim(&msg);
 
 	ret = !strcmp(msg.buf, validity);
@@ -50,7 +50,7 @@ void notes_cache_init(struct repository *r, struct notes_cache *c,
 
 int notes_cache_write(struct notes_cache *c)
 {
-	struct object_id tree_oid, commit_oid;
+	struct object_id tree_oid, cummit_oid;
 
 	if (!c || !c->tree.initialized || !c->tree.update_ref ||
 	    !*c->tree.update_ref)
@@ -60,10 +60,10 @@ int notes_cache_write(struct notes_cache *c)
 
 	if (write_notes_tree(&c->tree, &tree_oid))
 		return -1;
-	if (commit_tree(c->validity, strlen(c->validity), &tree_oid, NULL,
-			&commit_oid, NULL, NULL) < 0)
+	if (cummit_tree(c->validity, strlen(c->validity), &tree_oid, NULL,
+			&cummit_oid, NULL, NULL) < 0)
 		return -1;
-	if (update_ref("update notes cache", c->tree.update_ref, &commit_oid,
+	if (update_ref("update notes cache", c->tree.update_ref, &cummit_oid,
 		       NULL, 0, UPDATE_REFS_QUIET_ON_ERR) < 0)
 		return -1;
 

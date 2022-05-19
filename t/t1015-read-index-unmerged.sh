@@ -10,7 +10,7 @@ test_expect_success 'setup modify/delete + directory/file conflict' '
 
 		test_write_lines a b c d e f g h >letters &&
 		git add letters &&
-		git commit -m initial &&
+		git cummit -m initial &&
 
 		git checkout -b modify &&
 		# Throw in letters.txt for sorting order fun
@@ -18,7 +18,7 @@ test_expect_success 'setup modify/delete + directory/file conflict' '
 		echo i >>letters &&
 		echo "version 2" >letters.txt &&
 		git add letters letters.txt &&
-		git commit -m modified &&
+		git cummit -m modified &&
 
 		git checkout -b delete HEAD^ &&
 		git rm letters &&
@@ -26,7 +26,7 @@ test_expect_success 'setup modify/delete + directory/file conflict' '
 		>letters/file &&
 		echo "version 1" >letters.txt &&
 		git add letters letters.txt &&
-		git commit -m deleted
+		git cummit -m deleted
 	)
 '
 
@@ -68,7 +68,7 @@ test_expect_success 'setup directory/file conflict + simple edit/edit' '
 
 		test_seq 1 10 >numbers &&
 		git add numbers &&
-		git commit -m initial &&
+		git cummit -m initial &&
 
 		git checkout -b d-edit &&
 		mkdir foo &&
@@ -76,14 +76,14 @@ test_expect_success 'setup directory/file conflict + simple edit/edit' '
 		git add foo &&
 		echo 11 >>numbers &&
 		git add numbers &&
-		git commit -m "directory and edit" &&
+		git cummit -m "directory and edit" &&
 
 		git checkout -b f-edit d-edit^1 &&
 		echo content >foo &&
 		git add foo &&
 		echo eleven >>numbers &&
 		git add numbers &&
-		git commit -m "file and edit"
+		git cummit -m "file and edit"
 	)
 '
 

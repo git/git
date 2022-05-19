@@ -47,10 +47,10 @@ UI, Workflows & Features
    instead.
 
  * "git cherry-pick" learned the "--allow-empty-message" option to
-   allow it to replay a commit without any log message.
+   allow it to replay a cummit without any log message.
 
  * After "git cherry-pick -s" gave control back to the user asking
-   help to resolve conflicts, concluding "git commit" used to need to
+   help to resolve conflicts, concluding "git cummit" used to need to
    be run with "-s" if the user wants to sign it off; now the command
    leaves the sign-off line in the log template.
 
@@ -67,7 +67,7 @@ UI, Workflows & Features
  * Accumulated updates to "git gui" has been merged.
 
  * "git log -g" learned the "--grep-reflog=<pattern>" option to limit
-   its output to commits with a reflog message that matches the given
+   its output to cummits with a reflog message that matches the given
    pattern.
 
  * "git merge-base" learned the "--is-ancestor A B" option to tell if A is
@@ -119,13 +119,13 @@ Performance, Internal Implementation, etc.
    good name for a branch).
 
  * Many internal uses of a "git merge-base" equivalent were only to see
-   if one commit fast-forwards to the other, which did not need the
+   if one cummit fast-forwards to the other, which did not need the
    full set of merge bases to be computed. They have been updated to
    use less expensive checks.
 
  * The heuristics to detect and silently convert latin1 to utf8 when
    we were told to use utf-8 in the log message has been transplanted
-   from "mailinfo" to "commit" and "commit-tree".
+   from "mailinfo" to "cummit" and "cummit-tree".
 
  * Messages given by "git <subcommand> -h" from many subcommands have
    been marked for translation.
@@ -163,7 +163,7 @@ to them for details).
    confused on a case insensitive filesystem and failed to do so.
 
  * Even during a conflicted merge, "git blame $path" always meant to
-   blame uncommitted changes to the "working tree" version; make it
+   blame uncummitted changes to the "working tree" version; make it
    more useful by showing cleanly merged parts as coming from the other
    branch that is being merged.
 
@@ -175,7 +175,7 @@ to them for details).
    branches was counting in bytes, not in display columns.
 
  * "git cherry-pick A C B" used to replay changes in A and then B and
-   then C if these three commits had committer timestamps in that
+   then C if these three cummits had cummitter timestamps in that
    order, which is not what the user who said "A C B" naturally
    expects.
 
@@ -184,8 +184,8 @@ to them for details).
    subsequent "git fetch" to slurp all the other branches, defeating
    the whole point of specifying "only this branch".
 
- * Documentation talked about "first line of commit log" when it meant
-   the title of the commit.  The description was clarified by defining
+ * Documentation talked about "first line of cummit log" when it meant
+   the title of the cummit.  The description was clarified by defining
    how the title is decided and rewording the casual mention of "first
    line" to "title".
 
@@ -221,9 +221,9 @@ to them for details).
    references" nor "Reload" updated what is shown as the
    contents of it when the user overwrote the tag with "git tag -f".
 
- * "git log --all-match --grep=A --grep=B" ought to show commits that
+ * "git log --all-match --grep=A --grep=B" ought to show cummits that
    mention both A and B, but when these three options are used with
-   --author or --committer, it showed commits that mention either A or
+   --author or --cummitter, it showed cummits that mention either A or
    B (or both) instead.
 
  * The "-Xours" backend option to "git merge -s recursive" was ignored
@@ -251,7 +251,7 @@ to them for details).
    certainly not what the user meant.
 
  * "git show --format='%ci'" did not give the timestamp correctly for
-   commits created without human readable name on the "committer" line.
+   cummits created without human readable name on the "cummitter" line.
 
  * "git show --quiet" ought to be a synonym for "git show -s", but
    wasn't.
@@ -261,7 +261,7 @@ to them for details).
    that "git submodule status" was run with an unknown path "frotz".
 
  * "git status" honored the ignore=dirty settings in .gitmodules but
-   "git commit" didn't.
+   "git cummit" didn't.
 
- * "gitweb" did not give the correct committer timezone in its feed
+ * "gitweb" did not give the correct cummitter timezone in its feed
    output due to a typo.

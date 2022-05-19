@@ -15,7 +15,7 @@ struct range_diff_options {
 };
 
 /*
- * Compare series of commits in `range1` and `range2`, and emit to the
+ * Compare series of cummits in `range1` and `range2`, and emit to the
  * standard output.
  */
 int show_range_diff(const char *range1, const char *range2,

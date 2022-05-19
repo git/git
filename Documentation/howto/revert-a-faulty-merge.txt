@@ -59,9 +59,9 @@ by W.  That is what Alan saw.
 
 Linus explains the situation:
 
-    Reverting a regular commit just effectively undoes what that commit
-    did, and is fairly straightforward. But reverting a merge commit also
-    undoes the _data_ that the commit changed, but it does absolutely
+    Reverting a regular cummit just effectively undoes what that cummit
+    did, and is fairly straightforward. But reverting a merge cummit also
+    undoes the _data_ that the cummit changed, but it does absolutely
     nothing to the effects on _history_ that the merge had.
 
     So the merge will still exist, and it will still be seen as joining
@@ -70,7 +70,7 @@ Linus explains the situation:
     in will not affect that at all.
 
     So a "revert" undoes the data changes, but it's very much _not_ an
-    "undo" in the sense that it doesn't undo the effects of a commit on
+    "undo" in the sense that it doesn't undo the effects of a cummit on
     the repository history.
 
     So if you think of "revert" as "undo", then you're going to always
@@ -154,12 +154,12 @@ reverting such a revert).
 
 For example, think about what reverting a merge (and then reverting the
 revert) does to bisectability. Ignore the fact that the revert of a revert
-is undoing it - just think of it as a "single commit that does a lot".
+is undoing it - just think of it as a "single cummit that does a lot".
 Because that is what it does.
 
 When you have a problem you are chasing down, and you hit a "revert this
-merge", what you're hitting is essentially a single commit that contains
-all the changes (but obviously in reverse) of all the commits that got
+merge", what you're hitting is essentially a single cummit that contains
+all the changes (but obviously in reverse) of all the cummits that got
 merged. So it's debugging hell, because now you don't have lots of small
 changes that you can try to pinpoint which _part_ of it changes.
 
@@ -176,7 +176,7 @@ avoid.
 If at all possible, for example, if you find a problem that got merged
 into the main tree, rather than revert the merge, try _really_ hard to
 bisect the problem down into the branch you merged, and just fix it, or
-try to revert the individual commit that caused it.
+try to revert the individual cummit that caused it.
 
 Yes, it's more complex, and no, it's not always going to work (sometimes
 the answer is: "oops, I really shouldn't have merged it, because it wasn't
@@ -186,21 +186,21 @@ now need to do it by reverting the revert.
 
 ADDENDUM
 
-Sometimes you have to rewrite one of a topic branch's commits *and* you can't
+Sometimes you have to rewrite one of a topic branch's cummits *and* you can't
 change the topic's branching-off point.  Consider the following situation:
 
  P---o---o---M---x---x---W---x
   \         /
    A---B---C
 
-where commit W reverted commit M because it turned out that commit B was wrong
+where cummit W reverted cummit M because it turned out that cummit B was wrong
 and needs to be rewritten, but you need the rewritten topic to still branch
-from commit P (perhaps P is a branching-off point for yet another branch, and
+from cummit P (perhaps P is a branching-off point for yet another branch, and
 you want be able to merge the topic into both branches).
 
 The natural thing to do in this case is to checkout the A-B-C branch and use
-"rebase -i P" to change commit B.  However this does not rewrite commit A,
-because "rebase -i" by default fast-forwards over any initial commits selected
+"rebase -i P" to change cummit B.  However this does not rewrite cummit A,
+because "rebase -i" by default fast-forwards over any initial cummits selected
 with the "pick" command.  So you end up with this:
 
  P---o---o---M---x---x---W---x
@@ -210,12 +210,12 @@ with the "pick" command.  So you end up with this:
      B'---C'   <-- naively rewritten branch
 
 To merge A-B'-C' into the mainline branch you would still have to first revert
-commit W in order to pick up the changes in A, but then it's likely that the
+cummit W in order to pick up the changes in A, but then it's likely that the
 changes in B' will conflict with the original B changes re-introduced by the
 reversion of W.
 
 However, you can avoid these problems if you recreate the entire branch,
-including commit A:
+including cummit A:
 
    A'---B'---C'  <-- completely rewritten branch
   /
@@ -232,18 +232,18 @@ reverting W.  Mainline's history would look like this:
   \         /
    A---B---C
 
-But if you don't actually need to change commit A, then you need some way to
-recreate it as a new commit with the same changes in it.  The rebase command's
+But if you don't actually need to change cummit A, then you need some way to
+recreate it as a new cummit with the same changes in it.  The rebase command's
 --no-ff option provides a way to do this:
 
     $ git rebase [-i] --no-ff P
 
-The --no-ff option creates a new branch A'-B'-C' with all-new commits (all the
+The --no-ff option creates a new branch A'-B'-C' with all-new cummits (all the
 SHA IDs will be different) even if in the interactive case you only actually
-modify commit B.  You can then merge this new branch directly into the mainline
+modify cummit B.  You can then merge this new branch directly into the mainline
 branch and be sure you'll get all of the branch's changes.
 
-You can also use --no-ff in cases where you just add extra commits to the topic
+You can also use --no-ff in cases where you just add extra cummits to the topic
 to fix it up.  Let's revisit the situation discussed at the start of this howto:
 
  P---o---o---M---x---x---W---x
@@ -263,7 +263,7 @@ yielding
   \         /
    A---B---C----------------D---E
 
-You can merge the recreated branch into the mainline without reverting commit W,
+You can merge the recreated branch into the mainline without reverting cummit W,
 and mainline's history will look like this:
 
    A'---B'---C'------------D'---E'

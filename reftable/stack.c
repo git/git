@@ -537,7 +537,7 @@ void reftable_addition_destroy(struct reftable_addition *add)
 	reftable_free(add);
 }
 
-int reftable_addition_commit(struct reftable_addition *add)
+int reftable_addition_cummit(struct reftable_addition *add)
 {
 	struct strbuf table_list = STRBUF_INIT;
 	int i = 0;
@@ -622,7 +622,7 @@ static int stack_try_add(struct reftable_stack *st,
 	if (err < 0)
 		goto done;
 
-	err = reftable_addition_commit(&add);
+	err = reftable_addition_cummit(&add);
 done:
 	reftable_addition_close(&add);
 	return err;

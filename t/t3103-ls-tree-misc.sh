@@ -14,7 +14,7 @@ test_expect_success 'setup' '
 	mkdir a &&
 	touch a/one &&
 	git add a/one &&
-	git commit -m test
+	git cummit -m test
 '
 
 test_expect_success 'ls-tree fails with non-zero exit code on broken tree' '

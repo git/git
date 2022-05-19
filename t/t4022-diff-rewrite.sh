@@ -71,7 +71,7 @@ test_expect_success 'prepare a file that ends with an incomplete line' '
 	test_seq 1 99 >seq &&
 	printf 100 >>seq &&
 	git add seq &&
-	git commit seq -m seq
+	git cummit seq -m seq
 '
 
 test_expect_success 'rewrite the middle 90% of sequence file and terminate with newline' '

@@ -59,7 +59,7 @@ test_expect_success 'gc is not aborted due to a stale symref' '
 	git init remote &&
 	(
 		cd remote &&
-		test_commit initial &&
+		test_cummit initial &&
 		git clone . ../client &&
 		git branch -m develop &&
 		cd ../client &&
@@ -72,16 +72,16 @@ test_expect_success 'gc --keep-largest-pack' '
 	test_create_repo keep-pack &&
 	(
 		cd keep-pack &&
-		test_commit one &&
-		test_commit two &&
-		test_commit three &&
+		test_cummit one &&
+		test_cummit two &&
+		test_cummit three &&
 		git gc &&
 		( cd .git/objects/pack && ls *.pack ) >pack-list &&
 		test_line_count = 1 pack-list &&
 		cp pack-list base-pack-list &&
-		test_commit four &&
+		test_cummit four &&
 		git repack -d &&
-		test_commit five &&
+		test_cummit five &&
 		git repack -d &&
 		( cd .git/objects/pack && ls *.pack ) >pack-list &&
 		test_line_count = 3 pack-list &&
@@ -114,8 +114,8 @@ test_expect_success 'pre-auto-gc hook can stop auto gc' '
 		# We need to create two object whose sha1s start with 17
 		# since this is what git gc counts.  As it happens, these
 		# two blobs will do so.
-		test_commit "$(test_oid obj1)" &&
-		test_commit "$(test_oid obj2)" &&
+		test_cummit "$(test_oid obj1)" &&
+		test_cummit "$(test_oid obj2)" &&
 
 		git gc --auto >../out.actual 2>../err.actual
 	) &&
@@ -146,13 +146,13 @@ test_expect_success 'auto gc with too many loose objects does not attempt to cre
 	# We need to create two object whose sha1s start with 17
 	# since this is what git gc counts.  As it happens, these
 	# two blobs will do so.
-	test_commit "$(test_oid obj1)" &&
-	test_commit "$(test_oid obj2)" &&
+	test_cummit "$(test_oid obj1)" &&
+	test_cummit "$(test_oid obj2)" &&
 	# Our first gc will create a pack; our second will create a second pack
 	git gc --auto &&
 	ls .git/objects/pack/pack-*.pack | sort >existing_packs &&
-	test_commit "$(test_oid obj3)" &&
-	test_commit "$(test_oid obj4)" &&
+	test_cummit "$(test_oid obj3)" &&
+	test_cummit "$(test_oid obj4)" &&
 
 	git gc --auto 2>err &&
 	test_i18ngrep ! "^warning:" err &&
@@ -164,21 +164,21 @@ test_expect_success 'auto gc with too many loose objects does not attempt to cre
 '
 
 test_expect_success 'gc --no-quiet' '
-	GIT_PROGRESS_DELAY=0 git -c gc.writeCommitGraph=true gc --no-quiet >stdout 2>stderr &&
+	GIT_PROGRESS_DELAY=0 git -c gc.writecummitGraph=true gc --no-quiet >stdout 2>stderr &&
 	test_must_be_empty stdout &&
-	test_i18ngrep "Computing commit graph generation numbers" stderr
+	test_i18ngrep "Computing cummit graph generation numbers" stderr
 '
 
 test_expect_success TTY 'with TTY: gc --no-quiet' '
 	test_terminal env GIT_PROGRESS_DELAY=0 \
-		git -c gc.writeCommitGraph=true gc --no-quiet >stdout 2>stderr &&
+		git -c gc.writecummitGraph=true gc --no-quiet >stdout 2>stderr &&
 	test_must_be_empty stdout &&
 	test_i18ngrep "Enumerating objects" stderr &&
-	test_i18ngrep "Computing commit graph generation numbers" stderr
+	test_i18ngrep "Computing cummit graph generation numbers" stderr
 '
 
 test_expect_success 'gc --quiet' '
-	git -c gc.writeCommitGraph=true gc --quiet >stdout 2>stderr &&
+	git -c gc.writecummitGraph=true gc --quiet >stdout 2>stderr &&
 	test_must_be_empty stdout &&
 	test_must_be_empty stderr
 '
@@ -213,8 +213,8 @@ run_and_wait_for_auto_gc () {
 }
 
 test_expect_success 'background auto gc does not run if gc.log is present and recent but does if it is old' '
-	test_commit foo &&
-	test_commit bar &&
+	test_cummit foo &&
+	test_cummit bar &&
 	git repack &&
 	test_config gc.autopacklimit 1 &&
 	test_config gc.autodetach true &&
@@ -232,7 +232,7 @@ test_expect_success 'background auto gc does not run if gc.log is present and re
 
 test_expect_success 'background auto gc respects lock for all operations' '
 	# make sure we run a background auto-gc
-	test_commit make-pack &&
+	test_cummit make-pack &&
 	git repack &&
 	test_config gc.autopacklimit 1 &&
 	test_config gc.autodetach true &&

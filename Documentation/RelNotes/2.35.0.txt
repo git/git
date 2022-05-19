@@ -108,7 +108,7 @@ Performance, Internal Implementation, Development Support etc.
    API implementation has been reworked and reduced.
 
  * Teach and encourage first-time contributors to this project to
-   state the base commit when they submit their topic.
+   state the base cummit when they submit their topic.
 
  * The command line completion for "git send-email" options have been
    tweaked to make it easier to keep it in sync with the command itself.
@@ -327,7 +327,7 @@ Fixes since v2.34
    updated to match what the others create.
    (merge 0fc8ed154c km/help-prompt-fix later to maint).
 
- * "git log --invert-grep --author=<name>" used to exclude commits
+ * "git log --invert-grep --author=<name>" used to exclude cummits
    written by the given author, but now "--invert-grep" only affects
    the matches made by the "--grep=<pattern>" option.
    (merge 794c000267 rs/log-invert-grep-with-headers later to maint).
@@ -366,7 +366,7 @@ Fixes since v2.34
  * Fix performance-releated bug in "git subtree" (in contrib/).
    (merge 3ce8888fb4 jl/subtree-check-parents-argument-passing-fix later to maint).
 
- * Extend the guidance to choose the base commit to build your work
+ * Extend the guidance to choose the base cummit to build your work
    on, and hint/nudge contributors to read others' changes.
    (merge fdfae830f8 jc/doc-submitting-patches-choice-of-base later to maint).
 

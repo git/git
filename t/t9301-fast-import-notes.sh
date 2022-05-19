@@ -12,63 +12,63 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_tick
 cat >input <<INPUT_END
-commit refs/heads/main
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-first commit
-COMMIT
+cummit refs/heads/main
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+first cummit
+cummit
 
 M 644 inline foo
 data <<EOF
-file foo in first commit
+file foo in first cummit
 EOF
 
 M 755 inline bar
 data <<EOF
-file bar in first commit
+file bar in first cummit
 EOF
 
 M 644 inline baz/xyzzy
 data <<EOF
-file baz/xyzzy in first commit
+file baz/xyzzy in first cummit
 EOF
 
-commit refs/heads/main
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-second commit
-COMMIT
+cummit refs/heads/main
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+second cummit
+cummit
 
 M 644 inline foo
 data <<EOF
-file foo in second commit
+file foo in second cummit
 EOF
 
 M 755 inline baz/xyzzy
 data <<EOF
-file baz/xyzzy in second commit
+file baz/xyzzy in second cummit
 EOF
 
-commit refs/heads/main
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-third commit
-COMMIT
+cummit refs/heads/main
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+third cummit
+cummit
 
 M 644 inline foo
 data <<EOF
-file foo in third commit
+file foo in third cummit
 EOF
 
-commit refs/heads/main
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-fourth commit
-COMMIT
+cummit refs/heads/main
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+fourth cummit
+cummit
 
 M 755 inline bar
 data <<EOF
-file bar in fourth commit
+file bar in fourth cummit
 EOF
 
 INPUT_END
@@ -79,38 +79,38 @@ test_expect_success 'set up main branch' '
 	git whatchanged main
 '
 
-commit4=$(git rev-parse refs/heads/main)
-commit3=$(git rev-parse "$commit4^")
-commit2=$(git rev-parse "$commit4~2")
-commit1=$(git rev-parse "$commit4~3")
+cummit4=$(git rev-parse refs/heads/main)
+cummit3=$(git rev-parse "$cummit4^")
+cummit2=$(git rev-parse "$cummit4~2")
+cummit1=$(git rev-parse "$cummit4~3")
 
 test_tick
 cat >input <<INPUT_END
-commit refs/notes/test
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-first notes commit
-COMMIT
+cummit refs/notes/test
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+first notes cummit
+cummit
 
-M 644 inline $commit1
+M 644 inline $cummit1
 data <<EOF
-first note for first commit
+first note for first cummit
 EOF
 
-M 755 inline $commit2
+M 755 inline $cummit2
 data <<EOF
-first note for second commit
+first note for second cummit
 EOF
 
 INPUT_END
 
 cat >expect <<EXPECT_END
-    fourth commit
-    third commit
-    second commit
-    first note for second commit
-    first commit
-    first note for first commit
+    fourth cummit
+    third cummit
+    second cummit
+    first note for second cummit
+    first cummit
+    first note for first cummit
 EXPECT_END
 
 test_expect_success 'add notes with simple M command' '
@@ -124,34 +124,34 @@ test_expect_success 'add notes with simple M command' '
 test_tick
 cat >input <<INPUT_END
 feature notes
-commit refs/notes/test
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-second notes commit
-COMMIT
+cummit refs/notes/test
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+second notes cummit
+cummit
 
 from refs/notes/test^0
-N inline $commit3
+N inline $cummit3
 data <<EOF
-first note for third commit
+first note for third cummit
 EOF
 
-N inline $commit4
+N inline $cummit4
 data <<EOF
-first note for fourth commit
+first note for fourth cummit
 EOF
 
 INPUT_END
 
 cat >expect <<EXPECT_END
-    fourth commit
-    first note for fourth commit
-    third commit
-    first note for third commit
-    second commit
-    first note for second commit
-    first commit
-    first note for first commit
+    fourth cummit
+    first note for fourth cummit
+    third cummit
+    first note for third cummit
+    second cummit
+    first note for second cummit
+    first cummit
+    first note for first cummit
 EXPECT_END
 
 test_expect_success 'add notes with simple N command' '
@@ -164,44 +164,44 @@ test_expect_success 'add notes with simple N command' '
 
 test_tick
 cat >input <<INPUT_END
-commit refs/notes/test
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-third notes commit
-COMMIT
+cummit refs/notes/test
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+third notes cummit
+cummit
 
 from refs/notes/test^0
-N inline $commit1
+N inline $cummit1
 data <<EOF
-second note for first commit
+second note for first cummit
 EOF
 
-N inline $commit2
+N inline $cummit2
 data <<EOF
-second note for second commit
+second note for second cummit
 EOF
 
-N inline $commit3
+N inline $cummit3
 data <<EOF
-second note for third commit
+second note for third cummit
 EOF
 
-N inline $commit4
+N inline $cummit4
 data <<EOF
-second note for fourth commit
+second note for fourth cummit
 EOF
 
 INPUT_END
 
 cat >expect <<EXPECT_END
-    fourth commit
-    second note for fourth commit
-    third commit
-    second note for third commit
-    second commit
-    second note for second commit
-    first commit
-    second note for first commit
+    fourth cummit
+    second note for fourth cummit
+    third cummit
+    second note for third cummit
+    second cummit
+    second note for second cummit
+    first cummit
+    second note for first cummit
 EXPECT_END
 
 test_expect_success 'update existing notes with N command' '
@@ -214,46 +214,46 @@ test_expect_success 'update existing notes with N command' '
 
 test_tick
 cat >input <<INPUT_END
-commit refs/notes/test
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-fourth notes commit
-COMMIT
+cummit refs/notes/test
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+fourth notes cummit
+cummit
 
 from refs/notes/test^0
-M 644 inline $(echo "$commit3" | sed "s|^..|&/|")
+M 644 inline $(echo "$cummit3" | sed "s|^..|&/|")
 data <<EOF
-prefix of note for third commit
+prefix of note for third cummit
 EOF
 
-M 644 inline $(echo "$commit4" | sed "s|^..|&/|")
+M 644 inline $(echo "$cummit4" | sed "s|^..|&/|")
 data <<EOF
-prefix of note for fourth commit
+prefix of note for fourth cummit
 EOF
 
-M 644 inline $(echo "$commit4" | sed "s|^\(..\)\(..\)|\1/\2/|")
+M 644 inline $(echo "$cummit4" | sed "s|^\(..\)\(..\)|\1/\2/|")
 data <<EOF
-pre-prefix of note for fourth commit
+pre-prefix of note for fourth cummit
 EOF
 
-N inline $commit1
+N inline $cummit1
 data <<EOF
-third note for first commit
+third note for first cummit
 EOF
 
-N inline $commit2
+N inline $cummit2
 data <<EOF
-third note for second commit
+third note for second cummit
 EOF
 
-N inline $commit3
+N inline $cummit3
 data <<EOF
-third note for third commit
+third note for third cummit
 EOF
 
-N inline $commit4
+N inline $cummit4
 data <<EOF
-third note for fourth commit
+third note for fourth cummit
 EOF
 
 
@@ -262,20 +262,20 @@ INPUT_END
 whitespace="    "
 
 cat >expect <<EXPECT_END
-    fourth commit
-    pre-prefix of note for fourth commit
+    fourth cummit
+    pre-prefix of note for fourth cummit
 $whitespace
-    prefix of note for fourth commit
+    prefix of note for fourth cummit
 $whitespace
-    third note for fourth commit
-    third commit
-    prefix of note for third commit
+    third note for fourth cummit
+    third cummit
+    prefix of note for third cummit
 $whitespace
-    third note for third commit
-    second commit
-    third note for second commit
-    first commit
-    third note for first commit
+    third note for third cummit
+    second cummit
+    third note for second cummit
+    first cummit
+    third note for first cummit
 EXPECT_END
 
 test_expect_success 'add concatenation notes with M command' '
@@ -288,11 +288,11 @@ test_expect_success 'add concatenation notes with M command' '
 
 test_tick
 cat >input <<INPUT_END
-commit refs/notes/test
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-fifth notes commit
-COMMIT
+cummit refs/notes/test
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+fifth notes cummit
+cummit
 
 from refs/notes/test^0
 deleteall
@@ -300,10 +300,10 @@ deleteall
 INPUT_END
 
 cat >expect <<EXPECT_END
-    fourth commit
-    third commit
-    second commit
-    first commit
+    fourth cummit
+    third cummit
+    second cummit
+    first cummit
 EXPECT_END
 
 test_expect_success 'verify that deleteall also removes notes' '
@@ -316,42 +316,42 @@ test_expect_success 'verify that deleteall also removes notes' '
 
 test_tick
 cat >input <<INPUT_END
-commit refs/notes/test
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-sixth notes commit
-COMMIT
+cummit refs/notes/test
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+sixth notes cummit
+cummit
 
 from refs/notes/test^0
-M 644 inline $commit1
+M 644 inline $cummit1
 data <<EOF
-third note for first commit
+third note for first cummit
 EOF
 
-M 644 inline $commit3
+M 644 inline $cummit3
 data <<EOF
-third note for third commit
+third note for third cummit
 EOF
 
-N inline $commit1
+N inline $cummit1
 data <<EOF
-fourth note for first commit
+fourth note for first cummit
 EOF
 
-N inline $commit3
+N inline $cummit3
 data <<EOF
-fourth note for third commit
+fourth note for third cummit
 EOF
 
 INPUT_END
 
 cat >expect <<EXPECT_END
-    fourth commit
-    third commit
-    fourth note for third commit
-    second commit
-    first commit
-    fourth note for first commit
+    fourth cummit
+    third cummit
+    fourth note for third cummit
+    second cummit
+    first cummit
+    fourth note for first cummit
 EXPECT_END
 
 test_expect_success 'verify that later N commands override earlier M commands' '
@@ -362,27 +362,27 @@ test_expect_success 'verify that later N commands override earlier M commands' '
 
 '
 
-# Write fast-import commands to create the given number of commits
-fast_import_commits () {
+# Write fast-import commands to create the given number of cummits
+fast_import_cummits () {
 	my_ref=$1
-	my_num_commits=$2
+	my_num_cummits=$2
 	my_append_to_file=$3
 	my_i=0
-	while test $my_i -lt $my_num_commits
+	while test $my_i -lt $my_num_cummits
 	do
 		my_i=$(($my_i + 1))
 		test_tick
 		cat >>"$my_append_to_file" <<INPUT_END
-commit $my_ref
+cummit $my_ref
 mark :$my_i
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-commit #$my_i
-COMMIT
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+cummit #$my_i
+cummit
 
 M 644 inline file
 data <<EOF
-file contents in commit #$my_i
+file contents in cummit #$my_i
 EOF
 
 INPUT_END
@@ -390,30 +390,30 @@ INPUT_END
 }
 
 # Write fast-import commands to create the given number of notes annotating
-# the commits created by fast_import_commits()
+# the cummits created by fast_import_cummits()
 fast_import_notes () {
 	my_notes_ref=$1
-	my_num_commits=$2
+	my_num_cummits=$2
 	my_append_to_file=$3
 	my_note_append=$4
 	test_tick
 	cat >>"$my_append_to_file" <<INPUT_END
-commit $my_notes_ref
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-committing $my_num_commits notes
-COMMIT
+cummit $my_notes_ref
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+cummitting $my_num_cummits notes
+cummit
 
 INPUT_END
 
 	my_i=0
-	while test $my_i -lt $my_num_commits
+	while test $my_i -lt $my_num_cummits
 	do
 		my_i=$(($my_i + 1))
 		cat >>"$my_append_to_file" <<INPUT_END
 N inline :$my_i
 data <<EOF
-note for commit #$my_i$my_note_append
+note for cummit #$my_i$my_note_append
 EOF
 
 INPUT_END
@@ -422,19 +422,19 @@ INPUT_END
 
 
 rm input expect
-num_commits=400
-# Create lots of commits
-fast_import_commits "refs/heads/many_commits" $num_commits input
-# Create one note per above commit
-fast_import_notes "refs/notes/many_notes" $num_commits input
+num_cummits=400
+# Create lots of cummits
+fast_import_cummits "refs/heads/many_cummits" $num_cummits input
+# Create one note per above cummit
+fast_import_notes "refs/notes/many_notes" $num_cummits input
 # Add a couple of non-notes as well
 test_tick
 cat >>input <<INPUT_END
-commit refs/notes/many_notes
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-committing some non-notes to the notes tree
-COMMIT
+cummit refs/notes/many_notes
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+cummitting some non-notes to the notes tree
+cummit
 
 M 755 inline foobar/non-note.txt
 data <<EOF
@@ -452,21 +452,21 @@ Another non-note file
 EOF
 
 INPUT_END
-# Finally create the expected output from all these notes and commits
-i=$num_commits
+# Finally create the expected output from all these notes and cummits
+i=$num_cummits
 while test $i -gt 0
 do
 	cat >>expect <<EXPECT_END
-    commit #$i
-    note for commit #$i
+    cummit #$i
+    note for cummit #$i
 EXPECT_END
 	i=$(($i - 1))
 done
 
-test_expect_success 'add lots of commits and notes' '
+test_expect_success 'add lots of cummits and notes' '
 
 	git fast-import <input &&
-	GIT_NOTES_REF=refs/notes/many_notes git log refs/heads/many_commits |
+	GIT_NOTES_REF=refs/notes/many_notes git log refs/heads/many_cummits |
 	    grep "^    " > actual &&
 	test_cmp expect actual
 
@@ -490,28 +490,28 @@ test_expect_success 'verify that lots of notes trigger a fanout scheme' '
 # Create another notes tree from the one above
 SP=" "
 cat >>input <<INPUT_END
-commit refs/heads/other_commits
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-commit #$(($num_commit + 1))
-COMMIT
+cummit refs/heads/other_cummits
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+cummit #$(($num_cummit + 1))
+cummit
 
-from refs/heads/many_commits
+from refs/heads/many_cummits
 M 644 inline file
 data <<EOF
-file contents in commit #$(($num_commit + 1))
+file contents in cummit #$(($num_cummit + 1))
 EOF
 
-commit refs/notes/other_notes
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-committing one more note on a tree imported from a previous notes tree
-COMMIT
+cummit refs/notes/other_notes
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+cummitting one more note on a tree imported from a previous notes tree
+cummit
 
 M 040000 $(git log --no-walk --format=%T refs/notes/many_notes)$SP
-N inline :$(($num_commit + 1))
+N inline :$(($num_cummit + 1))
 data <<EOF
-note for commit #$(($num_commit + 1))
+note for cummit #$(($num_cummit + 1))
 EOF
 INPUT_END
 
@@ -552,31 +552,31 @@ test_expect_success 'verify that non-notes are untouched by a fanout change' '
 
 '
 
-# Change the notes for the three top commits
+# Change the notes for the three top cummits
 test_tick
 cat >input <<INPUT_END
-commit refs/notes/many_notes
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-changing notes for the top three commits
-COMMIT
+cummit refs/notes/many_notes
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+changing notes for the top three cummits
+cummit
 from refs/notes/many_notes^0
 INPUT_END
 
 rm expect
-i=$num_commits
+i=$num_cummits
 j=0
 while test $j -lt 3
 do
 	cat >>input <<INPUT_END
-N inline refs/heads/many_commits~$j
+N inline refs/heads/many_cummits~$j
 data <<EOF
-changed note for commit #$i
+changed note for cummit #$i
 EOF
 INPUT_END
 	cat >>expect <<EXPECT_END
-    commit #$i
-    changed note for commit #$i
+    cummit #$i
+    changed note for cummit #$i
 EXPECT_END
 	i=$(($i - 1))
 	j=$(($j + 1))
@@ -585,7 +585,7 @@ done
 test_expect_success 'change a few existing notes' '
 
 	git fast-import <input &&
-	GIT_NOTES_REF=refs/notes/many_notes git log -n3 refs/heads/many_commits |
+	GIT_NOTES_REF=refs/notes/many_notes git log -n3 refs/heads/many_cummits |
 	    grep "^    " > actual &&
 	test_cmp expect actual
 
@@ -608,33 +608,33 @@ test_expect_success 'verify that changing notes respect existing fanout' '
 remaining_notes=10
 test_tick
 cat >input <<INPUT_END
-commit refs/notes/many_notes
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
+cummit refs/notes/many_notes
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
 removing all notes but $remaining_notes
-COMMIT
+cummit
 from refs/notes/many_notes^0
 INPUT_END
 
-i=$(($num_commits - $remaining_notes))
-for sha1 in $(git rev-list -n $i refs/heads/many_commits)
+i=$(($num_cummits - $remaining_notes))
+for sha1 in $(git rev-list -n $i refs/heads/many_cummits)
 do
 	cat >>input <<INPUT_END
 N $ZERO_OID $sha1
 INPUT_END
 done
 
-i=$num_commits
+i=$num_cummits
 rm expect
 while test $i -gt 0
 do
 	cat >>expect <<EXPECT_END
-    commit #$i
+    cummit #$i
 EXPECT_END
 	if test $i -le $remaining_notes
 	then
 		cat >>expect <<EXPECT_END
-    note for commit #$i
+    note for cummit #$i
 EXPECT_END
 	fi
 	i=$(($i - 1))
@@ -643,7 +643,7 @@ done
 test_expect_success 'remove lots of notes' '
 
 	git fast-import <input &&
-	GIT_NOTES_REF=refs/notes/many_notes git log refs/heads/many_commits |
+	GIT_NOTES_REF=refs/notes/many_notes git log refs/heads/many_cummits |
 	    grep "^    " > actual &&
 	test_cmp expect actual
 
@@ -681,44 +681,44 @@ test_expect_success 'verify that non-notes are untouched by a fanout change' '
 
 rm input expect
 num_notes_refs=10
-num_commits=16
-some_commits=8
-# Create commits
-fast_import_commits "refs/heads/more_commits" $num_commits input
-# Create one note per above commit per notes ref
+num_cummits=16
+some_cummits=8
+# Create cummits
+fast_import_cummits "refs/heads/more_cummits" $num_cummits input
+# Create one note per above cummit per notes ref
 i=0
 while test $i -lt $num_notes_refs
 do
 	i=$(($i + 1))
-	fast_import_notes "refs/notes/more_notes_$i" $num_commits input
+	fast_import_notes "refs/notes/more_notes_$i" $num_cummits input
 done
 # Trigger branch reloading in git-fast-import by repeating the note creation
 i=0
 while test $i -lt $num_notes_refs
 do
 	i=$(($i + 1))
-	fast_import_notes "refs/notes/more_notes_$i" $some_commits input " (2)"
+	fast_import_notes "refs/notes/more_notes_$i" $some_cummits input " (2)"
 done
 # Finally create the expected output from the notes in refs/notes/more_notes_1
-i=$num_commits
+i=$num_cummits
 while test $i -gt 0
 do
-	note_data="note for commit #$i"
-	if test $i -le $some_commits
+	note_data="note for cummit #$i"
+	if test $i -le $some_cummits
 	then
 		note_data="$note_data (2)"
 	fi
 	cat >>expect <<EXPECT_END
-    commit #$i
+    cummit #$i
     $note_data
 EXPECT_END
 	i=$(($i - 1))
 done
 
-test_expect_success "add notes to $num_commits commits in each of $num_notes_refs refs" '
+test_expect_success "add notes to $num_cummits cummits in each of $num_notes_refs refs" '
 
 	git fast-import --active-branches=5 <input &&
-	GIT_NOTES_REF=refs/notes/more_notes_1 git log refs/heads/more_commits |
+	GIT_NOTES_REF=refs/notes/more_notes_1 git log refs/heads/more_cummits |
 	    grep "^    " > actual &&
 	test_cmp expect actual
 

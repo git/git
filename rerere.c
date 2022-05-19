@@ -249,7 +249,7 @@ static int write_rr(struct string_list *rr, int out_fd)
 
 		strbuf_release(&buf);
 	}
-	if (commit_lock_file(&write_lock) != 0)
+	if (cummit_lock_file(&write_lock) != 0)
 		die(_("unable to write rerere record"));
 	return 0;
 }
@@ -701,7 +701,7 @@ static void update_paths(struct repository *r, struct string_list *update)
 	}
 
 	if (write_locked_index(r->index, &index_lock,
-			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
+			       cummit_LOCK | SKIP_IF_UNCHANGED))
 		die(_("unable to write new index file"));
 }
 

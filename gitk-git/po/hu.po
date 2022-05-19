@@ -59,12 +59,12 @@ msgid "Reading"
 msgstr "Olvasás"
 
 #: gitk:496 gitk:4525
-msgid "Reading commits..."
-msgstr "Commitok olvasása ..."
+msgid "Reading cummits..."
+msgstr "cummitok olvasása ..."
 
 #: gitk:499 gitk:1637 gitk:4528
-msgid "No commits selected"
-msgstr "Nincsen commit kiválasztva"
+msgid "No cummits selected"
+msgstr "Nincsen cummit kiválasztva"
 
 #: gitk:1445 gitk:4045 gitk:12432
 msgid "Command line"
@@ -75,8 +75,8 @@ msgid "Can't parse git log output:"
 msgstr "Nem lehet értelmezni a git log kimenetét:"
 
 #: gitk:1740
-msgid "No commit information available"
-msgstr "Nincsen elérhető commit információ"
+msgid "No cummit information available"
+msgstr "Nincsen elérhető cummit információ"
 
 #: gitk:1903 gitk:1932 gitk:4315 gitk:9669 gitk:11241 gitk:11521
 msgid "OK"
@@ -168,8 +168,8 @@ msgid "Find"
 msgstr "Keresés"
 
 #: gitk:2295
-msgid "commit"
-msgstr "commit"
+msgid "cummit"
+msgstr "cummit"
 
 #: gitk:2299 gitk:2301 gitk:4687 gitk:4710 gitk:4734 gitk:6755 gitk:6827
 #: gitk:6912
@@ -218,8 +218,8 @@ msgid "Author"
 msgstr "Szerző"
 
 #: gitk:2319 gitk:4871 gitk:6786 gitk:7326
-msgid "Committer"
-msgstr "Commitoló"
+msgid "cummitter"
+msgstr "cummitoló"
 
 #: gitk:2350
 msgid "Search"
@@ -274,24 +274,24 @@ msgid "Create tag"
 msgstr "Tag készítése"
 
 #: gitk:2621 gitk:9371
-msgid "Write commit to file"
-msgstr "Commit fáljba írása"
+msgid "Write cummit to file"
+msgstr "cummit fáljba írása"
 
 #: gitk:2622 gitk:9428
 msgid "Create new branch"
 msgstr "Új branch készítése"
 
 #: gitk:2623
-msgid "Cherry-pick this commit"
-msgstr "Cherry-pick erre a commitra"
+msgid "Cherry-pick this cummit"
+msgstr "Cherry-pick erre a cummitra"
 
 #: gitk:2624
 msgid "Reset HEAD branch to here"
 msgstr "HEAD branch újraindítása ide"
 
 #: gitk:2625
-msgid "Mark this commit"
-msgstr "Ezen commit megjelölése"
+msgid "Mark this cummit"
+msgstr "Ezen cummit megjelölése"
 
 #: gitk:2626
 msgid "Return to mark"
@@ -302,23 +302,23 @@ msgid "Find descendant of this and mark"
 msgstr "Találd meg ezen utódokat és jelöld meg"
 
 #: gitk:2628
-msgid "Compare with marked commit"
-msgstr "Összehasonlítás a megjelölt commit-tal"
+msgid "Compare with marked cummit"
+msgstr "Összehasonlítás a megjelölt cummit-tal"
 
 #: gitk:2629 gitk:2640
 #, fuzzy
-msgid "Diff this -> marked commit"
+msgid "Diff this -> marked cummit"
 msgstr "Diff ezeket -> kiválasztott"
 
 #: gitk:2630 gitk:2641
 #, fuzzy
-msgid "Diff marked commit -> this"
+msgid "Diff marked cummit -> this"
 msgstr "Diff kiválasztottakat -> ezt"
 
 #: gitk:2631
 #, fuzzy
-msgid "Revert this commit"
-msgstr "Ezen commit megjelölése"
+msgid "Revert this cummit"
+msgstr "Ezen cummit megjelölése"
 
 #: gitk:2647
 msgid "Check out this branch"
@@ -345,7 +345,7 @@ msgid "External diff"
 msgstr "Külső diff"
 
 #: gitk:2659
-msgid "Blame parent commit"
+msgid "Blame parent cummit"
 msgstr "Blame szülő kommitra"
 
 #: gitk:2660
@@ -364,14 +364,14 @@ msgstr "Futtasd a git gui blame-t ezen a soron"
 #, fuzzy
 msgid ""
 "\n"
-"Gitk - a commit viewer for git\n"
+"Gitk - a cummit viewer for git\n"
 "\n"
 "Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
 "Use and redistribute under the terms of the GNU General Public License"
 msgstr ""
 "\n"
-"Gitk - commit nézegető a githez\n"
+"Gitk - cummit nézegető a githez\n"
 "\n"
 "Szerzői jog \\u00a9 2005-2016 Paul Mackerras\n"
 "\n"
@@ -400,22 +400,22 @@ msgid "<%s-W>\t\tClose window"
 msgstr "<%s-F>\t\tKeresés"
 
 #: gitk:3050
-msgid "<Home>\t\tMove to first commit"
-msgstr "<Pos1>\t\tElső commithoz"
+msgid "<Home>\t\tMove to first cummit"
+msgstr "<Pos1>\t\tElső cummithoz"
 
 #: gitk:3051
-msgid "<End>\t\tMove to last commit"
-msgstr "<Ende>\t\tUtolsó commithoz"
+msgid "<End>\t\tMove to last cummit"
+msgstr "<Ende>\t\tUtolsó cummithoz"
 
 #: gitk:3052
 #, fuzzy
-msgid "<Up>, p, k\tMove up one commit"
-msgstr "<Hoch>, p, i\tEgy committal feljebb"
+msgid "<Up>, p, k\tMove up one cummit"
+msgstr "<Hoch>, p, i\tEgy cummittal feljebb"
 
 #: gitk:3053
 #, fuzzy
-msgid "<Down>, n, j\tMove down one commit"
-msgstr "<Runter>, n, k\tEgy committal lejjebb"
+msgid "<Down>, n, j\tMove down one cummit"
+msgstr "<Runter>, n, k\tEgy cummittal lejjebb"
 
 #: gitk:3054
 #, fuzzy
@@ -428,54 +428,54 @@ msgstr "<Rechts>, x, l\tElőre a history listába"
 
 #: gitk:3056
 #, tcl-format
-msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgid "<%s-n>\tGo to n-th parent of current cummit in history list"
 msgstr ""
 
 #: gitk:3057
-msgid "<PageUp>\tMove up one page in commit list"
-msgstr "<BildHoch>\tEgy lappal feljebb a commit listába"
+msgid "<PageUp>\tMove up one page in cummit list"
+msgstr "<BildHoch>\tEgy lappal feljebb a cummit listába"
 
 #: gitk:3058
-msgid "<PageDown>\tMove down one page in commit list"
-msgstr "<BildRunter>\tEgy lappal lejjebb a commit listába"
+msgid "<PageDown>\tMove down one page in cummit list"
+msgstr "<BildRunter>\tEgy lappal lejjebb a cummit listába"
 
 #: gitk:3059
 #, tcl-format
-msgid "<%s-Home>\tScroll to top of commit list"
-msgstr "<%s-Pos1>\tGörgetés a commit lista tetejéhez"
+msgid "<%s-Home>\tScroll to top of cummit list"
+msgstr "<%s-Pos1>\tGörgetés a cummit lista tetejéhez"
 
 #: gitk:3060
 #, tcl-format
-msgid "<%s-End>\tScroll to bottom of commit list"
-msgstr "<%s-Ende>\tGörgetés a commit lista aljához"
+msgid "<%s-End>\tScroll to bottom of cummit list"
+msgstr "<%s-Ende>\tGörgetés a cummit lista aljához"
 
 #: gitk:3061
 #, tcl-format
-msgid "<%s-Up>\tScroll commit list up one line"
-msgstr "<%s-Hoch>\tEgy sorral feljebb görgetés a commit listában"
+msgid "<%s-Up>\tScroll cummit list up one line"
+msgstr "<%s-Hoch>\tEgy sorral feljebb görgetés a cummit listában"
 
 #: gitk:3062
 #, tcl-format
-msgid "<%s-Down>\tScroll commit list down one line"
-msgstr "<%s-Runter>\tEgy sorral lejjebb görgetés a commit listában"
+msgid "<%s-Down>\tScroll cummit list down one line"
+msgstr "<%s-Runter>\tEgy sorral lejjebb görgetés a cummit listában"
 
 #: gitk:3063
 #, tcl-format
-msgid "<%s-PageUp>\tScroll commit list up one page"
-msgstr "<%s-BildHoch>\tEgy lappal feljebb görgetés a commit listában"
+msgid "<%s-PageUp>\tScroll cummit list up one page"
+msgstr "<%s-BildHoch>\tEgy lappal feljebb görgetés a cummit listában"
 
 #: gitk:3064
 #, tcl-format
-msgid "<%s-PageDown>\tScroll commit list down one page"
-msgstr "<%s-BildRunter>\tEgy sorral lejjebb görgetés a commit listában"
+msgid "<%s-PageDown>\tScroll cummit list down one page"
+msgstr "<%s-BildRunter>\tEgy sorral lejjebb görgetés a cummit listában"
 
 #: gitk:3065
-msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
-msgstr "<Umschalt-Hoch>\tKeresés visszafele (felfele, utolsó commitok)"
+msgid "<Shift-Up>\tFind backwards (upwards, later cummits)"
+msgstr "<Umschalt-Hoch>\tKeresés visszafele (felfele, utolsó cummitok)"
 
 #: gitk:3066
-msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
-msgstr "<Umschalt-Runter>\tKeresés előre (lefelé; korábbi commitok)"
+msgid "<Shift-Down>\tFind forwards (downwards, earlier cummits)"
+msgstr "<Umschalt-Runter>\tKeresés előre (lefelé; korábbi cummitok)"
 
 #: gitk:3067
 msgid "<Delete>, b\tScroll diff view up one page"
@@ -513,8 +513,8 @@ msgstr "<Eingabetaste>\tKövetkező találathoz"
 
 #: gitk:3075
 #, fuzzy
-msgid "g\t\tGo to commit"
-msgstr "<Ende>\t\tUtolsó commithoz"
+msgid "g\t\tGo to cummit"
+msgstr "<Ende>\t\tUtolsó cummithoz"
 
 #: gitk:3076
 msgid "/\t\tFocus the search box"
@@ -577,8 +577,8 @@ msgid "command failed:"
 msgstr "parancs hiba:"
 
 #: gitk:3784
-msgid "No such commit"
-msgstr "Nincs ilyen commit"
+msgid "No such cummit"
+msgstr "Nincs ilyen cummit"
 
 #: gitk:3798
 msgid "git gui blame: command failed:"
@@ -610,9 +610,9 @@ msgstr "Hiba történt a git blame futtatása közben: %s"
 
 #: gitk:3925
 #, tcl-format
-msgid "That line comes from commit %s,  which is not in this view"
+msgid "That line comes from cummit %s,  which is not in this view"
 msgstr ""
-"A %s commitból származik az a sor, amelyik nem található ebben a nézetben"
+"A %s cummitból származik az a sor, amelyik nem található ebben a nézetben"
 
 #: gitk:3939
 msgid "External diff viewer failed:"
@@ -651,29 +651,29 @@ msgid "All remote-tracking branches"
 msgstr "Minden távoli követő branch"
 
 #: gitk:4081
-msgid "Commit Info (regular expressions):"
-msgstr "Commit Infó (reguláris kifejezés):"
+msgid "cummit Info (regular expressions):"
+msgstr "cummit Infó (reguláris kifejezés):"
 
 #: gitk:4082
 msgid "Author:"
 msgstr "Szerző:"
 
 #: gitk:4083
-msgid "Committer:"
-msgstr "Commitoló:"
+msgid "cummitter:"
+msgstr "cummitoló:"
 
 #: gitk:4084
-msgid "Commit Message:"
-msgstr "Commit üzenet:"
+msgid "cummit Message:"
+msgstr "cummit üzenet:"
 
 #: gitk:4085
-msgid "Matches all Commit Info criteria"
-msgstr "Egyezik minen Commit Infó feltétellel"
+msgid "Matches all cummit Info criteria"
+msgstr "Egyezik minen cummit Infó feltétellel"
 
 #: gitk:4086
 #, fuzzy
-msgid "Matches no Commit Info criteria"
-msgstr "Egyezik minen Commit Infó feltétellel"
+msgid "Matches no cummit Info criteria"
+msgstr "Egyezik minen cummit Infó feltétellel"
 
 #: gitk:4087
 msgid "Changes to Files:"
@@ -693,10 +693,10 @@ msgstr "Keresés szöveg:"
 
 #: gitk:4091
 msgid ""
-"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"cummit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 msgstr ""
-"Commit Dátumok (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"cummit Dátumok (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 
 #: gitk:4092
@@ -748,8 +748,8 @@ msgid "Enter files and directories to include, one per line:"
 msgstr "Fájlok és könyvtárak bejegyzése amiket tartalmaz, soronként:"
 
 #: gitk:4104
-msgid "Command to generate more commits to include:"
-msgstr "Parancs több tartalmazó commit generálására:"
+msgid "Command to generate more cummits to include:"
+msgstr "Parancs több tartalmazó cummit generálására:"
 
 #: gitk:4228
 msgid "Gitk: edit view"
@@ -768,8 +768,8 @@ msgid "Apply (F5)"
 msgstr "Alkalmaz (F5)"
 
 #: gitk:4354
-msgid "Error in commit selection arguments:"
-msgstr "Hiba történt a commit argumentumok kiválasztása közben:"
+msgid "Error in cummit selection arguments:"
+msgstr "Hiba történt a cummit argumentumok kiválasztása közben:"
 
 #: gitk:4409 gitk:4462 gitk:4924 gitk:4938 gitk:6208 gitk:12373 gitk:12374
 msgid "None"
@@ -792,14 +792,14 @@ msgid "Not ancestor"
 msgstr "Nem előd"
 
 #: gitk:5324
-msgid "Local changes checked in to index but not committed"
+msgid "Local changes checked in to index but not cummitted"
 msgstr ""
 "Lokális változtatások, melyek be vannak téve az indexbe, de még nincsenek "
-"commitolva"
+"cummitolva"
 
 #: gitk:5360
-msgid "Local uncommitted changes, not checked in to index"
-msgstr "Lokális nem commitolt változások, nincsenek betéve az indexbe"
+msgid "Local uncummitted changes, not checked in to index"
+msgstr "Lokális nem cummitolt változások, nincsenek betéve az indexbe"
 
 #: gitk:7134
 msgid "and many more"
@@ -880,8 +880,8 @@ msgid "Detached head: can't reset"
 msgstr "Elkülönített head: nem lehet visszaállítani"
 
 #: gitk:9005 gitk:9011
-msgid "Skipping merge commit "
-msgstr "Merge commit kihagyása "
+msgid "Skipping merge cummit "
+msgstr "Merge cummit kihagyása "
 
 #: gitk:9020 gitk:9025
 msgid "Error getting patch ID for "
@@ -892,8 +892,8 @@ msgid " - stopping\n"
 msgstr " - abbahagyás\n"
 
 #: gitk:9031 gitk:9034 gitk:9042 gitk:9056 gitk:9065
-msgid "Commit "
-msgstr "Commit "
+msgid "cummit "
+msgstr "cummit "
 
 #: gitk:9035
 msgid ""
@@ -913,10 +913,10 @@ msgstr ""
 
 #: gitk:9045
 msgid ""
-"Diff of commits:\n"
+"Diff of cummits:\n"
 "\n"
 msgstr ""
-"A commitok diffje:\n"
+"A cummitok diffje:\n"
 "\n"
 
 #: gitk:9057 gitk:9066
@@ -926,13 +926,13 @@ msgstr " %s gyereke van. abbahagyás\n"
 
 #: gitk:9085
 #, tcl-format
-msgid "Error writing commit to file: %s"
-msgstr "Hiba történt a commit fájlba írása közben: %s"
+msgid "Error writing cummit to file: %s"
+msgstr "Hiba történt a cummit fájlba írása közben: %s"
 
 #: gitk:9091
 #, tcl-format
-msgid "Error diffing commits: %s"
-msgstr "Hiba történt a commitok diffelése közben: %s"
+msgid "Error diffing cummits: %s"
+msgstr "Hiba történt a cummitok diffelése közben: %s"
 
 #: gitk:9137
 msgid "Top"
@@ -1017,8 +1017,8 @@ msgid "Write"
 msgstr "Írás"
 
 #: gitk:9408
-msgid "Error writing commit:"
-msgstr "Hiba történt a commit írása közben:"
+msgid "Error writing cummit:"
+msgstr "Hiba történt a cummit írása közben:"
 
 #: gitk:9435
 msgid "Name:"
@@ -1035,9 +1035,9 @@ msgstr "%s branch már létezik. Felülírja?"
 
 #: gitk:9530
 #, tcl-format
-msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgid "cummit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
-"%s commit már benne van a %s branchban -- biztos hogy újra csinálja ?"
+"%s cummit már benne van a %s branchban -- biztos hogy újra csinálja ?"
 "eintragen?"
 
 #: gitk:9535
@@ -1048,10 +1048,10 @@ msgstr "Cherry-picking"
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
-"Please commit, reset or stash your changes and try again."
+"Please cummit, reset or stash your changes and try again."
 msgstr ""
 "Cherry-pick hiba történt lokális váltotások miatt a '%s' fájlban.\n"
-"Kérem commitolja, indítsa újra vagy rejtse el a változtatásait és próbálja "
+"Kérem cummitolja, indítsa újra vagy rejtse el a változtatásait és próbálja "
 "újra."
 
 #: gitk:9550
@@ -1063,14 +1063,14 @@ msgstr ""
 "Kívánja futtatni a git citool-t a probléma megoldásához?"
 
 #: gitk:9566 gitk:9624
-msgid "No changes committed"
-msgstr "Nincsen változás commitolva"
+msgid "No changes cummitted"
+msgstr "Nincsen változás cummitolva"
 
 #: gitk:9593
 #, fuzzy, tcl-format
-msgid "Commit %s is not included in branch %s -- really revert it?"
+msgid "cummit %s is not included in branch %s -- really revert it?"
 msgstr ""
-"%s commit már benne van a %s branchban -- biztos hogy újra csinálja ?"
+"%s cummit már benne van a %s branchban -- biztos hogy újra csinálja ?"
 "eintragen?"
 
 #: gitk:9598
@@ -1082,10 +1082,10 @@ msgstr "Újraindítás"
 #, fuzzy, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
-"commit, reset or stash  your changes and try again."
+"cummit, reset or stash  your changes and try again."
 msgstr ""
 "Cherry-pick hiba történt lokális váltotások miatt a '%s' fájlban.\n"
-"Kérem commitolja, indítsa újra vagy rejtse el a változtatásait és próbálja "
+"Kérem cummitolja, indítsa újra vagy rejtse el a változtatásait és próbálja "
 "újra."
 
 #: gitk:9610
@@ -1141,10 +1141,10 @@ msgstr "Nem lehet a jelenleg kivett branch-ot törölni"
 #: gitk:9802
 #, tcl-format
 msgid ""
-"The commits on branch %s aren't on any other branch.\n"
+"The cummits on branch %s aren't on any other branch.\n"
 "Really delete branch %s?"
 msgstr ""
-"A %s branchon található commit nem található meg semelyik másik branchon.\n"
+"A %s branchon található cummit nem található meg semelyik másik branchon.\n"
 "Tényleg törli a %s branchot?"
 
 #: gitk:9833
@@ -1158,10 +1158,10 @@ msgstr "Szűrő"
 
 #: gitk:10146
 msgid ""
-"Error reading commit topology information; branch and preceding/following "
+"Error reading cummit topology information; branch and preceding/following "
 "tag information will be incomplete."
 msgstr ""
-"Hiba történt a commit topológiai információ olvasása közben; branch ésa "
+"Hiba történt a cummit topológiai információ olvasása közben; branch ésa "
 "megelőző/következő információ nem lesz teljes."
 
 #: gitk:11123
@@ -1185,8 +1185,8 @@ msgid "I"
 msgstr "K"
 
 #: gitk:11348
-msgid "Commit list display options"
-msgstr "Commit lista kijelzési opciók"
+msgid "cummit list display options"
+msgstr "cummit lista kijelzési opciók"
 
 #: gitk:11351
 msgid "Maximum graph width (lines)"

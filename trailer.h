@@ -91,7 +91,7 @@ void trailer_info_get(struct trailer_info *info, const char *str,
 void trailer_info_release(struct trailer_info *info);
 
 /*
- * Format the trailers from the commit msg "msg" into the strbuf "out".
+ * Format the trailers from the cummit msg "msg" into the strbuf "out".
  * Note two caveats about "opts":
  *
  *   - this is primarily a helper for pretty.c, and not
@@ -101,11 +101,11 @@ void trailer_info_release(struct trailer_info *info);
  *     only the trailer block itself, even if the "only_trailers" option is not
  *     set.
  */
-void format_trailers_from_commit(struct strbuf *out, const char *msg,
+void format_trailers_from_cummit(struct strbuf *out, const char *msg,
 				 const struct process_trailer_options *opts);
 
 /*
- * An interface for iterating over the trailers found in a particular commit
+ * An interface for iterating over the trailers found in a particular cummit
  * message. Use like:
  *
  *   struct trailer_iterator iter;
@@ -124,7 +124,7 @@ struct trailer_iterator {
 };
 
 /*
- * Initialize "iter" in preparation for walking over the trailers in the commit
+ * Initialize "iter" in preparation for walking over the trailers in the cummit
  * message "msg". The "msg" pointer must remain valid until the iterator is
  * released.
  *

@@ -14,7 +14,7 @@
 #include "test-tool.h"
 
 #include "cache-tree.h"
-#include "commit.h"
+#include "cummit.h"
 #include "lockfile.h"
 #include "merge-ort.h"
 #include "refs.h"
@@ -23,12 +23,12 @@
 #include "strvec.h"
 #include "tree.h"
 
-static const char *short_commit_name(struct commit *commit)
+static const char *short_cummit_name(struct cummit *cummit)
 {
-	return find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV);
+	return find_unique_abbrev(&cummit->object.oid, DEFAULT_ABBREV);
 }
 
-static struct commit *peel_committish(const char *name)
+static struct cummit *peel_cummittish(const char *name)
 {
 	struct object *obj;
 	struct object_id oid;
@@ -36,7 +36,7 @@ static struct commit *peel_committish(const char *name)
 	if (get_oid(name, &oid))
 		return NULL;
 	obj = parse_object(the_repository, &oid);
-	return (struct commit *)peel_to_type(name, 0, obj, OBJ_COMMIT);
+	return (struct cummit *)peel_to_type(name, 0, obj, OBJ_cummit);
 }
 
 static char *get_author(const char *message)
@@ -51,49 +51,49 @@ static char *get_author(const char *message)
 	return NULL;
 }
 
-static struct commit *create_commit(struct tree *tree,
-				    struct commit *based_on,
-				    struct commit *parent)
+static struct cummit *create_cummit(struct tree *tree,
+				    struct cummit *based_on,
+				    struct cummit *parent)
 {
 	struct object_id ret;
 	struct object *obj;
-	struct commit_list *parents = NULL;
+	struct cummit_list *parents = NULL;
 	char *author;
-	char *sign_commit = NULL;
-	struct commit_extra_header *extra;
+	char *sign_cummit = NULL;
+	struct cummit_extra_header *extra;
 	struct strbuf msg = STRBUF_INIT;
-	const char *out_enc = get_commit_output_encoding();
+	const char *out_enc = get_cummit_output_encoding();
 	const char *message = logmsg_reencode(based_on, NULL, out_enc);
 	const char *orig_message = NULL;
 	const char *exclude_gpgsig[] = { "gpgsig", NULL };
 
-	commit_list_insert(parent, &parents);
-	extra = read_commit_extra_headers(based_on, exclude_gpgsig);
-	find_commit_subject(message, &orig_message);
+	cummit_list_insert(parent, &parents);
+	extra = read_cummit_extra_headers(based_on, exclude_gpgsig);
+	find_cummit_subject(message, &orig_message);
 	strbuf_addstr(&msg, orig_message);
 	author = get_author(message);
 	reset_ident_date();
-	if (commit_tree_extended(msg.buf, msg.len, &tree->object.oid, parents,
-				 &ret, author, NULL, sign_commit, extra)) {
-		error(_("failed to write commit object"));
+	if (cummit_tree_extended(msg.buf, msg.len, &tree->object.oid, parents,
+				 &ret, author, NULL, sign_cummit, extra)) {
+		error(_("failed to write cummit object"));
 		return NULL;
 	}
 	free(author);
 	strbuf_release(&msg);
 
 	obj = parse_object(the_repository, &ret);
-	return (struct commit *)obj;
+	return (struct cummit *)obj;
 }
 
 int cmd__fast_rebase(int argc, const char **argv)
 {
-	struct commit *onto;
-	struct commit *last_commit = NULL, *last_picked_commit = NULL;
+	struct cummit *onto;
+	struct cummit *last_cummit = NULL, *last_picked_cummit = NULL;
 	struct object_id head;
 	struct lock_file lock = LOCK_INIT;
 	struct strvec rev_walk_args = STRVEC_INIT;
 	struct rev_info revs;
-	struct commit *commit;
+	struct cummit *cummit;
 	struct merge_options merge_opt;
 	struct tree *next_tree, *base_tree, *head_tree;
 	struct merge_result result;
@@ -114,7 +114,7 @@ int cmd__fast_rebase(int argc, const char **argv)
 	if (argc != 5 || strcmp(argv[1], "--onto"))
 		die("usage: read the code, figure out how to use it, then do so");
 
-	onto = peel_committish(argv[2]);
+	onto = peel_cummittish(argv[2]);
 	strbuf_addf(&branch_name, "refs/heads/%s", argv[4]);
 
 	/* Sanity check */
@@ -149,21 +149,21 @@ int cmd__fast_rebase(int argc, const char **argv)
 	memset(&result, 0, sizeof(result));
 	merge_opt.show_rename_progress = 1;
 	merge_opt.branch1 = "HEAD";
-	head_tree = get_commit_tree(onto);
+	head_tree = get_cummit_tree(onto);
 	result.tree = head_tree;
-	last_commit = onto;
-	while ((commit = get_revision(&revs))) {
-		struct commit *base;
+	last_cummit = onto;
+	while ((cummit = get_revision(&revs))) {
+		struct cummit *base;
 
 		fprintf(stderr, "Rebasing %s...\r",
-			oid_to_hex(&commit->object.oid));
-		assert(commit->parents && !commit->parents->next);
-		base = commit->parents->item;
+			oid_to_hex(&cummit->object.oid));
+		assert(cummit->parents && !cummit->parents->next);
+		base = cummit->parents->item;
 
-		next_tree = get_commit_tree(commit);
-		base_tree = get_commit_tree(base);
+		next_tree = get_cummit_tree(cummit);
+		base_tree = get_cummit_tree(base);
 
-		merge_opt.branch2 = short_commit_name(commit);
+		merge_opt.branch2 = short_cummit_name(cummit);
 		merge_opt.ancestor = xstrfmt("parent of %s", merge_opt.branch2);
 
 		merge_incore_nonrecursive(&merge_opt,
@@ -176,8 +176,8 @@ int cmd__fast_rebase(int argc, const char **argv)
 		merge_opt.ancestor = NULL;
 		if (!result.clean)
 			break;
-		last_picked_commit = commit;
-		last_commit = create_commit(result.tree, commit, last_commit);
+		last_picked_cummit = cummit;
+		last_cummit = create_cummit(result.tree, cummit, last_cummit);
 	}
 	/* TODO: There should be some kind of rev_info_free(&revs) call... */
 	memset(&revs, 0, sizeof(revs));
@@ -190,11 +190,11 @@ int cmd__fast_rebase(int argc, const char **argv)
 	if (result.clean) {
 		fprintf(stderr, "\nDone.\n");
 		strbuf_addf(&reflog_msg, "finish rebase %s onto %s",
-			    oid_to_hex(&last_picked_commit->object.oid),
-			    oid_to_hex(&last_commit->object.oid));
+			    oid_to_hex(&last_picked_cummit->object.oid),
+			    oid_to_hex(&last_cummit->object.oid));
 		if (update_ref(reflog_msg.buf, branch_name.buf,
-			       &last_commit->object.oid,
-			       &last_picked_commit->object.oid,
+			       &last_cummit->object.oid,
+			       &last_picked_cummit->object.oid,
 			       REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR)) {
 			error(_("could not update %s"), argv[4]);
 			die("Failed to update %s", argv[4]);
@@ -209,9 +209,9 @@ int cmd__fast_rebase(int argc, const char **argv)
 	} else {
 		fprintf(stderr, "\nAborting: Hit a conflict.\n");
 		strbuf_addf(&reflog_msg, "rebase progress up to %s",
-			    oid_to_hex(&last_picked_commit->object.oid));
+			    oid_to_hex(&last_picked_cummit->object.oid));
 		if (update_ref(reflog_msg.buf, "HEAD",
-			       &last_commit->object.oid,
+			       &last_cummit->object.oid,
 			       &head,
 			       REF_NO_DEREF, UPDATE_REFS_MSG_ON_ERR)) {
 			error(_("could not update %s"), argv[4]);
@@ -219,7 +219,7 @@ int cmd__fast_rebase(int argc, const char **argv)
 		}
 	}
 	if (write_locked_index(&the_index, &lock,
-			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
+			       cummit_LOCK | SKIP_IF_UNCHANGED))
 		die(_("unable to write %s"), get_index_file());
 	return (result.clean == 0);
 }

@@ -37,46 +37,46 @@ test_expect_success 'setup repo with criss-cross history' '
 
 	# check them in
 	git add data &&
-	git commit -m A &&
+	git cummit -m A &&
 	git branch A &&
 
 	# a file in one branch
 	git checkout -b B A &&
 	git rm data/9 &&
 	git add data &&
-	git commit -m B &&
+	git cummit -m B &&
 
 	# with a branch off of it
 	git branch D &&
 
-	# put some commits on D
+	# put some cummits on D
 	git checkout D &&
 	echo testD > data/testD &&
 	git add data &&
-	git commit -m D &&
+	git cummit -m D &&
 
 	# back up to the top, create another branch and cause
 	# a rename conflict with the file we deleted earlier
 	git checkout -b C A &&
 	git mv data/9 data/new-9 &&
 	git add data &&
-	git commit -m C &&
+	git cummit -m C &&
 
 	# with a branch off of it
 	git branch E &&
 
-	# put a commit on E
+	# put a cummit on E
 	git checkout E &&
 	echo testE > data/testE &&
 	git add data &&
-	git commit -m E &&
+	git cummit -m E &&
 
 	# now, merge E into B
 	git checkout B &&
 	test_must_fail git merge E &&
 	# force-resolve
 	git add data &&
-	git commit -m F &&
+	git cummit -m F &&
 	git branch F &&
 
 	# and merge D into C
@@ -84,7 +84,7 @@ test_expect_success 'setup repo with criss-cross history' '
 	test_must_fail git merge D &&
 	# force-resolve
 	git add data &&
-	git commit -m G &&
+	git cummit -m G &&
 	git branch G
 '
 

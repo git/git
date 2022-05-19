@@ -19,8 +19,8 @@
 #include "run-command.h"
 #include "sigchain.h"
 #include "strvec.h"
-#include "commit.h"
-#include "commit-graph.h"
+#include "cummit.h"
+#include "cummit-graph.h"
 #include "packfile.h"
 #include "object-store.h"
 #include "pack.h"
@@ -94,11 +94,11 @@ static void process_log_file(void)
 			get_lock_file_path(&log_lock),
 			strerror(saved_errno));
 		fflush(stderr);
-		commit_lock_file(&log_lock);
+		cummit_lock_file(&log_lock);
 		errno = saved_errno;
 	} else if (st.st_size) {
 		/* There was some error recorded in the lock file */
-		commit_lock_file(&log_lock);
+		cummit_lock_file(&log_lock);
 	} else {
 		/* No error, clean up any old gc.log */
 		unlink(git_path("gc.log"));
@@ -302,7 +302,7 @@ static uint64_t estimate_repack_memory(struct packed_git *pack)
 	 */
 	heap += sizeof(struct blob) * nr_objects / 2;
 	/*
-	 * and the other half is for trees (commits and tags are
+	 * and the other half is for trees (cummits and tags are
 	 * usually insignificant)
 	 */
 	heap += sizeof(struct tree) * nr_objects / 2;
@@ -461,7 +461,7 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 		    (uintmax_t) getpid(), my_host);
 	write_in_full(fd, sb.buf, sb.len);
 	strbuf_release(&sb);
-	commit_lock_file(&lock);
+	cummit_lock_file(&lock);
 	pidfile = register_tempfile(pidfile_path);
 	free(pidfile_path);
 	return NULL;
@@ -698,9 +698,9 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	}
 
 	prepare_repo_settings(the_repository);
-	if (the_repository->settings.gc_write_commit_graph == 1)
-		write_commit_graph_reachable(the_repository->objects->odb,
-					     !quiet && !daemonized ? COMMIT_GRAPH_WRITE_PROGRESS : 0,
+	if (the_repository->settings.gc_write_cummit_graph == 1)
+		write_cummit_graph_reachable(the_repository->objects->odb,
+					     !quiet && !daemonized ? cummit_GRAPH_WRITE_PROGRESS : 0,
 					     NULL);
 
 	if (auto_gc && too_many_loose_objects())
@@ -775,19 +775,19 @@ static int dfs_on_ref(const char *refname,
 	struct cg_auto_data *data = (struct cg_auto_data *)cb_data;
 	int result = 0;
 	struct object_id peeled;
-	struct commit_list *stack = NULL;
-	struct commit *commit;
+	struct cummit_list *stack = NULL;
+	struct cummit *cummit;
 
 	if (!peel_iterated_oid(oid, &peeled))
 		oid = &peeled;
-	if (oid_object_info(the_repository, oid, NULL) != OBJ_COMMIT)
+	if (oid_object_info(the_repository, oid, NULL) != OBJ_cummit)
 		return 0;
 
-	commit = lookup_commit(the_repository, oid);
-	if (!commit)
+	cummit = lookup_cummit(the_repository, oid);
+	if (!cummit)
 		return 0;
-	if (parse_commit(commit) ||
-	    commit_graph_position(commit) != COMMIT_NOT_FROM_GRAPH)
+	if (parse_cummit(cummit) ||
+	    cummit_graph_position(cummit) != cummit_NOT_FROM_GRAPH)
 		return 0;
 
 	data->num_not_in_graph++;
@@ -795,16 +795,16 @@ static int dfs_on_ref(const char *refname,
 	if (data->num_not_in_graph >= data->limit)
 		return 1;
 
-	commit_list_append(commit, &stack);
+	cummit_list_append(cummit, &stack);
 
 	while (!result && stack) {
-		struct commit_list *parent;
+		struct cummit_list *parent;
 
-		commit = pop_commit(&stack);
+		cummit = pop_cummit(&stack);
 
-		for (parent = commit->parents; parent; parent = parent->next) {
-			if (parse_commit(parent->item) ||
-			    commit_graph_position(parent->item) != COMMIT_NOT_FROM_GRAPH ||
+		for (parent = cummit->parents; parent; parent = parent->next) {
+			if (parse_cummit(parent->item) ||
+			    cummit_graph_position(parent->item) != cummit_NOT_FROM_GRAPH ||
 			    parent->item->object.flags & SEEN)
 				continue;
 
@@ -816,22 +816,22 @@ static int dfs_on_ref(const char *refname,
 				break;
 			}
 
-			commit_list_append(parent->item, &stack);
+			cummit_list_append(parent->item, &stack);
 		}
 	}
 
-	free_commit_list(stack);
+	free_cummit_list(stack);
 	return result;
 }
 
-static int should_write_commit_graph(void)
+static int should_write_cummit_graph(void)
 {
 	int result;
 	struct cg_auto_data data;
 
 	data.num_not_in_graph = 0;
 	data.limit = 100;
-	git_config_get_int("maintenance.commit-graph.auto",
+	git_config_get_int("maintenance.cummit-graph.auto",
 			   &data.limit);
 
 	if (!data.limit)
@@ -841,17 +841,17 @@ static int should_write_commit_graph(void)
 
 	result = for_each_ref(dfs_on_ref, &data);
 
-	repo_clear_commit_marks(the_repository, SEEN);
+	repo_clear_cummit_marks(the_repository, SEEN);
 
 	return result;
 }
 
-static int run_write_commit_graph(struct maintenance_run_opts *opts)
+static int run_write_cummit_graph(struct maintenance_run_opts *opts)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
 	child.git_cmd = child.close_object_store = 1;
-	strvec_pushl(&child.args, "commit-graph", "write",
+	strvec_pushl(&child.args, "cummit-graph", "write",
 		     "--split", "--reachable", NULL);
 
 	if (opts->quiet)
@@ -860,14 +860,14 @@ static int run_write_commit_graph(struct maintenance_run_opts *opts)
 	return !!run_command(&child);
 }
 
-static int maintenance_task_commit_graph(struct maintenance_run_opts *opts)
+static int maintenance_task_cummit_graph(struct maintenance_run_opts *opts)
 {
 	prepare_repo_settings(the_repository);
-	if (!the_repository->settings.core_commit_graph)
+	if (!the_repository->settings.core_cummit_graph)
 		return 0;
 
-	if (run_write_commit_graph(opts)) {
-		error(_("failed to write commit-graph"));
+	if (run_write_cummit_graph(opts)) {
+		error(_("failed to write cummit-graph"));
 		return 1;
 	}
 
@@ -1210,7 +1210,7 @@ enum maintenance_task_label {
 	TASK_LOOSE_OBJECTS,
 	TASK_INCREMENTAL_REPACK,
 	TASK_GC,
-	TASK_COMMIT_GRAPH,
+	TASK_cummit_GRAPH,
 	TASK_PACK_REFS,
 
 	/* Leave as final value */
@@ -1238,10 +1238,10 @@ static struct maintenance_task tasks[] = {
 		need_to_gc,
 		1,
 	},
-	[TASK_COMMIT_GRAPH] = {
-		"commit-graph",
-		maintenance_task_commit_graph,
-		should_write_commit_graph,
+	[TASK_cummit_GRAPH] = {
+		"cummit-graph",
+		maintenance_task_cummit_graph,
+		should_write_cummit_graph,
 	},
 	[TASK_PACK_REFS] = {
 		"pack-refs",
@@ -1324,8 +1324,8 @@ static void initialize_maintenance_strategy(void)
 
 	if (!strcasecmp(config_str, "incremental")) {
 		tasks[TASK_GC].schedule = SCHEDULE_NONE;
-		tasks[TASK_COMMIT_GRAPH].enabled = 1;
-		tasks[TASK_COMMIT_GRAPH].schedule = SCHEDULE_HOURLY;
+		tasks[TASK_cummit_GRAPH].enabled = 1;
+		tasks[TASK_cummit_GRAPH].schedule = SCHEDULE_HOURLY;
 		tasks[TASK_PREFETCH].enabled = 1;
 		tasks[TASK_PREFETCH].schedule = SCHEDULE_HOURLY;
 		tasks[TASK_INCREMENTAL_REPACK].enabled = 1;
@@ -1787,7 +1787,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 		rollback_lock_file(&lk);
 	else {
 		if (write_in_full(fd, plist.buf, plist.len) < 0 ||
-		    commit_lock_file(&lk))
+		    cummit_lock_file(&lk))
 			die_errno(_("could not write '%s'"), filename);
 
 		/* bootout might fail if not already running, so ignore */

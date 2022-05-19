@@ -49,7 +49,7 @@ test_expect_success setup '
 	echo a >f &&
 	git add f &&
 	test_tick &&
-	git commit -m initial
+	git cummit -m initial
 '
 
 # This used to fail before, too, but with a different diagnostic.
@@ -63,14 +63,14 @@ test_expect_success 'try to apply corrupted patch' '
 	test_cmp expected actual
 '
 
-test_expect_success "NUL in commit message's body" '
+test_expect_success "NUL in cummit message's body" '
 	test_when_finished "git am --abort" &&
 	make_mbox_with_nul body >body.patch &&
 	test_must_fail git am body.patch 2>err &&
-	grep "a NUL byte in commit log message not allowed" err
+	grep "a NUL byte in cummit log message not allowed" err
 '
 
-test_expect_success "NUL in commit message's header" "
+test_expect_success "NUL in cummit message's header" "
 	test_when_finished 'git am --abort' &&
 	make_mbox_with_nul subject >subject.patch &&
 	test_must_fail git mailinfo msg patch <subject.patch 2>err &&

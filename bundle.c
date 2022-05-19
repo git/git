@@ -4,7 +4,7 @@
 #include "object-store.h"
 #include "repository.h"
 #include "object.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
@@ -198,9 +198,9 @@ int verify_bundle(struct repository *r,
 	struct string_list *p = &header->prerequisites;
 	struct rev_info revs;
 	const char *argv[] = {NULL, "--all", NULL};
-	struct commit *commit;
+	struct cummit *cummit;
 	int i, ret = 0, req_nr;
-	const char *message = _("Repository lacks these prerequisite commits:");
+	const char *message = _("Repository lacks these prerequisite cummits:");
 
 	if (!r || !r->objects || !r->objects->odb)
 		return error(_("need a repository to verify a bundle"));
@@ -231,8 +231,8 @@ int verify_bundle(struct repository *r,
 		die(_("revision walk setup failed"));
 
 	i = req_nr;
-	while (i && (commit = get_revision(&revs)))
-		if (commit->object.flags & PREREQ_MARK)
+	while (i && (cummit = get_revision(&revs)))
+		if (cummit->object.flags & PREREQ_MARK)
 			i--;
 
 	for (i = 0; i < p->nr; i++) {
@@ -252,9 +252,9 @@ int verify_bundle(struct repository *r,
 	for (i = 0; i < p->nr; i++) {
 		struct string_list_item *e = p->items + i;
 		struct object_id *oid = e->util;
-		commit = lookup_commit_reference_gently(r, oid, 1);
-		if (commit)
-			clear_commit_marks(commit, ALL_REV_FLAGS);
+		cummit = lookup_cummit_reference_gently(r, oid, 1);
+		if (cummit)
+			clear_cummit_marks(cummit, ALL_REV_FLAGS);
 	}
 
 	if (verbose) {
@@ -409,11 +409,11 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		 * other limiting options could have prevented all the tips
 		 * from getting output.
 		 *
-		 * Non commit objects such as tags and blobs do not have
+		 * Non cummit objects such as tags and blobs do not have
 		 * this issue as they are not affected by those extra
 		 * constraints.
 		 */
-		if (!(e->item->flags & SHOWN) && e->item->type == OBJ_COMMIT) {
+		if (!(e->item->flags & SHOWN) && e->item->type == OBJ_cummit) {
 			warning(_("ref '%s' is excluded by the rev-list options"),
 				e->name);
 			goto skip_write_ref;
@@ -421,7 +421,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		/*
 		 * If you run "git bundle create bndl v1.0..v2.0", the
 		 * name of the positive ref is "v2.0" but that is the
-		 * commit that is referenced by the tag, and not the tag
+		 * cummit that is referenced by the tag, and not the tag
 		 * itself.
 		 */
 		if (!oideq(&oid, &e->item->oid)) {
@@ -430,7 +430,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 			 * in terms of a tag (e.g. v2.0 from the range
 			 * "v1.0..v2.0")?
 			 */
-			struct commit *one = lookup_commit_reference(revs->repo, &oid);
+			struct cummit *one = lookup_cummit_reference(revs->repo, &oid);
 			struct object *obj;
 
 			if (e->item == &(one->object)) {
@@ -468,25 +468,25 @@ struct bundle_prerequisites_info {
 	int fd;
 };
 
-static void write_bundle_prerequisites(struct commit *commit, void *data)
+static void write_bundle_prerequisites(struct cummit *cummit, void *data)
 {
 	struct bundle_prerequisites_info *bpi = data;
 	struct object *object;
 	struct pretty_print_context ctx = { 0 };
 	struct strbuf buf = STRBUF_INIT;
 
-	if (!(commit->object.flags & BOUNDARY))
+	if (!(cummit->object.flags & BOUNDARY))
 		return;
-	strbuf_addf(&buf, "-%s ", oid_to_hex(&commit->object.oid));
+	strbuf_addf(&buf, "-%s ", oid_to_hex(&cummit->object.oid));
 	write_or_die(bpi->fd, buf.buf, buf.len);
 
 	ctx.fmt = CMIT_FMT_ONELINE;
 	ctx.output_encoding = get_log_output_encoding();
 	strbuf_reset(&buf);
-	pretty_print_commit(&ctx, commit, &buf);
+	pretty_print_cummit(&ctx, cummit, &buf);
 	strbuf_trim(&buf);
 
-	object = (struct object *)commit;
+	object = (struct object *)cummit;
 	object->flags |= UNINTERESTING;
 	add_object_array_with_path(object, buf.buf, bpi->pending, S_IFINVALID,
 				   NULL);
@@ -508,7 +508,7 @@ int create_bundle(struct repository *r, const char *path,
 	int i;
 
 	/* init revs to list objects for pack-objects later */
-	save_commit_buffer = 0;
+	save_cummit_buffer = 0;
 	repo_init_revisions(r, &revs, NULL);
 
 	/*
@@ -587,11 +587,11 @@ int create_bundle(struct repository *r, const char *path,
 	bpi.pending = &revs_copy.pending;
 
 	/*
-	 * Remove any object walking here. We only care about commits and
+	 * Remove any object walking here. We only care about cummits and
 	 * tags here. The revs_copy has the right instances of these values.
 	 */
 	revs.blob_objects = revs.tree_objects = 0;
-	traverse_commit_list(&revs, write_bundle_prerequisites, NULL, &bpi);
+	traverse_cummit_list(&revs, write_bundle_prerequisites, NULL, &bpi);
 	object_array_remove_duplicates(&revs_copy.pending);
 
 	/* write bundle refs */
@@ -606,7 +606,7 @@ int create_bundle(struct repository *r, const char *path,
 		goto err;
 
 	if (!bundle_to_stdout) {
-		if (commit_lock_file(&lock))
+		if (cummit_lock_file(&lock))
 			die_errno(_("cannot create '%s'"), path);
 	}
 	return 0;

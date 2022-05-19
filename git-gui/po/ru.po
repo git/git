@@ -81,12 +81,12 @@ msgid "Scanning for modified files ..."
 msgstr "Поиск измененных файлов…"
 
 #: git-gui.sh:1629
-msgid "Calling prepare-commit-msg hook..."
-msgstr "Вызов перехватчика prepare-commit-msg…"
+msgid "Calling prepare-cummit-msg hook..."
+msgstr "Вызов перехватчика prepare-cummit-msg…"
 
 #: git-gui.sh:1646
-msgid "Commit declined by prepare-commit-msg hook."
-msgstr "Коммит прерван перехватчиком prepare-commit-msg."
+msgid "cummit declined by prepare-cummit-msg hook."
+msgstr "Коммит прерван перехватчиком prepare-cummit-msg."
 
 #: git-gui.sh:1804 lib/browser.tcl:252
 msgid "Ready."
@@ -108,15 +108,15 @@ msgid "Modified, not staged"
 msgstr "Изменено, не в индексе"
 
 #: git-gui.sh:2094 git-gui.sh:2106
-msgid "Staged for commit"
+msgid "Staged for cummit"
 msgstr "В индексе для коммита"
 
 #: git-gui.sh:2095 git-gui.sh:2107
-msgid "Portions staged for commit"
+msgid "Portions staged for cummit"
 msgstr "Части, в индексе для коммита"
 
 #: git-gui.sh:2096 git-gui.sh:2108
-msgid "Staged for commit, missing"
+msgid "Staged for cummit, missing"
 msgstr "В индексе для коммита, отсутствует"
 
 #: git-gui.sh:2098
@@ -124,7 +124,7 @@ msgid "File type changed, not staged"
 msgstr "Тип файла изменён, не в индексе"
 
 #: git-gui.sh:2099 git-gui.sh:2100
-msgid "File type changed, old type staged for commit"
+msgid "File type changed, old type staged for cummit"
 msgstr "Тип файла изменён, старый тип файла в индексе"
 
 #: git-gui.sh:2101
@@ -186,7 +186,7 @@ msgid "Branch"
 msgstr "Ветка"
 
 #: git-gui.sh:2732 lib/choose_rev.tcl:554
-msgid "Commit@@noun"
+msgid "cummit@@noun"
 msgstr "Коммит"
 
 #: git-gui.sh:2735 lib/merge.tcl:127 lib/merge.tcl:174
@@ -310,11 +310,11 @@ msgid "Done"
 msgstr "Завершено"
 
 #: git-gui.sh:2899
-msgid "Commit@@verb"
+msgid "cummit@@verb"
 msgstr "Закоммитить"
 
 #: git-gui.sh:2908 git-gui.sh:3400
-msgid "Amend Last Commit"
+msgid "Amend Last cummit"
 msgstr "Исправить последний коммит"
 
 #: git-gui.sh:2918 git-gui.sh:3361 lib/remote_branch_delete.tcl:101
@@ -322,15 +322,15 @@ msgid "Rescan"
 msgstr "Перечитать"
 
 #: git-gui.sh:2924
-msgid "Stage To Commit"
+msgid "Stage To cummit"
 msgstr "Добавить в индекс"
 
 #: git-gui.sh:2930
-msgid "Stage Changed Files To Commit"
+msgid "Stage Changed Files To cummit"
 msgstr "Добавить изменённые файлы в индекс"
 
 #: git-gui.sh:2936
-msgid "Unstage From Commit"
+msgid "Unstage From cummit"
 msgstr "Убрать из индекса"
 
 #: git-gui.sh:2942 lib/index.tcl:521
@@ -421,7 +421,7 @@ msgid "Unstaged Changes"
 msgstr "Изменено (не будет сохранено)"
 
 #: git-gui.sh:3293
-msgid "Staged Changes (Will Commit)"
+msgid "Staged Changes (Will cummit)"
 msgstr "Изменения в индексе (будут закоммичены)"
 
 #: git-gui.sh:3367
@@ -433,27 +433,27 @@ msgid "Push"
 msgstr "Отправить"
 
 #: git-gui.sh:3413
-msgid "Initial Commit Message:"
+msgid "Initial cummit Message:"
 msgstr "Сообщение первого коммита:"
 
 #: git-gui.sh:3414
-msgid "Amended Commit Message:"
+msgid "Amended cummit Message:"
 msgstr "Сообщение исправленного коммита:"
 
 #: git-gui.sh:3415
-msgid "Amended Initial Commit Message:"
+msgid "Amended Initial cummit Message:"
 msgstr "Сообщение исправленного первого коммита:"
 
 #: git-gui.sh:3416
-msgid "Amended Merge Commit Message:"
+msgid "Amended Merge cummit Message:"
 msgstr "Сообщение исправленного слияния:"
 
 #: git-gui.sh:3417
-msgid "Merge Commit Message:"
+msgid "Merge cummit Message:"
 msgstr "Сообщение слияния:"
 
 #: git-gui.sh:3418
-msgid "Commit Message:"
+msgid "cummit Message:"
 msgstr "Сообщение коммита:"
 
 #: git-gui.sh:3477 git-gui.sh:3641 lib/console.tcl:73
@@ -537,11 +537,11 @@ msgid "Start git gui In The Submodule"
 msgstr "Запустить git gui в подмодуле"
 
 #: git-gui.sh:3793
-msgid "Unstage Hunk From Commit"
+msgid "Unstage Hunk From cummit"
 msgstr "Убрать блок из индекса"
 
 #: git-gui.sh:3797
-msgid "Unstage Lines From Commit"
+msgid "Unstage Lines From cummit"
 msgstr "Убрать строки из индекса"
 
 #: git-gui.sh:3798 git-gui.sh:3809
@@ -549,19 +549,19 @@ msgid "Revert Lines"
 msgstr "Обратить изменения строк"
 
 #: git-gui.sh:3800
-msgid "Unstage Line From Commit"
+msgid "Unstage Line From cummit"
 msgstr "Убрать строку из индекса"
 
 #: git-gui.sh:3804
-msgid "Stage Hunk For Commit"
+msgid "Stage Hunk For cummit"
 msgstr "Добавить блок в индекс"
 
 #: git-gui.sh:3808
-msgid "Stage Lines For Commit"
+msgid "Stage Lines For cummit"
 msgstr "Добавить строки в индекс"
 
 #: git-gui.sh:3811
-msgid "Stage Line For Commit"
+msgid "Stage Line For cummit"
 msgstr "Добавить строку в индекс"
 
 #: git-gui.sh:3861
@@ -839,11 +839,11 @@ msgstr "Выполнен переход на «%s»."
 
 #: lib/checkout_op.tcl:536
 #, tcl-format
-msgid "Resetting '%s' to '%s' will lose the following commits:"
+msgid "Resetting '%s' to '%s' will lose the following cummits:"
 msgstr "Сброс «%s»  на «%s» приведет к потере следующих коммитов:"
 
 #: lib/checkout_op.tcl:558
-msgid "Recovering lost commits may not be easy."
+msgid "Recovering lost cummits may not be easy."
 msgstr "Восстановить потерянные коммиты будет сложно."
 
 #: lib/checkout_op.tcl:563
@@ -1004,16 +1004,16 @@ msgid "files"
 msgstr "файлов"
 
 #: lib/index.tcl:326
-msgid "Unstaging selected files from commit"
+msgid "Unstaging selected files from cummit"
 msgstr "Уборка выбранных файлов из индекса"
 
 #: lib/index.tcl:330
 #, tcl-format
-msgid "Unstaging %s from commit"
+msgid "Unstaging %s from cummit"
 msgstr "Удаление %s из индекса"
 
 #: lib/index.tcl:369
-msgid "Ready to commit."
+msgid "Ready to cummit."
 msgstr "Готов для коммита."
 
 #: lib/index.tcl:378
@@ -1244,7 +1244,7 @@ msgid "Email Address"
 msgstr "Адрес электронной почты"
 
 #: lib/option.tcl:143
-msgid "Summarize Merge Commits"
+msgid "Summarize Merge cummits"
 msgstr "Суммарное сообщение при слиянии"
 
 #: lib/option.tcl:144
@@ -1300,7 +1300,7 @@ msgid "Additional Diff Parameters"
 msgstr "Дополнительные параметры для diff"
 
 #: lib/option.tcl:158
-msgid "Commit Message Text Width"
+msgid "cummit Message Text Width"
 msgstr "Ширина текста сообщения коммита"
 
 #: lib/option.tcl:159
@@ -1312,7 +1312,7 @@ msgid "Default File Contents Encoding"
 msgstr "Кодировка содержания файла по умолчанию"
 
 #: lib/option.tcl:161
-msgid "Warn before committing to a detached head"
+msgid "Warn before cummitting to a detached head"
 msgstr "Предупреждать перед коммитом в отделённый HEAD"
 
 #: lib/option.tcl:162
@@ -1661,7 +1661,7 @@ msgstr "Следующие ветки могут быть объединены �
 #, tcl-format
 msgid ""
 "One or more of the merge tests failed because you have not fetched the "
-"necessary commits.  Try fetching from %s first."
+"necessary cummits.  Try fetching from %s first."
 msgstr "Некоторые тесты на слияние не прошли, потому что вы не извлекли необходимые коммиты. Попытайтесь извлечь их из %s."
 
 #: lib/remote_branch_delete.tcl:208
@@ -1895,7 +1895,7 @@ msgstr "Ветка по умолчанию не была получена."
 
 #: lib/choose_repository.tcl:971
 #, tcl-format
-msgid "Cannot resolve %s as a commit."
+msgid "Cannot resolve %s as a cummit."
 msgstr "Не могу распознать %s как коммит."
 
 #: lib/choose_repository.tcl:998
@@ -1933,11 +1933,11 @@ msgid "%s (%s): File Viewer"
 msgstr "%s (%s): Просмотр файла"
 
 #: lib/blame.tcl:80
-msgid "Commit:"
+msgid "cummit:"
 msgstr "Коммит:"
 
 #: lib/blame.tcl:282
-msgid "Copy Commit"
+msgid "Copy cummit"
 msgstr "Копировать SHA-1"
 
 #: lib/blame.tcl:286
@@ -1957,7 +1957,7 @@ msgid "Show History Context"
 msgstr "Показать исторический контекст"
 
 #: lib/blame.tcl:306
-msgid "Blame Parent Commit"
+msgid "Blame Parent cummit"
 msgstr "Авторы родительского коммита"
 
 #: lib/blame.tcl:468
@@ -2002,7 +2002,7 @@ msgid "Author:"
 msgstr "Автор:"
 
 #: lib/blame.tcl:1014
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "Коммитер:"
 
 #: lib/blame.tcl:1019
@@ -2010,11 +2010,11 @@ msgid "Original File:"
 msgstr "Исходный файл:"
 
 #: lib/blame.tcl:1067
-msgid "Cannot find HEAD commit:"
+msgid "Cannot find HEAD cummit:"
 msgstr "Не удалось найти текущее состояние:"
 
 #: lib/blame.tcl:1122
-msgid "Cannot find parent commit:"
+msgid "Cannot find parent cummit:"
 msgstr "Не удалось найти родительское состояние:"
 
 #: lib/blame.tcl:1137
@@ -2287,144 +2287,144 @@ msgstr "Обновлено"
 msgid "URL"
 msgstr "Ссылка"
 
-#: lib/commit.tcl:9
+#: lib/cummit.tcl:9
 msgid ""
 "There is nothing to amend.\n"
 "\n"
-"You are about to create the initial commit.  There is no commit before this to amend.\n"
+"You are about to create the initial cummit.  There is no cummit before this to amend.\n"
 msgstr "Отсутствует коммиты для исправления.\n\nВы создаете начальный коммит, здесь еще нечего исправлять.\n"
 
-#: lib/commit.tcl:18
+#: lib/cummit.tcl:18
 msgid ""
 "Cannot amend while merging.\n"
 "\n"
-"You are currently in the middle of a merge that has not been fully completed.  You cannot amend the prior commit unless you first abort the current merge activity.\n"
+"You are currently in the middle of a merge that has not been fully completed.  You cannot amend the prior cummit unless you first abort the current merge activity.\n"
 msgstr "Невозможно исправить коммит во время слияния.\n\nТекущее слияние не завершено. Невозможно исправить предыдуий коммит, не прерывая эту операцию.\n"
 
-#: lib/commit.tcl:56
-msgid "Error loading commit data for amend:"
+#: lib/cummit.tcl:56
+msgid "Error loading cummit data for amend:"
 msgstr "Ошибка при загрузке данных для исправления коммита:"
 
-#: lib/commit.tcl:83
+#: lib/cummit.tcl:83
 msgid "Unable to obtain your identity:"
 msgstr "Невозможно получить информацию об авторстве:"
 
-#: lib/commit.tcl:88
-msgid "Invalid GIT_COMMITTER_IDENT:"
-msgstr "Недопустимый GIT_COMMITTER_IDENT:"
+#: lib/cummit.tcl:88
+msgid "Invalid GIT_cummitTER_IDENT:"
+msgstr "Недопустимый GIT_cummitTER_IDENT:"
 
-#: lib/commit.tcl:138
+#: lib/cummit.tcl:138
 #, tcl-format
 msgid "warning: Tcl does not support encoding '%s'."
 msgstr "предупреждение: Tcl не поддерживает кодировку «%s»."
 
-#: lib/commit.tcl:158
+#: lib/cummit.tcl:158
 msgid ""
 "Last scanned state does not match repository state.\n"
 "\n"
-"Another Git program has modified this repository since the last scan.  A rescan must be performed before another commit can be created.\n"
+"Another Git program has modified this repository since the last scan.  A rescan must be performed before another cummit can be created.\n"
 "\n"
 "The rescan will be automatically started now.\n"
 msgstr "Последнее прочитанное состояние репозитория не соответствует текущему.\n\nС момента последней проверки репозиторий был изменен другой программой Git. Необходимо перечитать репозиторий, прежде чем изменять текущую ветвь. \n\nЭто будет сделано сейчас автоматически.\n"
 
-#: lib/commit.tcl:182
+#: lib/cummit.tcl:182
 #, tcl-format
 msgid ""
-"Unmerged files cannot be committed.\n"
+"Unmerged files cannot be cummitted.\n"
 "\n"
-"File %s has merge conflicts.  You must resolve them and stage the file before committing.\n"
+"File %s has merge conflicts.  You must resolve them and stage the file before cummitting.\n"
 msgstr "Нельзя выполнить коммит с незавершённой операцией слияния.\n\nДля файла %s возник конфликт слияния. Разрешите конфликт и добавьте их в индекс перед выполнением коммита.\n"
 
-#: lib/commit.tcl:190
+#: lib/cummit.tcl:190
 #, tcl-format
 msgid ""
 "Unknown file state %s detected.\n"
 "\n"
-"File %s cannot be committed by this program.\n"
+"File %s cannot be cummitted by this program.\n"
 msgstr "Обнаружено неизвестное состояние файла %s.\n\nФайл %s не может быть закоммичен этой программой.\n"
 
-#: lib/commit.tcl:198
+#: lib/cummit.tcl:198
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"You must stage at least 1 file before you can commit.\n"
+"You must stage at least 1 file before you can cummit.\n"
 msgstr "Отсутствуют изменения для сохранения.\n\nДобавьте в индекс хотя бы один файл перед выполнением коммита.\n"
 
-#: lib/commit.tcl:213
+#: lib/cummit.tcl:213
 msgid ""
-"Please supply a commit message.\n"
+"Please supply a cummit message.\n"
 "\n"
-"A good commit message has the following format:\n"
+"A good cummit message has the following format:\n"
 "\n"
 "- First line: Describe in one sentence what you did.\n"
 "- Second line: Blank\n"
 "- Remaining lines: Describe why this change is good.\n"
 msgstr "Укажите сообщение коммита.\n\nРекомендуется следующий формат сообщения:\n\n- в первой строке краткое описание сделанных изменений\n- вторая строка пустая\n- в оставшихся строках опишите, что дают ваши изменения\n"
 
-#: lib/commit.tcl:244
+#: lib/cummit.tcl:244
 msgid "Calling pre-commit hook..."
-msgstr "Вызов перехватчика pre-commit…"
+msgstr "Вызов перехватчика pre-cummit…"
 
-#: lib/commit.tcl:259
-msgid "Commit declined by pre-commit hook."
-msgstr "Коммит прерван переватчиком pre-commit."
+#: lib/cummit.tcl:259
+msgid "cummit declined by pre-commit hook."
+msgstr "Коммит прерван переватчиком pre-cummit."
 
-#: lib/commit.tcl:278
+#: lib/cummit.tcl:278
 msgid ""
-"You are about to commit on a detached head. This is a potentially dangerous thing to do because if you switch to another branch you will lose your changes and it can be difficult to retrieve them later from the reflog. You should probably cancel this commit and create a new branch to continue.\n"
+"You are about to cummit on a detached head. This is a potentially dangerous thing to do because if you switch to another branch you will lose your changes and it can be difficult to retrieve them later from the reflog. You should probably cancel this cummit and create a new branch to continue.\n"
 " \n"
-" Do you really want to proceed with your Commit?"
+" Do you really want to proceed with your cummit?"
 msgstr "Вы собираетесь сделать коммит в отделённый HEAD. Это действие потенциально опасно, так как если вы переключитесь на другую ветку после этого, то вы потеряете свои изменения и их сложно будет потом найти с помощью журнала ссылок (reflog). Вам скорее всего следует отменить этот коммит и создать новую ветку до продолжения.\n \n Вы действительно хотите продолжить и создать коммит?"
 
-#: lib/commit.tcl:299
-msgid "Calling commit-msg hook..."
-msgstr "Вызов перехватчика commit-msg…"
+#: lib/cummit.tcl:299
+msgid "Calling cummit-msg hook..."
+msgstr "Вызов перехватчика cummit-msg…"
 
-#: lib/commit.tcl:314
-msgid "Commit declined by commit-msg hook."
-msgstr "Коммит прерван переватчиком commit-msg"
+#: lib/cummit.tcl:314
+msgid "cummit declined by cummit-msg hook."
+msgstr "Коммит прерван переватчиком cummit-msg"
 
-#: lib/commit.tcl:327
-msgid "Committing changes..."
+#: lib/cummit.tcl:327
+msgid "cummitting changes..."
 msgstr "Коммит изменений…"
 
-#: lib/commit.tcl:344
+#: lib/cummit.tcl:344
 msgid "write-tree failed:"
 msgstr "Программа write-tree завершилась с ошибкой:"
 
-#: lib/commit.tcl:345 lib/commit.tcl:395 lib/commit.tcl:422
-msgid "Commit failed."
+#: lib/cummit.tcl:345 lib/cummit.tcl:395 lib/cummit.tcl:422
+msgid "cummit failed."
 msgstr "Не удалось закоммитить изменения."
 
-#: lib/commit.tcl:362
+#: lib/cummit.tcl:362
 #, tcl-format
-msgid "Commit %s appears to be corrupt"
+msgid "cummit %s appears to be corrupt"
 msgstr "Коммит %s похоже поврежден"
 
-#: lib/commit.tcl:367
+#: lib/cummit.tcl:367
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"No files were modified by this commit and it was not a merge commit.\n"
+"No files were modified by this cummit and it was not a merge cummit.\n"
 "\n"
 "A rescan will be automatically started now.\n"
 msgstr "Нет изменения для коммита.\n\nНи один файл не был изменен и не было слияния.\n\nСейчас автоматически запустится перечитывание репозитория.\n"
 
-#: lib/commit.tcl:374
-msgid "No changes to commit."
+#: lib/cummit.tcl:374
+msgid "No changes to cummit."
 msgstr "Нет изменения для коммита."
 
-#: lib/commit.tcl:394
-msgid "commit-tree failed:"
-msgstr "Программа commit-tree завершилась с ошибкой:"
+#: lib/cummit.tcl:394
+msgid "cummit-tree failed:"
+msgstr "Программа cummit-tree завершилась с ошибкой:"
 
-#: lib/commit.tcl:421
+#: lib/cummit.tcl:421
 msgid "update-ref failed:"
 msgstr "Программа update-ref завершилась с ошибкой:"
 
-#: lib/commit.tcl:514
+#: lib/cummit.tcl:514
 #, tcl-format
-msgid "Created commit %s: %s"
+msgid "Created cummit %s: %s"
 msgstr "Создан коммит %s: %s "
 
 #: lib/branch_delete.tcl:16
@@ -2533,7 +2533,7 @@ msgid "%s hook failed:"
 msgstr "ошибка перехватчика %s:"
 
 #: lib/error.tcl:96
-msgid "You must correct the above errors before committing."
+msgid "You must correct the above errors before cummitting."
 msgstr "Перед коммитом, исправьте вышеуказанные ошибки."
 
 #: lib/error.tcl:116
@@ -2545,7 +2545,7 @@ msgstr "%s (%s): ошибка"
 msgid ""
 "Cannot merge while amending.\n"
 "\n"
-"You must finish amending this commit before starting any type of merge.\n"
+"You must finish amending this cummit before starting any type of merge.\n"
 msgstr "Невозможно выполнить слияние во время исправления.\n\nЗавершите исправление данного коммита перед выполнением операции слияния.\n"
 
 #: lib/merge.tcl:27
@@ -2564,7 +2564,7 @@ msgid ""
 "\n"
 "File %s has merge conflicts.\n"
 "\n"
-"You must resolve them, stage the file, and commit to complete the current merge.  Only then can you begin another merge.\n"
+"You must resolve them, stage the file, and cummit to complete the current merge.  Only then can you begin another merge.\n"
 msgstr "Предыдущее слияние не завершено из-за конфликта.\n\nДля файла %s возник конфликт слияния.\n\nРазрешите конфликт, добавьте файл в индекс и закоммитьте. Только после этого можно начать следующее слияние.\n"
 
 #: lib/merge.tcl:55
@@ -2574,7 +2574,7 @@ msgid ""
 "\n"
 "File %s is modified.\n"
 "\n"
-"You should complete the current commit before starting a merge.  Doing so will help you abort a failed merge, should the need arise.\n"
+"You should complete the current cummit before starting a merge.  Doing so will help you abort a failed merge, should the need arise.\n"
 msgstr "Вы находитесь в процессе изменений.\n\nФайл %s изменён.\n\nВы должны завершить текущий коммит перед началом слияния. В случае необходимости, это позволит прервать операцию слияния.\n"
 
 #: lib/merge.tcl:108
@@ -2613,14 +2613,14 @@ msgstr "Версия, с которой провести слияние"
 msgid ""
 "Cannot abort while amending.\n"
 "\n"
-"You must finish amending this commit.\n"
+"You must finish amending this cummit.\n"
 msgstr "Невозможно прервать исправление.\n\nЗавершите текущее исправление коммита.\n"
 
 #: lib/merge.tcl:228
 msgid ""
 "Abort merge?\n"
 "\n"
-"Aborting the current merge will cause *ALL* uncommitted changes to be lost.\n"
+"Aborting the current merge will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with aborting the current merge?"
 msgstr "Прервать операцию слияния?\n\nПрерывание текущего слияния приведет к потере *ВСЕХ* несохраненных изменений.\n\nПродолжить?"
@@ -2629,7 +2629,7 @@ msgstr "Прервать операцию слияния?\n\nПрерывани�
 msgid ""
 "Reset changes?\n"
 "\n"
-"Resetting the changes will cause *ALL* uncommitted changes to be lost.\n"
+"Resetting the changes will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with resetting the current changes?"
 msgstr "Сбросить изменения?\n\nСброс изменений приведет к потере *ВСЕХ* несохраненных изменений.\n\nПродолжить?"

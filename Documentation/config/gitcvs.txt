@@ -1,5 +1,5 @@
-gitcvs.commitMsgAnnotation::
-	Append this string to each commit message. Set to empty string
+gitcvs.cummitMsgAnnotation::
+	Append this string to each cummit message. Set to empty string
 	to disable this feature. Defaults to "via git-CVS emulator".
 
 gitcvs.enabled::

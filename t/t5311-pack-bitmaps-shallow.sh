@@ -12,7 +12,7 @@ test_description='check bitmap operation with shallow repositories'
 #      A    --   B    --   C
 #    file=1    file=2    file=1
 #
-# and then create a shallow clone to the second commit, B.
+# and then create a shallow clone to the second cummit, B.
 # In a non-shallow clone, that would mean we already have
 # the tree for A. But in a shallow one, we've grafted away
 # A, and fetching A to B requires that the other side send
@@ -20,12 +20,12 @@ test_description='check bitmap operation with shallow repositories'
 test_expect_success 'setup shallow repo' '
 	echo 1 >file &&
 	git add file &&
-	git commit -m orig &&
+	git cummit -m orig &&
 	echo 2 >file &&
-	git commit -a -m update &&
+	git cummit -a -m update &&
 	git clone --no-local --bare --depth=1 . shallow.git &&
 	echo 1 >file &&
-	git commit -a -m repeat
+	git cummit -a -m repeat
 '
 
 test_expect_success 'turn on bitmaps in the parent' '

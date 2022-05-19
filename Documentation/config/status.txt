@@ -26,12 +26,12 @@ status.displayCommentPrefix::
 
 status.renameLimit::
 	The number of files to consider when performing rename detection
-	in linkgit:git-status[1] and linkgit:git-commit[1]. Defaults to
+	in linkgit:git-status[1] and linkgit:git-cummit[1]. Defaults to
 	the value of diff.renameLimit.
 
 status.renames::
 	Whether and how Git detects renames in linkgit:git-status[1] and
-	linkgit:git-commit[1] .  If set to "false", rename detection is
+	linkgit:git-cummit[1] .  If set to "false", rename detection is
 	disabled. If set to "true", basic rename detection is enabled.
 	If set to "copies" or "copy", Git will detect copies, as well.
 	Defaults to the value of diff.renames.
@@ -42,7 +42,7 @@ status.showStash::
 	Defaults to false.
 
 status.showUntrackedFiles::
-	By default, linkgit:git-status[1] and linkgit:git-commit[1] show
+	By default, linkgit:git-status[1] and linkgit:git-cummit[1] show
 	files which are not currently tracked by Git. Directories which
 	contain only untracked files, are shown with the directory name
 	only. Showing untracked files means that Git needs to lstat() all
@@ -58,18 +58,18 @@ status.showUntrackedFiles::
 +
 If this variable is not specified, it defaults to 'normal'.
 This variable can be overridden with the -u|--untracked-files option
-of linkgit:git-status[1] and linkgit:git-commit[1].
+of linkgit:git-status[1] and linkgit:git-cummit[1].
 
 status.submoduleSummary::
 	Defaults to false.
 	If this is set to a non zero number or true (identical to -1 or an
 	unlimited number), the submodule summary will be enabled and a
-	summary of commits for modified submodules will be shown (see
+	summary of cummits for modified submodules will be shown (see
 	--summary-limit option of linkgit:git-submodule[1]). Please note
 	that the summary output command will be suppressed for all
 	submodules when `diff.ignoreSubmodules` is set to 'all' or only
 	for those submodules where `submodule.<name>.ignore=all`. The only
-	exception to that rule is that status and commit will show staged
+	exception to that rule is that status and cummit will show staged
 	submodule changes. To
 	also view the summary for ignored submodules you can either use
 	the --ignore-submodules=dirty command-line option or the 'git

@@ -8,7 +8,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'create annotated tag in refs/tags' '
-	test_commit base &&
+	test_cummit base &&
 	git tag -m annotated foo
 '
 

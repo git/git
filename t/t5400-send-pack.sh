@@ -15,26 +15,26 @@ cnt=64
 test_expect_success setup '
 	test_tick &&
 	mkdir mozart mozart/is &&
-	echo "Commit #0" >mozart/is/pink &&
+	echo "cummit #0" >mozart/is/pink &&
 	git update-index --add mozart/is/pink &&
 	tree=$(git write-tree) &&
-	commit=$(echo "Commit #0" | git commit-tree $tree) &&
-	zero=$commit &&
+	cummit=$(echo "cummit #0" | git cummit-tree $tree) &&
+	zero=$cummit &&
 	parent=$zero &&
 	i=0 &&
 	while test $i -le $cnt
 	do
 		i=$(($i+1)) &&
 		test_tick &&
-		echo "Commit #$i" >mozart/is/pink &&
+		echo "cummit #$i" >mozart/is/pink &&
 		git update-index --add mozart/is/pink &&
 		tree=$(git write-tree) &&
-		commit=$(echo "Commit #$i" |
-			 git commit-tree $tree -p $parent) &&
-		git update-ref refs/tags/commit$i $commit &&
-		parent=$commit || return 1
+		cummit=$(echo "cummit #$i" |
+			 git cummit-tree $tree -p $parent) &&
+		git update-ref refs/tags/cummit$i $cummit &&
+		parent=$cummit || return 1
 	done &&
-	git update-ref HEAD "$commit" &&
+	git update-ref HEAD "$cummit" &&
 	git clone ./. victim &&
 	( cd victim && git config receive.denyCurrentBranch warn && git log ) &&
 	git update-ref HEAD "$zero" &&
@@ -47,11 +47,11 @@ test_expect_success setup '
 		echo "Rebase #$i" >mozart/is/pink &&
 		git update-index --add mozart/is/pink &&
 		tree=$(git write-tree) &&
-		commit=$(echo "Rebase #$i" | git commit-tree $tree -p $parent) &&
-		git update-ref refs/tags/rebase$i $commit &&
-		parent=$commit || return 1
+		cummit=$(echo "Rebase #$i" | git cummit-tree $tree -p $parent) &&
+		git update-ref refs/tags/rebase$i $cummit &&
+		parent=$cummit || return 1
 	done &&
-	git update-ref HEAD "$commit" &&
+	git update-ref HEAD "$cummit" &&
 	echo Rebase &&
 	git log'
 
@@ -148,7 +148,7 @@ test_expect_success 'push --all excludes remote-tracking hierarchy' '
 	mkdir parent &&
 	(
 		cd parent &&
-		git init && : >file && git add file && git commit -m add
+		git init && : >file && git add file && git cummit -m add
 	) &&
 	git clone parent child &&
 	(
@@ -168,10 +168,10 @@ test_expect_success 'receive-pack runs auto-gc in remote repo' '
 		cd parent &&
 		echo "Some text" >file.txt &&
 		git add . &&
-		git commit -m "Initial commit" &&
+		git cummit -m "Initial cummit" &&
 		git repack -adl &&
 		echo "Some more text" >>file.txt &&
-		git commit -a -m "Second commit" &&
+		git cummit -a -m "Second cummit" &&
 		git repack
 	) &&
 	cp -R parent child &&
@@ -189,7 +189,7 @@ test_expect_success 'receive-pack runs auto-gc in remote repo' '
 	(
 		cd parent &&
 		echo "Even more text" >>file.txt &&
-		git commit -a -m "Third commit" &&
+		git cummit -a -m "Third cummit" &&
 		git send-pack ../child HEAD:refs/heads/test_auto_gc
 	) &&
 	test ! -e child/.git/objects/tmp_test_object
@@ -201,9 +201,9 @@ rewound_push_setup() {
 	(
 		cd parent &&
 		git init &&
-		echo one >file && git add file && git commit -m one &&
+		echo one >file && git add file && git cummit -m one &&
 		git config receive.denyCurrentBranch warn &&
-		echo two >file && git commit -a -m two
+		echo two >file && git cummit -a -m two
 	) &&
 	git clone parent child &&
 	(
@@ -270,12 +270,12 @@ extract_ref_advertisement () {
 
 test_expect_success 'receive-pack de-dupes .have lines' '
 	git init shared &&
-	git -C shared commit --allow-empty -m both &&
+	git -C shared cummit --allow-empty -m both &&
 	git clone -s shared fork &&
 	(
 		cd shared &&
 		git checkout -b only-shared &&
-		git commit --allow-empty -m only-shared &&
+		git cummit --allow-empty -m only-shared &&
 		git update-ref refs/heads/foo HEAD
 	) &&
 

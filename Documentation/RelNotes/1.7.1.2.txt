@@ -4,8 +4,8 @@ Git v1.7.1.2 Release Notes
 Fixes since v1.7.1.1
 --------------------
 
- * "git commit" did not honor GIT_REFLOG_ACTION environment variable, resulting
-   reflog messages for cherry-pick and revert actions to be recorded as "commit".
+ * "git cummit" did not honor GIT_REFLOG_ACTION environment variable, resulting
+   reflog messages for cherry-pick and revert actions to be recorded as "cummit".
 
  * "git clone/fetch/pull" issued an incorrect error message when a ref and
    a symref that points to the ref were updated at the same time.  This

@@ -19,7 +19,7 @@ SYNOPSIS
 	     [--] [<pathspec>...]]
 'git stash' clear
 'git stash' create [<message>]
-'git stash' store [-m|--message <message>] [-q|--quiet] <commit>
+'git stash' store [-m|--message <message>] [-q|--quiet] <cummit>
 
 DESCRIPTION
 -----------
@@ -27,11 +27,11 @@ DESCRIPTION
 Use `git stash` when you want to record the current state of the
 working directory and the index, but want to go back to a clean
 working directory.  The command saves your local modifications away
-and reverts the working directory to match the `HEAD` commit.
+and reverts the working directory to match the `HEAD` cummit.
 
 The modifications stashed away by this command can be listed with
 `git stash list`, inspected with `git stash show`, and restored
-(potentially on top of a different commit) with `git stash apply`.
+(potentially on top of a different cummit) with `git stash apply`.
 Calling `git stash` without any arguments is equivalent to `git stash push`.
 A stash is by default listed as "WIP on 'branchname' ...", but
 you can give a more descriptive message on the command line when
@@ -72,7 +72,7 @@ list [<log-options>]::
 	List the stash entries that you currently have.  Each 'stash entry' is
 	listed with its name (e.g. `stash@{0}` is the latest entry, `stash@{1}` is
 	the one before, etc.), the name of the branch that was current when the
-	entry was made, and a short description of the commit the entry was
+	entry was made, and a short description of the cummit the entry was
 	based on.
 +
 ----------------------------------------------------------------
@@ -86,7 +86,7 @@ command to control what is shown and how. See linkgit:git-log[1].
 show [-u|--include-untracked|--only-untracked] [<diff-options>] [<stash>]::
 
 	Show the changes recorded in the stash entry as a diff between the
-	stashed contents and the commit back when the stash entry was first
+	stashed contents and the cummit back when the stash entry was first
 	created.
 	By default, the command shows the diffstat, but it will accept any
 	format known to 'git diff' (e.g., `git stash show -p stash@{1}`
@@ -110,20 +110,20 @@ and call `git stash drop` manually afterwards.
 apply [--index] [-q|--quiet] [<stash>]::
 
 	Like `pop`, but do not remove the state from the stash list. Unlike `pop`,
-	`<stash>` may be any commit that looks like a commit created by
+	`<stash>` may be any cummit that looks like a cummit created by
 	`stash push` or `stash create`.
 
 branch <branchname> [<stash>]::
 
 	Creates and checks out a new branch named `<branchname>` starting from
-	the commit at which the `<stash>` was originally created, applies the
+	the cummit at which the `<stash>` was originally created, applies the
 	changes recorded in `<stash>` to the new working tree and index.
 	If that succeeds, and `<stash>` is a reference of the form
 	`stash@{<revision>}`, it then drops the `<stash>`.
 +
 This is useful if the branch on which you ran `git stash push` has
 changed enough that `git stash apply` fails due to conflicts. Since
-the stash entry is applied on top of the commit that was HEAD at the
+the stash entry is applied on top of the cummit that was HEAD at the
 time `git stash` was run, it restores the originally stashed state
 with no conflicts.
 
@@ -138,7 +138,7 @@ drop [-q|--quiet] [<stash>]::
 
 create::
 
-	Create a stash entry (which is a regular commit object) and
+	Create a stash entry (which is a regular cummit object) and
 	return its object name, without storing it anywhere in the ref
 	namespace.
 	This is intended to be useful for scripts.  It is probably not
@@ -147,7 +147,7 @@ create::
 store::
 
 	Store a given stash created via 'git stash create' (which is a
-	dangling merge commit) in the stash ref, updating the stash
+	dangling merge cummit) in the stash ref, updating the stash
 	reflog.  This is intended to be useful for scripts.  It is
 	probably not the command you want to use; see "push" above.
 
@@ -210,7 +210,7 @@ The `--patch` option implies `--keep-index`.  You can use
 	This option is only valid for `push` and `save` commands.
 +
 Stash only the changes that are currently staged. This is similar to
-basic `git commit` except the state is committed to the stash instead
+basic `git cummit` except the state is cummitted to the stash instead
 of current branch.
 +
 The `--patch` option has priority over this one.
@@ -264,18 +264,18 @@ given, the latest stash is assumed (that is, `stash@{0}`).
 DISCUSSION
 ----------
 
-A stash entry is represented as a commit whose tree records the state
-of the working directory, and its first parent is the commit at `HEAD`
+A stash entry is represented as a cummit whose tree records the state
+of the working directory, and its first parent is the cummit at `HEAD`
 when the entry was created.  The tree of the second parent records the
 state of the index when the entry is made, and it is made a child of
-the `HEAD` commit.  The ancestry graph looks like this:
+the `HEAD` cummit.  The ancestry graph looks like this:
 
             .----W
            /    /
      -----H----I
 
-where `H` is the `HEAD` commit, `I` is a commit that records the state
-of the index, and `W` is a commit that records the state of the working
+where `H` is the `HEAD` cummit, `I` is a cummit that records the state
+of the index, and `W` is a cummit that records the state of the working
 tree.
 
 
@@ -307,16 +307,16 @@ Interrupted workflow::
 
 When you are in the middle of something, your boss comes in and
 demands that you fix something immediately.  Traditionally, you would
-make a commit to a temporary branch to store your changes away, and
+make a cummit to a temporary branch to store your changes away, and
 return to your original branch to make the emergency fix, like this:
 +
 ----------------------------------------------------------------
 # ... hack hack hack ...
 $ git switch -c my_wip
-$ git commit -a -m "WIP"
+$ git cummit -a -m "WIP"
 $ git switch master
 $ edit emergency fix
-$ git commit -a -m "Fix in a hurry"
+$ git cummit -a -m "Fix in a hurry"
 $ git switch my_wip
 $ git reset --soft HEAD^
 # ... continue hacking ...
@@ -328,27 +328,27 @@ You can use 'git stash' to simplify the above, like this:
 # ... hack hack hack ...
 $ git stash
 $ edit emergency fix
-$ git commit -a -m "Fix in a hurry"
+$ git cummit -a -m "Fix in a hurry"
 $ git stash pop
 # ... continue hacking ...
 ----------------------------------------------------------------
 
-Testing partial commits::
+Testing partial cummits::
 
 You can use `git stash push --keep-index` when you want to make two or
-more commits out of the changes in the work tree, and you want to test
-each change before committing:
+more cummits out of the changes in the work tree, and you want to test
+each change before cummitting:
 +
 ----------------------------------------------------------------
 # ... hack hack hack ...
 $ git add --patch foo            # add just first part to the index
 $ git stash push --keep-index    # save all other changes to the stash
 $ edit/build/test first part
-$ git commit -m 'First part'     # commit fully tested change
+$ git cummit -m 'First part'     # cummit fully tested change
 $ git stash pop                  # prepare to work on all other changes
-# ... repeat above five steps until one commit remains ...
+# ... repeat above five steps until one cummit remains ...
 $ edit/build/test remaining parts
-$ git commit foo -m 'Remaining parts'
+$ git cummit foo -m 'Remaining parts'
 ----------------------------------------------------------------
 
 Saving unrelated changes for future use::
@@ -356,15 +356,15 @@ Saving unrelated changes for future use::
 When you are in the middle of massive changes and you find some
 unrelated issue that you don't want to forget to fix, you can do the
 change(s), stage them, and use `git stash push --staged` to stash them
-out for future use. This is similar to committing the staged changes,
-only the commit ends-up being in the stash and not on the current branch.
+out for future use. This is similar to cummitting the staged changes,
+only the cummit ends-up being in the stash and not on the current branch.
 +
 ----------------------------------------------------------------
 # ... hack hack hack ...
 $ git add --patch foo           # add unrelated changes to the index
 $ git stash push --staged       # save these changes to the stash
 # ... hack hack hack, finish curent changes ...
-$ git commit -m 'Massive'       # commit fully tested changes
+$ git cummit -m 'Massive'       # cummit fully tested changes
 $ git switch fixup-branch       # switch to another branch
 $ git stash pop                 # to finish work on the saved changes
 ----------------------------------------------------------------
@@ -378,7 +378,7 @@ your repository, but not reachable any more:
 +
 ----------------------------------------------------------------
 git fsck --unreachable |
-grep commit | cut -d\  -f3 |
+grep cummit | cut -d\  -f3 |
 xargs git log --merges --no-walk --grep=WIP
 ----------------------------------------------------------------
 
@@ -386,7 +386,7 @@ xargs git log --merges --no-walk --grep=WIP
 SEE ALSO
 --------
 linkgit:git-checkout[1],
-linkgit:git-commit[1],
+linkgit:git-cummit[1],
 linkgit:git-reflog[1],
 linkgit:git-reset[1],
 linkgit:git-switch[1]

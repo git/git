@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# An example hook script to verify what is about to be cummitted.
+# Called by "git merge" with no arguments.  The hook should
+# exit with non-zero status after issuing an appropriate message to
+# stderr if it wants to stop the merge cummit.
+#
+# To enable this hook, rename this file to "pre-merge-cummit".
+
+. git-sh-setup
+test -x "$GIT_DIR/hooks/pre-cummit" &&
+        exec "$GIT_DIR/hooks/pre-cummit"
+:

@@ -10,18 +10,18 @@ format_patch () {
 }
 
 test_expect_success 'setup' '
-	test_commit initial file &&
-	test_commit first file &&
+	test_cummit initial file &&
+	test_cummit first file &&
 
 	git checkout initial &&
 	git mv file file2 &&
 	test_tick &&
-	git commit -m renamed-file &&
+	git cummit -m renamed-file &&
 	git tag renamed-file &&
 
 	git checkout -b side initial &&
-	test_commit side1 file &&
-	test_commit side2 file &&
+	test_cummit side1 file &&
+	test_cummit side2 file &&
 
 	format_patch side1 &&
 	format_patch side2
@@ -76,7 +76,7 @@ test_expect_success '--signoff overrides --no-signoff' '
 	git am --signoff --continue &&
 
 	# Applied side1 will be signed off
-	echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" >expected &&
+	echo "Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>" >expected &&
 	git cat-file commit HEAD^ | grep "Signed-off-by:" >actual &&
 	test_cmp expected actual &&
 

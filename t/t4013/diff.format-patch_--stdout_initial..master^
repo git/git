@@ -4,7 +4,7 @@ From: A U Thor <author@example.com>
 Date: Mon, 26 Jun 2006 00:01:00 +0000
 Subject: [PATCH 1/2] Second
 
-This is the second commit.
+This is the second cummit.
 ---
  dir/sub | 2 ++
  file0   | 3 +++

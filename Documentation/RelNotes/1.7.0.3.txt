@@ -15,7 +15,7 @@ Fixes since v1.7.0.2
  * "git fetch --all/--multi" used to discard information for remotes that
    are fetched earlier.
 
- * "git log --author=me --grep=it" tried to find commits that have "it"
+ * "git log --author=me --grep=it" tried to find cummits that have "it"
    or are written by "me", instead of the ones that have "it" _and_ are
    written by "me".
 

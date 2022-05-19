@@ -179,7 +179,7 @@ a space) at the start of each line:
 "" means the file is not a regular file, it is not in the index or
 not accessible in the working tree.
 +
-<eolattr> is the attribute that is used when checking out or committing,
+<eolattr> is the attribute that is used when checking out or cummitting,
 it is either "", "-text", "text", "text=auto", "text eol=lf", "text eol=crlf".
 Since Git 2.10 "text=auto eol=lf" and "text=auto eol=crlf" are supported.
 +

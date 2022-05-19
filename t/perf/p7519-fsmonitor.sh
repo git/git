@@ -132,7 +132,7 @@ test_expect_success "one time repo setup" '
 	touch_files 1000 &&
 	touch_files 10000 &&
 	git add 1_file 10_files 100_files 1000_files 10000_files &&
-	git commit -qm "Add files" &&
+	git cummit -qm "Add files" &&
 
 	# If Watchman exists, watch the work tree and attempt a query.
 	if test_have_prereq WATCHMAN; then

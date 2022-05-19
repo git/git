@@ -75,7 +75,7 @@ When a fetch mirror is created with `--mirror=fetch`, the refs will not
 be stored in the 'refs/remotes/' namespace, but rather everything in
 'refs/' on the remote will be directly mirrored into 'refs/' in the
 local repository. This option only makes sense in bare repositories,
-because a fetch would overwrite any local commits.
+because a fetch would overwrite any local cummits.
 +
 When a push mirror is created with `--mirror=push`, then `git push`
 will always behave as if `--mirror` was passed.

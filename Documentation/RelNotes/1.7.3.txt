@@ -67,7 +67,7 @@ release, unless otherwise noted.
  * "git ls-tree dir dirgarbage", when "dir" was a directory,
    incorrectly recursed into "dir".
 
- * "git note remove" created unnecessary extra commit when named object
+ * "git note remove" created unnecessary extra cummit when named object
    did not have any note to begin with.
 
  * "git rebase" did not work well if you had diff.noprefix configured.

@@ -19,28 +19,28 @@ done >original
 
 test_expect_success setup '
 	git add original &&
-	git commit -m"initial" &&
+	git cummit -m"initial" &&
 	git branch side &&
 	echo "11 $T" >>original &&
-	git commit -a -m"main updates a bit." &&
+	git cummit -a -m"main updates a bit." &&
 
 	echo "12 $T" >>original &&
-	git commit -a -m"main updates a bit more." &&
+	git cummit -a -m"main updates a bit more." &&
 
 	git checkout side &&
 	(echo "0 $T" && cat original) >renamed &&
 	git add renamed &&
 	git update-index --force-remove original &&
-	git commit -a -m"side renames and edits." &&
+	git cummit -a -m"side renames and edits." &&
 
 	tr "[a-z]" "[A-Z]" <original >newfile &&
 	git add newfile &&
-	git commit -a -m"side edits further." &&
+	git cummit -a -m"side edits further." &&
 	git branch second-side &&
 
 	tr "[a-m]" "[A-M]" <original >newfile &&
 	rm -f original &&
-	git commit -a -m"side edits once again." &&
+	git cummit -a -m"side edits once again." &&
 
 	git branch test-rebase side &&
 	git branch test-rebase-pick side &&
@@ -82,7 +82,7 @@ test_expect_success 'rebase the other way' '
 test_expect_success 'rebase -Xtheirs' '
 	git checkout -b conflicting main~2 &&
 	echo "AB $T" >> original &&
-	git commit -mconflicting original &&
+	git cummit -mconflicting original &&
 	git rebase -Xtheirs main &&
 	grep AB original &&
 	! grep 11 original
@@ -91,7 +91,7 @@ test_expect_success 'rebase -Xtheirs' '
 test_expect_success 'rebase -Xtheirs from orphan' '
 	git checkout --orphan orphan-conflicting main~2 &&
 	echo "AB $T" >> original &&
-	git commit -morphan-conflicting original &&
+	git cummit -morphan-conflicting original &&
 	git rebase -Xtheirs main &&
 	grep AB original &&
 	! grep 11 original
@@ -144,7 +144,7 @@ test_expect_success 'rebase -s funny -Xopt' '
 	chmod +x test-bin/git-merge-funny &&
 	git reset --hard &&
 	git checkout -b test-funny main^ &&
-	test_commit funny &&
+	test_cummit funny &&
 	(
 		PATH=./test-bin:$PATH &&
 		git rebase -s funny -Xopt main
@@ -156,10 +156,10 @@ test_expect_success 'rebase --skip works with two conflicts in a row' '
 	git checkout second-side  &&
 	tr "[A-Z]" "[a-z]" <newfile >tmp &&
 	mv tmp newfile &&
-	git commit -a -m"edit conflicting with side" &&
+	git cummit -a -m"edit conflicting with side" &&
 	tr "[d-f]" "[D-F]" <newfile >tmp &&
 	mv tmp newfile &&
-	git commit -a -m"another edit conflicting with side" &&
+	git cummit -a -m"another edit conflicting with side" &&
 	test_must_fail git rebase --merge test-conflicts &&
 	test_must_fail git rebase --skip &&
 	git rebase --skip
@@ -174,22 +174,22 @@ test_expect_success '--reapply-cherry-picks' '
 
 	printf "Line %d\n" $(test_seq 1 10) >repo/file.txt &&
 	git -C repo add file.txt &&
-	git -C repo commit -m "base commit" &&
+	git -C repo cummit -m "base cummit" &&
 
 	printf "Line %d\n" $(test_seq 1 11) >repo/file.txt &&
-	git -C repo commit -a -m "add 11" &&
+	git -C repo cummit -a -m "add 11" &&
 
 	printf "Line %d\n" $(test_seq 0 10) >repo/file.txt &&
-	git -C repo commit -a -m "add 0 delete 11" &&
+	git -C repo cummit -a -m "add 0 delete 11" &&
 
 	git -C repo checkout -b otherbranch HEAD^^ &&
 	printf "Line %d\n" $(test_seq 1 11) >repo/file.txt &&
-	git -C repo commit -a -m "add 11 in another branch" &&
+	git -C repo cummit -a -m "add 11 in another branch" &&
 
 	printf "Line %d\n" $(test_seq 1 12) >repo/file.txt &&
-	git -C repo commit -a -m "add 12 in another branch" &&
+	git -C repo cummit -a -m "add 12 in another branch" &&
 
-	# Regular rebase fails, because the 1-11 commit is deduplicated
+	# Regular rebase fails, because the 1-11 cummit is deduplicated
 	test_must_fail git -C repo rebase --merge main 2> err &&
 	test_i18ngrep "error: could not apply.*add 12 in another branch" err &&
 	git -C repo rebase --abort &&
@@ -207,17 +207,17 @@ test_expect_success '--reapply-cherry-picks refrains from reading unneeded blobs
 
 	printf "Line %d\n" $(test_seq 1 10) >server/file.txt &&
 	git -C server add file.txt &&
-	git -C server commit -m "merge base" &&
+	git -C server cummit -m "merge base" &&
 
 	printf "Line %d\n" $(test_seq 1 11) >server/file.txt &&
-	git -C server commit -a -m "add 11" &&
+	git -C server cummit -a -m "add 11" &&
 
 	printf "Line %d\n" $(test_seq 1 12) >server/file.txt &&
-	git -C server commit -a -m "add 12" &&
+	git -C server cummit -a -m "add 12" &&
 
 	git -C server checkout -b otherbranch HEAD^^ &&
 	printf "Line %d\n" $(test_seq 0 10) >server/file.txt &&
-	git -C server commit -a -m "add 0" &&
+	git -C server cummit -a -m "add 0" &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&

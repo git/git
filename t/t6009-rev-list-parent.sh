@@ -20,15 +20,15 @@ test_expect_success setup '
 	touch file &&
 	git add file &&
 
-	test_commit one &&
+	test_cummit one &&
 
 	test_tick=$(($test_tick - 2400)) &&
 
-	test_commit two &&
-	test_commit three &&
-	test_commit four &&
+	test_cummit two &&
+	test_cummit three &&
+	test_cummit four &&
 
-	git log --pretty=oneline --abbrev-commit
+	git log --pretty=oneline --abbrev-cummit
 '
 
 test_expect_success 'one is ancestor of others and should not be shown' '
@@ -41,13 +41,13 @@ test_expect_success 'one is ancestor of others and should not be shown' '
 test_expect_success 'setup roots, merges and octopuses' '
 
 	git checkout --orphan newroot &&
-	test_commit five &&
+	test_cummit five &&
 	git checkout -b sidebranch two &&
-	test_commit six &&
+	test_cummit six &&
 	git checkout -b anotherbranch three &&
-	test_commit seven &&
+	test_cummit seven &&
 	git checkout -b yetanotherbranch four &&
-	test_commit eight &&
+	test_cummit eight &&
 	git checkout main &&
 	test_tick &&
 	git merge --allow-unrelated-histories -m normalmerge newroot &&
@@ -94,7 +94,7 @@ test_expect_success 'rev-list octopus' '
 	check_revlist "--min-parents=3" tetrapus tripus
 '
 
-test_expect_success 'rev-list ordinary commits' '
+test_expect_success 'rev-list ordinary cummits' '
 
 	check_revlist "--min-parents=1 --max-parents=1" eight seven six four three two
 '
@@ -122,7 +122,7 @@ test_expect_success 'dodecapus' '
 	for i in 1 2 3 4 5 6 7 8 9 10 11
 	do
 		git checkout -b root$i five &&
-		test_commit $i &&
+		test_cummit $i &&
 		roots="$roots root$i" ||
 		return 1
 	done &&
@@ -138,12 +138,12 @@ test_expect_success 'dodecapus' '
 	check_revlist "--min-parents=4 --max-parents=11" tetrapus
 '
 
-test_expect_success 'ancestors with the same commit time' '
+test_expect_success 'ancestors with the same cummit time' '
 
 	test_tick_keep=$test_tick &&
 	for i in 1 2 3 4 5 6 7 8; do
 		test_tick=$test_tick_keep &&
-		test_commit t$i || return 1
+		test_cummit t$i || return 1
 	done &&
 	git rev-list t1^! --not t$i >result &&
 	test_must_be_empty result

@@ -16,7 +16,7 @@ Fixes since v1.9.0
    variables in the configuration file should not matter, but it did
    by mistake.
 
- * Codepaths that parse timestamps in commit objects have been
+ * Codepaths that parse timestamps in cummit objects have been
    tightened.
 
  * "git diff --external-diff" incorrectly fed the submodule directory
@@ -50,7 +50,7 @@ Fixes since v1.9.0
  * Attempting to deepen a shallow repository by fetching over smart
    HTTP transport failed in the protocol exchange, when no-done
    extension was used.  The fetching side waited for the list of
-   shallow boundary commits after the sending end stopped talking to
+   shallow boundary cummits after the sending end stopped talking to
    it.
 
  * Allow "git cmd path/", when the 'path' is where a submodule is

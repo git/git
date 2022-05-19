@@ -15,7 +15,7 @@ test_expect_success setup '
 	test_write_lines a b c d e f g h i j k l m >same_fn &&
 	cp same_fn other_fn &&
 	git add same_fn other_fn &&
-	git commit -m initial
+	git cummit -m initial
 '
 test_expect_success 'apply same filename with independent changes' '
 	modify "s/^d/z/" same_fn &&
@@ -84,7 +84,7 @@ test_expect_success 'apply A->B (rename), C->A (rename), A->A -- should pass.' '
 	modify "s/^d/z/" new_fn &&
 	git add new_fn &&
 	git diff -M --cached > patch1 &&
-	git commit -m "a rename" &&
+	git cummit -m "a rename" &&
 	git mv other_fn same_fn &&
 	modify "s/^e/y/" same_fn &&
 	git add same_fn &&

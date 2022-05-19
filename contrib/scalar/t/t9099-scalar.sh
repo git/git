@@ -33,12 +33,12 @@ test_expect_success 'scalar unregister' '
 '
 
 test_expect_success 'set up repository to clone' '
-	test_commit first &&
-	test_commit second &&
-	test_commit third &&
+	test_cummit first &&
+	test_cummit second &&
+	test_cummit third &&
 	git switch -c parallel first &&
 	mkdir -p 1/2 &&
-	test_commit 1/2/3 &&
+	test_cummit 1/2/3 &&
 	git config uploadPack.allowFilter true &&
 	git config uploadPack.allowAnySHA1InWant true
 '

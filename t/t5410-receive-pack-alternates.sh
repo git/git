@@ -9,12 +9,12 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit base &&
+	test_cummit base &&
 	git clone -s --bare . fork &&
 	git checkout -b public/branch main &&
-	test_commit public &&
+	test_cummit public &&
 	git checkout -b private/branch main &&
-	test_commit private
+	test_cummit private
 '
 
 extract_haves () {

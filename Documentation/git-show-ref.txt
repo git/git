@@ -17,7 +17,7 @@ DESCRIPTION
 -----------
 
 Displays references available in a local repository along with the associated
-commit IDs. Results can be filtered using a pattern and tags can be
+cummit IDs. Results can be filtered using a pattern and tags can be
 dereferenced into object IDs. Additionally, it can be used to test whether a
 particular ref exists.
 

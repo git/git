@@ -8,7 +8,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'branch -d @{-1}' '
-	test_commit A &&
+	test_cummit A &&
 	git checkout -b junk &&
 	git checkout - &&
 	test "$(git symbolic-ref HEAD)" = refs/heads/main &&
@@ -27,10 +27,10 @@ test_expect_success 'branch -d @{-12} when there is not enough switches yet' '
 
 test_expect_success 'merge @{-1}' '
 	git checkout A &&
-	test_commit B &&
+	test_cummit B &&
 	git checkout A &&
-	test_commit C &&
-	test_commit D &&
+	test_cummit C &&
+	test_cummit D &&
 	git branch -f main B &&
 	git branch -f other &&
 	git checkout other &&

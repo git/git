@@ -5,7 +5,7 @@
 #include "wildmatch.h"
 #include "object-store.h"
 #include "repository.h"
-#include "commit.h"
+#include "cummit.h"
 #include "remote.h"
 #include "color.h"
 #include "tag.h"
@@ -17,9 +17,9 @@
 #include "version.h"
 #include "trailer.h"
 #include "wt-status.h"
-#include "commit-slab.h"
-#include "commit-graph.h"
-#include "commit-reach.h"
+#include "cummit-slab.h"
+#include "cummit-graph.h"
+#include "cummit-reach.h"
 #include "worktree.h"
 #include "hashmap.h"
 #include "strvec.h"
@@ -130,10 +130,10 @@ enum atom_type {
 	ATOM_AUTHORNAME,
 	ATOM_AUTHOREMAIL,
 	ATOM_AUTHORDATE,
-	ATOM_COMMITTER,
-	ATOM_COMMITTERNAME,
-	ATOM_COMMITTEREMAIL,
-	ATOM_COMMITTERDATE,
+	ATOM_cummitTER,
+	ATOM_cummitTERNAME,
+	ATOM_cummitTEREMAIL,
+	ATOM_cummitTERDATE,
 	ATOM_TAGGER,
 	ATOM_TAGGERNAME,
 	ATOM_TAGGEREMAIL,
@@ -599,10 +599,10 @@ static struct {
 	[ATOM_AUTHORNAME] = { "authorname", SOURCE_OBJ },
 	[ATOM_AUTHOREMAIL] = { "authoremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
 	[ATOM_AUTHORDATE] = { "authordate", SOURCE_OBJ, FIELD_TIME },
-	[ATOM_COMMITTER] = { "committer", SOURCE_OBJ },
-	[ATOM_COMMITTERNAME] = { "committername", SOURCE_OBJ },
-	[ATOM_COMMITTEREMAIL] = { "committeremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
-	[ATOM_COMMITTERDATE] = { "committerdate", SOURCE_OBJ, FIELD_TIME },
+	[ATOM_cummitTER] = { "cummitter", SOURCE_OBJ },
+	[ATOM_cummitTERNAME] = { "cummittername", SOURCE_OBJ },
+	[ATOM_cummitTEREMAIL] = { "cummitteremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
+	[ATOM_cummitTERDATE] = { "cummitterdate", SOURCE_OBJ, FIELD_TIME },
 	[ATOM_TAGGER] = { "tagger", SOURCE_OBJ },
 	[ATOM_TAGGERNAME] = { "taggername", SOURCE_OBJ },
 	[ATOM_TAGGEREMAIL] = { "taggeremail", SOURCE_OBJ, FIELD_STR, person_email_atom_parser },
@@ -1129,10 +1129,10 @@ static void grab_tag_values(struct atom_value *val, int deref, struct object *ob
 }
 
 /* See grab_values */
-static void grab_commit_values(struct atom_value *val, int deref, struct object *obj)
+static void grab_cummit_values(struct atom_value *val, int deref, struct object *obj)
 {
 	int i;
-	struct commit *commit = (struct commit *) obj;
+	struct cummit *cummit = (struct cummit *) obj;
 
 	for (i = 0; i < used_atom_cnt; i++) {
 		const char *name = used_atom[i].name;
@@ -1143,18 +1143,18 @@ static void grab_commit_values(struct atom_value *val, int deref, struct object 
 		if (deref)
 			name++;
 		if (atom_type == ATOM_TREE &&
-		    grab_oid(name, "tree", get_commit_tree_oid(commit), v, &used_atom[i]))
+		    grab_oid(name, "tree", get_cummit_tree_oid(cummit), v, &used_atom[i]))
 			continue;
 		if (atom_type == ATOM_NUMPARENT) {
-			v->value = commit_list_count(commit->parents);
+			v->value = cummit_list_count(cummit->parents);
 			v->s = xstrfmt("%lu", (unsigned long)v->value);
 		}
 		else if (atom_type == ATOM_PARENT) {
-			struct commit_list *parents;
+			struct cummit_list *parents;
 			struct strbuf s = STRBUF_INIT;
-			for (parents = commit->parents; parents; parents = parents->next) {
+			for (parents = cummit->parents; parents; parents = parents->next) {
 				struct object_id *oid = &parents->item->object.oid;
-				if (parents != commit->parents)
+				if (parents != cummit->parents)
 					strbuf_addch(&s, ' ');
 				strbuf_addstr(&s, do_grab_oid("parent", oid, &used_atom[i]));
 			}
@@ -1319,11 +1319,11 @@ static void grab_person(const char *who, struct atom_value *val, int deref, void
 	}
 
 	/*
-	 * For a tag or a commit object, if "creator" or "creatordate" is
+	 * For a tag or a cummit object, if "creator" or "creatordate" is
 	 * requested, do something special.
 	 */
-	if (strcmp(who, "tagger") && strcmp(who, "committer"))
-		return; /* "author" for commit object is not wanted */
+	if (strcmp(who, "tagger") && strcmp(who, "cummitter"))
+		return; /* "author" for cummit object is not wanted */
 	if (!wholine)
 		wholine = find_wholine(who, wholen, buf);
 	if (!wholine)
@@ -1453,7 +1453,7 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct exp
 		}
 
 		if ((data->type != OBJ_TAG &&
-		     data->type != OBJ_COMMIT) ||
+		     data->type != OBJ_cummit) ||
 		    (strcmp(name, "body") &&
 		     !starts_with(name, "subject") &&
 		     !starts_with(name, "trailers") &&
@@ -1490,7 +1490,7 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct exp
 			struct strbuf s = STRBUF_INIT;
 
 			/* Format the trailer info according to the trailer_opts given */
-			format_trailers_from_commit(&s, subpos, &atom->u.contents.trailer_opts);
+			format_trailers_from_cummit(&s, subpos, &atom->u.contents.trailer_opts);
 
 			v->s = strbuf_detach(&s, NULL);
 		} else if (atom->u.contents.option == C_BARE)
@@ -1531,11 +1531,11 @@ static void grab_values(struct atom_value *val, int deref, struct object *obj, s
 		grab_sub_body_contents(val, deref, data);
 		grab_person("tagger", val, deref, buf);
 		break;
-	case OBJ_COMMIT:
-		grab_commit_values(val, deref, obj);
+	case OBJ_cummit:
+		grab_cummit_values(val, deref, obj);
 		grab_sub_body_contents(val, deref, data);
 		grab_person("author", val, deref, buf);
-		grab_person("committer", val, deref, buf);
+		grab_person("cummitter", val, deref, buf);
 		break;
 	case OBJ_TREE:
 		/* grab_tree_values(val, deref, obj, buf, sz); */
@@ -2137,7 +2137,7 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
  * NEEDSWORK:
  * 1. Only a single level of indirection is obtained, we might want to
  * change this to account for multiple levels (e.g. annotated tags
- * pointing to annotated tags pointing to a commit.)
+ * pointing to annotated tags pointing to a cummit.)
  * 2. As the refs are cached we might know what refname peels to without
  * the need to parse the object via parse_object(). peel_ref() might be a
  * more efficient alternative to obtain the pointee.
@@ -2239,7 +2239,7 @@ static int ref_filter_handler(const char *refname, const struct object_id *oid, 
 	struct ref_filter_cbdata *ref_cbdata = cb_data;
 	struct ref_filter *filter = ref_cbdata->filter;
 	struct ref_array_item *ref;
-	struct commit *commit = NULL;
+	struct cummit *cummit = NULL;
 	unsigned int kind;
 
 	if (flag & REF_BAD_NAME) {
@@ -2264,22 +2264,22 @@ static int ref_filter_handler(const char *refname, const struct object_id *oid, 
 		return 0;
 
 	/*
-	 * A merge filter is applied on refs pointing to commits. Hence
-	 * obtain the commit using the 'oid' available and discard all
-	 * non-commits early. The actual filtering is done later.
+	 * A merge filter is applied on refs pointing to cummits. Hence
+	 * obtain the cummit using the 'oid' available and discard all
+	 * non-cummits early. The actual filtering is done later.
 	 */
 	if (filter->reachable_from || filter->unreachable_from ||
-	    filter->with_commit || filter->no_commit || filter->verbose) {
-		commit = lookup_commit_reference_gently(the_repository, oid, 1);
-		if (!commit)
+	    filter->with_cummit || filter->no_cummit || filter->verbose) {
+		cummit = lookup_cummit_reference_gently(the_repository, oid, 1);
+		if (!cummit)
 			return 0;
 		/* We perform the filtering for the '--contains' option... */
-		if (filter->with_commit &&
-		    !commit_contains(filter, commit, filter->with_commit, &ref_cbdata->contains_cache))
+		if (filter->with_cummit &&
+		    !cummit_contains(filter, cummit, filter->with_cummit, &ref_cbdata->contains_cache))
 			return 0;
 		/* ...or for the `--no-contains' option */
-		if (filter->no_commit &&
-		    commit_contains(filter, commit, filter->no_commit, &ref_cbdata->no_contains_cache))
+		if (filter->no_cummit &&
+		    cummit_contains(filter, cummit, filter->no_cummit, &ref_cbdata->no_contains_cache))
 			return 0;
 	}
 
@@ -2289,7 +2289,7 @@ static int ref_filter_handler(const char *refname, const struct object_id *oid, 
 	 * by maxcount logic.
 	 */
 	ref = ref_array_push(ref_cbdata->array, refname, oid);
-	ref->commit = commit;
+	ref->cummit = cummit;
 	ref->flag = flag;
 	ref->kind = kind;
 
@@ -2339,13 +2339,13 @@ void ref_array_clear(struct ref_array *array)
 #define EXCLUDE_REACHED 0
 #define INCLUDE_REACHED 1
 static void reach_filter(struct ref_array *array,
-			 struct commit_list *check_reachable,
+			 struct cummit_list *check_reachable,
 			 int include_reached)
 {
 	struct rev_info revs;
 	int i, old_nr;
-	struct commit **to_clear;
-	struct commit_list *cr;
+	struct cummit **to_clear;
+	struct cummit_list *cr;
 
 	if (!check_reachable)
 		return;
@@ -2356,14 +2356,14 @@ static void reach_filter(struct ref_array *array,
 
 	for (i = 0; i < array->nr; i++) {
 		struct ref_array_item *item = array->items[i];
-		add_pending_object(&revs, &item->commit->object, item->refname);
-		to_clear[i] = item->commit;
+		add_pending_object(&revs, &item->cummit->object, item->refname);
+		to_clear[i] = item->cummit;
 	}
 
 	for (cr = check_reachable; cr; cr = cr->next) {
-		struct commit *merge_commit = cr->item;
-		merge_commit->object.flags |= UNINTERESTING;
-		add_pending_object(&revs, &merge_commit->object, "");
+		struct cummit *merge_cummit = cr->item;
+		merge_cummit->object.flags |= UNINTERESTING;
+		add_pending_object(&revs, &merge_cummit->object, "");
 	}
 
 	revs.limited = 1;
@@ -2375,9 +2375,9 @@ static void reach_filter(struct ref_array *array,
 
 	for (i = 0; i < old_nr; i++) {
 		struct ref_array_item *item = array->items[i];
-		struct commit *commit = item->commit;
+		struct cummit *cummit = item->cummit;
 
-		int is_merged = !!(commit->object.flags & UNINTERESTING);
+		int is_merged = !!(cummit->object.flags & UNINTERESTING);
 
 		if (is_merged == include_reached)
 			array->items[array->nr++] = array->items[i];
@@ -2385,11 +2385,11 @@ static void reach_filter(struct ref_array *array,
 			free_array_item(item);
 	}
 
-	clear_commit_marks_many(old_nr, to_clear, ALL_REV_FLAGS);
+	clear_cummit_marks_many(old_nr, to_clear, ALL_REV_FLAGS);
 
 	while (check_reachable) {
-		struct commit *merge_commit = pop_commit(&check_reachable);
-		clear_commit_marks(merge_commit, ALL_REV_FLAGS);
+		struct cummit *merge_cummit = pop_cummit(&check_reachable);
+		clear_cummit_marks(merge_cummit, ALL_REV_FLAGS);
 	}
 
 	free(to_clear);
@@ -2733,22 +2733,22 @@ int parse_opt_merge_filter(const struct option *opt, const char *arg, int unset)
 {
 	struct ref_filter *rf = opt->value;
 	struct object_id oid;
-	struct commit *merge_commit;
+	struct cummit *merge_cummit;
 
 	BUG_ON_OPT_NEG(unset);
 
 	if (get_oid(arg, &oid))
 		die(_("malformed object name %s"), arg);
 
-	merge_commit = lookup_commit_reference_gently(the_repository, &oid, 0);
+	merge_cummit = lookup_cummit_reference_gently(the_repository, &oid, 0);
 
-	if (!merge_commit)
-		return error(_("option `%s' must point to a commit"), opt->long_name);
+	if (!merge_cummit)
+		return error(_("option `%s' must point to a cummit"), opt->long_name);
 
 	if (starts_with(opt->long_name, "no"))
-		commit_list_insert(merge_commit, &rf->unreachable_from);
+		cummit_list_insert(merge_cummit, &rf->unreachable_from);
 	else
-		commit_list_insert(merge_commit, &rf->reachable_from);
+		cummit_list_insert(merge_cummit, &rf->reachable_from);
 
 	return 0;
 }

@@ -11,7 +11,7 @@ test_expect_success 'stash save --include-untracked some dirty working directory
 	echo 1 >file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	echo 2 >file &&
 	git add file &&
 	echo 3 >file &&
@@ -230,7 +230,7 @@ test_expect_success 'stash previously ignored file' '
 
 	git reset HEAD &&
 	git add .gitignore &&
-	git commit -m "Add .gitignore" &&
+	git cummit -m "Add .gitignore" &&
 	>ignored.d/foo &&
 	echo "!ignored.d/foo" >>.gitignore &&
 	git stash save --include-untracked &&
@@ -393,17 +393,17 @@ test_expect_success 'stash show --include-untracked errors on duplicate files' '
 	>tracked &&
 	git add tracked &&
 	tree=$(git write-tree) &&
-	i_commit=$(git commit-tree -p HEAD -m "index on any-branch" "$tree") &&
+	i_cummit=$(git cummit-tree -p HEAD -m "index on any-branch" "$tree") &&
 	test_when_finished "rm -f untracked_index" &&
-	u_commit=$(
+	u_cummit=$(
 		GIT_INDEX_FILE="untracked_index" &&
 		export GIT_INDEX_FILE &&
 		git update-index --add tracked &&
 		u_tree=$(git write-tree) &&
-		git commit-tree -m "untracked files on any-branch" "$u_tree"
+		git cummit-tree -m "untracked files on any-branch" "$u_tree"
 	) &&
-	w_commit=$(git commit-tree -p HEAD -p "$i_commit" -p "$u_commit" -m "WIP on any-branch" "$tree") &&
-	test_must_fail git stash show --include-untracked "$w_commit" 2>err &&
+	w_cummit=$(git cummit-tree -p HEAD -p "$i_cummit" -p "$u_cummit" -m "WIP on any-branch" "$tree") &&
+	test_must_fail git stash show --include-untracked "$w_cummit" 2>err &&
 	test_i18ngrep "worktree and untracked commit have duplicate entries: tracked" err
 '
 

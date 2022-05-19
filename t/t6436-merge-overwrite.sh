@@ -10,18 +10,18 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit c0 c0.c &&
-	test_commit c1 c1.c &&
-	test_commit c1a c1.c "c1 a" &&
+	test_cummit c0 c0.c &&
+	test_cummit c1 c1.c &&
+	test_cummit c1a c1.c "c1 a" &&
 	git reset --hard c0 &&
-	test_commit c2 c2.c &&
+	test_cummit c2 c2.c &&
 	git reset --hard c0 &&
 	mkdir sub &&
 	echo "sub/f" > sub/f &&
 	mkdir sub2 &&
 	echo "sub2/f" > sub2/f &&
 	git add sub/f sub2/f &&
-	git commit -m sub &&
+	git cummit -m sub &&
 	git tag sub &&
 	echo "VERY IMPORTANT CHANGES" > important
 '
@@ -38,7 +38,7 @@ test_expect_success 'will overwrite tracked file' '
 	git reset --hard c1 &&
 	cp important c2.c &&
 	git add c2.c &&
-	git commit -m important &&
+	git cummit -m important &&
 	git checkout c2
 '
 
@@ -65,7 +65,7 @@ test_expect_success 'will not overwrite staged changes' '
 test_expect_success 'will not overwrite removed file' '
 	git reset --hard c1 &&
 	git rm c1.c &&
-	git commit -m "rm c1.c" &&
+	git cummit -m "rm c1.c" &&
 	cp important c1.c &&
 	test_must_fail git merge c1a &&
 	test_cmp important c1.c &&
@@ -75,7 +75,7 @@ test_expect_success 'will not overwrite removed file' '
 test_expect_success 'will not overwrite re-added file' '
 	git reset --hard c1 &&
 	git rm c1.c &&
-	git commit -m "rm c1.c" &&
+	git cummit -m "rm c1.c" &&
 	cp important c1.c &&
 	git add c1.c &&
 	test_must_fail git merge c1a &&
@@ -86,7 +86,7 @@ test_expect_success 'will not overwrite re-added file' '
 test_expect_success 'will not overwrite removed file with staged changes' '
 	git reset --hard c1 &&
 	git rm c1.c &&
-	git commit -m "rm c1.c" &&
+	git cummit -m "rm c1.c" &&
 	cp important c1.c &&
 	git add c1.c &&
 	rm c1.c &&
@@ -99,7 +99,7 @@ test_expect_success 'will not overwrite removed file with staged changes' '
 test_expect_success 'will not overwrite unstaged changes in renamed file' '
 	git reset --hard c1 &&
 	git mv c1.c other.c &&
-	git commit -m rename &&
+	git cummit -m rename &&
 	cp important other.c &&
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	then
@@ -160,7 +160,7 @@ test_expect_success 'will not be confused by symlink in leading path' '
 	git reset --hard c0 &&
 	rm -rf sub &&
 	test_ln_s_add sub2 sub &&
-	git commit -m ln &&
+	git cummit -m ln &&
 	git checkout sub
 '
 

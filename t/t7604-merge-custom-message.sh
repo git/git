@@ -2,7 +2,7 @@
 
 test_description='git merge
 
-Testing merge when using a custom message for the merge commit.'
+Testing merge when using a custom message for the merge cummit.'
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
@@ -19,16 +19,16 @@ create_merge_msgs() {
 test_expect_success 'setup' '
 	echo c0 >c0.c &&
 	git add c0.c &&
-	git commit -m c0 &&
+	git cummit -m c0 &&
 	git tag c0 &&
 	echo c1 >c1.c &&
 	git add c1.c &&
-	git commit -m c1 &&
+	git cummit -m c1 &&
 	git tag c1 &&
 	git reset --hard c0 &&
 	echo c2 >c2.c &&
 	git add c2.c &&
-	git commit -m c2 &&
+	git cummit -m c2 &&
 	git tag c2 &&
 	create_merge_msgs
 '
@@ -59,7 +59,7 @@ test_expect_success 'prepare file with comment line and trailing newlines'  '
 	printf "%s" "$mesg_with_comment_and_newlines" >expect
 '
 
-test_expect_success 'cleanup commit messages (verbatim option)' '
+test_expect_success 'cleanup cummit messages (verbatim option)' '
 	git reset --hard c1 &&
 	git merge --cleanup=verbatim -F expect c2 &&
 	git cat-file commit HEAD >raw &&
@@ -67,7 +67,7 @@ test_expect_success 'cleanup commit messages (verbatim option)' '
 	test_cmp expect actual
 '
 
-test_expect_success 'cleanup commit messages (whitespace option)' '
+test_expect_success 'cleanup cummit messages (whitespace option)' '
 	git reset --hard c1 &&
 	test_write_lines "" "# text" "" >text &&
 	echo "# text" >expect &&
@@ -103,7 +103,7 @@ test_expect_success 'cleanup merge messages (scissors option)' '
 	test_cmp expect actual
 '
 
-test_expect_success 'cleanup commit messages (strip option)' '
+test_expect_success 'cleanup cummit messages (strip option)' '
 	git reset --hard c1 &&
 	test_write_lines "" "# text" "sample" "" >text &&
 	echo sample >expect &&

@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Performs an initial import of a directory. This is the equivalent
-# of doing 'git init; git add .; git commit'. It's a lot slower,
+# of doing 'git init; git add .; git cummit'. It's a lot slower,
 # but is meant to be a simple fast-import example.
 
 if [ -z "$1" -o -z "$2" ]; then
@@ -21,8 +21,8 @@ git init
 
 (
 	cat <<EOF
-commit refs/heads/$1
-committer $USERNAME <$EMAIL> now
+cummit refs/heads/$1
+cummitter $USERNAME <$EMAIL> now
 data <<MSGEOF
 $2
 MSGEOF

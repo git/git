@@ -20,7 +20,7 @@ setup_sparse_entry () {
 	git add sparse_entry &&
 	git update-index --skip-worktree sparse_entry &&
 	git config core.sparseCheckout false &&
-	git commit --allow-empty -m "ensure sparse_entry exists at HEAD" &&
+	git cummit --allow-empty -m "ensure sparse_entry exists at HEAD" &&
 	SPARSE_ENTRY_BLOB=$(git rev-parse :sparse_entry)
 }
 
@@ -165,7 +165,7 @@ test_expect_success 'do not warn when pathspec matches dense entries' '
 
 test_expect_success 'git add fails outside of sparse-checkout definition' '
 	test_when_finished git sparse-checkout disable &&
-	test_commit a &&
+	test_cummit a &&
 	git sparse-checkout init &&
 	git sparse-checkout set a &&
 	echo >>sparse_entry &&

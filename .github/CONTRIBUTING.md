@@ -6,7 +6,7 @@ a mailing list (git@vger.kernel.org) for code submissions, code
 reviews, and bug reports.
 
 Nevertheless, you can use [GitGitGadget](https://gitgitgadget.github.io/) to
-conveniently send your Pull Requests commits to our mailing list.
+conveniently send your Pull Requests cummits to our mailing list.
 
 Please read ["A note from the maintainer"](https://git.kernel.org/pub/scm/git/git.git/plain/MaintNotes?h=todo)
 to learn how the Git project is managed, and how you can work with it.

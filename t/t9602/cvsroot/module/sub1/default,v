@@ -49,14 +49,14 @@ desc
 
 1.2
 log
-@Second commit to proj, affecting all 7 files.
+@Second cummit to proj, affecting all 7 files.
 @
 text
 @This is sub1/default.
 
 Every directory in the `proj' project has a file named `default'.
 
-This line was added in the second commit (affecting all 7 files).
+This line was added in the second cummit (affecting all 7 files).
 @
 
 
@@ -65,7 +65,7 @@ log
 @First change on branch B_SPLIT.
 
 This change excludes sub3/default, because it was not part of this
-commit, and sub1/subsubB/default, which is not even on the branch yet.
+cummit, and sub1/subsubB/default, which is not even on the branch yet.
 @
 text
 @a5 2

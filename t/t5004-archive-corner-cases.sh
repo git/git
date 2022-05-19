@@ -6,8 +6,8 @@ test_description='test corner cases of git-archive'
 # the 10knuls.tar file is used to test for an empty git generated tar
 # without having to invoke tar because an otherwise valid empty GNU tar
 # will be considered broken by {Open,Net}BSD tar
-test_expect_success 'create commit with empty tree and fake empty tar' '
-	git commit --allow-empty -m foo &&
+test_expect_success 'create cummit with empty tree and fake empty tar' '
+	git cummit --allow-empty -m foo &&
 	perl -e "print \"\\0\" x 10240" >10knuls.tar
 '
 
@@ -42,7 +42,7 @@ then
 	test_set_prereq HEADER_ONLY_TAR_OK
 fi
 
-test_expect_success HEADER_ONLY_TAR_OK 'tar archive of commit with empty tree' '
+test_expect_success HEADER_ONLY_TAR_OK 'tar archive of cummit with empty tree' '
 	git archive --format=tar HEAD >empty-with-pax-header.tar &&
 	make_dir extract &&
 	"$TAR" xf empty-with-pax-header.tar -C extract &&
@@ -102,7 +102,7 @@ test_expect_success 'archive complains about pathspec on empty tree' '
 	test_must_fail git archive --format=tar HEAD -- foo >/dev/null
 '
 
-test_expect_success 'create a commit with an empty subtree' '
+test_expect_success 'create a cummit with an empty subtree' '
 	empty_tree=$(git hash-object -t tree /dev/null) &&
 	root_tree=$(printf "040000 tree $empty_tree\tsub\n" | git mktree)
 '
@@ -135,7 +135,7 @@ test_expect_success ZIPINFO 'zip archive with many entries' '
 		done
 	done &&
 	git add 00 &&
-	git commit -m "256 files in 1 directory" &&
+	git cummit -m "256 files in 1 directory" &&
 
 	# duplicate it to get 65536 files in 256 directories
 	subtree=$(git write-tree --prefix=00/) &&

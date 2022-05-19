@@ -24,10 +24,10 @@ test_expect_success 'setup no merge base' '
 		cd no_merge_base &&
 
 		git checkout -b L &&
-		test_commit A content A &&
+		test_cummit A content A &&
 
 		git checkout --orphan R &&
-		test_commit B content B
+		test_cummit B content B
 	)
 '
 
@@ -59,7 +59,7 @@ test_expect_success 'setup unique merge base' '
 	(
 		cd unique_merge_base &&
 
-		test_commit base content "1
+		test_cummit base content "1
 2
 3
 4
@@ -70,7 +70,7 @@ test_expect_success 'setup unique merge base' '
 		git branch R &&
 
 		git checkout L &&
-		test_commit L content "1
+		test_cummit L content "1
 2
 3
 4
@@ -79,7 +79,7 @@ test_expect_success 'setup unique merge base' '
 
 		git checkout R &&
 		git rm content &&
-		test_commit R renamed "1
+		test_cummit R renamed "1
 2
 3
 4
@@ -109,10 +109,10 @@ test_expect_success 'check unique merge base' '
 #          R1---R2--R3
 #
 # Where:
-#   commits L1 and R1 have modified the same file in non-conflicting ways
+#   cummits L1 and R1 have modified the same file in non-conflicting ways
 #   X1 is an auto-generated merge-base used when merging L1 and R1
-#   commits L2 and R2 are merges of R1 and L1 into L1 and R1, respectively
-#   commits L3 and R3 both modify 'content' in conflicting ways
+#   cummits L2 and R2 are merges of R1 and L1 into L1 and R1, respectively
+#   cummits L3 and R3 both modify 'content' in conflicting ways
 #
 
 test_expect_success 'setup multiple merge bases' '
@@ -120,7 +120,7 @@ test_expect_success 'setup multiple merge bases' '
 	(
 		cd multiple_merge_bases &&
 
-		test_commit initial content "1
+		test_cummit initial content "1
 2
 3
 4
@@ -131,7 +131,7 @@ test_expect_success 'setup multiple merge bases' '
 
 		# Create L1
 		git checkout L &&
-		test_commit L1 content "0
+		test_cummit L1 content "0
 1
 2
 3
@@ -140,7 +140,7 @@ test_expect_success 'setup multiple merge bases' '
 
 		# Create R1
 		git checkout R &&
-		test_commit R1 content "1
+		test_cummit R1 content "1
 2
 3
 4
@@ -157,7 +157,7 @@ test_expect_success 'setup multiple merge bases' '
 
 		# Create L3
 		git checkout L &&
-		test_commit L3 content "0
+		test_cummit L3 content "0
 1
 2
 3
@@ -168,7 +168,7 @@ A" &&
 		# Create R3
 		git checkout R &&
 		git rm content &&
-		test_commit R3 renamed "0
+		test_cummit R3 renamed "0
 2
 3
 4
@@ -189,14 +189,14 @@ test_expect_success 'check multiple merge bases' '
 	)
 '
 
-test_expect_success 'rebase --merge describes parent of commit being picked' '
+test_expect_success 'rebase --merge describes parent of cummit being picked' '
 	test_create_repo rebase &&
 	(
 		cd rebase &&
-		test_commit base file &&
-		test_commit main file &&
+		test_cummit base file &&
+		test_cummit main file &&
 		git checkout -b side HEAD^ &&
-		test_commit side file &&
+		test_cummit side file &&
 		test_must_fail git -c merge.conflictstyle=diff3 rebase --merge main &&
 		grep "||||||| parent of" file
 	)
@@ -222,7 +222,7 @@ test_setup_zdiff3 () {
 		test_write_lines 1 2 3 4 5 6 7 8 9 >evil &&
 
 		git add basic middle-common interesting evil &&
-		git commit -m base &&
+		git cummit -m base &&
 
 		git branch left &&
 		git branch right &&
@@ -233,7 +233,7 @@ test_setup_zdiff3 () {
 		test_write_lines 1 2 3 4 A B C D E F G H I J 7 8 9 >interesting &&
 		test_write_lines 1 2 3 4 X A B C 7 8 9 >evil &&
 		git add -u &&
-		git commit -m letters &&
+		git cummit -m letters &&
 
 		git checkout right &&
 		test_write_lines 1 2 3 4 A X C Y E 7 8 9 >basic &&
@@ -241,7 +241,7 @@ test_setup_zdiff3 () {
 		test_write_lines 1 2 3 4 A B C 5 6 G H I J 7 8 9 >interesting &&
 		test_write_lines 1 2 3 4 Y A B C B C 7 8 9 >evil &&
 		git add -u &&
-		git commit -m permuted
+		git cummit -m permuted
 	)
 }
 

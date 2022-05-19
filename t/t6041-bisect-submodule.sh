@@ -18,7 +18,7 @@ git_bisect () {
 	fi &&
 	echo "foo" >bar &&
 	git add bar &&
-	git commit -m "bisect bad" &&
+	git cummit -m "bisect bad" &&
 	BAD=$(git rev-parse --verify HEAD) &&
 	git reset --hard HEAD^^ &&
 	git submodule update &&

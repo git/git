@@ -33,7 +33,7 @@ UI, Workflows & Features
    untarring on a filesystem that has poor support for hardlinks.
    There is a Makefile option NO_INSTALL_HARDLINKS for you.
 
- * The smart-http backend used to always override GIT_COMMITTER_*
+ * The smart-http backend used to always override GIT_cummitTER_*
    variables with REMOTE_USER and REMOTE_ADDR, but these variables are
    now preserved when set.
 
@@ -55,9 +55,9 @@ UI, Workflows & Features
 
  * The "fmt-merge-msg" command learned to list the primary contributors
    involved in the side topic you are merging in a comment in the merge
-   commit template.
+   cummit template.
 
- * "git rebase" learned to optionally keep commits that do not
+ * "git rebase" learned to optionally keep cummits that do not
    introduce any change in the original history.
 
  * "git push --recurse-submodules" learned to optionally look into the
@@ -65,7 +65,7 @@ UI, Workflows & Features
    out.
 
  * A 'snapshot' request to "gitweb" honors If-Modified-Since: header,
-   based on the commit date.
+   based on the cummit date.
 
  * "gitweb" learned to highlight the patch it outputs even more.
 

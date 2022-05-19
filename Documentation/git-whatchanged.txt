@@ -3,7 +3,7 @@ git-whatchanged(1)
 
 NAME
 ----
-git-whatchanged - Show logs with difference each commit introduces
+git-whatchanged - Show logs with difference each cummit introduces
 
 
 SYNOPSIS
@@ -14,7 +14,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Shows commit logs and diff output each commit introduces.
+Shows cummit logs and diff output each cummit introduces.
 
 New users are encouraged to use linkgit:git-log[1] instead.  The
 `whatchanged` command is essentially the same as linkgit:git-log[1]
@@ -29,7 +29,7 @@ Examples
 --------
 `git whatchanged -p v2.6.12.. include/scsi drivers/scsi`::
 
-	Show as patches the commits since version 'v2.6.12' that changed
+	Show as patches the cummits since version 'v2.6.12' that changed
 	any file in the include/scsi or drivers/scsi subdirectories
 
 `git whatchanged --since="2 weeks ago" -- gitk`::

@@ -108,7 +108,7 @@ test_expect_success 'setup v1, b1' '
 	echo "adir/bdir/bfile line 2" >>adir/bdir/bfile &&
 	echo "adir/bdir/b2file" >adir/bdir/b2file &&
 	git add textfile.c t2 adir &&
-	git commit -q -m "First Commit (v1)" &&
+	git cummit -q -m "First cummit (v1)" &&
 	git tag v1 &&
 	git branch b1 &&
 	git clone -q --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
@@ -181,7 +181,7 @@ test_expect_success 'setup v1.2 on b1' '
 	mkdir cdir &&
 	echo "cdir/cfile" >cdir/cfile &&
 	git add -A cdir adir t3 t2 &&
-	git commit -q -m "v1.2" &&
+	git cummit -q -m "v1.2" &&
 	git tag v1.2 &&
 	git push --tags gitcvs.git b1:b1
 '
@@ -283,7 +283,7 @@ test_expect_success 'root dir edit [cvswork2]' '
 	(
 		cd cvswork2 && echo "Line 2" >>textfile.c &&
 		! cvs -f diff -u >"$WORKDIR/cvsEdit1.diff" &&
-		cvs -f commit -m "edit textfile.c" textfile.c
+		cvs -f cummit -m "edit textfile.c" textfile.c
 	) >cvsEdit1.log 2>&1
 '
 
@@ -293,7 +293,7 @@ test_expect_success 'root dir rm file [cvswork2]' '
 		cvs -f rm -f t2 &&
 		cvs -f diff -u >../cvsEdit2-empty.diff &&
 		! cvs -f diff -N -u >"$WORKDIR/cvsEdit2-N.diff" &&
-		cvs -f commit -m "rm t2"
+		cvs -f cummit -m "rm t2"
 	) >cvsEdit2.log 2>&1
 '
 
@@ -314,7 +314,7 @@ test_expect_success 'subdir edit/add/rm files [cvswork2]' '
 		  ! cvs -f diff -u -N -r v1.2 >"$WORKDIR/cvsEdit3-v1.2.diff" &&
 		  ! cvs -f diff -u -N -r v1.2 -r v1 >"$WORKDIR/cvsEdit3-v1.2-v1.diff"
 		) &&
-		cvs -f commit -m "various add/rm/edit"
+		cvs -f cummit -m "various add/rm/edit"
 	) >cvs.log 2>&1
 '
 
@@ -483,7 +483,7 @@ test_expect_success 'apply early [cvswork3] diff to b3' '
 		cd gitwork3 &&
 		git checkout -b b3 v1 &&
 		git apply -p0 --index <"$WORKDIR/cvswork3edit.diff" &&
-		git commit -m "cvswork3 edits applied"
+		git cummit -m "cvswork3 edits applied"
 	) &&
 	git fetch gitwork3 b3:b3 &&
 	git tag v3 b3
@@ -531,10 +531,10 @@ test_expect_success 'cvs up dirty [cvswork3]' '
 
 # TODO: test cvs status
 
-test_expect_success 'cvs commit [cvswork3]' '
+test_expect_success 'cvs cummit [cvswork3]' '
 	(
 		cd cvswork3 &&
-		cvs -f commit -m "dirty sandbox after auto-merge"
+		cvs -f cummit -m "dirty sandbox after auto-merge"
 	) >cvs.log 2>&1 &&
 	check_start_tree cvswork3 &&
 	check_file cvswork3 textfile.c v3merged &&

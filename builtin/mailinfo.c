@@ -59,9 +59,9 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('b', NULL, &mi.keep_non_patch_brackets_in_subject,
 			 N_("keep non patch brackets in subject")),
 		OPT_BOOL('m', "message-id", &mi.add_message_id,
-			 N_("copy Message-ID to the end of commit message")),
+			 N_("copy Message-ID to the end of cummit message")),
 		OPT_SET_INT_F('u', NULL, &meta_charset.policy,
-			      N_("re-code metadata to i18n.commitEncoding"),
+			      N_("re-code metadata to i18n.cummitEncoding"),
 			      CHARSET_DEFAULT, PARSE_OPT_NONEG),
 		OPT_SET_INT_F('n', NULL, &meta_charset.policy,
 			      N_("disable charset re-coding of metadata"),
@@ -88,7 +88,7 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 
 	switch (meta_charset.policy) {
 	case CHARSET_DEFAULT:
-		mi.metainfo_charset = get_commit_output_encoding();
+		mi.metainfo_charset = get_cummit_output_encoding();
 		break;
 	case CHARSET_NO_REENCODE:
 		mi.metainfo_charset = NULL;

@@ -20,12 +20,12 @@ test_expect_success 'setup ' '
 	echo "bin: test number 2" >two.bin &&
 	test_ln_s_add one.bin symlink.bin &&
 	git add . &&
-	GIT_AUTHOR_NAME=Number1 git commit -a -m First --date="2010-01-01 18:00:00" &&
+	GIT_AUTHOR_NAME=Number1 git cummit -a -m First --date="2010-01-01 18:00:00" &&
 	echo "bin: test 1 version 2" >one.bin &&
 	echo "bin: test number 2 version 2" >>two.bin &&
 	rm -f symlink.bin &&
 	test_ln_s_add two.bin symlink.bin &&
-	GIT_AUTHOR_NAME=Number2 git commit -a -m Second --date="2010-01-01 20:00:00"
+	GIT_AUTHOR_NAME=Number2 git cummit -a -m Second --date="2010-01-01 20:00:00"
 '
 
 cat >expected <<EOF
@@ -55,7 +55,7 @@ cat >expected <<EOF
 (Number2 2010-01-01 20:00:00 +0000 1) converted: test 1 version 2
 EOF
 
-test_expect_success 'basic blame on last commit' '
+test_expect_success 'basic blame on last cummit' '
 	git blame one.bin >blame &&
 	find_blame  <blame >result &&
 	test_cmp expected result
@@ -76,7 +76,7 @@ test_expect_success 'blame --textconv with local changes' '
 	test_when_finished "git checkout zero.bin" &&
 	printf "bin: updated number 0\015" >zero.bin &&
 	git blame --textconv zero.bin >blame &&
-	expect="(Not Committed Yet ....-..-.. ..:..:.. +0000 1)" &&
+	expect="(Not cummitted Yet ....-..-.. ..:..:.. +0000 1)" &&
 	expect="$expect converted: updated number 0" &&
 	expr "$(find_blame <blame)" : "^$expect"
 '
@@ -102,9 +102,9 @@ test_expect_success 'setup -cachetextconv' '
 	git config diff.test.cachetextconv false
 '
 
-test_expect_success 'make a new commit' '
+test_expect_success 'make a new cummit' '
 	echo "bin: test number 2 version 3" >>two.bin &&
-	GIT_AUTHOR_NAME=Number3 git commit -a -m Third --date="2010-01-01 22:00:00"
+	GIT_AUTHOR_NAME=Number3 git cummit -a -m Third --date="2010-01-01 22:00:00"
 '
 
 test_expect_success 'blame from previous revision' '
@@ -131,7 +131,7 @@ test_expect_success SYMLINKS 'blame --textconv (on symlink)' '
 
 # cp two.bin three.bin  and make small tweak
 # (this will direct blame -C -C three.bin to consider two.bin and symlink.bin)
-test_expect_success 'make another new commit' '
+test_expect_success 'make another new cummit' '
 	cat >three.bin <<\EOF &&
 bin: test number 2
 bin: test number 2 version 2
@@ -139,10 +139,10 @@ bin: test number 2 version 3
 bin: test number 3
 EOF
 	git add three.bin &&
-	GIT_AUTHOR_NAME=Number4 git commit -a -m Fourth --date="2010-01-01 23:00:00"
+	GIT_AUTHOR_NAME=Number4 git cummit -a -m Fourth --date="2010-01-01 23:00:00"
 '
 
-test_expect_success 'blame on last commit (-C -C, symlink)' '
+test_expect_success 'blame on last cummit (-C -C, symlink)' '
 	git blame -C -C three.bin >blame &&
 	find_blame <blame >result &&
 	cat >expected <<\EOF &&

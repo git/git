@@ -11,12 +11,12 @@ setup_repository () {
 	>file &&
 	git add file &&
 	test_tick &&
-	git commit -m "Initial" &&
+	git cummit -m "Initial" &&
 	git checkout -b side &&
 	>elif &&
 	git add elif &&
 	test_tick &&
-	git commit -m "Second" &&
+	git cummit -m "Second" &&
 	git checkout main
 	)
 }
@@ -242,7 +242,7 @@ test_expect_success 'show' '
 		git checkout -b ahead origin/main &&
 		echo 1 >>file &&
 		test_tick &&
-		git commit -m update file &&
+		git cummit -m update file &&
 		git checkout main &&
 		git branch --track octopus origin/main &&
 		git branch --track rebase origin/main &&
@@ -255,7 +255,7 @@ test_expect_success 'show' '
 			cd ../one &&
 			echo 1 >file &&
 			test_tick &&
-			git commit -m update file
+			git cummit -m update file
 		) &&
 		git config --add remote.origin.push : &&
 		git config --add remote.origin.push refs/heads/main:refs/heads/upstream &&
@@ -397,7 +397,7 @@ test_expect_success 'add --mirror=fetch' '
 	git init -b main mirror-fetch/parent &&
 	(
 		cd mirror-fetch/parent &&
-		test_commit one
+		test_cummit one
 	) &&
 	git init --bare mirror-fetch/child &&
 	(
@@ -468,7 +468,7 @@ test_expect_success 'add --mirror=push' '
 	git init -b main mirror-push/private &&
 	(
 		cd mirror-push/private &&
-		test_commit one &&
+		test_cummit one &&
 		git remote add --mirror=push public ../public
 	)
 '
@@ -543,7 +543,7 @@ test_expect_success 'add with reachable tags (default)' '
 		cd one &&
 		>foobar &&
 		git add foobar &&
-		git commit -m "Foobar" &&
+		git cummit -m "Foobar" &&
 		git tag -a -m "Foobar tag" foobar-tag &&
 		git reset --hard HEAD~1 &&
 		git tag -a -m "Some tag" some-tag
@@ -1331,7 +1331,7 @@ test_expect_success 'unqualified <dst> refspec DWIM and advice' '
 	(
 		cd test &&
 		git tag -a -m "Some tag" some-tag main &&
-		for type in commit tag tree blob
+		for type in cummit tag tree blob
 		do
 			if test "$type" = "blob"
 			then

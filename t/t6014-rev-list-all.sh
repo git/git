@@ -5,19 +5,19 @@ test_description='--all includes detached HEADs'
 . ./test-lib.sh
 
 
-commit () {
+cummit () {
 	test_tick &&
 	echo $1 > foo &&
 	git add foo &&
-	git commit -m "$1"
+	git cummit -m "$1"
 }
 
 test_expect_success 'setup' '
 
-	commit one &&
-	commit two &&
+	cummit one &&
+	cummit two &&
 	git checkout HEAD^ &&
-	commit detached
+	cummit detached
 
 '
 

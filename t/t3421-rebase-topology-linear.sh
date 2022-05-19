@@ -8,12 +8,12 @@ test_description='basic rebase topology tests'
 #      \
 #       d---e
 test_expect_success 'setup' '
-	test_commit a &&
-	test_commit b &&
-	test_commit c &&
+	test_cummit a &&
+	test_cummit b &&
+	test_cummit c &&
 	git checkout b &&
-	test_commit d &&
-	test_commit e
+	test_cummit d &&
+	test_cummit e
 '
 
 test_run_rebase () {
@@ -108,20 +108,20 @@ test_run_rebase success -i
 # gp = cherry-picked g
 # h = reverted g
 #
-# Reverted patches are there for tests to be able to check if a commit
-# that introduced the same change as another commit is
-# dropped. Without reverted commits, we could get false positives
+# Reverted patches are there for tests to be able to check if a cummit
+# that introduced the same change as another cummit is
+# dropped. Without reverted cummits, we could get false positives
 # because applying the patch succeeds, but simply results in no
 # changes.
 test_expect_success 'setup of linear history for range selection tests' '
 	git checkout c &&
-	test_commit g &&
+	test_cummit g &&
 	revert h g &&
 	git checkout d &&
 	cherry_pick gp g &&
-	test_commit i &&
+	test_cummit i &&
 	git checkout b &&
-	test_commit f
+	test_cummit f
 '
 
 test_run_rebase () {
@@ -185,18 +185,18 @@ test_run_rebase success -i
 #       d---k!--l
 #
 # ! = empty
-test_expect_success 'setup of linear history for empty commit tests' '
+test_expect_success 'setup of linear history for empty cummit tests' '
 	git checkout c &&
 	make_empty j &&
 	git checkout d &&
 	make_empty k &&
-	test_commit l
+	test_cummit l
 '
 
 test_run_rebase () {
 	result=$1
 	shift
-	test_expect_$result "rebase $* keeps begin-empty commits" "
+	test_expect_$result "rebase $* keeps begin-empty cummits" "
 		reset_rebase &&
 		git rebase $* j l &&
 		test_cmp_rev c HEAD~4 &&
@@ -210,7 +210,7 @@ test_run_rebase success -i
 test_run_rebase () {
 	result=$1
 	shift
-	test_expect_$result "rebase $* --no-keep-empty drops begin-empty commits" "
+	test_expect_$result "rebase $* --no-keep-empty drops begin-empty cummits" "
 		reset_rebase &&
 		git rebase $* --no-keep-empty c l &&
 		test_cmp_rev c HEAD~2 &&
@@ -243,9 +243,9 @@ test_run_rebase success --rebase-merges
 # bp = cherry-picked b
 # m = reverted b
 #
-# Reverted patches are there for tests to be able to check if a commit
-# that introduced the same change as another commit is
-# dropped. Without reverted commits, we could get false positives
+# Reverted patches are there for tests to be able to check if a cummit
+# that introduced the same change as another cummit is
+# dropped. Without reverted cummits, we could get false positives
 # because applying the patch succeeds, but simply results in no
 # changes.
 test_expect_success 'setup of linear history for test involving root' '
@@ -253,8 +253,8 @@ test_expect_success 'setup of linear history for test involving root' '
 	revert m b &&
 	git checkout --orphan disjoint &&
 	git rm -rf . &&
-	test_commit x &&
-	test_commit y &&
+	test_cummit x &&
+	test_cummit y &&
 	cherry_pick bp b
 '
 

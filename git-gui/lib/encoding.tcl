@@ -1,6 +1,6 @@
 # git-gui encoding support
 # Copyright (C) 2005 Paul Mackerras <paulus@samba.org>
-# (Copied from gitk, commit fd8ccbec4f0161)
+# (Copied from gitk, cummit fd8ccbec4f0161)
 
 # This list of encoding names and aliases is distilled from
 # http://www.iana.org/assignments/character-sets.

@@ -8,7 +8,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_tick
 
 test_expect_success setup '
-	test_commit file0 &&
+	test_cummit file0 &&
 	echo A >fileA.t &&
 	echo B >fileB.t &&
 	echo C >fileC.t &&

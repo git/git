@@ -10,7 +10,7 @@ sane_unset GIT_TEST_WRITE_REV_INDEX
 packdir=.git/objects/pack
 
 test_expect_success 'setup' '
-	test_commit base &&
+	test_cummit base &&
 
 	pack=$(git pack-objects --all $packdir/pack) &&
 	rev=$packdir/pack-$pack.rev &&
@@ -100,7 +100,7 @@ test_expect_success 'revindex in-memory vs on-disk' '
 	(
 		cd repo &&
 
-		test_commit commit &&
+		test_cummit cummit &&
 
 		git rev-list --objects --no-object-names --all >objects &&
 

@@ -35,10 +35,10 @@ Fixes since v1.7.1
  * "git checkout" and "git rebase" overwrote paths that are marked "assume
    unchanged".
 
- * "git commit --amend" on a commit with an invalid author-name line that
+ * "git cummit --amend" on a cummit with an invalid author-name line that
    lacks the display name didn't work.
 
- * "git describe" did not tie-break tags that point at the same commit
+ * "git describe" did not tie-break tags that point at the same cummit
    correctly; newer ones are preferred by paying attention to the
    tagger date now.
 
@@ -68,7 +68,7 @@ Fixes since v1.7.1
 
  * "git pull" accepted "--dry-run", gave it to underlying "git fetch" but
    ignored the option itself, resulting in a bogus attempt to merge
-   unrelated commit.
+   unrelated cummit.
 
  * "git rebase" did not faithfully reproduce a malformed author ident, that
    is often seen in a repository converted from foreign SCMs.

@@ -11,7 +11,7 @@ RUN="test-tool ref-store main"
 
 
 test_expect_success 'setup' '
-	test_commit one
+	test_cummit one
 '
 
 test_expect_success REFFILES 'pack_refs(PACK_REFS_ALL | PACK_REFS_PRUNE)' '
@@ -51,7 +51,7 @@ test_expect_success 'rename_refs(main, new-main)' '
 	$RUN rename-ref refs/heads/main refs/heads/new-main &&
 	git rev-parse new-main >actual &&
 	test_cmp expected actual &&
-	test_commit recreate-main
+	test_cummit recreate-main
 '
 
 test_expect_success 'for_each_ref(refs/heads/)' '
@@ -120,7 +120,7 @@ test_expect_success 'delete_ref(refs/heads/foo)' '
 	git checkout -b foo &&
 	FOO_SHA1=`git rev-parse foo` &&
 	git checkout --detach &&
-	test_commit bar-commit &&
+	test_cummit bar-cummit &&
 	git checkout -b bar &&
 	BAR_SHA1=`git rev-parse bar` &&
 	$RUN update-ref updating refs/heads/foo $BAR_SHA1 $FOO_SHA1 0 &&

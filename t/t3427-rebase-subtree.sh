@@ -10,7 +10,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
-commit_message() {
+cummit_message() {
 	git log --pretty=format:%s -1 "$1"
 }
 
@@ -27,13 +27,13 @@ commit_message() {
 # directory directly.
 #
 # Then, in subsequent test cases, `git filter-branch` is used to distill just
-# the commits that touch files_subtree/. To give it a final pre-rebase touch,
-# an empty commit is added on top. The pre-rebase commit history looks like
+# the cummits that touch files_subtree/. To give it a final pre-rebase touch,
+# an empty cummit is added on top. The pre-rebase commit history looks like
 # this:
 #
-# Add subproject main - topic_4 - files_subtree/topic_5 - Empty commit
+# Add subproject main - topic_4 - files_subtree/topic_5 - Empty cummit
 #
-# where the root commit adds three files: topic_1.t, topic_2.t and topic_3.t.
+# where the root cummit adds three files: topic_1.t, topic_2.t and topic_3.t.
 #
 # This commit history is then rebased onto `topic_3` with the
 # `-Xsubtree=files_subtree` option in two different ways:
@@ -42,52 +42,52 @@ commit_message() {
 # 2. using the `--rebase-merges` backend
 
 test_expect_success 'setup' '
-	test_commit README &&
+	test_cummit README &&
 
 	git init files &&
-	test_commit -C files topic_1 &&
-	test_commit -C files topic_2 &&
-	test_commit -C files topic_3 &&
+	test_cummit -C files topic_1 &&
+	test_cummit -C files topic_2 &&
+	test_cummit -C files topic_3 &&
 
 	: perform subtree merge into files_subtree/ &&
 	git fetch files refs/heads/main:refs/heads/files-main &&
-	git merge -s ours --no-commit --allow-unrelated-histories \
+	git merge -s ours --no-cummit --allow-unrelated-histories \
 		files-main &&
 	git read-tree --prefix=files_subtree -u files-main &&
-	git commit -m "Add subproject main" &&
+	git cummit -m "Add subproject main" &&
 
-	: add two extra commits to rebase &&
-	test_commit -C files_subtree topic_4 &&
-	test_commit files_subtree/topic_5 &&
+	: add two extra cummits to rebase &&
+	test_cummit -C files_subtree topic_4 &&
+	test_cummit files_subtree/topic_5 &&
 
 	git checkout -b to-rebase &&
 	git fast-export --no-data HEAD -- files_subtree/ |
 		sed -e "s%\([0-9a-f]\{40\} \)files_subtree/%\1%" |
 		git fast-import --force --quiet &&
 	git reset --hard &&
-	git commit -m "Empty commit" --allow-empty
+	git cummit -m "Empty cummit" --allow-empty
 '
 
-test_expect_success 'Rebase -Xsubtree --empty=ask --onto commit' '
+test_expect_success 'Rebase -Xsubtree --empty=ask --onto cummit' '
 	reset_rebase &&
 	git checkout -b rebase-onto to-rebase &&
 	test_must_fail git rebase -Xsubtree=files_subtree --empty=ask --onto files-main main &&
 	: first pick results in no changes &&
 	git rebase --skip &&
-	verbose test "$(commit_message HEAD~2)" = "topic_4" &&
-	verbose test "$(commit_message HEAD~)" = "files_subtree/topic_5" &&
-	verbose test "$(commit_message HEAD)" = "Empty commit"
+	verbose test "$(cummit_message HEAD~2)" = "topic_4" &&
+	verbose test "$(cummit_message HEAD~)" = "files_subtree/topic_5" &&
+	verbose test "$(cummit_message HEAD)" = "Empty cummit"
 '
 
-test_expect_success 'Rebase -Xsubtree --empty=ask --rebase-merges --onto commit' '
+test_expect_success 'Rebase -Xsubtree --empty=ask --rebase-merges --onto cummit' '
 	reset_rebase &&
 	git checkout -b rebase-merges-onto to-rebase &&
 	test_must_fail git rebase -Xsubtree=files_subtree --empty=ask --rebase-merges --onto files-main --root &&
 	: first pick results in no changes &&
 	git rebase --skip &&
-	verbose test "$(commit_message HEAD~2)" = "topic_4" &&
-	verbose test "$(commit_message HEAD~)" = "files_subtree/topic_5" &&
-	verbose test "$(commit_message HEAD)" = "Empty commit"
+	verbose test "$(cummit_message HEAD~2)" = "topic_4" &&
+	verbose test "$(cummit_message HEAD~)" = "files_subtree/topic_5" &&
+	verbose test "$(cummit_message HEAD)" = "Empty cummit"
 '
 
 test_done

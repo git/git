@@ -9,21 +9,21 @@ Testing pull.* configuration parsing and other things.'
 test_expect_success 'setup' '
 	echo c0 >c0.c &&
 	git add c0.c &&
-	git commit -m c0 &&
+	git cummit -m c0 &&
 	git tag c0 &&
 	echo c1 >c1.c &&
 	git add c1.c &&
-	git commit -m c1 &&
+	git cummit -m c1 &&
 	git tag c1 &&
 	git reset --hard c0 &&
 	echo c2 >c2.c &&
 	git add c2.c &&
-	git commit -m c2 &&
+	git cummit -m c2 &&
 	git tag c2 &&
 	git reset --hard c0 &&
 	echo c3 >c3.c &&
 	git add c3.c &&
-	git commit -m c3 &&
+	git cummit -m c3 &&
 	git tag c3
 '
 
@@ -179,7 +179,7 @@ test_does_fast_forward () {
 
 	# Check that we ended up at c1
 	git rev-parse HEAD >actual &&
-	git rev-parse c1^{commit} >expect &&
+	git rev-parse c1^{cummit} >expect &&
 	test_cmp actual expect &&
 
 	# Remove temporary files
@@ -461,19 +461,19 @@ test_expect_success 'setup conflicted merge' '
 	git add conflict.c &&
 	echo contents >foo.c &&
 	git add foo.c &&
-	git commit -m c4 &&
+	git cummit -m c4 &&
 	git tag c4 &&
 	echo B >conflict.c &&
 	git add conflict.c &&
 	git mv foo.c bar.c &&
-	git commit -m c5 &&
+	git cummit -m c5 &&
 	git tag c5 &&
 	git reset --hard c4 &&
 	echo C >conflict.c &&
 	git add conflict.c &&
 	echo secondline >> foo.c &&
 	git add foo.c &&
-	git commit -m c6 &&
+	git cummit -m c6 &&
 	git tag c6
 '
 

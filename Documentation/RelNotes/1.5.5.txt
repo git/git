@@ -31,7 +31,7 @@ Updates since v1.5.4
    another to actually download the pack data.  We now use only
    one connection for these tasks.
 
- * "git commit" does not run lstat(2) more than necessary
+ * "git cummit" does not run lstat(2) more than necessary
    anymore.
 
 (usability, bells and whistles)
@@ -66,7 +66,7 @@ Updates since v1.5.4
    used to tell "git-fetch" and "git-push" to use different URL than what
    is given from the command line.
 
- * "git add -i" behaves better even before you make an initial commit.
+ * "git add -i" behaves better even before you make an initial cummit.
 
  * "git am" refused to run from a subdirectory without a good reason.
 
@@ -91,8 +91,8 @@ Updates since v1.5.4
    for 4 seconds before it showed any progress report.  It is now a bit
    more impatient and starts showing progress report early.
 
- * "git commit" learned a new hook "prepare-commit-msg" that can
-   inspect what is going to be committed and prepare the commit
+ * "git cummit" learned a new hook "prepare-cummit-msg" that can
+   inspect what is going to be cummitted and prepare the cummit
    log message template to be edited.
 
  * "git cvsimport" can now take more than one -M options.
@@ -100,12 +100,12 @@ Updates since v1.5.4
  * "git describe" learned to limit the tags to be used for
    naming with --match option.
 
- * "git describe --contains" now barfs when the named commit
+ * "git describe --contains" now barfs when the named cummit
    cannot be described.
 
- * "git describe --exact-match" describes only commits that are tagged.
+ * "git describe --exact-match" describes only cummits that are tagged.
 
- * "git describe --long" describes a tagged commit as $tag-0-$sha1,
+ * "git describe --long" describes a tagged cummit as $tag-0-$sha1,
    instead of just showing the exact tagname.
 
  * "git describe" warns when using a tag whose name and path contradict
@@ -164,9 +164,9 @@ Updates since v1.5.4
 
  * "git submodule" learned a new subcommand "summary" to show the
    symmetric difference between the HEAD version and the work tree version
-   of the submodule commits.
+   of the submodule cummits.
 
- * Various "git cvsimport", "git cvsexportcommit", "git cvsserver",
+ * Various "git cvsimport", "git cvsexportcummit", "git cvsserver",
    "git svn" and "git p4" improvements.
 
 (internal)

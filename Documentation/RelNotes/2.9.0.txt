@@ -12,15 +12,15 @@ Merging two branches that have no common ancestor with "git merge" is
 by default forbidden now to prevent creating such an unusual merge by
 mistake.
 
-The output formats of "git log" that indents the commit log message by
+The output formats of "git log" that indents the cummit log message by
 4 spaces now expands HT in the log message by default.  You can use
 the "--no-expand-tabs" option to disable this.
 
-"git commit-tree" plumbing command required the user to always sign
-its result when the user sets the commit.gpgsign configuration
+"git cummit-tree" plumbing command required the user to always sign
+its result when the user sets the cummit.gpgsign configuration
 variable, which was an ancient mistake, which this release corrects.
-A script that drives commit-tree, if it relies on this mistake, now
-needs to read commit.gpgsign and pass the -S option as necessary.
+A script that drives cummit-tree, if it relies on this mistake, now
+needs to read cummit.gpgsign and pass the -S option as necessary.
 
 
 Updates since v2.8
@@ -73,7 +73,7 @@ UI, Workflows & Features
 
  * Shell completion (in contrib/) updates.
 
- * The commit object name reported when "rebase -i" stops has been
+ * The cummit object name reported when "rebase -i" stops has been
    shortened.
 
  * "git worktree add" can be given "--no-checkout" option to only
@@ -98,20 +98,20 @@ UI, Workflows & Features
    signature that have to be resolved in different ways, but there was
    no way to record these separate resolutions.
 
- * "git p4" learned to record P4 jobs in Git commit that imports from
+ * "git p4" learned to record P4 jobs in Git cummit that imports from
    the history in Perforce.
 
  * "git describe --contains" often made a hard-to-justify choice of
-   tag to name a given commit, because it tried to come up
+   tag to name a given cummit, because it tried to come up
    with a name with smallest number of hops from a tag, causing an old
-   commit whose close descendant that is recently tagged were not
+   cummit whose close descendant that is recently tagged were not
    described with respect to an old tag but with a newer tag.  It did
    not help that its computation of "hop" count was further tweaked to
    penalize being on a side branch of a merge.  The logic has been
    updated to favor using the tag with the oldest tagger date, which
-   is a lot easier to explain to the end users: "We describe a commit
+   is a lot easier to explain to the end users: "We describe a cummit
    in terms of the (chronologically) oldest tag that contains the
-   commit."
+   cummit."
 
  * "git clone" learned the "--shallow-submodules" option.
 
@@ -132,11 +132,11 @@ UI, Workflows & Features
    turned out to be a convoluted no-op; implement what it wanted to do
    correctly, and stop filtering settings given via "git -c var=val".
 
- * "git commit --dry-run" reported "No, no, you cannot commit." in one
-   case where "git commit" would have allowed you to commit, and this
-   improves it a little bit ("git commit --dry-run --short" still does
+ * "git cummit --dry-run" reported "No, no, you cannot cummit." in one
+   case where "git cummit" would have allowed you to cummit, and this
+   improves it a little bit ("git cummit --dry-run --short" still does
    not give you the correct answer, for example).  This is a stop-gap
-   measure in that "commit --short --dry-run" still gives an incorrect
+   measure in that "cummit --short --dry-run" still gives an incorrect
    result.
 
  * The experimental "multiple worktree" feature gains more safety to
@@ -144,10 +144,10 @@ UI, Workflows & Features
    worked on elsewhere, by noticing that e.g. it is being rebased.
 
  * "git format-patch" learned a new "--base" option to record what
-   (public, well-known) commit the original series was built on in
+   (public, well-known) cummit the original series was built on in
    its output.
 
- * "git commit" learned to pay attention to the "commit.verbose"
+ * "git cummit" learned to pay attention to the "cummit.verbose"
    configuration variable and act as if the "--verbose" option
    was given from the command line.
 
@@ -285,7 +285,7 @@ notes for details).
 
  * "git index-pack --keep[=<msg>] pack-$name.pack" simply did not work.
 
- * Fetching of history by naming a commit object name directly didn't
+ * Fetching of history by naming a cummit object name directly didn't
    work across remote-curl transport.
 
  * A small memory leak in an error codepath has been plugged in xdiff
@@ -301,8 +301,8 @@ notes for details).
    when lines in it had trailing whitespaces on them.
 
  * When "git merge --squash" stopped due to conflict, the concluding
-   "git commit" failed to read in the SQUASH_MSG that shows the log
-   messages from all the squashed commits.
+   "git cummit" failed to read in the SQUASH_MSG that shows the log
+   messages from all the squashed cummits.
 
  * "git merge FETCH_HEAD" dereferenced NULL pointer when merging
    nothing into an unborn history (which is arguably unusual usage,
@@ -345,7 +345,7 @@ notes for details).
    repository location to use absolute paths by accident.  This has
    been corrected.
 
- * "git commit" misbehaved in a few minor ways when an empty message
+ * "git cummit" misbehaved in a few minor ways when an empty message
    is given via -m '', all of which has been corrected.
 
  * Support for CRAM-MD5 authentication method in "git imap-send" did
@@ -412,7 +412,7 @@ notes for details).
 
  * "git rebase -m" could be asked to rebase an entire branch starting
    from the root, but failed by assuming that there always is a parent
-   commit to the first commit on the branch.
+   cummit to the first cummit on the branch.
 
  * Fix a broken "p4 lfs" test.
 
@@ -429,14 +429,14 @@ notes for details).
    of one letter, which would confuse "highlight" filter used in
    gitweb.
 
- * "git commit-tree" plumbing command required the user to always sign
-   its result when the user sets the commit.gpgsign configuration
+ * "git cummit-tree" plumbing command required the user to always sign
+   its result when the user sets the cummit.gpgsign configuration
    variable, which was an ancient mistake.  Rework "git rebase" that
-   relied on this mistake so that it reads commit.gpgsign and pass (or
-   not pass) the -S option to "git commit-tree" to keep the end-user
-   expectation the same, while teaching "git commit-tree" to ignore
+   relied on this mistake so that it reads cummit.gpgsign and pass (or
+   not pass) the -S option to "git cummit-tree" to keep the end-user
+   expectation the same, while teaching "git cummit-tree" to ignore
    the configuration variable.  This will stop requiring the users to
-   sign commit objects used internally as an implementation detail of
+   sign cummit objects used internally as an implementation detail of
    "git stash".
 
  * "http.cookieFile" configuration variable clearly wants a pathname,
@@ -461,7 +461,7 @@ notes for details).
 
  * CI test was taught to build documentation pages.
 
- * "git fsck" learned to catch NUL byte in a commit object as
+ * "git fsck" learned to catch NUL byte in a cummit object as
    potential error and warn.
 
  * Portability enhancement for "rebase -i" to help platforms whose
@@ -472,7 +472,7 @@ notes for details).
    customize this behaviour.
 
  * Documentation for "git merge --verify-signatures" has been updated
-   to clarify that the signature of only the commit at the tip is
+   to clarify that the signature of only the cummit at the tip is
    verified.  Also the phrasing used for signature and key validity is
    adjusted to align with that used by OpenPGP.
 

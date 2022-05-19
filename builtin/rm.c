@@ -153,12 +153,12 @@ static int check_local_mod(struct object_id *head, int index_only)
 		 * accidentally.  A local change could be (1) file in
 		 * work tree is different since the index; and/or (2)
 		 * the user staged a content that is different from
-		 * the current commit in the index.
+		 * the current cummit in the index.
 		 *
 		 * In such a case, you would need to --force the
 		 * removal.  However, "rm --cached" (remove only from
 		 * the index) is safe if the index matches the file in
-		 * the work tree or the HEAD commit, as it means that
+		 * the work tree or the HEAD cummit, as it means that
 		 * the content being removed is available elsewhere.
 		 */
 
@@ -174,8 +174,8 @@ static int check_local_mod(struct object_id *head, int index_only)
 			local_changes = 1;
 
 		/*
-		 * Is the index different from the HEAD commit?  By
-		 * definition, before the very initial commit,
+		 * Is the index different from the HEAD cummit?  By
+		 * definition, before the very initial cummit,
 		 * anything staged in the index is treated by the same
 		 * way as changed from the HEAD.
 		 */
@@ -187,7 +187,7 @@ static int check_local_mod(struct object_id *head, int index_only)
 
 		/*
 		 * If the index does not match the file in the work
-		 * tree and if it does not match the HEAD commit
+		 * tree and if it does not match the HEAD cummit
 		 * either, (1) "git rm" without --cached definitely
 		 * will lose information; (2) "git rm --cached" will
 		 * lose information unless it is about removing an
@@ -361,7 +361,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	 *
 	 *	rm F; git rm F
 	 *
-	 * Further, if HEAD commit exists, "diff-index --cached" must
+	 * Further, if HEAD cummit exists, "diff-index --cached" must
 	 * report no changes unless forced.
 	 */
 	if (!force) {
@@ -373,7 +373,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	}
 
 	/*
-	 * First remove the names from the index: we won't commit
+	 * First remove the names from the index: we won't cummit
 	 * the index unless all of them succeed.
 	 */
 	for (i = 0; i < list.nr; i++) {
@@ -392,8 +392,8 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	 * Then, unless we used "--cached", remove the filenames from
 	 * the workspace. If we fail to remove the first one, we
 	 * abort the "git rm" (but once we've successfully removed
-	 * any file at all, we'll go ahead and commit to it all:
-	 * by then we've already committed ourselves and can't fail
+	 * any file at all, we'll go ahead and cummit to it all:
+	 * by then we've already cummitted ourselves and can't fail
 	 * in the middle)
 	 */
 	if (!index_only) {
@@ -426,7 +426,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix)
 	}
 
 	if (write_locked_index(&the_index, &lock_file,
-			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
+			       cummit_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 
 	return ret;

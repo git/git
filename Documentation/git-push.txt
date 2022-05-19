@@ -99,26 +99,26 @@ on the remote side. Whether this is allowed depends on where in
 those sections "update" means any modifications except deletes, which
 as noted after the next few sections are treated differently.
 +
-The `refs/heads/*` namespace will only accept commit objects, and
+The `refs/heads/*` namespace will only accept cummit objects, and
 updates only if they can be fast-forwarded.
 +
 The `refs/tags/*` namespace will accept any kind of object (as
-commits, trees and blobs can be tagged), and any updates to them will
+cummits, trees and blobs can be tagged), and any updates to them will
 be rejected.
 +
 It's possible to push any type of object to any namespace outside of
-`refs/{tags,heads}/*`. In the case of tags and commits, these will be
-treated as if they were the commits inside `refs/heads/*` for the
+`refs/{tags,heads}/*`. In the case of tags and cummits, these will be
+treated as if they were the cummits inside `refs/heads/*` for the
 purposes of whether the update is allowed.
 +
-I.e. a fast-forward of commits and tags outside `refs/{tags,heads}/*`
+I.e. a fast-forward of cummits and tags outside `refs/{tags,heads}/*`
 is allowed, even in cases where what's being fast-forwarded is not a
-commit, but a tag object which happens to point to a new commit which
-is a fast-forward of the commit the last tag (or commit) it's
+cummit, but a tag object which happens to point to a new cummit which
+is a fast-forward of the cummit the last tag (or cummit) it's
 replacing. Replacing a tag with an entirely different tag is also
-allowed, if it points to the same commit, as well as pushing a peeled
-tag, i.e. pushing the commit that existing tag object points to, or a
-new tag object which an existing commit points to.
+allowed, if it points to the same cummit, as well as pushing a peeled
+tag, i.e. pushing the cummit that existing tag object points to, or a
+new tag object which an existing cummit points to.
 +
 Tree and blob objects outside of `refs/{tags,heads}/*` will be treated
 the same way as if they were inside `refs/tags/*`, any update of them
@@ -128,7 +128,7 @@ All of the rules described above about what's not allowed as an update
 can be overridden by adding an the optional leading `+` to a refspec
 (or using `--force` command line option). The only exception to this
 is that no amount of forcing will make the `refs/heads/*` namespace
-accept a non-commit object. Hooks and configuration can also override
+accept a non-cummit object. Hooks and configuration can also override
 or amend these rules, see e.g. `receive.denyNonFastForwards` in
 linkgit:git-config[1] and `pre-receive` and `update` in
 linkgit:githooks[5].
@@ -191,7 +191,7 @@ already exists on the remote side.
 --follow-tags::
 	Push all the refs that would be pushed without this option,
 	and also push annotated tags in `refs/tags` that are missing
-	from the remote but are pointing at commit-ish that are
+	from the remote but are pointing at cummit-ish that are
 	reachable from the refs being pushed.  This can also be specified
 	with configuration variable `push.followTags`.  For more
 	information, see `push.followTags` in linkgit:git-config[1].
@@ -245,11 +245,11 @@ You will have to bypass the "must fast-forward" rule in order to
 replace the history you originally published with the rebased history.
 If somebody else built on top of your original history while you are
 rebasing, the tip of the branch at the remote may advance with their
-commit, and blindly pushing with `--force` will lose their work.
+cummit, and blindly pushing with `--force` will lose their work.
 +
 This option allows you to say that you expect the history you are
 updating is what you rebased and want to replace. If the remote ref
-still points at the commit you specified, you can be sure that no
+still points at the cummit you specified, you can be sure that no
 other people did anything to the ref. It is like taking a "lease" on
 the ref without explicitly locking it, and the remote ref is updated
 only if the "lease" is still valid.
@@ -312,7 +312,7 @@ more tedious like:
 +
 	git fetch              # update 'master' from remote
 	git tag base master    # mark our base point
-	git rebase -i master   # rewrite some commits
+	git rebase -i master   # rewrite some cummits
 	git push --force-with-lease=master:base master:master
 +
 I.e. create a `base` tag for versions of the upstream code that you've
@@ -323,7 +323,7 @@ updated to in the background.
 +
 Alternatively, specifying `--force-if-includes` as an ancillary option
 along with `--force-with-lease[=<refname>]` (i.e., without saying what
-exact commit the ref on the remote side must be pointing at, or which
+exact cummit the ref on the remote side must be pointing at, or which
 refs on the remote side are being protected) at the time of "push" will
 verify if updates from the remote-tracking refs that may have been
 implicitly updated in the background are integrated locally before
@@ -338,7 +338,7 @@ allowing a forced update.
 	what is expected.
 +
 This flag disables these checks, and can cause the remote repository
-to lose commits; use it with care.
+to lose cummits; use it with care.
 +
 Note that `--force` applies to all the refs that are pushed, hence
 using it with `push.default` set to `matching` or with multiple push
@@ -400,11 +400,11 @@ Specifying `--no-force-if-includes` disables this behavior.
 
 --no-recurse-submodules::
 --recurse-submodules=check|on-demand|only|no::
-	May be used to make sure all submodule commits used by the
+	May be used to make sure all submodule cummits used by the
 	revisions to be pushed are available on a remote-tracking branch.
-	If 'check' is used Git will verify that all submodule commits that
+	If 'check' is used Git will verify that all submodule cummits that
 	changed in the revisions to be pushed are available on at least one
-	remote of the submodule. If any commits are missing the push will
+	remote of the submodule. If any cummits are missing the push will
 	be aborted and exit with non-zero status. If 'on-demand' is used
 	all submodules that changed in the revisions to be pushed will be
 	pushed. If on-demand was not able to push all necessary revisions it will
@@ -507,17 +507,17 @@ NOTE ABOUT FAST-FORWARDS
 ------------------------
 
 When an update changes a branch (or more in general, a ref) that used to
-point at commit A to point at another commit B, it is called a
+point at cummit A to point at another cummit B, it is called a
 fast-forward update if and only if B is a descendant of A.
 
-In a fast-forward update from A to B, the set of commits that the original
-commit A built on top of is a subset of the commits the new commit B
+In a fast-forward update from A to B, the set of cummits that the original
+cummit A built on top of is a subset of the cummits the new cummit B
 builds on top of.  Hence, it does not lose any history.
 
 In contrast, a non-fast-forward update will lose history.  For example,
-suppose you and somebody else started at the same commit X, and you built
-a history leading to commit B while the other person built a history
-leading to commit A.  The history looks like this:
+suppose you and somebody else started at the same cummit X, and you built
+a history leading to cummit B while the other person built a history
+leading to cummit A.  The history looks like this:
 
 ----------------
 
@@ -529,14 +529,14 @@ leading to commit A.  The history looks like this:
 
 Further suppose that the other person already pushed changes leading to A
 back to the original repository from which you two obtained the original
-commit X.
+cummit X.
 
 The push done by the other person updated the branch that used to point at
-commit X to point at commit A.  It is a fast-forward.
+cummit X to point at cummit A.  It is a fast-forward.
 
 But if you try to push, you will attempt to update the branch (that
-now points at A) with commit B.  This does _not_ fast-forward.  If you did
-so, the changes introduced by commit A will be lost, because everybody
+now points at A) with cummit B.  This does _not_ fast-forward.  If you did
+so, the changes introduced by cummit A will be lost, because everybody
 will now start building on top of B.
 
 The command by default does not allow an update that is not a fast-forward
@@ -548,7 +548,7 @@ history from the repository, create a history that contains changes done
 by both parties, and push the result back.
 
 You can perform "git pull", resolve potential conflicts, and "git push"
-the result.  A "git pull" will create a merge commit C between commits A
+the result.  A "git pull" will create a merge cummit C between cummits A
 and B.
 
 ----------------
@@ -559,12 +559,12 @@ and B.
 
 ----------------
 
-Updating A with the resulting merge commit will fast-forward and your
+Updating A with the resulting merge cummit will fast-forward and your
 push will be accepted.
 
 Alternatively, you can rebase your change between X and B on top of A,
 with "git pull --rebase", and push the result back.  The rebase will
-create a new commit D that builds the change between X and B on top of
+create a new cummit D that builds the change between X and B on top of
 A.
 
 ----------------
@@ -575,16 +575,16 @@ A.
 
 ----------------
 
-Again, updating A with this commit will fast-forward and your push will be
+Again, updating A with this cummit will fast-forward and your push will be
 accepted.
 
 There is another common situation where you may encounter non-fast-forward
 rejection when you try to push, and it is possible even when you are
-pushing into a repository nobody else pushes into. After you push commit
+pushing into a repository nobody else pushes into. After you push cummit
 A yourself (in the first picture in this section), replace it with "git
-commit --amend" to produce commit B, and you try to push it out, because
+cummit --amend" to produce cummit B, and you try to push it out, because
 forgot that you have pushed A out already. In such a case, and only if
-you are certain that nobody in the meantime fetched your earlier commit A
+you are certain that nobody in the meantime fetched your earlier cummit A
 (and started building on top of it), you can run "git push --force" to
 overwrite it. In other words, "git push --force" is a method reserved for
 a case where you do mean to lose history.
@@ -669,7 +669,7 @@ made on `satellite`.
 `git push origin +dev:master`::
 	Update the origin repository's master branch with the dev branch,
 	allowing non-fast-forward updates.  *This can leave unreferenced
-	commits dangling in the origin repository.*  Consider the
+	cummits dangling in the origin repository.*  Consider the
 	following situation, where a fast-forward is not possible:
 +
 ----
@@ -686,8 +686,8 @@ The above command would change the origin repository to
 	    o---o---o---X---Y---Z  master
 ----
 +
-Commits A and B would no longer belong to a branch with a symbolic name,
-and so would be unreachable.  As such, these commits would be removed by
+cummits A and B would no longer belong to a branch with a symbolic name,
+and so would be unreachable.  As such, these cummits would be removed by
 a `git gc` command on the origin repository.
 
 include::transfer-data-leaks.txt[]

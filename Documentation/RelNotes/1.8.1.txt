@@ -58,7 +58,7 @@ UI, Workflows & Features
    override the hardcoded default of 3 lines.
 
  * "git format-patch" learned the "--notes=<ref>" option to give
-   notes for the commit after the three-dash lines in its output.
+   notes for the cummit after the three-dash lines in its output.
 
  * "git log -p -S<string>" now looks for the <string> after applying
    the textconv filter (if defined); earlier it inspected the contents
@@ -78,7 +78,7 @@ UI, Workflows & Features
    case and removes the submodule working tree when it is safe to do so.
 
  * "git send-email" used to prompt for the sender address, even when
-   the committer identity is well specified (e.g. via user.name and
+   the cummitter identity is well specified (e.g. via user.name and
    user.email configuration variables).  The command no longer gives
    this prompt when not necessary.
 

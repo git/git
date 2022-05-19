@@ -124,7 +124,7 @@ development like so:
 $ git checkout -b psuh origin/master
 ----
 
-We'll make a number of commits here in order to demonstrate how to send a topic
+We'll make a number of cummits here in order to demonstrate how to send a topic
 with multiple patches up for review simultaneously.
 
 [[code-it-up]]
@@ -216,7 +216,7 @@ and see if it works. There's a binary you can use to test with in the
 $ ./bin-wrappers/git psuh
 ----
 
-Check it out! You've got a command! Nice work! Let's commit this.
+Check it out! You've got a command! Nice work! Let's cummit this.
 
 `git status` reveals modified `Makefile`, `builtin.h`, and `git.c` as well as
 untracked `builtin/psuh.c` and `git-psuh`. First, let's take care of the binary,
@@ -236,19 +236,19 @@ add an entry for your new command in alphabetical order:
 
 Checking `git status` again should show that `git-psuh` has been removed from
 the untracked list and `.gitignore` has been added to the modified list. Now we
-can stage and commit:
+can stage and cummit:
 
 ----
 $ git add Makefile builtin.h builtin/psuh.c git.c .gitignore
-$ git commit -s
+$ git cummit -s
 ----
 
-You will be presented with your editor in order to write a commit message. Start
-the commit with a 50-column or less subject line, including the name of the
+You will be presented with your editor in order to write a cummit message. Start
+the cummit with a 50-column or less subject line, including the name of the
 component you're working on, followed by a blank line (always required) and then
-the body of your commit message, which should provide the bulk of the context.
+the body of your cummit message, which should provide the bulk of the context.
 Remember to be explicit and provide the "Why" of your change, especially if it
-couldn't easily be understood from your diff. When editing your commit message,
+couldn't easily be understood from your diff. When editing your cummit message,
 don't remove the `Signed-off-by` trailer which was added by `-s` above.
 
 ----
@@ -259,24 +259,24 @@ present. So here's an implementation to help drive customer
 satisfaction and engagement: a pony which doubtfully greets the user,
 or, a Pony Saying "Um, Hello" (PSUH).
 
-This commit message is intentionally formatted to 72 columns per line,
-starts with a single line as "commit message subject" that is written as
+This cummit message is intentionally formatted to 72 columns per line,
+starts with a single line as "cummit message subject" that is written as
 if to command the codebase to do something (add this, teach a command
 that). The body of the message is designed to add information about the
-commit that is not readily deduced from reading the associated diff,
+cummit that is not readily deduced from reading the associated diff,
 such as answering the question "why?".
 
 Signed-off-by: A U Thor <author@example.com>
 ----
 
-Go ahead and inspect your new commit with `git show`. "psuh:" indicates you
+Go ahead and inspect your new cummit with `git show`. "psuh:" indicates you
 have modified mainly the `psuh` command. The subject line gives readers an idea
 of what you've changed. The sign-off line (`-s`) indicates that you agree to
 the Developer's Certificate of Origin 1.1 (see the
 `Documentation/SubmittingPatches` +++[[dco]]+++ header).
 
 For the remainder of the tutorial, the subject line only will be listed for the
-sake of brevity. However, fully-fleshed example commit messages are available
+sake of brevity. However, fully-fleshed example cummit messages are available
 on the reference implementation linked at the top of this document.
 
 [[implementation]]
@@ -337,12 +337,12 @@ You should see that the name printed matches the one you see when you run:
 $ git config --get user.name
 ----
 
-Great! Now we know how to check for values in the Git config. Let's commit this
+Great! Now we know how to check for values in the Git config. Let's cummit this
 too, so we don't lose our progress.
 
 ----
 $ git add builtin/psuh.c
-$ git commit -sm "psuh: show parameters & config opts"
+$ git cummit -sm "psuh: show parameters & config opts"
 ----
 
 NOTE: Again, the above is for sake of brevity in this tutorial. In a real change
@@ -354,7 +354,7 @@ if we can print the name of the user's current branch. We can mimic the
 `git status` implementation; the printer is located in `wt-status.c` and we can
 see that the branch is held in a `struct wt_status`.
 
-`wt_status_print()` gets invoked by `cmd_status()` in `builtin/commit.c`.
+`wt_status_print()` gets invoked by `cmd_status()` in `builtin/cummit.c`.
 Looking at that implementation we see the status config being populated like so:
 
 ----
@@ -362,7 +362,7 @@ status_init_config(&s, git_status_config);
 ----
 
 But as we drill down, we can find that `status_init_config()` wraps a call
-to `git_config()`. Let's modify the code we wrote in the previous commit.
+to `git_config()`. Let's modify the code we wrote in the previous cummit.
 
 Be sure to include the header to allow you to use `struct wt_status`:
 ----
@@ -387,24 +387,24 @@ prepare it, and print its contents:
 
 Run it again. Check it out - here's the (verbose) name of your current branch!
 
-Let's commit this as well.
+Let's cummit this as well.
 
 ----
 $ git add builtin/psuh.c
-$ git commit -sm "psuh: print the current branch"
+$ git cummit -sm "psuh: print the current branch"
 ----
 
-Now let's see if we can get some info about a specific commit.
+Now let's see if we can get some info about a specific cummit.
 
-Luckily, there are some helpers for us here. `commit.h` has a function called
-`lookup_commit_reference_by_name` to which we can simply provide a hardcoded
-string; `pretty.h` has an extremely handy `pp_commit_easy()` call which doesn't
+Luckily, there are some helpers for us here. `cummit.h` has a function called
+`lookup_cummit_reference_by_name` to which we can simply provide a hardcoded
+string; `pretty.h` has an extremely handy `pp_cummit_easy()` call which doesn't
 require a full format object to be passed.
 
 Add the following includes:
 
 ----
-#include "commit.h"
+#include "cummit.h"
 #include "pretty.h"
 ----
 
@@ -412,16 +412,16 @@ Then, add the following lines within your implementation of `cmd_psuh()` near
 the declarations and the logic, respectively.
 
 ----
-	struct commit *c = NULL;
-	struct strbuf commitline = STRBUF_INIT;
+	struct cummit *c = NULL;
+	struct strbuf cummitline = STRBUF_INIT;
 
 ...
 
-	c = lookup_commit_reference_by_name("origin/master");
+	c = lookup_cummit_reference_by_name("origin/master");
 
 	if (c != NULL) {
-		pp_commit_easy(CMIT_FMT_ONELINE, c, &commitline);
-		printf(_("Current commit: %s\n"), commitline.buf);
+		pp_cummit_easy(CMIT_FMT_ONELINE, c, &cummitline);
+		printf(_("Current cummit: %s\n"), cummitline.buf);
 	}
 ----
 
@@ -429,21 +429,21 @@ The `struct strbuf` provides some safety belts to your basic `char*`, one of
 which is a length member to prevent buffer overruns. It needs to be initialized
 nicely with `STRBUF_INIT`. Keep it in mind when you need to pass around `char*`.
 
-`lookup_commit_reference_by_name` resolves the name you pass it, so you can play
+`lookup_cummit_reference_by_name` resolves the name you pass it, so you can play
 with the value there and see what kind of things you can come up with.
 
-`pp_commit_easy` is a convenience wrapper in `pretty.h` that takes a single
+`pp_cummit_easy` is a convenience wrapper in `pretty.h` that takes a single
 format enum shorthand, rather than an entire format struct. It then
-pretty-prints the commit according to that shorthand. These are similar to the
+pretty-prints the cummit according to that shorthand. These are similar to the
 formats available with `--pretty=FOO` in many Git commands.
 
 Build it and run, and if you're using the same name in the example, you should
-see the subject line of the most recent commit in `origin/master` that you know
-about. Neat! Let's commit that as well.
+see the subject line of the most recent cummit in `origin/master` that you know
+about. Neat! Let's cummit that as well.
 
 ----
 $ git add builtin/psuh.c
-$ git commit -sm "psuh: display the top of origin/master"
+$ git cummit -sm "psuh: display the top of origin/master"
 ----
 
 [[add-documentation]]
@@ -532,7 +532,7 @@ You can also check that the documentation coverage is good (that is, the project
 sees that your command has been implemented as well as documented) by running
 `make check-docs` from the top-level.
 
-Go ahead and commit your new documentation change.
+Go ahead and cummit your new documentation change.
 
 [[add-usage]]
 === Adding Usage Text
@@ -613,7 +613,7 @@ git-push                                mainporcelain           remote
 Build again. Now, when you run with `-h`, you should see your usage printed and
 your command terminated before anything else interesting happens. Great!
 
-Go ahead and commit this one, too.
+Go ahead and cummit this one, too.
 
 [[testing]]
 == Testing
@@ -707,7 +707,7 @@ speak TAP. `prove` can run concurrently. `shuffle` randomizes the order the
 tests are run in, which makes them resilient against unwanted inter-test
 dependencies. `prove` also makes the output nicer.
 
-Go ahead and commit this change, as well.
+Go ahead and cummit this change, as well.
 
 [[ready-to-share]]
 == Getting Ready to Share
@@ -778,7 +778,7 @@ get ready to push.
 
 Next, double-check that you've been doing all your development in a new branch
 by running `git branch`. If you didn't, now is a good time to move your new
-commits to their own branch.
+cummits to their own branch.
 
 As mentioned briefly at the beginning of this document, we are basing our work
 on `master`, so go ahead and update as shown below, or using your preferred
@@ -918,25 +918,25 @@ $ git format-patch --cover-letter -o psuh/ --base=auto psuh@{u}..psuh
    can take a directory and send out all the patches from there.
 
  . The `--base=auto` option tells the command to record the "base
-   commit", on which the recipient is expected to apply the patch
+   cummit", on which the recipient is expected to apply the patch
    series.  The `auto` value will cause `format-patch` to compute
-   the base commit automatically, which is the merge base of tip
-   commit of the remote-tracking branch and the specified revision
+   the base cummit automatically, which is the merge base of tip
+   cummit of the remote-tracking branch and the specified revision
    range.
 
  . The `psuh@{u}..psuh` option tells `format-patch` to generate
-   patches for the commits you created on the `psuh` branch since it
+   patches for the cummits you created on the `psuh` branch since it
    forked from its upstream (which is `origin/master` if you
    followed the example in the "Set up your workspace" section).  If
    you are already on the `psuh` branch, you can just say `@{u}`,
-   which means "commits on the current branch since it forked from
+   which means "cummits on the current branch since it forked from
    its upstream", which is the same thing.
 
-The command will make one patch file per commit. After you
+The command will make one patch file per cummit. After you
 run, you can go have a look at each of the patches with your favorite text
 editor and make sure everything looks alright; however, it's not recommended to
 make code fixups via the patch file. It's a better idea to make the change the
-normal way using `git rebase -i` or by adding a new commit than by modifying a
+normal way using `git rebase -i` or by adding a new cummit than by modifying a
 patch.
 
 NOTE: Optionally, you can also use the `--rfc` flag to prefix your patch subject
@@ -1056,7 +1056,7 @@ $ git checkout psuh
 $ git branch psuh-v1
 ----
 
-Refine your patch series by using `git rebase -i` to adjust commits based upon
+Refine your patch series by using `git rebase -i` to adjust cummits based upon
 reviewer comments. Once the patch series is ready for submission, generate your
 patches again, but with some new flags:
 
@@ -1071,7 +1071,7 @@ between your v1 and v2 patches.
 
 The `-v2` parameter tells `format-patch` to output your patches
 as version "2". For instance, you may notice that your v2 patches are
-all named like `v2-000n-my-commit-subject.patch`. `-v2` will also format
+all named like `v2-000n-my-cummit-subject.patch`. `-v2` will also format
 your patches by prefixing them with "[PATCH v2]" instead of "[PATCH]",
 and your range-diff will be prefaced with "Range-diff against v1".
 
@@ -1124,11 +1124,11 @@ $ git send-email --to=target@example.com
 === Bonus Chapter: One-Patch Changes
 
 In some cases, your very small change may consist of only one patch. When that
-happens, you only need to send one email. Your commit message should already be
+happens, you only need to send one email. Your cummit message should already be
 meaningful and explain at a high level the purpose (what is happening and why)
 of your patch, but if you need to supply even more context, you can do so below
 the `---` in your patch. Take the example below, which was generated with `git
-format-patch` on a single commit, and then edited to add the content between
+format-patch` on a single cummit, and then edited to add the content between
 the `---` and the diffstat.
 
 ----
@@ -1137,15 +1137,15 @@ From: A U Thor <author@example.com>
 Date: Thu, 18 Apr 2019 15:11:02 -0700
 Subject: [PATCH] README: change the grammar
 
-I think it looks better this way. This part of the commit message will
-end up in the commit-log.
+I think it looks better this way. This part of the cummit message will
+end up in the cummit-log.
 
 Signed-off-by: A U Thor <author@example.com>
 ---
 Let's have a wild discussion about grammar on the mailing list. This
-part of my email will never end up in the commit log. Here is where I
+part of my email will never end up in the cummit log. Here is where I
 can add additional context to the mailing list about my intent, outside
-of the context of the commit log. This section was added after `git
+of the context of the cummit log. This section was added after `git
 format-patch` was run, by editing the patch file in a text editor.
 
  README.md | 2 +-
@@ -1184,7 +1184,7 @@ and the suggested change. This way reviewers don't need to inspect your v2 to
 figure out whether you implemented their comment or not.
 
 Reviewers may ask you about what you wrote in the patchset, either in
-the proposed commit log message or in the changes themselves.  You
+the proposed cummit log message or in the changes themselves.  You
 should answer these questions in your response messages, but often the
 reason why reviewers asked these questions to understand what you meant
 to write is because your patchset needed clarification to be understood.
@@ -1215,10 +1215,10 @@ Note], which are similar to etiquette rules in most open source communities
 surrounding bottom-posting and inline replies.
 
 When you're making changes to your code, it is cleanest - that is, the resulting
-commits are easiest to look at - if you use `git rebase -i` (interactive
+cummits are easiest to look at - if you use `git rebase -i` (interactive
 rebase). Take a look at this
 https://www.oreilly.com/library/view/git-pocket-guide/9781449327507/ch10.html[overview]
-from O'Reilly. The general idea is to modify each commit which requires changes;
+from O'Reilly. The general idea is to modify each cummit which requires changes;
 this way, instead of having a patch A with a mistake, a patch B which was fine
 and required no upstream reviews in v1, and a patch C which fixes patch A for
 v2, you can just ship a v2 with a correct patch A and correct patch B. This is
@@ -1254,7 +1254,7 @@ but I need to change this and that - please wait for v5 before you merge it."
 
 If the topic has already been merged to `next`, rather than modifying your
 patches with `git rebase -i`, you should make further changes incrementally -
-that is, with another commit, based on top of the maintainer's topic branch as
+that is, with another cummit, based on top of the maintainer's topic branch as
 detailed in https://github.com/gitster/git. Your work is still in the same topic
 but is now incremental, rather than a wholesale rewrite of the topic branch.
 

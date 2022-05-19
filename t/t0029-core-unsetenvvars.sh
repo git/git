@@ -12,7 +12,7 @@ then
 fi
 
 test_expect_success 'setup' '
-	test_hook --setup pre-commit <<-\EOF
+	test_hook --setup pre-cummit <<-\EOF
 	echo $HOBBES >&2
 	EOF
 '
@@ -20,10 +20,10 @@ test_expect_success 'setup' '
 test_expect_success 'core.unsetenvvars works' '
 	HOBBES=Calvin &&
 	export HOBBES &&
-	git commit --allow-empty -m with 2>err &&
+	git cummit --allow-empty -m with 2>err &&
 	grep Calvin err &&
 	git -c core.unsetenvvars=FINDUS,HOBBES,CALVIN \
-		commit --allow-empty -m without 2>err &&
+		cummit --allow-empty -m without 2>err &&
 	! grep Calvin err
 '
 

@@ -17,11 +17,11 @@ test_expect_success "proc-receive: report option without matching ok ($PROTOCOL/
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: proc-receive> option refname refs/pull/123/head        Z
-	> remote: proc-receive> option old-oid <COMMIT-B>        Z
+	> remote: proc-receive> option old-oid <cummit-B>        Z
 	> remote: error: proc-receive reported "option" without a matching "ok/ng" directive        Z
 	> To <URL/of/upstream.git>
 	> !	HEAD:refs/for/main/topic	[remote rejected] (proc-receive failed to report status)
@@ -49,13 +49,13 @@ test_expect_success "proc-receive: report option refname ($PROTOCOL/porcelain)" 
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: proc-receive> option refname refs/pull/123/head        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/pull/123/head        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/pull/123/head        Z
 	> To <URL/of/upstream.git>
 	> *	HEAD:refs/pull/123/head	[new reference]
 	> Done
@@ -83,14 +83,14 @@ test_expect_success "proc-receive: report option refname and forced-update ($PRO
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: proc-receive> option refname refs/pull/123/head        Z
 	> remote: proc-receive> option forced-update        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/pull/123/head        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/pull/123/head        Z
 	> To <URL/of/upstream.git>
 	> *	HEAD:refs/pull/123/head	[new reference]
 	> Done
@@ -118,16 +118,16 @@ test_expect_success "proc-receive: report option refname and old-oid ($PROTOCOL/
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: proc-receive> option refname refs/pull/123/head        Z
-	> remote: proc-receive> option old-oid <COMMIT-B>        Z
+	> remote: proc-receive> option old-oid <cummit-B>        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/pull/123/head        Z
+	> remote: post-receive< <cummit-B> <cummit-A> refs/pull/123/head        Z
 	> To <URL/of/upstream.git>
-	>  	HEAD:refs/pull/123/head	<COMMIT-B>..<COMMIT-A>
+	>  	HEAD:refs/pull/123/head	<cummit-B>..<cummit-A>
 	> Done
 	EOF
 	test_cmp expect actual
@@ -152,15 +152,15 @@ test_expect_success "proc-receive: report option old-oid ($PROTOCOL/porcelain)" 
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
-	> remote: proc-receive> option old-oid <COMMIT-B>        Z
+	> remote: proc-receive> option old-oid <cummit-B>        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/for/main/topic        Z
+	> remote: post-receive< <cummit-B> <cummit-A> refs/for/main/topic        Z
 	> To <URL/of/upstream.git>
-	>  	HEAD:refs/for/main/topic	<COMMIT-B>..<COMMIT-A>
+	>  	HEAD:refs/for/main/topic	<cummit-B>..<cummit-A>
 	> Done
 	EOF
 	test_cmp expect actual
@@ -186,16 +186,16 @@ test_expect_success "proc-receive: report option old-oid and new-oid ($PROTOCOL/
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
-	> remote: proc-receive> option old-oid <COMMIT-A>        Z
-	> remote: proc-receive> option new-oid <COMMIT-B>        Z
+	> remote: proc-receive> option old-oid <cummit-A>        Z
+	> remote: proc-receive> option new-oid <cummit-B>        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/for/main/topic        Z
+	> remote: post-receive< <cummit-A> <cummit-B> refs/for/main/topic        Z
 	> To <URL/of/upstream.git>
-	>  	HEAD:refs/for/main/topic	<COMMIT-A>..<COMMIT-B>
+	>  	HEAD:refs/for/main/topic	<cummit-A>..<cummit-B>
 	> Done
 	EOF
 	test_cmp expect actual
@@ -229,34 +229,34 @@ test_expect_success "proc-receive: report with multiple rewrites ($PROTOCOL/porc
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/next/topic        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/a/b/c/topic        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/next/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/a/b/c/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/next/topic        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/a/b/c/topic        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/next/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/a/b/c/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok refs/for/a/b/c/topic        Z
 	> remote: proc-receive> ok refs/for/next/topic        Z
 	> remote: proc-receive> option refname refs/pull/123/head        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: proc-receive> option refname refs/pull/124/head        Z
-	> remote: proc-receive> option old-oid <COMMIT-B>        Z
+	> remote: proc-receive> option old-oid <cummit-B>        Z
 	> remote: proc-receive> option forced-update        Z
-	> remote: proc-receive> option new-oid <COMMIT-A>        Z
+	> remote: proc-receive> option new-oid <cummit-A>        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/pull/123/head        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/for/a/b/c/topic        Z
-	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/pull/124/head        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/pull/123/head        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/for/a/b/c/topic        Z
+	> remote: post-receive< <cummit-B> <cummit-A> refs/pull/124/head        Z
 	> To <URL/of/upstream.git>
 	> *	HEAD:refs/pull/123/head	[new reference]
 	> *	HEAD:refs/for/a/b/c/topic	[new reference]
-	> +	HEAD:refs/pull/124/head	<COMMIT-B>...<COMMIT-A> (forced update)
+	> +	HEAD:refs/pull/124/head	<cummit-B>...<cummit-A> (forced update)
 	> Done
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<COMMIT-A> refs/heads/main
+	<cummit-A> refs/heads/main
 	EOF
 '

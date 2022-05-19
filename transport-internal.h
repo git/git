@@ -48,7 +48,7 @@ struct transport_vtable {
 	 * The transport must modify new_sha1 in the ref to the new
 	 * value if the remote accepted the change. Note that this
 	 * could be a different value from peer_ref->new_oid if the
-	 * process involved generating new commits.
+	 * process involved generating new cummits.
 	 **/
 	int (*push_refs)(struct transport *transport, struct ref *refs, int flags);
 	int (*connect)(struct transport *connection, const char *name,

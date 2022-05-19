@@ -16,7 +16,7 @@ Fixes since v1.8.4.2
    "HEAD" points at, and the receiving end needed to guess.  A new
    capability has been defined in the pack protocol to convey this
    information so that cloning from a repository with more than one
-   branches pointing at the same commit where the HEAD is at now
+   branches pointing at the same cummit where the HEAD is at now
    reliably sets the initial branch in the resulting repository.
 
  * We did not handle cases where http transport gets redirected during
@@ -25,8 +25,8 @@ Fixes since v1.8.4.2
  * "git rev-list --objects ^v1.0^ v1.0" gave v1.0 tag itself in the
    output, but "git rev-list --objects v1.0^..v1.0" did not.
 
- * The fall-back parsing of commit objects with broken author or
-   committer lines were less robust than ideal in picking up the
+ * The fall-back parsing of cummit objects with broken author or
+   cummitter lines were less robust than ideal in picking up the
    timestamps.
 
  * Bash prompting code to deal with an SVN remote as an upstream

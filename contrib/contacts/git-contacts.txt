@@ -17,7 +17,7 @@ DESCRIPTION
 
 Given a set of changes, specified as patch files or revisions, determine people
 who might be interested in those changes.  This is done by consulting the
-history of each patch or revision hunk to find people mentioned by commits
+history of each patch or revision hunk to find people mentioned by cummits
 which touched the lines of files under consideration.
 
 Input consists of one or more patch files or revision arguments.  A revision
@@ -36,10 +36,10 @@ DISCUSSION
 ----------
 
 `git blame` is invoked for each hunk in a patch file or revision.  For each
-commit mentioned by `git blame`, the commit message is consulted for people who
+cummit mentioned by `git blame`, the cummit message is consulted for people who
 authored, reviewed, signed, acknowledged, or were Cc:'d.  Once the list of
 participants is known, each person's relevance is computed by considering how
-many commits mentioned that person compared with the total number of commits
+many cummits mentioned that person compared with the total number of cummits
 under consideration.  The final output consists only of participants who exceed
 a minimum threshold of participation.
 

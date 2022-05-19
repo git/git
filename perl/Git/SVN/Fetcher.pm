@@ -20,8 +20,8 @@ sub new {
 	my ($class, $git_svn, $switch_path) = @_;
 	my $self = SVN::Delta::Editor->new;
 	bless $self, $class;
-	if (exists $git_svn->{last_commit}) {
-		$self->{c} = $git_svn->{last_commit};
+	if (exists $git_svn->{last_cummit}) {
+		$self->{c} = $git_svn->{last_cummit};
 		$self->{empty_symlinks} =
 		                  _mark_empty_symlinks($git_svn, $switch_path);
 	}
@@ -77,7 +77,7 @@ sub _mark_empty_symlinks {
 	return {} if (!defined($bool)) || (defined($bool) && ! $bool);
 
 	my %ret;
-	my ($rev, $cmt) = $git_svn->last_rev_commit;
+	my ($rev, $cmt) = $git_svn->last_rev_cummit;
 	return {} unless ($rev && $cmt);
 
 	# allow the warning to be printed for each revision we fetch to
@@ -205,7 +205,7 @@ sub open_file {
 	($mode, $blob) = (command('ls-tree', '-z', $self->{c}, "./$gpath")
 	                     =~ /\A(\d{6}) blob ($::oid)\t\Q$gpath\E\0/);
 	unless (defined $mode && defined $blob) {
-		die "$path was not found in commit $self->{c} (r$rev)\n";
+		die "$path was not found in cummit $self->{c} (r$rev)\n";
 	}
 	if ($mode eq '100644' && $self->{empty_symlinks}->{$path}) {
 		$mode = '120000';
@@ -455,7 +455,7 @@ sub close_edit {
 		$self->stash_placeholder_list();
 	}
 
-	$self->{git_commit_ok} = 1;
+	$self->{git_cummit_ok} = 1;
 	$self->{nr} = $self->{gii}->{nr};
 	delete $self->{gii};
 	$self->SUPER::close_edit(@_);
@@ -484,12 +484,12 @@ sub find_empty_directories {
 		next if $skip_added;
 
 		# Use `git ls-tree` to get the filenames of this directory
-		# that existed prior to this particular commit.
+		# that existed prior to this particular cummit.
 		my $ls = command('ls-tree', '-z', '--name-only',
 				 $self->{c}, "$dir/");
 		my %files = map { $_ => 1 } split(/\0/, $ls);
 
-		# Remove the filenames that were deleted during this commit.
+		# Remove the filenames that were deleted during this cummit.
 		delete $files{$_} foreach (@deleted_gpath);
 
 		# Report the directory if there are no filenames left.
@@ -573,7 +573,7 @@ This is a subclass of C<SVN::Delta::Editor>, which means it implements
 callbacks to act as a consumer of Subversion tree deltas.  This
 particular implementation of those callbacks is meant to store
 information about the resulting content which B<git svn fetch> could
-use to populate new commits and new entries for F<unhandled.log>.
+use to populate new cummits and new entries for F<unhandled.log>.
 More specifically:
 
 =over

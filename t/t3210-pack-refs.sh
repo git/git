@@ -22,7 +22,7 @@ test_expect_success \
     'prepare a trivial repository' \
     'echo Hello > A &&
      git update-index --add A &&
-     git commit -m "Initial commit." &&
+     git cummit -m "Initial cummit." &&
      HEAD=$(git rev-parse --verify HEAD)'
 
 SHA1=
@@ -124,7 +124,7 @@ test_expect_success 'pack, prune and repack' '
 '
 
 test_expect_success 'explicit pack-refs with dangling packed reference' '
-	git commit --allow-empty -m "soon to be garbage-collected" &&
+	git cummit --allow-empty -m "soon to be garbage-collected" &&
 	git pack-refs --all &&
 	git reset --hard HEAD^ &&
 	git reflog expire --expire=all --all &&
@@ -135,7 +135,7 @@ test_expect_success 'explicit pack-refs with dangling packed reference' '
 
 test_expect_success 'delete ref with dangling packed version' '
 	git checkout -b lamb &&
-	git commit --allow-empty -m "future garbage" &&
+	git cummit --allow-empty -m "future garbage" &&
 	git pack-refs --all &&
 	git reset --hard HEAD^ &&
 	git checkout main &&
@@ -147,7 +147,7 @@ test_expect_success 'delete ref with dangling packed version' '
 
 test_expect_success 'delete ref while another dangling packed ref' '
 	git branch lamb &&
-	git commit --allow-empty -m "future garbage" &&
+	git cummit --allow-empty -m "future garbage" &&
 	git pack-refs --all &&
 	git reset --hard HEAD^ &&
 	git reflog expire --expire=all --all &&

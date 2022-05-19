@@ -9,11 +9,11 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
-	test_commit initial &&
+	test_cummit initial &&
 	printf "%04096d" 0 >4096-zeroes.txt &&
 	git add 4096-zeroes.txt &&
 	test_tick &&
-	git commit -m "A 4k file"
+	git cummit -m "A 4k file"
 '
 
 # OpenBSD only supports up to 255 repetitions, so repeat twice for 64*64=4096.

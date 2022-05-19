@@ -1,9 +1,9 @@
 -b::
-	Show blank SHA-1 for boundary commits.  This can also
+	Show blank SHA-1 for boundary cummits.  This can also
 	be controlled via the `blame.blankBoundary` config option.
 
 --root::
-	Do not treat root commits as boundaries.  This can also be
+	Do not treat root cummits as boundaries.  This can also be
 	controlled via the `blame.showRoot` config option.
 
 --show-stats::
@@ -38,8 +38,8 @@ include::line-range-format.txt[]
 	--reverse START..HEAD` for convenience.
 
 --first-parent::
-	Follow only the first parent commit upon seeing a merge
-	commit. This option can be used to determine when a line
+	Follow only the first parent cummit upon seeing a merge
+	cummit. This option can be used to determine when a line
 	was introduced to a particular integration branch, rather
 	than when it was introduced to the history overall.
 
@@ -48,8 +48,8 @@ include::line-range-format.txt[]
 	Show in a format designed for machine consumption.
 
 --line-porcelain::
-	Show the porcelain format, but output commit information for
-	each line, not just the first time a commit is referenced.
+	Show the porcelain format, but output cummit information for
+	each line, not just the first time a cummit is referenced.
 	Implies --porcelain.
 
 --incremental::
@@ -58,7 +58,7 @@ include::line-range-format.txt[]
 
 --encoding=<encoding>::
 	Specifies the encoding used to output author names
-	and commit summaries. Setting it to `none` makes blame
+	and cummit summaries. Setting it to `none` makes blame
 	output unconverted data. For more information see the
 	discussion about encoding in the linkgit:git-log[1]
 	manual page.
@@ -85,48 +85,48 @@ include::line-range-format.txt[]
 	or `--incremental`.
 
 -M[<num>]::
-	Detect moved or copied lines within a file. When a commit
+	Detect moved or copied lines within a file. When a cummit
 	moves or copies a block of lines (e.g. the original file
-	has A and then B, and the commit changes it to B and then
+	has A and then B, and the cummit changes it to B and then
 	A), the traditional 'blame' algorithm notices only half of
 	the movement and typically blames the lines that were moved
 	up (i.e. B) to the parent and assigns blame to the lines that
-	were moved down (i.e. A) to the child commit.  With this
+	were moved down (i.e. A) to the child cummit.  With this
 	option, both groups of lines are blamed on the parent by
 	running extra passes of inspection.
 +
 <num> is optional but it is the lower bound on the number of
 alphanumeric characters that Git must detect as moving/copying
 within a file for it to associate those lines with the parent
-commit. The default value is 20.
+cummit. The default value is 20.
 
 -C[<num>]::
 	In addition to `-M`, detect lines moved or copied from other
-	files that were modified in the same commit.  This is
+	files that were modified in the same cummit.  This is
 	useful when you reorganize your program and move code
 	around across files.  When this option is given twice,
 	the command additionally looks for copies from other
-	files in the commit that creates the file. When this
+	files in the cummit that creates the file. When this
 	option is given three times, the command additionally
-	looks for copies from other files in any commit.
+	looks for copies from other files in any cummit.
 +
 <num> is optional but it is the lower bound on the number of
 alphanumeric characters that Git must detect as moving/copying
 between files for it to associate those lines with the parent
-commit. And the default value is 40. If there are more than one
+cummit. And the default value is 40. If there are more than one
 `-C` options given, the <num> argument of the last `-C` will
 take effect.
 
 --ignore-rev <rev>::
 	Ignore changes made by the revision when assigning blame, as if the
 	change never happened.  Lines that were changed or added by an ignored
-	commit will be blamed on the previous commit that changed that line or
+	cummit will be blamed on the previous cummit that changed that line or
 	nearby lines.  This option may be specified multiple times to ignore
 	more than one revision.  If the `blame.markIgnoredLines` config option
-	is set, then lines that were changed by an ignored commit and attributed to
-	another commit will be marked with a `?` in the blame output.  If the
+	is set, then lines that were changed by an ignored cummit and attributed to
+	another cummit will be marked with a `?` in the blame output.  If the
 	`blame.markUnblamableLines` config option is set, then those lines touched
-	by an ignored commit that we could not attribute to another revision are
+	by an ignored cummit that we could not attribute to another revision are
 	marked with a '*'.
 
 --ignore-revs-file <file>::
@@ -138,8 +138,8 @@ take effect.
 
 --color-lines::
 	Color line annotations in the default format differently if they come from
-	the same commit as the preceding line. This makes it easier to distinguish
-	code blocks introduced by different commits. The color defaults to cyan and
+	the same cummit as the preceding line. This makes it easier to distinguish
+	code blocks introduced by different cummits. The color defaults to cyan and
 	can be adjusted using the `color.blame.repeatedLines` config option.
 
 --color-by-age::

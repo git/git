@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git checkout' [-q] [-f] [-m] [<branch>]
 'git checkout' [-q] [-f] [-m] --detach [<branch>]
-'git checkout' [-q] [-f] [-m] [--detach] <commit>
+'git checkout' [-q] [-f] [-m] [--detach] <cummit>
 'git checkout' [-q] [-f] [-m] [[-b|-B|--orphan] <new-branch>] [<start-point>]
 'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <pathspec>...
 'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]
@@ -27,7 +27,7 @@ branch.
 	To prepare for working on `<branch>`, switch to it by updating
 	the index and the files in the working tree, and by pointing
 	`HEAD` at the branch. Local modifications to the files in the
-	working tree are kept, so that they can be committed to the
+	working tree are kept, so that they can be cummitted to the
 	`<branch>`.
 +
 If `<branch>` is not found but there does exist a tracking branch in
@@ -64,16 +64,16 @@ that is to say, the branch is not reset/created unless "git checkout" is
 successful.
 
 'git checkout' --detach [<branch>]::
-'git checkout' [--detach] <commit>::
+'git checkout' [--detach] <cummit>::
 
-	Prepare to work on top of `<commit>`, by detaching `HEAD` at it
+	Prepare to work on top of `<cummit>`, by detaching `HEAD` at it
 	(see "DETACHED HEAD" section), and updating the index and the
 	files in the working tree.  Local modifications to the files
 	in the working tree are kept, so that the resulting working
-	tree will be the state recorded in the commit plus the local
+	tree will be the state recorded in the cummit plus the local
 	modifications.
 +
-When the `<commit>` argument is a branch name, the `--detach` option can
+When the `<cummit>` argument is a branch name, the `--detach` option can
 be used to detach `HEAD` at the tip of the branch (`git checkout
 <branch>` would check out that branch without detaching `HEAD`).
 +
@@ -83,7 +83,7 @@ Omitting `<branch>` detaches `HEAD` at the tip of the current branch.
 'git checkout' [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]::
 
 	Overwrite the contents of the files that match the pathspec.
-	When the `<tree-ish>` (most often a commit) is not given,
+	When the `<tree-ish>` (most often a cummit) is not given,
 	overwrite working tree with the contents in the index.
 	When the `<tree-ish>` is given, overwrite both the index and
 	the working tree with the contents at the `<tree-ish>`.
@@ -205,24 +205,24 @@ variable.
 -d::
 --detach::
 	Rather than checking out a branch to work on it, check out a
-	commit for inspection and discardable experiments.
-	This is the default behavior of `git checkout <commit>` when
-	`<commit>` is not a branch name.  See the "DETACHED HEAD" section
+	cummit for inspection and discardable experiments.
+	This is the default behavior of `git checkout <cummit>` when
+	`<cummit>` is not a branch name.  See the "DETACHED HEAD" section
 	below for details.
 
 --orphan <new-branch>::
 	Create a new 'orphan' branch, named `<new-branch>`, started from
-	`<start-point>` and switch to it.  The first commit made on this
+	`<start-point>` and switch to it.  The first cummit made on this
 	new branch will have no parents and it will be the root of a new
 	history totally disconnected from all the other branches and
-	commits.
+	cummits.
 +
 The index and the working tree are adjusted as if you had previously run
 `git checkout <start-point>`.  This allows you to start a new history
 that records a set of paths similar to `<start-point>` by easily running
-`git commit -a` to make the root commit.
+`git cummit -a` to make the root cummit.
 +
-This can be useful when you want to publish the tree from a commit
+This can be useful when you want to publish the tree from a cummit
 without exposing its full history. You might want to do this to publish
 an open source branch of a project whose current tree is "clean", but
 whose full history contains proprietary or otherwise encumbered bits of
@@ -297,7 +297,7 @@ Note that this option uses the no overlay mode by default (see also
 --recurse-submodules::
 --no-recurse-submodules::
 	Using `--recurse-submodules` will update the content of all active
-	submodules according to the commit recorded in the superproject. If
+	submodules according to the cummit recorded in the superproject. If
 	local modifications in a submodule would be overwritten the checkout
 	will fail unless `-f` is used. If nothing (or `--no-recurse-submodules`)
 	is used, submodules working trees will not be updated.
@@ -329,11 +329,11 @@ Note that this option uses the no overlay mode by default (see also
 	Branch to checkout; if it refers to a branch (i.e., a name that,
 	when prepended with "refs/heads/", is a valid ref), then that
 	branch is checked out. Otherwise, if it refers to a valid
-	commit, your `HEAD` becomes "detached" and you are no longer on
+	cummit, your `HEAD` becomes "detached" and you are no longer on
 	any branch (see below for details).
 +
 You can use the `@{-N}` syntax to refer to the N-th last
-branch/commit checked out using "git checkout" operation. You may
+branch/cummit checked out using "git checkout" operation. You may
 also specify `-` which is synonymous to `@{-1}`.
 +
 As a special case, you may use `A...B` as a shortcut for the
@@ -344,7 +344,7 @@ leave out at most one of `A` and `B`, in which case it defaults to `HEAD`.
 	Name for the new branch.
 
 <start-point>::
-	The name of a commit at which to start the new branch; see
+	The name of a cummit at which to start the new branch; see
 	linkgit:git-branch[1] for details. Defaults to `HEAD`.
 +
 As a special case, you may use `"A...B"` as a shortcut for the
@@ -370,89 +370,89 @@ For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
 DETACHED HEAD
 -------------
 `HEAD` normally refers to a named branch (e.g. `master`). Meanwhile, each
-branch refers to a specific commit. Let's look at a repo with three
-commits, one of them tagged, and with branch `master` checked out:
+branch refers to a specific cummit. Let's look at a repo with three
+cummits, one of them tagged, and with branch `master` checked out:
 
 ------------
            HEAD (refers to branch 'master')
             |
             v
-a---b---c  branch 'master' (refers to commit 'c')
+a---b---c  branch 'master' (refers to cummit 'c')
     ^
     |
-  tag 'v2.0' (refers to commit 'b')
+  tag 'v2.0' (refers to cummit 'b')
 ------------
 
-When a commit is created in this state, the branch is updated to refer to
-the new commit. Specifically, 'git commit' creates a new commit `d`, whose
-parent is commit `c`, and then updates branch `master` to refer to new
-commit `d`. `HEAD` still refers to branch `master` and so indirectly now refers
-to commit `d`:
+When a cummit is created in this state, the branch is updated to refer to
+the new cummit. Specifically, 'git cummit' creates a new cummit `d`, whose
+parent is cummit `c`, and then updates branch `master` to refer to new
+cummit `d`. `HEAD` still refers to branch `master` and so indirectly now refers
+to cummit `d`:
 
 ------------
-$ edit; git add; git commit
+$ edit; git add; git cummit
 
                HEAD (refers to branch 'master')
                 |
                 v
-a---b---c---d  branch 'master' (refers to commit 'd')
+a---b---c---d  branch 'master' (refers to cummit 'd')
     ^
     |
-  tag 'v2.0' (refers to commit 'b')
+  tag 'v2.0' (refers to cummit 'b')
 ------------
 
-It is sometimes useful to be able to checkout a commit that is not at
-the tip of any named branch, or even to create a new commit that is not
+It is sometimes useful to be able to checkout a cummit that is not at
+the tip of any named branch, or even to create a new cummit that is not
 referenced by a named branch. Let's look at what happens when we
-checkout commit `b` (here we show two ways this may be done):
+checkout cummit `b` (here we show two ways this may be done):
 
 ------------
 $ git checkout v2.0  # or
 $ git checkout master^^
 
-   HEAD (refers to commit 'b')
+   HEAD (refers to cummit 'b')
     |
     v
-a---b---c---d  branch 'master' (refers to commit 'd')
+a---b---c---d  branch 'master' (refers to cummit 'd')
     ^
     |
-  tag 'v2.0' (refers to commit 'b')
+  tag 'v2.0' (refers to cummit 'b')
 ------------
 
 Notice that regardless of which checkout command we use, `HEAD` now refers
-directly to commit `b`. This is known as being in detached `HEAD` state.
-It means simply that `HEAD` refers to a specific commit, as opposed to
-referring to a named branch. Let's see what happens when we create a commit:
+directly to cummit `b`. This is known as being in detached `HEAD` state.
+It means simply that `HEAD` refers to a specific cummit, as opposed to
+referring to a named branch. Let's see what happens when we create a cummit:
 
 ------------
-$ edit; git add; git commit
+$ edit; git add; git cummit
 
-     HEAD (refers to commit 'e')
+     HEAD (refers to cummit 'e')
       |
       v
       e
      /
-a---b---c---d  branch 'master' (refers to commit 'd')
+a---b---c---d  branch 'master' (refers to cummit 'd')
     ^
     |
-  tag 'v2.0' (refers to commit 'b')
+  tag 'v2.0' (refers to cummit 'b')
 ------------
 
-There is now a new commit `e`, but it is referenced only by `HEAD`. We can
-of course add yet another commit in this state:
+There is now a new cummit `e`, but it is referenced only by `HEAD`. We can
+of course add yet another cummit in this state:
 
 ------------
-$ edit; git add; git commit
+$ edit; git add; git cummit
 
-	 HEAD (refers to commit 'f')
+	 HEAD (refers to cummit 'f')
 	  |
 	  v
       e---f
      /
-a---b---c---d  branch 'master' (refers to commit 'd')
+a---b---c---d  branch 'master' (refers to cummit 'd')
     ^
     |
-  tag 'v2.0' (refers to commit 'b')
+  tag 'v2.0' (refers to cummit 'b')
 ------------
 
 In fact, we can perform all the normal Git operations. But, let's look
@@ -464,16 +464,16 @@ $ git checkout master
                HEAD (refers to branch 'master')
       e---f     |
      /          v
-a---b---c---d  branch 'master' (refers to commit 'd')
+a---b---c---d  branch 'master' (refers to cummit 'd')
     ^
     |
-  tag 'v2.0' (refers to commit 'b')
+  tag 'v2.0' (refers to cummit 'b')
 ------------
 
-It is important to realize that at this point nothing refers to commit
-`f`. Eventually commit `f` (and by extension commit `e`) will be deleted
+It is important to realize that at this point nothing refers to cummit
+`f`. Eventually cummit `f` (and by extension cummit `e`) will be deleted
 by the routine Git garbage collection process, unless we create a reference
-before that happens. If we have not yet moved away from commit `f`,
+before that happens. If we have not yet moved away from cummit `f`,
 any of these will create a reference to it:
 
 ------------
@@ -482,19 +482,19 @@ $ git branch foo        <2>
 $ git tag foo           <3>
 ------------
 
-<1> creates a new branch `foo`, which refers to commit `f`, and then
+<1> creates a new branch `foo`, which refers to cummit `f`, and then
     updates `HEAD` to refer to branch `foo`. In other words, we'll no longer
     be in detached `HEAD` state after this command.
 
-<2> similarly creates a new branch `foo`, which refers to commit `f`,
+<2> similarly creates a new branch `foo`, which refers to cummit `f`,
     but leaves `HEAD` detached.
 
-<3> creates a new tag `foo`, which refers to commit `f`,
+<3> creates a new tag `foo`, which refers to cummit `f`,
     leaving `HEAD` detached.
 
-If we have moved away from commit `f`, then we must first recover its object
+If we have moved away from cummit `f`, then we must first recover its object
 name (typically by using git reflog), and then we can create a reference to
-it. For example, to see the last two commits to which `HEAD` referred, we
+it. For example, to see the last two cummits to which `HEAD` referred, we
 can use either of these commands:
 
 ------------
@@ -529,7 +529,7 @@ $ git checkout hello.c            <3>
 ------------
 +
 <1> switch branch
-<2> take a file out of another commit
+<2> take a file out of another cummit
 <3> restore `hello.c` from the index
 +
 If you want to check out _all_ C source files out of the index,

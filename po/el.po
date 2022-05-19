@@ -21,9 +21,9 @@
 #   (a) checkout     |  εξαγωγή
 #   (to) checkout    |  εξάγω
 #   cherry-pick      |  επιλεκτική διαλογή
-#   (a) commit       |  μια υποβολή
-#   (to) commit      |  υποβάλλω
-#   commit-ish       |  υποβολή ή φαινομενική
+#   (a) cummit       |  μια υποβολή
+#   (to) cummit      |  υποβάλλω
+#   cummit-ish       |  υποβολή ή φαινομενική
 #   config file      |  αρχείο ρυθμίσεων
 #   conflict         |  σύγκρουση
 #   dangling         |  εκκρεμές
@@ -117,7 +117,7 @@ msgstr ""
 "αρχεία."
 
 #: advice.c:156
-msgid "Committing is not possible because you have unmerged files."
+msgid "cummitting is not possible because you have unmerged files."
 msgstr "Δεν είναι δυνατό να γίνει υποβολή επειδή έχετε μη συγχωνευμένα αρχεία."
 
 #: advice.c:158
@@ -143,7 +143,7 @@ msgstr "Δεν είναι δυνατό να γίνει %s επειδή έχετ�
 #: advice.c:172
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
-"as appropriate to mark resolution and make a commit."
+"as appropriate to mark resolution and make a cummit."
 msgstr ""
 "Φτιάξτε τα στο δέντρο εργασίας, και μετά χρησιμοποιήστε 'git add/rm "
 "<αρχείο>'\n"
@@ -158,7 +158,7 @@ msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "Δεν έχετε ολοκληρώσει τη συγχώνευσή σας (Υπάρχει το MERGE_HEAD)."
 
 #: advice.c:187
-msgid "Please, commit your changes before merging."
+msgid "Please, cummit your changes before merging."
 msgstr "Παρακαλώ, υποβάλετε τις αλλαγές σας πριν συγχωνεύσετε."
 
 #: advice.c:188
@@ -171,10 +171,10 @@ msgid ""
 "Note: checking out '%s'.\n"
 "\n"
 "You are in 'detached HEAD' state. You can look around, make experimental\n"
-"changes and commit them, and you can discard any commits you make in this\n"
+"changes and cummit them, and you can discard any cummits you make in this\n"
 "state without impacting any branches by performing another checkout.\n"
 "\n"
-"If you want to create a new branch to retain commits you create, you may\n"
+"If you want to create a new branch to retain cummits you create, you may\n"
 "do so (now or later) by using -b with the checkout command again. Example:\n"
 "\n"
 "  git checkout -b <new-branch-name>\n"
@@ -823,7 +823,7 @@ msgid "allow overlapping hunks"
 msgstr ""
 
 #: apply.c:5017 builtin/add.c:291 builtin/check-ignore.c:22
-#: builtin/commit.c:1312 builtin/count-objects.c:98 builtin/fsck.c:724
+#: builtin/cummit.c:1312 builtin/count-objects.c:98 builtin/fsck.c:724
 #: builtin/log.c:2037 builtin/mv.c:123 builtin/read-tree.c:128
 #: builtin/rebase--interactive.c:159
 msgid "be verbose"
@@ -1057,7 +1057,7 @@ msgstr ""
 
 #: bisect.c:733
 #, c-format
-msgid "Not a valid commit name %s"
+msgid "Not a valid cummit name %s"
 msgstr "Μη έγκυρο όνομα υποβολής %s"
 
 #: bisect.c:758
@@ -1078,7 +1078,7 @@ msgstr ""
 #, c-format
 msgid ""
 "The merge base %s is %s.\n"
-"This means the first '%s' commit is between %s and [%s].\n"
+"This means the first '%s' cummit is between %s and [%s].\n"
 msgstr ""
 
 #: bisect.c:776
@@ -1093,7 +1093,7 @@ msgstr ""
 #, c-format
 msgid ""
 "the merge base between %s and [%s] must be skipped.\n"
-"So we cannot be sure the first %s commit is between %s and %s.\n"
+"So we cannot be sure the first %s cummit is between %s and %s.\n"
 "We continue anyway."
 msgstr ""
 
@@ -1129,7 +1129,7 @@ msgstr ""
 #: bisect.c:994
 #, c-format
 msgid ""
-"No testable commit found.\n"
+"No testable cummit found.\n"
 "Maybe you started with bad path parameters?\n"
 msgstr ""
 
@@ -1155,15 +1155,15 @@ msgid "--contents and --reverse do not blend well."
 msgstr ""
 
 #: blame.c:1806
-msgid "cannot use --contents with final commit object name"
+msgid "cannot use --contents with final cummit object name"
 msgstr ""
 
 #: blame.c:1827
-msgid "--reverse and --first-parent together require specified latest commit"
+msgid "--reverse and --first-parent together require specified latest cummit"
 msgstr ""
 
 #: blame.c:1836 bundle.c:164 ref-filter.c:2071 remote.c:1948 sequencer.c:1993
-#: sequencer.c:4064 builtin/commit.c:1004 builtin/log.c:378 builtin/log.c:936
+#: sequencer.c:4064 builtin/cummit.c:1004 builtin/log.c:378 builtin/log.c:936
 #: builtin/log.c:1420 builtin/log.c:1796 builtin/log.c:2086 builtin/merge.c:407
 #: builtin/pack-objects.c:3137 builtin/pack-objects.c:3152
 #: builtin/shortlog.c:192
@@ -1324,13 +1324,13 @@ msgid "unrecognized header: %s%s (%d)"
 msgstr ""
 
 #: bundle.c:90 rerere.c:480 rerere.c:690 sequencer.c:2215 sequencer.c:2763
-#: builtin/commit.c:776
+#: builtin/cummit.c:776
 #, c-format
 msgid "could not open '%s'"
 msgstr "δεν ήταν δυνατό το άνοιγμα του '%s'"
 
 #: bundle.c:143
-msgid "Repository lacks these prerequisite commits:"
+msgid "Repository lacks these prerequisite cummits:"
 msgstr ""
 
 #: bundle.c:194
@@ -1395,19 +1395,19 @@ msgstr ""
 msgid "invalid color value: %.*s"
 msgstr ""
 
-#: commit.c:50 sequencer.c:2567 builtin/am.c:355 builtin/am.c:399
+#: cummit.c:50 sequencer.c:2567 builtin/am.c:355 builtin/am.c:399
 #: builtin/am.c:1375 builtin/am.c:2019 builtin/replace.c:376
 #: builtin/replace.c:448
 #, c-format
 msgid "could not parse %s"
 msgstr ""
 
-#: commit.c:52
+#: cummit.c:52
 #, c-format
-msgid "%s %s is not a commit!"
+msgid "%s %s is not a cummit!"
 msgstr ""
 
-#: commit.c:193
+#: cummit.c:193
 msgid ""
 "Support for <GIT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
@@ -1419,156 +1419,156 @@ msgid ""
 "\"git config advice.graftFileDeprecated false\""
 msgstr ""
 
-#: commit.c:1122
+#: cummit.c:1122
 #, c-format
-msgid "Commit %s has an untrusted GPG signature, allegedly by %s."
+msgid "cummit %s has an untrusted GPG signature, allegedly by %s."
 msgstr "Η υπογραφή %s έχει μη αξιόπιστη υπογραφή GPG, δήθεν από %s."
 
-#: commit.c:1125
+#: cummit.c:1125
 #, c-format
-msgid "Commit %s has a bad GPG signature allegedly by %s."
+msgid "cummit %s has a bad GPG signature allegedly by %s."
 msgstr "Η υποβολή %s έχει λάθος υπογραφή GPG δήθεν από %s."
 
-#: commit.c:1128
+#: cummit.c:1128
 #, c-format
-msgid "Commit %s does not have a GPG signature."
+msgid "cummit %s does not have a GPG signature."
 msgstr "Η υποβολή %s δεν έχει υπογραφή GPG."
 
-#: commit.c:1131
+#: cummit.c:1131
 #, c-format
-msgid "Commit %s has a good GPG signature by %s\n"
+msgid "cummit %s has a good GPG signature by %s\n"
 msgstr "Η υποβολή %s έχει σωστή υπογραφή GPG από %s\n"
 
-#: commit.c:1385
+#: cummit.c:1385
 msgid ""
-"Warning: commit message did not conform to UTF-8.\n"
+"Warning: cummit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
-"variable i18n.commitencoding to the encoding your project uses.\n"
+"variable i18n.cummitencoding to the encoding your project uses.\n"
 msgstr ""
 
-#: commit-graph.c:101
+#: cummit-graph.c:101
 #, c-format
 msgid "graph file %s is too small"
 msgstr ""
 
-#: commit-graph.c:136
+#: cummit-graph.c:136
 #, c-format
 msgid "graph signature %X does not match signature %X"
 msgstr ""
 
-#: commit-graph.c:143
+#: cummit-graph.c:143
 #, c-format
 msgid "graph version %X does not match version %X"
 msgstr ""
 
-#: commit-graph.c:150
+#: cummit-graph.c:150
 #, c-format
 msgid "hash version %X does not match version %X"
 msgstr ""
 
-#: commit-graph.c:173
+#: cummit-graph.c:173
 msgid "chunk lookup table entry missing; graph file may be incomplete"
 msgstr ""
 
-#: commit-graph.c:184
+#: cummit-graph.c:184
 #, c-format
 msgid "improper chunk offset %08x%08x"
 msgstr ""
 
-#: commit-graph.c:221
+#: cummit-graph.c:221
 #, c-format
 msgid "chunk id %08x appears multiple times"
 msgstr ""
 
-#: commit-graph.c:334
+#: cummit-graph.c:334
 #, c-format
-msgid "could not find commit %s"
+msgid "could not find cummit %s"
 msgstr ""
 
-#: commit-graph.c:671 builtin/pack-objects.c:2646
+#: cummit-graph.c:671 builtin/pack-objects.c:2646
 #, c-format
 msgid "unable to get type of object %s"
 msgstr ""
 
-#: commit-graph.c:704
-msgid "Loading known commits in commit graph"
+#: cummit-graph.c:704
+msgid "Loading known cummits in cummit graph"
 msgstr ""
 
-#: commit-graph.c:720
-msgid "Expanding reachable commits in commit graph"
+#: cummit-graph.c:720
+msgid "Expanding reachable cummits in cummit graph"
 msgstr ""
 
-#: commit-graph.c:732
-msgid "Clearing commit marks in commit graph"
+#: cummit-graph.c:732
+msgid "Clearing cummit marks in cummit graph"
 msgstr ""
 
-#: commit-graph.c:752
-msgid "Computing commit graph generation numbers"
+#: cummit-graph.c:752
+msgid "Computing cummit graph generation numbers"
 msgstr ""
 
-#: commit-graph.c:869
+#: cummit-graph.c:869
 #, c-format
-msgid "Finding commits for commit graph in %d pack"
-msgid_plural "Finding commits for commit graph in %d packs"
+msgid "Finding cummits for cummit graph in %d pack"
+msgid_plural "Finding cummits for cummit graph in %d packs"
 msgstr[0] ""
 msgstr[1] ""
 
-#: commit-graph.c:882
+#: cummit-graph.c:882
 #, c-format
 msgid "error adding pack %s"
 msgstr ""
 
-#: commit-graph.c:884
+#: cummit-graph.c:884
 #, c-format
 msgid "error opening index for %s"
 msgstr ""
 
-#: commit-graph.c:898
+#: cummit-graph.c:898
 #, c-format
-msgid "Finding commits for commit graph from %d ref"
-msgid_plural "Finding commits for commit graph from %d refs"
+msgid "Finding cummits for cummit graph from %d ref"
+msgid_plural "Finding cummits for cummit graph from %d refs"
 msgstr[0] ""
 msgstr[1] ""
 
-#: commit-graph.c:930
-msgid "Finding commits for commit graph among packed objects"
+#: cummit-graph.c:930
+msgid "Finding cummits for cummit graph among packed objects"
 msgstr ""
 
-#: commit-graph.c:943
-msgid "Counting distinct commits in commit graph"
+#: cummit-graph.c:943
+msgid "Counting distinct cummits in cummit graph"
 msgstr ""
 
-#: commit-graph.c:956
+#: cummit-graph.c:956
 #, c-format
-msgid "the commit graph format cannot write %d commits"
+msgid "the cummit graph format cannot write %d cummits"
 msgstr ""
 
-#: commit-graph.c:965
-msgid "Finding extra edges in commit graph"
+#: cummit-graph.c:965
+msgid "Finding extra edges in cummit graph"
 msgstr ""
 
-#: commit-graph.c:989
-msgid "too many commits to write graph"
+#: cummit-graph.c:989
+msgid "too many cummits to write graph"
 msgstr ""
 
-#: commit-graph.c:996 midx.c:769
+#: cummit-graph.c:996 midx.c:769
 #, c-format
 msgid "unable to create leading directories of %s"
 msgstr ""
 
-#: commit-graph.c:1036
+#: cummit-graph.c:1036
 #, c-format
-msgid "Writing out commit graph in %d pass"
-msgid_plural "Writing out commit graph in %d passes"
+msgid "Writing out cummit graph in %d pass"
+msgid_plural "Writing out cummit graph in %d passes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: commit-graph.c:1109
-msgid "the commit-graph file has incorrect checksum and is likely corrupt"
+#: cummit-graph.c:1109
+msgid "the cummit-graph file has incorrect checksum and is likely corrupt"
 msgstr ""
 
-#: commit-graph.c:1153
-msgid "Verifying commits in commit graph"
+#: cummit-graph.c:1153
+msgid "Verifying cummits in cummit graph"
 msgstr ""
 
 #: compat/obstack.c:406 compat/obstack.c:408
@@ -2486,7 +2486,7 @@ msgstr ""
 
 #: fetch-pack.c:432
 #, c-format
-msgid "invalid commit %s"
+msgid "invalid cummit %s"
 msgstr ""
 
 #: fetch-pack.c:463
@@ -2592,7 +2592,7 @@ msgid "Server does not support --deepen"
 msgstr ""
 
 #: fetch-pack.c:984
-msgid "no common commits"
+msgid "no common cummits"
 msgstr ""
 
 #: fetch-pack.c:996 fetch-pack.c:1419
@@ -2916,7 +2916,7 @@ msgstr "δεν επιτρέπεται κενό όνομα ident (για το <%s
 msgid "name consists only of disallowed characters: %s"
 msgstr "το όνομα αποτελείται μόνο από μη επιτρεπτούς χαρακτήρες: %s"
 
-#: ident.c:419 builtin/commit.c:608
+#: ident.c:419 builtin/cummit.c:608
 #, c-format
 msgid "invalid date format: %s"
 msgstr "μη έγκυρη μορφή ημερομηνίας: %s"
@@ -2939,7 +2939,7 @@ msgid ""
 "Unable to create '%s.lock': %s.\n"
 "\n"
 "Another git process seems to be running in this repository, e.g.\n"
-"an editor opened by 'git commit'. Please make sure all processes\n"
+"an editor opened by 'git cummit'. Please make sure all processes\n"
 "are terminated then try again. If it still fails, a git process\n"
 "may have crashed in this repository earlier:\n"
 "remove the file manually to continue."
@@ -2947,7 +2947,7 @@ msgstr ""
 "Δε γίνεται να δημιουργηθεί το '%s.lock': %s.\n"
 "\n"
 "Φαίνεται πως μια άλλη διεργασία git τρέχει μέσα σε αυτό το αποθετήριο, π.χ.\n"
-"ένας διορθωτής που άνοιξε από το 'git commit'. Παρακαλώ σιγουρευτείτε πως "
+"ένας διορθωτής που άνοιξε από το 'git cummit'. Παρακαλώ σιγουρευτείτε πως "
 "όλες οι διεργασίες\n"
 "έχουν τερματιστεί και προσπαθήστε πάλι. Αν αποτυγχάνει ακόμα, μπορεί μια "
 "διεργασία git\n"
@@ -2969,7 +2969,7 @@ msgid "unable to write new index file"
 msgstr "δεν είναι δυνατή η εγγραφή νέου αρχείου ευρετηρίου"
 
 #: merge-recursive.c:332
-msgid "(bad commit)\n"
+msgid "(bad cummit)\n"
 msgstr ""
 
 #: merge-recursive.c:355
@@ -3037,17 +3037,17 @@ msgstr ""
 
 #: merge-recursive.c:1218
 #, c-format
-msgid "Failed to merge submodule %s (commits not present)"
+msgid "Failed to merge submodule %s (cummits not present)"
 msgstr ""
 
 #: merge-recursive.c:1225
 #, c-format
-msgid "Failed to merge submodule %s (commits don't follow merge-base)"
+msgid "Failed to merge submodule %s (cummits don't follow merge-base)"
 msgstr ""
 
 #: merge-recursive.c:1233 merge-recursive.c:1245
 #, c-format
-msgid "Fast-forwarding submodule %s to the following commit:"
+msgid "Fast-forwarding submodule %s to the following cummit:"
 msgstr ""
 
 #: merge-recursive.c:1236 merge-recursive.c:1248
@@ -3057,7 +3057,7 @@ msgstr ""
 
 #: merge-recursive.c:1271
 #, c-format
-msgid "Failed to merge submodule %s (merge following commits not found)"
+msgid "Failed to merge submodule %s (merge following cummits not found)"
 msgstr ""
 
 #: merge-recursive.c:1275
@@ -3348,7 +3348,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: merge-recursive.c:3588
-msgid "merge returned no commit"
+msgid "merge returned no cummit"
 msgstr ""
 
 #: merge-recursive.c:3654
@@ -3491,12 +3491,12 @@ msgstr ""
 #, c-format
 msgid ""
 "You have not concluded your previous notes merge (%s exists).\n"
-"Please, use 'git notes merge --commit' or 'git notes merge --abort' to "
-"commit/abort the previous merge before you start a new notes merge."
+"Please, use 'git notes merge --cummit' or 'git notes merge --abort' to "
+"cummit/abort the previous merge before you start a new notes merge."
 msgstr ""
 "Δεν έχετε ολοκληρώσει την προηγούμενη συγχώνευση σημειώσεών σας (Υπάρχει το "
 "%s).\n"
-"Παρακαλώ, χρησιμοποιήστε 'git notes merge --commit' ή 'git notes merge --"
+"Παρακαλώ, χρησιμοποιήστε 'git notes merge --cummit' ή 'git notes merge --"
 "abort' για να υποβάλετε/εγκαταλείψετε την προηγούμενη συγχώνευση πριν "
 "ξεκινήσετε νέα συγχώνευση σημειώσεων."
 
@@ -3506,7 +3506,7 @@ msgid "You have not concluded your notes merge (%s exists)."
 msgstr "Δεν έχετε ολοκληρώσει τη συγχώνευση σημειώσεών σας (Υπάρχει το %s)."
 
 #: notes-utils.c:46
-msgid "Cannot commit uninitialized/unreferenced notes tree"
+msgid "Cannot cummit uninitialized/unreferenced notes tree"
 msgstr ""
 
 #: notes-utils.c:105
@@ -3816,7 +3816,7 @@ msgstr ""
 
 #: range-diff.c:74 sequencer.c:4828
 #, c-format
-msgid "could not parse commit '%s'"
+msgid "could not parse cummit '%s'"
 msgstr ""
 
 #: range-diff.c:224
@@ -3932,7 +3932,7 @@ msgstr ""
 #: read-cache.c:1949 read-cache.c:2227 rerere.c:565 rerere.c:599 rerere.c:1111
 #: builtin/add.c:459 builtin/check-ignore.c:178 builtin/checkout.c:294
 #: builtin/checkout.c:622 builtin/checkout.c:991 builtin/clean.c:955
-#: builtin/commit.c:344 builtin/diff-tree.c:116 builtin/grep.c:498
+#: builtin/cummit.c:344 builtin/diff-tree.c:116 builtin/grep.c:498
 #: builtin/mv.c:145 builtin/reset.c:245 builtin/rm.c:271
 #: builtin/submodule--helper.c:330
 msgid "index file corrupt"
@@ -4022,20 +4022,20 @@ msgstr ""
 msgid ""
 "\n"
 "Commands:\n"
-"p, pick <commit> = use commit\n"
-"r, reword <commit> = use commit, but edit the commit message\n"
-"e, edit <commit> = use commit, but stop for amending\n"
-"s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup <commit> = like \"squash\", but discard this commit's log message\n"
+"p, pick <cummit> = use cummit\n"
+"r, reword <cummit> = use cummit, but edit the cummit message\n"
+"e, edit <cummit> = use cummit, but stop for amending\n"
+"s, squash <cummit> = use cummit, but meld into previous cummit\n"
+"f, fixup <cummit> = like \"squash\", but discard this cummit's log message\n"
 "x, exec <command> = run command (the rest of the line) using shell\n"
 "b, break = stop here (continue rebase later with 'git rebase --continue')\n"
-"d, drop <commit> = remove commit\n"
+"d, drop <cummit> = remove cummit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified). Use -c <commit> to reword the commit message.\n"
+"m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+".       create a merge cummit using the original merge cummit's\n"
+".       message (or the oneline, if no original merge cummit was\n"
+".       specified). Use -c <cummit> to reword the cummit message.\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
@@ -4043,13 +4043,13 @@ msgstr ""
 #: rebase-interactive.c:31 git-rebase--preserve-merges.sh:173
 msgid ""
 "\n"
-"Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
+"Do not remove any line. Use 'drop' explicitly to remove a cummit.\n"
 msgstr ""
 
 #: rebase-interactive.c:34 git-rebase--preserve-merges.sh:177
 msgid ""
 "\n"
-"If you remove a line here THAT COMMIT WILL BE LOST.\n"
+"If you remove a line here THAT cummit WILL BE LOST.\n"
 msgstr ""
 
 #: rebase-interactive.c:40 git-rebase--preserve-merges.sh:816
@@ -4069,7 +4069,7 @@ msgid ""
 msgstr ""
 
 #: rebase-interactive.c:51 git-rebase--preserve-merges.sh:900
-msgid "Note that empty commits are commented out"
+msgid "Note that empty cummits are commented out"
 msgstr ""
 
 #: rebase-interactive.c:62 rebase-interactive.c:75 sequencer.c:2219
@@ -4460,7 +4460,7 @@ msgstr ""
 
 #: ref-filter.c:2370
 #, c-format
-msgid "option `%s' must point to a commit"
+msgid "option `%s' must point to a cummit"
 msgstr ""
 
 #: remote.c:363
@@ -4544,7 +4544,7 @@ msgstr ""
 #: remote.c:1040
 #, c-format
 msgid ""
-"The <src> part of the refspec is a commit object.\n"
+"The <src> part of the refspec is a cummit object.\n"
 "Did you mean to create a new branch by pushing to\n"
 "'%s:refs/heads/%s'?"
 msgstr ""
@@ -4680,7 +4680,7 @@ msgstr "Ο κλάδος σας είναι ενήμερος με το '%s'.\n"
 
 #: remote.c:2001
 #, c-format
-msgid "Your branch and '%s' refer to different commits.\n"
+msgid "Your branch and '%s' refer to different cummits.\n"
 msgstr "Ο κλάδος σας και το '%s' αναφέρονται σε διαφορετικές υποβολές.\n"
 
 #: remote.c:2004
@@ -4690,22 +4690,22 @@ msgstr "  (χρησιμοποιήστε \"%s\" για λεπτομέρειες)\
 
 #: remote.c:2008
 #, c-format
-msgid "Your branch is ahead of '%s' by %d commit.\n"
-msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
+msgid "Your branch is ahead of '%s' by %d cummit.\n"
+msgid_plural "Your branch is ahead of '%s' by %d cummits.\n"
 msgstr[0] "Ο κλάδος σας είναι μπροστά από το '%s' κατά %d υποβολή.\n"
 msgstr[1] "Ο κλάδος σας είναι μπροστά από το '%s' κατά %d υποβολές.\n"
 
 #: remote.c:2014
-msgid "  (use \"git push\" to publish your local commits)\n"
+msgid "  (use \"git push\" to publish your local cummits)\n"
 msgstr ""
 "  (χρησιμοποιήστε \"git push\" για να δημοσιεύσετε τις τοπικές σας "
 "υποβολές)\n"
 
 #: remote.c:2017
 #, c-format
-msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
+msgid "Your branch is behind '%s' by %d cummit, and can be fast-forwarded.\n"
 msgid_plural ""
-"Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
+"Your branch is behind '%s' by %d cummits, and can be fast-forwarded.\n"
 msgstr[0] ""
 "Ο κλάδος σας είναι πίσω από το '%s' κατά %d υποβολή, και μπορεί να κάνει "
 "ταχεία προώθηση.\n"
@@ -4722,10 +4722,10 @@ msgstr ""
 #, c-format
 msgid ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commit each, respectively.\n"
+"and have %d and %d different cummit each, respectively.\n"
 msgid_plural ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commits each, respectively.\n"
+"and have %d and %d different cummits each, respectively.\n"
 msgstr[0] ""
 "Ο κλάδος σας και το '%s' έχουν αποκλίνει,\n"
 "και έχουν %d και %d διαφορετική υποβολή ο καθένας, αντίστοιχα.\n"
@@ -4864,7 +4864,7 @@ msgstr "ο παρών κλάδος σας φαίνεται να είναι χα�
 
 #: revision.c:2487
 #, c-format
-msgid "your current branch '%s' does not have any commits yet"
+msgid "your current branch '%s' does not have any cummits yet"
 msgstr "ο τρέχων κλάδος σας '%s' δεν έχει ακόμα καμία υποβολή"
 
 #: revision.c:2684
@@ -4925,7 +4925,7 @@ msgstr ""
 
 #: sequencer.c:184
 #, c-format
-msgid "invalid commit message cleanup mode '%s'"
+msgid "invalid cummit message cleanup mode '%s'"
 msgstr ""
 
 #: sequencer.c:288
@@ -4962,11 +4962,11 @@ msgstr ""
 msgid ""
 "after resolving the conflicts, mark the corrected paths\n"
 "with 'git add <paths>' or 'git rm <paths>'\n"
-"and commit the result with 'git commit'"
+"and cummit the result with 'git cummit'"
 msgstr ""
 "αφού επιλύσετε τις συγκρούσεις, επισημάνετε τις διορθωμένες διαδρομές\n"
 "με 'git add <διαδρομές>' ή 'git rm <διαδρομές>'\n"
-"και υποβάλετε το αποτέλεσμα με 'git commit'"
+"και υποβάλετε το αποτέλεσμα με 'git cummit'"
 
 #: sequencer.c:394 sequencer.c:2671
 #, c-format
@@ -4985,7 +4985,7 @@ msgid "failed to finalize '%s'"
 msgstr ""
 
 #: sequencer.c:429 sequencer.c:931 sequencer.c:1615 sequencer.c:2574
-#: sequencer.c:2913 sequencer.c:3022 builtin/am.c:245 builtin/commit.c:748
+#: sequencer.c:2913 sequencer.c:3022 builtin/am.c:245 builtin/cummit.c:748
 #: builtin/merge.c:1085 builtin/rebase.c:154
 #, c-format
 msgid "could not read '%s'"
@@ -4997,7 +4997,7 @@ msgid "your local changes would be overwritten by %s."
 msgstr "οι τοπικές αλλαγές σας θα επεγγραφόντουσαν από το %s."
 
 #: sequencer.c:459
-msgid "commit your changes or stash them to proceed."
+msgid "cummit your changes or stash them to proceed."
 msgstr "υποβάλετε τις αλλαγές σας ή αποθηκεύστε τις για να προχωρήσετε."
 
 #: sequencer.c:491
@@ -5018,7 +5018,7 @@ msgid "unable to update cache tree"
 msgstr ""
 
 #: sequencer.c:612
-msgid "could not resolve HEAD commit"
+msgid "could not resolve HEAD cummit"
 msgstr "δεν ήταν δυνατή η ταύτιση της υποβολής HEAD"
 
 #: sequencer.c:692
@@ -5075,13 +5075,13 @@ msgstr ""
 #, c-format
 msgid ""
 "you have staged changes in your working tree\n"
-"If these changes are meant to be squashed into the previous commit, run:\n"
+"If these changes are meant to be squashed into the previous cummit, run:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
-"If they are meant to go into a new commit, run:\n"
+"If they are meant to go into a new cummit, run:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
@@ -5091,22 +5091,22 @@ msgstr ""
 "Αν αυτές οι αλλαγές πρέπει να συμπτυχθούν μέσα στην προηγούμενη υποβολή, "
 "τρέξτε:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Αν πρέπει να πάνε σε νέα υποβολή, τρέξτε:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "Και στις δύο περιπτώσεις, μόλις τελειώσετε, συνεχίστε με:\n"
 "\n"
 "  git rebase --continue\n"
 
 #: sequencer.c:945
-msgid "writing root commit"
+msgid "writing root cummit"
 msgstr ""
 
 #: sequencer.c:1155
-msgid "'prepare-commit-msg' hook failed"
+msgid "'prepare-cummit-msg' hook failed"
 msgstr ""
 
 #: sequencer.c:1162
@@ -5119,9 +5119,9 @@ msgid ""
 "\n"
 "    git config --global --edit\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Το όνομα και η διεύθυνση email σας ρυθμίστηκαν αυτόματα με βάση\n"
 "το όνομα χρήστη και το όνομα υπολογιστή σας. Παρακαλώ ελέγξτε πως είναι "
@@ -5136,7 +5136,7 @@ msgstr ""
 "Έπειτα, μπορείτε να διορθώσετε την ταυτότητα χρήστη που χρησιμοποιήθηκε για "
 "αυτή την υποβολή με:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1175
 msgid ""
@@ -5147,9 +5147,9 @@ msgid ""
 "    git config --global user.name \"Your Name\"\n"
 "    git config --global user.email you@example.com\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Το όνομα και η διεύθυνση email σας ρυθμίστηκαν αυτόματα με βάση\n"
 "το όνομα χρήστη και το όνομα υπολογιστή σας. Παρακαλώ ελέγξτε πως είναι "
@@ -5162,18 +5162,18 @@ msgstr ""
 "Έπειτα, μπορείτε να διορθώσετε την ταυτότητα χρήστη που χρησιμοποιήθηκε για "
 "αυτή την υποβολή με:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1217
-msgid "couldn't look up newly created commit"
+msgid "couldn't look up newly created cummit"
 msgstr ""
 
 #: sequencer.c:1219
-msgid "could not parse newly created commit"
+msgid "could not parse newly created cummit"
 msgstr ""
 
 #: sequencer.c:1265
-msgid "unable to resolve HEAD after creating commit"
+msgid "unable to resolve HEAD after creating cummit"
 msgstr "δεν ήταν δυνατή η ταύτιση του HEAD μετά τη δημιουργία της υποβολής"
 
 #: sequencer.c:1267
@@ -5181,7 +5181,7 @@ msgid "detached HEAD"
 msgstr ""
 
 #: sequencer.c:1271
-msgid " (root-commit)"
+msgid " (root-cummit)"
 msgstr ""
 
 #: sequencer.c:1292
@@ -5190,15 +5190,15 @@ msgstr ""
 
 #: sequencer.c:1294
 #, c-format
-msgid "HEAD %s is not a commit!"
+msgid "HEAD %s is not a cummit!"
 msgstr "Το HEAD %s δεν είναι υποβολή!"
 
-#: sequencer.c:1298 builtin/commit.c:1546
-msgid "could not parse HEAD commit"
+#: sequencer.c:1298 builtin/cummit.c:1546
+msgid "could not parse HEAD cummit"
 msgstr ""
 
 #: sequencer.c:1350 sequencer.c:1964
-msgid "unable to parse commit author"
+msgid "unable to parse cummit author"
 msgstr ""
 
 #: sequencer.c:1360 builtin/am.c:1570 builtin/merge.c:678
@@ -5207,22 +5207,22 @@ msgstr ""
 
 #: sequencer.c:1377 sequencer.c:1433
 #, c-format
-msgid "unable to read commit message from '%s'"
+msgid "unable to read cummit message from '%s'"
 msgstr ""
 
-#: sequencer.c:1399 builtin/am.c:1591 builtin/commit.c:1649 builtin/merge.c:859
+#: sequencer.c:1399 builtin/am.c:1591 builtin/cummit.c:1649 builtin/merge.c:859
 #: builtin/merge.c:884
-msgid "failed to write commit object"
+msgid "failed to write cummit object"
 msgstr ""
 
 #: sequencer.c:1460
 #, c-format
-msgid "could not parse commit %s"
+msgid "could not parse cummit %s"
 msgstr ""
 
 #: sequencer.c:1465
 #, c-format
-msgid "could not parse parent commit %s"
+msgid "could not parse parent cummit %s"
 msgstr ""
 
 #: sequencer.c:1565 sequencer.c:1675
@@ -5232,7 +5232,7 @@ msgstr ""
 
 #: sequencer.c:1622 sequencer.c:1647
 #, c-format
-msgid "This is a combination of %d commits."
+msgid "This is a combination of %d cummits."
 msgstr ""
 
 #: sequencer.c:1632 sequencer.c:4808
@@ -5244,7 +5244,7 @@ msgid "could not read HEAD"
 msgstr ""
 
 #: sequencer.c:1636
-msgid "could not read HEAD's commit message"
+msgid "could not read HEAD's cummit message"
 msgstr ""
 
 #: sequencer.c:1642
@@ -5253,22 +5253,22 @@ msgid "cannot write '%s'"
 msgstr ""
 
 #: sequencer.c:1649 git-rebase--preserve-merges.sh:441
-msgid "This is the 1st commit message:"
+msgid "This is the 1st cummit message:"
 msgstr ""
 
 #: sequencer.c:1657
 #, c-format
-msgid "could not read commit message of %s"
+msgid "could not read cummit message of %s"
 msgstr ""
 
 #: sequencer.c:1664
 #, c-format
-msgid "This is the commit message #%d:"
+msgid "This is the cummit message #%d:"
 msgstr ""
 
 #: sequencer.c:1670
 #, c-format
-msgid "The commit message #%d will be skipped:"
+msgid "The cummit message #%d will be skipped:"
 msgstr ""
 
 #: sequencer.c:1758
@@ -5276,29 +5276,29 @@ msgid "your index file is unmerged."
 msgstr "το αρχείο ευρετηρίου σας δεν έχει συγχωνευτεί."
 
 #: sequencer.c:1765
-msgid "cannot fixup root commit"
+msgid "cannot fixup root cummit"
 msgstr ""
 
 #: sequencer.c:1784
 #, c-format
-msgid "commit %s is a merge but no -m option was given."
+msgid "cummit %s is a merge but no -m option was given."
 msgstr "η υποβολή %s είναι συγχώνευση αλλά δεν έχει δοθεί επιλογή -m."
 
 #: sequencer.c:1792 sequencer.c:1800
 #, c-format
-msgid "commit %s does not have parent %d"
+msgid "cummit %s does not have parent %d"
 msgstr "η υποβολή %s δεν έχει γονέα το %d"
 
 #: sequencer.c:1806
 #, c-format
-msgid "cannot get commit message for %s"
+msgid "cannot get cummit message for %s"
 msgstr ""
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
 #: sequencer.c:1825
 #, c-format
-msgid "%s: cannot parse parent commit %s"
+msgid "%s: cannot parse parent cummit %s"
 msgstr ""
 
 #: sequencer.c:1890
@@ -5343,7 +5343,7 @@ msgstr ""
 
 #: sequencer.c:2171
 #, c-format
-msgid "cannot '%s' without a previous commit"
+msgid "cannot '%s' without a previous cummit"
 msgstr ""
 
 #: sequencer.c:2243
@@ -5356,7 +5356,7 @@ msgid "unusable instruction sheet: '%s'"
 msgstr ""
 
 #: sequencer.c:2250
-msgid "no commits parsed."
+msgid "no cummits parsed."
 msgstr ""
 
 #: sequencer.c:2261
@@ -5382,7 +5382,7 @@ msgid "malformed options sheet: '%s'"
 msgstr ""
 
 #: sequencer.c:2518 sequencer.c:4067
-msgid "empty commit set passed"
+msgid "empty cummit set passed"
 msgstr ""
 
 #: sequencer.c:2526
@@ -5456,9 +5456,9 @@ msgstr ""
 #: sequencer.c:2813
 #, c-format
 msgid ""
-"You can amend the commit now, with\n"
+"You can amend the cummit now, with\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
@@ -5466,7 +5466,7 @@ msgid ""
 msgstr ""
 "Μπορείτε να τροποποιήσετε την υποβολή τώρα, με\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Όταν οι αλλαγές σας σας ικανοποιούν, τρέξτε\n"
 "\n"
@@ -5511,7 +5511,7 @@ msgstr ""
 msgid ""
 "execution succeeded: %s\n"
 "but left changes to the index and/or the working tree\n"
-"Commit or stash your changes, and then run\n"
+"cummit or stash your changes, and then run\n"
 "\n"
 "  git rebase --continue\n"
 "\n"
@@ -5523,7 +5523,7 @@ msgid "illegal label name: '%.*s'"
 msgstr ""
 
 #: sequencer.c:3002
-msgid "writing fake root commit"
+msgid "writing fake root cummit"
 msgstr ""
 
 #: sequencer.c:3007
@@ -5564,7 +5564,7 @@ msgstr ""
 
 #: sequencer.c:3176
 #, c-format
-msgid "could not get commit message of '%s'"
+msgid "could not get cummit message of '%s'"
 msgstr ""
 
 #: sequencer.c:3325
@@ -5662,7 +5662,7 @@ msgid "cannot rebase: You have unstaged changes."
 msgstr ""
 
 #: sequencer.c:3840
-msgid "cannot amend non-existing commit"
+msgid "cannot amend non-existing cummit"
 msgstr ""
 
 #: sequencer.c:3842
@@ -5678,7 +5678,7 @@ msgstr ""
 #: sequencer.c:3847
 msgid ""
 "\n"
-"You have uncommitted changes in your working tree. Please, commit them\n"
+"You have uncummitted changes in your working tree. Please, cummit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 "\n"
@@ -5696,7 +5696,7 @@ msgid "could not remove CHERRY_PICK_HEAD"
 msgstr ""
 
 #: sequencer.c:3943
-msgid "could not commit staged changes."
+msgid "could not cummit staged changes."
 msgstr ""
 
 #: sequencer.c:4044
@@ -5710,7 +5710,7 @@ msgid "%s: bad revision"
 msgstr ""
 
 #: sequencer.c:4083
-msgid "can't revert as initial commit"
+msgid "can't revert as initial cummit"
 msgstr ""
 
 #: sequencer.c:4529
@@ -5729,22 +5729,22 @@ msgstr ""
 #: sequencer.c:4684
 #, c-format
 msgid ""
-"unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
+"unrecognized setting %s for option rebase.missingcummitsCheck. Ignoring."
 msgstr ""
 
 #: sequencer.c:4754
 #, c-format
 msgid ""
-"Warning: some commits may have been dropped accidentally.\n"
-"Dropped commits (newer to older):\n"
+"Warning: some cummits may have been dropped accidentally.\n"
+"Dropped cummits (newer to older):\n"
 msgstr ""
 
 #: sequencer.c:4761
 #, c-format
 msgid ""
-"To avoid this message, use \"drop\" to explicitly remove a commit.\n"
+"To avoid this message, use \"drop\" to explicitly remove a cummit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
+"Use 'git config rebase.missingcummitsCheck' to change the level of "
 "warnings.\n"
 "The possible behaviours are: ignore, warn, error.\n"
 "\n"
@@ -6119,7 +6119,7 @@ msgid "cannot read object for %s"
 msgstr ""
 
 #: sha1-file.c:1858
-msgid "corrupt commit"
+msgid "corrupt cummit"
 msgstr ""
 
 #: sha1-file.c:1866
@@ -6240,7 +6240,7 @@ msgstr "Η περιγραφή διαδρομής '%s' βρίσκεται μέσ�
 
 #: submodule.c:906
 #, c-format
-msgid "submodule entry '%s' (%s) is a %s, not a commit"
+msgid "submodule entry '%s' (%s) is a %s, not a cummit"
 msgstr "το στοιχείο υποενότητας '%s' (%s) είναι %s, όχι υποβολή"
 
 #: submodule.c:1143 builtin/branch.c:656 builtin/submodule--helper.c:1989
@@ -6666,7 +6666,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by checkout:\n"
-"%%sPlease commit your changes or stash them before you switch branches."
+"%%sPlease cummit your changes or stash them before you switch branches."
 msgstr ""
 "Οι τοπικές αλλαγές σας στα ακόλουθα αρχεία θα επεγγραφόντουσαν από την "
 "εξαγωγή:\n"
@@ -6686,7 +6686,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
-"%%sPlease commit your changes or stash them before you merge."
+"%%sPlease cummit your changes or stash them before you merge."
 msgstr ""
 "Οι τοπικές αλλαγές σας στα ακόλουθα αρχεία θα επεγγραφόντουσαν από τη "
 "συγχώνευση:\n"
@@ -6706,7 +6706,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by %s:\n"
-"%%sPlease commit your changes or stash them before you %s."
+"%%sPlease cummit your changes or stash them before you %s."
 msgstr ""
 "Οι τοπικές αλλαγές σας στα ακόλουθα αρχεία θα επεγγραφόντουσαν από το %s:\n"
 "%%sΠαρακαλώ υποβάλετε τις αλλαγές σας ή αποθηκεύστε τις πριν από το %s."
@@ -6971,21 +6971,21 @@ msgstr ""
 "επίλυση)"
 
 #: wt-status.c:203 wt-status.c:1046
-msgid "Changes to be committed:"
+msgid "Changes to be cummitted:"
 msgstr "Αλλαγές προς υποβολή:"
 
 #: wt-status.c:221 wt-status.c:1055
-msgid "Changes not staged for commit:"
+msgid "Changes not staged for cummit:"
 msgstr "Αλλαγές που δεν έχουν προετοιμαστεί για υποβολή:"
 
 #: wt-status.c:225
-msgid "  (use \"git add <file>...\" to update what will be committed)"
+msgid "  (use \"git add <file>...\" to update what will be cummitted)"
 msgstr ""
 "  (χρησιμοποιήστε \"git add <αρχείο>...\" για να ενημερώσετε αυτά που θα "
 "υποβληθούν)"
 
 #: wt-status.c:227
-msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
+msgid "  (use \"git add/rm <file>...\" to update what will be cummitted)"
 msgstr ""
 "  (χρησιμοποιήστε \"git add/rm <αρχείο>...\" για να ενημερώσετε αυτά που θα "
 "υποβληθούν)"
@@ -6998,14 +6998,14 @@ msgstr ""
 "αλλαγές στο φάκελο εργασίας)"
 
 #: wt-status.c:230
-msgid "  (commit or discard the untracked or modified content in submodules)"
+msgid "  (cummit or discard the untracked or modified content in submodules)"
 msgstr ""
 "  (να γίνει υποβολή ή απόρριψη του μη παρακολουθούμενου ή τροποποιημένου "
 "περιεχομένου στις υποενότητες)"
 
 #: wt-status.c:242
 #, c-format
-msgid "  (use \"git %s <file>...\" to include in what will be committed)"
+msgid "  (use \"git %s <file>...\" to include in what will be cummitted)"
 msgstr ""
 "  (χρησιμοποιήστε \"git %s <αρχείο>...\" για να συμπεριληφθεί σε αυτά που θα "
 "υποβληθούν)"
@@ -7071,7 +7071,7 @@ msgid "unmerged:"
 msgstr "μη συγχωνευμένο:"
 
 #: wt-status.c:373
-msgid "new commits, "
+msgid "new cummits, "
 msgstr "νέες υποβολές, "
 
 #: wt-status.c:375
@@ -7094,7 +7094,7 @@ msgid "Submodules changed but not updated:"
 msgstr "Υποενότητες που άλλαξαν αλλά δεν ενημερώθηκαν:"
 
 #: wt-status.c:918
-msgid "Submodule changes to be committed:"
+msgid "Submodule changes to be cummitted:"
 msgstr "Αλλαγές σε υποενότητες προς υποβολή:"
 
 #: wt-status.c:1000
@@ -7110,8 +7110,8 @@ msgid "You have unmerged paths."
 msgstr "Έχετε μη συγχωνευμένες διαδρομές."
 
 #: wt-status.c:1104
-msgid "  (fix conflicts and run \"git commit\")"
-msgstr "  (διορθώστε τις συγκρούσεις και τρέξτε \"git commit\")"
+msgid "  (fix conflicts and run \"git cummit\")"
+msgstr "  (διορθώστε τις συγκρούσεις και τρέξτε \"git cummit\")"
 
 #: wt-status.c:1106
 msgid "  (use \"git merge --abort\" to abort the merge)"
@@ -7123,8 +7123,8 @@ msgid "All conflicts fixed but you are still merging."
 msgstr "Επιλύθηκαν όλες οι συγκρούσεις αλλά ακόμα κάνετε συγχώνευση."
 
 #: wt-status.c:1113
-msgid "  (use \"git commit\" to conclude merge)"
-msgstr "  (χρησιμοποιήστε \"git commit\" για να ολοκληρώσετε τη συγχώνευση)"
+msgid "  (use \"git cummit\" to conclude merge)"
+msgstr "  (χρησιμοποιήστε \"git cummit\" για να ολοκληρώσετε τη συγχώνευση)"
 
 #: wt-status.c:1122
 msgid "You are in the middle of an am session."
@@ -7214,13 +7214,13 @@ msgstr "  (επιλύθηκαν όλες οι συγκρούσεις: τρέξτ
 #: wt-status.c:1341
 #, c-format
 msgid ""
-"You are currently splitting a commit while rebasing branch '%s' on '%s'."
+"You are currently splitting a cummit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Αυτή τη στιγμή τεμαχίζετε μια υποβολή κατά τη διάρκεια rebase του κλάδου "
 "'%s' στο '%s'."
 
 #: wt-status.c:1346
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a cummit during a rebase."
 msgstr "Αυτή τη στιγμή τεμαχίζετε μια υποβολή κατά τη διάρκεια ενός rebase."
 
 #: wt-status.c:1349
@@ -7231,19 +7231,19 @@ msgstr ""
 
 #: wt-status.c:1353
 #, c-format
-msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
+msgid "You are currently editing a cummit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Αυτή τη στιγμή διορθώνετε μια υποβολή κατά τη διάρκεια rebase του κλάδου "
 "'%s' στο '%s'."
 
 #: wt-status.c:1358
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a cummit during a rebase."
 msgstr "Αυτή τη στιγμή διορθώνετε μια υποβολή κατά τη διάρκεια ενός rebase."
 
 #: wt-status.c:1361
-msgid "  (use \"git commit --amend\" to amend the current commit)"
+msgid "  (use \"git cummit --amend\" to amend the current cummit)"
 msgstr ""
-"  (χρησιμοποιήστε \"git commit --amend\" για να τροποποιήσετε την τρέχουσα "
+"  (χρησιμοποιήστε \"git cummit --amend\" για να τροποποιήσετε την τρέχουσα "
 "υποβολή)"
 
 #: wt-status.c:1363
@@ -7255,7 +7255,7 @@ msgstr ""
 
 #: wt-status.c:1372
 #, c-format
-msgid "You are currently cherry-picking commit %s."
+msgid "You are currently cherry-picking cummit %s."
 msgstr "Αυτή τη στιγμή κάνετε επιλεκτική διαλογή της υποβολής %s."
 
 #: wt-status.c:1377
@@ -7276,7 +7276,7 @@ msgstr ""
 
 #: wt-status.c:1390
 #, c-format
-msgid "You are currently reverting commit %s."
+msgid "You are currently reverting cummit %s."
 msgstr "Αυτή τη στιγμή αναιρείτε την υποβολή %s."
 
 #: wt-status.c:1395
@@ -7332,11 +7332,11 @@ msgid "Not currently on any branch."
 msgstr "Δεν είστε αυτή τη στιγμή σε κανέναν κλάδο."
 
 #: wt-status.c:1653
-msgid "Initial commit"
+msgid "Initial cummit"
 msgstr "Αρχική υποβολή"
 
 #: wt-status.c:1654
-msgid "No commits yet"
+msgid "No cummits yet"
 msgstr "Δεν υπάρχουν ακόμα υποβολές"
 
 #: wt-status.c:1668
@@ -7377,20 +7377,20 @@ msgstr "Δεν υπάρχουν αλλαγές"
 
 #: wt-status.c:1693
 #, c-format
-msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
+msgid "no changes added to cummit (use \"git add\" and/or \"git cummit -a\")\n"
 msgstr ""
 "δεν προστέθηκαν αλλαγές στην υποβολή (χρησιμοποιήστε \"git add\" και/ή \"git "
-"commit -a\")\n"
+"cummit -a\")\n"
 
 #: wt-status.c:1696
 #, c-format
-msgid "no changes added to commit\n"
+msgid "no changes added to cummit\n"
 msgstr "δεν προστέθηκαν αλλαγές στην υποβολή\n"
 
 #: wt-status.c:1699
 #, c-format
 msgid ""
-"nothing added to commit but untracked files present (use \"git add\" to "
+"nothing added to cummit but untracked files present (use \"git add\" to "
 "track)\n"
 msgstr ""
 "δεν προστέθηκε τίποτα στην υποβολή αλλά υπάρχουν μη παρακολουθούμενα αρχεία "
@@ -7398,36 +7398,36 @@ msgstr ""
 
 #: wt-status.c:1702
 #, c-format
-msgid "nothing added to commit but untracked files present\n"
+msgid "nothing added to cummit but untracked files present\n"
 msgstr ""
 "δεν προστέθηκε τίποτα στην υποβολή αλλά υπάρχουν μη παρακολουθούμενα αρχεία\n"
 
 #: wt-status.c:1705
 #, c-format
-msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
+msgid "nothing to cummit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
 "δεν υπάρχει τίποτα προς υποβολή (δημιουργήστε/αντιγράψτε αρχεία και "
 "χρησιμοποιήστε \"git add\" για να παρακολουθήσετε)\n"
 
 #: wt-status.c:1708 wt-status.c:1713
 #, c-format
-msgid "nothing to commit\n"
+msgid "nothing to cummit\n"
 msgstr "δεν υπάρχει τίποτα προς υποβολή\n"
 
 #: wt-status.c:1711
 #, c-format
-msgid "nothing to commit (use -u to show untracked files)\n"
+msgid "nothing to cummit (use -u to show untracked files)\n"
 msgstr ""
 "δεν υπάρχει τίποτα προς υποβολή (χρησιμοποιήστε -u για προβολή των "
 "μηπαρακολουθούμενων αρχείων)\n"
 
 #: wt-status.c:1715
 #, c-format
-msgid "nothing to commit, working tree clean\n"
+msgid "nothing to cummit, working tree clean\n"
 msgstr "δεν υπάρχει τίποτα προς υποβολή, το δέντρο εργασίας είναι καθαρό\n"
 
 #: wt-status.c:1828
-msgid "No commits yet on "
+msgid "No cummits yet on "
 msgstr "Δεν υπάρχουν ακόμα υποβολές στο "
 
 #: wt-status.c:1832
@@ -7453,12 +7453,12 @@ msgid "cannot %s: You have unstaged changes."
 msgstr "δεν είναι δυνατό να γίνει %s: Έχετε μη προετοιμασμένες αλλαγές."
 
 #: wt-status.c:2392
-msgid "additionally, your index contains uncommitted changes."
+msgid "additionally, your index contains uncummitted changes."
 msgstr "επιπρόσθετα, το ευρετήριό σας περιέχει μη υποβεβλημένες αλλαγές."
 
 #: wt-status.c:2394
 #, c-format
-msgid "cannot %s: Your index contains uncommitted changes."
+msgid "cannot %s: Your index contains uncummitted changes."
 msgstr ""
 "δεν είναι δυνατό να γίνει %s: Το ευρετήριό σας περιέχει μη υποβεβλημένες "
 "αλλαγές."
@@ -7472,7 +7472,7 @@ msgstr "git add [<επιλογές>] [--] <περιγραφή διαδρομής
 msgid "unexpected diff status %c"
 msgstr ""
 
-#: builtin/add.c:89 builtin/commit.c:285
+#: builtin/add.c:89 builtin/cummit.c:285
 msgid "updating files failed"
 msgstr ""
 
@@ -7708,7 +7708,7 @@ msgstr "απέτυχε η δημιουργία του φακέλου '%s'"
 msgid "Failed to split patches."
 msgstr ""
 
-#: builtin/am.c:1082 builtin/commit.c:371
+#: builtin/am.c:1082 builtin/cummit.c:371
 msgid "unable to write index file"
 msgstr ""
 
@@ -7742,7 +7742,7 @@ msgstr ""
 
 #: builtin/am.c:1297
 #, c-format
-msgid "unable to parse commit %s"
+msgid "unable to parse cummit %s"
 msgstr ""
 
 #: builtin/am.c:1493
@@ -7785,7 +7785,7 @@ msgid "cannot be interactive without stdin connected to a terminal."
 msgstr ""
 
 #: builtin/am.c:1649
-msgid "Commit Body is:"
+msgid "cummit Body is:"
 msgstr "Το περιεχόμενο της υποβολής είναι:"
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
@@ -7895,7 +7895,7 @@ msgid "be quiet"
 msgstr ""
 
 #: builtin/am.c:2173
-msgid "add a Signed-off-by line to the commit message"
+msgid "add a Signed-off-by line to the cummit message"
 msgstr ""
 
 #: builtin/am.c:2176
@@ -7932,7 +7932,7 @@ msgstr ""
 msgid "pass it through git-apply"
 msgstr ""
 
-#: builtin/am.c:2209 builtin/commit.c:1343 builtin/fmt-merge-msg.c:671
+#: builtin/am.c:2209 builtin/cummit.c:1343 builtin/fmt-merge-msg.c:671
 #: builtin/fmt-merge-msg.c:674 builtin/grep.c:879 builtin/merge.c:240
 #: builtin/pull.c:152 builtin/pull.c:210 builtin/rebase.c:1062
 #: builtin/repack.c:317 builtin/repack.c:321 builtin/repack.c:323
@@ -7979,21 +7979,21 @@ msgid "show the patch being applied."
 msgstr ""
 
 #: builtin/am.c:2243
-msgid "lie about committer date"
+msgid "lie about cummitter date"
 msgstr ""
 
 #: builtin/am.c:2245
 msgid "use current timestamp for author date"
 msgstr ""
 
-#: builtin/am.c:2247 builtin/commit.c:1486 builtin/merge.c:274
+#: builtin/am.c:2247 builtin/cummit.c:1486 builtin/merge.c:274
 #: builtin/pull.c:185 builtin/rebase.c:1106 builtin/rebase--interactive.c:185
 #: builtin/revert.c:114 builtin/tag.c:402
 msgid "key-id"
 msgstr ""
 
 #: builtin/am.c:2248 builtin/rebase.c:1107 builtin/rebase--interactive.c:186
-msgid "GPG-sign commits"
+msgid "GPG-sign cummits"
 msgstr ""
 
 #: builtin/am.c:2251
@@ -8073,7 +8073,7 @@ msgid "git bisect--helper --bisect-clean-state"
 msgstr "git bisect--helper --bisect-clean-state"
 
 #: builtin/bisect--helper.c:25
-msgid "git bisect--helper --bisect-reset [<commit>]"
+msgid "git bisect--helper --bisect-reset [<cummit>]"
 msgstr "git bisect--helper --bisect-reset [<υποβολή>]"
 
 #: builtin/bisect--helper.c:26
@@ -8143,13 +8143,13 @@ msgstr ""
 
 #: builtin/bisect--helper.c:163
 #, c-format
-msgid "'%s' is not a valid commit"
+msgid "'%s' is not a valid cummit"
 msgstr ""
 
 #: builtin/bisect--helper.c:174
 #, c-format
 msgid ""
-"could not check out original HEAD '%s'. Try 'git bisect reset <commit>'."
+"could not check out original HEAD '%s'. Try 'git bisect reset <cummit>'."
 msgstr ""
 
 #: builtin/bisect--helper.c:215
@@ -8194,7 +8194,7 @@ msgstr ""
 
 #: builtin/bisect--helper.c:321
 #, c-format
-msgid "bisecting only with a %s commit"
+msgid "bisecting only with a %s cummit"
 msgstr ""
 
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -8293,7 +8293,7 @@ msgid "start the bisect session"
 msgstr ""
 
 #: builtin/bisect--helper.c:647
-msgid "update BISECT_HEAD instead of checking out the current commit"
+msgid "update BISECT_HEAD instead of checking out the current cummit"
 msgstr ""
 
 #: builtin/bisect--helper.c:649
@@ -8309,7 +8309,7 @@ msgid "--bisect-clean-state requires no arguments"
 msgstr ""
 
 #: builtin/bisect--helper.c:677
-msgid "--bisect-reset requires either no argument or a commit"
+msgid "--bisect-reset requires either no argument or a cummit"
 msgstr ""
 
 #: builtin/bisect--helper.c:681
@@ -8359,11 +8359,11 @@ msgid "Show blame entries as we find them, incrementally"
 msgstr ""
 
 #: builtin/blame.c:794
-msgid "Show blank SHA-1 for boundary commits (Default: off)"
+msgid "Show blank SHA-1 for boundary cummits (Default: off)"
 msgstr ""
 
 #: builtin/blame.c:795
-msgid "Do not treat root commits as boundaries (Default: off)"
+msgid "Do not treat root cummits as boundaries (Default: off)"
 msgstr ""
 
 #: builtin/blame.c:796
@@ -8391,7 +8391,7 @@ msgid "Show in a format designed for machine consumption"
 msgstr ""
 
 #: builtin/blame.c:802
-msgid "Show porcelain format with per-line commit information"
+msgid "Show porcelain format with per-line cummit information"
 msgstr "Προβολή μορφής εντολών porcelain με πληροφορίες υποβολής ανά γραμμή"
 
 #: builtin/blame.c:803
@@ -8403,7 +8403,7 @@ msgid "Show raw timestamp (Default: off)"
 msgstr ""
 
 #: builtin/blame.c:805
-msgid "Show long commit SHA1 (Default: off)"
+msgid "Show long cummit SHA1 (Default: off)"
 msgstr ""
 
 #: builtin/blame.c:806
@@ -8537,7 +8537,7 @@ msgstr ""
 
 #: builtin/branch.c:169
 #, c-format
-msgid "Couldn't look up commit object for '%s'"
+msgid "Couldn't look up cummit object for '%s'"
 msgstr ""
 
 #: builtin/branch.c:173
@@ -8556,7 +8556,7 @@ msgid "cannot use -a with -d"
 msgstr ""
 
 #: builtin/branch.c:223
-msgid "Couldn't look up commit object for HEAD"
+msgid "Couldn't look up cummit object for HEAD"
 msgstr ""
 
 #: builtin/branch.c:237
@@ -8701,11 +8701,11 @@ msgid "act on remote-tracking branches"
 msgstr ""
 
 #: builtin/branch.c:607 builtin/branch.c:609
-msgid "print only branches that contain the commit"
+msgid "print only branches that contain the cummit"
 msgstr ""
 
 #: builtin/branch.c:608 builtin/branch.c:610
-msgid "print only branches that don't contain the commit"
+msgid "print only branches that don't contain the cummit"
 msgstr ""
 
 #: builtin/branch.c:613
@@ -8819,7 +8819,7 @@ msgstr ""
 
 #: builtin/branch.c:737
 #, c-format
-msgid "No commit on branch '%s' yet."
+msgid "No cummit on branch '%s' yet."
 msgstr ""
 
 #: builtin/branch.c:740
@@ -8912,7 +8912,7 @@ msgid "only one batch option may be specified"
 msgstr ""
 
 #: builtin/cat-file.c:633
-msgid "<type> can be one of: blob, tree, commit, tag"
+msgid "<type> can be one of: blob, tree, cummit, tag"
 msgstr "ο <τύπος> μπορεί να είναι ένας εκ των: blob, δέντρο, υποβολή, ετικέτα"
 
 #: builtin/cat-file.c:634
@@ -9234,12 +9234,12 @@ msgstr " ... και %d ακόμα.\n"
 #: builtin/checkout.c:900
 #, c-format
 msgid ""
-"Warning: you are leaving %d commit behind, not connected to\n"
+"Warning: you are leaving %d cummit behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"Warning: you are leaving %d commits behind, not connected to\n"
+"Warning: you are leaving %d cummits behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
@@ -9316,7 +9316,7 @@ msgstr "δεν είναι δυνατή η χρήση του '%s' με το '%s'"
 
 #: builtin/checkout.c:1248
 #, c-format
-msgid "Cannot switch branch to a non-commit '%s'"
+msgid "Cannot switch branch to a non-cummit '%s'"
 msgstr "Δεν είναι δυνατή η αλλαγή του κλάδου στο '%s' που δεν είναι υποβολή"
 
 #: builtin/checkout.c:1281 builtin/checkout.c:1283 builtin/clone.c:120
@@ -9338,7 +9338,7 @@ msgid "create reflog for new branch"
 msgstr "να δημιουργηθεί reflog για νέο κλάδο"
 
 #: builtin/checkout.c:1286 builtin/worktree.c:493
-msgid "detach HEAD at named commit"
+msgid "detach HEAD at named cummit"
 msgstr "να γίνει αποσύνδεση του HEAD στην κατονομασμένη υποβολή"
 
 #: builtin/checkout.c:1287
@@ -9421,7 +9421,7 @@ msgstr "μη έγκυρη περιγραφή διαδρομής"
 
 #: builtin/checkout.c:1411
 #, c-format
-msgid "'%s' is not a commit and a branch '%s' cannot be created from it"
+msgid "'%s' is not a cummit and a branch '%s' cannot be created from it"
 msgstr ""
 "το '%s' δεν είναι υποβολή και δε γίνεται να δημιουργηθεί κλάδος '%s' από αυτό"
 
@@ -10021,51 +10021,51 @@ msgstr ""
 msgid "--command must be the first argument"
 msgstr ""
 
-#: builtin/commit.c:41
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<επιλογές>] [--] <περιγραφή διαδρομής>..."
+#: builtin/cummit.c:41
+msgid "git cummit [<options>] [--] <pathspec>..."
+msgstr "git cummit [<επιλογές>] [--] <περιγραφή διαδρομής>..."
 
-#: builtin/commit.c:46
+#: builtin/cummit.c:46
 msgid "git status [<options>] [--] <pathspec>..."
 msgstr "git status [<επιλογές>] [--] <περιγραφή διαδρομής>..."
 
-#: builtin/commit.c:51
+#: builtin/cummit.c:51
 msgid ""
-"You asked to amend the most recent commit, but doing so would make\n"
+"You asked to amend the most recent cummit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
-"remove the commit entirely with \"git reset HEAD^\".\n"
+"remove the cummit entirely with \"git reset HEAD^\".\n"
 msgstr ""
 "Ζητήσατε να τροποποιήσετε την πιο πρόσφατη υποβολή, αλλά αυτό θα την άφηνε\n"
 "κενή. Μπορείτε να επαναλάβετε την εντολή σας με --allow-empty, ή να\n"
 "αφαιρέσετε την υποβολή εντελώς με \"git reset HEAD^\".\n"
 
-#: builtin/commit.c:56
+#: builtin/cummit.c:56
 msgid ""
 "The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
-"If you wish to commit it anyway, use:\n"
+"If you wish to cummit it anyway, use:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 msgstr ""
 "Η προηγούμενη επιλεκτική διαλογή είναι τώρα κενή, πιθανώς λόγω επίλυσης "
 "συγκρούσεων.\n"
 "Αν θέλετε να την υποβάλετε πάραυτα, χρησιμοποιήστε:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 
-#: builtin/commit.c:63
+#: builtin/cummit.c:63
 msgid "Otherwise, please use 'git reset'\n"
 msgstr "Ειδάλλως, παρακαλώ χρησιμοποιήστε 'git reset'\n"
 
-#: builtin/commit.c:66
+#: builtin/cummit.c:66
 msgid ""
-"If you wish to skip this commit, use:\n"
+"If you wish to skip this cummit, use:\n"
 "\n"
 "    git reset\n"
 "\n"
 "Then \"git cherry-pick --continue\" will resume cherry-picking\n"
-"the remaining commits.\n"
+"the remaining cummits.\n"
 msgstr ""
 "Αν θέλετε να προσπεράσετε αυτή την υποβολή, χρησιμοποιήστε:\n"
 "\n"
@@ -10075,102 +10075,102 @@ msgstr ""
 "διαλογή\n"
 "των υπόλοιπων υποβολών.\n"
 
-#: builtin/commit.c:312
+#: builtin/cummit.c:312
 msgid "failed to unpack HEAD tree object"
 msgstr ""
 
-#: builtin/commit.c:353
+#: builtin/cummit.c:353
 msgid "unable to create temporary index"
 msgstr ""
 
-#: builtin/commit.c:359
+#: builtin/cummit.c:359
 msgid "interactive add failed"
 msgstr ""
 
-#: builtin/commit.c:373
+#: builtin/cummit.c:373
 msgid "unable to update temporary index"
 msgstr ""
 
-#: builtin/commit.c:375
+#: builtin/cummit.c:375
 msgid "Failed to update main cache tree"
 msgstr ""
 
-#: builtin/commit.c:400 builtin/commit.c:423 builtin/commit.c:469
+#: builtin/cummit.c:400 builtin/cummit.c:423 builtin/cummit.c:469
 msgid "unable to write new_index file"
 msgstr ""
 
-#: builtin/commit.c:452
-msgid "cannot do a partial commit during a merge."
+#: builtin/cummit.c:452
+msgid "cannot do a partial cummit during a merge."
 msgstr ""
 
-#: builtin/commit.c:454
-msgid "cannot do a partial commit during a cherry-pick."
+#: builtin/cummit.c:454
+msgid "cannot do a partial cummit during a cherry-pick."
 msgstr ""
 
-#: builtin/commit.c:462
+#: builtin/cummit.c:462
 msgid "cannot read the index"
 msgstr ""
 
-#: builtin/commit.c:481
+#: builtin/cummit.c:481
 msgid "unable to write temporary index file"
 msgstr ""
 
-#: builtin/commit.c:579
+#: builtin/cummit.c:579
 #, c-format
-msgid "commit '%s' lacks author header"
+msgid "cummit '%s' lacks author header"
 msgstr "η υποβολή '%s' δε διαθέτει επικεφαλίδα δημιουργού"
 
-#: builtin/commit.c:581
+#: builtin/cummit.c:581
 #, c-format
-msgid "commit '%s' has malformed author line"
+msgid "cummit '%s' has malformed author line"
 msgstr "η υποβολή '%s' έχει εσφαλμένη γραμμή δημιουργού"
 
-#: builtin/commit.c:600
+#: builtin/cummit.c:600
 msgid "malformed --author parameter"
 msgstr ""
 
-#: builtin/commit.c:652
+#: builtin/cummit.c:652
 msgid ""
 "unable to select a comment character that is not used\n"
-"in the current commit message"
+"in the current cummit message"
 msgstr ""
 
-#: builtin/commit.c:689 builtin/commit.c:722 builtin/commit.c:1052
+#: builtin/cummit.c:689 builtin/cummit.c:722 builtin/cummit.c:1052
 #, c-format
-msgid "could not lookup commit %s"
+msgid "could not lookup cummit %s"
 msgstr ""
 
-#: builtin/commit.c:701 builtin/shortlog.c:319
+#: builtin/cummit.c:701 builtin/shortlog.c:319
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr ""
 
-#: builtin/commit.c:703
+#: builtin/cummit.c:703
 msgid "could not read log from standard input"
 msgstr ""
 
-#: builtin/commit.c:707
+#: builtin/cummit.c:707
 #, c-format
 msgid "could not read log file '%s'"
 msgstr ""
 
-#: builtin/commit.c:736 builtin/commit.c:744
+#: builtin/cummit.c:736 builtin/cummit.c:744
 msgid "could not read SQUASH_MSG"
 msgstr ""
 
-#: builtin/commit.c:741
+#: builtin/cummit.c:741
 msgid "could not read MERGE_MSG"
 msgstr ""
 
-#: builtin/commit.c:795
-msgid "could not write commit template"
+#: builtin/cummit.c:795
+msgid "could not write cummit template"
 msgstr ""
 
-#: builtin/commit.c:813
+#: builtin/cummit.c:813
 #, c-format
 msgid ""
 "\n"
-"It looks like you may be committing a merge.\n"
+"It looks like you may be cummitting a merge.\n"
 "If this is not correct, please remove the file\n"
 "\t%s\n"
 "and try again.\n"
@@ -10181,11 +10181,11 @@ msgstr ""
 "\t%s\n"
 "και προσπαθήστε ξανά.\n"
 
-#: builtin/commit.c:818
+#: builtin/cummit.c:818
 #, c-format
 msgid ""
 "\n"
-"It looks like you may be committing a cherry-pick.\n"
+"It looks like you may be cummitting a cherry-pick.\n"
 "If this is not correct, please remove the file\n"
 "\t%s\n"
 "and try again.\n"
@@ -10196,372 +10196,372 @@ msgstr ""
 "\t%s\n"
 "και προσπαθήστε ξανά.\n"
 
-#: builtin/commit.c:831
+#: builtin/cummit.c:831
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be ignored, and an empty message aborts the commit.\n"
+"Please enter the cummit message for your changes. Lines starting\n"
+"with '%c' will be ignored, and an empty message aborts the cummit.\n"
 msgstr ""
 "Παρακαλώ εισάγετε το μήνυμα υποβολής για τις αλλαγές σας. Οι γραμμές που "
 "αρχίζουν\n"
 "με '%c' αγνοούνται, και με κενό μήνυμα εγκαταλείπετε την υποβολή.\n"
 
-#: builtin/commit.c:839
+#: builtin/cummit.c:839
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
-"An empty message aborts the commit.\n"
+"An empty message aborts the cummit.\n"
 msgstr ""
 "Παρακαλώ εισάγετε το μήνυμα υποβολής για τις αλλαγές σας. Οι γραμμές που "
 "αρχίζουν\n"
 "με '%c' θα διατηρηθούν, μπορείτε να τις αφαιρέσετε μετά αν θέλετε.\n"
 "Με κενό μήνυμα εγκαταλείπετε την υποβολή.\n"
 
-#: builtin/commit.c:856
+#: builtin/cummit.c:856
 #, c-format
 msgid "%sAuthor:    %.*s <%.*s>"
 msgstr "%sΔημιουργός:    %.*s <%.*s>"
 
-#: builtin/commit.c:864
+#: builtin/cummit.c:864
 #, c-format
 msgid "%sDate:      %s"
 msgstr "%sΗμερομηνία:      %s"
 
-#: builtin/commit.c:871
+#: builtin/cummit.c:871
 #, c-format
-msgid "%sCommitter: %.*s <%.*s>"
+msgid "%scummitter: %.*s <%.*s>"
 msgstr "%sΥποβάλλων: %.*s <%.*s>"
 
-#: builtin/commit.c:889
+#: builtin/cummit.c:889
 msgid "Cannot read index"
 msgstr ""
 
-#: builtin/commit.c:956
+#: builtin/cummit.c:956
 msgid "Error building trees"
 msgstr ""
 
-#: builtin/commit.c:970 builtin/tag.c:258
+#: builtin/cummit.c:970 builtin/tag.c:258
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr "Παρακαλώ εισάγετε το μήνυμα χρησιμοποιώντας την επιλογή -m ή -F.\n"
 
-#: builtin/commit.c:1014
+#: builtin/cummit.c:1014
 #, c-format
 msgid "--author '%s' is not 'Name <email>' and matches no existing author"
 msgstr ""
 "--author '%s' δεν είναι 'Όνομα <email>' και δεν ταιριάζει με κάποιον "
 "υπάρχοντα δημιουργό"
 
-#: builtin/commit.c:1028
+#: builtin/cummit.c:1028
 #, c-format
 msgid "Invalid ignored mode '%s'"
 msgstr ""
 
-#: builtin/commit.c:1042 builtin/commit.c:1279
+#: builtin/cummit.c:1042 builtin/cummit.c:1279
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr ""
 
-#: builtin/commit.c:1080
+#: builtin/cummit.c:1080
 msgid "--long and -z are incompatible"
 msgstr "--long και -z είναι ασύμβατα μεταξύ τους"
 
-#: builtin/commit.c:1113
+#: builtin/cummit.c:1113
 msgid "Using both --reset-author and --author does not make sense"
 msgstr "Η χρήση των --reset-author και --author ταυτόχρονα δεν έχει νόημα"
 
-#: builtin/commit.c:1122
+#: builtin/cummit.c:1122
 msgid "You have nothing to amend."
 msgstr "Δεν έχετε τίποτα προς τροποποίηση."
 
-#: builtin/commit.c:1125
+#: builtin/cummit.c:1125
 msgid "You are in the middle of a merge -- cannot amend."
 msgstr "Βρίσκεστε στη μέση μιας συγχώνευσης -- δεν είναι δυνατή η τροποποίηση."
 
-#: builtin/commit.c:1127
+#: builtin/cummit.c:1127
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr ""
 "Βρίσκεστε στη μέση μιας επιλεκτικής διαλογής -- δεν είναι δυνατή η "
 "τροποποίηση."
 
-#: builtin/commit.c:1130
+#: builtin/cummit.c:1130
 msgid "Options --squash and --fixup cannot be used together"
 msgstr ""
 
-#: builtin/commit.c:1140
+#: builtin/cummit.c:1140
 msgid "Only one of -c/-C/-F/--fixup can be used."
 msgstr ""
 
-#: builtin/commit.c:1142
+#: builtin/cummit.c:1142
 msgid "Option -m cannot be combined with -c/-C/-F."
 msgstr ""
 
-#: builtin/commit.c:1150
+#: builtin/cummit.c:1150
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "--reset-author μπορεί να χρησιμοποιηθεί μόνο με -C, -c ή --amend."
 
-#: builtin/commit.c:1167
+#: builtin/cummit.c:1167
 msgid "Only one of --include/--only/--all/--interactive/--patch can be used."
 msgstr ""
 
-#: builtin/commit.c:1169
+#: builtin/cummit.c:1169
 msgid "No paths with --include/--only does not make sense."
 msgstr ""
 
-#: builtin/commit.c:1183 builtin/tag.c:546
+#: builtin/cummit.c:1183 builtin/tag.c:546
 #, c-format
 msgid "Invalid cleanup mode %s"
 msgstr ""
 
-#: builtin/commit.c:1188
+#: builtin/cummit.c:1188
 msgid "Paths with -a does not make sense."
 msgstr ""
 
-#: builtin/commit.c:1314 builtin/commit.c:1498
+#: builtin/cummit.c:1314 builtin/cummit.c:1498
 msgid "show status concisely"
 msgstr ""
 
-#: builtin/commit.c:1316 builtin/commit.c:1500
+#: builtin/cummit.c:1316 builtin/cummit.c:1500
 msgid "show branch information"
 msgstr ""
 
-#: builtin/commit.c:1318
+#: builtin/cummit.c:1318
 msgid "show stash information"
 msgstr ""
 
-#: builtin/commit.c:1320 builtin/commit.c:1502
+#: builtin/cummit.c:1320 builtin/cummit.c:1502
 msgid "compute full ahead/behind values"
 msgstr ""
 
-#: builtin/commit.c:1322
+#: builtin/cummit.c:1322
 msgid "version"
 msgstr ""
 
-#: builtin/commit.c:1322 builtin/commit.c:1504 builtin/push.c:561
+#: builtin/cummit.c:1322 builtin/cummit.c:1504 builtin/push.c:561
 #: builtin/worktree.c:640
 msgid "machine-readable output"
 msgstr "έξοδος σε μηχανικά αναγνώσιμη μορφή"
 
-#: builtin/commit.c:1325 builtin/commit.c:1506
+#: builtin/cummit.c:1325 builtin/cummit.c:1506
 msgid "show status in long format (default)"
 msgstr ""
 
-#: builtin/commit.c:1328 builtin/commit.c:1509
+#: builtin/cummit.c:1328 builtin/cummit.c:1509
 msgid "terminate entries with NUL"
 msgstr ""
 
-#: builtin/commit.c:1330 builtin/commit.c:1334 builtin/commit.c:1512
+#: builtin/cummit.c:1330 builtin/cummit.c:1334 builtin/cummit.c:1512
 #: builtin/fast-export.c:1085 builtin/fast-export.c:1088 builtin/rebase.c:1118
 #: builtin/tag.c:400
 msgid "mode"
 msgstr ""
 
-#: builtin/commit.c:1331 builtin/commit.c:1512
+#: builtin/cummit.c:1331 builtin/cummit.c:1512
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
 
-#: builtin/commit.c:1335
+#: builtin/cummit.c:1335
 msgid ""
 "show ignored files, optional modes: traditional, matching, no. (Default: "
 "traditional)"
 msgstr ""
 
-#: builtin/commit.c:1337 parse-options.h:164
+#: builtin/cummit.c:1337 parse-options.h:164
 msgid "when"
 msgstr ""
 
-#: builtin/commit.c:1338
+#: builtin/cummit.c:1338
 msgid ""
 "ignore changes to submodules, optional when: all, dirty, untracked. "
 "(Default: all)"
 msgstr ""
 
-#: builtin/commit.c:1340
+#: builtin/cummit.c:1340
 msgid "list untracked files in columns"
 msgstr ""
 
-#: builtin/commit.c:1341
+#: builtin/cummit.c:1341
 msgid "do not detect renames"
 msgstr ""
 
-#: builtin/commit.c:1343
+#: builtin/cummit.c:1343
 msgid "detect renames, optionally set similarity index"
 msgstr ""
 
-#: builtin/commit.c:1363
+#: builtin/cummit.c:1363
 msgid "Unsupported combination of ignored and untracked-files arguments"
 msgstr ""
 
-#: builtin/commit.c:1468
-msgid "suppress summary after successful commit"
+#: builtin/cummit.c:1468
+msgid "suppress summary after successful cummit"
 msgstr ""
 
-#: builtin/commit.c:1469
-msgid "show diff in commit message template"
+#: builtin/cummit.c:1469
+msgid "show diff in cummit message template"
 msgstr ""
 
-#: builtin/commit.c:1471
-msgid "Commit message options"
+#: builtin/cummit.c:1471
+msgid "cummit message options"
 msgstr "Επιλογές μηνύματος υποβολής"
 
-#: builtin/commit.c:1472 builtin/merge.c:264 builtin/tag.c:397
+#: builtin/cummit.c:1472 builtin/merge.c:264 builtin/tag.c:397
 msgid "read message from file"
 msgstr ""
 
-#: builtin/commit.c:1473
+#: builtin/cummit.c:1473
 msgid "author"
 msgstr "δημιουργός"
 
-#: builtin/commit.c:1473
-msgid "override author for commit"
+#: builtin/cummit.c:1473
+msgid "override author for cummit"
 msgstr ""
 
-#: builtin/commit.c:1474 builtin/gc.c:518
+#: builtin/cummit.c:1474 builtin/gc.c:518
 msgid "date"
 msgstr ""
 
-#: builtin/commit.c:1474
-msgid "override date for commit"
+#: builtin/cummit.c:1474
+msgid "override date for cummit"
 msgstr ""
 
-#: builtin/commit.c:1475 builtin/merge.c:260 builtin/notes.c:409
+#: builtin/cummit.c:1475 builtin/merge.c:260 builtin/notes.c:409
 #: builtin/notes.c:575 builtin/tag.c:395
 msgid "message"
 msgstr ""
 
-#: builtin/commit.c:1475
-msgid "commit message"
+#: builtin/cummit.c:1475
+msgid "cummit message"
 msgstr "μήνυμα υποβολής"
 
-#: builtin/commit.c:1476 builtin/commit.c:1477 builtin/commit.c:1478
-#: builtin/commit.c:1479 parse-options.h:278 ref-filter.h:92
-msgid "commit"
+#: builtin/cummit.c:1476 builtin/cummit.c:1477 builtin/cummit.c:1478
+#: builtin/cummit.c:1479 parse-options.h:278 ref-filter.h:92
+msgid "cummit"
 msgstr "υποβολή"
 
-#: builtin/commit.c:1476
-msgid "reuse and edit message from specified commit"
+#: builtin/cummit.c:1476
+msgid "reuse and edit message from specified cummit"
 msgstr ""
 
-#: builtin/commit.c:1477
-msgid "reuse message from specified commit"
+#: builtin/cummit.c:1477
+msgid "reuse message from specified cummit"
 msgstr ""
 
-#: builtin/commit.c:1478
-msgid "use autosquash formatted message to fixup specified commit"
+#: builtin/cummit.c:1478
+msgid "use autosquash formatted message to fixup specified cummit"
 msgstr ""
 
-#: builtin/commit.c:1479
-msgid "use autosquash formatted message to squash specified commit"
+#: builtin/cummit.c:1479
+msgid "use autosquash formatted message to squash specified cummit"
 msgstr ""
 
-#: builtin/commit.c:1480
-msgid "the commit is authored by me now (used with -C/-c/--amend)"
+#: builtin/cummit.c:1480
+msgid "the cummit is authored by me now (used with -C/-c/--amend)"
 msgstr "η υποβολή έχει δημιουργό εμένα τώρα (χρησιμοποιείται με -C/-c/--amend)"
 
-#: builtin/commit.c:1481 builtin/log.c:1533 builtin/merge.c:277
+#: builtin/cummit.c:1481 builtin/log.c:1533 builtin/merge.c:277
 #: builtin/pull.c:156 builtin/revert.c:107
 msgid "add Signed-off-by:"
 msgstr ""
 
-#: builtin/commit.c:1482
+#: builtin/cummit.c:1482
 msgid "use specified template file"
 msgstr ""
 
-#: builtin/commit.c:1483
-msgid "force edit of commit"
+#: builtin/cummit.c:1483
+msgid "force edit of cummit"
 msgstr ""
 
-#: builtin/commit.c:1484
+#: builtin/cummit.c:1484
 msgid "default"
 msgstr ""
 
-#: builtin/commit.c:1484 builtin/tag.c:401
+#: builtin/cummit.c:1484 builtin/tag.c:401
 msgid "how to strip spaces and #comments from message"
 msgstr ""
 
-#: builtin/commit.c:1485
-msgid "include status in commit message template"
+#: builtin/cummit.c:1485
+msgid "include status in cummit message template"
 msgstr ""
 
-#: builtin/commit.c:1487 builtin/merge.c:275 builtin/pull.c:186
+#: builtin/cummit.c:1487 builtin/merge.c:275 builtin/pull.c:186
 #: builtin/revert.c:115
-msgid "GPG sign commit"
+msgid "GPG sign cummit"
 msgstr ""
 
-#: builtin/commit.c:1490
-msgid "Commit contents options"
+#: builtin/cummit.c:1490
+msgid "cummit contents options"
 msgstr "Επιλογές περιεχομένων υποβολής"
 
-#: builtin/commit.c:1491
-msgid "commit all changed files"
+#: builtin/cummit.c:1491
+msgid "cummit all changed files"
 msgstr "να γίνει υποβολή όλων των αλλαγμένων αρχείων"
 
-#: builtin/commit.c:1492
-msgid "add specified files to index for commit"
+#: builtin/cummit.c:1492
+msgid "add specified files to index for cummit"
 msgstr ""
 
-#: builtin/commit.c:1493
+#: builtin/cummit.c:1493
 msgid "interactively add files"
 msgstr ""
 
-#: builtin/commit.c:1494
+#: builtin/cummit.c:1494
 msgid "interactively add changes"
 msgstr ""
 
-#: builtin/commit.c:1495
-msgid "commit only specified files"
+#: builtin/cummit.c:1495
+msgid "cummit only specified files"
 msgstr "να γίνει υποβολή μόνο των δοθέντων αρχείων"
 
-#: builtin/commit.c:1496
-msgid "bypass pre-commit and commit-msg hooks"
+#: builtin/cummit.c:1496
+msgid "bypass pre-cummit and cummit-msg hooks"
 msgstr ""
 
-#: builtin/commit.c:1497
-msgid "show what would be committed"
+#: builtin/cummit.c:1497
+msgid "show what would be cummitted"
 msgstr ""
 
-#: builtin/commit.c:1510
-msgid "amend previous commit"
+#: builtin/cummit.c:1510
+msgid "amend previous cummit"
 msgstr "τροποποίηση της προηγούμενης υποβολής"
 
-#: builtin/commit.c:1511
+#: builtin/cummit.c:1511
 msgid "bypass post-rewrite hook"
 msgstr ""
 
-#: builtin/commit.c:1516
+#: builtin/cummit.c:1516
 msgid "ok to record an empty change"
 msgstr ""
 
-#: builtin/commit.c:1518
+#: builtin/cummit.c:1518
 msgid "ok to record a change with an empty message"
 msgstr ""
 
-#: builtin/commit.c:1591
+#: builtin/cummit.c:1591
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr ""
 
-#: builtin/commit.c:1598
+#: builtin/cummit.c:1598
 msgid "could not read MERGE_MODE"
 msgstr ""
 
-#: builtin/commit.c:1617
+#: builtin/cummit.c:1617
 #, c-format
-msgid "could not read commit message: %s"
+msgid "could not read cummit message: %s"
 msgstr ""
 
-#: builtin/commit.c:1628
+#: builtin/cummit.c:1628
 #, c-format
-msgid "Aborting commit due to empty commit message.\n"
+msgid "Aborting cummit due to empty cummit message.\n"
 msgstr "Εγκατάλειψη της υποβολής λόγω κενού μηνύματος υποβολής.\n"
 
-#: builtin/commit.c:1633
+#: builtin/cummit.c:1633
 #, c-format
-msgid "Aborting commit; you did not edit the message.\n"
+msgid "Aborting cummit; you did not edit the message.\n"
 msgstr "Εγκατάλειψη της υποβολής, δεν επεξεργαστήκατε το μήνυμα.\n"
 
-#: builtin/commit.c:1668
+#: builtin/cummit.c:1668
 msgid ""
 "repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -10571,55 +10571,55 @@ msgstr ""
 "το αρχείο new_index. Ελέγξτε πως ο δίσκος δεν είναι γεμάτος και πως\n"
 "δεν υπάρχει υπέρβαση ορίου, και μετά κάντε \"git reset HEAD\" για ανάκτηση."
 
-#: builtin/commit-graph.c:10
-msgid "git commit-graph [--object-dir <objdir>]"
-msgstr "git commit-graph [--object-dir <φάκελος αντικειμένων>]"
+#: builtin/cummit-graph.c:10
+msgid "git cummit-graph [--object-dir <objdir>]"
+msgstr "git cummit-graph [--object-dir <φάκελος αντικειμένων>]"
 
-#: builtin/commit-graph.c:11 builtin/commit-graph.c:23
-msgid "git commit-graph read [--object-dir <objdir>]"
-msgstr "git commit-graph read [--object-dir <φάκελος αντικειμένων>]"
+#: builtin/cummit-graph.c:11 builtin/cummit-graph.c:23
+msgid "git cummit-graph read [--object-dir <objdir>]"
+msgstr "git cummit-graph read [--object-dir <φάκελος αντικειμένων>]"
 
-#: builtin/commit-graph.c:12 builtin/commit-graph.c:18
-msgid "git commit-graph verify [--object-dir <objdir>]"
-msgstr "git commit-graph verify [--object-dir <φάκελος αντικειμένων>]"
+#: builtin/cummit-graph.c:12 builtin/cummit-graph.c:18
+msgid "git cummit-graph verify [--object-dir <objdir>]"
+msgstr "git cummit-graph verify [--object-dir <φάκελος αντικειμένων>]"
 
-#: builtin/commit-graph.c:13 builtin/commit-graph.c:28
+#: builtin/cummit-graph.c:13 builtin/cummit-graph.c:28
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--reachable|--"
-"stdin-packs|--stdin-commits]"
+"git cummit-graph write [--object-dir <objdir>] [--append] [--reachable|--"
+"stdin-packs|--stdin-cummits]"
 msgstr ""
-"git commit-graph write [--object-dir <φάκελος αντικειμένων>] [--append] [--"
-"reachable|--stdin-packs|--stdin-commits]"
+"git cummit-graph write [--object-dir <φάκελος αντικειμένων>] [--append] [--"
+"reachable|--stdin-packs|--stdin-cummits]"
 
-#: builtin/commit-graph.c:48 builtin/commit-graph.c:78
-#: builtin/commit-graph.c:132 builtin/commit-graph.c:190 builtin/fetch.c:153
+#: builtin/cummit-graph.c:48 builtin/cummit-graph.c:78
+#: builtin/cummit-graph.c:132 builtin/cummit-graph.c:190 builtin/fetch.c:153
 #: builtin/log.c:1553
 msgid "dir"
 msgstr "φάκελος"
 
-#: builtin/commit-graph.c:49 builtin/commit-graph.c:79
-#: builtin/commit-graph.c:133 builtin/commit-graph.c:191
+#: builtin/cummit-graph.c:49 builtin/cummit-graph.c:79
+#: builtin/cummit-graph.c:133 builtin/cummit-graph.c:191
 msgid "The object directory to store the graph"
 msgstr "Ο φάκελος αντικειμένων που θα αποθηκευτεί ο γράφος"
 
-#: builtin/commit-graph.c:135
+#: builtin/cummit-graph.c:135
 msgid "start walk at all refs"
 msgstr ""
 
-#: builtin/commit-graph.c:137
-msgid "scan pack-indexes listed by stdin for commits"
+#: builtin/cummit-graph.c:137
+msgid "scan pack-indexes listed by stdin for cummits"
 msgstr ""
 
-#: builtin/commit-graph.c:139
-msgid "start walk at commits listed by stdin"
+#: builtin/cummit-graph.c:139
+msgid "start walk at cummits listed by stdin"
 msgstr ""
 
-#: builtin/commit-graph.c:141
-msgid "include all commits already in the commit-graph file"
+#: builtin/cummit-graph.c:141
+msgid "include all cummits already in the cummit-graph file"
 msgstr ""
 
-#: builtin/commit-graph.c:150
-msgid "use at most one of --reachable, --stdin-commits, or --stdin-packs"
+#: builtin/cummit-graph.c:150
+msgid "use at most one of --reachable, --stdin-cummits, or --stdin-packs"
 msgstr ""
 
 #: builtin/config.c:11
@@ -10923,7 +10923,7 @@ msgid "print sizes in human readable format"
 msgstr ""
 
 #: builtin/describe.c:27
-msgid "git describe [<options>] [<commit-ish>...]"
+msgid "git describe [<options>] [<cummit-ish>...]"
 msgstr "git describe [<επιλογές>] [<υποβολή ή φαινομενική>...]"
 
 #: builtin/describe.c:28
@@ -10992,7 +10992,7 @@ msgstr ""
 
 #: builtin/describe.c:439
 #, c-format
-msgid "traversed %lu commits\n"
+msgid "traversed %lu cummits\n"
 msgstr ""
 
 #: builtin/describe.c:442
@@ -11014,11 +11014,11 @@ msgstr "Μη έγκυρο όνομα αντικειμένου %s"
 
 #: builtin/describe.c:521
 #, c-format
-msgid "%s is neither a commit nor blob"
+msgid "%s is neither a cummit nor blob"
 msgstr "%s δεν είναι ούτε υποβολή ούτε blob"
 
 #: builtin/describe.c:535
-msgid "find the tag that comes after the commit"
+msgid "find the tag that comes after the cummit"
 msgstr ""
 
 #: builtin/describe.c:536
@@ -11058,7 +11058,7 @@ msgid "do not consider tags matching <pattern>"
 msgstr ""
 
 #: builtin/describe.c:551 builtin/name-rev.c:424
-msgid "show abbreviated commit object as fallback"
+msgid "show abbreviated cummit object as fallback"
 msgstr ""
 
 #: builtin/describe.c:552 builtin/describe.c:555
@@ -11082,11 +11082,11 @@ msgid "No names found, cannot describe anything."
 msgstr ""
 
 #: builtin/describe.c:654
-msgid "--dirty is incompatible with commit-ishes"
+msgid "--dirty is incompatible with cummit-ishes"
 msgstr ""
 
 #: builtin/describe.c:656
-msgid "--broken is incompatible with commit-ishes"
+msgid "--broken is incompatible with cummit-ishes"
 msgstr ""
 
 #: builtin/diff.c:84
@@ -11119,7 +11119,7 @@ msgid "unhandled object '%s' given."
 msgstr ""
 
 #: builtin/difftool.c:31
-msgid "git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"
+msgid "git difftool [<options>] [<cummit> [<cummit>]] [--] [<path>...]"
 msgstr "git difftool [<επιλογές>] [<υποβολή> [<υποβολή>]] [--] [<διαδρομή>...]"
 
 #: builtin/difftool.c:261
@@ -11241,7 +11241,7 @@ msgid "Fake a tagger when tags lack one"
 msgstr ""
 
 #: builtin/fast-export.c:1098
-msgid "Output full tree for each commit"
+msgid "Output full tree for each cummit"
 msgstr ""
 
 #: builtin/fast-export.c:1100
@@ -11269,7 +11269,7 @@ msgid "Reference parents which are not in fast-export stream by object id"
 msgstr ""
 
 #: builtin/fast-export.c:1108
-msgid "Show original object ids of blobs/commits"
+msgid "Show original object ids of blobs/cummits"
 msgstr "Προβολή αρχικών αναγνωριστικών των blob/υποβολών"
 
 #: builtin/fetch.c:28
@@ -11607,11 +11607,11 @@ msgid "git for-each-ref [--points-at <object>]"
 msgstr ""
 
 #: builtin/for-each-ref.c:12
-msgid "git for-each-ref [(--merged | --no-merged) [<commit>]]"
+msgid "git for-each-ref [(--merged | --no-merged) [<cummit>]]"
 msgstr ""
 
 #: builtin/for-each-ref.c:13
-msgid "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
+msgid "git for-each-ref [--contains [<cummit>]] [--no-contains [<cummit>]]"
 msgstr ""
 
 #: builtin/for-each-ref.c:28
@@ -11651,11 +11651,11 @@ msgid "print only refs that are not merged"
 msgstr ""
 
 #: builtin/for-each-ref.c:47
-msgid "print only refs which contain the commit"
+msgid "print only refs which contain the cummit"
 msgstr ""
 
 #: builtin/for-each-ref.c:48
-msgid "print only refs which don't contain the commit"
+msgid "print only refs which don't contain the cummit"
 msgstr ""
 
 #: builtin/fsck.c:88 builtin/fsck.c:160 builtin/fsck.c:161
@@ -11765,7 +11765,7 @@ msgstr ""
 
 #: builtin/fsck.c:502
 #, c-format
-msgid "%s: not a commit"
+msgid "%s: not a cummit"
 msgstr ""
 
 #: builtin/fsck.c:557
@@ -12968,7 +12968,7 @@ msgstr ""
 
 #: builtin/log.c:1324 builtin/log.c:2068 builtin/log.c:2070 builtin/log.c:2082
 #, c-format
-msgid "Unknown commit %s"
+msgid "Unknown cummit %s"
 msgstr ""
 
 #: builtin/log.c:1334 builtin/notes.c:897 builtin/tag.c:526
@@ -12982,9 +12982,9 @@ msgstr ""
 
 #: builtin/log.c:1343
 msgid ""
-"Failed to get upstream, if you want to record base commit automatically,\n"
+"Failed to get upstream, if you want to record base cummit automatically,\n"
 "please use git branch --set-upstream-to to track a remote branch.\n"
-"Or you could specify base commit by --base=<base-commit-id> manually."
+"Or you could specify base cummit by --base=<base-cummit-id> manually."
 msgstr ""
 
 #: builtin/log.c:1363
@@ -12992,11 +12992,11 @@ msgid "Failed to find exact merge base"
 msgstr ""
 
 #: builtin/log.c:1374
-msgid "base commit should be the ancestor of revision list"
+msgid "base cummit should be the ancestor of revision list"
 msgstr ""
 
 #: builtin/log.c:1378
-msgid "base commit shouldn't be in revision list"
+msgid "base cummit shouldn't be in revision list"
 msgstr ""
 
 #: builtin/log.c:1431
@@ -13068,7 +13068,7 @@ msgid "output all-zero hash in From header"
 msgstr ""
 
 #: builtin/log.c:1563
-msgid "don't include a patch matching a commit upstream"
+msgid "don't include a patch matching a cummit upstream"
 msgstr ""
 
 #: builtin/log.c:1565
@@ -13104,7 +13104,7 @@ msgid "ident"
 msgstr ""
 
 #: builtin/log.c:1575
-msgid "set From address to <ident> (or committer ident if absent)"
+msgid "set From address to <ident> (or cummitter ident if absent)"
 msgstr ""
 
 #: builtin/log.c:1577
@@ -13140,7 +13140,7 @@ msgid "add a signature"
 msgstr ""
 
 #: builtin/log.c:1591
-msgid "base-commit"
+msgid "base-cummit"
 msgstr ""
 
 #: builtin/log.c:1592
@@ -13451,7 +13451,7 @@ msgid "empty mbox: '%s'"
 msgstr ""
 
 #: builtin/merge.c:53
-msgid "git merge [<options>] [<commit>...]"
+msgid "git merge [<options>] [<cummit>...]"
 msgstr ""
 
 #: builtin/merge.c:54
@@ -13499,19 +13499,19 @@ msgid "(synonym to --stat)"
 msgstr ""
 
 #: builtin/merge.c:241 builtin/pull.c:153
-msgid "add (at most <n>) entries from shortlog to merge commit message"
+msgid "add (at most <n>) entries from shortlog to merge cummit message"
 msgstr ""
 
 #: builtin/merge.c:244 builtin/pull.c:159
-msgid "create a single commit instead of doing a merge"
+msgid "create a single cummit instead of doing a merge"
 msgstr ""
 
 #: builtin/merge.c:246 builtin/pull.c:162
-msgid "perform a commit if the merge succeeds (default)"
+msgid "perform a cummit if the merge succeeds (default)"
 msgstr ""
 
 #: builtin/merge.c:248 builtin/pull.c:165
-msgid "edit message before committing"
+msgid "edit message before cummitting"
 msgstr ""
 
 #: builtin/merge.c:249
@@ -13544,7 +13544,7 @@ msgid "option for selected merge strategy"
 msgstr ""
 
 #: builtin/merge.c:261
-msgid "merge commit message (for a non-fast-forward merge)"
+msgid "merge cummit message (for a non-fast-forward merge)"
 msgstr ""
 
 #: builtin/merge.c:268
@@ -13560,7 +13560,7 @@ msgid "allow merging unrelated histories"
 msgstr ""
 
 #: builtin/merge.c:278
-msgid "verify commit-msg hook"
+msgid "verify cummit-msg hook"
 msgstr ""
 
 #: builtin/merge.c:303
@@ -13586,7 +13586,7 @@ msgstr " (τίποτα προς σύμπτυξη)"
 
 #: builtin/merge.c:393
 #, c-format
-msgid "Squash commit -- not updating HEAD\n"
+msgid "Squash cummit -- not updating HEAD\n"
 msgstr ""
 
 #: builtin/merge.c:443
@@ -13596,7 +13596,7 @@ msgstr ""
 
 #: builtin/merge.c:494
 #, c-format
-msgid "'%s' does not point to a commit"
+msgid "'%s' does not point to a cummit"
 msgstr ""
 
 #: builtin/merge.c:581
@@ -13625,23 +13625,23 @@ msgstr ""
 
 #: builtin/merge.c:792
 #, c-format
-msgid "Not committing merge; use 'git commit' to complete the merge.\n"
+msgid "Not cummitting merge; use 'git cummit' to complete the merge.\n"
 msgstr ""
-"Δε γίνεται υποβολή της συγχώνευσης, χρησιμοποιήστε 'git commit' για να "
+"Δε γίνεται υποβολή της συγχώνευσης, χρησιμοποιήστε 'git cummit' για να "
 "ολοκληρώσετε τη συγχώνευση.\n"
 
 #: builtin/merge.c:798
 #, c-format
 msgid ""
-"Please enter a commit message to explain why this merge is necessary,\n"
+"Please enter a cummit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
 "\n"
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
-"the commit.\n"
+"the cummit.\n"
 msgstr ""
 
 #: builtin/merge.c:834
-msgid "Empty commit message."
+msgid "Empty cummit message."
 msgstr ""
 
 #: builtin/merge.c:853
@@ -13651,7 +13651,7 @@ msgstr "Εξαιρετικά.\n"
 
 #: builtin/merge.c:906
 #, c-format
-msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
+msgid "Automatic merge failed; fix conflicts and then cummit the result.\n"
 msgstr ""
 
 #: builtin/merge.c:945
@@ -13704,7 +13704,7 @@ msgstr ""
 #: builtin/merge.c:1287
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Δεν έχετε ολοκληρώσει τη συγχώνευσή σας (Υπάρχει το MERGE_HEAD).\n"
 "Παρακαλώ, υποβάλετε τις αλλαγές σας πριν συγχωνεύσετε."
@@ -13712,7 +13712,7 @@ msgstr ""
 #: builtin/merge.c:1294
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Δεν έχετε ολοκληρώσει την επιλεκτική διαλογή σας (Υπάρχει το "
 "CHERRY_PICK_HEAD).\n"
@@ -13729,15 +13729,15 @@ msgid "You cannot combine --squash with --no-ff."
 msgstr "Δε μπορείτε να συνδυάσετε το --squash με το --no-ff."
 
 #: builtin/merge.c:1314
-msgid "No commit specified and merge.defaultToUpstream not set."
+msgid "No cummit specified and merge.defaultToUpstream not set."
 msgstr ""
 
 #: builtin/merge.c:1331
-msgid "Squash commit into empty head not supported yet"
+msgid "Squash cummit into empty head not supported yet"
 msgstr ""
 
 #: builtin/merge.c:1333
-msgid "Non-fast-forward commit does not make sense into an empty head"
+msgid "Non-fast-forward cummit does not make sense into an empty head"
 msgstr ""
 
 #: builtin/merge.c:1338
@@ -13746,7 +13746,7 @@ msgid "%s - not something we can merge"
 msgstr ""
 
 #: builtin/merge.c:1340
-msgid "Can merge only exactly one commit into empty head"
+msgid "Can merge only exactly one cummit into empty head"
 msgstr ""
 
 #: builtin/merge.c:1422
@@ -13807,27 +13807,27 @@ msgstr ""
 
 #: builtin/merge.c:1637
 #, c-format
-msgid "Automatic merge went well; stopped before committing as requested\n"
+msgid "Automatic merge went well; stopped before cummitting as requested\n"
 msgstr ""
 
 #: builtin/merge-base.c:32
-msgid "git merge-base [-a | --all] <commit> <commit>..."
+msgid "git merge-base [-a | --all] <cummit> <cummit>..."
 msgstr ""
 
 #: builtin/merge-base.c:33
-msgid "git merge-base [-a | --all] --octopus <commit>..."
+msgid "git merge-base [-a | --all] --octopus <cummit>..."
 msgstr ""
 
 #: builtin/merge-base.c:34
-msgid "git merge-base --independent <commit>..."
+msgid "git merge-base --independent <cummit>..."
 msgstr ""
 
 #: builtin/merge-base.c:35
-msgid "git merge-base --is-ancestor <commit> <commit>"
+msgid "git merge-base --is-ancestor <cummit> <cummit>"
 msgstr ""
 
 #: builtin/merge-base.c:36
-msgid "git merge-base --fork-point <ref> [<commit>]"
+msgid "git merge-base --fork-point <ref> [<cummit>]"
 msgstr ""
 
 #: builtin/merge-base.c:153
@@ -13847,7 +13847,7 @@ msgid "is the first one ancestor of the other?"
 msgstr ""
 
 #: builtin/merge-base.c:161
-msgid "find where <commit> forked from reflog of <ref>"
+msgid "find where <cummit> forked from reflog of <ref>"
 msgstr ""
 
 #: builtin/merge-file.c:9
@@ -14045,7 +14045,7 @@ msgid "renaming '%s' failed"
 msgstr ""
 
 #: builtin/name-rev.c:355
-msgid "git name-rev [<options>] <commit>..."
+msgid "git name-rev [<options>] <cummit>..."
 msgstr ""
 
 #: builtin/name-rev.c:356
@@ -14061,7 +14061,7 @@ msgid "print only names (no SHA-1)"
 msgstr ""
 
 #: builtin/name-rev.c:414
-msgid "only use tags to name the commits"
+msgid "only use tags to name the cummits"
 msgstr ""
 
 #: builtin/name-rev.c:416
@@ -14073,7 +14073,7 @@ msgid "ignore refs matching <pattern>"
 msgstr ""
 
 #: builtin/name-rev.c:420
-msgid "list all commits reachable from all refs"
+msgid "list all cummits reachable from all refs"
 msgstr ""
 
 #: builtin/name-rev.c:421
@@ -14122,7 +14122,7 @@ msgid ""
 msgstr ""
 
 #: builtin/notes.c:35
-msgid "git notes merge --commit [-v | -q]"
+msgid "git notes merge --cummit [-v | -q]"
 msgstr ""
 
 #: builtin/notes.c:36
@@ -14174,7 +14174,7 @@ msgid "git notes merge [<options>] <notes-ref>"
 msgstr ""
 
 #: builtin/notes.c:76
-msgid "git notes merge --commit [<options>]"
+msgid "git notes merge --cummit [<options>]"
 msgstr ""
 
 #: builtin/notes.c:77
@@ -14365,11 +14365,11 @@ msgid "failed to read ref NOTES_MERGE_PARTIAL"
 msgstr ""
 
 #: builtin/notes.c:724
-msgid "could not find commit from NOTES_MERGE_PARTIAL."
+msgid "could not find cummit from NOTES_MERGE_PARTIAL."
 msgstr ""
 
 #: builtin/notes.c:726
-msgid "could not parse commit from NOTES_MERGE_PARTIAL."
+msgid "could not parse cummit from NOTES_MERGE_PARTIAL."
 msgstr ""
 
 #: builtin/notes.c:739
@@ -14402,11 +14402,11 @@ msgstr ""
 "στρατηγική (manual/ours/theirs/union/cat_sort_uniq)"
 
 #: builtin/notes.c:790
-msgid "Committing unmerged notes"
+msgid "cummitting unmerged notes"
 msgstr ""
 
 #: builtin/notes.c:792
-msgid "finalize notes merge by committing unmerged notes"
+msgid "finalize notes merge by cummitting unmerged notes"
 msgstr ""
 
 #: builtin/notes.c:794
@@ -14418,7 +14418,7 @@ msgid "abort notes merge"
 msgstr ""
 
 #: builtin/notes.c:807
-msgid "cannot mix --commit, --abort or -s/--strategy"
+msgid "cannot mix --cummit, --abort or -s/--strategy"
 msgstr ""
 
 #: builtin/notes.c:812
@@ -14443,8 +14443,8 @@ msgstr ""
 #: builtin/notes.c:878
 #, c-format
 msgid ""
-"Automatic notes merge failed. Fix conflicts in %s and commit the result with "
-"'git notes merge --commit', or abort the merge with 'git notes merge --"
+"Automatic notes merge failed. Fix conflicts in %s and cummit the result with "
+"'git notes merge --cummit', or abort the merge with 'git notes merge --"
 "abort'.\n"
 msgstr ""
 
@@ -14797,7 +14797,7 @@ msgid "pack compression level"
 msgstr ""
 
 #: builtin/pack-objects.c:3308
-msgid "do not hide commits by grafts"
+msgid "do not hide cummits by grafts"
 msgstr ""
 
 #: builtin/pack-objects.c:3310
@@ -15021,7 +15021,7 @@ msgstr ""
 
 #: builtin/pull.c:566
 #, c-format
-msgid "unable to access commit %s"
+msgid "unable to access cummit %s"
 msgstr ""
 
 #: builtin/pull.c:844
@@ -15041,7 +15041,7 @@ msgid "pull with rebase"
 msgstr "ενσωμάτωση με rebase"
 
 #: builtin/pull.c:905
-msgid "please commit or stash them."
+msgid "please cummit or stash them."
 msgstr ""
 
 #: builtin/pull.c:930
@@ -15049,7 +15049,7 @@ msgstr ""
 msgid ""
 "fetch updated the current branch head.\n"
 "fast-forwarding your working tree from\n"
-"commit %s."
+"cummit %s."
 msgstr ""
 
 #: builtin/pull.c:936
@@ -15233,8 +15233,8 @@ msgstr ""
 
 #: builtin/push.c:298
 msgid ""
-"You cannot update a remote ref that points at a non-commit object,\n"
-"or update a remote ref to make it point at a non-commit object,\n"
+"You cannot update a remote ref that points at a non-cummit object,\n"
+"or update a remote ref to make it point at a non-cummit object,\n"
 "without using the '--force' option.\n"
 msgstr ""
 "Δε μπορείτε να ενημερώσετε ένα απομακρυσμένο ref που δείχνει σε αντικείμενο "
@@ -15413,7 +15413,7 @@ msgid "single arg format must be symmetric range"
 msgstr ""
 
 #: builtin/range-diff.c:90
-msgid "need two commit ranges"
+msgid "need two cummit ranges"
 msgstr ""
 
 #: builtin/read-tree.c:41
@@ -15540,7 +15540,7 @@ msgstr ""
 msgid ""
 "Resolve all conflicts manually, mark them as resolved with\n"
 "\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
+"You can instead skip this cummit: run \"git rebase --skip\".\n"
 "To abort and get back to the state before \"git rebase\", run \"git rebase --"
 "abort\"."
 msgstr ""
@@ -15613,7 +15613,7 @@ msgid "do not show diffstat of what changed upstream"
 msgstr ""
 
 #: builtin/rebase.c:1053
-msgid "add a Signed-off-by: line to each commit"
+msgid "add a Signed-off-by: line to each cummit"
 msgstr ""
 
 #: builtin/rebase.c:1055 builtin/rebase.c:1059 builtin/rebase.c:1061
@@ -15625,7 +15625,7 @@ msgid "passed to 'git apply'"
 msgstr ""
 
 #: builtin/rebase.c:1067 builtin/rebase.c:1070
-msgid "cherry-pick all commits, even if unchanged"
+msgid "cherry-pick all cummits, even if unchanged"
 msgstr ""
 
 #: builtin/rebase.c:1072
@@ -15657,7 +15657,7 @@ msgid "use merging strategies to rebase"
 msgstr ""
 
 #: builtin/rebase.c:1091
-msgid "let the user edit the list of commits to rebase"
+msgid "let the user edit the list of cummits to rebase"
 msgstr ""
 
 #: builtin/rebase.c:1095
@@ -15669,11 +15669,11 @@ msgid "allow rerere to update index with resolved conflict"
 msgstr ""
 
 #: builtin/rebase.c:1102
-msgid "preserve empty commits during rebase"
+msgid "preserve empty cummits during rebase"
 msgstr ""
 
 #: builtin/rebase.c:1104
-msgid "move commits that begin with squash!/fixup! under -i"
+msgid "move cummits that begin with squash!/fixup! under -i"
 msgstr ""
 
 #: builtin/rebase.c:1110
@@ -15681,11 +15681,11 @@ msgid "automatically stash/stash pop before and after"
 msgstr ""
 
 #: builtin/rebase.c:1112
-msgid "add exec lines after each commit of the editable list"
+msgid "add exec lines after each cummit of the editable list"
 msgstr ""
 
 #: builtin/rebase.c:1116
-msgid "allow rebasing commits with empty messages"
+msgid "allow rebasing cummits with empty messages"
 msgstr ""
 
 #: builtin/rebase.c:1119
@@ -15709,7 +15709,7 @@ msgid "pass the argument through to the merge strategy"
 msgstr ""
 
 #: builtin/rebase.c:1130
-msgid "rebase all reachable commits up to the root(s)"
+msgid "rebase all reachable cummits up to the root(s)"
 msgstr ""
 
 #: builtin/rebase.c:1133 builtin/rebase--interactive.c:198
@@ -15812,7 +15812,7 @@ msgid "invalid upstream '%s'"
 msgstr ""
 
 #: builtin/rebase.c:1508
-msgid "Could not create new root commit"
+msgid "Could not create new root cummit"
 msgstr ""
 
 #: builtin/rebase.c:1526
@@ -15822,12 +15822,12 @@ msgstr ""
 
 #: builtin/rebase.c:1533
 #, c-format
-msgid "Does not point to a valid commit '%s'"
+msgid "Does not point to a valid cummit '%s'"
 msgstr ""
 
 #: builtin/rebase.c:1558
 #, c-format
-msgid "fatal: no such branch/commit '%s'"
+msgid "fatal: no such branch/cummit '%s'"
 msgstr ""
 
 #: builtin/rebase.c:1566 builtin/submodule--helper.c:38
@@ -15869,7 +15869,7 @@ msgid "HEAD is now at %s"
 msgstr "Το HEAD τώρα βρίσκεται στο %s"
 
 #: builtin/rebase.c:1651 git-legacy-rebase.sh:682
-msgid "Please commit or stash them."
+msgid "Please cummit or stash them."
 msgstr ""
 
 #: builtin/rebase.c:1678
@@ -15959,15 +15959,15 @@ msgid "git rebase--interactive [<options>]"
 msgstr ""
 
 #: builtin/rebase--interactive.c:150
-msgid "keep empty commits"
+msgid "keep empty cummits"
 msgstr ""
 
 #: builtin/rebase--interactive.c:152 builtin/revert.c:125
-msgid "allow commits with empty messages"
+msgid "allow cummits with empty messages"
 msgstr ""
 
 #: builtin/rebase--interactive.c:153
-msgid "rebase merge commits"
+msgid "rebase merge cummits"
 msgstr ""
 
 #: builtin/rebase--interactive.c:155
@@ -15975,11 +15975,11 @@ msgid "keep original branch points of cousins"
 msgstr ""
 
 #: builtin/rebase--interactive.c:157
-msgid "move commits that begin with squash!/fixup!"
+msgid "move cummits that begin with squash!/fixup!"
 msgstr ""
 
 #: builtin/rebase--interactive.c:158
-msgid "sign commits"
+msgid "sign cummits"
 msgstr ""
 
 #: builtin/rebase--interactive.c:160
@@ -15987,7 +15987,7 @@ msgid "continue rebase"
 msgstr "συνέχεια; rebase"
 
 #: builtin/rebase--interactive.c:162
-msgid "skip commit"
+msgid "skip cummit"
 msgstr ""
 
 #: builtin/rebase--interactive.c:163
@@ -15999,11 +15999,11 @@ msgid "show the current patch"
 msgstr ""
 
 #: builtin/rebase--interactive.c:168
-msgid "shorten commit ids in the todo list"
+msgid "shorten cummit ids in the todo list"
 msgstr ""
 
 #: builtin/rebase--interactive.c:170
-msgid "expand commit ids in the todo list"
+msgid "expand cummit ids in the todo list"
 msgstr ""
 
 #: builtin/rebase--interactive.c:172
@@ -16039,7 +16039,7 @@ msgid "squash onto"
 msgstr ""
 
 #: builtin/rebase--interactive.c:183
-msgid "the upstream commit"
+msgid "the upstream cummit"
 msgstr ""
 
 #: builtin/rebase--interactive.c:184
@@ -16067,7 +16067,7 @@ msgid "switch-to"
 msgstr "αλλαγή σε"
 
 #: builtin/rebase--interactive.c:193
-msgid "the branch or commit to checkout"
+msgid "the branch or cummit to checkout"
 msgstr ""
 
 #: builtin/rebase--interactive.c:194
@@ -16091,7 +16091,7 @@ msgid "--[no-]rebase-cousins has no effect without --rebase-merges"
 msgstr ""
 
 #: builtin/rebase--interactive.c:230
-msgid "a base commit must be provided with --upstream or --onto"
+msgid "a base cummit must be provided with --upstream or --onto"
 msgstr ""
 
 #: builtin/receive-pack.c:33
@@ -16830,7 +16830,7 @@ msgid "git replace [-f] --edit <object>"
 msgstr ""
 
 #: builtin/replace.c:24
-msgid "git replace [-f] --graft <commit> [<parent>...]"
+msgid "git replace [-f] --graft <cummit> [<parent>...]"
 msgstr ""
 
 #: builtin/replace.c:25
@@ -16946,33 +16946,33 @@ msgstr "το νέο αντικείμενο είναι ίδιο με το παλ�
 
 #: builtin/replace.c:407
 #, c-format
-msgid "bad mergetag in commit '%s'"
+msgid "bad mergetag in cummit '%s'"
 msgstr ""
 
 #: builtin/replace.c:409
 #, c-format
-msgid "malformed mergetag in commit '%s'"
+msgid "malformed mergetag in cummit '%s'"
 msgstr ""
 
 #: builtin/replace.c:421
 #, c-format
 msgid ""
-"original commit '%s' contains mergetag '%s' that is discarded; use --edit "
+"original cummit '%s' contains mergetag '%s' that is discarded; use --edit "
 "instead of --graft"
 msgstr ""
 
 #: builtin/replace.c:460
 #, c-format
-msgid "the original commit '%s' has a gpg signature"
+msgid "the original cummit '%s' has a gpg signature"
 msgstr ""
 
 #: builtin/replace.c:461
-msgid "the signature will be removed in the replacement commit!"
+msgid "the signature will be removed in the replacement cummit!"
 msgstr ""
 
 #: builtin/replace.c:471
 #, c-format
-msgid "could not write replacement commit for: '%s'"
+msgid "could not write replacement cummit for: '%s'"
 msgstr ""
 
 #: builtin/replace.c:479
@@ -16982,7 +16982,7 @@ msgstr ""
 
 #: builtin/replace.c:482
 #, c-format
-msgid "new commit is the same as the old one: '%s'"
+msgid "new cummit is the same as the old one: '%s'"
 msgstr "η νέα υποβολή είναι ίδια με την παλιά: '%s'"
 
 #: builtin/replace.c:515
@@ -17005,7 +17005,7 @@ msgid "edit existing object"
 msgstr ""
 
 #: builtin/replace.c:539
-msgid "change a commit's parents"
+msgid "change a cummit's parents"
 msgstr ""
 
 #: builtin/replace.c:540
@@ -17079,7 +17079,7 @@ msgstr ""
 
 #: builtin/reset.c:32
 msgid ""
-"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
+"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"
 msgstr ""
 "git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<υποβολή>]"
 
@@ -17264,7 +17264,7 @@ msgid ""
 msgstr ""
 
 #: builtin/revert.c:24
-msgid "git revert [<options>] <commit-ish>..."
+msgid "git revert [<options>] <cummit-ish>..."
 msgstr ""
 
 #: builtin/revert.c:25
@@ -17272,7 +17272,7 @@ msgid "git revert <subcommand>"
 msgstr "git revert <υποεντολή>"
 
 #: builtin/revert.c:30
-msgid "git cherry-pick [<options>] <commit-ish>..."
+msgid "git cherry-pick [<options>] <cummit-ish>..."
 msgstr "git cherry-pick [<επιλογές>] <υποβολή ή φαινομενική>..."
 
 #: builtin/revert.c:31
@@ -17302,11 +17302,11 @@ msgid "cancel revert or cherry-pick sequence"
 msgstr ""
 
 #: builtin/revert.c:104
-msgid "don't automatically commit"
+msgid "don't automatically cummit"
 msgstr ""
 
 #: builtin/revert.c:105
-msgid "edit the commit message"
+msgid "edit the cummit message"
 msgstr ""
 
 #: builtin/revert.c:108
@@ -17326,15 +17326,15 @@ msgid "option for merge strategy"
 msgstr ""
 
 #: builtin/revert.c:122
-msgid "append commit name"
+msgid "append cummit name"
 msgstr ""
 
 #: builtin/revert.c:124
-msgid "preserve initially empty commits"
+msgid "preserve initially empty cummits"
 msgstr ""
 
 #: builtin/revert.c:126
-msgid "keep redundant, empty commits"
+msgid "keep redundant, empty cummits"
 msgstr ""
 
 #: builtin/revert.c:220
@@ -17464,15 +17464,15 @@ msgid "git log --pretty=short | git shortlog [<options>]"
 msgstr "git log --pretty=short | git shortlog [<επιλογές>]"
 
 #: builtin/shortlog.c:264
-msgid "Group by committer rather than author"
+msgid "Group by cummitter rather than author"
 msgstr ""
 
 #: builtin/shortlog.c:266
-msgid "sort output according to the number of commits per author"
+msgid "sort output according to the number of cummits per author"
 msgstr ""
 
 #: builtin/shortlog.c:268
-msgid "Suppress commit descriptions, only provides commit count"
+msgid "Suppress cummit descriptions, only provides cummit count"
 msgstr ""
 
 #: builtin/shortlog.c:270
@@ -17528,7 +17528,7 @@ msgid "color '*!+-' corresponding to the branch"
 msgstr ""
 
 #: builtin/show-branch.c:652
-msgid "show <n> more commits after the common ancestor"
+msgid "show <n> more cummits after the common ancestor"
 msgstr ""
 
 #: builtin/show-branch.c:654
@@ -17544,7 +17544,7 @@ msgid "include the current branch"
 msgstr ""
 
 #: builtin/show-branch.c:659
-msgid "name commits with their object names"
+msgid "name cummits with their object names"
 msgstr ""
 
 #: builtin/show-branch.c:661
@@ -17556,11 +17556,11 @@ msgid "show refs unreachable from any other ref"
 msgstr ""
 
 #: builtin/show-branch.c:665
-msgid "show commits in topological order"
+msgid "show cummits in topological order"
 msgstr ""
 
 #: builtin/show-branch.c:668
-msgid "show only commits not on the first branch"
+msgid "show only cummits not on the first branch"
 msgstr ""
 
 #: builtin/show-branch.c:670
@@ -17618,7 +17618,7 @@ msgstr ""
 
 #: builtin/show-branch.c:837
 #, c-format
-msgid "cannot find commit %s (%s)"
+msgid "cannot find cummit %s (%s)"
 msgstr ""
 
 #: builtin/show-ref.c:11
@@ -17795,7 +17795,7 @@ msgstr ""
 
 #: builtin/submodule--helper.c:875
 msgid ""
-"Use commit stored in the index instead of the one stored in the submodule "
+"Use cummit stored in the index instead of the one stored in the submodule "
 "HEAD"
 msgstr ""
 
@@ -18105,9 +18105,9 @@ msgstr "git tag -d <όνομα ετικέτας>..."
 
 #: builtin/tag.c:27
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
+"git tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--"
 "points-at <object>]\n"
-"\t\t[--format=<format>] [--[no-]merged [<commit>]] [<pattern>...]"
+"\t\t[--format=<format>] [--[no-]merged [<cummit>]] [<pattern>...]"
 msgstr ""
 "git tag -l [-n[<αριθ.>]] [--contains <υποβολή>] [--no-contains <υποβολή>] [--"
 "points-at <αντικείμενο>]\n"
@@ -18224,11 +18224,11 @@ msgid "show tag list in columns"
 msgstr ""
 
 #: builtin/tag.c:409 builtin/tag.c:411
-msgid "print only tags that contain the commit"
+msgid "print only tags that contain the cummit"
 msgstr ""
 
 #: builtin/tag.c:410 builtin/tag.c:412
-msgid "print only tags that don't contain the commit"
+msgid "print only tags that don't contain the cummit"
 msgstr ""
 
 #: builtin/tag.c:413
@@ -18585,15 +18585,15 @@ msgstr ""
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr ""
 
-#: builtin/verify-commit.c:20
-msgid "git verify-commit [-v | --verbose] <commit>..."
+#: builtin/verify-cummit.c:20
+msgid "git verify-cummit [-v | --verbose] <cummit>..."
 msgstr ""
 
-#: builtin/verify-commit.c:76
-msgid "print commit contents"
+#: builtin/verify-cummit.c:76
+msgid "print cummit contents"
 msgstr ""
 
-#: builtin/verify-commit.c:77 builtin/verify-tag.c:38
+#: builtin/verify-cummit.c:77 builtin/verify-tag.c:38
 msgid "print raw gpg status output"
 msgstr ""
 
@@ -18618,7 +18618,7 @@ msgid "print tag contents"
 msgstr ""
 
 #: builtin/worktree.c:18
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
+msgid "git worktree add [<options>] <path> [<cummit-ish>]"
 msgstr ""
 
 #: builtin/worktree.c:19
@@ -18918,11 +18918,11 @@ msgstr ""
 
 #: t/helper/test-reach.c:152
 #, c-format
-msgid "commit %s is not marked reachable"
+msgid "cummit %s is not marked reachable"
 msgstr "η υποβολή %s δεν είναι σημειωμένη ως προσβάσιμη"
 
 #: t/helper/test-reach.c:162
-msgid "too many commits marked reachable"
+msgid "too many cummits marked reachable"
 msgstr ""
 
 #: git.c:27
@@ -19126,7 +19126,7 @@ msgid "Apply a series of patches from a mailbox"
 msgstr ""
 
 #: command-list.h:52
-msgid "Annotate file lines with commit information"
+msgid "Annotate file lines with cummit information"
 msgstr ""
 
 #: command-list.h:53
@@ -19142,7 +19142,7 @@ msgid "Create an archive of files from a named tree"
 msgstr ""
 
 #: command-list.h:56
-msgid "Use binary search to find the commit that introduced a bug"
+msgid "Use binary search to find the cummit that introduced a bug"
 msgstr ""
 
 #: command-list.h:57
@@ -19186,15 +19186,15 @@ msgid "Ensures that a reference name is well formed"
 msgstr ""
 
 #: command-list.h:67
-msgid "Find commits yet to be applied to upstream"
+msgid "Find cummits yet to be applied to upstream"
 msgstr ""
 
 #: command-list.h:68
-msgid "Apply the changes introduced by some existing commits"
+msgid "Apply the changes introduced by some existing cummits"
 msgstr ""
 
 #: command-list.h:69
-msgid "Graphical alternative to git-commit"
+msgid "Graphical alternative to git-cummit"
 msgstr ""
 
 #: command-list.h:70
@@ -19214,11 +19214,11 @@ msgid "Record changes to the repository"
 msgstr ""
 
 #: command-list.h:74
-msgid "Write and verify Git commit-graph files"
+msgid "Write and verify Git cummit-graph files"
 msgstr ""
 
 #: command-list.h:75
-msgid "Create a new commit object"
+msgid "Create a new cummit object"
 msgstr ""
 
 #: command-list.h:76
@@ -19242,7 +19242,7 @@ msgid "Helper to store credentials on disk"
 msgstr ""
 
 #: command-list.h:81
-msgid "Export a single commit to a CVS checkout"
+msgid "Export a single cummit to a CVS checkout"
 msgstr ""
 
 #: command-list.h:82
@@ -19262,7 +19262,7 @@ msgid "Give an object a human readable name based on an available ref"
 msgstr ""
 
 #: command-list.h:86
-msgid "Show changes between commits, commit and working tree, etc"
+msgid "Show changes between cummits, cummit and working tree, etc"
 msgstr ""
 
 #: command-list.h:87
@@ -19304,7 +19304,7 @@ msgid "Rewrite branches"
 msgstr ""
 
 #: command-list.h:96
-msgid "Produce a merge commit message"
+msgid "Produce a merge cummit message"
 msgstr ""
 
 #: command-list.h:97
@@ -19324,7 +19324,7 @@ msgid "Cleanup unnecessary files and optimize the local repository"
 msgstr ""
 
 #: command-list.h:101
-msgid "Extract commit ID from an archive created using git-archive"
+msgid "Extract cummit ID from an archive created using git-archive"
 msgstr ""
 
 #: command-list.h:102
@@ -19374,7 +19374,7 @@ msgid "Instantly browse your working repository in gitweb"
 msgstr ""
 
 #: command-list.h:113
-msgid "add or parse structured information in commit messages"
+msgid "add or parse structured information in cummit messages"
 msgstr ""
 
 #: command-list.h:114
@@ -19382,7 +19382,7 @@ msgid "The Git repository browser"
 msgstr ""
 
 #: command-list.h:115
-msgid "Show commit logs"
+msgid "Show cummit logs"
 msgstr ""
 
 #: command-list.h:116
@@ -19504,7 +19504,7 @@ msgid "Applies a quilt patchset onto the current branch"
 msgstr "Κάνει εφαρμογή ενός πακέτου διορθώσεων πάνω στον τρέχοντα κλάδο"
 
 #: command-list.h:145
-msgid "Compare two commit ranges (e.g. two versions of a branch)"
+msgid "Compare two cummit ranges (e.g. two versions of a branch)"
 msgstr ""
 
 #: command-list.h:146
@@ -19512,7 +19512,7 @@ msgid "Reads tree information into the index"
 msgstr ""
 
 #: command-list.h:147
-msgid "Reapply commits on top of another base tip"
+msgid "Reapply cummits on top of another base tip"
 msgstr ""
 
 #: command-list.h:148
@@ -19548,11 +19548,11 @@ msgid "Reset current HEAD to the specified state"
 msgstr ""
 
 #: command-list.h:156
-msgid "Revert some existing commits"
+msgid "Revert some existing cummits"
 msgstr ""
 
 #: command-list.h:157
-msgid "Lists commit objects in reverse chronological order"
+msgid "Lists cummit objects in reverse chronological order"
 msgstr ""
 
 #: command-list.h:158
@@ -19584,7 +19584,7 @@ msgid "Show various types of objects"
 msgstr ""
 
 #: command-list.h:165
-msgid "Show branches and their commits"
+msgid "Show branches and their cummits"
 msgstr ""
 
 #: command-list.h:166
@@ -19668,7 +19668,7 @@ msgid "Show a Git logical variable"
 msgstr ""
 
 #: command-list.h:186
-msgid "Check the GPG signature of commits"
+msgid "Check the GPG signature of cummits"
 msgstr ""
 
 #: command-list.h:187
@@ -19684,7 +19684,7 @@ msgid "Git web interface (web frontend to Git repositories)"
 msgstr ""
 
 #: command-list.h:190
-msgid "Show logs with difference each commit introduces"
+msgid "Show logs with difference each cummit introduces"
 msgstr ""
 
 #: command-list.h:191
@@ -19866,7 +19866,7 @@ msgstr ""
 
 #: git-merge-octopus.sh:73
 #, sh-format
-msgid "Unable to find common commit with $pretty_name"
+msgid "Unable to find common cummit with $pretty_name"
 msgstr ""
 
 #: git-merge-octopus.sh:77
@@ -19944,12 +19944,12 @@ msgstr ""
 
 #: git-legacy-rebase.sh:614
 #, sh-format
-msgid "Does not point to a valid commit: $onto_name"
+msgid "Does not point to a valid cummit: $onto_name"
 msgstr ""
 
 #: git-legacy-rebase.sh:640
 #, sh-format
-msgid "fatal: no such branch/commit '$branch_name'"
+msgid "fatal: no such branch/cummit '$branch_name'"
 msgstr ""
 
 #: git-legacy-rebase.sh:678
@@ -19993,7 +19993,7 @@ msgid "git stash clear with parameters is unimplemented"
 msgstr ""
 
 #: git-stash.sh:125
-msgid "You do not have the initial commit yet"
+msgid "You do not have the initial cummit yet"
 msgstr "Δεν έχετε ακόμα την αρχική υποβολή"
 
 #: git-stash.sh:140
@@ -20022,7 +20022,7 @@ msgstr ""
 
 #: git-stash.sh:246
 #, sh-format
-msgid "Cannot update $ref_stash with $w_commit"
+msgid "Cannot update $ref_stash with $w_cummit"
 msgstr ""
 
 #: git-stash.sh:298
@@ -20076,7 +20076,7 @@ msgstr ""
 
 #: git-stash.sh:570
 #, sh-format
-msgid "'$args' is not a stash-like commit"
+msgid "'$args' is not a stash-like cummit"
 msgstr ""
 
 #: git-stash.sh:581
@@ -20233,7 +20233,7 @@ msgstr ""
 #, sh-format
 msgid ""
 "Fetched in submodule path '$displaypath', but it did not contain $sha1. "
-"Direct fetching of that commit failed."
+"Direct fetching of that cummit failed."
 msgstr ""
 
 #: git-submodule.sh:609
@@ -20292,17 +20292,17 @@ msgstr ""
 
 #: git-submodule.sh:826
 #, sh-format
-msgid "  Warn: $display_name doesn't contain commit $sha1_src"
+msgid "  Warn: $display_name doesn't contain cummit $sha1_src"
 msgstr ""
 
 #: git-submodule.sh:829
 #, sh-format
-msgid "  Warn: $display_name doesn't contain commit $sha1_dst"
+msgid "  Warn: $display_name doesn't contain cummit $sha1_dst"
 msgstr ""
 
 #: git-submodule.sh:832
 #, sh-format
-msgid "  Warn: $display_name doesn't contain commits $sha1_src and $sha1_dst"
+msgid "  Warn: $display_name doesn't contain cummits $sha1_src and $sha1_dst"
 msgstr ""
 
 #: git-parse-remote.sh:89
@@ -20319,19 +20319,19 @@ msgstr ""
 msgid ""
 "\n"
 "Commands:\n"
-"p, pick <commit> = use commit\n"
-"r, reword <commit> = use commit, but edit the commit message\n"
-"e, edit <commit> = use commit, but stop for amending\n"
-"s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup <commit> = like \"squash\", but discard this commit's log message\n"
-"x, exec <commit> = run command (the rest of the line) using shell\n"
-"d, drop <commit> = remove commit\n"
+"p, pick <cummit> = use cummit\n"
+"r, reword <cummit> = use cummit, but edit the cummit message\n"
+"e, edit <cummit> = use cummit, but stop for amending\n"
+"s, squash <cummit> = use cummit, but meld into previous cummit\n"
+"f, fixup <cummit> = like \"squash\", but discard this cummit's log message\n"
+"x, exec <cummit> = run command (the rest of the line) using shell\n"
+"d, drop <cummit> = remove cummit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified). Use -c <commit> to reword the commit message.\n"
+"m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+".       create a merge cummit using the original merge cummit's\n"
+".       message (or the oneline, if no original merge cummit was\n"
+".       specified). Use -c <cummit> to reword the cummit message.\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
@@ -20339,9 +20339,9 @@ msgstr ""
 #: git-rebase--preserve-merges.sh:215
 #, sh-format
 msgid ""
-"You can amend the commit now, with\n"
+"You can amend the cummit now, with\n"
 "\n"
-"\tgit commit --amend $gpg_sign_opt_quoted\n"
+"\tgit cummit --amend $gpg_sign_opt_quoted\n"
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
@@ -20349,7 +20349,7 @@ msgid ""
 msgstr ""
 "Μπορείτε να τροποποιήσετε την υποβολή τώρα, με\n"
 "\n"
-"\tgit commit --amend $gpg_sign_opt_quoted\n"
+"\tgit cummit --amend $gpg_sign_opt_quoted\n"
 "\n"
 "Όταν οι αλλαγές σας σας ικανοποιούν, τρέξτε\n"
 "\n"
@@ -20357,16 +20357,16 @@ msgstr ""
 
 #: git-rebase--preserve-merges.sh:240
 #, sh-format
-msgid "$sha1: not a commit that can be picked"
+msgid "$sha1: not a cummit that can be picked"
 msgstr ""
 
 #: git-rebase--preserve-merges.sh:279
 #, sh-format
-msgid "Invalid commit name: $sha1"
+msgid "Invalid cummit name: $sha1"
 msgstr ""
 
 #: git-rebase--preserve-merges.sh:309
-msgid "Cannot write current commit's replacement sha1"
+msgid "Cannot write current cummit's replacement sha1"
 msgstr ""
 
 #: git-rebase--preserve-merges.sh:360
@@ -20401,18 +20401,18 @@ msgstr ""
 
 #: git-rebase--preserve-merges.sh:412
 #, sh-format
-msgid "This is the commit message #${n}:"
+msgid "This is the cummit message #${n}:"
 msgstr ""
 
 #: git-rebase--preserve-merges.sh:417
 #, sh-format
-msgid "The commit message #${n} will be skipped:"
+msgid "The cummit message #${n} will be skipped:"
 msgstr ""
 
 #: git-rebase--preserve-merges.sh:428
 #, sh-format
-msgid "This is a combination of $count commit."
-msgid_plural "This is a combination of $count commits."
+msgid "This is a combination of $count cummit."
+msgid_plural "This is a combination of $count cummits."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -20422,7 +20422,7 @@ msgid "Cannot write $fixup_msg"
 msgstr ""
 
 #: git-rebase--preserve-merges.sh:440
-msgid "This is a combination of 2 commits."
+msgid "This is a combination of 2 cummits."
 msgstr ""
 
 #: git-rebase--preserve-merges.sh:481 git-rebase--preserve-merges.sh:524
@@ -20434,11 +20434,11 @@ msgstr ""
 #: git-rebase--preserve-merges.sh:556
 #, sh-format
 msgid ""
-"Could not amend commit after successfully picking $sha1... $rest\n"
-"This is most likely due to an empty commit message, or the pre-commit hook\n"
+"Could not amend cummit after successfully picking $sha1... $rest\n"
+"This is most likely due to an empty cummit message, or the pre-commit hook\n"
 "failed. If the pre-commit hook failed, you may need to resolve the issue "
 "before\n"
-"you are able to reword the commit."
+"you are able to reword the cummit."
 msgstr ""
 "Δεν ήταν δυνατή η τροποποίηση της υποβολής μετά από την επιτυχή διαλογή του "
 "$sha1... $rest\n"
@@ -20455,7 +20455,7 @@ msgstr ""
 
 #: git-rebase--preserve-merges.sh:586
 #, sh-format
-msgid "Cannot '$squash_style' without a previous commit"
+msgid "Cannot '$squash_style' without a previous cummit"
 msgstr ""
 
 #: git-rebase--preserve-merges.sh:628
@@ -20488,7 +20488,7 @@ msgstr ""
 msgid ""
 "Execution succeeded: $rest\n"
 "but left changes to the index and/or the working tree\n"
-"Commit or stash your changes, and then run\n"
+"cummit or stash your changes, and then run\n"
 "\n"
 "\tgit rebase --continue"
 msgstr ""
@@ -20516,13 +20516,13 @@ msgstr ""
 msgid ""
 "You have staged changes in your working tree.\n"
 "If these changes are meant to be\n"
-"squashed into the previous commit, run:\n"
+"squashed into the previous cummit, run:\n"
 "\n"
-"  git commit --amend $gpg_sign_opt_quoted\n"
+"  git cummit --amend $gpg_sign_opt_quoted\n"
 "\n"
-"If they are meant to go into a new commit, run:\n"
+"If they are meant to go into a new cummit, run:\n"
 "\n"
-"  git commit $gpg_sign_opt_quoted\n"
+"  git cummit $gpg_sign_opt_quoted\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
@@ -20532,23 +20532,23 @@ msgstr ""
 "Αν αυτές οι αλλαγές πρέπει να \n"
 "συμπτυχθούν μέσα στην προηγούμενη υποβολή, τρέξτε:\n"
 "\n"
-"  git commit --amend $gpg_sign_opt_quoted\n"
+"  git cummit --amend $gpg_sign_opt_quoted\n"
 "\n"
 "Αν πρέπει να πάνε σε νέα υποβολή, τρέξτε:\n"
 "\n"
-"  git commit $gpg_sign_opt_quoted\n"
+"  git cummit $gpg_sign_opt_quoted\n"
 "\n"
 "Και στις δύο περιπτώσεις, μόλις τελειώσετε, συνεχίστε με:\n"
 "\n"
 "  git rebase --continue\n"
 
 #: git-rebase--preserve-merges.sh:779
-msgid "Error trying to find the author identity to amend commit"
+msgid "Error trying to find the author identity to amend cummit"
 msgstr ""
 
 #: git-rebase--preserve-merges.sh:784
 msgid ""
-"You have uncommitted changes in your working tree. Please commit them\n"
+"You have uncummitted changes in your working tree. Please cummit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 "Έχετε μη συγχωνευμένες αλλαγές στο δέντρο εργασίας σας. Παρακαλώ υποβάλετέ "
@@ -20556,7 +20556,7 @@ msgstr ""
 "πρώτα και μετά τρέξτε 'git rebase --continue' πάλι."
 
 #: git-rebase--preserve-merges.sh:789 git-rebase--preserve-merges.sh:793
-msgid "Could not commit staged changes."
+msgid "Could not cummit staged changes."
 msgstr ""
 
 #: git-rebase--preserve-merges.sh:824 git-rebase--preserve-merges.sh:910
@@ -20589,7 +20589,7 @@ msgstr[0] ""
 msgstr[1] ""
 
 #: git-rebase--preserve-merges.sh:942 git-rebase--preserve-merges.sh:947
-msgid "Could not init rewritten commits"
+msgid "Could not init rewritten cummits"
 msgstr ""
 
 #: git-sh-setup.sh:89 git-sh-setup.sh:94
@@ -20625,20 +20625,20 @@ msgid "Cannot $action: You have unstaged changes."
 msgstr ""
 
 #: git-sh-setup.sh:242
-msgid "Cannot rebase: Your index contains uncommitted changes."
+msgid "Cannot rebase: Your index contains uncummitted changes."
 msgstr ""
 
 #: git-sh-setup.sh:245
-msgid "Cannot pull with rebase: Your index contains uncommitted changes."
+msgid "Cannot pull with rebase: Your index contains uncummitted changes."
 msgstr ""
 
 #: git-sh-setup.sh:248
 #, sh-format
-msgid "Cannot $action: Your index contains uncommitted changes."
+msgid "Cannot $action: Your index contains uncummitted changes."
 msgstr ""
 
 #: git-sh-setup.sh:252
-msgid "Additionally, your index contains uncommitted changes."
+msgid "Additionally, your index contains uncummitted changes."
 msgstr "Επιπρόσθετα, το ευρετήριό σας περιέχει μη υποβεβλημένες αλλαγές."
 
 #: git-sh-setup.sh:372
@@ -21210,7 +21210,7 @@ msgstr ""
 #: git-send-email.perl:616
 #, perl-format
 msgid ""
-"File '%s' exists but it could also be the range of commits\n"
+"File '%s' exists but it could also be the range of cummits\n"
 "to produce patches for.  Please disambiguate by...\n"
 "\n"
 "    * Saying \"./%s\" if you mean a file; or\n"
@@ -21327,7 +21327,7 @@ msgstr ""
 #: git-send-email.perl:1412
 msgid ""
 "    The Cc list above has been expanded by additional\n"
-"    addresses found in the patch commit message. By default\n"
+"    addresses found in the patch cummit message. By default\n"
 "    send-email prompts before sending whenever this occurs.\n"
 "    This behavior is controlled by the sendemail.confirm\n"
 "    configuration setting.\n"

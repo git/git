@@ -5,7 +5,7 @@ Fixes since v2.8.3
 ------------------
 
  * Documentation for "git merge --verify-signatures" has been updated
-   to clarify that the signature of only the commit at the tip is
+   to clarify that the signature of only the cummit at the tip is
    verified.  Also the phrasing used for signature and key validity is
    adjusted to align with that used by OpenPGP.
 
@@ -16,7 +16,7 @@ Fixes since v2.8.3
  * Portability enhancement for "rebase -i" to help platforms whose
    shell does not like "for i in <empty>" (which is not POSIX-kosher).
 
- * "git fsck" learned to catch NUL byte in a commit object as
+ * "git fsck" learned to catch NUL byte in a cummit object as
    potential error and warn.
 
  * CI test was taught to build documentation pages.
@@ -25,16 +25,16 @@ Fixes since v2.8.3
    which are all fixed with this.
 
  * "git describe --contains" often made a hard-to-justify choice of
-   tag to give name to a given commit, because it tried to come up
+   tag to give name to a given cummit, because it tried to come up
    with a name with smallest number of hops from a tag, causing an old
-   commit whose close descendant that is recently tagged were not
+   cummit whose close descendant that is recently tagged were not
    described with respect to an old tag but with a newer tag.  It did
    not help that its computation of "hop" count was further tweaked to
    penalize being on a side branch of a merge.  The logic has been
    updated to favor using the tag with the oldest tagger date, which
-   is a lot easier to explain to the end users: "We describe a commit
+   is a lot easier to explain to the end users: "We describe a cummit
    in terms of the (chronologically) oldest tag that contains the
-   commit."
+   cummit."
 
  * Running tests with '-x' option to trace the individual command
    executions is a useful way to debug test scripts, but some tests

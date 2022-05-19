@@ -272,11 +272,11 @@ sub trees_match {
 	$ret;
 }
 
-sub get_commit_editor {
+sub get_cummit_editor {
 	my ($self, $log, $cb, $pool) = @_;
 
 	my @lock = (::compare_svn_version('1.2.0') >= 0) ? (undef, 0) : ();
-	$self->SUPER::get_commit_editor($log, $cb, @lock, $pool);
+	$self->SUPER::get_cummit_editor($log, $cb, @lock, $pool);
 }
 
 sub gs_do_update {
@@ -311,7 +311,7 @@ sub gs_do_update {
 
 	$reporter->finish_report($pool);
 	$pool->clear;
-	$editor->{git_commit_ok};
+	$editor->{git_cummit_ok};
 }
 
 # this requires SVN 1.4.3 or later (do_switch didn't work before 1.4.3, and
@@ -356,7 +356,7 @@ sub gs_do_switch {
 	}
 
 	$pool->clear;
-	$editor->{git_commit_ok};
+	$editor->{git_cummit_ok};
 }
 
 sub longest_common_path {
@@ -441,7 +441,7 @@ sub gs_fetch_loop_common {
 				     $err->expanded_message,
 				     "\nWill attempt to follow ",
 				     "revisions r$min .. r$max ",
-				     "committed before the deletion\n";
+				     "cummitted before the deletion\n";
 			my $hi = $max;
 			while (--$hi >= $min) {
 				my $ok;
@@ -469,12 +469,12 @@ sub gs_fetch_loop_common {
 				}
 				next unless $gs->match_paths($paths, $r);
 				$gs->{logged_rev_props} = $logged;
-				if (my $last_commit = $gs->last_commit) {
-					$gs->assert_index_clean($last_commit);
+				if (my $last_cummit = $gs->last_cummit) {
+					$gs->assert_index_clean($last_cummit);
 				}
 				my $log_entry = $gs->do_fetch($paths, $r);
 				if ($log_entry) {
-					$gs->do_git_commit($log_entry);
+					$gs->do_git_cummit($log_entry);
 				}
 				$Git::SVN::INDEX_FILES{$gs->{index}} = 1;
 			}
@@ -486,7 +486,7 @@ sub gs_fetch_loop_common {
 			$reload_ra->() if $ra_invalid;
 		}
 		# pre-fill the .rev_db since it'll eventually get filled in
-		# with '0' x $oid_length if something new gets committed
+		# with '0' x $oid_length if something new gets cummitted
 		foreach my $gs (@$gsv) {
 			next if $gs->rev_map_max >= $max;
 			next if defined $gs->rev_map_get($max);

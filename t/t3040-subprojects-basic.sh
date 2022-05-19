@@ -8,19 +8,19 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'setup: create superproject' '
 	: >Makefile &&
 	git add Makefile &&
-	git commit -m "Superproject created"
+	git cummit -m "Superproject created"
 '
 
 test_expect_success 'setup: create subprojects' '
 	mkdir sub1 &&
 	( cd sub1 && git init && : >Makefile && git add * &&
-	git commit -q -m "subproject 1" ) &&
+	git cummit -q -m "subproject 1" ) &&
 	mkdir sub2 &&
 	( cd sub2 && git init && : >Makefile && git add * &&
-	git commit -q -m "subproject 2" ) &&
+	git cummit -q -m "subproject 2" ) &&
 	git update-index --add sub1 &&
 	git add sub2 &&
-	git commit -q -m "subprojects added" &&
+	git cummit -q -m "subprojects added" &&
 	GIT_PRINT_SHA1_ELLIPSIS="yes" git diff-tree --abbrev=5 HEAD^ HEAD |cut -d" " -f-3,5- >current &&
 	git branch save HEAD &&
 	cat >expected <<-\EOF &&
@@ -34,16 +34,16 @@ test_expect_success 'check if fsck ignores the subprojects' '
 	git fsck --full
 '
 
-test_expect_success 'check if commit in a subproject detected' '
+test_expect_success 'check if cummit in a subproject detected' '
 	( cd sub1 &&
 	echo "all:" >>Makefile &&
 	echo "	true" >>Makefile &&
-	git commit -q -a -m "make all" ) &&
+	git cummit -q -a -m "make all" ) &&
 	test_expect_code 1 git diff-files --exit-code
 '
 
-test_expect_success 'check if a changed subproject HEAD can be committed' '
-	git commit -q -a -m "sub1 changed" &&
+test_expect_success 'check if a changed subproject HEAD can be cummitted' '
+	git cummit -q -a -m "sub1 changed" &&
 	test_expect_code 1 git diff-tree --exit-code HEAD^ HEAD
 '
 
@@ -70,7 +70,7 @@ test_expect_success 'removing and adding subproject' '
 	git update-index --force-remove -- sub2 &&
 	mv sub2 sub3 &&
 	git add sub3 &&
-	git commit -q -m "renaming a subproject" &&
+	git cummit -q -m "renaming a subproject" &&
 	test_expect_code 1 git diff -M --name-status --exit-code HEAD^ HEAD
 '
 

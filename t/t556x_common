@@ -13,7 +13,7 @@ config() {
 test_expect_success 'setup repository' '
 	echo content >file &&
 	git add file &&
-	git commit -m one &&
+	git cummit -m one &&
 
 	mkdir "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
@@ -30,7 +30,7 @@ test_expect_success 'setup repository' '
 
 	echo other >file &&
 	git add file &&
-	git commit -m two &&
+	git cummit -m two &&
 	git push public main:main &&
 
 	LOOSE_URL=$(find_file objects/??) &&

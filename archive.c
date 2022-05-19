@@ -2,7 +2,7 @@
 #include "config.h"
 #include "refs.h"
 #include "object-store.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tree-walk.h"
 #include "attr.h"
 #include "archive.h"
@@ -35,7 +35,7 @@ void init_archivers(void)
 	init_zip_archiver();
 }
 
-static void format_subst(const struct commit *commit,
+static void format_subst(const struct cummit *cummit,
 			 const char *src, size_t len,
 			 struct strbuf *buf, struct pretty_print_context *ctx)
 {
@@ -58,7 +58,7 @@ static void format_subst(const struct commit *commit,
 		strbuf_add(&fmt, b + 8, c - b - 8);
 
 		strbuf_add(buf, src, b - src);
-		format_commit_message(commit, fmt.buf, buf, ctx);
+		format_cummit_message(cummit, fmt.buf, buf, ctx);
 		len -= c + 1 - src;
 		src  = c + 1;
 	}
@@ -75,11 +75,11 @@ static void *object_file_to_archive(const struct archiver_args *args,
 				    unsigned long *sizep)
 {
 	void *buffer;
-	const struct commit *commit = args->convert ? args->commit : NULL;
+	const struct cummit *cummit = args->convert ? args->cummit : NULL;
 	struct checkout_metadata meta;
 
 	init_checkout_metadata(&meta, args->refname,
-			       args->commit_oid ? args->commit_oid :
+			       args->cummit_oid ? args->cummit_oid :
 			       (args->tree ? &args->tree->object.oid : NULL), oid);
 
 	path += args->baselen;
@@ -90,8 +90,8 @@ static void *object_file_to_archive(const struct archiver_args *args,
 
 		strbuf_attach(&buf, buffer, *sizep, *sizep + 1);
 		convert_to_working_tree(args->repo->index, path, buf.buf, buf.len, &buf, &meta);
-		if (commit)
-			format_subst(commit, buf.buf, buf.len, &buf, args->pretty_ctx);
+		if (cummit)
+			format_subst(cummit, buf.buf, buf.len, &buf, args->pretty_ctx);
 		buffer = strbuf_detach(&buf, &size);
 		*sizep = size;
 	}
@@ -434,10 +434,10 @@ static void parse_treeish_arg(const char **argv,
 		int remote)
 {
 	const char *name = argv[0];
-	const struct object_id *commit_oid;
+	const struct object_id *cummit_oid;
 	time_t archive_time;
 	struct tree *tree;
-	const struct commit *commit;
+	const struct cummit *cummit;
 	struct object_id oid;
 	char *ref = NULL;
 
@@ -455,12 +455,12 @@ static void parse_treeish_arg(const char **argv,
 	if (get_oid(name, &oid))
 		die(_("not a valid object name: %s"), name);
 
-	commit = lookup_commit_reference_gently(ar_args->repo, &oid, 1);
-	if (commit) {
-		commit_oid = &commit->object.oid;
-		archive_time = commit->date;
+	cummit = lookup_cummit_reference_gently(ar_args->repo, &oid, 1);
+	if (cummit) {
+		cummit_oid = &cummit->object.oid;
+		archive_time = cummit->date;
 	} else {
-		commit_oid = NULL;
+		cummit_oid = NULL;
 		archive_time = time(NULL);
 	}
 
@@ -484,8 +484,8 @@ static void parse_treeish_arg(const char **argv,
 	}
 	ar_args->refname = ref;
 	ar_args->tree = tree;
-	ar_args->commit_oid = commit_oid;
-	ar_args->commit = commit;
+	ar_args->cummit_oid = cummit_oid;
+	ar_args->cummit = cummit;
 	ar_args->time = archive_time;
 }
 

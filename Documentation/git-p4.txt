@@ -22,7 +22,7 @@ using Git.
 
 Create a new Git repository from an existing p4 repository using
 'git p4 clone', giving it one or more p4 depot paths.  Incorporate
-new commits from p4 changes with 'git p4 sync'.  The 'sync' command
+new cummits from p4 changes with 'git p4 sync'.  The 'sync' command
 is also used to include new branches from other p4 depot paths.
 Submit Git changes back to p4 using 'git p4 submit'.  The command
 'git p4 rebase' does a sync plus rebases the current branch onto
@@ -42,7 +42,7 @@ $ git p4 clone //depot/path/project
 ------------
 $ cd project
 $ vi foo.h
-$ git commit -a -m "edited foo.h"
+$ git cummit -a -m "edited foo.h"
 ------------
 
 * Update the Git repository with recent changes from p4, rebasing your
@@ -52,7 +52,7 @@ $ git commit -a -m "edited foo.h"
 $ git p4 rebase
 ------------
 
-* Submit your commits back to p4:
+* Submit your cummits back to p4:
 +
 ------------
 $ git p4 submit
@@ -74,7 +74,7 @@ This:
 1. Creates an empty Git repository in a subdirectory called 'project'.
 +
 2. Imports the full contents of the head revision from the given p4
-   depot path into a single commit in the Git branch 'refs/remotes/p4/master'.
+   depot path into a single cummit in the Git branch 'refs/remotes/p4/master'.
 +
 3. Creates a local branch, 'master' from this remote and checks it out.
 
@@ -92,7 +92,7 @@ be included in the Git repository using:
 ------------
 $ git p4 sync
 ------------
-This command finds new changes in p4 and imports them as Git commits.
+This command finds new changes in p4 and imports them as Git cummits.
 
 P4 repositories can be added to an existing Git repository using
 'git p4 sync' too:
@@ -121,10 +121,10 @@ option to specify just a single branch to update.
 Rebase
 ~~~~~~
 A common working pattern is to fetch the latest changes from the p4 depot
-and merge them with local uncommitted changes.  Often, the p4 repository
+and merge them with local uncummitted changes.  Often, the p4 repository
 is the ultimate location for all code, thus a rebase workflow makes
 sense.  This command does 'git p4 sync' followed by 'git rebase' to move
-local commits on top of updated p4 changes.
+local cummits on top of updated p4 changes.
 ------------
 $ git p4 rebase
 ------------
@@ -149,10 +149,10 @@ To specify a branch other than the current one, use:
 $ git p4 submit topicbranch
 ------------
 
-To specify a single commit or a range of commits, use:
+To specify a single cummit or a range of cummits, use:
 ------------
-$ git p4 submit --commit <sha1>
-$ git p4 submit --commit <sha1..sha1>
+$ git p4 submit --cummit <sha1>
+$ git p4 submit --cummit <sha1..sha1>
 ------------
 
 The upstream reference is generally 'refs/remotes/p4/master', but can
@@ -160,7 +160,7 @@ be overridden using the `--origin=` command-line option.
 
 The p4 changes will be created as the user invoking 'git p4 submit'. The
 `--preserve-user` option will cause ownership to be modified
-according to the author of the Git commit.  This option requires admin
+according to the author of the Git cummit.  This option requires admin
 privileges in p4, which can be granted using 'p4 protect'.
 
 To shelve changes instead of submitting, use `--shelve` and `--update-shelve`:
@@ -173,11 +173,11 @@ $ git p4 submit --update-shelve 1234 --update-shelve 2345
 
 Unshelve
 ~~~~~~~~
-Unshelving will take a shelved P4 changelist, and produce the equivalent git commit
+Unshelving will take a shelved P4 changelist, and produce the equivalent git cummit
 in the branch refs/remotes/p4-unshelved/<changelist>.
 
-The git commit is created relative to the current origin revision (HEAD by default).
-A parent commit is created based on the origin, and then the unshelve commit is
+The git cummit is created relative to the current origin revision (HEAD by default).
+A parent cummit is created based on the origin, and then the unshelve cummit is
 created based on that.
 
 The origin revision can be changed with the "--origin" option.
@@ -309,9 +309,9 @@ Submit options
 ~~~~~~~~~~~~~~
 These options can be used to modify 'git p4 submit' behavior.
 
---origin <commit>::
-	Upstream location from which commits are identified to submit to
-	p4.  By default, this is the most recent p4 commit reachable
+--origin <cummit>::
+	Upstream location from which cummits are identified to submit to
+	p4.  By default, this is the most recent p4 cummit reachable
 	from `HEAD`.
 
 -M::
@@ -330,47 +330,47 @@ These options can be used to modify 'git p4 submit' behavior.
 
 -n::
 --dry-run::
-	Show just what commits would be submitted to p4; do not change
+	Show just what cummits would be submitted to p4; do not change
 	state in Git or p4.
 
 --prepare-p4-only::
-	Apply a commit to the p4 workspace, opening, adding and deleting
+	Apply a cummit to the p4 workspace, opening, adding and deleting
 	files in p4 as for a normal submit operation.  Do not issue the
 	final "p4 submit", but instead print a message about how to
 	submit manually or revert.  This option always stops after the
-	first (oldest) commit.  Git tags are not exported to p4.
+	first (oldest) cummit.  Git tags are not exported to p4.
 
 --shelve::
 	Instead of submitting create a series of shelved changelists.
 	After creating each shelve, the relevant files are reverted/deleted.
-	If you have multiple commits pending multiple shelves will be created.
+	If you have multiple cummits pending multiple shelves will be created.
 
 --update-shelve CHANGELIST::
-	Update an existing shelved changelist with this commit. Implies
+	Update an existing shelved changelist with this cummit. Implies
 	--shelve. Repeat for multiple shelved changelists.
 
 --conflict=(ask|skip|quit)::
-	Conflicts can occur when applying a commit to p4.  When this
+	Conflicts can occur when applying a cummit to p4.  When this
 	happens, the default behavior ("ask") is to prompt whether to
-	skip this commit and continue, or quit.  This option can be used
-	to bypass the prompt, causing conflicting commits to be automatically
-	skipped, or to quit trying to apply commits, without prompting.
+	skip this cummit and continue, or quit.  This option can be used
+	to bypass the prompt, causing conflicting cummits to be automatically
+	skipped, or to quit trying to apply cummits, without prompting.
 
 --branch <branch>::
 	After submitting, sync this named branch instead of the default
 	p4/master.  See the "Sync options" section above for more
 	information.
 
---commit (<sha1>|<sha1>..<sha1>)::
-    Submit only the specified commit or range of commits, instead of the full
+--cummit (<sha1>|<sha1>..<sha1>)::
+    Submit only the specified cummit or range of cummits, instead of the full
     list of changes that are in the current Git branch.
 
 --disable-rebase::
-    Disable the automatic rebase after all commits have been successfully
+    Disable the automatic rebase after all cummits have been successfully
     submitted. Can also be set with git-p4.disableRebase.
 
 --disable-p4sync::
-    Disable the automatic sync of p4/master from Perforce after commits have
+    Disable the automatic sync of p4/master from Perforce after cummits have
     been submitted. Implies --disable-rebase. Can also be set with
     git-p4.disableP4Sync. Sync with origin/master still goes ahead if possible.
 
@@ -444,10 +444,10 @@ be one or more space-separated p4 depot paths, with an optional
 p4 revision specifier on the end:
 
 "//depot/my/project"::
-    Import one commit with all files in the '#head' change under that tree.
+    Import one cummit with all files in the '#head' change under that tree.
 
 "//depot/my/project@all"::
-    Import one commit for each change in the history of that depot path.
+    Import one cummit for each change in the history of that depot path.
 
 "//depot/my/project@1,6"::
     Import only changes 1 through 6.
@@ -591,7 +591,7 @@ git-p4.retries::
 Clone and sync variables
 ~~~~~~~~~~~~~~~~~~~~~~~~
 git-p4.syncFromOrigin::
-	Because importing commits from other Git repositories is much faster
+	Because importing cummits from other Git repositories is much faster
 	than importing them from p4, a mechanism exists to find p4 changes
 	first in Git remotes.  If branches exist under 'refs/remote/origin/p4',
 	those will be fetched and used when syncing from p4.  This
@@ -668,9 +668,9 @@ git-p4.largeFilePush::
 	Boolean variable which defines if large files are automatically
 	pushed to a server.
 
-git-p4.keepEmptyCommits::
+git-p4.keepEmptycummits::
 	A changelist that contains only excluded files will be imported
-	as an empty commit if this boolean option is set to true.
+	as an empty cummit if this boolean option is set to true.
 
 git-p4.mapUser::
 	Map a P4 user to a name and email address in Git. Use a string
@@ -758,7 +758,7 @@ IMPLEMENTATION DETAILS
 * Submitting requires a p4 client, which is not in the same location
   as the Git repository.  Patches are applied, one at a time, to
   this p4 client and submitted from there.
-* Each commit imported by 'git p4' has a line at the end of the log
+* Each cummit imported by 'git p4' has a line at the end of the log
   message indicating the p4 depot location and change number.  This
   line is used by later 'git p4 sync' operations to know which p4
   changes are new.

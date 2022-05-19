@@ -11,7 +11,7 @@ test_expect_success setup '
 	printf "LINEONE\r\nLINETWO\r\nLINETHREE\r\n" >CRLF.txt &&
 	printf "LINEONE\r\nLINETWO\nLINETHREE\n" >CRLF_mix_LF.txt &&
 	git add . &&
-	git commit -m initial
+	git cummit -m initial
 '
 
 test_expect_success 'renormalize CRLF in repo' '

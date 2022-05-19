@@ -37,10 +37,10 @@ test_expect_success 'setup' '
 	mkdir "$FN" &&
 	for_each_name "echo initial >\"\$name\"" &&
 	git add . &&
-	git commit -q -m Initial &&
+	git cummit -q -m Initial &&
 
 	for_each_name "echo second >\"\$name\"" &&
-	git commit -a -m Second &&
+	git cummit -a -m Second &&
 
 	for_each_name "echo modified >\"\$name\""
 

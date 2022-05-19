@@ -93,9 +93,9 @@ test_expect_success 'checkout-index --temp correctly reports error on missing bl
 
 test_expect_success 'checkout-index --temp correctly reports error for submodules' '
 	git init sub &&
-	test_commit -C sub file &&
+	test_cummit -C sub file &&
 	git submodule add ./sub &&
-	git commit -m sub &&
+	git cummit -m sub &&
 	test_must_fail git checkout-index --temp sub 2>stderr &&
 	test_i18ngrep "cannot create temporary submodule sub" stderr
 '

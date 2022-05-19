@@ -17,7 +17,7 @@ UI, Workflows & Features
    our side originally had.
 
  * "git filter-branch" learned to use a different exit code to allow
-   the callers to tell the case where there was no new commits to
+   the callers to tell the case where there was no new cummits to
    rewrite from other error cases.
 
  * When built with more recent cURL, GIT_SSL_VERSION can now specify
@@ -27,7 +27,7 @@ UI, Workflows & Features
    "~/.ssh/id_ed25519.pub" are also possible SSH key files.
    (merge 2e2f0288ef bb/git-gui-ssh-key-files later to maint).
 
- * "git gui" performs commit upon CTRL/CMD+ENTER but the
+ * "git gui" performs cummit upon CTRL/CMD+ENTER but the
    CTRL/CMD+KP_ENTER (i.e. enter key on the numpad) did not have the
    same key binding.  It now does.
    (merge 28a1d94a06 bp/git-gui-bind-kp-enter later to maint).
@@ -81,7 +81,7 @@ UI, Workflows & Features
  * Error messages from "git push" can be painted for more visibility.
 
  * "git http-fetch" (deprecated) had an optional and experimental
-   "feature" to fetch only commits and/or trees, which nobody used.
+   "feature" to fetch only cummits and/or trees, which nobody used.
    This has been removed.
 
  * The functionality of "$GIT_DIR/info/grafts" has been superseded by
@@ -96,7 +96,7 @@ UI, Workflows & Features
    (merge 7213c28818 js/no-pager-shorthand later to maint).
 
  * "git rebase" learned "--rebase-merges" to transplant the whole
-   topology of commit graph elsewhere.
+   topology of cummit graph elsewhere.
 
  * "git status" learned to pay attention to UI related diff
    configuration variables such as diff.renames.
@@ -123,9 +123,9 @@ UI, Workflows & Features
    for various commands better.
 
  * "git blame" learns to unhighlight uninteresting metadata from the
-   originating commit on lines that are the same as the previous one,
+   originating cummit on lines that are the same as the previous one,
    and also paint lines in different colors depending on the age of
-   the commit.
+   the cummit.
 
  * Transfer protocol v2 learned to support the partial clone.
 
@@ -144,7 +144,7 @@ UI, Workflows & Features
    from the other side; instead, just let cURL library to advertise
    and negotiate the best one.
 
- * "git p4" learned to "unshelve" shelved commit from P4.
+ * "git p4" learned to "unshelve" shelved cummit from P4.
    (merge 123f631761 ld/p4-unshelve later to maint).
 
 
@@ -245,8 +245,8 @@ Performance, Internal Implementation, Development Support etc.
    it cleaner to integrate with other types of signature systems later.
 
  * The code has been taught to use the duplicated information stored
-   in the commit-graph file to learn the tree object name for a commit
-   to avoid opening and parsing the commit object when it makes sense
+   in the cummit-graph file to learn the tree object name for a cummit
+   to avoid opening and parsing the cummit object when it makes sense
    to do so.
 
  * "git gc" in a large repository takes a lot of time as it considers
@@ -281,7 +281,7 @@ Performance, Internal Implementation, Development Support etc.
    same mechanism as other output, and honor the merge.verbosity
    configuration.  The code also learned to give a few new messages
    when a submodule three-way merge resolves cleanly when one side
-   records a descendant of the commit chosen by the other side.
+   records a descendant of the cummit chosen by the other side.
 
  * Avoid unchecked snprintf() to make future code auditing easier.
    (merge ac4896f007 jk/snprintf-truncation later to maint).
@@ -320,7 +320,7 @@ Fixes since v2.17
    <pathspec>, which has been fixed.
    (merge 353278687e tg/stash-untracked-with-pathspec-fix later to maint).
 
- * "git tag --contains no-such-commit" gave a full list of options
+ * "git tag --contains no-such-cummit" gave a full list of options
    after giving an error message.
    (merge 3bb0923f06 ps/contains-id-error-message later to maint).
 
@@ -328,10 +328,10 @@ Fixes since v2.17
    --graph" output better.
    (merge 4551fbba14 jk/diff-highlight-graph-fix later to maint).
 
- * when refs that do not point at committish are given, "git
+ * when refs that do not point at cummittish are given, "git
    filter-branch" gave a misleading error messages.  This has been
    corrected.
-   (merge f78ab355e7 yk/filter-branch-non-committish-refs later to maint).
+   (merge f78ab355e7 yk/filter-branch-non-cummittish-refs later to maint).
 
  * "git submodule status" misbehaved on a submodule that has been
    removed from the working tree.
@@ -342,8 +342,8 @@ Fixes since v2.17
    fixed.
    (merge a0d51e8d0e eb/cred-helper-ignore-sigpipe later to maint).
 
- * "git rebase --keep-empty" still removed an empty commit if the
-   other side contained an empty commit (due to the "does an
+ * "git rebase --keep-empty" still removed an empty cummit if the
+   other side contained an empty cummit (due to the "does an
    equivalent patch exist already?" check), which has been corrected.
    (merge 3d946165e1 pw/rebase-keep-empty-fixes later to maint).
 
@@ -353,9 +353,9 @@ Fixes since v2.17
    cached paths to the new current directory.
    (merge fb9c2d2703 jk/relative-directory-fix later to maint).
 
- * "cd sub/dir && git commit ../path" ought to record the changes to
+ * "cd sub/dir && git cummit ../path" ought to record the changes to
    the file "sub/path", but this regressed long time ago.
-   (merge 86238e07ef bw/commit-partial-from-subdirectory-fix later to maint).
+   (merge 86238e07ef bw/cummit-partial-from-subdirectory-fix later to maint).
 
  * Recent introduction of "--log-destination" option to "git daemon"
    did not work well when the daemon was run under "--inetd" mode.
@@ -396,7 +396,7 @@ Fixes since v2.17
    (merge 51db271587 ab/git-svn-get-record-typofix later to maint).
 
  * During a "rebase -i" session, the code could give older timestamp
-   to commits created by later "pick" than an earlier "reword", which
+   to cummits created by later "pick" than an earlier "reword", which
    has been corrected.
    (merge 12f7babd6b js/ident-date-fix later to maint).
 
@@ -412,7 +412,7 @@ Fixes since v2.17
    (merge 256be1d3f0 sa/send-email-dedup-some-headers later to maint).
 
  * "git fast-export" had a regression in v2.15.0 era where it skipped
-   some merge commits in certain cases, which has been corrected.
+   some merge cummits in certain cases, which has been corrected.
    (merge be011bbe00 ma/fast-export-skip-merge-fix later to maint).
 
  * The code did not propagate the terminal width to subprocesses via
@@ -427,7 +427,7 @@ Fixes since v2.17
    (merge 7818b619e2 ab/perl-python-attrs later to maint).
 
  * "git rebase -i" sometimes left intermediate "# This is a
-   combination of N commits" message meant for the human consumption
+   combination of N cummits" message meant for the human consumption
    inside an editor in the final result in certain corner cases, which
    has been fixed.
    (merge 15ef69314d js/rebase-i-clean-msg-after-fixup-continue later to maint).
@@ -484,10 +484,10 @@ Fixes since v2.17
    (merge 786ef50a23 lm/credential-netrc later to maint).
 
  * "git submodule update" attempts two different kinds of "git fetch"
-   against the upstream repository to grab a commit bound at the
+   against the upstream repository to grab a cummit bound at the
    submodule's path, but it incorrectly gave up if the first kind
    (i.e. a normal fetch) failed, making the second "last resort" one
-   (i.e. fetching an exact commit object by object name) ineffective.
+   (i.e. fetching an exact cummit object by object name) ineffective.
    This has been corrected.
    (merge e30d833671 sb/submodule-update-try-harder later to maint).
 
@@ -505,7 +505,7 @@ Fixes since v2.17
    (merge 12ecea46e3 pa/import-tars-long-names later to maint).
 
  * "git rev-parse Y..." etc. misbehaved when given endpoints were
-   not committishes.
+   not cummittishes.
    (merge 0ed556d38f en/rev-parse-invalid-range later to maint).
 
  * "git pull --recurse-submodules --rebase", when the submodule

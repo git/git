@@ -39,7 +39,7 @@ test_expect_success 'Create a repo with many changes' '
 			do
 				p4 edit file.txt &&
 				echo $i$j >file.txt &&
-				p4 submit -d "Commit $i$j" || exit
+				p4 submit -d "cummit $i$j" || exit
 			done || exit
 		done
 	)
@@ -66,7 +66,7 @@ test_expect_success 'file.txt is correct' '
 	test_cmp expected "$git/file.txt"
 '
 
-test_expect_success 'Correct number of commits' '
+test_expect_success 'Correct number of cummits' '
 	(cd "$git" && git log --oneline) >log &&
 	wc -l log &&
 	test_line_count = 43 log

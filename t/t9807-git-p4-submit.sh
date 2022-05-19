@@ -37,7 +37,7 @@ test_expect_success 'submit with no client dir' '
 		cd "$git" &&
 		echo file2 >file2 &&
 		git add file2 &&
-		git commit -m "git commit 2" &&
+		git cummit -m "git cummit 2" &&
 		rm -rf "$cli" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit
@@ -49,14 +49,14 @@ test_expect_success 'submit with no client dir' '
 	)
 '
 
-# make two commits, but tell it to apply only from HEAD^
+# make two cummits, but tell it to apply only from HEAD^
 test_expect_success 'submit --origin' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
-		test_commit "file3" &&
-		test_commit "file4" &&
+		test_cummit "file3" &&
+		test_cummit "file4" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --origin=HEAD^
 	) &&
@@ -72,8 +72,8 @@ test_expect_success 'submit --dry-run' '
 	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
-		test_commit "dry-run1" &&
-		test_commit "dry-run2" &&
+		test_cummit "dry-run1" &&
+		test_cummit "dry-run2" &&
 		git p4 submit --dry-run >out &&
 		test_i18ngrep "Would apply" out
 	) &&
@@ -91,12 +91,12 @@ test_expect_success 'submit --dry-run --export-labels' '
 		cd "$git" &&
 		echo dry-run1 >dry-run1 &&
 		git add dry-run1 &&
-		git commit -m "dry-run1" dry-run1 &&
+		git cummit -m "dry-run1" dry-run1 &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit &&
 		echo dry-run2 >dry-run2 &&
 		git add dry-run2 &&
-		git commit -m "dry-run2" dry-run2 &&
+		git cummit -m "dry-run2" dry-run2 &&
 		git tag -m "dry-run-tag1" dry-run-tag1 HEAD^ &&
 		git p4 submit --dry-run --export-labels >out &&
 		test_i18ngrep "Would create p4 label" out
@@ -113,7 +113,7 @@ test_expect_success 'submit with allowSubmit' '
 	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
-		test_commit "file5" &&
+		test_cummit "file5" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.allowSubmit "nobranch" &&
 		test_must_fail git p4 submit &&
@@ -127,12 +127,12 @@ test_expect_success 'submit with master branch name from argv' '
 	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
-		test_commit "file6" &&
+		test_cummit "file6" &&
 		git config git-p4.skipSubmitEdit true &&
 		test_must_fail git p4 submit nobranch &&
 		git branch otherbranch &&
 		git reset --hard HEAD^ &&
-		test_commit "file7" &&
+		test_cummit "file7" &&
 		git p4 submit otherbranch
 	) &&
 	(
@@ -147,7 +147,7 @@ test_expect_success 'allow submit from branch with same revision but different n
 	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
-		test_commit "file8" &&
+		test_cummit "file8" &&
 		git checkout -b branch1 &&
 		git checkout -b branch2 &&
 		git config git-p4.skipSubmitEdit true &&
@@ -158,15 +158,15 @@ test_expect_success 'allow submit from branch with same revision but different n
 	)
 '
 
-# make two commits, but tell it to apply only one
+# make two cummits, but tell it to apply only one
 
-test_expect_success 'submit --commit one' '
+test_expect_success 'submit --cummit one' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
-		test_commit "file9" &&
-		test_commit "file10" &&
+		test_cummit "file9" &&
+		test_cummit "file10" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --commit HEAD
 	) &&
@@ -177,16 +177,16 @@ test_expect_success 'submit --commit one' '
 	)
 '
 
-# make three commits, but tell it to apply only range
+# make three cummits, but tell it to apply only range
 
-test_expect_success 'submit --commit range' '
+test_expect_success 'submit --cummit range' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
-		test_commit "file11" &&
-		test_commit "file12" &&
-		test_commit "file13" &&
+		test_cummit "file11" &&
+		test_cummit "file12" &&
+		test_cummit "file13" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --commit HEAD~2..HEAD
 	) &&
@@ -210,7 +210,7 @@ test_expect_success 'submit modify' '
 		git config git-p4.skipSubmitEdit true &&
 		echo line >>file1 &&
 		git add file1 &&
-		git commit -m file1 &&
+		git cummit -m file1 &&
 		git p4 submit
 	) &&
 	(
@@ -228,7 +228,7 @@ test_expect_success 'submit add' '
 		git config git-p4.skipSubmitEdit true &&
 		echo file13 >file13 &&
 		git add file13 &&
-		git commit -m file13 &&
+		git cummit -m file13 &&
 		git p4 submit
 	) &&
 	(
@@ -244,7 +244,7 @@ test_expect_success 'submit delete' '
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git rm file4.t &&
-		git commit -m "delete file4.t" &&
+		git cummit -m "delete file4.t" &&
 		git p4 submit
 	) &&
 	(
@@ -263,7 +263,7 @@ test_expect_success 'submit copy' '
 		git config git-p4.detectCopiesHarder true &&
 		cp file5.t file5.ta &&
 		git add file5.ta &&
-		git commit -m "copy to file5.ta" &&
+		git cummit -m "copy to file5.ta" &&
 		git p4 submit
 	) &&
 	(
@@ -281,7 +281,7 @@ test_expect_success 'submit rename' '
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.detectRenames true &&
 		git mv file6.t file6.ta &&
-		git commit -m "rename file6.t to file6.ta" &&
+		git cummit -m "rename file6.t to file6.ta" &&
 		git p4 submit
 	) &&
 	(
@@ -293,7 +293,7 @@ test_expect_success 'submit rename' '
 '
 
 #
-# Converting git commit message to p4 change description, including
+# Converting git cummit message to p4 change description, including
 # parsing out the optional Jobs: line.
 #
 test_expect_success 'simple one-line description' '
@@ -306,7 +306,7 @@ test_expect_success 'simple one-line description' '
 		cat >msg <<-EOF &&
 		One-line description line for desc2.
 		EOF
-		git commit -F - <msg &&
+		git cummit -F - <msg &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit &&
 		change=$(p4 -G changes -m 1 //depot/... | \
@@ -327,10 +327,10 @@ test_expect_success 'description with odd formatting' '
 		(
 			printf "subject line\n\n\tExtra tab\nline.\n\n" &&
 			printf "Description:\n\tBogus description marker\n\n" &&
-			# git commit eats trailing newlines; only use one
+			# git cummit eats trailing newlines; only use one
 			printf "Files:\n\tBogus descs marker\n"
 		) >msg &&
-		git commit -F - <msg &&
+		git cummit -F - <msg &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit &&
 		change=$(p4 -G changes -m 1 //depot/... | \
@@ -364,7 +364,7 @@ test_expect_success 'description with Jobs section at end' '
 			printf "Junk: 3164175\n" &&
 			printf "Jobs: $(cat jobname)\n"
 		) >msg &&
-		git commit -F - <msg &&
+		git cummit -F - <msg &&
 		git config git-p4.skipSubmitEdit true &&
 		# build a job
 		make_job $(cat jobname) &&
@@ -399,7 +399,7 @@ test_expect_success 'description with Jobs and values on separate lines' '
 			printf "\t$(cat jobname1)\n" &&
 			printf "\t$(cat jobname2)\n"
 		) >msg &&
-		git commit -F - <msg &&
+		git cummit -F - <msg &&
 		git config git-p4.skipSubmitEdit true &&
 		# build two jobs
 		make_job $(cat jobname1) &&
@@ -438,7 +438,7 @@ test_expect_success 'description with Jobs section and bogus following text' '
 			printf "Jobs: $(cat jobname)\n" &&
 			printf "MoreJunk: 3711\n"
 		) >msg &&
-		git commit -F - <msg &&
+		git cummit -F - <msg &&
 		git config git-p4.skipSubmitEdit true &&
 		# build a job
 		make_job $(cat jobname) &&
@@ -459,7 +459,7 @@ test_expect_success 'submit --prepare-p4-only' '
 		cd "$git" &&
 		echo prep-only-add >prep-only-add &&
 		git add prep-only-add &&
-		git commit -m "prep only add" &&
+		git cummit -m "prep only add" &&
 		git p4 submit --prepare-p4-only >out &&
 		test_i18ngrep "prepared for submission" out &&
 		test_i18ngrep "must be deleted" out &&
@@ -480,13 +480,13 @@ test_expect_success 'submit --shelve' '
 		p4 revert ... &&
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
-		test_commit "shelveme1" &&
+		test_cummit "shelveme1" &&
 		git p4 submit --origin=HEAD^ &&
 
 		echo 654321 >shelveme2.t &&
 		echo 123456 >>shelveme1.t &&
 		git add shelveme* &&
-		git commit -m"shelvetest" &&
+		git cummit -m"shelvetest" &&
 		git p4 submit --shelve --origin=HEAD^ &&
 
 		test_path_is_file shelveme1.t &&
@@ -508,7 +508,7 @@ last_shelve () {
 }
 
 make_shelved_cl() {
-	test_commit "$1" >/dev/null &&
+	test_cummit "$1" >/dev/null &&
 	git p4 submit --origin HEAD^ --shelve >/dev/null &&
 	p4 -G changes -s shelved -m 1 | marshal_dump change
 }
@@ -533,7 +533,7 @@ test_expect_success 'submit --update-shelve' '
 		echo added-file.t >added-file.t &&
 		git add shelf.t added-file.t &&
 		git rm -f shelved-change-1.t &&
-		git commit --amend -C HEAD &&
+		git cummit --amend -C HEAD &&
 		git show --stat HEAD &&
 		git p4 submit -v --origin HEAD~2 --update-shelve $shelved_cl0 --update-shelve $shelved_cl1 &&
 		echo "done git p4 submit"
@@ -571,11 +571,11 @@ test_expect_success 'update a shelve involving moved and copied files' '
 		cp file_to_move copy_of_file &&
 		git add copy_of_file &&
 		git mv file_to_move moved/ &&
-		git commit -m "rename a file" &&
+		git cummit -m "rename a file" &&
 		git p4 submit -M --shelve --origin HEAD^ &&
 		: >new_file &&
 		git add new_file &&
-		git commit --amend &&
+		git cummit --amend &&
 		git show --stat HEAD &&
 		change=$(last_shelve) &&
 		git p4 submit -M --update-shelve $change --commit HEAD

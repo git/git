@@ -72,7 +72,7 @@ static const char * const git_stash_clear_usage[] = {
 };
 
 static const char * const git_stash_store_usage[] = {
-	N_("git stash store [-m|--message <message>] [-q|--quiet] <commit>"),
+	N_("git stash store [-m|--message <message>] [-q|--quiet] <cummit>"),
 	NULL
 };
 
@@ -93,20 +93,20 @@ static const char ref_stash[] = "refs/stash";
 static struct strbuf stash_index_path = STRBUF_INIT;
 
 /*
- * w_commit is set to the commit containing the working tree
- * b_commit is set to the base commit
- * i_commit is set to the commit containing the index tree
- * u_commit is set to the commit containing the untracked files tree
+ * w_cummit is set to the cummit containing the working tree
+ * b_cummit is set to the base cummit
+ * i_cummit is set to the cummit containing the index tree
+ * u_cummit is set to the cummit containing the untracked files tree
  * w_tree is set to the working tree
  * b_tree is set to the base tree
  * i_tree is set to the index tree
  * u_tree is set to the untracked files tree
  */
 struct stash_info {
-	struct object_id w_commit;
-	struct object_id b_commit;
-	struct object_id i_commit;
-	struct object_id u_commit;
+	struct object_id w_cummit;
+	struct object_id b_cummit;
+	struct object_id i_cummit;
+	struct object_id u_cummit;
 	struct object_id w_tree;
 	struct object_id b_tree;
 	struct object_id i_tree;
@@ -123,11 +123,11 @@ static void free_stash_info(struct stash_info *info)
 
 static void assert_stash_like(struct stash_info *info, const char *revision)
 {
-	if (get_oidf(&info->b_commit, "%s^1", revision) ||
+	if (get_oidf(&info->b_cummit, "%s^1", revision) ||
 	    get_oidf(&info->w_tree, "%s:", revision) ||
 	    get_oidf(&info->b_tree, "%s^1:", revision) ||
 	    get_oidf(&info->i_tree, "%s^2:", revision))
-		die(_("'%s' is not a stash-like commit"), revision);
+		die(_("'%s' is not a stash-like cummit"), revision);
 }
 
 static int get_stash_info(struct stash_info *info, int argc, const char **argv)
@@ -136,7 +136,7 @@ static int get_stash_info(struct stash_info *info, int argc, const char **argv)
 	char *end_of_rev;
 	char *expanded_ref;
 	const char *revision;
-	const char *commit = NULL;
+	const char *cummit = NULL;
 	struct object_id dummy;
 	struct strbuf symbolic = STRBUF_INIT;
 
@@ -155,10 +155,10 @@ static int get_stash_info(struct stash_info *info, int argc, const char **argv)
 	}
 
 	if (argc == 1)
-		commit = argv[0];
+		cummit = argv[0];
 
 	strbuf_init(&info->revision, 0);
-	if (!commit) {
+	if (!cummit) {
 		if (!ref_exists(ref_stash)) {
 			free_stash_info(info);
 			fprintf_ln(stderr, _("No stash entries found."));
@@ -166,15 +166,15 @@ static int get_stash_info(struct stash_info *info, int argc, const char **argv)
 		}
 
 		strbuf_addf(&info->revision, "%s@{0}", ref_stash);
-	} else if (strspn(commit, "0123456789") == strlen(commit)) {
-		strbuf_addf(&info->revision, "%s@{%s}", ref_stash, commit);
+	} else if (strspn(cummit, "0123456789") == strlen(cummit)) {
+		strbuf_addf(&info->revision, "%s@{%s}", ref_stash, cummit);
 	} else {
-		strbuf_addstr(&info->revision, commit);
+		strbuf_addstr(&info->revision, cummit);
 	}
 
 	revision = info->revision.buf;
 
-	if (get_oid(revision, &info->w_commit)) {
+	if (get_oid(revision, &info->w_cummit)) {
 		error(_("%s is not a valid reference"), revision);
 		free_stash_info(info);
 		return -1;
@@ -265,16 +265,16 @@ static int reset_tree(struct object_id *i_tree, int update, int reset)
 	if (unpack_trees(nr_trees, t, &opts))
 		return -1;
 
-	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
+	if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
 		return error(_("unable to write new index file"));
 
 	return 0;
 }
 
-static int diff_tree_binary(struct strbuf *out, struct object_id *w_commit)
+static int diff_tree_binary(struct strbuf *out, struct object_id *w_cummit)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
-	const char *w_commit_hex = oid_to_hex(w_commit);
+	const char *w_commit_hex = oid_to_hex(w_cummit);
 
 	/*
 	 * Diff-tree would not be very hard to replace with a native function,
@@ -485,7 +485,7 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 	 */
 	repo_hold_locked_index(the_repository, &lock, LOCK_DIE_ON_ERROR);
 	if (write_locked_index(&the_index, &lock,
-			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
+			       cummit_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write index."));
 }
 
@@ -497,7 +497,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 	struct merge_options o;
 	struct object_id c_tree;
 	struct object_id index_tree;
-	struct commit *result;
+	struct cummit *result;
 	const struct object_id *bases[1];
 
 	read_cache_preload(NULL);
@@ -514,10 +514,10 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 		} else {
 			struct strbuf out = STRBUF_INIT;
 
-			if (diff_tree_binary(&out, &info->w_commit)) {
+			if (diff_tree_binary(&out, &info->w_cummit)) {
 				strbuf_release(&out);
 				return error(_("could not generate diff %s^!."),
-					     oid_to_hex(&info->w_commit));
+					     oid_to_hex(&info->w_cummit));
 			}
 
 			ret = apply_cached(&out);
@@ -639,7 +639,7 @@ static int do_drop_stash(struct stash_info *info, int quiet)
 			   0)) {
 		if (!quiet)
 			printf_ln(_("Dropped %s (%s)"), info->revision.buf,
-				  oid_to_hex(&info->w_commit));
+				  oid_to_hex(&info->w_cummit));
 	} else {
 		return error(_("%s: Could not drop stash entry"),
 			     info->revision.buf);
@@ -739,7 +739,7 @@ static int branch_stash(int argc, const char **argv, const char *prefix)
 	cp.git_cmd = 1;
 	strvec_pushl(&cp.args, "checkout", "-b", NULL);
 	strvec_push(&cp.args, branch);
-	strvec_push(&cp.args, oid_to_hex(&info.b_commit));
+	strvec_push(&cp.args, oid_to_hex(&info.b_cummit));
 	ret = run_command(&cp);
 	if (!ret)
 		ret = do_apply_stash(prefix, &info, 1, 0);
@@ -797,7 +797,7 @@ static int git_stash_config(const char *var, const char *value, void *cb)
 
 static void diff_include_untracked(const struct stash_info *info, struct diff_options *diff_opt)
 {
-	const struct object_id *oid[] = { &info->w_commit, &info->u_tree };
+	const struct object_id *oid[] = { &info->w_cummit, &info->u_tree };
 	struct tree *tree[ARRAY_SIZE(oid)];
 	struct tree_desc tree_desc[ARRAY_SIZE(oid)];
 	struct unpack_trees_options unpack_tree_opt = { 0 };
@@ -819,7 +819,7 @@ static void diff_include_untracked(const struct stash_info *info, struct diff_op
 	if (unpack_trees(ARRAY_SIZE(tree_desc), tree_desc, &unpack_tree_opt))
 		die(_("failed to unpack trees"));
 
-	do_diff_cache(&info->b_commit, diff_opt);
+	do_diff_cache(&info->b_cummit, diff_opt);
 }
 
 static int show_stash(int argc, const char **argv, const char *prefix)
@@ -897,7 +897,7 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 	setup_diff_pager(&rev.diffopt);
 	switch (show_untracked) {
 	case UNTRACKED_NONE:
-		diff_tree_oid(&info.b_commit, &info.w_commit, "", &rev.diffopt);
+		diff_tree_oid(&info.b_cummit, &info.w_cummit, "", &rev.diffopt);
 		break;
 	case UNTRACKED_ONLY:
 		if (info.has_u)
@@ -907,7 +907,7 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 		if (info.has_u)
 			diff_include_untracked(&info, &rev.diffopt);
 		else
-			diff_tree_oid(&info.b_commit, &info.w_commit, "", &rev.diffopt);
+			diff_tree_oid(&info.b_cummit, &info.w_cummit, "", &rev.diffopt);
 		break;
 	}
 	log_tree_diff_flush(&rev);
@@ -916,19 +916,19 @@ static int show_stash(int argc, const char **argv, const char *prefix)
 	return diff_result_code(&rev.diffopt, 0);
 }
 
-static int do_store_stash(const struct object_id *w_commit, const char *stash_msg,
+static int do_store_stash(const struct object_id *w_cummit, const char *stash_msg,
 			  int quiet)
 {
 	if (!stash_msg)
 		stash_msg = "Created via \"git stash store\".";
 
-	if (update_ref(stash_msg, ref_stash, w_commit, NULL,
+	if (update_ref(stash_msg, ref_stash, w_cummit, NULL,
 		       REF_FORCE_CREATE_REFLOG,
 		       quiet ? UPDATE_REFS_QUIET_ON_ERR :
 		       UPDATE_REFS_MSG_ON_ERR)) {
 		if (!quiet) {
 			fprintf_ln(stderr, _("Cannot update %s with %s"),
-				   ref_stash, oid_to_hex(w_commit));
+				   ref_stash, oid_to_hex(w_cummit));
 		}
 		return -1;
 	}
@@ -956,7 +956,7 @@ static int store_stash(int argc, const char **argv, const char *prefix)
 	if (argc != 1) {
 		if (!quiet)
 			fprintf_ln(stderr, _("\"git stash store\" requires one "
-					     "<commit> argument"));
+					     "<cummit> argument"));
 		return -1;
 	}
 
@@ -1024,7 +1024,7 @@ static int check_changes_tracked_files(const struct pathspec *ps)
 	struct object_id dummy;
 	int ret = 0;
 
-	/* No initial commit. */
+	/* No initial cummit. */
 	if (get_oid("HEAD", &dummy))
 		return -1;
 
@@ -1104,8 +1104,8 @@ static int save_untracked_files(struct stash_info *info, struct strbuf *msg,
 		goto done;
 	}
 
-	if (commit_tree(untracked_msg.buf, untracked_msg.len,
-			&info->u_tree, NULL, &info->u_commit, NULL, NULL)) {
+	if (cummit_tree(untracked_msg.buf, untracked_msg.len,
+			&info->u_tree, NULL, &info->u_cummit, NULL, NULL)) {
 		ret = -1;
 		goto done;
 	}
@@ -1238,7 +1238,7 @@ static int stash_working_tree(struct stash_info *info, const struct pathspec *ps
 		goto done;
 	}
 
-	add_pending_object(&rev, parse_object(the_repository, &info->b_commit),
+	add_pending_object(&rev, parse_object(the_repository, &info->b_cummit),
 			   "");
 	if (run_diff_index(&rev, 0)) {
 		ret = -1;
@@ -1281,14 +1281,14 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 {
 	int ret = 0;
 	int flags = 0;
-	int untracked_commit_option = 0;
+	int untracked_cummit_option = 0;
 	const char *head_short_sha1 = NULL;
 	const char *branch_ref = NULL;
 	const char *branch_name = "(no branch)";
-	struct commit *head_commit = NULL;
-	struct commit_list *parents = NULL;
+	struct cummit *head_cummit = NULL;
+	struct cummit_list *parents = NULL;
 	struct strbuf msg = STRBUF_INIT;
-	struct strbuf commit_tree_label = STRBUF_INIT;
+	struct strbuf cummit_tree_label = STRBUF_INIT;
 	struct strbuf untracked_files = STRBUF_INIT;
 
 	prepare_fallback_ident("git stash", "git@stash");
@@ -1299,14 +1299,14 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 		goto done;
 	}
 
-	if (get_oid("HEAD", &info->b_commit)) {
+	if (get_oid("HEAD", &info->b_cummit)) {
 		if (!quiet)
 			fprintf_ln(stderr, _("You do not have "
-					     "the initial commit yet"));
+					     "the initial cummit yet"));
 		ret = -1;
 		goto done;
 	} else {
-		head_commit = lookup_commit(the_repository, &info->b_commit);
+		head_cummit = lookup_cummit(the_repository, &info->b_cummit);
 	}
 
 	if (!check_changes(ps, include_untracked, &untracked_files)) {
@@ -1317,16 +1317,16 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 	branch_ref = resolve_ref_unsafe("HEAD", 0, NULL, &flags);
 	if (flags & REF_ISSYMREF)
 		skip_prefix(branch_ref, "refs/heads/", &branch_name);
-	head_short_sha1 = find_unique_abbrev(&head_commit->object.oid,
+	head_short_sha1 = find_unique_abbrev(&head_cummit->object.oid,
 					     DEFAULT_ABBREV);
 	strbuf_addf(&msg, "%s: %s ", branch_name, head_short_sha1);
-	pp_commit_easy(CMIT_FMT_ONELINE, head_commit, &msg);
+	pp_cummit_easy(CMIT_FMT_ONELINE, head_cummit, &msg);
 
-	strbuf_addf(&commit_tree_label, "index on %s\n", msg.buf);
-	commit_list_insert(head_commit, &parents);
+	strbuf_addf(&cummit_tree_label, "index on %s\n", msg.buf);
+	cummit_list_insert(head_cummit, &parents);
 	if (write_cache_as_tree(&info->i_tree, 0, NULL) ||
-	    commit_tree(commit_tree_label.buf, commit_tree_label.len,
-			&info->i_tree, parents, &info->i_commit, NULL, NULL)) {
+	    cummit_tree(cummit_tree_label.buf, cummit_tree_label.len,
+			&info->i_tree, parents, &info->i_cummit, NULL, NULL)) {
 		if (!quiet)
 			fprintf_ln(stderr, _("Cannot save the current "
 					     "index state"));
@@ -1342,7 +1342,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 			ret = -1;
 			goto done;
 		}
-		untracked_commit_option = 1;
+		untracked_cummit_option = 1;
 	}
 	if (patch_mode) {
 		ret = stash_patch(info, ps, patch, quiet);
@@ -1380,20 +1380,20 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 		strbuf_insertf(stash_msg_buf, 0, "On %s: ", branch_name);
 
 	/*
-	 * `parents` will be empty after calling `commit_tree()`, so there is
-	 * no need to call `free_commit_list()`
+	 * `parents` will be empty after calling `cummit_tree()`, so there is
+	 * no need to call `free_cummit_list()`
 	 */
 	parents = NULL;
-	if (untracked_commit_option)
-		commit_list_insert(lookup_commit(the_repository,
-						 &info->u_commit),
+	if (untracked_cummit_option)
+		cummit_list_insert(lookup_cummit(the_repository,
+						 &info->u_cummit),
 				   &parents);
-	commit_list_insert(lookup_commit(the_repository, &info->i_commit),
+	cummit_list_insert(lookup_cummit(the_repository, &info->i_cummit),
 			   &parents);
-	commit_list_insert(head_commit, &parents);
+	cummit_list_insert(head_cummit, &parents);
 
-	if (commit_tree(stash_msg_buf->buf, stash_msg_buf->len, &info->w_tree,
-			parents, &info->w_commit, NULL, NULL)) {
+	if (cummit_tree(stash_msg_buf->buf, stash_msg_buf->len, &info->w_tree,
+			parents, &info->w_cummit, NULL, NULL)) {
 		if (!quiet)
 			fprintf_ln(stderr, _("Cannot record "
 					     "working tree state"));
@@ -1402,7 +1402,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 	}
 
 done:
-	strbuf_release(&commit_tree_label);
+	strbuf_release(&cummit_tree_label);
 	strbuf_release(&msg);
 	strbuf_release(&untracked_files);
 	return ret;
@@ -1425,7 +1425,7 @@ static int create_stash(int argc, const char **argv, const char *prefix)
 	ret = do_create_stash(&ps, &stash_msg_buf, 0, 0, 0, &info,
 			      NULL, 0);
 	if (!ret)
-		printf_ln("%s", oid_to_hex(&info.w_commit));
+		printf_ln("%s", oid_to_hex(&info.w_cummit));
 
 	strbuf_release(&stash_msg_buf);
 	return ret;
@@ -1507,7 +1507,7 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 		goto done;
 	}
 
-	if (do_store_stash(&info.w_commit, stash_msg_buf.buf, 1)) {
+	if (do_store_stash(&info.w_cummit, stash_msg_buf.buf, 1)) {
 		ret = -1;
 		if (!quiet)
 			fprintf_ln(stderr, _("Cannot save the current status"));

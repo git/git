@@ -118,7 +118,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv)
 		OPT_BOOL(0, "stdin-packs", &opts.stdin_packs,
 			 N_("write multi-pack index containing only given indexes")),
 		OPT_FILENAME(0, "refs-snapshot", &opts.refs_snapshot,
-			     N_("refs snapshot for selecting bitmap commits")),
+			     N_("refs snapshot for selecting bitmap cummits")),
 		OPT_END(),
 	};
 

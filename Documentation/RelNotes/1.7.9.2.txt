@@ -37,9 +37,9 @@ Fixes since v1.7.9.1
  * When you have both .../foo and .../foo.git, "git clone .../foo" did not
    favor the former but the latter.
 
- * "git commit" refused to create a commit when entries added with
+ * "git cummit" refused to create a cummit when entries added with
    "add -N" remained in the index, without telling Git what their content
-   in the next commit should be. We should have created the commit without
+   in the next cummit should be. We should have created the cummit without
    these paths.
 
  * "git diff --stat" said "files", "insertions", and "deletions" even

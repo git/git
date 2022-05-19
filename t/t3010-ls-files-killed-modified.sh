@@ -56,13 +56,13 @@ test_expect_success 'git update-index --add to add various paths.' '
 	date >path10 &&
 	git update-index --add -- path0 path?/file? pathx/ju path7 path8 path9 path10 &&
 	git init submod1 &&
-	git -C submod1 commit --allow-empty -m "empty 1" &&
+	git -C submod1 cummit --allow-empty -m "empty 1" &&
 	git init submod2 &&
-	git -C submod2 commit --allow-empty -m "empty 2" &&
+	git -C submod2 cummit --allow-empty -m "empty 2" &&
 	git update-index --add submod[12] &&
 	(
 		cd submod1 &&
-		git commit --allow-empty -m "empty 1 (updated)"
+		git cummit --allow-empty -m "empty 1 (updated)"
 	) &&
 	rm -fr path?	# leave path10 alone
 '

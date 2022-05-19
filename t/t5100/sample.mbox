@@ -7,7 +7,7 @@ From: A (zzz)
       Thor
       <a.u.thor@example.com> (Comment)
 Date: Fri, 9 Jun 2006 00:44:16 -0700
-Subject: [PATCH] a commit.
+Subject: [PATCH] a cummit.
 
 Here is a patch from A U Thor.
 
@@ -43,7 +43,7 @@ Hopefully this would fix the problem stated there.
 I have included an extra blank line above, but it does not have to be
 stripped away here, along with the               		   
 whitespaces at the end of the above line.  They are expected to be squashed
-when the message is made into a commit log by stripspace,
+when the message is made into a cummit log by stripspace,
 Also, there are three blank lines after this paragraph,
 two truly blank and another full of spaces in between.
 
@@ -374,7 +374,7 @@ References: <Pine.LNX.4.640.0001@woody.linux-foundation.org>
  <Pine.LNX.4.640.0049@woody.linux-foundation.org>
  <Pine.LNX.4.640.0050@woody.linux-foundation.org>
 Date: Fri, 9 Jun 2006 00:44:16 -0700
-Subject: [PATCH] a commit.
+Subject: [PATCH] a cummit.
 
 Here is a patch from A U Thor.
 
@@ -479,7 +479,7 @@ Content-Type: multipart/mixed; boundary="=-=-="
 Content-Type: text/plain; charset=ISO8859-15
 Content-Transfer-Encoding: quoted-printable
 
-Here comes a commit log message, and
+Here comes a cummit log message, and
 its second line is here.
 ---
  builtin-mailinfo.c  | 4 ++--
@@ -626,10 +626,10 @@ index b0b5d8f..461c47e 100644
 +	return scissors_dashes_seen == 03;
 +}
 +
- static int handle_commit_msg(struct strbuf *line)
+ static int handle_cummit_msg(struct strbuf *line)
  {
  	static int still_looking = 1;
-@@ -723,10 +751,17 @@ static int handle_commit_msg(struct strbuf *line)
+@@ -723,10 +751,17 @@ static int handle_cummit_msg(struct strbuf *line)
  		strbuf_ltrim(line);
  		if (!line->len)
  			return 0;
@@ -710,7 +710,7 @@ Subject: This one contains
 	a tab
  and a space
 
-a commit message
+a cummit message
 
 diff --git a/foo b/foo
 index e69de29..d95f3ad 100644

@@ -9,10 +9,10 @@ Fixes since v1.7.10.3
  * A name taken from mailmap was copied into an internal buffer
    incorrectly and could overrun the buffer if it is too long.
 
- * A malformed commit object that has a header line chomped in the
+ * A malformed cummit object that has a header line chomped in the
    middle could kill git with a NULL pointer dereference.
 
- * An author/committer name that is a single character was mishandled
+ * An author/cummitter name that is a single character was mishandled
    as an invalid name by mistake.
 
  * The progress indicator for a large "git checkout" was sent to
@@ -22,7 +22,7 @@ Fixes since v1.7.10.3
    read from a file, did not treat individual lines in the given
    pattern argument as separate regular expressions as it should.
 
- * When "git rebase" was given a bad commit to replay the history on,
+ * When "git rebase" was given a bad cummit to replay the history on,
    its error message did not correctly give the command line argument
    it had trouble parsing.
 

@@ -93,7 +93,7 @@ test_expect_success 'edit far away from RCS lines' '
 		git config git-p4.skipSubmitEdit true &&
 		sed "s/^line7/line7 edit/" <filek >filek.tmp &&
 		mv -f filek.tmp filek &&
-		git commit -m "filek line7 edit" filek &&
+		git cummit -m "filek line7 edit" filek &&
 		git p4 submit &&
 		scrub_k_check filek
 	)
@@ -111,7 +111,7 @@ test_expect_success 'edit near RCS lines' '
 		git config git-p4.attemptRCSCleanup true &&
 		sed "s/^line4/line4 edit/" <filek >filek.tmp &&
 		mv -f filek.tmp filek &&
-		git commit -m "filek line4 edit" filek &&
+		git cummit -m "filek line4 edit" filek &&
 		git p4 submit &&
 		scrub_k_check filek
 	)
@@ -129,7 +129,7 @@ test_expect_success 'edit keyword lines' '
 		git config git-p4.attemptRCSCleanup true &&
 		sed "/Revision/d" <filek >filek.tmp &&
 		mv -f filek.tmp filek &&
-		git commit -m "filek remove Revision line" filek &&
+		git cummit -m "filek remove Revision line" filek &&
 		git p4 submit &&
 		scrub_k_check filek
 	)
@@ -147,7 +147,7 @@ test_expect_success 'scrub ko files differently' '
 		git config git-p4.attemptRCSCleanup true &&
 		sed "s/^line4/line4 edit/" <fileko >fileko.tmp &&
 		mv -f fileko.tmp fileko &&
-		git commit -m "fileko line4 edit" fileko &&
+		git cummit -m "fileko line4 edit" fileko &&
 		git p4 submit &&
 		scrub_ko_check fileko &&
 		! scrub_k_check fileko
@@ -198,7 +198,7 @@ test_expect_success 'do not scrub plain text' '
 		git config git-p4.attemptRCSCleanup true &&
 		sed "s/^line4/line4 edit/" <file_text >file_text.tmp &&
 		mv -f file_text.tmp file_text &&
-		git commit -m "file_text line4 edit" file_text &&
+		git cummit -m "file_text line4 edit" file_text &&
 		(
 			cd "$cli" &&
 			p4 open file_text &&
@@ -273,11 +273,11 @@ test_expect_success 'cope with rcs keyword expansion damage' '
 		test $new_lines = $(($old_lines - 1)) &&
 
 		git add kwfile1.c &&
-		git commit -m "Zap an RCS kw line" &&
+		git cummit -m "Zap an RCS kw line" &&
 		git p4 submit &&
 		git p4 rebase &&
 		git diff p4/master &&
-		git p4 commit &&
+		git p4 cummit &&
 		echo "try modifying in both" &&
 		cd "$cli" &&
 		p4 edit kwfile1.c &&
@@ -286,7 +286,7 @@ test_expect_success 'cope with rcs keyword expansion damage' '
 		cd "$git" &&
 		echo "line from git at the top" | cat - kwfile1.c >kwfile1.c.new &&
 		mv kwfile1.c.new kwfile1.c &&
-		git commit -m "Add line in git at the top" kwfile1.c &&
+		git cummit -m "Add line in git at the top" kwfile1.c &&
 		git p4 rebase &&
 		git p4 submit
 	)
@@ -306,7 +306,7 @@ test_expect_success 'cope with rcs keyword file deletion' '
 		cd "$git" &&
 		grep Revision kwdelfile.c &&
 		git rm -f kwdelfile.c &&
-		git commit -m "Delete a file containing RCS keywords" &&
+		git cummit -m "Delete a file containing RCS keywords" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
 		git p4 submit
@@ -327,7 +327,7 @@ test_expect_success 'Add keywords in git which match the default p4 values' '
 		cd "$git" &&
 		echo "NewKW: \$Revision\$" >>kwfile1.c &&
 		git add kwfile1.c &&
-		git commit -m "Adding RCS keywords in git" &&
+		git cummit -m "Adding RCS keywords in git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
 		git p4 submit
@@ -342,7 +342,7 @@ test_expect_success 'Add keywords in git which match the default p4 values' '
 '
 
 # If you add keywords in git of the form $Header:#1$ then things will fail
-# unless git-p4 takes steps to scrub the *git* commit.
+# unless git-p4 takes steps to scrub the *git* cummit.
 #
 test_expect_failure 'Add keywords in git which do not match the default p4 values' '
 	test_when_finished cleanup_git &&
@@ -351,7 +351,7 @@ test_expect_failure 'Add keywords in git which do not match the default p4 value
 		cd "$git" &&
 		echo "NewKW2: \$Revision:1\$" >>kwfile1.c &&
 		git add kwfile1.c &&
-		git commit -m "Adding RCS keywords in git" &&
+		git cummit -m "Adding RCS keywords in git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.attemptRCSCleanup true &&
 		git p4 submit

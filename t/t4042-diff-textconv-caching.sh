@@ -14,12 +14,12 @@ test_expect_success 'setup' '
 	echo foo content 1 >foo.bin &&
 	echo bar content 1 >bar.bin &&
 	git add . &&
-	git commit -m one &&
+	git cummit -m one &&
 	foo1=$(git rev-parse --short HEAD:foo.bin) &&
 	bar1=$(git rev-parse --short HEAD:bar.bin) &&
 	echo foo content 2 >foo.bin &&
 	echo bar content 2 >bar.bin &&
-	git commit -a -m two &&
+	git cummit -a -m two &&
 	foo2=$(git rev-parse --short HEAD:foo.bin) &&
 	bar2=$(git rev-parse --short HEAD:bar.bin) &&
 	echo "*.bin diff=magic" >.gitattributes &&

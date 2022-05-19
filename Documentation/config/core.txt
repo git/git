@@ -179,7 +179,7 @@ core.safecrlf::
 	If true, makes Git check if converting `CRLF` is reversible when
 	end-of-line conversion is active.  Git will verify if a command
 	modifies a file in the work tree either directly or indirectly.
-	For example, committing a file followed by checking out the
+	For example, cummitting a file followed by checking out the
 	same file should yield the original file in the work tree.  If
 	this is not the case for the current setting of
 	`core.autocrlf`, Git will reject the file.  The variable can
@@ -187,9 +187,9 @@ core.safecrlf::
 	irreversible conversion but continue the operation.
 +
 CRLF conversion bears a slight chance of corrupting data.
-When it is enabled, Git will convert CRLF to LF during commit and LF to
+When it is enabled, Git will convert CRLF to LF during cummit and LF to
 CRLF during checkout.  A file that contains a mixture of LF and
-CRLF before the commit cannot be recreated by Git.  For text
+CRLF before the cummit cannot be recreated by Git.  For text
 files this is the right thing to do: it corrects line endings
 such that we have only LF line endings in the repository.
 But for binary files that are accidentally classified as text the
@@ -197,7 +197,7 @@ conversion can corrupt data.
 +
 If you recognize such corruption early you can easily fix it by
 setting the conversion type explicitly in .gitattributes.  Right
-after committing you still have the original file in your work
+after cummitting you still have the original file in your work
 tree and this file is not yet corrupted.  You can explicitly tell
 Git that this file is binary and Git will handle the file
 appropriately.
@@ -357,7 +357,7 @@ core.logAllRefUpdates::
 	If it is set to `always`, then a missing reflog is automatically
 	created for any ref under `refs/`.
 +
-This information can be used to determine what commit
+This information can be used to determine what cummit
 was the tip of a branch "2 days ago".
 +
 This value is true by default in a repository that has
@@ -499,19 +499,19 @@ alternative to having an `init.templateDir` where you've changed
 default hooks.
 
 core.editor::
-	Commands such as `commit` and `tag` that let you edit
+	Commands such as `cummit` and `tag` that let you edit
 	messages by launching an editor use the value of this
 	variable when it is set, and the environment variable
 	`GIT_EDITOR` is not set.  See linkgit:git-var[1].
 
 core.commentChar::
-	Commands such as `commit` and `tag` that let you edit
+	Commands such as `cummit` and `tag` that let you edit
 	messages consider a line that begins with this character
 	commented, and removes them after the editor returns
 	(default '#').
 +
-If set to "auto", `git-commit` would select a character that is not
-the beginning character of any line in existing commit messages.
+If set to "auto", `git-cummit` would select a character that is not
+the beginning character of any line in existing cummit messages.
 
 core.filesRefLockTimeout::
 	The length of time, in milliseconds, to retry when trying to
@@ -586,7 +586,7 @@ core.fsync::
 	prefixing it with a '-'.  Items that are not hardened may be
 	lost in the event of an unclean	system shutdown. Unless you
 	have special requirements, it is recommended that you leave
-	this option empty or pick one of `committed`, `added`,
+	this option empty or pick one of `cummitted`, `added`,
 	or `all`.
 +
 When this configuration is encountered, the set of components starts with
@@ -596,26 +596,26 @@ is ignored.
 +
 The empty string resets the fsync configuration to the platform
 default. The default on most platforms is equivalent to
-`core.fsync=committed,-loose-object`, which has good performance,
+`core.fsync=cummitted,-loose-object`, which has good performance,
 but risks losing recent work in the event of an unclean system shutdown.
 +
 * `none` clears the set of fsynced components.
 * `loose-object` hardens objects added to the repo in loose-object form.
 * `pack` hardens objects added to the repo in packfile form.
 * `pack-metadata` hardens packfile bitmaps and indexes.
-* `commit-graph` hardens the commit graph file.
+* `cummit-graph` hardens the cummit graph file.
 * `index` hardens the index when it is modified.
 * `objects` is an aggregate option that is equivalent to
   `loose-object,pack`.
 * `reference` hardens references modified in the repo.
 * `derived-metadata` is an aggregate option that is equivalent to
-  `pack-metadata,commit-graph`.
-* `committed` is an aggregate option that is currently equivalent to
+  `pack-metadata,cummit-graph`.
+* `cummitted` is an aggregate option that is currently equivalent to
   `objects`. This mode sacrifices some performance to ensure that work
-  that is committed to the repository with `git commit` or similar commands
+  that is cummitted to the repository with `git cummit` or similar commands
   is hardened.
 * `added` is an aggregate option that is currently equivalent to
-  `committed,index`. This mode sacrifices additional performance to
+  `cummitted,index`. This mode sacrifices additional performance to
   ensure that the results of commands like `git add` and similar operations
   are hardened.
 * `all` is an aggregate option that syncs all individual components above.
@@ -669,18 +669,18 @@ Set this config setting to 'rename' there; However, This will remove the
 check that makes sure that existing object files will not get overwritten.
 
 core.notesRef::
-	When showing commit messages, also show notes which are stored in
+	When showing cummit messages, also show notes which are stored in
 	the given ref.  The ref must be fully qualified.  If the given
 	ref does not exist, it is not an error but means that no
 	notes should be printed.
 +
-This setting defaults to "refs/notes/commits", and it can be overridden by
+This setting defaults to "refs/notes/cummits", and it can be overridden by
 the `GIT_NOTES_REF` environment variable.  See linkgit:git-notes[1].
 
-core.commitGraph::
-	If true, then git will read the commit-graph file (if it exists)
-	to parse the graph structure of commits. Defaults to true. See
-	linkgit:git-commit-graph[1] for more information.
+core.cummitGraph::
+	If true, then git will read the cummit-graph file (if it exists)
+	to parse the graph structure of cummits. Defaults to true. See
+	linkgit:git-cummit-graph[1] for more information.
 
 core.useReplaceRefs::
 	If set to `false`, behave as if the `--no-replace-objects`

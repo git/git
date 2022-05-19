@@ -29,28 +29,28 @@ status_uno_is_clean () {
 }
 
 test_expect_success 'setup' '
-	test_commit my_main &&
+	test_cummit my_main &&
 	git init repo_a &&
 	(
 		cd repo_a &&
-		test_commit a_main &&
+		test_cummit a_main &&
 		git checkout -b foo &&
-		test_commit a_foo &&
+		test_cummit a_foo &&
 		git checkout -b bar &&
-		test_commit a_bar &&
+		test_cummit a_bar &&
 		git checkout -b ambiguous_branch_and_file &&
-		test_commit a_ambiguous_branch_and_file
+		test_cummit a_ambiguous_branch_and_file
 	) &&
 	git init repo_b &&
 	(
 		cd repo_b &&
-		test_commit b_main &&
+		test_cummit b_main &&
 		git checkout -b foo &&
-		test_commit b_foo &&
+		test_cummit b_foo &&
 		git checkout -b baz &&
-		test_commit b_baz &&
+		test_cummit b_baz &&
 		git checkout -b ambiguous_branch_and_file &&
-		test_commit b_ambiguous_branch_and_file
+		test_cummit b_ambiguous_branch_and_file
 	) &&
 	git remote add repo_a repo_a &&
 	git remote add repo_b repo_b &&
@@ -84,7 +84,7 @@ test_expect_success 'when arg matches multiple remotes, do not fallback to inter
 	git checkout -b t_ambiguous_branch_and_file &&
 	>ambiguous_branch_and_file &&
 	git add ambiguous_branch_and_file &&
-	git commit -m "ambiguous_branch_and_file" &&
+	git cummit -m "ambiguous_branch_and_file" &&
 
 	# modify file to verify that it will not be touched by checkout
 	test_when_finished "git checkout -- ambiguous_branch_and_file" &&
@@ -183,20 +183,20 @@ test_expect_success 'setup more remotes with unconventional refspecs' '
 	git init repo_c &&
 	(
 		cd repo_c &&
-		test_commit c_main &&
+		test_cummit c_main &&
 		git checkout -b bar &&
-		test_commit c_bar &&
+		test_cummit c_bar &&
 		git checkout -b spam &&
-		test_commit c_spam
+		test_cummit c_spam
 	) &&
 	git init repo_d &&
 	(
 		cd repo_d &&
-		test_commit d_main &&
+		test_cummit d_main &&
 		git checkout -b baz &&
-		test_commit d_baz &&
+		test_cummit d_baz &&
 		git checkout -b eggs &&
-		test_commit d_eggs
+		test_cummit d_eggs
 	) &&
 	git remote add repo_c repo_c &&
 	git config remote.repo_c.fetch \
@@ -298,7 +298,7 @@ test_expect_success 'loosely defined local base branch is reported correctly' '
 	status_uno_is_clean &&
 	git branch strict &&
 	git branch loose &&
-	git commit --allow-empty -m "a bit more" &&
+	git cummit --allow-empty -m "a bit more" &&
 
 	test_config branch.strict.remote . &&
 	test_config branch.loose.remote . &&

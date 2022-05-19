@@ -2,7 +2,7 @@
 #include "transport.h"
 #include "quote.h"
 #include "run-command.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "revision.h"
 #include "remote.h"
@@ -689,7 +689,7 @@ static int fetch_refs(struct transport *transport,
 	 * helper does not support protocol v2. --negotiate-only requires
 	 * protocol v2.
 	 */
-	if (data->transport_options.acked_commits) {
+	if (data->transport_options.acked_cummits) {
 		warning(_("--negotiate-only requires protocol v2"));
 		return -1;
 	}

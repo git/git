@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "default.h"
-#include "../commit.h"
+#include "../cummit.h"
 #include "../fetch-negotiator.h"
 #include "../prio-queue.h"
 #include "../refs.h"
@@ -20,17 +20,17 @@ struct negotiation_state {
 };
 
 static void rev_list_push(struct negotiation_state *ns,
-			  struct commit *commit, int mark)
+			  struct cummit *cummit, int mark)
 {
-	if (!(commit->object.flags & mark)) {
-		commit->object.flags |= mark;
+	if (!(cummit->object.flags & mark)) {
+		cummit->object.flags |= mark;
 
-		if (parse_commit(commit))
+		if (parse_cummit(cummit))
 			return;
 
-		prio_queue_put(&ns->rev_list, commit);
+		prio_queue_put(&ns->rev_list, cummit);
 
-		if (!(commit->object.flags & COMMON))
+		if (!(cummit->object.flags & COMMON))
 			ns->non_common_revs++;
 	}
 }
@@ -40,8 +40,8 @@ static int clear_marks(const char *refname, const struct object_id *oid,
 {
 	struct object *o = deref_tag(the_repository, parse_object(the_repository, oid), refname, 0);
 
-	if (o && o->type == OBJ_COMMIT)
-		clear_commit_marks((struct commit *)o,
+	if (o && o->type == OBJ_cummit)
+		clear_cummit_marks((struct cummit *)o,
 				   COMMON | COMMON_REF | SEEN | POPPED);
 	return 0;
 }
@@ -51,27 +51,27 @@ static int clear_marks(const char *refname, const struct object_id *oid,
  * In some cases, it is desirable to mark only the ancestors (for example
  * when only the server does not yet know that they are common).
  */
-static void mark_common(struct negotiation_state *ns, struct commit *commit,
+static void mark_common(struct negotiation_state *ns, struct cummit *cummit,
 		int ancestors_only, int dont_parse)
 {
-	if (commit != NULL && !(commit->object.flags & COMMON)) {
-		struct object *o = (struct object *)commit;
+	if (cummit != NULL && !(cummit->object.flags & COMMON)) {
+		struct object *o = (struct object *)cummit;
 
 		if (!ancestors_only)
 			o->flags |= COMMON;
 
 		if (!(o->flags & SEEN))
-			rev_list_push(ns, commit, SEEN);
+			rev_list_push(ns, cummit, SEEN);
 		else {
-			struct commit_list *parents;
+			struct cummit_list *parents;
 
 			if (!ancestors_only && !(o->flags & POPPED))
 				ns->non_common_revs--;
 			if (!o->parsed && !dont_parse)
-				if (parse_commit(commit))
+				if (parse_cummit(cummit))
 					return;
 
-			for (parents = commit->parents;
+			for (parents = cummit->parents;
 					parents;
 					parents = parents->next)
 				mark_common(ns, parents->item, 0,
@@ -85,28 +85,28 @@ static void mark_common(struct negotiation_state *ns, struct commit *commit,
  */
 static const struct object_id *get_rev(struct negotiation_state *ns)
 {
-	struct commit *commit = NULL;
+	struct cummit *cummit = NULL;
 
-	while (commit == NULL) {
+	while (cummit == NULL) {
 		unsigned int mark;
-		struct commit_list *parents;
+		struct cummit_list *parents;
 
 		if (ns->rev_list.nr == 0 || ns->non_common_revs == 0)
 			return NULL;
 
-		commit = prio_queue_get(&ns->rev_list);
-		parse_commit(commit);
-		parents = commit->parents;
+		cummit = prio_queue_get(&ns->rev_list);
+		parse_cummit(cummit);
+		parents = cummit->parents;
 
-		commit->object.flags |= POPPED;
-		if (!(commit->object.flags & COMMON))
+		cummit->object.flags |= POPPED;
+		if (!(cummit->object.flags & COMMON))
 			ns->non_common_revs--;
 
-		if (commit->object.flags & COMMON) {
+		if (cummit->object.flags & COMMON) {
 			/* do not send "have", and ignore ancestors */
-			commit = NULL;
+			cummit = NULL;
 			mark = COMMON | SEEN;
-		} else if (commit->object.flags & COMMON_REF)
+		} else if (cummit->object.flags & COMMON_REF)
 			/* send "have", and ignore ancestors */
 			mark = COMMON | SEEN;
 		else
@@ -122,10 +122,10 @@ static const struct object_id *get_rev(struct negotiation_state *ns)
 		}
 	}
 
-	return &commit->object.oid;
+	return &cummit->object.oid;
 }
 
-static void known_common(struct fetch_negotiator *n, struct commit *c)
+static void known_common(struct fetch_negotiator *n, struct cummit *c)
 {
 	if (!(c->object.flags & SEEN)) {
 		rev_list_push(n->data, c, COMMON_REF | SEEN);
@@ -133,7 +133,7 @@ static void known_common(struct fetch_negotiator *n, struct commit *c)
 	}
 }
 
-static void add_tip(struct fetch_negotiator *n, struct commit *c)
+static void add_tip(struct fetch_negotiator *n, struct cummit *c)
 {
 	n->known_common = NULL;
 	rev_list_push(n->data, c, SEEN);
@@ -146,7 +146,7 @@ static const struct object_id *next(struct fetch_negotiator *n)
 	return get_rev(n->data);
 }
 
-static int ack(struct fetch_negotiator *n, struct commit *c)
+static int ack(struct fetch_negotiator *n, struct cummit *c)
 {
 	int known_to_be_common = !!(c->object.flags & COMMON);
 	mark_common(n->data, c, 0, 1);
@@ -168,7 +168,7 @@ void default_negotiator_init(struct fetch_negotiator *negotiator)
 	negotiator->ack = ack;
 	negotiator->release = release;
 	negotiator->data = CALLOC_ARRAY(ns, 1);
-	ns->rev_list.compare = compare_commits_by_commit_date;
+	ns->rev_list.compare = compare_cummits_by_cummit_date;
 
 	if (marked)
 		for_each_ref(clear_marks, NULL);

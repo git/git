@@ -9,7 +9,7 @@ test_expect_success 'setup' '
 	mkdir a aa "a[a]" &&
 	touch a/one aa/two "a[a]/three" &&
 	git add a/one aa/two "a[a]/three" &&
-	git commit -m test
+	git cummit -m test
 '
 
 test_expect_success 'ls-tree a[a] matches literally' '

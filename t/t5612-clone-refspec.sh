@@ -10,15 +10,15 @@ test_expect_success 'setup' '
 	# Make two branches, "main" and "side"
 	echo one >file &&
 	git add file &&
-	git commit -m one &&
+	git cummit -m one &&
 	echo two >file &&
-	git commit -a -m two &&
+	git cummit -a -m two &&
 	git tag two &&
 	echo three >file &&
-	git commit -a -m three &&
+	git cummit -a -m three &&
 	git checkout -b side &&
 	echo four >file &&
-	git commit -a -m four &&
+	git cummit -a -m four &&
 	git checkout main &&
 	git tag five &&
 
@@ -61,10 +61,10 @@ test_expect_success 'setup' '
 	# advance both "main" and "side" branches
 	git checkout side &&
 	echo five >file &&
-	git commit -a -m five &&
+	git cummit -a -m five &&
 	git checkout main &&
 	echo six >file &&
-	git commit -a -m six &&
+	git cummit -a -m six &&
 
 	# update tag
 	git tag -d two && git tag two

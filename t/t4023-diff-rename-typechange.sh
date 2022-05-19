@@ -11,26 +11,26 @@ test_expect_success setup '
 	COPYING_test_data >foo &&
 	test_ln_s_add linklink bar &&
 	git add foo &&
-	git commit -a -m Initial &&
+	git cummit -a -m Initial &&
 	git tag one &&
 
 	git rm -f foo bar &&
 	COPYING_test_data >bar &&
 	test_ln_s_add linklink foo &&
 	git add bar &&
-	git commit -a -m Second &&
+	git cummit -a -m Second &&
 	git tag two &&
 
 	git rm -f foo bar &&
 	COPYING_test_data >foo &&
 	git add foo &&
-	git commit -a -m Third &&
+	git cummit -a -m Third &&
 	git tag three &&
 
 	mv foo bar &&
 	test_ln_s_add linklink foo &&
 	git add bar &&
-	git commit -a -m Fourth &&
+	git cummit -a -m Fourth &&
 	git tag four &&
 
 	# This is purely for sanity check
@@ -39,14 +39,14 @@ test_expect_success setup '
 	COPYING_test_data >foo &&
 	cat "$TEST_DIRECTORY"/../Makefile >bar &&
 	git add foo bar &&
-	git commit -a -m Fifth &&
+	git cummit -a -m Fifth &&
 	git tag five &&
 
 	git rm -f foo bar &&
 	cat "$TEST_DIRECTORY"/../Makefile >foo &&
 	COPYING_test_data >bar &&
 	git add foo bar &&
-	git commit -a -m Sixth &&
+	git cummit -a -m Sixth &&
 	git tag six
 
 '

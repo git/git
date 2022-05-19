@@ -8,7 +8,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit init
+	test_cummit init
 '
 
 test_expect_success 'rev-parse --git-common-dir on main worktree' '
@@ -193,7 +193,7 @@ test_expect_success 'bare repo setup' '
 	git init --bare bare1 &&
 	echo "data" >file1 &&
 	git add file1 &&
-	git commit -m"File1: add data" &&
+	git cummit -m"File1: add data" &&
 	git push bare1 main &&
 	git reset --hard HEAD^
 '
@@ -240,7 +240,7 @@ test_expect_success 'broken main worktree still at the top' '
 	git init broken-main &&
 	(
 		cd broken-main &&
-		test_commit new &&
+		test_cummit new &&
 		git worktree add linked &&
 		cat >expected <<-EOF &&
 		worktree $(pwd)
@@ -265,7 +265,7 @@ test_expect_success 'linked worktrees are sorted' '
 	(
 		cd sorted/main &&
 		test_tick &&
-		test_commit new &&
+		test_cummit new &&
 		git worktree add ../first &&
 		git worktree add ../second &&
 		git worktree list --porcelain >out &&

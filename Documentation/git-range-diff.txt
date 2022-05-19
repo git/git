@@ -3,7 +3,7 @@ git-range-diff(1)
 
 NAME
 ----
-git-range-diff - Compare two commit ranges (e.g. two versions of a branch)
+git-range-diff - Compare two cummit ranges (e.g. two versions of a branch)
 
 SYNOPSIS
 --------
@@ -17,21 +17,21 @@ DESCRIPTION
 -----------
 
 This command shows the differences between two versions of a patch
-series, or more generally, two commit ranges (ignoring merge commits).
+series, or more generally, two cummit ranges (ignoring merge cummits).
 
-To that end, it first finds pairs of commits from both commit ranges
-that correspond with each other. Two commits are said to correspond when
-the diff between their patches (i.e. the author information, the commit
-message and the commit diff) is reasonably small compared to the
+To that end, it first finds pairs of cummits from both cummit ranges
+that correspond with each other. Two cummits are said to correspond when
+the diff between their patches (i.e. the author information, the cummit
+message and the cummit diff) is reasonably small compared to the
 patches' size. See ``Algorithm`` below for details.
 
-Finally, the list of matching commits is shown in the order of the
-second commit range, with unmatched commits being inserted just after
+Finally, the list of matching cummits is shown in the order of the
+second cummit range, with unmatched cummits being inserted just after
 all of their ancestors have been shown.
 
-There are three ways to specify the commit ranges:
+There are three ways to specify the cummit ranges:
 
-- `<range1> <range2>`: Either commit range can be of the form
+- `<range1> <range2>`: Either cummit range can be of the form
   `<base>..<rev>`, `<rev>^!` or `<rev>^-<n>`. See `SPECIFYING RANGES`
   in linkgit:gitrevisions[7] for more details.
 
@@ -44,16 +44,16 @@ There are three ways to specify the commit ranges:
 OPTIONS
 -------
 --no-dual-color::
-	When the commit diffs differ, `git range-diff` recreates the
+	When the cummit diffs differ, `git range-diff` recreates the
 	original diffs' coloring, and adds outer -/+ diff markers with
 	the *background* being red/green to make it easier to see e.g.
 	when there was a change in what exact lines were added.
 +
-Additionally, the commit diff lines that are only present in the first commit
+Additionally, the cummit diff lines that are only present in the first cummit
 range are shown "dimmed" (this can be overridden using the `color.diff.<slot>`
 config setting where `<slot>` is one of `contextDimmed`, `oldDimmed` and
-`newDimmed`), and the commit diff lines that are only present in the second
-commit range are shown in bold (which can be overridden using the config
+`newDimmed`), and the cummit diff lines that are only present in the second
+cummit range are shown in bold (which can be overridden using the config
 settings `color.diff.<slot>` with `<slot>` being one of `contextBold`,
 `oldBold` or `newBold`).
 +
@@ -64,17 +64,17 @@ to revert to color all lines according to the outer diff markers
 --creation-factor=<percent>::
 	Set the creation/deletion cost fudge factor to `<percent>`.
 	Defaults to 60. Try a larger value if `git range-diff` erroneously
-	considers a large change a total rewrite (deletion of one commit
+	considers a large change a total rewrite (deletion of one cummit
 	and addition of another), and a smaller one in the reverse case.
 	See the ``Algorithm`` section below for an explanation why this is
 	needed.
 
 --left-only::
-	Suppress commits that are missing from the first specified range
+	Suppress cummits that are missing from the first specified range
 	(or the "left range" when using the `<rev1>...<rev2>` format).
 
 --right-only::
-	Suppress commits that are missing from the second specified range
+	Suppress cummits that are missing from the second specified range
 	(or the "right range" when using the `<rev1>...<rev2>` format).
 
 --[no-]notes[=<ref>]::
@@ -82,7 +82,7 @@ to revert to color all lines according to the outer diff markers
 	(see linkgit:git-log[1]) that generates the patches.
 
 <range1> <range2>::
-	Compare the commits specified by the two ranges, where
+	Compare the cummits specified by the two ranges, where
 	`<range1>` is considered an older version of `<range2>`.
 
 <rev1>...<rev2>::
@@ -98,8 +98,8 @@ to revert to color all lines according to the outer diff markers
 `git range-diff` also accepts the regular diff options (see
 linkgit:git-diff[1]), most notably the `--color=[<when>]` and
 `--no-color` options. These options are used when generating the "diff
-between patches", i.e. to compare the author, commit message and diff of
-corresponding old/new commits. There is currently no means to tweak most of the
+between patches", i.e. to compare the author, cummit message and diff of
+corresponding old/new cummits. There is currently no means to tweak most of the
 diff options passed to `git log` when generating those patches.
 
 OUTPUT STABILITY
@@ -160,21 +160,21 @@ A typical output of `git range-diff` would look like this:
 3:  bedead < -:  ------- TO-UNDO
 ------------
 
-In this example, there are 3 old and 3 new commits, where the developer
+In this example, there are 3 old and 3 new cummits, where the developer
 removed the 3rd, added a new one before the first two, and modified the
-commit message of the 2nd commit as well its diff.
+cummit message of the 2nd cummit as well its diff.
 
 When the output goes to a terminal, it is color-coded by default, just
 like regular `git diff`'s output. In addition, the first line (adding a
-commit) is green, the last line (deleting a commit) is red, the second
+cummit) is green, the last line (deleting a cummit) is red, the second
 line (with a perfect match) is yellow like the commit header of `git
-show`'s output, and the third line colors the old commit red, the new
+show`'s output, and the third line colors the old cummit red, the new
 one green and the rest like `git show`'s commit header.
 
 A naive color-coded diff of diffs is actually a bit hard to read,
 though, as it colors the entire lines red or green. The line that added
-"What is unexpected" in the old commit, for example, is completely red,
-even if the intent of the old commit was to add something.
+"What is unexpected" in the old cummit, for example, is completely red,
+even if the intent of the old cummit was to add something.
 
 To help with that, `range` uses the `--dual-color` mode by default. In
 this mode, the diff of diffs will retain the original diff colors, and
@@ -186,10 +186,10 @@ changed.
 Algorithm
 ---------
 
-The general idea is this: we generate a cost matrix between the commits
-in both commit ranges, then solve the least-cost assignment.
+The general idea is this: we generate a cost matrix between the cummits
+in both cummit ranges, then solve the least-cost assignment.
 
-The cost matrix is populated thusly: for each pair of commits, both
+The cost matrix is populated thusly: for each pair of cummits, both
 diffs are generated and the "diff of diffs" is generated, with 3 context
 lines, then the number of lines in that diff is used as cost.
 
@@ -198,10 +198,10 @@ unrelated patch has been added between two iterations of the same patch
 series), the cost matrix is extended to allow for that, by adding
 fixed-cost entries for wholesale deletes/adds.
 
-Example: Let commits `1--2` be the first iteration of a patch series and
+Example: Let cummits `1--2` be the first iteration of a patch series and
 `A--C` the second iteration. Let's assume that `A` is a cherry-pick of
 `2,` and `C` is a cherry-pick of `1` but with a small modification (say,
-a fixed typo). Visualize the commits as a bipartite graph:
+a fixed typo). Visualize the cummits as a bipartite graph:
 
 ------------
     1            A
@@ -240,7 +240,7 @@ In mathematical terms, what we are looking for is some sort of a minimum
 cost bipartite matching; `1` is matched to `C` at some cost, etc. The
 underlying graph is in fact a complete bipartite graph; the cost we
 associate with every edge is the size of the diff between the two
-commits' patches. To explain also new commits, we introduce dummy nodes
+cummits' patches. To explain also new cummits, we introduce dummy nodes
 on both sides:
 
 ------------
@@ -265,7 +265,7 @@ fudge factor we require a much larger common part to consider patches as
 corresponding.
 
 The overall time needed to compute this algorithm is the time needed to
-compute n+m commit diffs and then n*m diffs of patches, plus the time
+compute n+m cummit diffs and then n*m diffs of patches, plus the time
 needed to compute the least-cost assignment between n and m diffs. Git
 uses an implementation of the Jonker-Volgenant algorithm to solve the
 assignment problem, which has cubic runtime complexity. The matching

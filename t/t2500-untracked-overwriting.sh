@@ -8,13 +8,13 @@ test_setup_reset () {
 	git init reset_$1 &&
 	(
 		cd reset_$1 &&
-		test_commit init &&
+		test_cummit init &&
 
 		git branch stable &&
 		git branch work &&
 
 		git checkout work &&
-		test_commit foo &&
+		test_cummit foo &&
 
 		git checkout stable
 	)
@@ -74,11 +74,11 @@ test_setup_checkout_m () {
 	git init checkout &&
 	(
 		cd checkout &&
-		test_commit init &&
+		test_cummit init &&
 
 		test_write_lines file has some >filler &&
 		git add filler &&
-		git commit -m filler &&
+		git cummit -m filler &&
 
 		git branch stable &&
 
@@ -86,7 +86,7 @@ test_setup_checkout_m () {
 		echo stuff >notes.txt &&
 		test_write_lines file has some words >filler &&
 		git add notes.txt filler &&
-		git commit -m filler &&
+		git cummit -m filler &&
 
 		git checkout stable
 	)
@@ -112,14 +112,14 @@ test_setup_sequencing () {
 	git init sequencing_$1 &&
 	(
 		cd sequencing_$1 &&
-		test_commit init &&
+		test_cummit init &&
 
 		test_write_lines this file has some words >filler &&
 		git add filler &&
-		git commit -m filler &&
+		git cummit -m filler &&
 
 		mkdir -p foo/bar &&
-		test_commit foo/bar/baz &&
+		test_cummit foo/bar/baz &&
 
 		git branch simple &&
 		git branch fooey &&
@@ -128,13 +128,13 @@ test_setup_sequencing () {
 		git rm foo/bar/baz.t &&
 		echo stuff >>filler &&
 		git add -u &&
-		git commit -m "changes" &&
+		git cummit -m "changes" &&
 
 		git checkout simple &&
 		echo items >>filler &&
 		echo newstuff >>newfile &&
 		git add filler newfile &&
-		git commit -m another
+		git cummit -m another
 	)
 }
 
@@ -204,7 +204,7 @@ test_expect_success 'git am --abort and untracked dir vs. unmerged file' '
 		git format-patch -1 --stdout fooey >changes.mbox &&
 		test_must_fail git am --3way changes.mbox &&
 
-		# Delete the conflicted file; we will stage and commit it later
+		# Delete the conflicted file; we will stage and cummit it later
 		rm filler &&
 
 		# Put an unrelated untracked directory there

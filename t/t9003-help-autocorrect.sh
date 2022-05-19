@@ -15,7 +15,7 @@ test_expect_success 'setup' '
 	PATH="$PATH:." &&
 	export PATH &&
 
-	git commit --allow-empty -m "a single log entry" &&
+	git cummit --allow-empty -m "a single log entry" &&
 
 	# Sanity check
 	git lgf >actual &&

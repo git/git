@@ -22,28 +22,28 @@ test_expect_success 'initialize source svn repo' '
 		cd "$SVN_TREE" &&
 		touch foo &&
 		svn add foo &&
-		svn commit -m "initial commit" &&
+		svn cummit -m "initial cummit" &&
 		svn cp -m branch "$svnrepo"/trunk "$svnrepo"/branches/branch1 &&
 		touch bar &&
 		svn add bar &&
-		svn commit -m x &&
+		svn cummit -m x &&
 		svn cp -m branch "$svnrepo"/trunk "$svnrepo"/branches/branch2 &&
 		svn switch "$svnrepo"/branches/branch1 &&
 		touch baz &&
 		svn add baz &&
-		svn commit -m x &&
+		svn cummit -m x &&
 		svn switch "$svnrepo"/trunk &&
 		svn merge "$svnrepo"/branches/branch1 &&
-		svn commit -m "merge" &&
+		svn cummit -m "merge" &&
 		svn switch "$svnrepo"/branches/branch1 &&
-		svn commit -m x &&
+		svn cummit -m x &&
 		svn switch "$svnrepo"/branches/branch2 &&
 		svn merge "$svnrepo"/branches/branch1 &&
-		svn commit -m "merge branch1" &&
+		svn cummit -m "merge branch1" &&
 		svn switch "$svnrepo"/trunk &&
 		svn merge "$svnrepo"/branches/branch2 &&
 		svn resolved baz &&
-		svn commit -m "merge branch2"
+		svn cummit -m "merge branch2"
 	) &&
 	rm -rf "$SVN_TREE"
 '
@@ -53,6 +53,6 @@ test_expect_success 'clone svn repo' '
 	git svn fetch
 '
 
-test_expect_success 'verify merge commit' 'git rev-parse HEAD^2'
+test_expect_success 'verify merge cummit' 'git rev-parse HEAD^2'
 
 test_done

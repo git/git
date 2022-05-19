@@ -31,7 +31,7 @@ Fixes since v1.8.3.2
 
  * The wildmatch engine did not honor WM_CASEFOLD option correctly.
 
- * "git log -c --follow $path" segfaulted upon hitting the commit that
+ * "git log -c --follow $path" segfaulted upon hitting the cummit that
    renamed the $path being followed.
 
  * When a reflog notation is used for implicit "current branch",

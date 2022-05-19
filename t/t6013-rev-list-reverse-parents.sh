@@ -8,22 +8,22 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 
-commit () {
+cummit () {
 	test_tick &&
 	echo $1 > foo &&
 	git add foo &&
-	git commit -m "$1"
+	git cummit -m "$1"
 }
 
 test_expect_success 'set up --reverse example' '
-	commit one &&
+	cummit one &&
 	git tag root &&
-	commit two &&
+	cummit two &&
 	git checkout -b side HEAD^ &&
-	commit three &&
+	cummit three &&
 	git checkout main &&
 	git merge -s ours side &&
-	commit five
+	cummit five
 	'
 
 test_expect_success '--reverse --parents --full-history combines correctly' '

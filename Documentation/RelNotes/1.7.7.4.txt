@@ -10,5 +10,5 @@ Fixes since v1.7.7.3
    try to cater to older compilers.
 
  * "git name-rev --all" tried to name all _objects_, naturally failing to
-   describe many blobs and trees, instead of showing only commits as
+   describe many blobs and trees, instead of showing only cummits as
    advertised in its documentation.

@@ -20,7 +20,7 @@ test_expect_success setup '
 	test_tick &&
 	echo ichi >file &&
 	git add file &&
-	git commit -m L &&
+	git cummit -m L &&
 	L=$(git rev-parse --verify HEAD) &&
 
 	(
@@ -33,7 +33,7 @@ test_expect_success setup '
 	test_tick &&
 	echo A >file &&
 	git add file &&
-	git commit -m A &&
+	git cummit -m A &&
 	A=$(git rev-parse --verify HEAD)
 '
 
@@ -55,7 +55,7 @@ get_needs () {
 	' "$1"
 }
 
-test_expect_success 'fetch A (new commit : 1 connection)' '
+test_expect_success 'fetch A (new cummit : 1 connection)' '
 	rm -f $U &&
 	(
 		cd cloned &&
@@ -73,7 +73,7 @@ test_expect_success "create tag T on A, create C on branch cat" '
 	git checkout -b cat &&
 	echo C >file &&
 	git add file &&
-	git commit -m C &&
+	git cummit -m C &&
 	C=$(git rev-parse --verify HEAD) &&
 	git checkout main
 '
@@ -98,16 +98,16 @@ test_expect_success 'fetch C, T (new branch, tag : 1 connection)' '
 	test_cmp expect actual
 '
 
-test_expect_success "create commits O, B, tag S on B" '
+test_expect_success "create cummits O, B, tag S on B" '
 	test_tick &&
 	echo O >file &&
 	git add file &&
-	git commit -m O &&
+	git cummit -m O &&
 
 	test_tick &&
 	echo B >file &&
 	git add file &&
-	git commit -m B &&
+	git cummit -m B &&
 	B=$(git rev-parse --verify HEAD) &&
 
 	git tag -a -m tag2 tag2 $B &&
@@ -121,7 +121,7 @@ want $S
 EOF
 '
 
-test_expect_success 'fetch B, S (commit and tag : 1 connection)' '
+test_expect_success 'fetch B, S (cummit and tag : 1 connection)' '
 	rm -f $U &&
 	(
 		cd cloned &&

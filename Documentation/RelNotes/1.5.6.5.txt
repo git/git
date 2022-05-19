@@ -6,7 +6,7 @@ Fixes since v1.5.6.4
 
 * "git cvsimport" used to spit out "UNKNOWN LINE..." diagnostics to stdout.
 
-* "git commit -F filename" and "git tag -F filename" run from subdirectories
+* "git cummit -F filename" and "git tag -F filename" run from subdirectories
   did not read the right file.
 
 * "git init --template=" with blank "template" parameter linked files

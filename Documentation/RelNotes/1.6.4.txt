@@ -62,10 +62,10 @@ Updates since v1.6.3
  * "git am" accepts StGIT series file as its input.
 
  * "git bisect skip" skips to a more randomly chosen place in the hope
-   to avoid testing a commit that is too close to a commit that is
+   to avoid testing a cummit that is too close to a cummit that is
    already known to be untestable.
 
- * "git cvsexportcommit" learned -k option to stop CVS keywords expansion
+ * "git cvsexportcummit" learned -k option to stop CVS keywords expansion
 
  * "git fast-export" learned to handle history simplification more
    gracefully.
@@ -106,7 +106,7 @@ Updates since v1.6.3
  * "git submodule update" learned --rebase option to update checked
    out submodules by rebasing the local changes.
 
- * "gitweb" can optionally use gravatar to adorn author/committer names.
+ * "gitweb" can optionally use gravatar to adorn author/cummitter names.
 
 (developers)
 
@@ -140,7 +140,7 @@ v1.6.3.X series.
    intact, even when both branches are subject to rewriting.
 
  * "git repack" used to faithfully follow grafts and considered true
-   parents recorded in the commit object unreachable from the commit.
+   parents recorded in the cummit object unreachable from the cummit.
    After such a repacking, you cannot remove grafts without corrupting
    the repository.
 

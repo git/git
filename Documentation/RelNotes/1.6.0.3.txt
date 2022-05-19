@@ -16,7 +16,7 @@ Fixes since v1.6.0.2
 * "git rebase -i" now honors the pre-rebase hook, just like the
   other rebase implementations "git rebase" and "git rebase -m".
 
-* "git rebase -i" incorrectly aborted when there is no commit to replay.
+* "git rebase -i" incorrectly aborted when there is no cummit to replay.
 
 * Behaviour of "git diff --quiet" was inconsistent with "diff --exit-code"
   with the output redirected to /dev/null.
@@ -49,7 +49,7 @@ Fixes since v1.6.0.2
 * "git stash apply" now offers a better suggestion on how to continue
   if the working tree is currently dirty.
 
-* "git for-each-ref --format=%(subject)" fixed for commits with no
+* "git for-each-ref --format=%(subject)" fixed for cummits with no
   newline in the message body.
 
 * "git remote" fixed to protect printf from user input.
@@ -73,7 +73,7 @@ Fixes since v1.6.0.2
   been removed from it during the merge.
 
 * "git merge" did not allocate enough memory for the structure itself when
-  enumerating the parents of the resulting commit.
+  enumerating the parents of the resulting cummit.
 
 * "git blame -C -C" no longer segfaults while trying to pass blame if
    it encounters a submodule reference.
@@ -84,10 +84,10 @@ Fixes since v1.6.0.2
 * "git svn" fixed to display an error message when 'set-tree' failed,
    instead of a Perl compile error.
 
-* "git submodule" fixed to handle checking out a different commit
+* "git submodule" fixed to handle checking out a different cummit
   than HEAD after initializing the submodule.
 
-* The "git commit" error message when there are still unmerged
+* The "git cummit" error message when there are still unmerged
   files present was clarified to match "git write-tree".
 
 * "git init" was confused when core.bare or core.sharedRepository are set
@@ -103,7 +103,7 @@ Fixes since v1.6.0.2
 
 * "Git.pm" tests relied on unnecessarily more recent version of Perl.
 
-* "gitweb" triggered undef warning on commits without log messages.
+* "gitweb" triggered undef warning on cummits without log messages.
 
 * "gitweb" triggered undef warnings on missing trees.
 

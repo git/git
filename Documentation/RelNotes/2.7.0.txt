@@ -86,7 +86,7 @@ UI, Workflows & Features
  * "git push" learned new configuration for doing "--recurse-submodules"
    on each push.
 
- * "format-patch" has learned a new option to zero-out the commit
+ * "format-patch" has learned a new option to zero-out the cummit
    object name on the mbox "From " line.
 
 
@@ -154,7 +154,7 @@ Performance, Internal Implementation, Development Support etc.
  * Use a safer behavior when we hit errors verifying remote certificates.
 
  * Speed up filter-branch for cases where we only care about rewriting
-   commits, not tree data.
+   cummits, not tree data.
 
  * The parse-options API has been updated to make "-h" command line
    option work more consistently in all commands.
@@ -191,7 +191,7 @@ notes for details).
    every one of them.
 
  * "git blame --first-parent v1.0..v2.0" was not rejected but did not
-   limit the blame to commits on the first parent chain.
+   limit the blame to cummits on the first parent chain.
 
  * "git subtree" (in contrib/) now can take whitespaces in the
    pathnames, not only in the in-tree pathname but the name of the
@@ -204,7 +204,7 @@ notes for details).
    like we do for the local transport.
 
  * Correct "git p4 --detect-labels" so that it does not fail to create
-   a tag that points at a commit that is also being imported.
+   a tag that points at a cummit that is also being imported.
 
  * The Makefile always runs the library archiver with hardcoded "crs"
    options, which was inconvenient for exotic platforms on which
@@ -244,7 +244,7 @@ notes for details).
 
  * After "git checkout --detach", "git status" reported a fairly
    useless "HEAD detached at HEAD", instead of saying at which exact
-   commit.
+   cummit.
 
  * When "git send-email" wanted to talk over Net::SMTP::SSL,
    Net::Cmd::datasend() did not like to be fed too many bytes at the
@@ -284,7 +284,7 @@ notes for details).
    grace period, the user must make sure that the repository is
    quiescent.
 
- * A recent "filter-branch --msg-filter" broke skipping of the commit
+ * A recent "filter-branch --msg-filter" broke skipping of the cummit
    object header, which is fixed.
 
  * The normalize_ceiling_entry() function does not muck with the end
@@ -379,8 +379,8 @@ notes for details).
    such as WinXP.
 
  * "git p4" used to import Perforce CLs that touch only paths outside
-   the client spec as empty commits.  It has been corrected to ignore
-   them instead, with a new configuration git-p4.keepEmptyCommits as a
+   the client spec as empty cummits.  It has been corrected to ignore
+   them instead, with a new configuration git-p4.keepEmptycummits as a
    backward compatibility knob.
 
  * The completion script (in contrib/) used to list "git column"

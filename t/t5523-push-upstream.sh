@@ -16,10 +16,10 @@ test_expect_success 'setup bare parent' '
 	git remote add upstream parent
 '
 
-test_expect_success 'setup local commit' '
+test_expect_success 'setup local cummit' '
 	echo content >file &&
 	git add file &&
-	git commit -m one
+	git cummit -m one
 '
 
 check_config() {

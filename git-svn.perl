@@ -114,7 +114,7 @@ my ($_stdin, $_help, $_edit,
 	$_before, $_after,
 	$_merge, $_strategy, $_rebase_merges, $_dry_run, $_parents, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
-	$_commit_url, $_tag, $_merge_info, $_interactive, $_set_svn_props);
+	$_cummit_url, $_tag, $_merge_info, $_interactive, $_set_svn_props);
 
 # This is a refactoring artifact so Git::SVN can get at this git-svn switch.
 sub opt_prefix { return $_prefix || '' }
@@ -184,14 +184,14 @@ my %cmd = (
 	                  "Deprecated alias for ".
 			  "'$0 init -T<trunk> -b<branches> -t<tags>'",
 			  \%init_opts ],
-	dcommit => [ \&cmd_dcommit,
-	             'Commit several diffs to merge with upstream',
+	dcummit => [ \&cmd_dcummit,
+	             'cummit several diffs to merge with upstream',
 			{ 'merge|m|M' => \$_merge,
 			  'strategy|s=s' => \$_strategy,
 			  'verbose|v' => \$_verbose,
 			  'dry-run|n' => \$_dry_run,
 			  'fetch-all|all' => \$_fetch_all,
-			  'commit-url=s' => \$_commit_url,
+			  'cummit-url=s' => \$_cummit_url,
 			  'set-svn-props=s' => \$_set_svn_props,
 			  'revision|r=i' => \$_revision,
 			  'no-rebase' => \$_no_rebase,
@@ -206,7 +206,7 @@ my %cmd = (
 	              'parents' => \$_parents,
 	              'tag|t' => \$_tag,
 	              'username=s' => \$Git::SVN::Prompt::_username,
-	              'commit-url=s' => \$_commit_url } ],
+	              'cummit-url=s' => \$_cummit_url } ],
 	tag => [ sub { $_tag = 1; cmd_branch(@_) },
 	         'Create a tag in the SVN repository',
 	         { 'message|m=s' => \$_message,
@@ -214,7 +214,7 @@ my %cmd = (
 	           'dry-run|n' => \$_dry_run,
 	           'parents' => \$_parents,
 	           'username=s' => \$Git::SVN::Prompt::_username,
-	           'commit-url=s' => \$_commit_url } ],
+	           'cummit-url=s' => \$_cummit_url } ],
 	'set-tree' => [ \&cmd_set_tree,
 	                "Set an SVN repository to a git tree-ish",
 			{ 'stdin' => \$_stdin, %cmt_opts, %fc_opts, } ],
@@ -229,7 +229,7 @@ my %cmd = (
 		       'Print the value of a property on a file or directory',
 		       { 'revision|r=i' => \$_revision } ],
         'propset' => [ \&cmd_propset,
-		       'Set the value of a property on a file or directory - will be set on commit',
+		       'Set the value of a property on a file or directory - will be set on cummit',
 		       {} ],
         'proplist' => [ \&cmd_proplist,
 		       'List all properties of a file or directory',
@@ -249,13 +249,13 @@ my %cmd = (
 		        previous versions of git-svn',
                        { 'minimize' => \$Git::SVN::Migration::_minimize,
 			 %remote_opts } ],
-	'log' => [ \&Git::SVN::Log::cmd_show_log, 'Show commit logs',
+	'log' => [ \&Git::SVN::Log::cmd_show_log, 'Show cummit logs',
 			{ 'limit=i' => \$Git::SVN::Log::limit,
 			  'revision|r=s' => \$_revision,
 			  'verbose|v' => \$Git::SVN::Log::verbose,
 			  'incremental' => \$Git::SVN::Log::incremental,
 			  'oneline' => \$Git::SVN::Log::oneline,
-			  'show-commit' => \$Git::SVN::Log::show_commit,
+			  'show-cummit' => \$Git::SVN::Log::show_cummit,
 			  'non-recursive' => \$Git::SVN::Log::non_recursive,
 			  'authors-file|A=s' => \$_authors,
 			  'color' => \$Git::SVN::Log::color,
@@ -274,8 +274,8 @@ my %cmd = (
 			  'dry-run|n' => \$_dry_run,
 			  'rebase-merges|p' => \$_rebase_merges,
 			  %fc_opts } ],
-	'commit-diff' => [ \&cmd_commit_diff,
-	                   'Commit a diff between two trees',
+	'cummit-diff' => [ \&cmd_cummit_diff,
+	                   'cummit a diff between two trees',
 			{ 'message|m=s' => \$_message,
 			  'file|F=s' => \$_file,
 			  'revision|r=s' => \$_revision,
@@ -380,7 +380,7 @@ if (defined $_authors_prog) {
 	$_authors_prog = "'" . $abs_file . "'" if -x $abs_file;
 }
 
-unless ($cmd =~ /^(?:clone|init|multi-init|commit-diff)$/) {
+unless ($cmd =~ /^(?:clone|init|multi-init|cummit-diff)$/) {
 	Git::SVN::Migration::migration_check();
 }
 Git::SVN::init_vars();
@@ -553,7 +553,7 @@ sub cmd_init {
 
 sub cmd_fetch {
 	if (grep /^\d+=./, @_) {
-		die "'<rev>=<commit>' fetch arguments are ",
+		die "'<rev>=<cummit>' fetch arguments are ",
 		    "no longer supported.\n";
 	}
 	my ($remote) = @_;
@@ -579,18 +579,18 @@ sub cmd_fetch {
 }
 
 sub cmd_set_tree {
-	my (@commits) = @_;
-	if ($_stdin || !@commits) {
+	my (@cummits) = @_;
+	if ($_stdin || !@cummits) {
 		print "Reading from stdin...\n";
-		@commits = ();
+		@cummits = ();
 		while (<STDIN>) {
 			if (/\b($oid_short)\b/o) {
-				unshift @commits, $1;
+				unshift @cummits, $1;
 			}
 		}
 	}
 	my @revs;
-	foreach my $c (@commits) {
+	foreach my $c (@cummits) {
 		my @tmp = command('rev-parse',$c);
 		if (scalar @tmp == 1) {
 			push @revs, $tmp[0];
@@ -601,16 +601,16 @@ sub cmd_set_tree {
 		}
 	}
 	my $gs = Git::SVN->new;
-	my ($r_last, $cmt_last) = $gs->last_rev_commit;
+	my ($r_last, $cmt_last) = $gs->last_rev_cummit;
 	$gs->fetch;
 	if (defined $gs->{last_rev} && $r_last != $gs->{last_rev}) {
 		fatal "There are new revisions that were fetched ",
 		      "and need to be merged (or acknowledged) ",
-		      "before committing.\nlast rev: $r_last\n",
+		      "before cummitting.\nlast rev: $r_last\n",
 		      " current: $gs->{last_rev}";
 	}
 	$gs->set_tree($_) foreach @revs;
-	print "Done committing ",scalar @revs," revisions to SVN\n";
+	print "Done cummitting ",scalar @revs," revisions to SVN\n";
 	unlink $gs->{index};
 }
 
@@ -714,10 +714,10 @@ sub populate_merge_info {
 	my ($d, $gs, $uuid, $linear_refs, $rewritten_parent) = @_;
 
 	my %parentshash;
-	read_commit_parents(\%parentshash, $d);
+	read_cummit_parents(\%parentshash, $d);
 	my @parents = @{$parentshash{$d}};
 	if ($#parents > 0) {
-		# Merge commit
+		# Merge cummit
 		my $all_parents_ok = 1;
 		my $aggregate_mergeinfo = '';
 		my $rooturl = $gs->repos_root;
@@ -735,11 +735,11 @@ sub populate_merge_info {
 
 			unless (defined($svnrev)) {
 				# Should have been caught be preflight check
-				fatal "merge commit $d has ancestor $parent, but that change "
+				fatal "merge cummit $d has ancestor $parent, but that change "
                      ."does not have git-svn metadata!";
 			}
 			unless ($branchurl =~ /^\Q$rooturl\E(.*)/) {
-				fatal "commit $parent git-svn metadata changed mid-run!";
+				fatal "cummit $parent git-svn metadata changed mid-run!";
 			}
 			my $branchpath = $1;
 
@@ -780,7 +780,7 @@ sub populate_merge_info {
 						 ."This means git-svn cannot determine the "
 						 ."svn revision numbers to place into the "
 						 ."svn:mergeinfo property. You must ensure "
-						 ."a branch is entirely committed to "
+						 ."a branch is entirely cummitted to "
 						 ."SVN before merging it in order for "
 						 ."svn:mergeinfo population to function "
 						 ."properly";
@@ -808,7 +808,7 @@ sub populate_merge_info {
 	return undef;
 }
 
-sub dcommit_rebase {
+sub dcummit_rebase {
 	my ($is_last, $current, $fetched_ref, $svn_error) = @_;
 	my @diff;
 
@@ -837,8 +837,8 @@ sub dcommit_rebase {
 		command_noisy(@finish, $fetched_ref) if @finish;
 	}
 	if ($svn_error) {
-		die "ERROR: Not all changes have been committed into SVN"
-			.($_no_rebase ? ".\n" : ", however the committed\n"
+		die "ERROR: Not all changes have been cummitted into SVN"
+			.($_no_rebase ? ".\n" : ", however the cummitted\n"
 			."ones (if any) seem to be successfully integrated "
 			."into the working tree.\n")
 			."Please see the above messages for details.\n";
@@ -846,11 +846,11 @@ sub dcommit_rebase {
 	return @diff;
 }
 
-sub cmd_dcommit {
+sub cmd_dcummit {
 	my $head = shift;
 	command_noisy(qw/update-index --refresh/);
 	git_cmd_try { command_oneline(qw/diff-index --quiet HEAD --/) }
-		'Cannot dcommit with a dirty index.  Commit your changes first, '
+		'Cannot dcummit with a dirty index.  cummit your changes first, '
 		. "or stash them with `git stash'.\n";
 	$head ||= 'HEAD';
 
@@ -874,11 +874,11 @@ sub cmd_dcommit {
 		    "$head history.\nPerhaps the repository is empty.";
 	}
 
-	if (defined $_commit_url) {
-		$url = $_commit_url;
+	if (defined $_cummit_url) {
+		$url = $_cummit_url;
 	} else {
 		$url = eval { command_oneline('config', '--get',
-			      "svn-remote.$gs->{repo_id}.commiturl") };
+			      "svn-remote.$gs->{repo_id}.cummiturl") };
 		if (!$url) {
 			$url = $gs->full_pushurl
 		}
@@ -886,11 +886,11 @@ sub cmd_dcommit {
 
 	my $last_rev = $_revision if defined $_revision;
 	if ($url) {
-		print "Committing to $url ...\n";
+		print "cummitting to $url ...\n";
 	}
 	my ($linear_refs, $parents) = linearize_history($gs, \@refs);
 	if ($_no_rebase && scalar(@$linear_refs) > 1) {
-		warn "Attempting to commit more than one change while ",
+		warn "Attempting to cummit more than one change while ",
 		     "--no-rebase is enabled.\n",
 		     "If these changes depend on each other, re-running ",
 		     "without --no-rebase may be required."
@@ -904,10 +904,10 @@ sub cmd_dcommit {
 				print $_;
 			}
 			command_close_pipe($fh, $ctx);
-			$_ = ask("Commit this patch to SVN? ([y]es (default)|[n]o|[q]uit|[a]ll): ",
+			$_ = ask("cummit this patch to SVN? ([y]es (default)|[n]o|[q]uit|[a]ll): ",
 			         valid_re => qr/^(?:yes|y|no|n|quit|q|all|a)/i,
 			         default => $ask_default);
-			die "Commit this patch reply required" unless defined $_;
+			die "cummit this patch reply required" unless defined $_;
 			if (/^[nq]/i) {
 				exit(0);
 			} elsif (/^a/i) {
@@ -930,7 +930,7 @@ sub cmd_dcommit {
 
 	unless (defined($_merge_info) || ! $push_merge_info) {
 		# Preflight check of changes to ensure no issues with mergeinfo
-		# This includes check for uncommitted-to-SVN parents
+		# This includes check for uncummitted-to-SVN parents
 		# (other than the first parent, which we will handle),
 		# information from different SVN repos, and paths
 		# which are not underneath this repository root.
@@ -938,10 +938,10 @@ sub cmd_dcommit {
 	        Git::SVN::remove_username($rooturl);
 		foreach my $d (@$linear_refs) {
 			my %parentshash;
-			read_commit_parents(\%parentshash, $d);
+			read_cummit_parents(\%parentshash, $d);
 			my @realparents = @{$parentshash{$d}};
 			if ($#realparents > 0) {
-				# Merge commit
+				# Merge cummit
 				shift @realparents; # Remove/ignore first parent
 				foreach my $parent (@realparents) {
 					my ($branchurl, $svnrev, $paruuid) = cmt_metadata($parent);
@@ -950,9 +950,9 @@ sub cmd_dcommit {
 						# abort the whole operation.
 						fatal "$parent is merged into revision $d, "
 							 ."but does not have git-svn metadata. "
-							 ."Either dcommit the branch or use a "
+							 ."Either dcummit the branch or use a "
 							 ."local cherry-pick, FF merge, or rebase "
-							 ."instead of an explicit merge commit.";
+							 ."instead of an explicit merge cummit.";
 					}
 
 					unless ($paruuid eq $uuid) {
@@ -985,7 +985,7 @@ sub cmd_dcommit {
 			(undef, $last_rev, undef) = cmt_metadata("$d~1");
 			unless (defined $last_rev) {
 				fatal "Unable to extract revision information ",
-				      "from commit $d~1";
+				      "from cummit $d~1";
 			}
 		}
 		if ($_dry_run) {
@@ -1001,7 +1001,7 @@ sub cmd_dcommit {
 			}
 
 			my %ed_opts = ( r => $last_rev,
-			                log => get_commit_entry($d)->{log},
+			                log => get_cummit_entry($d)->{log},
 			                ra => Git::SVN::Ra->new($url),
 			                config => SVN::Core::config_get_config(
 			                        $Git::SVN::Ra::config_dir
@@ -1009,7 +1009,7 @@ sub cmd_dcommit {
 			                tree_a => "$d~1",
 			                tree_b => $d,
 			                editor_cb => sub {
-			                       print "Committed r$_[0]\n";
+			                       print "cummitted r$_[0]\n";
 			                       $cmt_rev = $_[0];
 			                },
 					mergeinfo => $_merge_info,
@@ -1018,14 +1018,14 @@ sub cmd_dcommit {
 			my $err_handler = $SVN::Error::handler;
 			$SVN::Error::handler = sub {
 				my $err = shift;
-				dcommit_rebase(1, $current_head, $gs->refname,
+				dcummit_rebase(1, $current_head, $gs->refname,
 					$err);
 			};
 
 			if (!Git::SVN::Editor->new(\%ed_opts)->apply_diff) {
 				print "No changes\n$d~1 == $d\n";
 			} elsif ($parents->{$d} && @{$parents->{$d}}) {
-				$gs->{inject_parents_dcommit}->{$cmt_rev} =
+				$gs->{inject_parents_dcummit}->{$cmt_rev} =
 				                               $parents->{$d};
 			}
 			$_fetch_all ? $gs->fetch_all : $gs->fetch;
@@ -1033,7 +1033,7 @@ sub cmd_dcommit {
 			$last_rev = $cmt_rev;
 			next if $_no_rebase;
 
-			my @diff = dcommit_rebase(@$linear_refs == 0, $d,
+			my @diff = dcummit_rebase(@$linear_refs == 0, $d,
 						$gs->refname, undef);
 
 			$rewritten_parent = command_oneline(qw/rev-parse/,
@@ -1054,12 +1054,12 @@ sub cmd_dcommit {
 					  join("\n", @$linear_refs),
 					  "\n\nafter:\n",
 					  join("\n", @$linear_refs_), "\n",
-					  'If you are attempting to commit ',
+					  'If you are attempting to cummit ',
 					  "merges, try running:\n\t",
 					  'git rebase --interactive',
 					  '--rebase-merges ',
 					  $gs->refname,
-					  "\nBefore dcommitting";
+					  "\nBefore dcummitting";
 				}
 				if ($url_ ne $expect_url) {
 					if ($url_ eq $gs->metadata_url) {
@@ -1097,11 +1097,11 @@ sub cmd_dcommit {
 			command_oneline(qw/symbolic-ref -q HEAD/);
 		};
 		if ($new_is_symbolic) {
-			print "dcommitted the branch ", $head, "\n";
+			print "dcummitted the branch ", $head, "\n";
 		} else {
-			print "dcommitted on a detached HEAD because you gave ",
+			print "dcummitted on a detached HEAD because you gave ",
 			      "a revision argument.\n",
-			      "The rewritten commit is: ", $new_head, "\n";
+			      "The rewritten cummit is: ", $new_head, "\n";
 		}
 		command(['checkout', $old_head], STDERR => 0);
 	}
@@ -1162,11 +1162,11 @@ sub cmd_branch {
 	}
 	my ($lft, $rgt) = @{ $glob->{path} }{qw/left right/};
 	my $url;
-	if (defined $_commit_url) {
-		$url = $_commit_url;
+	if (defined $_cummit_url) {
+		$url = $_cummit_url;
 	} else {
 		$url = eval { command_oneline('config', '--get',
-			"svn-remote.$gs->{repo_id}.commiturl") };
+			"svn-remote.$gs->{repo_id}.cummiturl") };
 		if (!$url) {
 			$url = $remote->{pushurl} || $remote->{url};
 		}
@@ -1273,7 +1273,7 @@ sub cmd_rebase {
 		return;
 	}
 	if (command(qw/diff-index HEAD --/)) {
-		print STDERR "Cannot rebase with uncommitted changes:\n";
+		print STDERR "Cannot rebase with uncummitted changes:\n";
 		command_noisy('status');
 		exit 1;
 	}
@@ -1498,9 +1498,9 @@ sub cmd_multi_fetch {
 }
 
 # this command is special because it requires no metadata
-sub cmd_commit_diff {
+sub cmd_cummit_diff {
 	my ($ta, $tb, $url) = @_;
-	my $usage = "usage: $0 commit-diff -r<revision> ".
+	my $usage = "usage: $0 cummit-diff -r<revision> ".
 	            "<tree-ish> <tree-ish> [<URL>]";
 	fatal($usage) if (!defined $ta || !defined $tb);
 	my $svn_path = '';
@@ -1518,13 +1518,13 @@ sub cmd_commit_diff {
 	}
 	if (defined $_message && defined $_file) {
 		fatal("Both --message/-m and --file/-F specified ",
-		      "for the commit message.\n",
+		      "for the cummit message.\n",
 		      "I have no idea what you mean");
 	}
 	if (defined $_file) {
 		$_message = file_to_s($_file);
 	} else {
-		$_message ||= get_commit_entry($tb)->{log};
+		$_message ||= get_cummit_entry($tb)->{log};
 	}
 	my $ra ||= Git::SVN::Ra->new($url);
 	my $r = $_revision;
@@ -1538,7 +1538,7 @@ sub cmd_commit_diff {
 	                ra => $ra,
 	                tree_a => $ta,
 	                tree_b => $tb,
-	                editor_cb => sub { print "Committed r$_[0]\n" },
+	                editor_cb => sub { print "cummitted r$_[0]\n" },
 	                svn_path => $svn_path );
 	if (!Git::SVN::Editor->new(\%ed_opts)->apply_diff) {
 		print "No changes\n$ta == $tb\n";
@@ -1830,29 +1830,29 @@ sub get_tree_from_treeish {
 	while ($type eq 'tag') {
 		($treeish, $type) = command(qw/cat-file tag/, $treeish);
 	}
-	if ($type eq 'commit') {
-		$expected = (grep /^tree /, command(qw/cat-file commit/,
+	if ($type eq 'cummit') {
+		$expected = (grep /^tree /, command(qw/cat-file cummit/,
 		                                    $treeish))[0];
 		($expected) = ($expected =~ /^tree ($oid)$/o);
 		die "Unable to get tree from $treeish\n" unless $expected;
 	} elsif ($type eq 'tree') {
 		$expected = $treeish;
 	} else {
-		die "$treeish is a $type, expected tree, tag or commit\n";
+		die "$treeish is a $type, expected tree, tag or cummit\n";
 	}
 	return $expected;
 }
 
-sub get_commit_entry {
+sub get_cummit_entry {
 	my ($treeish) = shift;
 	my %log_entry = ( log => '', tree => get_tree_from_treeish($treeish) );
 	my @git_path = qw(rev-parse --git-path);
-	my $commit_editmsg = command_oneline(@git_path, 'COMMIT_EDITMSG');
-	my $commit_msg = command_oneline(@git_path, 'COMMIT_MSG');
-	open my $log_fh, '>', $commit_editmsg or croak $!;
+	my $cummit_editmsg = command_oneline(@git_path, 'cummit_EDITMSG');
+	my $cummit_msg = command_oneline(@git_path, 'cummit_MSG');
+	open my $log_fh, '>', $cummit_editmsg or croak $!;
 
 	my $type = command_oneline(qw/cat-file -t/, $treeish);
-	if ($type eq 'commit' || $type eq 'tag') {
+	if ($type eq 'cummit' || $type eq 'tag') {
 		my ($msg_fh, $ctx) = command_output_pipe('cat-file',
 		                                         $type, $treeish);
 		my $in_msg = 0;
@@ -1887,23 +1887,23 @@ sub get_commit_entry {
 
 	if ($_edit || ($type eq 'tree')) {
 		chomp(my $editor = command_oneline(qw(var GIT_EDITOR)));
-		system('sh', '-c', $editor.' "$@"', $editor, $commit_editmsg);
+		system('sh', '-c', $editor.' "$@"', $editor, $cummit_editmsg);
 	}
-	rename $commit_editmsg, $commit_msg or croak $!;
+	rename $cummit_editmsg, $cummit_msg or croak $!;
 	{
 		require Encode;
 		# SVN requires messages to be UTF-8 when entering the repo
-		open $log_fh, '<', $commit_msg or croak $!;
+		open $log_fh, '<', $cummit_msg or croak $!;
 		binmode $log_fh;
 		chomp($log_entry{log} = get_record($log_fh, undef));
 
-		my $enc = Git::config('i18n.commitencoding') || 'UTF-8';
+		my $enc = Git::config('i18n.cummitencoding') || 'UTF-8';
 		my $msg = $log_entry{log};
 
 		eval { $msg = Encode::decode($enc, $msg, 1) };
 		if ($@) {
 			die "Could not decode as $enc:\n", $msg,
-			    "\nPerhaps you need to set i18n.commitencoding\n";
+			    "\nPerhaps you need to set i18n.cummitencoding\n";
 		}
 
 		eval { $msg = Encode::encode('UTF-8', $msg, 1) };
@@ -1913,7 +1913,7 @@ sub get_commit_entry {
 
 		close $log_fh or croak $!;
 	}
-	unlink $commit_msg;
+	unlink $cummit_msg;
 	\%log_entry;
 }
 
@@ -2000,7 +2000,7 @@ sub extract_metadata {
 
 sub cmt_metadata {
 	return extract_metadata((grep(/^git-svn-id: /,
-		command(qw/cat-file commit/, shift)))[-1]);
+		command(qw/cat-file cummit/, shift)))[-1]);
 }
 
 sub cmt_sha2rev_batch {
@@ -2017,7 +2017,7 @@ sub cmt_sha2rev_batch {
 			if ($first && $line =~ /^$::oid\smissing$/) {
 				last;
 			} elsif ($first &&
-			       $line =~ /^$::oid\scommit\s(\d+)$/) {
+			       $line =~ /^$::oid\scummit\s(\d+)$/) {
 				$first = 0;
 				$size = $1;
 				next;
@@ -2044,7 +2044,7 @@ sub working_head_info {
 	my $hash;
 	my %max;
 	while (<$fh>) {
-		if ( m{^commit ($::oid)$} ) {
+		if ( m{^cummit ($::oid)$} ) {
 			unshift @$refs, $hash if $hash and $refs;
 			$hash = $1;
 			next;
@@ -2068,7 +2068,7 @@ sub working_head_info {
 	(undef, undef, undef, undef);
 }
 
-sub read_commit_parents {
+sub read_cummit_parents {
 	my ($parents, $c) = @_;
 	chomp(my $p = command_oneline(qw/rev-list --parents -1/, $c));
 	$p =~ s/^($c)\s*// or die "rev-list --parents -1 $c failed!\n";
@@ -2079,14 +2079,14 @@ sub linearize_history {
 	my ($gs, $refs) = @_;
 	my %parents;
 	foreach my $c (@$refs) {
-		read_commit_parents(\%parents, $c);
+		read_cummit_parents(\%parents, $c);
 	}
 
 	my @linear_refs;
 	my %skip = ();
-	my $last_svn_commit = $gs->last_commit;
+	my $last_svn_cummit = $gs->last_cummit;
 	foreach my $c (reverse @$refs) {
-		next if $c eq $last_svn_commit;
+		next if $c eq $last_svn_cummit;
 		last if $skip{$c};
 
 		unshift @linear_refs, $c;
@@ -2094,18 +2094,18 @@ sub linearize_history {
 
 		# we only want the first parent to diff against for linear
 		# history, we save the rest to inject when we finalize the
-		# svn commit
+		# svn cummit
 		my $fp_a = verify_ref("$c~1");
 		my $fp_b = shift @{$parents{$c}} if $parents{$c};
 		if (!$fp_a || !$fp_b) {
-			die "Commit $c\n",
-			    "has no parent commit, and therefore ",
+			die "cummit $c\n",
+			    "has no parent cummit, and therefore ",
 			    "nothing to diff against.\n",
 			    "You should be working from a repository ",
 			    "originally created by git-svn\n";
 		}
 		if ($fp_a ne $fp_b) {
-			die "$c~1 = $fp_a, however parsing commit $c ",
+			die "$c~1 = $fp_a, however parsing cummit $c ",
 			    "revealed that:\n$c~1 = $fp_b\nBUG!\n";
 		}
 
@@ -2214,8 +2214,8 @@ $log_entry hashref as returned by libsvn_log_entry()
 	log => 'whitespace-formatted log entry
 ',						# trailing newline is preserved
 	revision => '8',			# integer
-	date => '2004-02-24T17:01:44.108345Z',	# commit date
-	author => 'committer name'
+	date => '2004-02-24T17:01:44.108345Z',	# cummit date
+	author => 'cummitter name'
 };
 
 

@@ -86,12 +86,12 @@ msgid "Scanning for modified files ..."
 msgstr "Módosított fájlok keresése ..."
 
 #: git-gui.sh:1367
-msgid "Calling prepare-commit-msg hook..."
-msgstr "A prepare-commit-msg hurok meghívása..."
+msgid "Calling prepare-cummit-msg hook..."
+msgstr "A prepare-cummit-msg hurok meghívása..."
 
 #: git-gui.sh:1384
-msgid "Commit declined by prepare-commit-msg hook."
-msgstr "A commitot megakadályozta a prepare-commit-msg hurok."
+msgid "cummit declined by prepare-cummit-msg hook."
+msgstr "A cummitot megakadályozta a prepare-cummit-msg hurok."
 
 #: git-gui.sh:1542 lib/browser.tcl:246
 msgid "Ready."
@@ -106,16 +106,16 @@ msgid "Modified, not staged"
 msgstr "Módosított, de nem kiválasztott"
 
 #: git-gui.sh:1822 git-gui.sh:1830
-msgid "Staged for commit"
-msgstr "Kiválasztva commitolásra"
+msgid "Staged for cummit"
+msgstr "Kiválasztva cummitolásra"
 
 #: git-gui.sh:1823 git-gui.sh:1831
-msgid "Portions staged for commit"
-msgstr "Részek kiválasztva commitolásra"
+msgid "Portions staged for cummit"
+msgstr "Részek kiválasztva cummitolásra"
 
 #: git-gui.sh:1824 git-gui.sh:1832
-msgid "Staged for commit, missing"
-msgstr "Kiválasztva commitolásra, hiányzó"
+msgid "Staged for cummit, missing"
+msgstr "Kiválasztva cummitolásra, hiányzó"
 
 #: git-gui.sh:1826
 msgid "File type changed, not staged"
@@ -167,8 +167,8 @@ msgid "Branch"
 msgstr "Branch"
 
 #: git-gui.sh:2286 lib/choose_rev.tcl:548
-msgid "Commit@@noun"
-msgstr "Commit@@főnév"
+msgid "cummit@@noun"
+msgstr "cummit@@főnév"
 
 #: git-gui.sh:2289 lib/merge.tcl:121 lib/merge.tcl:150 lib/merge.tcl:168
 msgid "Merge"
@@ -288,32 +288,32 @@ msgid "Done"
 msgstr "Kész"
 
 #: git-gui.sh:2434
-msgid "Commit@@verb"
-msgstr "Commit@@ige"
+msgid "cummit@@verb"
+msgstr "cummit@@ige"
 
 #: git-gui.sh:2443 git-gui.sh:2878
-msgid "New Commit"
-msgstr "Új commit"
+msgid "New cummit"
+msgstr "Új cummit"
 
 #: git-gui.sh:2451 git-gui.sh:2885
-msgid "Amend Last Commit"
-msgstr "Utolsó commit javítása"
+msgid "Amend Last cummit"
+msgstr "Utolsó cummit javítása"
 
 #: git-gui.sh:2461 git-gui.sh:2839 lib/remote_branch_delete.tcl:99
 msgid "Rescan"
 msgstr "Keresés újra"
 
 #: git-gui.sh:2467
-msgid "Stage To Commit"
-msgstr "Kiválasztás commitolásra"
+msgid "Stage To cummit"
+msgstr "Kiválasztás cummitolásra"
 
 #: git-gui.sh:2473
-msgid "Stage Changed Files To Commit"
-msgstr "Módosított fájlok kiválasztása commitolásra"
+msgid "Stage Changed Files To cummit"
+msgstr "Módosított fájlok kiválasztása cummitolásra"
 
 #: git-gui.sh:2479
-msgid "Unstage From Commit"
-msgstr "Commitba való kiválasztás visszavonása"
+msgid "Unstage From cummit"
+msgstr "cummitba való kiválasztás visszavonása"
 
 #: git-gui.sh:2484 lib/index.tcl:410
 msgid "Revert Changes"
@@ -392,8 +392,8 @@ msgid "Current Branch:"
 msgstr "Jelenlegi branch:"
 
 #: git-gui.sh:2775
-msgid "Staged Changes (Will Commit)"
-msgstr "Kiválasztott változtatások (commitolva lesz)"
+msgid "Staged Changes (Will cummit)"
+msgstr "Kiválasztott változtatások (cummitolva lesz)"
 
 #: git-gui.sh:2795
 msgid "Unstaged Changes"
@@ -408,28 +408,28 @@ msgid "Push"
 msgstr "Push"
 
 #: git-gui.sh:2899
-msgid "Initial Commit Message:"
-msgstr "Kezdeti commit üzenet:"
+msgid "Initial cummit Message:"
+msgstr "Kezdeti cummit üzenet:"
 
 #: git-gui.sh:2900
-msgid "Amended Commit Message:"
-msgstr "Javító commit üzenet:"
+msgid "Amended cummit Message:"
+msgstr "Javító cummit üzenet:"
 
 #: git-gui.sh:2901
-msgid "Amended Initial Commit Message:"
-msgstr "Kezdeti javító commit üzenet:"
+msgid "Amended Initial cummit Message:"
+msgstr "Kezdeti javító cummit üzenet:"
 
 #: git-gui.sh:2902
-msgid "Amended Merge Commit Message:"
-msgstr "Javító merge commit üzenet:"
+msgid "Amended Merge cummit Message:"
+msgstr "Javító merge cummit üzenet:"
 
 #: git-gui.sh:2903
-msgid "Merge Commit Message:"
-msgstr "Merge commit üzenet:"
+msgid "Merge cummit Message:"
+msgstr "Merge cummit üzenet:"
 
 #: git-gui.sh:2904
-msgid "Commit Message:"
-msgstr "Commit üzenet:"
+msgid "cummit Message:"
+msgstr "cummit üzenet:"
 
 #: git-gui.sh:2953 git-gui.sh:3104 lib/console.tcl:73
 msgid "Copy All"
@@ -480,20 +480,20 @@ msgid "Revert To Base"
 msgstr "Visszaállítás az alaphoz"
 
 #: git-gui.sh:3183
-msgid "Unstage Hunk From Commit"
-msgstr "Hunk törlése commitból"
+msgid "Unstage Hunk From cummit"
+msgstr "Hunk törlése cummitból"
 
 #: git-gui.sh:3184
-msgid "Unstage Line From Commit"
+msgid "Unstage Line From cummit"
 msgstr "A sor kiválasztásának törlése"
 
 #: git-gui.sh:3186
-msgid "Stage Hunk For Commit"
-msgstr "Hunk kiválasztása commitba"
+msgid "Stage Hunk For cummit"
+msgstr "Hunk kiválasztása cummitba"
 
 #: git-gui.sh:3187
-msgid "Stage Line For Commit"
-msgstr "Sor kiválasztása commitba"
+msgid "Stage Line For cummit"
+msgstr "Sor kiválasztása cummitba"
 
 #: git-gui.sh:3210
 msgid "Initializing..."
@@ -552,12 +552,12 @@ msgid "File Viewer"
 msgstr "Fájl néző"
 
 #: lib/blame.tcl:78
-msgid "Commit:"
-msgstr "Commit:"
+msgid "cummit:"
+msgstr "cummit:"
 
 #: lib/blame.tcl:271
-msgid "Copy Commit"
-msgstr "Commit másolása"
+msgid "Copy cummit"
+msgstr "cummit másolása"
 
 #: lib/blame.tcl:275
 msgid "Find Text..."
@@ -572,8 +572,8 @@ msgid "Show History Context"
 msgstr "Történeti környezet mutatása"
 
 #: lib/blame.tcl:291
-msgid "Blame Parent Commit"
-msgstr "Szülő commit vizsgálata"
+msgid "Blame Parent cummit"
+msgstr "Szülő cummit vizsgálata"
 
 #: lib/blame.tcl:450
 #, tcl-format
@@ -617,20 +617,20 @@ msgid "Author:"
 msgstr "Szerző:"
 
 #: lib/blame.tcl:967
-msgid "Committer:"
-msgstr "Commiter:"
+msgid "cummitter:"
+msgstr "cummiter:"
 
 #: lib/blame.tcl:972
 msgid "Original File:"
 msgstr "Eredeti fájl:"
 
 #: lib/blame.tcl:1020
-msgid "Cannot find HEAD commit:"
-msgstr "Nem található a HEAD commit:"
+msgid "Cannot find HEAD cummit:"
+msgstr "Nem található a HEAD cummit:"
 
 #: lib/blame.tcl:1075
-msgid "Cannot find parent commit:"
-msgstr "Nem található a szülő commit:"
+msgid "Cannot find parent cummit:"
+msgstr "Nem található a szülő cummit:"
 
 #: lib/blame.tcl:1090
 msgid "Unable to display parent"
@@ -954,13 +954,13 @@ msgstr "'%s' kifejtve."
 
 #: lib/checkout_op.tcl:500
 #, tcl-format
-msgid "Resetting '%s' to '%s' will lose the following commits:"
+msgid "Resetting '%s' to '%s' will lose the following cummits:"
 msgstr ""
-"A(z) '%s' -> '%s' visszaállítás a következő commitok elvesztését jelenti:"
+"A(z) '%s' -> '%s' visszaállítás a következő cummitok elvesztését jelenti:"
 
 #: lib/checkout_op.tcl:522
-msgid "Recovering lost commits may not be easy."
-msgstr "Az elveszett commitok helyreállítása nem biztos, hogy egyszerű."
+msgid "Recovering lost cummits may not be easy."
+msgstr "Az elveszett cummitok helyreállítása nem biztos, hogy egyszerű."
 
 #: lib/checkout_op.tcl:527
 #, tcl-format
@@ -1212,8 +1212,8 @@ msgstr "Nincs alapértelmezett branch."
 
 #: lib/choose_repository.tcl:920
 #, tcl-format
-msgid "Cannot resolve %s as a commit."
-msgstr "Nem sikerült felöldani a(z) %s objektumot commitként."
+msgid "Cannot resolve %s as a cummit."
+msgstr "Nem sikerült felöldani a(z) %s objektumot cummitként."
 
 #: lib/choose_repository.tcl:932
 msgid "Creating working directory"
@@ -1282,49 +1282,49 @@ msgstr "Frissítve"
 msgid "URL"
 msgstr "URL"
 
-#: lib/commit.tcl:9
+#: lib/cummit.tcl:9
 msgid ""
 "There is nothing to amend.\n"
 "\n"
-"You are about to create the initial commit.  There is no commit before this "
+"You are about to create the initial cummit.  There is no cummit before this "
 "to amend.\n"
 msgstr ""
 "Nincs semmi javítanivaló.\n"
 "\n"
-"Az első commit létrehozása előtt nincs semmilyen commit amit javitani "
+"Az első cummit létrehozása előtt nincs semmilyen cummit amit javitani "
 "lehetne.\n"
 
-#: lib/commit.tcl:18
+#: lib/cummit.tcl:18
 msgid ""
 "Cannot amend while merging.\n"
 "\n"
 "You are currently in the middle of a merge that has not been fully "
-"completed.  You cannot amend the prior commit unless you first abort the "
+"completed.  You cannot amend the prior cummit unless you first abort the "
 "current merge activity.\n"
 msgstr ""
 "Nem lehet javítani merge alatt.\n"
 "\n"
 "A jelenlegi merge még nem teljesen fejeződött be. Csak akkor javíthat egy "
-"előbbi commitot, hogyha megszakítja a jelenlegi merge folyamatot.\n"
+"előbbi cummitot, hogyha megszakítja a jelenlegi merge folyamatot.\n"
 
-#: lib/commit.tcl:48
-msgid "Error loading commit data for amend:"
-msgstr "Hiba a javítandó commit adat betöltése közben:"
+#: lib/cummit.tcl:48
+msgid "Error loading cummit data for amend:"
+msgstr "Hiba a javítandó cummit adat betöltése közben:"
 
-#: lib/commit.tcl:75
+#: lib/cummit.tcl:75
 msgid "Unable to obtain your identity:"
 msgstr "Nem sikerült megállapítani az azonosítót:"
 
-#: lib/commit.tcl:80
-msgid "Invalid GIT_COMMITTER_IDENT:"
-msgstr "Érvénytelen GIT_COMMITTER_IDENT:"
+#: lib/cummit.tcl:80
+msgid "Invalid GIT_cummitTER_IDENT:"
+msgstr "Érvénytelen GIT_cummitTER_IDENT:"
 
-#: lib/commit.tcl:132
+#: lib/cummit.tcl:132
 msgid ""
 "Last scanned state does not match repository state.\n"
 "\n"
 "Another Git program has modified this repository since the last scan.  A "
-"rescan must be performed before another commit can be created.\n"
+"rescan must be performed before another cummit can be created.\n"
 "\n"
 "The rescan will be automatically started now.\n"
 msgstr ""
@@ -1336,126 +1336,126 @@ msgstr ""
 "\n"
 "Az újrakeresés most automatikusan el fog indulni.\n"
 
-#: lib/commit.tcl:155
+#: lib/cummit.tcl:155
 #, tcl-format
 msgid ""
-"Unmerged files cannot be committed.\n"
+"Unmerged files cannot be cummitted.\n"
 "\n"
 "File %s has merge conflicts.  You must resolve them and stage the file "
-"before committing.\n"
+"before cummitting.\n"
 msgstr ""
-"Nem commitolhatunk fájlokat merge előtt.\n"
+"Nem cummitolhatunk fájlokat merge előtt.\n"
 "\n"
 "A(z) %s fájlban ütközések vannak. Egyszer azokat ki kell javítani, majd "
-"hozzá ki kell választani a fájlt mielőtt commitolni lehetne.\n"
+"hozzá ki kell választani a fájlt mielőtt cummitolni lehetne.\n"
 
-#: lib/commit.tcl:163
+#: lib/cummit.tcl:163
 #, tcl-format
 msgid ""
 "Unknown file state %s detected.\n"
 "\n"
-"File %s cannot be committed by this program.\n"
+"File %s cannot be cummitted by this program.\n"
 msgstr ""
 "Ismeretlen fájl típus %s érzékelve.\n"
 "\n"
-"A(z) %s fájlt nem tudja ez a program commitolni.\n"
+"A(z) %s fájlt nem tudja ez a program cummitolni.\n"
 
-#: lib/commit.tcl:171
+#: lib/cummit.tcl:171
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"You must stage at least 1 file before you can commit.\n"
+"You must stage at least 1 file before you can cummit.\n"
 msgstr ""
-"Nincs commitolandó változtatás.\n"
+"Nincs cummitolandó változtatás.\n"
 "\n"
-"Legalább egy fájl ki kell választani, hogy commitolni lehessen.\n"
+"Legalább egy fájl ki kell választani, hogy cummitolni lehessen.\n"
 
-#: lib/commit.tcl:186
+#: lib/cummit.tcl:186
 msgid ""
-"Please supply a commit message.\n"
+"Please supply a cummit message.\n"
 "\n"
-"A good commit message has the following format:\n"
+"A good cummit message has the following format:\n"
 "\n"
 "- First line: Describe in one sentence what you did.\n"
 "- Second line: Blank\n"
 "- Remaining lines: Describe why this change is good.\n"
 msgstr ""
-"Adjunk megy egy commit üzenetet.\n"
+"Adjunk megy egy cummit üzenetet.\n"
 "\n"
-"Egy jó commit üzenetnek a következő a formátuma:\n"
+"Egy jó cummit üzenetnek a következő a formátuma:\n"
 "\n"
 "- Első sor: Egy mondatban leírja, hogy mit csináltunk.\n"
 "- Második sor: Üres\n"
 "- A többi sor: Leírja, hogy miért jó ez a változtatás.\n"
 
-#: lib/commit.tcl:210
+#: lib/cummit.tcl:210
 #, tcl-format
 msgid "warning: Tcl does not support encoding '%s'."
 msgstr "figyelmeztetés: a Tcl nem támogatja a(z) '%s' kódolást."
 
-#: lib/commit.tcl:226
+#: lib/cummit.tcl:226
 msgid "Calling pre-commit hook..."
 msgstr "A pre-commit hurok meghívása..."
 
-#: lib/commit.tcl:241
-msgid "Commit declined by pre-commit hook."
-msgstr "A commitot megakadályozta a pre-commit hurok. "
+#: lib/cummit.tcl:241
+msgid "cummit declined by pre-commit hook."
+msgstr "A cummitot megakadályozta a pre-commit hurok. "
 
-#: lib/commit.tcl:264
-msgid "Calling commit-msg hook..."
-msgstr "A commit-msg hurok meghívása..."
+#: lib/cummit.tcl:264
+msgid "Calling cummit-msg hook..."
+msgstr "A cummit-msg hurok meghívása..."
 
-#: lib/commit.tcl:279
-msgid "Commit declined by commit-msg hook."
-msgstr "A commiot megakadályozta a commit-msg hurok."
+#: lib/cummit.tcl:279
+msgid "cummit declined by cummit-msg hook."
+msgstr "A commiot megakadályozta a cummit-msg hurok."
 
-#: lib/commit.tcl:292
-msgid "Committing changes..."
-msgstr "A változtatások commitolása..."
+#: lib/cummit.tcl:292
+msgid "cummitting changes..."
+msgstr "A változtatások cummitolása..."
 
-#: lib/commit.tcl:308
+#: lib/cummit.tcl:308
 msgid "write-tree failed:"
 msgstr "a write-tree sikertelen:"
 
-#: lib/commit.tcl:309 lib/commit.tcl:353 lib/commit.tcl:373
-msgid "Commit failed."
-msgstr "A commit nem sikerült."
+#: lib/cummit.tcl:309 lib/cummit.tcl:353 lib/cummit.tcl:373
+msgid "cummit failed."
+msgstr "A cummit nem sikerült."
 
-#: lib/commit.tcl:326
+#: lib/cummit.tcl:326
 #, tcl-format
-msgid "Commit %s appears to be corrupt"
-msgstr "A(z) %s commit sérültnek tűnik"
+msgid "cummit %s appears to be corrupt"
+msgstr "A(z) %s cummit sérültnek tűnik"
 
-#: lib/commit.tcl:331
+#: lib/cummit.tcl:331
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"No files were modified by this commit and it was not a merge commit.\n"
+"No files were modified by this cummit and it was not a merge cummit.\n"
 "\n"
 "A rescan will be automatically started now.\n"
 msgstr ""
-"Nincs commitolandó változtatás.\n"
+"Nincs cummitolandó változtatás.\n"
 "\n"
-"Egyetlen fájlt se módosított ez a commit és merge commit se volt.\n"
+"Egyetlen fájlt se módosított ez a cummit és merge cummit se volt.\n"
 "\n"
 "Az újrakeresés most automatikusan el fog indulni.\n"
 
-#: lib/commit.tcl:338
-msgid "No changes to commit."
-msgstr "Nincs commitolandó változtatás."
+#: lib/cummit.tcl:338
+msgid "No changes to cummit."
+msgstr "Nincs cummitolandó változtatás."
 
-#: lib/commit.tcl:352
-msgid "commit-tree failed:"
-msgstr "a commit-tree sikertelen:"
+#: lib/cummit.tcl:352
+msgid "cummit-tree failed:"
+msgstr "a cummit-tree sikertelen:"
 
-#: lib/commit.tcl:372
+#: lib/cummit.tcl:372
 msgid "update-ref failed:"
 msgstr "az update-ref sikertelen:"
 
-#: lib/commit.tcl:460
+#: lib/cummit.tcl:460
 #, tcl-format
-msgid "Created commit %s: %s"
-msgstr "Létrejött a %s commit: %s"
+msgid "Created cummit %s: %s"
+msgstr "Létrejött a %s cummit: %s"
 
 #: lib/console.tcl:59
 msgid "Working... please wait..."
@@ -1653,8 +1653,8 @@ msgid "warning"
 msgstr "figyelmeztetés"
 
 #: lib/error.tcl:94
-msgid "You must correct the above errors before committing."
-msgstr "Ki kell javítanunk a fenti hibákat commit előtt."
+msgid "You must correct the above errors before cummitting."
+msgstr "Ki kell javítanunk a fenti hibákat cummit előtt."
 
 #: lib/index.tcl:6
 msgid "Unable to unlock the index."
@@ -1682,12 +1682,12 @@ msgstr "Index zárolásának feloldása"
 
 #: lib/index.tcl:287
 #, tcl-format
-msgid "Unstaging %s from commit"
-msgstr "A(z) %s commitba való kiválasztásának visszavonása"
+msgid "Unstaging %s from cummit"
+msgstr "A(z) %s cummitba való kiválasztásának visszavonása"
 
 #: lib/index.tcl:326
-msgid "Ready to commit."
-msgstr "Commitolásra kész."
+msgid "Ready to cummit."
+msgstr "cummitolásra kész."
 
 #: lib/index.tcl:339
 #, tcl-format
@@ -1727,11 +1727,11 @@ msgstr "%s visszaállítása"
 msgid ""
 "Cannot merge while amending.\n"
 "\n"
-"You must finish amending this commit before starting any type of merge.\n"
+"You must finish amending this cummit before starting any type of merge.\n"
 msgstr ""
 "Javítás közben nem lehetséges a merge.\n"
 "\n"
-"Egyszer be kell fejezni ennek a commitnak a javítását, majd kezdődhet egy "
+"Egyszer be kell fejezni ennek a cummitnak a javítását, majd kezdődhet egy "
 "merge.\n"
 
 #: lib/merge.tcl:27
@@ -1758,14 +1758,14 @@ msgid ""
 "\n"
 "File %s has merge conflicts.\n"
 "\n"
-"You must resolve them, stage the file, and commit to complete the current "
+"You must resolve them, stage the file, and cummit to complete the current "
 "merge.  Only then can you begin another merge.\n"
 msgstr ""
 "Jelenleg egy ütközés feloldása közben vagyunk.\n"
 "\n"
 "A(z) %s fájlban ütközések vannak.\n"
 "\n"
-"Fel kell oldanunk őket, kiválasztani a fájlt, és commitolni hogy befejezzük "
+"Fel kell oldanunk őket, kiválasztani a fájlt, és cummitolni hogy befejezzük "
 "a jelenlegi merge-t. Csak ezután kezdhetünk el egy újabbat.\n"
 
 #: lib/merge.tcl:55
@@ -1775,14 +1775,14 @@ msgid ""
 "\n"
 "File %s is modified.\n"
 "\n"
-"You should complete the current commit before starting a merge.  Doing so "
+"You should complete the current cummit before starting a merge.  Doing so "
 "will help you abort a failed merge, should the need arise.\n"
 msgstr ""
 "Jelenleg egy változtatás közben vagyunk.\n"
 "\n"
 "A(z) %s fájl megváltozott.\n"
 "\n"
-"Először be kell fejeznünk a jelenlegi commitot, hogy elkezdhessünk egy merge-"
+"Először be kell fejeznünk a jelenlegi cummitot, hogy elkezdhessünk egy merge-"
 "t. Ez segíteni fog, hogy félbeszakíthassunk egy merge-t.\n"
 
 #: lib/merge.tcl:107
@@ -1816,23 +1816,23 @@ msgstr "Merge-ölni szándékozott revízió"
 msgid ""
 "Cannot abort while amending.\n"
 "\n"
-"You must finish amending this commit.\n"
+"You must finish amending this cummit.\n"
 msgstr ""
-"A commit javítás közben megszakítva.\n"
+"A cummit javítás közben megszakítva.\n"
 "\n"
-"Be kell fejeznünk ennek a commitnak a javítását.\n"
+"Be kell fejeznünk ennek a cummitnak a javítását.\n"
 
 #: lib/merge.tcl:222
 msgid ""
 "Abort merge?\n"
 "\n"
-"Aborting the current merge will cause *ALL* uncommitted changes to be lost.\n"
+"Aborting the current merge will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with aborting the current merge?"
 msgstr ""
 "Megszakítjuk a merge-t?\n"
 "\n"
-"A jelenlegi merge megszakítása *MINDEN* nem commitolt változtatás "
+"A jelenlegi merge megszakítása *MINDEN* nem cummitolt változtatás "
 "elvesztését jelenti.\n"
 "\n"
 "Folytatjuk a jelenlegi merge megszakítását?"
@@ -1841,13 +1841,13 @@ msgstr ""
 msgid ""
 "Reset changes?\n"
 "\n"
-"Resetting the changes will cause *ALL* uncommitted changes to be lost.\n"
+"Resetting the changes will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with resetting the current changes?"
 msgstr ""
 "Visszavonjuk a módosításokat?\n"
 "\n"
-"A módosítások visszavonása *MINDEN* nem commitolt változtatás elvesztését "
+"A módosítások visszavonása *MINDEN* nem cummitolt változtatás elvesztését "
 "jelenti.\n"
 "\n"
 "Folytatjuk a jelenlegi módosítások visszavonását?"
@@ -1992,8 +1992,8 @@ msgid "Email Address"
 msgstr "Email cím"
 
 #: lib/option.tcl:141
-msgid "Summarize Merge Commits"
-msgstr "A merge commitok összegzése"
+msgid "Summarize Merge cummits"
+msgstr "A merge cummitok összegzése"
 
 #: lib/option.tcl:142
 msgid "Merge Verbosity"
@@ -2036,8 +2036,8 @@ msgid "Number of Diff Context Lines"
 msgstr "A diff környezeti sorok száma"
 
 #: lib/option.tcl:153
-msgid "Commit Message Text Width"
-msgstr "Commit üzenet szövegének szélessége"
+msgid "cummit Message Text Width"
+msgstr "cummit üzenet szövegének szélessége"
 
 #: lib/option.tcl:154
 msgid "New Branch Name Template"
@@ -2219,10 +2219,10 @@ msgstr ""
 #, tcl-format
 msgid ""
 "One or more of the merge tests failed because you have not fetched the "
-"necessary commits.  Try fetching from %s first."
+"necessary cummits.  Try fetching from %s first."
 msgstr ""
 "Egy vagy több merge teszt hibát jelzett, mivel nem töltöttük le a megfelelő "
-"commitokat. Próbáljunk meg letölteni a következőből: %s először."
+"cummitokat. Próbáljunk meg letölteni a következőből: %s először."
 
 #: lib/remote_branch_delete.tcl:207
 msgid "Please select one or more branches to delete."
@@ -2571,32 +2571,32 @@ msgstr "Tageket is"
 #~ msgid "Not connected to aspell"
 #~ msgstr "Nincs kapcsolat az aspellhez"
 
-#~ msgid "Unstaged Changes (Will Not Be Committed)"
-#~ msgstr "Nem kiválasztott változtatások (nem lesz commitolva)"
+#~ msgid "Unstaged Changes (Will Not Be cummitted)"
+#~ msgstr "Nem kiválasztott változtatások (nem lesz cummitolva)"
 
 #~ msgid "Push to %s..."
 #~ msgstr "Pusholás ide: %s..."
 
-#~ msgid "Add Existing To Commit"
-#~ msgstr "Hozzáadás létező commithoz"
+#~ msgid "Add Existing To cummit"
+#~ msgstr "Hozzáadás létező cummithoz"
 
 #~ msgid "Add Existing"
 #~ msgstr "Létező hozzáadása"
 
 #~ msgid ""
-#~ "Abort commit?\n"
+#~ "Abort cummit?\n"
 #~ "\n"
-#~ "Aborting the current commit will cause *ALL* uncommitted changes to be "
+#~ "Aborting the current cummit will cause *ALL* uncummitted changes to be "
 #~ "lost.\n"
 #~ "\n"
-#~ "Continue with aborting the current commit?"
+#~ "Continue with aborting the current cummit?"
 #~ msgstr ""
-#~ "Megszakítjuk a commitot?\n"
+#~ "Megszakítjuk a cummitot?\n"
 #~ "\n"
-#~ "A jelenlegi commit megszakítása *MINDEN* nem commitolt változtatás "
+#~ "A jelenlegi cummit megszakítása *MINDEN* nem cummitolt változtatás "
 #~ "elvesztését jelenti.\n"
 #~ "\n"
-#~ "Folytatjuk a jelenlegi commit megszakítását?"
+#~ "Folytatjuk a jelenlegi cummit megszakítását?"
 
 #~ msgid "Aborting... please wait..."
 #~ msgstr "Megszakítás... várjunk..."

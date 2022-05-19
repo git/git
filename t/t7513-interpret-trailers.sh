@@ -214,14 +214,14 @@ test_expect_success 'with non-trailer lines mixed with cherry picked from' '
 
 		this is not a trailer
 		this is not a trailer
-		(cherry picked from commit x)
+		(cherry picked from cummit x)
 		this is not a trailer
 	EOF
 	cat >expected <<-\EOF &&
 
 		this is not a trailer
 		this is not a trailer
-		(cherry picked from commit x)
+		(cherry picked from cummit x)
 		this is not a trailer
 		token: value
 	EOF
@@ -563,7 +563,7 @@ test_expect_success 'with config setup and ":=#" as separators' '
 	test_cmp expected actual
 '
 
-test_expect_success 'with commit basic message' '
+test_expect_success 'with cummit basic message' '
 	cat basic_message >expected &&
 	echo >>expected &&
 	git interpret-trailers <basic_message >actual &&
@@ -580,7 +580,7 @@ test_expect_success 'with basic patch' '
 	test_cmp expected actual
 '
 
-test_expect_success 'with commit complex message as argument' '
+test_expect_success 'with cummit complex message as argument' '
 	cat complex_message_body complex_message_trailers >complex_message &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
@@ -676,7 +676,7 @@ test_expect_success 'with message that has an old style conflict block' '
 	test_cmp expected actual
 '
 
-test_expect_success 'with commit complex message and trailer args' '
+test_expect_success 'with cummit complex message and trailer args' '
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Fixes: Z
@@ -1297,16 +1297,16 @@ test_expect_success 'with simple command' '
 	test_cmp expected actual
 '
 
-test_expect_success 'with command using committer information' '
+test_expect_success 'with command using cummitter information' '
 	git config trailer.sign.ifExists "addIfDifferent" &&
-	git config trailer.sign.command "echo \"\$GIT_COMMITTER_NAME <\$GIT_COMMITTER_EMAIL>\"" &&
+	git config trailer.sign.command "echo \"\$GIT_cummitTER_NAME <\$GIT_cummitTER_EMAIL>\"" &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-\EOF &&
 		Fixes: Z
 		Acked-by= Z
 		Reviewed-by:
 		Signed-off-by: Z
-		Signed-off-by: C O Mitter <committer@example.com>
+		Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	git interpret-trailers --trailer "review:" --trailer "fix=22" \
 		<complex_message >actual &&
@@ -1331,20 +1331,20 @@ test_expect_success 'with command using author information' '
 	test_cmp expected actual
 '
 
-test_expect_success 'setup a commit' '
-	echo "Content of the first commit." > a.txt &&
+test_expect_success 'setup a cummit' '
+	echo "Content of the first cummit." > a.txt &&
 	git add a.txt &&
-	git commit -m "Add file a.txt"
+	git cummit -m "Add file a.txt"
 '
 
 test_expect_success 'cmd takes precedence over command' '
 	test_when_finished "git config --unset trailer.fix.cmd" &&
 	git config trailer.fix.ifExists "replace" &&
 	git config trailer.fix.cmd "test -n \"\$1\" && git log -1 --oneline --format=\"%h (%aN)\" \
-	--abbrev-commit --abbrev=14 \"\$1\" || true" &&
+	--abbrev-cummit --abbrev=14 \"\$1\" || true" &&
 	git config trailer.fix.command "git log -1 --oneline --format=\"%h (%s)\" \
-		--abbrev-commit --abbrev=14 \$ARG" &&
-	FIXED=$(git log -1 --oneline --format="%h (%aN)" --abbrev-commit --abbrev=14 HEAD) &&
+		--abbrev-cummit --abbrev=14 \$ARG" &&
+	FIXED=$(git log -1 --oneline --format="%h (%aN)" --abbrev-cummit --abbrev=14 HEAD) &&
 	cat complex_message_body >expected2 &&
 	sed -e "s/ Z\$/ /" >>expected2 <<-EOF &&
 		Fixes: $FIXED
@@ -1360,8 +1360,8 @@ test_expect_success 'cmd takes precedence over command' '
 
 test_expect_success 'with command using $ARG' '
 	git config trailer.fix.ifExists "replace" &&
-	git config trailer.fix.command "git log -1 --oneline --format=\"%h (%s)\" --abbrev-commit --abbrev=14 \$ARG" &&
-	FIXED=$(git log -1 --oneline --format="%h (%s)" --abbrev-commit --abbrev=14 HEAD) &&
+	git config trailer.fix.command "git log -1 --oneline --format=\"%h (%s)\" --abbrev-cummit --abbrev=14 \$ARG" &&
+	FIXED=$(git log -1 --oneline --format="%h (%s)" --abbrev-cummit --abbrev=14 HEAD) &&
 	cat complex_message_body >expected &&
 	sed -e "s/ Z\$/ /" >>expected <<-EOF &&
 		Fixes: $FIXED
@@ -1527,7 +1527,7 @@ test_expect_success 'handling of --- lines in input' '
 	body
 
 	not-a-trailer: too soon
-	------ this is just a line in the commit message with a bunch of
+	------ this is just a line in the cummit message with a bunch of
 	------ dashes; it does not have any syntactic meaning.
 
 	real-trailer: just right
@@ -1546,13 +1546,13 @@ test_expect_success 'suppress --- handling' '
 	git interpret-trailers --parse --no-divider >actual <<-\EOF &&
 	subject
 
-	This commit message has a "---" in it, but because we tell
+	This cummit message has a "---" in it, but because we tell
 	interpret-trailers not to respect that, it has no effect.
 
 	not-a-trailer: too soon
 	---
 
-	This is still the commit message body.
+	This is still the cummit message body.
 
 	real-trailer: just right
 	EOF

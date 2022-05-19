@@ -53,7 +53,7 @@ test_dirty() {
 }
 
 test_expect_success 'setup' '
-	test_commit init &&
+	test_cummit init &&
 	mkdir sub &&
 	touch ./1 ./2 sub/1 sub/2 &&
 	git add 1 2 sub/1 sub/2 &&
@@ -132,16 +132,16 @@ test_expect_success 'diff-files does not examine skip-worktree dirty entries' '
 	test -z "$(git diff-files -- one)"
 '
 
-test_expect_success 'commit on skip-worktree absent entries' '
+test_expect_success 'cummit on skip-worktree absent entries' '
 	git reset &&
 	setup_absent &&
-	test_must_fail git commit -m null 1
+	test_must_fail git cummit -m null 1
 '
 
-test_expect_success 'commit on skip-worktree dirty entries' '
+test_expect_success 'cummit on skip-worktree dirty entries' '
 	git reset &&
 	setup_dirty &&
-	test_must_fail git commit -m null 1
+	test_must_fail git cummit -m null 1
 '
 
 test_done

@@ -8,9 +8,9 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'setup non-bare' '
 	echo one >file &&
 	git add file &&
-	git commit -m one &&
+	git cummit -m one &&
 	echo two >file &&
-	git commit -a -m two
+	git cummit -a -m two
 '
 
 test_expect_success '"hard" reset requires a worktree' '

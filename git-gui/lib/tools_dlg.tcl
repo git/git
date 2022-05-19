@@ -378,7 +378,7 @@ method _cancel {} {
 }
 
 method _rev {} {
-	if {[catch {$w_rev commit_or_die}]} {
+	if {[catch {$w_rev cummit_or_die}]} {
 		return {}
 	}
 	return [$w_rev get]

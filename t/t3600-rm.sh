@@ -14,7 +14,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'Initialize test directory' '
 	touch -- foo bar baz "space embedded" -q &&
 	git add -- foo bar baz "space embedded" -q &&
-	git commit -m "add normal files"
+	git cummit -m "add normal files"
 '
 
 if test_have_prereq !FUNNYNAMES
@@ -25,7 +25,7 @@ fi
 test_expect_success FUNNYNAMES 'add files with funny names' '
 	touch -- "tab	embedded" "newline${LF}embedded" &&
 	git add -- "tab	embedded" "newline${LF}embedded" &&
-	git commit -m "add files with tabs and newlines"
+	git cummit -m "add files with tabs and newlines"
 '
 
 test_expect_success 'Pre-check that foo exists and is in index before git rm foo' '
@@ -46,7 +46,7 @@ test_expect_success 'Test that git rm --cached foo succeeds if the index matches
 test_expect_success 'Test that git rm --cached foo succeeds if the index matches the file' '
 	echo content >foo &&
 	git add foo &&
-	git commit -m foo &&
+	git cummit -m foo &&
 	echo "other content" >foo &&
 	git rm --cached foo
 '
@@ -54,7 +54,7 @@ test_expect_success 'Test that git rm --cached foo succeeds if the index matches
 test_expect_success 'Test that git rm --cached foo fails if the index matches neither the file nor HEAD' '
 	echo content >foo &&
 	git add foo &&
-	git commit -m foo --allow-empty &&
+	git cummit -m foo --allow-empty &&
 	echo "other content" >foo &&
 	git add foo &&
 	echo "yet another content" >foo &&
@@ -64,7 +64,7 @@ test_expect_success 'Test that git rm --cached foo fails if the index matches ne
 test_expect_success 'Test that git rm --cached -f foo works in case where --cached only did not' '
 	echo content >foo &&
 	git add foo &&
-	git commit -m foo --allow-empty &&
+	git cummit -m foo --allow-empty &&
 	echo "other content" >foo &&
 	git add foo &&
 	echo "yet another content" >foo &&
@@ -115,22 +115,22 @@ test_expect_success 'Remove nonexistent file with --ignore-unmatch' '
 test_expect_success '"rm" command printed' '
 	echo frotz >test-file &&
 	git add test-file &&
-	git commit -m "add file for rm test" &&
+	git cummit -m "add file for rm test" &&
 	git rm test-file >rm-output.raw &&
 	grep "^rm " rm-output.raw >rm-output &&
 	test_line_count = 1 rm-output &&
 	rm -f test-file rm-output.raw rm-output &&
-	git commit -m "remove file from rm test"
+	git cummit -m "remove file from rm test"
 '
 
 test_expect_success '"rm" command suppressed with --quiet' '
 	echo frotz >test-file &&
 	git add test-file &&
-	git commit -m "add file for rm --quiet test" &&
+	git cummit -m "add file for rm --quiet test" &&
 	git rm --quiet test-file >rm-output &&
 	test_must_be_empty rm-output &&
 	rm -f test-file rm-output &&
-	git commit -m "remove file from rm --quiet test"
+	git cummit -m "remove file from rm --quiet test"
 '
 
 # Now, failure cases.
@@ -194,7 +194,7 @@ test_expect_success 'Recursive test setup' '
 	mkdir -p frotz &&
 	echo qfwfq >frotz/nitfol &&
 	git add frotz &&
-	git commit -m "subdir test"
+	git cummit -m "subdir test"
 '
 
 test_expect_success 'Recursive without -r fails' '
@@ -227,7 +227,7 @@ test_expect_success 'Call "rm" from outside the work tree' '
 		git init &&
 		echo something >somefile &&
 		git add somefile &&
-		git commit -m "add a file" &&
+		git cummit -m "add a file" &&
 		(
 			cd .. &&
 			git --git-dir=repo/.git --work-tree=repo rm somefile
@@ -322,7 +322,7 @@ test_expect_success 'rm removes empty submodules from work tree' '
 	git config -f .gitmodules submodule.sub.path submod &&
 	git submodule init &&
 	git add .gitmodules &&
-	git commit -m "add submodule" &&
+	git cummit -m "add submodule" &&
 	git rm submod &&
 	test_path_is_missing submod &&
 	git status -s -uno --ignore-submodules=none >actual &&
@@ -494,20 +494,20 @@ test_expect_success 'setup submodule conflict' '
 	git checkout -b branch1 &&
 	echo 1 >nitfol &&
 	git add nitfol &&
-	git commit -m "added nitfol 1" &&
+	git cummit -m "added nitfol 1" &&
 	git checkout -b branch2 main &&
 	echo 2 >nitfol &&
 	git add nitfol &&
-	git commit -m "added nitfol 2" &&
+	git cummit -m "added nitfol 2" &&
 	git checkout -b conflict1 main &&
 	git -C submod fetch &&
 	git -C submod checkout branch1 &&
 	git add submod &&
-	git commit -m "submod 1" &&
+	git cummit -m "submod 1" &&
 	git checkout -b conflict2 main &&
 	git -C submod checkout branch2 &&
 	git add submod &&
-	git commit -m "submod 2"
+	git cummit -m "submod 2"
 '
 
 cat >expect.conflict <<EOF
@@ -649,10 +649,10 @@ test_expect_success 'setup subsubmodule' '
 		git config -f .gitmodules submodule.sub.path subsubmod &&
 		git submodule init &&
 		git add .gitmodules &&
-		git commit -m "add subsubmodule" &&
+		git cummit -m "add subsubmodule" &&
 		git submodule update subsubmod
 	) &&
-	git commit -a -m "added deep submodule"
+	git cummit -a -m "added deep submodule"
 '
 
 test_expect_success 'rm recursively removes work tree of unmodified submodules' '
@@ -724,8 +724,8 @@ test_expect_success "rm absorbs submodule's nested .git directory" '
 	test_i18ngrep Migrating output.err
 '
 
-test_expect_success 'checking out a commit after submodule removal needs manual updates' '
-	git commit -m "submodule removal" submod .gitmodules &&
+test_expect_success 'checking out a cummit after submodule removal needs manual updates' '
+	git cummit -m "submodule removal" submod .gitmodules &&
 	git checkout HEAD^ &&
 	git submodule update &&
 	git checkout -q HEAD^ &&
@@ -782,7 +782,7 @@ test_expect_success SYMLINKS 'rm across a symlinked leading path (no index)' '
 	echo content >e/f &&
 	ln -s e d &&
 	git add -A e d &&
-	git commit -m "symlink d to e, e/f exists" &&
+	git cummit -m "symlink d to e, e/f exists" &&
 	test_must_fail git rm d/f &&
 	git rev-parse --verify :d &&
 	git rev-parse --verify :e/f &&
@@ -795,7 +795,7 @@ test_expect_failure SYMLINKS 'rm across a symlinked leading path (w/ index)' '
 	mkdir d &&
 	echo content >d/f &&
 	git add -A e d &&
-	git commit -m "d/f exists" &&
+	git cummit -m "d/f exists" &&
 	mv d e &&
 	ln -s e d &&
 	test_must_fail git rm d/f &&
@@ -843,7 +843,7 @@ test_expect_success 'rm file with local modification' '
 	    foo.txt
 	(use --cached to keep the file, or -f to force removal)
 	EOF
-	git commit -m "testing rm 3" &&
+	git cummit -m "testing rm 3" &&
 	echo content3 >foo.txt &&
 	test_must_fail git rm foo.txt 2>actual &&
 	test_cmp expect actual

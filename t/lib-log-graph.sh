@@ -2,10 +2,10 @@
 
 sanitize_log_output () {
 	sed -e 's/ *$//' \
-	    -e 's/commit [0-9a-f]*$/commit COMMIT_OBJECT_NAME/' \
+	    -e 's/cummit [0-9a-f]*$/cummit cummit_OBJECT_NAME/' \
 	    -e 's/Merge: [ 0-9a-f]*$/Merge: MERGE_PARENTS/' \
 	    -e 's/Merge tag.*/Merge HEADS DESCRIPTION/' \
-	    -e 's/Merge commit.*/Merge HEADS DESCRIPTION/' \
+	    -e 's/Merge cummit.*/Merge HEADS DESCRIPTION/' \
 	    -e 's/index [0-9a-f]*\.\.[0-9a-f]*/index BEFORE..AFTER/'
 }
 

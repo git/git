@@ -7,23 +7,23 @@ test_description='git merge
 
 Testing basic merge operations/option parsing.
 
-! [c0] commit 0
- ! [c1] commit 1
-  ! [c2] commit 2
-   ! [c3] commit 3
+! [c0] cummit 0
+ ! [c1] cummit 1
+  ! [c2] cummit 2
+   ! [c3] cummit 3
     ! [c4] c4
      ! [c5] c5
       ! [c6] c6
-       * [main] Merge commit 'c1'
+       * [main] Merge cummit 'c1'
 --------
-       - [main] Merge commit 'c1'
- +     * [c1] commit 1
+       - [main] Merge cummit 'c1'
+ +     * [c1] cummit 1
       +  [c6] c6
      +   [c5] c5
     ++   [c4] c4
-   ++++  [c3] commit 3
-  +      [c2] commit 2
-+++++++* [c0] commit 0
+   ++++  [c3] cummit 3
+  +      [c2] cummit 2
++++++++* [c0] cummit 0
 '
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
@@ -50,23 +50,23 @@ create_merge_msgs () {
 	echo "Merge tag 'c2'" >msg.1-5 &&
 	echo "Merge tags 'c2' and 'c3'" >msg.1-5-9 &&
 	{
-		echo "Squashed commit of the following:" &&
+		echo "Squashed cummit of the following:" &&
 		echo &&
 		git log --no-merges ^HEAD c1
 	} >squash.1 &&
 	{
-		echo "Squashed commit of the following:" &&
+		echo "Squashed cummit of the following:" &&
 		echo &&
 		git log --no-merges ^HEAD c2
 	} >squash.1-5 &&
 	{
-		echo "Squashed commit of the following:" &&
+		echo "Squashed cummit of the following:" &&
 		echo &&
 		git log --no-merges ^HEAD c2 c3
 	} >squash.1-5-9 &&
 	{
 		echo "* tag 'c3':" &&
-		echo "  commit 3"
+		echo "  cummit 3"
 	} >msg.log
 }
 
@@ -117,7 +117,7 @@ verify_no_mergehead () {
 test_expect_success 'setup' '
 	git add file &&
 	test_tick &&
-	git commit -m "commit 0" &&
+	git cummit -m "cummit 0" &&
 	git tag c0 &&
 	c0=$(git rev-parse HEAD) &&
 	cp file.1 file &&
@@ -125,27 +125,27 @@ test_expect_success 'setup' '
 	cp file.1 other &&
 	git add other &&
 	test_tick &&
-	git commit -m "commit 1" &&
+	git cummit -m "cummit 1" &&
 	git tag c1 &&
 	c1=$(git rev-parse HEAD) &&
 	git reset --hard "$c0" &&
 	cp file.5 file &&
 	git add file &&
 	test_tick &&
-	git commit -m "commit 2" &&
+	git cummit -m "cummit 2" &&
 	git tag c2 &&
 	c2=$(git rev-parse HEAD) &&
 	git reset --hard "$c0" &&
 	cp file.9y file &&
 	git add file &&
 	test_tick &&
-	git commit -m "commit 7" &&
+	git cummit -m "cummit 7" &&
 	git tag c7 &&
 	git reset --hard "$c0" &&
 	cp file.9 file &&
 	git add file &&
 	test_tick &&
-	git commit -m "commit 3" &&
+	git cummit -m "cummit 3" &&
 	git tag c3 &&
 	c3=$(git rev-parse HEAD) &&
 	git reset --hard "$c0" &&
@@ -240,10 +240,10 @@ test_expect_success 'merge --squash c3 with c7' '
 	git reset --hard c3 &&
 	test_must_fail git merge --squash c7 &&
 	cat result.9z >file &&
-	git commit --no-edit -a &&
+	git cummit --no-edit -a &&
 
 	cat >expect <<-EOF &&
-	Squashed commit of the following:
+	Squashed cummit of the following:
 
 	$(git show -s c7)
 
@@ -255,12 +255,12 @@ test_expect_success 'merge --squash c3 with c7' '
 	test_cmp expect actual
 '
 
-test_expect_success 'merge c3 with c7 with commit.cleanup = scissors' '
-	git config commit.cleanup scissors &&
+test_expect_success 'merge c3 with c7 with cummit.cleanup = scissors' '
+	git config cummit.cleanup scissors &&
 	git reset --hard c3 &&
 	test_must_fail git merge c7 &&
 	cat result.9z >file &&
-	git commit --no-edit -a &&
+	git cummit --no-edit -a &&
 
 	cat >expect <<-\EOF &&
 	Merge tag '"'"'c7'"'"'
@@ -277,15 +277,15 @@ test_expect_success 'merge c3 with c7 with commit.cleanup = scissors' '
 	test_cmp expect actual
 '
 
-test_expect_success 'merge c3 with c7 with --squash commit.cleanup = scissors' '
-	git config commit.cleanup scissors &&
+test_expect_success 'merge c3 with c7 with --squash cummit.cleanup = scissors' '
+	git config cummit.cleanup scissors &&
 	git reset --hard c3 &&
 	test_must_fail git merge --squash c7 &&
 	cat result.9z >file &&
-	git commit --no-edit -a &&
+	git cummit --no-edit -a &&
 
 	cat >expect <<-EOF &&
-	Squashed commit of the following:
+	Squashed cummit of the following:
 
 	$(git show -s c7)
 
@@ -336,18 +336,18 @@ test_expect_success 'merges with merge.ff=only' '
 	verify_head $c3
 '
 
-test_expect_success 'merge c0 with c1 (no-commit)' '
+test_expect_success 'merge c0 with c1 (no-cummit)' '
 	git reset --hard c0 &&
-	git merge --no-commit c1 &&
+	git merge --no-cummit c1 &&
 	verify_merge file result.1 &&
 	verify_head $c1
 '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
-test_expect_success 'merge c1 with c2 (no-commit)' '
+test_expect_success 'merge c1 with c2 (no-cummit)' '
 	git reset --hard c1 &&
-	git merge --no-commit c2 &&
+	git merge --no-cummit c2 &&
 	verify_merge file result.1-5 &&
 	verify_head $c1 &&
 	verify_mergeheads $c2
@@ -355,9 +355,9 @@ test_expect_success 'merge c1 with c2 (no-commit)' '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
-test_expect_success 'merge c1 with c2 and c3 (no-commit)' '
+test_expect_success 'merge c1 with c2 and c3 (no-cummit)' '
 	git reset --hard c1 &&
-	git merge --no-commit c2 c3 &&
+	git merge --no-cummit c2 c3 &&
 	verify_merge file result.1-5-9 &&
 	verify_head $c1 &&
 	verify_mergeheads $c2 $c3
@@ -416,9 +416,9 @@ test_expect_success 'merge c1 with c2 and c3 (squash)' '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
-test_expect_success 'merge c1 with c2 (no-commit in config)' '
+test_expect_success 'merge c1 with c2 (no-cummit in config)' '
 	git reset --hard c1 &&
-	test_config branch.main.mergeoptions "--no-commit" &&
+	test_config branch.main.mergeoptions "--no-cummit" &&
 	git merge c2 &&
 	verify_merge file result.1-5 &&
 	verify_head $c1 &&
@@ -512,11 +512,11 @@ test_expect_success 'override config option --stat' '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
-test_expect_success 'merge c1 with c2 (override --no-commit)' '
+test_expect_success 'merge c1 with c2 (override --no-cummit)' '
 	git reset --hard c1 &&
-	test_config branch.main.mergeoptions "--no-commit" &&
+	test_config branch.main.mergeoptions "--no-cummit" &&
 	test_tick &&
-	git merge --commit c2 &&
+	git merge --cummit c2 &&
 	verify_merge file result.1-5 msg.1-5 &&
 	verify_parents $c1 $c2
 '
@@ -579,10 +579,10 @@ test_expect_success 'combining --squash and --no-ff is refused' '
 	test_must_fail git merge --no-ff --squash c1
 '
 
-test_expect_success 'combining --squash and --commit is refused' '
+test_expect_success 'combining --squash and --cummit is refused' '
 	git reset --hard c0 &&
-	test_must_fail git merge --squash --commit c1 &&
-	test_must_fail git merge --commit --squash c1
+	test_must_fail git merge --squash --cummit c1 &&
+	test_must_fail git merge --cummit --squash c1
 '
 
 test_expect_success 'option --ff-only overwrites --no-ff' '
@@ -750,25 +750,25 @@ test_expect_success 'conflicted merge with --autostash, --abort restores stash' 
 	test_cmp file.1 file
 '
 
-test_expect_success 'completed merge (git commit) with --no-commit and --autostash' '
+test_expect_success 'completed merge (git cummit) with --no-cummit and --autostash' '
 	git reset --hard c1 &&
 	git merge-file file file.orig file.9 &&
 	git diff >expect &&
-	git merge --no-commit --autostash c2 &&
+	git merge --no-cummit --autostash c2 &&
 	git stash show -p MERGE_AUTOSTASH >actual &&
 	test_cmp expect actual &&
-	git commit 2>err &&
+	git cummit 2>err &&
 	test_i18ngrep "Applied autostash." err &&
 	git show HEAD:file >merge-result &&
 	test_cmp result.1-5 merge-result &&
 	test_cmp result.1-5-9 file
 '
 
-test_expect_success 'completed merge (git merge --continue) with --no-commit and --autostash' '
+test_expect_success 'completed merge (git merge --continue) with --no-cummit and --autostash' '
 	git reset --hard c1 &&
 	git merge-file file file.orig file.9 &&
 	git diff >expect &&
-	git merge --no-commit --autostash c2 &&
+	git merge --no-cummit --autostash c2 &&
 	git stash show -p MERGE_AUTOSTASH >actual &&
 	test_cmp expect actual &&
 	git merge --continue 2>err &&
@@ -778,11 +778,11 @@ test_expect_success 'completed merge (git merge --continue) with --no-commit and
 	test_cmp result.1-5-9 file
 '
 
-test_expect_success 'aborted merge (merge --abort) with --no-commit and --autostash' '
+test_expect_success 'aborted merge (merge --abort) with --no-cummit and --autostash' '
 	git reset --hard c1 &&
 	git merge-file file file.orig file.9 &&
 	git diff >expect &&
-	git merge --no-commit --autostash c2 &&
+	git merge --no-cummit --autostash c2 &&
 	git stash show -p MERGE_AUTOSTASH >actual &&
 	test_cmp expect actual &&
 	git merge --abort 2>err &&
@@ -791,11 +791,11 @@ test_expect_success 'aborted merge (merge --abort) with --no-commit and --autost
 	test_cmp expect actual
 '
 
-test_expect_success 'aborted merge (reset --hard) with --no-commit and --autostash' '
+test_expect_success 'aborted merge (reset --hard) with --no-cummit and --autostash' '
 	git reset --hard c1 &&
 	git merge-file file file.orig file.9 &&
 	git diff >expect &&
-	git merge --no-commit --autostash c2 &&
+	git merge --no-cummit --autostash c2 &&
 	git stash show -p MERGE_AUTOSTASH >actual &&
 	test_cmp expect actual &&
 	git reset --hard 2>err &&
@@ -803,11 +803,11 @@ test_expect_success 'aborted merge (reset --hard) with --no-commit and --autosta
 	git diff --exit-code
 '
 
-test_expect_success 'quit merge with --no-commit and --autostash' '
+test_expect_success 'quit merge with --no-cummit and --autostash' '
 	git reset --hard c1 &&
 	git merge-file file file.orig file.9 &&
 	git diff >expect &&
-	git merge --no-commit --autostash c2 &&
+	git merge --no-cummit --autostash c2 &&
 	git stash show -p MERGE_AUTOSTASH >actual &&
 	test_cmp expect actual &&
 	git diff HEAD >expect &&
@@ -834,23 +834,23 @@ cat >expected.branch <<\EOF
 Merge branch 'c5-branch' (early part)
 EOF
 cat >expected.tag <<\EOF
-Merge commit 'c5~1'
+Merge cummit 'c5~1'
 EOF
 
 test_expect_success 'merge early part of c2' '
 	git reset --hard c3 &&
 	echo c4 >c4.c &&
 	git add c4.c &&
-	git commit -m c4 &&
+	git cummit -m c4 &&
 	git tag c4 &&
 	echo c5 >c5.c &&
 	git add c5.c &&
-	git commit -m c5 &&
+	git cummit -m c5 &&
 	git tag c5 &&
 	git reset --hard c3 &&
 	echo c6 >c6.c &&
 	git add c6.c &&
-	git commit -m c6 &&
+	git cummit -m c6 &&
 	git tag c6 &&
 	git branch -f c5-branch c5 &&
 	git merge c5-branch~1 &&
@@ -864,17 +864,17 @@ test_expect_success 'merge early part of c2' '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
-test_expect_success 'merge --no-ff --no-commit && commit' '
+test_expect_success 'merge --no-ff --no-cummit && cummit' '
 	git reset --hard c0 &&
-	git merge --no-ff --no-commit c1 &&
-	EDITOR=: git commit &&
+	git merge --no-ff --no-cummit c1 &&
+	EDITOR=: git cummit &&
 	verify_parents $c0 $c1
 '
 
 test_debug 'git log --graph --decorate --oneline --all'
 
-test_expect_success 'amending no-ff merge commit' '
-	EDITOR=: git commit --amend &&
+test_expect_success 'amending no-ff merge cummit' '
+	EDITOR=: git cummit --amend &&
 	verify_parents $c0 $c1
 '
 
@@ -941,8 +941,8 @@ test_expect_success 'merge annotated/signed tag w/ tracking' '
 
 test_expect_success GPG 'merge --ff-only tag' '
 	git reset --hard c0 &&
-	git commit --allow-empty -m "A newer commit" &&
-	git tag -s -m "A newer commit" signed &&
+	git cummit --allow-empty -m "A newer cummit" &&
+	git tag -s -m "A newer cummit" signed &&
 	git reset --hard c0 &&
 
 	git merge --ff-only signed &&
@@ -953,8 +953,8 @@ test_expect_success GPG 'merge --ff-only tag' '
 
 test_expect_success GPG 'merge --no-edit tag should skip editor' '
 	git reset --hard c0 &&
-	git commit --allow-empty -m "A newer commit" &&
-	git tag -f -s -m "A newer commit" signed &&
+	git cummit --allow-empty -m "A newer cummit" &&
+	git tag -f -s -m "A newer cummit" signed &&
 	git reset --hard c0 &&
 
 	EDITOR=false git merge --no-edit --no-ff signed &&
@@ -971,19 +971,19 @@ test_expect_success 'set up mod-256 conflict scenario' '
 		done
 	done >file &&
 	git add file &&
-	git commit -m base &&
+	git cummit -m base &&
 
 	# one side changes the first line of each to "main"
 	sed s/-1/-main/ file >tmp &&
 	mv tmp file &&
-	git commit -am main &&
+	git cummit -am main &&
 
 	# and the other to "side"; merging the two will
 	# yield 256 separate conflicts
 	git checkout -b side HEAD^ &&
 	sed s/-1/-side/ file >tmp &&
 	mv tmp file &&
-	git commit -am side
+	git cummit -am side
 '
 
 test_expect_success 'merge detects mod-256 conflicts (recursive)' '
@@ -1008,7 +1008,7 @@ test_expect_success 'merge nothing into void' '
 
 test_expect_success 'merge can be completed with --continue' '
 	git reset --hard c0 &&
-	git merge --no-ff --no-commit c1 &&
+	git merge --no-ff --no-cummit c1 &&
 	git merge --continue &&
 	verify_parents $c0 $c1
 '
@@ -1032,13 +1032,13 @@ test_expect_success 'merge --quit' '
 	git init merge-quit &&
 	(
 		cd merge-quit &&
-		test_commit base &&
+		test_cummit base &&
 		echo one >>base.t &&
-		git commit -am one &&
+		git cummit -am one &&
 		git branch one &&
 		git checkout base &&
 		echo two >>base.t &&
-		git commit -am two &&
+		git cummit -am two &&
 		test_must_fail git -c rerere.enabled=true merge one &&
 		test_path_is_file .git/MERGE_HEAD &&
 		test_path_is_file .git/MERGE_MODE &&
@@ -1055,7 +1055,7 @@ test_expect_success 'merge --quit' '
 '
 
 test_expect_success 'merge suggests matching remote refname' '
-	git commit --allow-empty -m not-local &&
+	git cummit --allow-empty -m not-local &&
 	git update-ref refs/remotes/origin/not-local HEAD &&
 	git reset --hard HEAD^ &&
 

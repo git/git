@@ -7,7 +7,7 @@ test_description='test disabling of git-over-ssh in clone/fetch'
 setup_ssh_wrapper
 
 test_expect_success 'setup repository to clone' '
-	test_commit one &&
+	test_cummit one &&
 	mkdir remote &&
 	git init --bare remote/repo.git &&
 	git push remote/repo.git HEAD

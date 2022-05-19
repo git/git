@@ -23,7 +23,7 @@ test_expect_success 'symlinked directory' '
 		: > other/subdir2/file.t &&
 		(cd some/sub/directory && ln -s ../../../other/subdir2 .) &&
 		git add some other &&
-		git commit -m "symlinks" &&
+		git cummit -m "symlinks" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit -v
 	) &&

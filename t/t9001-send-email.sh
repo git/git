@@ -19,7 +19,7 @@ test_expect_success $PREREQ 'prepare reference tree' '
 	echo "1A quick brown fox jumps over the" >file &&
 	echo "lazy dog" >>file &&
 	git add file &&
-	GIT_AUTHOR_NAME="A" git commit -a -m "Initial."
+	GIT_AUTHOR_NAME="A" git cummit -a -m "Initial."
 '
 
 test_expect_success $PREREQ 'Setup helper tool' '
@@ -37,7 +37,7 @@ test_expect_success $PREREQ 'Setup helper tool' '
 	cat >"msgtxt$output"
 	EOF
 	git add fake.sendmail &&
-	GIT_AUTHOR_NAME="A" git commit -a -m "Second."
+	GIT_AUTHOR_NAME="A" git cummit -a -m "Second."
 '
 
 clean_fake_sendmail () {
@@ -164,9 +164,9 @@ EOF
 "
 
 test_expect_success $PREREQ 'cc trailer with various syntax' '
-	test_commit cc-trailer &&
+	test_cummit cc-trailer &&
 	test_when_finished "git reset --hard HEAD^" &&
-	git commit --amend -F - <<-EOF &&
+	git cummit --amend -F - <<-EOF &&
 	Test Cc: trailers.
 
 	Cc: one@example.com
@@ -237,14 +237,14 @@ EOF
 "
 
 test_suppress_self () {
-	test_commit $3 &&
+	test_cummit $3 &&
 	test_when_finished "git reset --hard HEAD^" &&
 
 	write_script cccmd-sed <<-EOF &&
 		sed -n -e s/^cccmd--//p "\$1"
 	EOF
 
-	git commit --amend --author="$1 <$2>" -F - &&
+	git cummit --amend --author="$1 <$2>" -F - &&
 	clean_fake_sendmail &&
 	git format-patch --stdout -1 >"suppress-self-$3.patch" &&
 
@@ -349,8 +349,8 @@ test_expect_success $PREREQ,AUTOIDENT 'implicit ident is allowed' '
 	clean_fake_sendmail &&
 	(sane_unset GIT_AUTHOR_NAME &&
 	sane_unset GIT_AUTHOR_EMAIL &&
-	sane_unset GIT_COMMITTER_NAME &&
-	sane_unset GIT_COMMITTER_EMAIL &&
+	sane_unset GIT_cummitTER_NAME &&
+	sane_unset GIT_cummitTER_EMAIL &&
 	GIT_SEND_EMAIL_NOTTY=1 git send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		--to=to@example.com \
@@ -362,8 +362,8 @@ test_expect_success $PREREQ,!AUTOIDENT 'broken implicit ident aborts send-email'
 	clean_fake_sendmail &&
 	(sane_unset GIT_AUTHOR_NAME &&
 	sane_unset GIT_AUTHOR_EMAIL &&
-	sane_unset GIT_COMMITTER_NAME &&
-	sane_unset GIT_COMMITTER_EMAIL &&
+	sane_unset GIT_cummitTER_NAME &&
+	sane_unset GIT_cummitTER_EMAIL &&
 	GIT_SEND_EMAIL_NOTTY=1 && export GIT_SEND_EMAIL_NOTTY &&
 	test_must_fail git send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
@@ -778,7 +778,7 @@ cat >expected-suppress-cccmd <<\EOF
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
 (mbox) Adding cc: One <one@example.com> from line 'Cc: One <one@example.com>, two@example.com'
 (mbox) Adding cc: two@example.com from line 'Cc: One <one@example.com>, two@example.com'
-(body) Adding cc: C O Mitter <committer@example.com> from line 'Signed-off-by: C O Mitter <committer@example.com>'
+(body) Adding cc: C O Mitter <cummitter@example.com> from line 'Signed-off-by: C O Mitter <cummitter@example.com>'
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
@@ -786,13 +786,13 @@ RCPT TO:<to@example.com>
 RCPT TO:<author@example.com>
 RCPT TO:<one@example.com>
 RCPT TO:<two@example.com>
-RCPT TO:<committer@example.com>
+RCPT TO:<cummitter@example.com>
 From: Example <from@example.com>
 To: to@example.com
 Cc: A <author@example.com>,
 	One <one@example.com>,
 	two@example.com,
-	C O Mitter <committer@example.com>
+	C O Mitter <cummitter@example.com>
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -945,7 +945,7 @@ cat >expected-suppress-bodycc <<\EOF
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
 (mbox) Adding cc: One <one@example.com> from line 'Cc: One <one@example.com>, two@example.com'
 (mbox) Adding cc: two@example.com from line 'Cc: One <one@example.com>, two@example.com'
-(body) Adding cc: C O Mitter <committer@example.com> from line 'Signed-off-by: C O Mitter <committer@example.com>'
+(body) Adding cc: C O Mitter <cummitter@example.com> from line 'Signed-off-by: C O Mitter <cummitter@example.com>'
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
@@ -953,13 +953,13 @@ RCPT TO:<to@example.com>
 RCPT TO:<author@example.com>
 RCPT TO:<one@example.com>
 RCPT TO:<two@example.com>
-RCPT TO:<committer@example.com>
+RCPT TO:<cummitter@example.com>
 From: Example <from@example.com>
 To: to@example.com
 Cc: A <author@example.com>,
 	One <one@example.com>,
 	two@example.com,
-	C O Mitter <committer@example.com>
+	C O Mitter <cummitter@example.com>
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -979,17 +979,17 @@ test_expect_success $PREREQ 'setup expect' "
 cat >expected-suppress-cc <<\EOF
 0001-Second.patch
 (mbox) Adding cc: A <author@example.com> from line 'From: A <author@example.com>'
-(body) Adding cc: C O Mitter <committer@example.com> from line 'Signed-off-by: C O Mitter <committer@example.com>'
+(body) Adding cc: C O Mitter <cummitter@example.com> from line 'Signed-off-by: C O Mitter <cummitter@example.com>'
 Dry-OK. Log says:
 Server: relay.example.com
 MAIL FROM:<from@example.com>
 RCPT TO:<to@example.com>
 RCPT TO:<author@example.com>
-RCPT TO:<committer@example.com>
+RCPT TO:<cummitter@example.com>
 From: Example <from@example.com>
 To: to@example.com
 Cc: A <author@example.com>,
-	C O Mitter <committer@example.com>
+	C O Mitter <cummitter@example.com>
 Subject: [PATCH 1/1] Second.
 Date: DATE-STRING
 Message-Id: MESSAGE-ID-STRING
@@ -1149,9 +1149,9 @@ test_expect_success $PREREQ '--compose adds MIME for utf8 subject' '
 
 test_expect_success $PREREQ 'utf8 author is correctly passed on' '
 	clean_fake_sendmail &&
-	test_commit weird_author &&
+	test_cummit weird_author &&
 	test_when_finished "git reset --hard HEAD^" &&
-	git commit --amend --author "Füñný Nâmé <odd_?=mail@example.com>" &&
+	git cummit --amend --author "Füñný Nâmé <odd_?=mail@example.com>" &&
 	git format-patch --stdout -1 >funny_name.patch &&
 	git send-email --from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
@@ -1162,9 +1162,9 @@ test_expect_success $PREREQ 'utf8 author is correctly passed on' '
 
 test_expect_success $PREREQ 'utf8 sender is not duplicated' '
 	clean_fake_sendmail &&
-	test_commit weird_sender &&
+	test_cummit weird_sender &&
 	test_when_finished "git reset --hard HEAD^" &&
-	git commit --amend --author "Füñný Nâmé <odd_?=mail@example.com>" &&
+	git cummit --amend --author "Füñný Nâmé <odd_?=mail@example.com>" &&
 	git format-patch --stdout -1 >funny_name.patch &&
 	git send-email --from="Füñný Nâmé <odd_?=mail@example.com>" \
 		--to=nobody@example.com \
@@ -1243,7 +1243,7 @@ test_expect_success $PREREQ '--compose-encoding adds correct MIME for subject' '
 test_expect_success $PREREQ 'detects ambiguous reference/file conflict' '
 	echo main >main &&
 	git add main &&
-	git commit -m"add main" &&
+	git cummit -m"add main" &&
 	test_must_fail git send-email --dry-run main 2>errors &&
 	grep disambiguate errors
 '

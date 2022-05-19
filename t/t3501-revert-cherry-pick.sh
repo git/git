@@ -24,23 +24,23 @@ test_expect_success setup '
 
 	test_tick &&
 	git add oops &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag initial &&
 
 	test_tick &&
 	echo "Add extra line at the end" >>oops &&
-	git commit -a -m added &&
+	git cummit -a -m added &&
 	git tag added &&
 
 	test_tick &&
 	git mv oops spoo &&
-	git commit -m rename1 &&
+	git cummit -m rename1 &&
 	git tag rename1 &&
 
 	test_tick &&
 	git checkout -b side initial &&
 	git mv oops opos &&
-	git commit -m rename2 &&
+	git cummit -m rename2 &&
 	git tag rename2
 '
 
@@ -114,7 +114,7 @@ test_expect_success 'cherry-pick on unborn branch' '
 
 test_expect_success 'cherry-pick "-" to pick from previous branch' '
 	git checkout unborn &&
-	test_commit to-pick actual content &&
+	test_cummit to-pick actual content &&
 	git checkout main &&
 	git cherry-pick - &&
 	echo content >expect &&
@@ -125,19 +125,19 @@ test_expect_success 'cherry-pick "-" is meaningless without checkout' '
 	test_create_repo afresh &&
 	(
 		cd afresh &&
-		test_commit one &&
-		test_commit two &&
-		test_commit three &&
+		test_cummit one &&
+		test_cummit two &&
+		test_cummit three &&
 		test_must_fail git cherry-pick -
 	)
 '
 
 test_expect_success 'cherry-pick "-" works with arguments' '
 	git checkout -b side-branch &&
-	test_commit change actual change &&
+	test_cummit change actual change &&
 	git checkout main &&
 	git cherry-pick -s - &&
-	echo "Signed-off-by: C O Mitter <committer@example.com>" >expect &&
+	echo "Signed-off-by: C O Mitter <cummitter@example.com>" >expect &&
 	git cat-file commit HEAD | grep ^Signed-off-by: >signoff &&
 	test_cmp expect signoff &&
 	echo change >expect &&
@@ -145,13 +145,13 @@ test_expect_success 'cherry-pick "-" works with arguments' '
 '
 
 test_expect_success 'cherry-pick works with dirty renamed file' '
-	test_commit to-rename &&
+	test_cummit to-rename &&
 	git checkout -b unrelated &&
-	test_commit unrelated &&
+	test_cummit unrelated &&
 	git checkout @{-1} &&
 	git mv to-rename.t renamed &&
 	test_tick &&
-	git commit -m renamed &&
+	git cummit -m renamed &&
 	echo modified >renamed &&
 	git cherry-pick refs/heads/unrelated &&
 	test $(git rev-parse :0:renamed) = $(git rev-parse HEAD~2:to-rename.t) &&
@@ -159,18 +159,18 @@ test_expect_success 'cherry-pick works with dirty renamed file' '
 '
 
 test_expect_success 'advice from failed revert' '
-	test_commit --no-tag "add dream" dream dream &&
+	test_cummit --no-tag "add dream" dream dream &&
 	dream_oid=$(git rev-parse --short HEAD) &&
 	cat <<-EOF >expected &&
 	error: could not revert $dream_oid... add dream
 	hint: After resolving the conflicts, mark them with
 	hint: "git add/rm <pathspec>", then run
 	hint: "git revert --continue".
-	hint: You can instead skip this commit with "git revert --skip".
+	hint: You can instead skip this cummit with "git revert --skip".
 	hint: To abort and get back to the state before "git revert",
 	hint: run "git revert --abort".
 	EOF
-	test_commit --append --no-tag "double-add dream" dream dream &&
+	test_cummit --append --no-tag "double-add dream" dream dream &&
 	test_must_fail git revert HEAD^ 2>actual &&
 	test_cmp expected actual
 '

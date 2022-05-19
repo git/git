@@ -12,11 +12,11 @@ Fixes since v1.5.3.6
    from being used as a normal source of git-clone.
 
  * The code to reject nonsense command line of the form
-   "git-commit -a paths..." and "git-commit --interactive
+   "git-cummit -a paths..." and "git-cummit --interactive
    paths..." were broken.
 
  * Adding a signature that is not ASCII-only to an original
-   commit that is ASCII-only would make the result non-ASCII.
+   cummit that is ASCII-only would make the result non-ASCII.
    "git-format-patch -s" did not mark such a message correctly
    with MIME encoding header.
 
@@ -26,7 +26,7 @@ Fixes since v1.5.3.6
    contents, and the previous staging made the index entry
    "racily clean".
 
- * git-commit did not honor GIT_INDEX_FILE the user had in the
+ * git-cummit did not honor GIT_INDEX_FILE the user had in the
    environment.
 
  * When checking out a revision, git-checkout did not report where the

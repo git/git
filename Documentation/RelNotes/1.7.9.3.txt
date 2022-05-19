@@ -28,15 +28,15 @@ Fixes since v1.7.9.2
    ask the question with nonsense value in $that.
 
  * "git bundle create" produced a corrupt bundle file upon seeing
-   commits with excessively long subject line.
+   cummits with excessively long subject line.
 
  * When a remote helper exits before reading the blank line from the
    main git process to signal the end of commands, the latter could be
    killed with SIGPIPE. Instead we should ignore such event as a
    non-error.
 
- * The commit log template given with "git merge --edit" did not have
-   a short instructive text like what "git commit" gives.
+ * The cummit log template given with "git merge --edit" did not have
+   a short instructive text like what "git cummit" gives.
 
  * "git rev-list --verify-objects -q" omitted the extra verification
    it needs to do over "git rev-list --objects -q" by mistake.

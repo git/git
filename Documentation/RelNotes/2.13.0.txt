@@ -11,7 +11,7 @@ Backward compatibility notes.
    this (mis)feature.  That is not scheduled to happen in the upcoming
    release (yet).
 
- * The historical argument order "git merge <msg> HEAD <commit>..."
+ * The historical argument order "git merge <msg> HEAD <cummit>..."
    has been deprecated for quite some time, and is now removed.
 
  * The default location "~/.git-credential-cache/socket" for the
@@ -151,7 +151,7 @@ UI, Workflows & Features
    doing other things, output from reset seeped out).  These, and
    other chattyness has been fixed.
 
- * "git merge <message> HEAD <commit>" syntax that has been deprecated
+ * "git merge <message> HEAD <cummit>" syntax that has been deprecated
    since October 2007 has been removed.
 
  * The refs completion for large number of refs has been sped up,
@@ -179,7 +179,7 @@ UI, Workflows & Features
  * The output from "git status --short" has been extended to show
    various kinds of dirtiness in submodules differently; instead of to
    "M" for modified, 'm' and '?' can be shown to signal changes only
-   to the working tree of the submodule but not the commit that is
+   to the working tree of the submodule but not the cummit that is
    checked out.
 
  * Allow the http.postbuffer configuration variable to be set to a
@@ -229,7 +229,7 @@ Performance, Internal Implementation, Development Support etc.
  * A test that creates a confusing branch whose name is HEAD has been
    corrected not to do so.
 
- * The code that parses header fields in the commit object has been
+ * The code that parses header fields in the cummit object has been
    updated for (micro)performance and code hygiene.
 
  * An helper function to make it easier to append the result from
@@ -263,7 +263,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git tag --contains" used to (ab)use the object bits to keep track
    of the state of object reachability without clearing them after
-   use; this has been cleaned up and made to use the newer commit-slab
+   use; this has been cleaned up and made to use the newer cummit-slab
    facility.
 
  * The "debug" helper used in the test framework learned to run
@@ -428,12 +428,12 @@ notes for details).
    code that handled @{-1} and @{upstream} was a bit too loose in
    disambiguating.
 
- * "git fetch" that requests a commit by object name, when the other
+ * "git fetch" that requests a cummit by object name, when the other
    side does not allow such an request, failed without much
    explanation.
 
- * "git filter-branch --prune-empty" drops a single-parent commit that
-   becomes a no-op, but did not drop a root commit whose tree is empty.
+ * "git filter-branch --prune-empty" drops a single-parent cummit that
+   becomes a no-op, but did not drop a root cummit whose tree is empty.
 
  * Recent versions of Git treats http alternates (used in dumb http
    transport) just like HTTP redirects and requires the client to
@@ -459,7 +459,7 @@ notes for details).
  * "git status --porcelain" is supposed to give a stable output, but a
    few strings were left as translatable by mistake.
 
- * "git revert -m 0 $merge_commit" complained that reverting a merge
+ * "git revert -m 0 $merge_cummit" complained that reverting a merge
    needs to say relative to which parent the reversion needs to
    happen, as if "-m 0" weren't given.  The correct diagnosis is that
    "-m 0" does not refer to the first parent ("-m 1" does).  This has
@@ -498,7 +498,7 @@ notes for details).
    (merge a54e938e5b rs/freebsd-getcwd-workaround later to maint).
 
  * A recent update to "rebase -i" stopped running hooks for the "git
-   commit" command during "reword" action, which has been fixed.
+   cummit" command during "reword" action, which has been fixed.
 
  * Removing an entry from a notes tree and then looking another note
    entry from the resulting tree using the internal notes API

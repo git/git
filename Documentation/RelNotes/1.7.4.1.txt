@@ -13,8 +13,8 @@ Fixes since v1.7.4
  * The option to tell "git clone" to recurse into the submodules was
    misspelled with an underscore "--recurse_submodules".
 
- * "git diff --cached HEAD" before the first commit does what an end user
-   would expect (namely, show what would be committed without further "git
+ * "git diff --cached HEAD" before the first cummit does what an end user
+   would expect (namely, show what would be cummitted without further "git
    add").
 
  * "git fast-import" didn't accept the command to ask for "notes" feature

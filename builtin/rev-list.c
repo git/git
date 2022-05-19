@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "config.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
@@ -20,7 +20,7 @@
 #include "packfile.h"
 
 static const char rev_list_usage[] =
-"git rev-list [<options>] <commit-id>... [-- <path>...]\n"
+"git rev-list [<options>] <cummit-id>... [-- <path>...]\n"
 "  limiting output:\n"
 "    --max-count=<n>\n"
 "    --max-age=<epoch>\n"
@@ -50,7 +50,7 @@ static const char rev_list_usage[] =
 "    --header | --pretty\n"
 "    --[no-]object-names\n"
 "    --abbrev=<n> | --no-abbrev\n"
-"    --abbrev-commit\n"
+"    --abbrev-cummit\n"
 "    --left-right\n"
 "    --count\n"
 "  special purpose:\n"
@@ -92,8 +92,8 @@ static off_t get_object_disk_usage(struct object *obj)
 	return size;
 }
 
-static void finish_commit(struct commit *commit);
-static void show_commit(struct commit *commit, void *data)
+static void finish_cummit(struct cummit *cummit);
+static void show_cummit(struct cummit *cummit, void *data)
 {
 	struct rev_list_info *info = data;
 	struct rev_info *revs = info->revs;
@@ -101,58 +101,58 @@ static void show_commit(struct commit *commit, void *data)
 	display_progress(progress, ++progress_counter);
 
 	if (show_disk_usage)
-		total_disk_usage += get_object_disk_usage(&commit->object);
+		total_disk_usage += get_object_disk_usage(&cummit->object);
 
 	if (info->flags & REV_LIST_QUIET) {
-		finish_commit(commit);
+		finish_cummit(cummit);
 		return;
 	}
 
-	graph_show_commit(revs->graph);
+	graph_show_cummit(revs->graph);
 
 	if (revs->count) {
-		if (commit->object.flags & PATCHSAME)
+		if (cummit->object.flags & PATCHSAME)
 			revs->count_same++;
-		else if (commit->object.flags & SYMMETRIC_LEFT)
+		else if (cummit->object.flags & SYMMETRIC_LEFT)
 			revs->count_left++;
 		else
 			revs->count_right++;
-		finish_commit(commit);
+		finish_cummit(cummit);
 		return;
 	}
 
 	if (info->show_timestamp)
-		printf("%"PRItime" ", commit->date);
+		printf("%"PRItime" ", cummit->date);
 	if (info->header_prefix)
 		fputs(info->header_prefix, stdout);
 
 	if (revs->include_header) {
 		if (!revs->graph)
-			fputs(get_revision_mark(revs, commit), stdout);
-		if (revs->abbrev_commit && revs->abbrev)
-			fputs(find_unique_abbrev(&commit->object.oid, revs->abbrev),
+			fputs(get_revision_mark(revs, cummit), stdout);
+		if (revs->abbrev_cummit && revs->abbrev)
+			fputs(find_unique_abbrev(&cummit->object.oid, revs->abbrev),
 			      stdout);
 		else
-			fputs(oid_to_hex(&commit->object.oid), stdout);
+			fputs(oid_to_hex(&cummit->object.oid), stdout);
 	}
 	if (revs->print_parents) {
-		struct commit_list *parents = commit->parents;
+		struct cummit_list *parents = cummit->parents;
 		while (parents) {
 			printf(" %s", oid_to_hex(&parents->item->object.oid));
 			parents = parents->next;
 		}
 	}
 	if (revs->children.name) {
-		struct commit_list *children;
+		struct cummit_list *children;
 
-		children = lookup_decoration(&revs->children, &commit->object);
+		children = lookup_decoration(&revs->children, &cummit->object);
 		while (children) {
 			printf(" %s", oid_to_hex(&children->item->object.oid));
 			children = children->next;
 		}
 	}
-	show_decorations(revs, commit);
-	if (revs->commit_format == CMIT_FMT_ONELINE)
+	show_decorations(revs, cummit);
+	if (revs->cummit_format == CMIT_FMT_ONELINE)
 		putchar(' ');
 	else if (revs->include_header)
 		putchar('\n');
@@ -163,26 +163,26 @@ static void show_commit(struct commit *commit, void *data)
 		ctx.abbrev = revs->abbrev;
 		ctx.date_mode = revs->date_mode;
 		ctx.date_mode_explicit = revs->date_mode_explicit;
-		ctx.fmt = revs->commit_format;
+		ctx.fmt = revs->cummit_format;
 		ctx.output_encoding = get_log_output_encoding();
 		ctx.color = revs->diffopt.use_color;
-		pretty_print_commit(&ctx, commit, &buf);
+		pretty_print_cummit(&ctx, cummit, &buf);
 		if (buf.len) {
-			if (revs->commit_format != CMIT_FMT_ONELINE)
+			if (revs->cummit_format != CMIT_FMT_ONELINE)
 				graph_show_oneline(revs->graph);
 
-			graph_show_commit_msg(revs->graph, stdout, &buf);
+			graph_show_cummit_msg(revs->graph, stdout, &buf);
 
 			/*
-			 * Add a newline after the commit message.
+			 * Add a newline after the cummit message.
 			 *
 			 * Usually, this newline produces a blank
 			 * padding line between entries, in which case
 			 * we need to add graph padding on this line.
 			 *
-			 * However, the commit message may not end in a
+			 * However, the cummit message may not end in a
 			 * newline.  In this case the newline simply
-			 * ends the last line of the commit message,
+			 * ends the last line of the cummit message,
 			 * and we don't need any graph output.  (This
 			 * always happens with CMIT_FMT_ONELINE, and it
 			 * happens with CMIT_FMT_USERFORMAT when the
@@ -195,11 +195,11 @@ static void show_commit(struct commit *commit, void *data)
 			/*
 			 * If the message buffer is empty, just show
 			 * the rest of the graph output for this
-			 * commit.
+			 * cummit.
 			 */
 			if (graph_show_remainder(revs->graph))
 				putchar('\n');
-			if (revs->commit_format == CMIT_FMT_ONELINE)
+			if (revs->cummit_format == CMIT_FMT_ONELINE)
 				putchar('\n');
 		}
 		strbuf_release(&buf);
@@ -208,17 +208,17 @@ static void show_commit(struct commit *commit, void *data)
 			putchar('\n');
 	}
 	maybe_flush_or_die(stdout, "stdout");
-	finish_commit(commit);
+	finish_cummit(cummit);
 }
 
-static void finish_commit(struct commit *commit)
+static void finish_cummit(struct cummit *cummit)
 {
-	if (commit->parents) {
-		free_commit_list(commit->parents);
-		commit->parents = NULL;
+	if (cummit->parents) {
+		free_cummit_list(cummit->parents);
+		cummit->parents = NULL;
 	}
-	free_commit_buffer(the_repository->parsed_objects,
-			   commit);
+	free_cummit_buffer(the_repository->parsed_objects,
+			   cummit);
 }
 
 static inline void finish_object__ma(struct object *obj)
@@ -262,7 +262,7 @@ static int finish_object(struct object *obj, const char *name, void *cb_data)
 		finish_object__ma(obj);
 		return 1;
 	}
-	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_COMMIT)
+	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_cummit)
 		parse_object(the_repository, &obj->oid);
 	return 0;
 }
@@ -285,7 +285,7 @@ static void show_object(struct object *obj, const char *name, void *cb_data)
 		 * The object count is always accumulated in the .count_right
 		 * field for traversal that is not a left-right traversal,
 		 * and cmd_rev_list() made sure that a .count request that
-		 * wants to count non-commit objects, which is handled by
+		 * wants to count non-cummit objects, which is handled by
 		 * the show_object() callback, does not ask for .left_right.
 		 */
 		revs->count_right++;
@@ -298,9 +298,9 @@ static void show_object(struct object *obj, const char *name, void *cb_data)
 		printf("%s\n", oid_to_hex(&obj->oid));
 }
 
-static void show_edge(struct commit *commit)
+static void show_edge(struct cummit *cummit)
 {
-	printf("-%s\n", oid_to_hex(&commit->object.oid));
+	printf("-%s\n", oid_to_hex(&cummit->object.oid));
 }
 
 static void print_var_str(const char *var, const char *val)
@@ -317,34 +317,34 @@ static int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 {
 	int cnt, flags = info->flags;
 	char hex[GIT_MAX_HEXSZ + 1] = "";
-	struct commit_list *tried;
+	struct cummit_list *tried;
 	struct rev_info *revs = info->revs;
 
-	if (!revs->commits)
+	if (!revs->cummits)
 		return 1;
 
-	revs->commits = filter_skipped(revs->commits, &tried,
+	revs->cummits = filter_skipped(revs->cummits, &tried,
 				       flags & BISECT_SHOW_ALL,
 				       NULL, NULL);
 
 	/*
-	 * revs->commits can reach "reaches" commits among
-	 * "all" commits.  If it is good, then there are
-	 * (all-reaches) commits left to be bisected.
+	 * revs->cummits can reach "reaches" cummits among
+	 * "all" cummits.  If it is good, then there are
+	 * (all-reaches) cummits left to be bisected.
 	 * On the other hand, if it is bad, then the set
 	 * to bisect is "reaches".
-	 * A bisect set of size N has (N-1) commits further
+	 * A bisect set of size N has (N-1) cummits further
 	 * to test, as we already know one bad one.
 	 */
 	cnt = all - reaches;
 	if (cnt < reaches)
 		cnt = reaches;
 
-	if (revs->commits)
-		oid_to_hex_r(hex, &revs->commits->item->object.oid);
+	if (revs->cummits)
+		oid_to_hex_r(hex, &revs->cummits->item->object.oid);
 
 	if (flags & BISECT_SHOW_ALL) {
-		traverse_commit_list(revs, show_commit, show_object, info);
+		traverse_cummit_list(revs, show_cummit, show_object, info);
 		printf("------\n");
 	}
 
@@ -401,7 +401,7 @@ static inline int parse_missing_action_value(const char *value)
 static int try_bitmap_count(struct rev_info *revs,
 			    int filter_provided_objects)
 {
-	uint32_t commit_count = 0,
+	uint32_t cummit_count = 0,
 		 tag_count = 0,
 		 tree_count = 0,
 		 blob_count = 0;
@@ -421,8 +421,8 @@ static int try_bitmap_count(struct rev_info *revs,
 
 	/*
 	 * If we're counting reachable objects, we can't handle a max count of
-	 * commits to traverse, since we don't know which objects go with which
-	 * commit.
+	 * cummits to traverse, since we don't know which objects go with which
+	 * cummit.
 	 */
 	if (revs->max_count >= 0 &&
 	    (revs->tag_objects || revs->tree_objects || revs->blob_objects))
@@ -438,14 +438,14 @@ static int try_bitmap_count(struct rev_info *revs,
 	if (!bitmap_git)
 		return -1;
 
-	count_bitmap_commit_list(bitmap_git, &commit_count,
+	count_bitmap_cummit_list(bitmap_git, &cummit_count,
 				 revs->tree_objects ? &tree_count : NULL,
 				 revs->blob_objects ? &blob_count : NULL,
 				 revs->tag_objects ? &tag_count : NULL);
-	if (max_count >= 0 && max_count < commit_count)
-		commit_count = max_count;
+	if (max_count >= 0 && max_count < cummit_count)
+		cummit_count = max_count;
 
-	printf("%d\n", commit_count + tree_count + blob_count + tag_count);
+	printf("%d\n", cummit_count + tree_count + blob_count + tag_count);
 	free_bitmap_index(bitmap_git);
 	return 0;
 }
@@ -457,7 +457,7 @@ static int try_bitmap_traversal(struct rev_info *revs,
 
 	/*
 	 * We can't use a bitmap result with a traversal limit, since the set
-	 * of commits we'd get would be essentially random.
+	 * of cummits we'd get would be essentially random.
 	 */
 	if (revs->max_count >= 0)
 		return -1;
@@ -466,7 +466,7 @@ static int try_bitmap_traversal(struct rev_info *revs,
 	if (!bitmap_git)
 		return -1;
 
-	traverse_bitmap_commit_list(bitmap_git, revs, &show_object_fast);
+	traverse_bitmap_cummit_list(bitmap_git, revs, &show_object_fast);
 	free_bitmap_index(bitmap_git);
 	return 0;
 }
@@ -509,7 +509,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	git_config(git_default_config, NULL);
 	repo_init_revisions(the_repository, &revs, prefix);
 	revs.abbrev = DEFAULT_ABBREV;
-	revs.commit_format = CMIT_FMT_UNSPECIFIED;
+	revs.cummit_format = CMIT_FMT_UNSPECIFIED;
 	revs.include_header = 1;
 
 	/*
@@ -634,21 +634,21 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		usage(rev_list_usage);
 
 	}
-	if (revs.commit_format != CMIT_FMT_USERFORMAT)
+	if (revs.cummit_format != CMIT_FMT_USERFORMAT)
 		revs.include_header = 1;
-	if (revs.commit_format != CMIT_FMT_UNSPECIFIED) {
+	if (revs.cummit_format != CMIT_FMT_UNSPECIFIED) {
 		/* The command line has a --pretty  */
 		info.hdr_termination = '\n';
-		if (revs.commit_format == CMIT_FMT_ONELINE || !revs.include_header)
+		if (revs.cummit_format == CMIT_FMT_ONELINE || !revs.include_header)
 			info.header_prefix = "";
 		else
-			info.header_prefix = "commit ";
+			info.header_prefix = "cummit ";
 	}
 	else if (revs.verbose_header)
 		/* Only --header was specified */
-		revs.commit_format = CMIT_FMT_RAW;
+		revs.cummit_format = CMIT_FMT_RAW;
 
-	if ((!revs.commits && reflog_walk_empty(revs.reflog_info) &&
+	if ((!revs.cummits && reflog_walk_empty(revs.reflog_info) &&
 	     (!(revs.tag_objects || revs.tree_objects || revs.blob_objects) &&
 	      !revs.pending.nr) &&
 	     !revs.rev_input_given && !revs.read_from_stdin) ||
@@ -663,7 +663,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	    (revs.left_right || revs.cherry_mark))
 		die(_("marked counting and '%s' cannot be used together"), "--objects");
 
-	save_commit_buffer = (revs.verbose_header ||
+	save_cummit_buffer = (revs.verbose_header ||
 			      revs.grep_filter.pattern_list ||
 			      revs.grep_filter.header_list);
 	if (bisect_list)
@@ -696,19 +696,19 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		if (revs.first_parent_only)
 			bisect_flags |= FIND_BISECTION_FIRST_PARENT_ONLY;
 
-		find_bisection(&revs.commits, &reaches, &all, bisect_flags);
+		find_bisection(&revs.cummits, &reaches, &all, bisect_flags);
 
 		if (bisect_show_vars)
 			return show_bisect_vars(&info, reaches, all);
 	}
 
 	if (filter_provided_objects) {
-		struct commit_list *c;
+		struct cummit_list *c;
 		for (i = 0; i < revs.pending.nr; i++) {
 			struct object_array_entry *pending = revs.pending.objects + i;
 			pending->item->flags |= NOT_USER_GIVEN;
 		}
-		for (c = revs.commits; c; c = c->next)
+		for (c = revs.cummits; c; c = c->next)
 			c->item->object.flags |= NOT_USER_GIVEN;
 	}
 
@@ -717,8 +717,8 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 	if (arg_missing_action == MA_PRINT)
 		oidset_init(&missing_objects, DEFAULT_OIDSET_SIZE);
 
-	traverse_commit_list_filtered(
-		&revs, show_commit, show_object, &info,
+	traverse_cummit_list_filtered(
+		&revs, show_cummit, show_object, &info,
 		(arg_print_omitted ? &omitted_objects : NULL));
 
 	if (arg_print_omitted) {

@@ -8,7 +8,7 @@ test_expect_success 'setup remote repo' '
 	(cd remote &&
 	 echo content >file &&
 	 git add file &&
-	 git commit -m one
+	 git cummit -m one
 	)
 '
 

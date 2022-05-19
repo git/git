@@ -21,7 +21,7 @@ static GIT_PATH_FUNC(git_path_bisect_first_parent, "BISECT_FIRST_PARENT")
 static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
 
 static const char * const git_bisect_helper_usage[] = {
-	N_("git bisect--helper --bisect-reset [<commit>]"),
+	N_("git bisect--helper --bisect-reset [<cummit>]"),
 	"git bisect--helper --bisect-terms [--term-good | --term-old | --term-bad | --term-new]",
 	N_("git bisect--helper --bisect-start [--term-{new,bad}=<term> --term-{old,good}=<term>]"
 					    " [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<paths>...]"),
@@ -201,11 +201,11 @@ static int write_terms(const char *bad, const char *good)
 	return res;
 }
 
-static int bisect_reset(const char *commit)
+static int bisect_reset(const char *cummit)
 {
 	struct strbuf branch = STRBUF_INIT;
 
-	if (!commit) {
+	if (!cummit) {
 		if (strbuf_read_file(&branch, git_path_bisect_start(), 0) < 1) {
 			printf(_("We are not bisecting.\n"));
 			return 0;
@@ -214,9 +214,9 @@ static int bisect_reset(const char *commit)
 	} else {
 		struct object_id oid;
 
-		if (get_oid_commit(commit, &oid))
-			return error(_("'%s' is not a valid commit"), commit);
-		strbuf_addstr(&branch, commit);
+		if (get_oid_cummit(cummit, &oid))
+			return error(_("'%s' is not a valid cummit"), cummit);
+		strbuf_addstr(&branch, cummit);
 	}
 
 	if (!ref_exists("BISECT_HEAD")) {
@@ -226,7 +226,7 @@ static int bisect_reset(const char *commit)
 		if (run_command_v_opt(argv.v, RUN_GIT_CMD)) {
 			error(_("could not check out original"
 				" HEAD '%s'. Try 'git bisect"
-				" reset <commit>'."), branch.buf);
+				" reset <cummit>'."), branch.buf);
 			strbuf_release(&branch);
 			strvec_clear(&argv);
 			return -1;
@@ -238,19 +238,19 @@ static int bisect_reset(const char *commit)
 	return bisect_clean_state();
 }
 
-static void log_commit(FILE *fp, char *fmt, const char *state,
-		       struct commit *commit)
+static void log_cummit(FILE *fp, char *fmt, const char *state,
+		       struct cummit *cummit)
 {
 	struct pretty_print_context pp = {0};
-	struct strbuf commit_msg = STRBUF_INIT;
+	struct strbuf cummit_msg = STRBUF_INIT;
 	char *label = xstrfmt(fmt, state);
 
-	format_commit_message(commit, "%s", &commit_msg, &pp);
+	format_cummit_message(cummit, "%s", &cummit_msg, &pp);
 
-	fprintf(fp, "# %s: [%s] %s\n", label, oid_to_hex(&commit->object.oid),
-		commit_msg.buf);
+	fprintf(fp, "# %s: [%s] %s\n", label, oid_to_hex(&cummit->object.oid),
+		cummit_msg.buf);
 
-	strbuf_release(&commit_msg);
+	strbuf_release(&cummit_msg);
 	free(label);
 }
 
@@ -259,7 +259,7 @@ static int bisect_write(const char *state, const char *rev,
 {
 	struct strbuf tag = STRBUF_INIT;
 	struct object_id oid;
-	struct commit *commit;
+	struct cummit *cummit;
 	FILE *fp = NULL;
 	int res = 0;
 
@@ -289,8 +289,8 @@ static int bisect_write(const char *state, const char *rev,
 		goto finish;
 	}
 
-	commit = lookup_commit_reference(the_repository, &oid);
-	log_commit(fp, "%s", state, commit);
+	cummit = lookup_cummit_reference(the_repository, &oid);
+	log_cummit(fp, "%s", state, cummit);
 
 	if (!nolog)
 		fprintf(fp, "git bisect %s %s\n", state, rev);
@@ -362,7 +362,7 @@ static int decide_next(const struct bisect_terms *terms,
 		 * have bad (or new) but not good (or old). We could bisect
 		 * although this is less optimum.
 		 */
-		warning(_("bisecting only with a %s commit"), terms->term_bad);
+		warning(_("bisecting only with a %s cummit"), terms->term_bad);
 		if (!isatty(0))
 			return 0;
 		/*
@@ -518,14 +518,14 @@ static int prepare_revs(struct bisect_terms *terms, struct rev_info *revs)
 	return res;
 }
 
-static int bisect_skipped_commits(struct bisect_terms *terms)
+static int bisect_skipped_cummits(struct bisect_terms *terms)
 {
 	int res;
 	FILE *fp = NULL;
 	struct rev_info revs;
-	struct commit *commit;
+	struct cummit *cummit;
 	struct pretty_print_context pp = {0};
-	struct strbuf commit_name = STRBUF_INIT;
+	struct strbuf cummit_name = STRBUF_INIT;
 
 	res = prepare_revs(terms, &revs);
 	if (res)
@@ -536,16 +536,16 @@ static int bisect_skipped_commits(struct bisect_terms *terms)
 		return error_errno(_("could not open '%s' for appending"),
 				  git_path_bisect_log());
 
-	if (fprintf(fp, "# only skipped commits left to test\n") < 0)
+	if (fprintf(fp, "# only skipped cummits left to test\n") < 0)
 		return error_errno(_("failed to write to '%s'"), git_path_bisect_log());
 
-	while ((commit = get_revision(&revs)) != NULL) {
-		strbuf_reset(&commit_name);
-		format_commit_message(commit, "%s",
-				      &commit_name, &pp);
-		fprintf(fp, "# possible first %s commit: [%s] %s\n",
-			terms->term_bad, oid_to_hex(&commit->object.oid),
-			commit_name.buf);
+	while ((cummit = get_revision(&revs)) != NULL) {
+		strbuf_reset(&cummit_name);
+		format_cummit_message(cummit, "%s",
+				      &cummit_name, &pp);
+		fprintf(fp, "# possible first %s cummit: [%s] %s\n",
+			terms->term_bad, oid_to_hex(&cummit->object.oid),
+			cummit_name.buf);
 	}
 
 	/*
@@ -554,7 +554,7 @@ static int bisect_skipped_commits(struct bisect_terms *terms)
 	 */
 	reset_revision_walk();
 
-	strbuf_release(&commit_name);
+	strbuf_release(&cummit_name);
 	fclose(fp);
 	return 0;
 }
@@ -562,21 +562,21 @@ static int bisect_skipped_commits(struct bisect_terms *terms)
 static int bisect_successful(struct bisect_terms *terms)
 {
 	struct object_id oid;
-	struct commit *commit;
+	struct cummit *cummit;
 	struct pretty_print_context pp = {0};
-	struct strbuf commit_name = STRBUF_INIT;
+	struct strbuf cummit_name = STRBUF_INIT;
 	char *bad_ref = xstrfmt("refs/bisect/%s",terms->term_bad);
 	int res;
 
 	read_ref(bad_ref, &oid);
-	commit = lookup_commit_reference_by_name(bad_ref);
-	format_commit_message(commit, "%s", &commit_name, &pp);
+	cummit = lookup_cummit_reference_by_name(bad_ref);
+	format_cummit_message(cummit, "%s", &cummit_name, &pp);
 
-	res = append_to_file(git_path_bisect_log(), "# first %s commit: [%s] %s\n",
-			    terms->term_bad, oid_to_hex(&commit->object.oid),
-			    commit_name.buf);
+	res = append_to_file(git_path_bisect_log(), "# first %s cummit: [%s] %s\n",
+			    terms->term_bad, oid_to_hex(&cummit->object.oid),
+			    cummit_name.buf);
 
-	strbuf_release(&commit_name);
+	strbuf_release(&cummit_name);
 	free(bad_ref);
 	return res;
 }
@@ -598,7 +598,7 @@ static enum bisect_error bisect_next(struct bisect_terms *terms, const char *pre
 		res = bisect_successful(terms);
 		return res ? res : BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND;
 	} else if (res == BISECT_ONLY_SKIPPED_LEFT) {
-		res = bisect_skipped_commits(terms);
+		res = bisect_skipped_cummits(terms);
 		return res ? res : BISECT_ONLY_SKIPPED_LEFT;
 	}
 	return res;
@@ -676,7 +676,7 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, const char **a
 			terms->term_bad = xstrdup(arg);
 		} else if (starts_with(arg, "--")) {
 			return error(_("unrecognized option: '%s'"), arg);
-		} else if (!get_oidf(&oid, "%s^{commit}", arg)) {
+		} else if (!get_oidf(&oid, "%s^{cummit}", arg)) {
 			string_list_append(&revs, oid_to_hex(&oid));
 		} else if (has_double_dash) {
 			die(_("'%s' does not appear to be a valid "
@@ -891,7 +891,7 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, const char **a
 	 */
 
 	for (; argc; argc--, argv++) {
-		struct commit *commit;
+		struct cummit *cummit;
 
 		if (get_oid(*argv, &oid)){
 			error(_("Bad rev input: %s"), *argv);
@@ -899,11 +899,11 @@ static enum bisect_error bisect_state(struct bisect_terms *terms, const char **a
 			return BISECT_FAILED;
 		}
 
-		commit = lookup_commit_reference(the_repository, &oid);
-		if (!commit)
-			die(_("Bad rev input (not a commit): %s"), *argv);
+		cummit = lookup_cummit_reference(the_repository, &oid);
+		if (!cummit)
+			die(_("Bad rev input (not a cummit): %s"), *argv);
 
-		oid_array_append(&revs, &commit->object.oid);
+		oid_array_append(&revs, &cummit->object.oid);
 	}
 
 	if (strbuf_read_file(&buf, git_path_bisect_expected_rev(), 0) < the_hash_algo->hexsz ||
@@ -1029,16 +1029,16 @@ static enum bisect_error bisect_skip(struct bisect_terms *terms, const char **ar
 
 		if (dotdot) {
 			struct rev_info revs;
-			struct commit *commit;
+			struct cummit *cummit;
 
 			init_revisions(&revs, NULL);
 			setup_revisions(2, argv + i - 1, &revs, NULL);
 
 			if (prepare_revision_walk(&revs))
 				die(_("revision walk setup failed\n"));
-			while ((commit = get_revision(&revs)) != NULL)
+			while ((cummit = get_revision(&revs)) != NULL)
 				strvec_push(&argv_state,
-						oid_to_hex(&commit->object.oid));
+						oid_to_hex(&cummit->object.oid));
 
 			reset_revision_walk();
 		} else {
@@ -1215,7 +1215,7 @@ static int bisect_run(struct bisect_terms *terms, const char **argv, int argc)
 			printf(_("bisect run success"));
 			res = BISECT_OK;
 		} else if (res == BISECT_INTERNAL_SUCCESS_1ST_BAD_FOUND) {
-			printf(_("bisect found first bad commit"));
+			printf(_("bisect found first bad cummit"));
 			res = BISECT_OK;
 		} else if (res) {
 			error(_("bisect run failed: 'git bisect--helper --bisect-state"
@@ -1258,7 +1258,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "bisect-start", &cmdmode,
 			 N_("start the bisect session"), BISECT_START),
 		OPT_CMDMODE(0, "bisect-next", &cmdmode,
-			 N_("find the next bisection commit"), BISECT_NEXT),
+			 N_("find the next bisection cummit"), BISECT_NEXT),
 		OPT_CMDMODE(0, "bisect-state", &cmdmode,
 			 N_("mark the state of ref (or refs)"), BISECT_STATE),
 		OPT_CMDMODE(0, "bisect-log", &cmdmode,
@@ -1266,7 +1266,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "bisect-replay", &cmdmode,
 			 N_("replay the bisection process from the given file"), BISECT_REPLAY),
 		OPT_CMDMODE(0, "bisect-skip", &cmdmode,
-			 N_("skip some commits for checkout"), BISECT_SKIP),
+			 N_("skip some cummits for checkout"), BISECT_SKIP),
 		OPT_CMDMODE(0, "bisect-visualize", &cmdmode,
 			 N_("visualize the bisection"), BISECT_VISUALIZE),
 		OPT_CMDMODE(0, "bisect-run", &cmdmode,
@@ -1287,7 +1287,7 @@ int cmd_bisect__helper(int argc, const char **argv, const char *prefix)
 	switch (cmdmode) {
 	case BISECT_RESET:
 		if (argc > 1)
-			return error(_("--bisect-reset requires either no argument or a commit"));
+			return error(_("--bisect-reset requires either no argument or a cummit"));
 		res = bisect_reset(argc ? argv[0] : NULL);
 		break;
 	case BISECT_TERMS:

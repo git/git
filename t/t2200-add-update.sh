@@ -4,8 +4,8 @@ test_description='git add -u
 
 This test creates a working tree state with three files:
 
-  top (previously committed, modified)
-  dir/sub (previously committed, modified)
+  top (previously cummitted, modified)
+  dir/sub (previously cummitted, modified)
   dir/other (untracked)
 
 and issues a git add -u with path limiting on "dir" to add
@@ -26,7 +26,7 @@ test_expect_success setup '
 	echo initial >dir2/sub3 &&
 	git add check dir1 dir2 top foo &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	echo changed >check &&
 	echo changed >top &&

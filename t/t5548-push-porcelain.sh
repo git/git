@@ -6,14 +6,14 @@ test_description='Test git push porcelain output'
 
 . ./test-lib.sh
 
-# Create commits in <repo> and assign each commit's oid to shell variables
+# Create cummits in <repo> and assign each cummit's oid to shell variables
 # given in the arguments (A, B, and C). E.g.:
 #
-#     create_commits_in <repo> A B C
+#     create_cummits_in <repo> A B C
 #
 # NOTE: Never calling this function from a subshell since variable
 # assignments will disappear when subshell exits.
-create_commits_in () {
+create_cummits_in () {
 	repo="$1" && test -d "$repo" ||
 	error "Repository $repo does not exist."
 	shift &&
@@ -21,7 +21,7 @@ create_commits_in () {
 	do
 		name=$1 &&
 		shift &&
-		test_commit -C "$repo" --no-tag "$name" &&
+		test_cummit -C "$repo" --no-tag "$name" &&
 		eval $name=$(git -C "$repo" rev-parse HEAD)
 	done
 }
@@ -40,12 +40,12 @@ get_abbrev_oid () {
 
 # Format the output of git-push, git-show-ref and other commands to make a
 # user-friendly and stable text.  We can easily prepare the expect text
-# without having to worry about future changes of the commit ID and spaces
+# without having to worry about future changes of the cummit ID and spaces
 # of the output.
 make_user_friendly_and_stable_output () {
 	sed \
-		-e "s/$(get_abbrev_oid $A)[0-9a-f]*/<COMMIT-A>/g" \
-		-e "s/$(get_abbrev_oid $B)[0-9a-f]*/<COMMIT-B>/g" \
+		-e "s/$(get_abbrev_oid $A)[0-9a-f]*/<cummit-A>/g" \
+		-e "s/$(get_abbrev_oid $B)[0-9a-f]*/<cummit-B>/g" \
 		-e "s/$ZERO_OID/<ZERO-OID>/g" \
 		-e "s#To $URL_PREFIX/upstream.git#To <URL/of/upstream.git>#"
 }
@@ -61,10 +61,10 @@ setup_upstream_and_workbench () {
 		rm -rf upstream.git workbench &&
 		git init --bare upstream.git &&
 		git init workbench &&
-		create_commits_in workbench A B &&
+		create_cummits_in workbench A B &&
 		(
 			cd workbench &&
-			# Try to make a stable fixed width for abbreviated commit ID,
+			# Try to make a stable fixed width for abbreviated cummit ID,
 			# this fixed-width oid will be replaced with "<OID>".
 			git config core.abbrev 7 &&
 			git remote add origin ../upstream.git &&
@@ -112,9 +112,9 @@ run_git_push_porcelain_output_test() {
 		format_and_save_expect <<-EOF &&
 		> To <URL/of/upstream.git>
 		> =	refs/heads/baz:refs/heads/baz	[up to date]
-		>  	<COMMIT-B>:refs/heads/bar	<COMMIT-A>..<COMMIT-B>
+		>  	<cummit-B>:refs/heads/bar	<cummit-A>..<cummit-B>
 		> -	:refs/heads/foo	[deleted]
-		> +	refs/heads/main:refs/heads/main	<COMMIT-B>...<COMMIT-A> (forced update)
+		> +	refs/heads/main:refs/heads/main	<cummit-B>...<cummit-A> (forced update)
 		> *	refs/heads/next:refs/heads/next	[new branch]
 		> Done
 		EOF
@@ -123,10 +123,10 @@ run_git_push_porcelain_output_test() {
 		git -C "$upstream" show-ref >out &&
 		make_user_friendly_and_stable_output <out >actual &&
 		cat >expect <<-EOF &&
-		<COMMIT-B> refs/heads/bar
-		<COMMIT-A> refs/heads/baz
-		<COMMIT-A> refs/heads/main
-		<COMMIT-A> refs/heads/next
+		<cummit-B> refs/heads/bar
+		<cummit-A> refs/heads/baz
+		<cummit-A> refs/heads/main
+		<cummit-A> refs/heads/next
 		EOF
 		test_cmp expect actual
 	'
@@ -159,10 +159,10 @@ run_git_push_porcelain_output_test() {
 		git -C "$upstream" show-ref >out &&
 		make_user_friendly_and_stable_output <out >actual &&
 		cat >expect <<-EOF &&
-		<COMMIT-B> refs/heads/bar
-		<COMMIT-A> refs/heads/baz
-		<COMMIT-A> refs/heads/main
-		<COMMIT-A> refs/heads/next
+		<cummit-B> refs/heads/bar
+		<cummit-A> refs/heads/baz
+		<cummit-A> refs/heads/main
+		<cummit-A> refs/heads/next
 		EOF
 		test_cmp expect actual
 	'
@@ -201,10 +201,10 @@ run_git_push_porcelain_output_test() {
 		git -C "$upstream" show-ref >out &&
 		make_user_friendly_and_stable_output <out >actual &&
 		cat >expect <<-EOF &&
-		<COMMIT-B> refs/heads/bar
-		<COMMIT-A> refs/heads/baz
-		<COMMIT-A> refs/heads/main
-		<COMMIT-A> refs/heads/next
+		<cummit-B> refs/heads/bar
+		<cummit-A> refs/heads/baz
+		<cummit-A> refs/heads/main
+		<cummit-A> refs/heads/next
 		EOF
 		test_cmp expect actual
 	'
@@ -230,7 +230,7 @@ run_git_push_porcelain_output_test() {
 		To <URL/of/upstream.git>
 		> =	refs/heads/next:refs/heads/next	[up to date]
 		> -	:refs/heads/baz	[deleted]
-		>  	refs/heads/main:refs/heads/main	<COMMIT-A>..<COMMIT-B>
+		>  	refs/heads/main:refs/heads/main	<cummit-A>..<cummit-B>
 		> !	refs/heads/bar:refs/heads/bar	[rejected] (non-fast-forward)
 		Done
 		EOF
@@ -239,9 +239,9 @@ run_git_push_porcelain_output_test() {
 		git -C "$upstream" show-ref >out &&
 		make_user_friendly_and_stable_output <out >actual &&
 		cat >expect <<-EOF &&
-		<COMMIT-B> refs/heads/bar
-		<COMMIT-B> refs/heads/main
-		<COMMIT-A> refs/heads/next
+		<cummit-B> refs/heads/bar
+		<cummit-B> refs/heads/main
+		<cummit-A> refs/heads/next
 		EOF
 		test_cmp expect actual
 	'

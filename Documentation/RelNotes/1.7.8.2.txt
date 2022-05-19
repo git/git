@@ -31,11 +31,11 @@ Fixes since v1.7.8.1
    sides added, without any common ancestor version" conflict
    situation.
 
- * "git cherry-pick $commit" (not a range) created an unnecessary
+ * "git cherry-pick $cummit" (not a range) created an unnecessary
    sequencer state and interfered with valid workflow to use the
-   command during a session to cherry-pick multiple commits.
+   command during a session to cherry-pick multiple cummits.
 
- * You could make "git commit" segfault by giving the "--no-message"
+ * You could make "git cummit" segfault by giving the "--no-message"
    option.
 
  * "fast-import" did not correctly update an existing notes tree,
@@ -64,8 +64,8 @@ Fixes since v1.7.8.1
  * "git push -v" forgot how to be verbose by mistake. It now properly
    becomes verbose when asked to.
 
- * When a "reword" action in "git rebase -i" failed to run "commit --amend",
+ * When a "reword" action in "git rebase -i" failed to run "cummit --amend",
    we did not give the control back to the user to resolve the situation, and
-   instead kept the original commit log message.
+   instead kept the original cummit log message.
 
 Also contains minor fixes and documentation updates.

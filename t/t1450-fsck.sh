@@ -10,11 +10,11 @@ test_description='git fsck random collection of tests
 
 test_expect_success setup '
 	git config gc.auto 0 &&
-	git config i18n.commitencoding ISO-8859-1 &&
-	test_commit A fileA one &&
-	git config --unset i18n.commitencoding &&
+	git config i18n.cummitencoding ISO-8859-1 &&
+	test_cummit A fileA one &&
+	git config --unset i18n.cummitencoding &&
 	git checkout HEAD^0 &&
-	test_commit B fileB two &&
+	test_cummit B fileB two &&
 	git tag -d A B &&
 	git reflog expire --expire=now --all
 '
@@ -25,7 +25,7 @@ test_expect_success 'loose objects borrowed from alternate are not missing' '
 		cd another &&
 		git init &&
 		echo ../../../.git/objects >.git/objects/info/alternates &&
-		test_commit C fileC one &&
+		test_cummit C fileC one &&
 		git fsck --no-dangling >../actual 2>&1
 	) &&
 	test_must_be_empty actual
@@ -62,7 +62,7 @@ test_expect_success 'object with hash mismatch' '
 		mv objects/$old objects/$new &&
 		git update-index --add --cacheinfo 100644 $oid foo &&
 		tree=$(git write-tree) &&
-		cmt=$(echo bogus | git commit-tree $tree) &&
+		cmt=$(echo bogus | git cummit-tree $tree) &&
 		git update-ref refs/heads/bogus $cmt &&
 
 		test_must_fail git fsck 2>out &&
@@ -84,7 +84,7 @@ test_expect_success 'object with hash and type mismatch' '
 		mv objects/$old objects/$new &&
 		git update-index --add --cacheinfo 100644 $oid foo &&
 		tree=$(git write-tree) &&
-		cmt=$(echo bogus | git commit-tree $tree) &&
+		cmt=$(echo bogus | git cummit-tree $tree) &&
 		git update-ref refs/heads/bogus $cmt &&
 
 
@@ -114,11 +114,11 @@ test_expect_success 'zlib corrupt loose object output ' '
 	)
 '
 
-test_expect_success 'branch pointing to non-commit' '
+test_expect_success 'branch pointing to non-cummit' '
 	git rev-parse HEAD^{tree} >.git/refs/heads/invalid &&
 	test_when_finished "git update-ref -d refs/heads/invalid" &&
 	test_must_fail git fsck 2>out &&
-	test_i18ngrep "not a commit" out
+	test_i18ngrep "not a cummit" out
 '
 
 test_expect_success 'HEAD link pointing at a funny object' '
@@ -174,7 +174,7 @@ test_expect_success 'other worktree HEAD link pointing at a funny place' '
 	test_i18ngrep "worktrees/other/HEAD points to something strange" out
 '
 
-test_expect_success 'commit with multiple signatures is okay' '
+test_expect_success 'cummit with multiple signatures is okay' '
 	git cat-file commit HEAD >basis &&
 	cat >sigs <<-EOF &&
 	gpgsig -----BEGIN PGP SIGNATURE-----
@@ -184,73 +184,73 @@ test_expect_success 'commit with multiple signatures is okay' '
 	  VGhpcyBpcyBub3QgcmVhbGx5IGEgc2lnbmF0dXJlLg==
 	  -----END PGP SIGNATURE-----
 	EOF
-	sed -e "/^committer/q" basis >okay &&
+	sed -e "/^cummitter/q" basis >okay &&
 	cat sigs >>okay &&
 	echo >>okay &&
 	sed -e "1,/^$/d" basis >>okay &&
 	cat okay &&
-	new=$(git hash-object -t commit -w --stdin <okay) &&
+	new=$(git hash-object -t cummit -w --stdin <okay) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	git fsck 2>out &&
 	cat out &&
-	! grep "commit $new" out
+	! grep "cummit $new" out
 '
 
 test_expect_success 'email without @ is okay' '
 	git cat-file commit HEAD >basis &&
 	sed "s/@/AT/" basis >okay &&
-	new=$(git hash-object -t commit -w --stdin <okay) &&
+	new=$(git hash-object -t cummit -w --stdin <okay) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	git fsck 2>out &&
-	! grep "commit $new" out
+	! grep "cummit $new" out
 '
 
 test_expect_success 'email with embedded > is not okay' '
 	git cat-file commit HEAD >basis &&
 	sed "s/@[a-z]/&>/" basis >bad-email &&
-	new=$(git hash-object -t commit -w --stdin <bad-email) &&
+	new=$(git hash-object -t cummit -w --stdin <bad-email) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
-	test_i18ngrep "error in commit $new" out
+	test_i18ngrep "error in cummit $new" out
 '
 
 test_expect_success 'missing < email delimiter is reported nicely' '
 	git cat-file commit HEAD >basis &&
 	sed "s/<//" basis >bad-email-2 &&
-	new=$(git hash-object -t commit -w --stdin <bad-email-2) &&
+	new=$(git hash-object -t cummit -w --stdin <bad-email-2) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
-	test_i18ngrep "error in commit $new.* - bad name" out
+	test_i18ngrep "error in cummit $new.* - bad name" out
 '
 
 test_expect_success 'missing email is reported nicely' '
 	git cat-file commit HEAD >basis &&
 	sed "s/[a-z]* <[^>]*>//" basis >bad-email-3 &&
-	new=$(git hash-object -t commit -w --stdin <bad-email-3) &&
+	new=$(git hash-object -t cummit -w --stdin <bad-email-3) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
-	test_i18ngrep "error in commit $new.* - missing email" out
+	test_i18ngrep "error in cummit $new.* - missing email" out
 '
 
 test_expect_success '> in name is reported' '
 	git cat-file commit HEAD >basis &&
 	sed "s/ </> </" basis >bad-email-4 &&
-	new=$(git hash-object -t commit -w --stdin <bad-email-4) &&
+	new=$(git hash-object -t cummit -w --stdin <bad-email-4) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
-	test_i18ngrep "error in commit $new" out
+	test_i18ngrep "error in cummit $new" out
 '
 
 # date is 2^64 + 1
@@ -258,23 +258,23 @@ test_expect_success 'integer overflow in timestamps is reported' '
 	git cat-file commit HEAD >basis &&
 	sed "s/^\\(author .*>\\) [0-9]*/\\1 18446744073709551617/" \
 		<basis >bad-timestamp &&
-	new=$(git hash-object -t commit -w --stdin <bad-timestamp) &&
+	new=$(git hash-object -t cummit -w --stdin <bad-timestamp) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
-	test_i18ngrep "error in commit $new.*integer overflow" out
+	test_i18ngrep "error in cummit $new.*integer overflow" out
 '
 
-test_expect_success 'commit with NUL in header' '
+test_expect_success 'cummit with NUL in header' '
 	git cat-file commit HEAD >basis &&
-	sed "s/author ./author Q/" <basis | q_to_nul >commit-NUL-header &&
-	new=$(git hash-object -t commit -w --stdin <commit-NUL-header) &&
+	sed "s/author ./author Q/" <basis | q_to_nul >cummit-NUL-header &&
+	new=$(git hash-object -t cummit -w --stdin <cummit-NUL-header) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	test_must_fail git fsck 2>out &&
-	test_i18ngrep "error in commit $new.*unterminated header: NUL at offset" out
+	test_i18ngrep "error in cummit $new.*unterminated header: NUL at offset" out
 '
 
 test_expect_success 'tree object with duplicate entries' '
@@ -335,11 +335,11 @@ test_expect_success 'unparseable tree object' '
 
 	test_when_finished "git update-ref -d refs/heads/wrong" &&
 	test_when_finished "remove_object \$tree_sha1" &&
-	test_when_finished "remove_object \$commit_sha1" &&
+	test_when_finished "remove_object \$cummit_sha1" &&
 	junk=$(test_oid junk) &&
 	tree_sha1=$(printf "100644 \0$junk" | git hash-object -t tree --stdin -w --literally) &&
-	commit_sha1=$(git commit-tree $tree_sha1) &&
-	git update-ref refs/heads/wrong $commit_sha1 &&
+	cummit_sha1=$(git cummit-tree $tree_sha1) &&
+	git update-ref refs/heads/wrong $cummit_sha1 &&
 	test_must_fail git fsck 2>out &&
 	test_i18ngrep "error: empty filename in tree entry" out &&
 	test_i18ngrep "$tree_sha1" out &&
@@ -349,7 +349,7 @@ test_expect_success 'unparseable tree object' '
 test_expect_success 'tree entry with type mismatch' '
 	test_when_finished "remove_object \$blob" &&
 	test_when_finished "remove_object \$tree" &&
-	test_when_finished "remove_object \$commit" &&
+	test_when_finished "remove_object \$cummit" &&
 	test_when_finished "git update-ref -d refs/heads/type_mismatch" &&
 	blob=$(echo blob | git hash-object -w --stdin) &&
 	blob_bin=$(echo $blob | hex2oct) &&
@@ -357,8 +357,8 @@ test_expect_success 'tree entry with type mismatch' '
 		printf "40000 dir\0${blob_bin}100644 file\0${blob_bin}" |
 		git hash-object -t tree --stdin -w --literally
 	) &&
-	commit=$(git commit-tree $tree) &&
-	git update-ref refs/heads/type_mismatch $commit &&
+	cummit=$(git cummit-tree $tree) &&
+	git update-ref refs/heads/type_mismatch $cummit &&
 	test_must_fail git fsck >out 2>&1 &&
 	test_i18ngrep "is a blob, not a tree" out &&
 	test_i18ngrep ! "dangling blob" out
@@ -368,7 +368,7 @@ test_expect_success 'tag pointing to nonexistent' '
 	badoid=$(test_oid deadbeef) &&
 	cat >invalid-tag <<-EOF &&
 	object $badoid
-	type commit
+	type cummit
 	tag invalid
 	tagger T A Gger <tagger@example.com> 1234567890 -0000
 
@@ -388,7 +388,7 @@ test_expect_success 'tag pointing to something else than its type' '
 	test_when_finished "remove_object $sha" &&
 	cat >wrong-tag <<-EOF &&
 	object $sha
-	type commit
+	type cummit
 	tag wrong
 	tagger T A Gger <tagger@example.com> 1234567890 -0000
 
@@ -406,7 +406,7 @@ test_expect_success 'tag with incorrect tag name & missing tagger' '
 	sha=$(git rev-parse HEAD) &&
 	cat >wrong-tag <<-EOF &&
 	object $sha
-	type commit
+	type cummit
 	tag wrong name format
 
 	This is an invalid tag.
@@ -429,7 +429,7 @@ test_expect_success 'tag with bad tagger' '
 	sha=$(git rev-parse HEAD) &&
 	cat >wrong-tag <<-EOF &&
 	object $sha
-	type commit
+	type cummit
 	tag not-quite-wrong
 	tagger Bad Tagger Name
 
@@ -441,14 +441,14 @@ test_expect_success 'tag with bad tagger' '
 	echo $tag >.git/refs/tags/wrong &&
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
 	test_must_fail git fsck --tags 2>out &&
-	test_i18ngrep "error in tag .*: invalid author/committer" out
+	test_i18ngrep "error in tag .*: invalid author/cummitter" out
 '
 
 test_expect_success 'tag with NUL in header' '
 	sha=$(git rev-parse HEAD) &&
 	q_to_nul >tag-NUL-header <<-EOF &&
 	object $sha
-	type commit
+	type cummit
 	tag contains-Q-in-header
 	tagger T A Gger <tagger@example.com> 1234567890 -0000
 
@@ -484,7 +484,7 @@ test_expect_success 'rev-list --verify-objects with bad sha1' '
 	test_when_finished "git read-tree -u --reset HEAD" &&
 	tree=$(git write-tree) &&
 	test_when_finished "remove_object $tree" &&
-	cmt=$(echo bogus | git commit-tree $tree) &&
+	cmt=$(echo bogus | git cummit-tree $tree) &&
 	test_when_finished "remove_object $cmt" &&
 	git update-ref refs/heads/bogus $cmt &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
@@ -496,7 +496,7 @@ test_expect_success 'rev-list --verify-objects with bad sha1' '
 test_expect_success 'force fsck to ignore double author' '
 	git cat-file commit HEAD >basis &&
 	sed "s/^author .*/&,&/" <basis | tr , \\n >multiple-authors &&
-	new=$(git hash-object -t commit -w --stdin <multiple-authors) &&
+	new=$(git hash-object -t cummit -w --stdin <multiple-authors) &&
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
@@ -518,8 +518,8 @@ test_expect_success 'fsck notices blob entry pointing to null sha1' '
 '
 
 test_expect_success 'fsck notices submodule entry pointing to null sha1' '
-	(git init null-commit &&
-	 cd null-commit &&
+	(git init null-cummit &&
+	 cd null-cummit &&
 	 sha=$(printf "160000 submodule$_bz$_bzoid" |
 	       git hash-object -w --stdin -t tree) &&
 	  git fsck 2>out &&
@@ -537,7 +537,7 @@ while read name path pretty; do
 			git config core.protectNTFS false &&
 			echo content >file &&
 			git add file &&
-			git commit -m base &&
+			git cummit -m base &&
 			blob=$(git rev-parse :file) &&
 			tree=$(git rev-parse HEAD^{tree}) &&
 			value=$(eval "echo \$$type") &&
@@ -569,7 +569,7 @@ test_expect_success 'fsck allows .Ňit' '
 		cd not-dotgit &&
 		echo content >file &&
 		git add file &&
-		git commit -m base &&
+		git cummit -m base &&
 		blob=$(git rev-parse :file) &&
 		printf "100644 blob $blob\t.\\305\\207it" >tree &&
 		tree=$(git mktree <tree) &&
@@ -578,21 +578,21 @@ test_expect_success 'fsck allows .Ňit' '
 	)
 '
 
-test_expect_success 'NUL in commit' '
-	rm -fr nul-in-commit &&
-	git init nul-in-commit &&
+test_expect_success 'NUL in cummit' '
+	rm -fr nul-in-cummit &&
+	git init nul-in-cummit &&
 	(
-		cd nul-in-commit &&
-		git commit --allow-empty -m "initial commitQNUL after message" &&
+		cd nul-in-cummit &&
+		git cummit --allow-empty -m "initial cummitQNUL after message" &&
 		git cat-file commit HEAD >original &&
 		q_to_nul <original >munged &&
-		git hash-object -w -t commit --stdin <munged >name &&
+		git hash-object -w -t cummit --stdin <munged >name &&
 		git branch bad $(cat name) &&
 
-		test_must_fail git -c fsck.nulInCommit=error fsck 2>warn.1 &&
-		test_i18ngrep nulInCommit warn.1 &&
+		test_must_fail git -c fsck.nulIncummit=error fsck 2>warn.1 &&
+		test_i18ngrep nulIncummit warn.1 &&
 		git fsck 2>warn.2 &&
-		test_i18ngrep nulInCommit warn.2
+		test_i18ngrep nulIncummit warn.2
 	)
 '
 
@@ -604,11 +604,11 @@ create_repo_missing () {
 	git init missing &&
 	(
 		cd missing &&
-		git commit -m one --allow-empty &&
+		git cummit -m one --allow-empty &&
 		mkdir subdir &&
 		echo content >subdir/file &&
 		git add subdir/file &&
-		git commit -m two &&
+		git cummit -m two &&
 		unrelated=$(echo unrelated | git hash-object --stdin -w) &&
 		git tag -m foo tag $unrelated &&
 		sha1=$(git rev-parse --verify "$1") &&
@@ -642,7 +642,7 @@ test_expect_success 'fsck notices missing tagged object' '
 	test_must_fail git -C missing fsck
 '
 
-test_expect_success 'fsck notices ref pointing to missing commit' '
+test_expect_success 'fsck notices ref pointing to missing cummit' '
 	create_repo_missing HEAD &&
 	test_must_fail git -C missing fsck
 '
@@ -659,7 +659,7 @@ test_expect_success 'fsck --connectivity-only' '
 		cd connectivity-only &&
 		touch empty &&
 		git add empty &&
-		test_commit empty &&
+		test_cummit empty &&
 
 		# Drop the index now; we want to be sure that we
 		# recursively notice the broken objects
@@ -691,7 +691,7 @@ test_expect_success 'fsck --connectivity-only with explicit head' '
 	git init connectivity-only &&
 	(
 		cd connectivity-only &&
-		test_commit foo &&
+		test_cummit foo &&
 		rm -f .git/index &&
 		tree=$(git rev-parse HEAD^{tree}) &&
 		remove_object $(git rev-parse HEAD:foo.t) &&
@@ -705,9 +705,9 @@ test_expect_success 'fsck --name-objects' '
 	(
 		cd name-objects &&
 		git config core.logAllRefUpdates false &&
-		test_commit julius caesar.t &&
-		test_commit augustus44 &&
-		test_commit caesar  &&
+		test_cummit julius caesar.t &&
+		test_cummit augustus44 &&
+		test_cummit caesar  &&
 		remove_object $(git rev-parse julius:caesar.t) &&
 		tree=$(git rev-parse --verify julius:) &&
 		git tag -d julius &&
@@ -732,8 +732,8 @@ test_expect_success 'fsck errors in packed objects' '
 	git cat-file commit HEAD >basis &&
 	sed "s/</one/" basis >one &&
 	sed "s/</foo/" basis >two &&
-	one=$(git hash-object -t commit -w one) &&
-	two=$(git hash-object -t commit -w two) &&
+	one=$(git hash-object -t cummit -w one) &&
+	two=$(git hash-object -t cummit -w two) &&
 	pack=$(
 		{
 			echo $one &&
@@ -744,13 +744,13 @@ test_expect_success 'fsck errors in packed objects' '
 	remove_object $one &&
 	remove_object $two &&
 	test_must_fail git fsck 2>out &&
-	test_i18ngrep "error in commit $one.* - bad name" out &&
-	test_i18ngrep "error in commit $two.* - bad name" out &&
+	test_i18ngrep "error in cummit $one.* - bad name" out &&
+	test_i18ngrep "error in cummit $two.* - bad name" out &&
 	! grep corrupt out
 '
 
 test_expect_success 'fsck fails on corrupt packfile' '
-	hsh=$(git commit-tree -m mycommit HEAD^{tree}) &&
+	hsh=$(git cummit-tree -m mycommit HEAD^{tree}) &&
 	pack=$(echo $hsh | git pack-objects .git/objects/pack/pack) &&
 
 	# Corrupt the first byte of the first object. (It contains 3 type bits,
@@ -770,7 +770,7 @@ test_expect_success 'fsck finds problems in duplicate loose objects' '
 	git init broken-duplicate &&
 	(
 		cd broken-duplicate &&
-		test_commit duplicate &&
+		test_cummit duplicate &&
 		# no "-d" here, so we end up with duplicates
 		git repack &&
 		# now corrupt the loose copy
@@ -781,16 +781,16 @@ test_expect_success 'fsck finds problems in duplicate loose objects' '
 	)
 '
 
-test_expect_success 'fsck detects trailing loose garbage (commit)' '
+test_expect_success 'fsck detects trailing loose garbage (cummit)' '
 	git cat-file commit HEAD >basis &&
-	echo bump-commit-sha1 >>basis &&
-	commit=$(git hash-object -w -t commit basis) &&
-	file=$(sha1_file $commit) &&
-	test_when_finished "remove_object $commit" &&
+	echo bump-cummit-sha1 >>basis &&
+	cummit=$(git hash-object -w -t cummit basis) &&
+	file=$(sha1_file $cummit) &&
+	test_when_finished "remove_object $cummit" &&
 	chmod +w "$file" &&
 	echo garbage >>"$file" &&
 	test_must_fail git fsck 2>out &&
-	test_i18ngrep "garbage.*$commit" out
+	test_i18ngrep "garbage.*$cummit" out
 '
 
 test_expect_success 'fsck detects trailing loose garbage (large blob)' '
@@ -833,12 +833,12 @@ test_expect_success 'create dangling-object repository' '
 		dblob=$(echo dangling | git hash-object -w --stdin) &&
 		tree=$(printf "100644 blob %s\t%s\n" $blob one | git mktree) &&
 		dtree=$(printf "100644 blob %s\t%s\n" $blob two | git mktree) &&
-		commit=$(git commit-tree $tree) &&
-		dcommit=$(git commit-tree -p $commit $tree) &&
+		cummit=$(git cummit-tree $tree) &&
+		dcummit=$(git cummit-tree -p $cummit $tree) &&
 
 		cat >expect <<-EOF
 		dangling blob $dblob
-		dangling commit $dcommit
+		dangling cummit $dcummit
 		dangling tree $dtree
 		EOF
 	)

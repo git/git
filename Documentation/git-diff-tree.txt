@@ -9,7 +9,7 @@ git-diff-tree - Compares the content and mode of blobs found via two tree object
 SYNOPSIS
 --------
 [verse]
-'git diff-tree' [--stdin] [-m] [-s] [-v] [--no-commit-id] [--pretty]
+'git diff-tree' [--stdin] [-m] [-s] [-v] [--no-cummit-id] [--pretty]
 	      [-t] [-r] [-c | --cc] [--combined-all-paths] [--root] [--merge-base]
 	      [<common-diff-options>] <tree-ish> [<tree-ish>] [<path>...]
 
@@ -17,10 +17,10 @@ DESCRIPTION
 -----------
 Compares the content and mode of the blobs found via two tree objects.
 
-If there is only one <tree-ish> given, the commit is compared with its parents
+If there is only one <tree-ish> given, the cummit is compared with its parents
 (see --stdin below).
 
-Note that 'git diff-tree' can use the tree encapsulated in a commit object.
+Note that 'git diff-tree' can use the tree encapsulated in a cummit object.
 
 OPTIONS
 -------
@@ -40,38 +40,38 @@ include::diff-options.txt[]
 	show tree entry itself as well as subtrees.  Implies -r.
 
 --root::
-	When `--root` is specified the initial commit will be shown as a big
+	When `--root` is specified the initial cummit will be shown as a big
 	creation event. This is equivalent to a diff against the NULL tree.
 
 --merge-base::
 	Instead of comparing the <tree-ish>s directly, use the merge
 	base between the two <tree-ish>s as the "before" side.  There
-	must be two <tree-ish>s given and they must both be commits.
+	must be two <tree-ish>s given and they must both be cummits.
 
 --stdin::
 	When `--stdin` is specified, the command does not take
 	<tree-ish> arguments from the command line.  Instead, it
-	reads lines containing either two <tree>, one <commit>, or a
-	list of <commit> from its standard input.  (Use a single space
+	reads lines containing either two <tree>, one <cummit>, or a
+	list of <cummit> from its standard input.  (Use a single space
 	as separator.)
 +
 When two trees are given, it compares the first tree with the second.
-When a single commit is given, it compares the commit with its
-parents.  The remaining commits, when given, are used as if they are
-parents of the first commit.
+When a single cummit is given, it compares the cummit with its
+parents.  The remaining cummits, when given, are used as if they are
+parents of the first cummit.
 +
 When comparing two trees, the ID of both trees (separated by a space
 and terminated by a newline) is printed before the difference.  When
-comparing commits, the ID of the first (or only) commit, followed by a
+comparing cummits, the ID of the first (or only) cummit, followed by a
 newline, is printed.
 +
 The following flags further affect the behavior when comparing
-commits (but not trees).
+cummits (but not trees).
 
 -m::
 	By default, 'git diff-tree --stdin' does not show
-	differences for merge commits.  With this flag, it shows
-	differences to that commit from all of its parents. See
+	differences for merge cummits.  With this flag, it shows
+	differences to that cummit from all of its parents. See
 	also `-c`.
 
 -s::
@@ -82,16 +82,16 @@ commits (but not trees).
 
 -v::
 	This flag causes 'git diff-tree --stdin' to also show
-	the commit message before the differences.
+	the cummit message before the differences.
 
 include::pretty-options.txt[]
 
---no-commit-id::
-	'git diff-tree' outputs a line with the commit ID when
-	applicable.  This flag suppressed the commit ID output.
+--no-cummit-id::
+	'git diff-tree' outputs a line with the cummit ID when
+	applicable.  This flag suppressed the cummit ID output.
 
 -c::
-	This flag changes the way a merge commit is displayed
+	This flag changes the way a merge cummit is displayed
 	(which means it is useful only when the command is given
 	one <tree-ish>, or `--stdin`).  It shows the differences
 	from each of the parents to the merge result simultaneously
@@ -101,24 +101,24 @@ include::pretty-options.txt[]
 	from all parents.
 
 --cc::
-	This flag changes the way a merge commit patch is displayed,
+	This flag changes the way a merge cummit patch is displayed,
 	in a similar way to the `-c` option. It implies the `-c`
 	and `-p` options and further compresses the patch output
 	by omitting uninteresting hunks whose the contents in the parents
 	have only two variants and the merge result picks one of them
-	without modification.  When all hunks are uninteresting, the commit
-	itself and the commit log message is not shown, just like in any other
+	without modification.  When all hunks are uninteresting, the cummit
+	itself and the cummit log message is not shown, just like in any other
 	"empty diff" case.
 
 --combined-all-paths::
-	This flag causes combined diffs (used for merge commits) to
+	This flag causes combined diffs (used for merge cummits) to
 	list the name of the file from all parents.  It thus only has
 	effect when -c or --cc are specified, and is likely only
 	useful if filename changes are detected (i.e. when either
 	rename or copy detection have been requested).
 
 --always::
-	Show the commit itself and the commit log message even
+	Show the cummit itself and the cummit log message even
 	if the diff itself is empty.
 
 

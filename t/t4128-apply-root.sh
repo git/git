@@ -9,7 +9,7 @@ test_expect_success 'setup' '
 	mkdir -p some/sub/dir &&
 	echo Hello > some/sub/dir/file &&
 	git add some/sub/dir/file &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag initial
 
 '

@@ -9,9 +9,9 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit initial &&
+	test_cummit initial &&
 	git worktree add wt &&
-	test_commit -C wt in-worktree
+	test_cummit -C wt in-worktree
 '
 
 test_expect_success 'apply in subdirectory' '

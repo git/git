@@ -1,4 +1,4 @@
-# git-gui commit checkout support
+# git-gui cummit checkout support
 # Copyright (C) 2007 Shawn Pearce
 
 class checkout_op {
@@ -7,9 +7,9 @@ field w        {}; # our window (if we have one)
 field w_cons   {}; # embedded console window object
 
 field new_expr   ; # expression the user saw/thinks this is
-field new_hash   ; # commit SHA-1 we are switching to
+field new_hash   ; # cummit SHA-1 we are switching to
 field new_ref    ; # ref we are updating/creating
-field old_hash   ; # commit SHA-1 that was checked out when we started
+field old_hash   ; # cummit SHA-1 that was checked out when we started
 
 field parent_w      .; # window that started us
 field merge_type none; # type of merge to apply to existing branch
@@ -277,15 +277,15 @@ method _checkout {} {
 }
 
 method _start_checkout {} {
-	global HEAD commit_type
+	global HEAD cummit_type
 
 	# -- Our in memory state should match the repository.
 	#
 	repository_state curType old_hash curMERGE_HEAD
-	if {[string match amend* $commit_type]
+	if {[string match amend* $cummit_type]
 		&& $curType eq {normal}
 		&& $old_hash eq $HEAD} {
-	} elseif {$commit_type ne $curType || $HEAD ne $old_hash} {
+	} elseif {$cummit_type ne $curType || $HEAD ne $old_hash} {
 		info_popup [mc "Last scanned state does not match repository state.
 
 Another Git program has modified this repository since the last scan.  A rescan must be performed before the current branch can be changed.
@@ -390,7 +390,7 @@ $err
 }
 
 method _after_readtree {} {
-	global commit_type HEAD MERGE_HEAD PARENT
+	global cummit_type HEAD MERGE_HEAD PARENT
 	global current_branch is_detached
 	global ui_comm
 
@@ -491,19 +491,19 @@ method _update_repo_state {} {
 	#    amend mode our file lists are accurate and we can avoid
 	#    the rescan.
 	#
-	global commit_type_is_amend commit_type HEAD MERGE_HEAD PARENT
+	global cummit_type_is_amend cummit_type HEAD MERGE_HEAD PARENT
 	global ui_comm
 
 	unlock_index
 	set name [_name $this]
-	set commit_type_is_amend 0
-	if {[string match amend* $commit_type]} {
+	set cummit_type_is_amend 0
+	if {[string match amend* $cummit_type]} {
 		$ui_comm delete 0.0 end
 		$ui_comm edit reset
 		$ui_comm edit modified false
 		rescan [list ui_status [mc "Checked out '%s'." $name]]
 	} else {
-		repository_state commit_type HEAD MERGE_HEAD
+		repository_state cummit_type HEAD MERGE_HEAD
 		set PARENT $HEAD
 		ui_status [mc "Checked out '%s'." $name]
 	}
@@ -533,7 +533,7 @@ method _confirm_reset {cur} {
 	pack [label $w.msg1 \
 		-anchor w \
 		-justify left \
-		-text [mc "Resetting '%s' to '%s' will lose the following commits:" $name $new_expr]\
+		-text [mc "Resetting '%s' to '%s' will lose the following cummits:" $name $new_expr]\
 		] -anchor w
 
 	set list $w.list.l
@@ -555,7 +555,7 @@ method _confirm_reset {cur} {
 	pack [label $w.msg2 \
 		-anchor w \
 		-justify left \
-		-text [mc "Recovering lost commits may not be easy."] \
+		-text [mc "Recovering lost cummits may not be easy."] \
 		]
 	pack [label $w.msg3 \
 		-anchor w \

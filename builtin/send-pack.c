@@ -1,6 +1,6 @@
 #include "builtin.h"
 #include "config.h"
-#include "commit.h"
+#include "cummit.h"
 #include "refs.h"
 #include "pkt-line.h"
 #include "sideband.h"

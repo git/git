@@ -15,7 +15,7 @@ Fixes since v2.3.7
    that edits it had incorrectly spelled user.name and user.email
    entries in it.
 
- * "git commit --date=now" or anything that relies on approxidate lost
+ * "git cummit --date=now" or anything that relies on approxidate lost
    the daylight-saving-time offset.
 
 Also contains typofixes, documentation updates and trivial code

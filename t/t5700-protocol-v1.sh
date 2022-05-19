@@ -21,7 +21,7 @@ daemon_parent=$GIT_DAEMON_DOCUMENT_ROOT_PATH/parent
 
 test_expect_success 'create repo to be served by git-daemon' '
 	git init "$daemon_parent" &&
-	test_commit -C "$daemon_parent" one
+	test_cummit -C "$daemon_parent" one
 '
 
 test_expect_success 'clone with git:// using protocol v1' '
@@ -39,7 +39,7 @@ test_expect_success 'clone with git:// using protocol v1' '
 '
 
 test_expect_success 'fetch with git:// using protocol v1' '
-	test_commit -C "$daemon_parent" two &&
+	test_cummit -C "$daemon_parent" two &&
 
 	GIT_TRACE_PACKET=1 git -C daemon_child -c protocol.version=1 \
 		fetch 2>log &&
@@ -69,7 +69,7 @@ test_expect_success 'pull with git:// using protocol v1' '
 '
 
 test_expect_success 'push with git:// using protocol v1' '
-	test_commit -C daemon_child three &&
+	test_cummit -C daemon_child three &&
 
 	# Push to another branch, as the target repository has the
 	# main branch checked out and we cannot push into it.
@@ -92,7 +92,7 @@ stop_git_daemon
 #
 test_expect_success 'create repo to be served by file:// transport' '
 	git init file_parent &&
-	test_commit -C file_parent one
+	test_cummit -C file_parent one
 '
 
 test_expect_success 'clone with file:// using protocol v1' '
@@ -108,7 +108,7 @@ test_expect_success 'clone with file:// using protocol v1' '
 '
 
 test_expect_success 'fetch with file:// using protocol v1' '
-	test_commit -C file_parent two &&
+	test_cummit -C file_parent two &&
 
 	GIT_TRACE_PACKET=1 git -C file_child -c protocol.version=1 \
 		fetch 2>log &&
@@ -134,7 +134,7 @@ test_expect_success 'pull with file:// using protocol v1' '
 '
 
 test_expect_success 'push with file:// using protocol v1' '
-	test_commit -C file_child three &&
+	test_cummit -C file_child three &&
 
 	# Push to another branch, as the target repository has the
 	# main branch checked out and we cannot push into it.
@@ -155,7 +155,7 @@ test_expect_success 'cloning branchless tagless but not refless remote' '
 	git -c init.defaultbranch=main init server &&
 	echo foo >server/foo.txt &&
 	git -C server add foo.txt &&
-	git -C server commit -m "message" &&
+	git -C server cummit -m "message" &&
 	git -C server update-ref refs/notbranch/alsonottag HEAD &&
 	git -C server checkout --detach &&
 	git -C server branch -D main &&
@@ -183,7 +183,7 @@ expect_ssh () {
 
 test_expect_success 'create repo to be served by ssh:// transport' '
 	git init ssh_parent &&
-	test_commit -C ssh_parent one
+	test_cummit -C ssh_parent one
 '
 
 test_expect_success 'clone with ssh:// using protocol v1' '
@@ -200,7 +200,7 @@ test_expect_success 'clone with ssh:// using protocol v1' '
 '
 
 test_expect_success 'fetch with ssh:// using protocol v1' '
-	test_commit -C ssh_parent two &&
+	test_cummit -C ssh_parent two &&
 
 	GIT_TRACE_PACKET=1 git -C ssh_child -c protocol.version=1 \
 		fetch 2>log &&
@@ -228,7 +228,7 @@ test_expect_success 'pull with ssh:// using protocol v1' '
 '
 
 test_expect_success 'push with ssh:// using protocol v1' '
-	test_commit -C ssh_child three &&
+	test_cummit -C ssh_child three &&
 
 	# Push to another branch, as the target repository has the
 	# main branch checked out and we cannot push into it.
@@ -252,7 +252,7 @@ start_httpd
 test_expect_success 'create repo to be served by http:// transport' '
 	git init "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
 	git -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" config http.receivepack true &&
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" one
+	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" one
 '
 
 test_expect_success 'clone with http:// using protocol v1' '
@@ -270,7 +270,7 @@ test_expect_success 'clone with http:// using protocol v1' '
 '
 
 test_expect_success 'fetch with http:// using protocol v1' '
-	test_commit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two &&
+	test_cummit -C "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" two &&
 
 	GIT_TRACE_PACKET=1 git -C http_child -c protocol.version=1 \
 		fetch 2>log &&
@@ -296,7 +296,7 @@ test_expect_success 'pull with http:// using protocol v1' '
 '
 
 test_expect_success 'push with http:// using protocol v1' '
-	test_commit -C http_child three &&
+	test_cummit -C http_child three &&
 
 	# Push to another branch, as the target repository has the
 	# main branch checked out and we cannot push into it.

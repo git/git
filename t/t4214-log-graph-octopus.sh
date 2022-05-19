@@ -18,22 +18,22 @@ test_cmp_colored_graph () {
 }
 
 test_expect_success 'set up merge history' '
-	test_commit initial &&
+	test_cummit initial &&
 	for i in 1 2 3 4 ; do
 		git checkout main -b $i || return $?
 		# Make tag name different from branch name, to avoid
 		# ambiguity error when calling checkout.
-		test_commit $i $i $i tag$i || return $?
+		test_cummit $i $i $i tag$i || return $?
 	done &&
 	git checkout 1 -b merge &&
 	test_merge octopus-merge 1 2 3 4 &&
-	test_commit after-merge &&
+	test_cummit after-merge &&
 	git checkout 1 -b L &&
-	test_commit left &&
+	test_cummit left &&
 	git checkout 4 -b crossover &&
-	test_commit after-4 &&
+	test_cummit after-4 &&
 	git checkout initial -b more-L &&
-	test_commit after-initial
+	test_cummit after-initial
 '
 
 test_expect_success 'log --graph with tricky octopus merge, no color' '
@@ -261,7 +261,7 @@ test_expect_success 'log --graph with crossover in octopus merge and its child w
 	test_cmp_colored_graph after-4 after-merge
 '
 
-test_expect_success 'log --graph with unrelated commit and octopus tip, no color' '
+test_expect_success 'log --graph with unrelated cummit and octopus tip, no color' '
 	test_cmp_graph after-initial octopus-merge <<-\EOF
 	* after-initial
 	| *---.   octopus-merge
@@ -281,7 +281,7 @@ test_expect_success 'log --graph with unrelated commit and octopus tip, no color
 	EOF
 '
 
-test_expect_success 'log --graph with unrelated commit and octopus tip with colors' '
+test_expect_success 'log --graph with unrelated cummit and octopus tip with colors' '
 	test_config log.graphColors red,green,yellow,blue,magenta,cyan &&
 	cat >expect.colors <<-\EOF &&
 	* after-initial
@@ -303,7 +303,7 @@ test_expect_success 'log --graph with unrelated commit and octopus tip with colo
 	test_cmp_colored_graph after-initial octopus-merge
 '
 
-test_expect_success 'log --graph with unrelated commit and octopus child, no color' '
+test_expect_success 'log --graph with unrelated cummit and octopus child, no color' '
 	test_cmp_graph after-initial after-merge <<-\EOF
 	* after-initial
 	| * after-merge
@@ -324,7 +324,7 @@ test_expect_success 'log --graph with unrelated commit and octopus child, no col
 	EOF
 '
 
-test_expect_success 'log --graph with unrelated commit and octopus child with colors' '
+test_expect_success 'log --graph with unrelated cummit and octopus child with colors' '
 	test_config log.graphColors red,green,yellow,blue,magenta,cyan &&
 	cat >expect.colors <<-\EOF &&
 	* after-initial

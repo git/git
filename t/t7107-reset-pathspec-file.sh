@@ -12,7 +12,7 @@ test_expect_success setup '
 	echo C >fileC.t &&
 	echo D >fileD.t &&
 	git add . &&
-	git commit --include . -m "Commit" &&
+	git cummit --include . -m "cummit" &&
 	git tag checkpoint
 '
 

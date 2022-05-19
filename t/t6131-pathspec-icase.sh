@@ -9,22 +9,22 @@ then
 	test_done
 fi
 
-test_expect_success 'create commits with glob characters' '
-	test_commit bar bar &&
-	test_commit bAr bAr &&
-	test_commit BAR BAR &&
+test_expect_success 'create cummits with glob characters' '
+	test_cummit bar bar &&
+	test_cummit bAr bAr &&
+	test_cummit BAR BAR &&
 	mkdir foo &&
-	test_commit foo/bar foo/bar &&
-	test_commit foo/bAr foo/bAr &&
-	test_commit foo/BAR foo/BAR &&
+	test_cummit foo/bar foo/bar &&
+	test_cummit foo/bAr foo/bAr &&
+	test_cummit foo/BAR foo/BAR &&
 	mkdir fOo &&
-	test_commit fOo/bar fOo/bar &&
-	test_commit fOo/bAr fOo/bAr &&
-	test_commit fOo/BAR fOo/BAR &&
+	test_cummit fOo/bar fOo/bar &&
+	test_cummit fOo/bAr fOo/bAr &&
+	test_cummit fOo/BAR fOo/BAR &&
 	mkdir FOO &&
-	test_commit FOO/bar FOO/bar &&
-	test_commit FOO/bAr FOO/bAr &&
-	test_commit FOO/BAR FOO/BAR
+	test_cummit FOO/bar FOO/bar &&
+	test_cummit FOO/bAr FOO/bAr &&
+	test_cummit FOO/BAR FOO/BAR
 '
 
 test_expect_success 'tree_entry_interesting matches bar' '

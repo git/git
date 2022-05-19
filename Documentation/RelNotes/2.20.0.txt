@@ -42,7 +42,7 @@ UI, Workflows & Features
    time.  An attempt is made to detect such a case and warn.
 
  * "git checkout -b newbranch [HEAD]" should not have to do as much as
-   checking out a commit different from HEAD.  An attempt is made to
+   checking out a cummit different from HEAD.  An attempt is made to
    optimize this special case.
 
  * "git rev-list --stdin </dev/null" used to be an error; it now shows
@@ -73,7 +73,7 @@ UI, Workflows & Features
  * "git multi-pack-index" learned to detect corruption in the .midx
    file it uses, and this feature has been integrated into "git fsck".
 
- * Generation of (experimental) commit-graph files have so far been
+ * Generation of (experimental) cummit-graph files have so far been
    fairly silent, even though it takes noticeable amount of time in a
    meaningfully large repository.  The users will now see progress
    output.
@@ -120,7 +120,7 @@ UI, Workflows & Features
 
  * The documentation of "git gc" has been updated to mention that it
    is no longer limited to "pruning away cruft" but also updates
-   ancillary files like commit-graph as a part of repository
+   ancillary files like cummit-graph as a part of repository
    optimization.
 
  * "git p4 unshelve" improvements.
@@ -183,7 +183,7 @@ Performance, Internal Implementation, Development Support etc.
  * Developer builds now use -Wunused-function compilation option.
 
  * One of our CI tests to run with "unusual/experimental/random"
-   settings now also uses commit-graph and midx.
+   settings now also uses cummit-graph and midx.
 
  * When there are too many packfiles in a repository (which is not
    recommended), looking up an object in these would require
@@ -208,7 +208,7 @@ Performance, Internal Implementation, Development Support etc.
    delta against another object that is not in the resulting pack but
    is known to be present on the receiving end, the code learned to
    take advantage of the reachability bitmap; this allows the server
-   to send a delta against a base beyond the "boundary" commit.
+   to send a delta against a base beyond the "boundary" cummit.
 
  * spatch transformation to replace boolean uses of !hashcmp() to
    newly introduced oideq() is added, and applied, to regain
@@ -251,8 +251,8 @@ Performance, Internal Implementation, Development Support etc.
    (merge b3c7eef9b0 nd/the-index later to maint).
 
  * Code clean-up in the internal machinery used by "git status" and
-   "git commit --dry-run".
-   (merge 73ba5d78b4 ss/wt-status-committable later to maint).
+   "git cummit --dry-run".
+   (merge 73ba5d78b4 ss/wt-status-cummittable later to maint).
 
  * Some environment variables that control the runtime options of Git
    used during tests are getting renamed for consistency.
@@ -265,7 +265,7 @@ Performance, Internal Implementation, Development Support etc.
    on the hashmap API.  Replace the implementation to build on top of
    the khash API and gain performance.
 
- * Over some transports, fetching objects with an exact commit object
+ * Over some transports, fetching objects with an exact cummit object
    name can be done without first seeing the ref advertisements.  The
    code has been optimized to exploit this.
 
@@ -342,7 +342,7 @@ Performance, Internal Implementation, Development Support etc.
    completion script (in contrib/) has been simplified a bit.
 
  * The revision walker machinery learned to take advantage of the
-   commit generation numbers stored in the commit-graph file.
+   cummit generation numbers stored in the cummit-graph file.
 
  * The codebase has been cleaned up to reduce "#ifndef NO_PTHREADS".
 
@@ -400,7 +400,7 @@ Fixes since v2.19
 -----------------
 
  * "git interpret-trailers" and its underlying machinery had a buggy
-   code that attempted to ignore patch text after commit log message,
+   code that attempted to ignore patch text after cummit log message,
    which triggered in various codepaths that will always get the log
    message alone and never get such an input.
    (merge 66e83d9b41 jk/trailer-fixes later to maint).
@@ -411,7 +411,7 @@ Fixes since v2.19
 
  * "git rebase -i" did not clear the state files correctly when a run
    of "squash/fixup" is aborted and then the user manually amended the
-   commit instead, which has been corrected.
+   cummit instead, which has been corrected.
    (merge 10d2f35436 js/rebase-i-autosquash-fix later to maint).
 
  * When fsmonitor is in use, after operation on submodules updates
@@ -420,7 +420,7 @@ Fixes since v2.19
    (merge 43f1180814 bp/mv-submodules-with-fsmonitor later to maint).
 
  * Fix for a long-standing bug that leaves the index file corrupt when
-   it shrinks during a partial commit.
+   it shrinks during a partial cummit.
    (merge 6c003d6ffb jk/reopen-tempfile-truncate later to maint).
 
  * Further fix for O_APPEND emulation on Windows
@@ -435,11 +435,11 @@ Fixes since v2.19
    (merge 84d938b732 nd/attr-pathspec-fix later to maint).
 
  * Recent update broke the reachability algorithm when refs (e.g.
-   tags) that point at objects that are not commit were involved,
+   tags) that point at objects that are not cummit were involved,
    which has been fixed.
 
  * "git rebase" etc. in Git 2.19 fails to abort when given an empty
-   commit log message as result of editing, which has been corrected.
+   cummit log message as result of editing, which has been corrected.
    (merge a3ec9eaf38 en/sequencer-empty-edit-result-aborts later to maint).
 
  * The code to backfill objects in lazily cloned repository did not
@@ -457,12 +457,12 @@ Fixes since v2.19
    segfault, which has been corrected.
    (merge e467a90c7a tg/range-diff-corner-case-fix later to maint).
 
- * The recently introduced commit-graph auxiliary data is incompatible
+ * The recently introduced cummit-graph auxiliary data is incompatible
    with mechanisms such as replace & grafts that "breaks" immutable
    nature of the object reference relationship.  Disable optimizations
-   based on its use (and updating existing commit-graph) when these
+   based on its use (and updating existing cummit-graph) when these
    incompatible features are in use in the repository.
-   (merge 829a321569 ds/commit-graph-with-grafts later to maint).
+   (merge 829a321569 ds/cummit-graph-with-grafts later to maint).
 
  * The mailmap file update.
    (merge 255eb03edf jn/mailmap-update later to maint).
@@ -495,7 +495,7 @@ Fixes since v2.19
 
  * "git log --graph" showing an octopus merge sometimes miscounted the
    number of display columns it is consuming to show the merge and its
-   parent commits, which has been corrected.
+   parent cummits, which has been corrected.
    (merge 04005834ed np/log-graph-octopus-fix later to maint).
 
  * "git range-diff" did not work well when the compared ranges had
@@ -623,7 +623,7 @@ Fixes since v2.19
    available into the comparison machinery and segfault, which has
    been corrected to check such a request upfront and reject it.
 
- * When "git bundle" aborts due to an empty commit ranges
+ * When "git bundle" aborts due to an empty cummit ranges
    (i.e. resulting in an empty pack), it left a file descriptor to an
    lockfile open, which resulted in leftover lockfile on Windows where
    you cannot remove a file with an open file descriptor.  This has
@@ -671,7 +671,7 @@ Fixes since v2.19
    (merge 55f6bce2c9 fe/doc-updates later to maint).
    (merge 7987d2232d jk/check-everything-connected-is-long-gone later to maint).
    (merge 4ba3c9be47 dz/credential-doc-url-matching-rules later to maint).
-   (merge 4c399442f7 ma/commit-graph-docs later to maint).
+   (merge 4c399442f7 ma/cummit-graph-docs later to maint).
    (merge fc0503b04e ma/t1400-undebug-test later to maint).
    (merge e56b53553a nd/packobjectshook-doc-fix later to maint).
    (merge c56170a0c4 ma/mailing-list-address-in-git-help later to maint).
@@ -681,7 +681,7 @@ Fixes since v2.19
    (merge b1492bf315 ma/t7005-bash-workaround later to maint).
    (merge ac1f98a0df du/rev-parse-is-plumbing later to maint).
    (merge ca8ed443a5 mm/doc-no-dashed-git later to maint).
-   (merge ce366a8144 du/get-tar-commit-id-is-plumbing later to maint).
+   (merge ce366a8144 du/get-tar-cummit-id-is-plumbing later to maint).
    (merge 61018fe9e0 du/cherry-is-plumbing later to maint).
    (merge c7e5fe79b9 sb/strbuf-h-update later to maint).
    (merge 8d2008196b tq/branch-create-wo-branch-get later to maint).

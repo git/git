@@ -13,7 +13,7 @@ feature.experimental::
 	features. The new default values are:
 +
 * `fetch.negotiationAlgorithm=skipping` may improve fetch negotiation times by
-skipping more commits at a time, reducing the number of round trips.
+skipping more cummits at a time, reducing the number of round trips.
 
 feature.manyFiles::
 	Enable config options that optimize for repos with many files in the

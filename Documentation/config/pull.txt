@@ -1,8 +1,8 @@
 pull.ff::
-	By default, Git does not create an extra merge commit when merging
-	a commit that is a descendant of the current commit. Instead, the
+	By default, Git does not create an extra merge cummit when merging
+	a cummit that is a descendant of the current cummit. Instead, the
 	tip of the current branch is fast-forwarded. When set to `false`,
-	this variable tells Git to create an extra merge commit in such
+	this variable tells Git to create an extra merge cummit in such
 	a case (equivalent to giving the `--no-ff` option from the command
 	line). When set to `only`, only such fast-forward merges are
 	allowed (equivalent to giving the `--ff-only` option from the
@@ -15,7 +15,7 @@ pull.rebase::
 	per-branch basis.
 +
 When `merges` (or just 'm'), pass the `--rebase-merges` option to 'git rebase'
-so that the local merge commits are included in the rebase (see
+so that the local merge cummits are included in the rebase (see
 linkgit:git-rebase[1] for details).
 +
 When the value is `interactive` (or just 'i'), the rebase is run in interactive

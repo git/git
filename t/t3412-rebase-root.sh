@@ -2,7 +2,7 @@
 
 test_description='git rebase --root
 
-Tests if git rebase --root --onto <newparent> can rebase the root commit.
+Tests if git rebase --root --onto <newparent> can rebase the root cummit.
 '
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -16,13 +16,13 @@ log_with_names () {
 
 
 test_expect_success 'prepare repository' '
-	test_commit 1 A &&
-	test_commit 2 A &&
+	test_cummit 1 A &&
+	test_cummit 2 A &&
 	git symbolic-ref HEAD refs/heads/other &&
 	rm .git/index &&
-	test_commit 3 B &&
-	test_commit 1b A 1 &&
-	test_commit 4 B
+	test_cummit 3 B &&
+	test_cummit 1b A 1 &&
+	test_cummit 4 B
 '
 
 test_expect_success 'rebase --root fails with too many args' '
@@ -89,23 +89,23 @@ test_expect_success 'pre-rebase got correct input (4)' '
 test_expect_success 'set up merge history' '
 	git checkout other^ &&
 	git checkout -b side &&
-	test_commit 5 C &&
+	test_cummit 5 C &&
 	git checkout other &&
 	git merge side
 '
 
 cat > expect-side <<'EOF'
-commit work6 work6~1 work6^2
+cummit work6 work6~1 work6^2
 Merge branch 'side' into other
-commit work6^2 work6~2
+cummit work6^2 work6~2
 5
-commit work6~1 work6~2
+cummit work6~1 work6~2
 4
-commit work6~2 work6~3
+cummit work6~2 work6~3
 3
-commit work6~3 work6~4
+cummit work6~3 work6~4
 2
-commit work6~4
+cummit work6~4
 1
 EOF
 
@@ -113,27 +113,27 @@ test_expect_success 'set up second root and merge' '
 	git symbolic-ref HEAD refs/heads/third &&
 	rm .git/index &&
 	rm A B C &&
-	test_commit 6 D &&
+	test_cummit 6 D &&
 	git checkout other &&
 	git merge --allow-unrelated-histories third
 '
 
 cat > expect-third <<'EOF'
-commit work7 work7~1 work7^2
+cummit work7 work7~1 work7^2
 Merge branch 'third' into other
-commit work7^2 work7~4
+cummit work7^2 work7~4
 6
-commit work7~1 work7~2 work7~1^2
+cummit work7~1 work7~2 work7~1^2
 Merge branch 'side' into other
-commit work7~1^2 work7~3
+cummit work7~1^2 work7~3
 5
-commit work7~2 work7~3
+cummit work7~2 work7~3
 4
-commit work7~3 work7~4
+cummit work7~3 work7~4
 3
-commit work7~4 work7~5
+cummit work7~4 work7~5
 2
-commit work7~5
+cummit work7~5
 1
 EOF
 
@@ -165,7 +165,7 @@ test_expect_success 'set up a conflict' '
 	git checkout main &&
 	echo conflict > B &&
 	git add B &&
-	git commit -m conflict
+	git cummit -m conflict
 '
 
 test_expect_success 'rebase --root with conflict (first part)' '
@@ -213,23 +213,23 @@ test_expect_success 'rebase -i --root with conflict (second part)' '
 '
 
 cat >expect-conflict-p <<\EOF
-commit conflict3 conflict3~1 conflict3^2
+cummit conflict3 conflict3~1 conflict3^2
 Merge branch 'third' into other
-commit conflict3^2 conflict3~4
+cummit conflict3^2 conflict3~4
 6
-commit conflict3~1 conflict3~2 conflict3~1^2
+cummit conflict3~1 conflict3~2 conflict3~1^2
 Merge branch 'side' into other
-commit conflict3~1^2 conflict3~3
+cummit conflict3~1^2 conflict3~3
 5
-commit conflict3~2 conflict3~3
+cummit conflict3~2 conflict3~3
 4
-commit conflict3~3 conflict3~4
+cummit conflict3~3 conflict3~4
 3
-commit conflict3~4 conflict3~5
+cummit conflict3~4 conflict3~5
 conflict
-commit conflict3~5 conflict3~6
+cummit conflict3~5 conflict3~6
 2
-commit conflict3~6
+cummit conflict3~6
 1
 EOF
 

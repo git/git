@@ -101,14 +101,14 @@ refs::
 	set and "$GIT_COMMON_DIR/refs" will be used instead.
 
 refs/heads/`name`::
-	records tip-of-the-tree commit objects of branch `name`
+	records tip-of-the-tree cummit objects of branch `name`
 
 refs/tags/`name`::
-	records any object name (not necessarily a commit
-	object, or a tag object that points at a commit object).
+	records any object name (not necessarily a cummit
+	object, or a tag object that points at a cummit object).
 
 refs/remotes/`name`::
-	records tip-of-the-tree commit objects of branches copied
+	records tip-of-the-tree cummit objects of branches copied
 	from a remote repository.
 
 refs/replace/`<obj-sha1>`::
@@ -135,7 +135,7 @@ HEAD::
 	a symbolic link instead of a symref that points at the current
 	branch.
 +
-HEAD can also record a specific commit directly, instead of
+HEAD can also record a specific cummit directly, instead of
 being a symref to point at the current branch.  Such a state
 is often called 'detached HEAD.'  See linkgit:git-checkout[1]
 for details.
@@ -202,10 +202,10 @@ info/refs::
 	repository.
 
 info/grafts::
-	This file records fake commit ancestry information, to
+	This file records fake cummit ancestry information, to
 	pretend the set of parents a commit has is different
-	from how the commit was actually created.  One record
-	per line describes a commit and its fake parents by
+	from how the cummit was actually created.  One record
+	per line describes a cummit and its fake parents by
 	listing their 40-byte hexadecimal object names separated
 	by a space and terminated by a newline.
 +

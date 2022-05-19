@@ -1,6 +1,6 @@
 #!/bin/sh
 # Copyright (c) 2008, Nanako Shiraishi
-# Prime rerere database from existing merge commits
+# Prime rerere database from existing merge cummits
 
 me=rerere-train
 USAGE=$(cat <<-EOF
@@ -60,14 +60,14 @@ cd_to_toplevel
 # Remember original branch
 branch=$(git symbolic-ref -q HEAD) ||
 original_HEAD=$(git rev-parse --verify HEAD) || {
-	echo >&2 "Not on any branch and no commit yet?"
+	echo >&2 "Not on any branch and no cummit yet?"
 	exit 1
 }
 
 mkdir -p "$GIT_DIR/rr-cache" || exit
 
 git rev-list --parents "$@" |
-while read commit parent1 other_parents
+while read cummit parent1 other_parents
 do
 	if test -z "$other_parents"
 	then
@@ -86,9 +86,9 @@ do
 	fi
 	if test -s "$GIT_DIR/MERGE_RR"
 	then
-		git --no-pager show -s --format="Learning from %h %s" "$commit"
+		git --no-pager show -s --format="Learning from %h %s" "$cummit"
 		git rerere
-		git checkout -q $commit -- .
+		git checkout -q $cummit -- .
 		git rerere
 	fi
 	git reset -q --hard  # Might nuke untracked files...

@@ -12,10 +12,10 @@ test_expect_success setup '
 	echo >b/e &&
 	git add . &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	echo " " >a/d &&
 	test_tick &&
-	git commit -a -m second &&
+	git cummit -a -m second &&
 	echo "  " >a/d &&
 	echo " " >b/e &&
 	git add a/d
@@ -70,7 +70,7 @@ test_expect_success 'diff-files --diff-filter --quiet' '
 '
 
 test_expect_success 'diff-tree --diff-filter --quiet' '
-	git commit -a -m "worktree state" &&
+	git cummit -a -m "worktree state" &&
 	test_must_fail git diff-tree --diff-filter=M --quiet HEAD^ HEAD
 '
 

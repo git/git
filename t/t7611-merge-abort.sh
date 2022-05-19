@@ -5,7 +5,7 @@ test_description='test aborting in-progress merges
 Set up repo with conflicting and non-conflicting branches:
 
 There are three files foo/bar/baz, and the following graph illustrates the
-content of these files in each commit:
+content of these files in each cummit:
 
 # foo/bar/baz --- foo/bar/bazz     <-- main
 #             \
@@ -33,16 +33,16 @@ test_expect_success 'setup' '
 	echo bar > bar &&
 	echo baz > baz &&
 	git add foo bar baz &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	echo bazz > baz &&
-	git commit -a -m "second" &&
+	git cummit -a -m "second" &&
 	git checkout -b conflict_branch HEAD^ &&
 	echo barf > bar &&
 	echo bazf > baz &&
-	git commit -a -m "conflict" &&
+	git cummit -a -m "conflict" &&
 	git checkout -b clean_branch HEAD^ &&
 	echo bart > bar &&
-	git commit -a -m "clean" &&
+	git cummit -a -m "clean" &&
 	git checkout main
 '
 
@@ -76,9 +76,9 @@ test_expect_success 'Forget previous merge' '
 	git reset --hard "$pre_merge_head"
 '
 
-test_expect_success 'Abort after --no-commit' '
-	# Redo merge, but stop before creating merge commit
-	git merge --no-commit clean_branch &&
+test_expect_success 'Abort after --no-cummit' '
+	# Redo merge, but stop before creating merge cummit
+	git merge --no-cummit clean_branch &&
 	test -f .git/MERGE_HEAD &&
 	# Abort non-conflicting merge
 	git merge --abort &&
@@ -128,7 +128,7 @@ test_expect_success 'Reset index (but preserve worktree changes)' '
 '
 
 test_expect_success 'Abort clean merge with non-conflicting dirty worktree' '
-	git merge --no-commit clean_branch &&
+	git merge --no-cummit clean_branch &&
 	test -f .git/MERGE_HEAD &&
 	# Abort merge
 	git merge --abort &&
@@ -158,7 +158,7 @@ test_expect_success 'Reset worktree changes' '
 test_expect_success 'Fail clean merge with conflicting dirty worktree' '
 	echo xyzzy >> bar &&
 	git diff > expect &&
-	test_must_fail git merge --no-commit clean_branch &&
+	test_must_fail git merge --no-cummit clean_branch &&
 	test ! -f .git/MERGE_HEAD &&
 	test "$pre_merge_head" = "$(git rev-parse HEAD)" &&
 	test -z "$(git diff --staged)" &&
@@ -182,7 +182,7 @@ test_expect_success 'Reset worktree changes' '
 test_expect_success 'Fail clean merge with matching dirty worktree' '
 	echo bart > bar &&
 	git diff > expect &&
-	test_must_fail git merge --no-commit clean_branch &&
+	test_must_fail git merge --no-cummit clean_branch &&
 	test ! -f .git/MERGE_HEAD &&
 	test "$pre_merge_head" = "$(git rev-parse HEAD)" &&
 	test -z "$(git diff --staged)" &&

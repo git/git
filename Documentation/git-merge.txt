@@ -9,16 +9,16 @@ git-merge - Join two or more development histories together
 SYNOPSIS
 --------
 [verse]
-'git merge' [-n] [--stat] [--no-commit] [--squash] [--[no-]edit]
+'git merge' [-n] [--stat] [--no-cummit] [--squash] [--[no-]edit]
 	[--no-verify] [-s <strategy>] [-X <strategy-option>] [-S[<keyid>]]
 	[--[no-]allow-unrelated-histories]
 	[--[no-]rerere-autoupdate] [-m <msg>] [-F <file>]
-	[--into-name <branch>] [<commit>...]
+	[--into-name <branch>] [<cummit>...]
 'git merge' (--continue | --abort | --quit)
 
 DESCRIPTION
 -----------
-Incorporates changes from the named commits (since the time their
+Incorporates changes from the named cummits (since the time their
 histories diverged from the current branch) into the current
 branch.  This command is used by 'git pull' to incorporate changes
 from another repository and can be used by hand to merge changes
@@ -35,8 +35,8 @@ Assume the following history exists and the current branch is
 
 Then "`git merge topic`" will replay the changes made on the
 `topic` branch since it diverged from `master` (i.e., `E`) until
-its current commit (`C`) on top of `master`, and record the result
-in a new commit along with the names of the two parent commits and
+its current cummit (`C`) on top of `master`, and record the result
+in a new cummit along with the names of the two parent cummits and
 a log message from the user describing the changes.
 
 ------------
@@ -48,12 +48,12 @@ a log message from the user describing the changes.
 The second syntax ("`git merge --abort`") can only be run after the
 merge has resulted in conflicts. 'git merge --abort' will abort the
 merge process and try to reconstruct the pre-merge state. However,
-if there were uncommitted changes when the merge started (and
+if there were uncummitted changes when the merge started (and
 especially if those changes were further modified after the merge
 was started), 'git merge --abort' will in some cases be unable to
 reconstruct the original (pre-merge) changes. Therefore:
 
-*Warning*: Running 'git merge' with non-trivial uncommitted changes is
+*Warning*: Running 'git merge' with non-trivial uncummitted changes is
 discouraged: while possible, it may leave you in a state that is hard to
 back out of in the case of a conflict.
 
@@ -67,10 +67,10 @@ OPTIONS
 include::merge-options.txt[]
 
 -m <msg>::
-	Set the commit message to be used for the merge commit (in
+	Set the cummit message to be used for the merge cummit (in
 	case one is created).
 +
-If `--log` is specified, a shortlog of the commits being merged
+If `--log` is specified, a shortlog of the cummits being merged
 will be appended to the specified message.
 +
 The 'git fmt-merge-msg' command can be
@@ -84,10 +84,10 @@ invocations. The automated message can include the branch description.
 
 -F <file>::
 --file=<file>::
-	Read the commit message to be used for the merge commit (in
+	Read the cummit message to be used for the merge cummit (in
 	case one is created).
 +
-If `--log` is specified, a shortlog of the commits being merged
+If `--log` is specified, a shortlog of the cummits being merged
 will be appended to the specified message.
 
 --rerere-autoupdate::
@@ -105,10 +105,10 @@ will be appended to the specified message.
 	try to reconstruct the pre-merge state. If an autostash entry is
 	present, apply it to the worktree.
 +
-If there were uncommitted worktree changes present when the merge
+If there were uncummitted worktree changes present when the merge
 started, 'git merge --abort' will in some cases be unable to
 reconstruct these changes. It is therefore recommended to always
-commit or stash your changes before running 'git merge'.
+cummit or stash your changes before running 'git merge'.
 +
 'git merge --abort' is equivalent to 'git reset --merge' when
 `MERGE_HEAD` is present unless `MERGE_AUTOSTASH` is also present in
@@ -126,16 +126,16 @@ list.
 	merge by running 'git merge --continue' (see "HOW TO RESOLVE
 	CONFLICTS" section below).
 
-<commit>...::
-	Commits, usually other branch heads, to merge into our branch.
-	Specifying more than one commit will create a merge with
+<cummit>...::
+	cummits, usually other branch heads, to merge into our branch.
+	Specifying more than one cummit will create a merge with
 	more than two parents (affectionately called an Octopus merge).
 +
-If no commit is given from the command line, merge the remote-tracking
+If no cummit is given from the command line, merge the remote-tracking
 branches that the current branch is configured to use as its upstream.
 See also the configuration section of this manual page.
 +
-When `FETCH_HEAD` (and no other commit) is specified, the branches
+When `FETCH_HEAD` (and no other cummit) is specified, the branches
 recorded in the `.git/FETCH_HEAD` file by the previous invocation
 of `git fetch` for merging are merged to the current branch.
 
@@ -144,32 +144,32 @@ PRE-MERGE CHECKS
 ----------------
 
 Before applying outside changes, you should get your own work in
-good shape and committed locally, so it will not be clobbered if
+good shape and cummitted locally, so it will not be clobbered if
 there are conflicts.  See also linkgit:git-stash[1].
 'git pull' and 'git merge' will stop without doing anything when
-local uncommitted changes overlap with files that 'git pull'/'git
+local uncummitted changes overlap with files that 'git pull'/'git
 merge' may need to update.
 
-To avoid recording unrelated changes in the merge commit,
+To avoid recording unrelated changes in the merge cummit,
 'git pull' and 'git merge' will also abort if there are any changes
-registered in the index relative to the `HEAD` commit.  (Special
+registered in the index relative to the `HEAD` cummit.  (Special
 narrow exceptions to this rule may exist depending on which merge
 strategy is in use, but generally, the index must match HEAD.)
 
-If all named commits are already ancestors of `HEAD`, 'git merge'
+If all named cummits are already ancestors of `HEAD`, 'git merge'
 will exit early with the message "Already up to date."
 
 FAST-FORWARD MERGE
 ------------------
 
-Often the current branch head is an ancestor of the named commit.
+Often the current branch head is an ancestor of the named cummit.
 This is the most common case especially when invoked from 'git
-pull': you are tracking an upstream repository, you have committed
+pull': you are tracking an upstream repository, you have cummitted
 no local changes, and now you want to update to a newer upstream
-revision.  In this case, a new commit is not needed to store the
+revision.  In this case, a new cummit is not needed to store the
 combined history; instead, the `HEAD` (along with the index) is
-updated to point at the named commit, without creating an extra
-merge commit.
+updated to point at the named cummit, without creating an extra
+merge cummit.
 
 This behavior can be suppressed with the `--no-ff` option.
 
@@ -177,11 +177,11 @@ TRUE MERGE
 ----------
 
 Except in a fast-forward merge (see above), the branches to be
-merged must be tied together by a merge commit that has both of them
+merged must be tied together by a merge cummit that has both of them
 as its parents.
 
 A merged version reconciling the changes from all branches to be
-merged is committed, and your `HEAD`, index, and working tree are
+merged is cummitted, and your `HEAD`, index, and working tree are
 updated to it.  It is possible to have modifications in the working
 tree as long as they do not overlap; the update will preserve them.
 
@@ -210,14 +210,14 @@ MERGING TAG
 -----------
 
 When merging an annotated (and possibly signed) tag, Git always
-creates a merge commit even if a fast-forward merge is possible, and
-the commit message template is prepared with the tag message.
+creates a merge cummit even if a fast-forward merge is possible, and
+the cummit message template is prepared with the tag message.
 Additionally, if the tag is signed, the signature check is reported
 as a comment in the message template. See also linkgit:git-tag[1].
 
-When you want to just integrate with the work leading to the commit
+When you want to just integrate with the work leading to the cummit
 that happens to be tagged, e.g. synchronizing with an upstream
-release point, you may not want to make an unnecessary merge commit.
+release point, you may not want to make an unnecessary merge cummit.
 
 In such a case, you can "unwrap" the tag yourself before feeding it
 to `git merge`, or pass `--ff-only` when you do not have any work on
@@ -320,16 +320,16 @@ HOW TO RESOLVE CONFLICTS
 After seeing a conflict, you can do two things:
 
  * Decide not to merge.  The only clean-ups you need are to reset
-   the index file to the `HEAD` commit to reverse 2. and to clean
+   the index file to the `HEAD` cummit to reverse 2. and to clean
    up working tree changes made by 2. and 3.; `git merge --abort`
    can be used for this.
 
  * Resolve the conflicts.  Git will mark the conflicts in
    the working tree.  Edit the files into shape and
-   'git add' them to the index.  Use 'git commit' or
+   'git add' them to the index.  Use 'git cummit' or
    'git merge --continue' to seal the deal. The latter command
    checks whether there is a (interrupted) merge in progress
-   before calling 'git commit'.
+   before calling 'git cummit'.
 
 You can work through the conflict with a number of tools:
 
@@ -368,17 +368,17 @@ $ git merge -s ours obsolete
 ------------------------------------------------
 
 * Merge branch `maint` into the current branch, but do not make
-  a new commit automatically:
+  a new cummit automatically:
 +
 ------------------------------------------------
-$ git merge --no-commit maint
+$ git merge --no-cummit maint
 ------------------------------------------------
 +
 This can be used when you want to include further changes to the
-merge, or want to write your own merge commit message.
+merge, or want to write your own merge cummit message.
 +
 You should refrain from abusing this option to sneak substantial
-changes into a merge commit.  Small fixups like bumping
+changes into a merge cummit.  Small fixups like bumping
 release/version name would be acceptable.
 
 

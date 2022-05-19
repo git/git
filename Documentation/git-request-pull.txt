@@ -18,9 +18,9 @@ their tree.  The request, printed to the standard output,
 begins with the branch description, summarizes
 the changes and indicates from where they can be pulled.
 
-The upstream project is expected to have the commit named by
+The upstream project is expected to have the cummit named by
 `<start>` and the output asks it to integrate the changes you made
-since that commit, up to the commit named by `<end>`, by visiting
+since that cummit, up to the cummit named by `<end>`, by visiting
 the repository named by `<URL>`.
 
 
@@ -30,17 +30,17 @@ OPTIONS
 	Include patch text in the output.
 
 <start>::
-	Commit to start at.  This names a commit that is already in
+	cummit to start at.  This names a cummit that is already in
 	the upstream history.
 
 <URL>::
 	The repository URL to be pulled from.
 
 <end>::
-	Commit to end at (defaults to HEAD).  This names the commit
+	cummit to end at (defaults to HEAD).  This names the cummit
 	at the tip of the history you are asking to be pulled.
 +
-When the repository named by `<URL>` has the commit at a tip of a
+When the repository named by `<URL>` has the cummit at a tip of a
 ref that is different from the ref you have locally, you can use the
 `<local>:<remote>` syntax, to have its local name, a colon `:`, and
 its remote name.

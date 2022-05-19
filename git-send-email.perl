@@ -621,10 +621,10 @@ if (0) {
 	}
 }
 
-my ($repoauthor, $repocommitter);
+my ($repoauthor, $repocummitter);
 {
 	my %cache;
-	my ($author, $committer);
+	my ($author, $cummitter);
 	my $common = sub {
 		my ($what) = @_;
 		return $cache{$what} if exists $cache{$what};
@@ -632,7 +632,7 @@ my ($repoauthor, $repocommitter);
 		return $cache{$what};
 	};
 	$repoauthor = sub { $common->('author') };
-	$repocommitter = sub { $common->('committer') };
+	$repocummitter = sub { $common->('cummitter') };
 }
 
 sub parse_address_line {
@@ -744,7 +744,7 @@ sub is_format_patch_arg {
 			return $format_patch;
 		}
 		die sprintf(__(<<EOF), $f, $f);
-File '%s' exists but it could also be the range of commits
+File '%s' exists but it could also be the range of cummits
 to produce patches for.  Please disambiguate by...
 
     * Saying "./%s" if you mean a file; or
@@ -827,7 +827,7 @@ if ($compose) {
 		or die sprintf(__("Failed to open for writing %s: %s"), $compose_filename, $!);
 
 
-	my $tpl_sender = $sender || $repoauthor->() || $repocommitter->() || '';
+	my $tpl_sender = $sender || $repoauthor->() || $repocummitter->() || '';
 	my $tpl_subject = $initial_subject || '';
 	my $tpl_in_reply_to = $initial_in_reply_to || '';
 	my $tpl_reply_to = $reply_to || '';
@@ -1047,7 +1047,7 @@ if (defined $sender) {
 	$sender =~ s/^\s+|\s+$//g;
 	($sender) = expand_aliases($sender);
 } else {
-	$sender = $repoauthor->() || $repocommitter->() || '';
+	$sender = $repoauthor->() || $repocummitter->() || '';
 }
 
 # $sender could be an already sanitized address
@@ -1201,7 +1201,7 @@ sub make_message_id {
 	$uniq = "$message_id_stamp-$message_id_serial";
 
 	my $du_part;
-	for ($sender, $repocommitter->(), $repoauthor->()) {
+	for ($sender, $repocummitter->(), $repoauthor->()) {
 		$du_part = extract_valid_address(sanitize_address($_));
 		last if (defined $du_part and $du_part ne '');
 	}
@@ -1563,7 +1563,7 @@ Message-Id: $message_id
 			$ask_default = "y"; # assume yes on EOF since user hasn't explicitly asked for confirmation
 			print __ <<EOF ;
     The Cc list above has been expanded by additional
-    addresses found in the patch commit message. By default
+    addresses found in the patch cummit message. By default
     send-email prompts before sending whenever this occurs.
     This behavior is controlled by the sendemail.confirm
     configuration setting.

@@ -5,7 +5,7 @@ test_description='test git worktree move, remove, lock and unlock'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit init &&
+	test_cummit init &&
 	git worktree add source &&
 	git worktree list --porcelain >out &&
 	grep "^worktree" out >actual &&
@@ -137,9 +137,9 @@ test_expect_success 'move a repo with uninitialized submodule' '
 	git init withsub &&
 	(
 		cd withsub &&
-		test_commit initial &&
+		test_cummit initial &&
 		git submodule add "$PWD"/.git sub &&
-		git commit -m withsub &&
+		git cummit -m withsub &&
 		git worktree add second HEAD &&
 		git worktree move second third
 	)
@@ -218,7 +218,7 @@ test_expect_success 'remove cleans up .git/worktrees when empty' '
 	git init moog &&
 	(
 		cd moog &&
-		test_commit bim &&
+		test_cummit bim &&
 		git worktree add --detach goom &&
 		test_path_exists .git/worktrees &&
 		git worktree remove goom &&

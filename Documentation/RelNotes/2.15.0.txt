@@ -49,7 +49,7 @@ UI, Workflows & Features
    the user a chance to abort with ^C).
 
  * "git merge" learned a "--signoff" option to add the Signed-off-by:
-   trailer with the committer's name.
+   trailer with the cummitter's name.
 
  * "git diff" learned to optionally paint new lines that are the same
    as deleted lines elsewhere differently from genuinely new lines.
@@ -59,7 +59,7 @@ UI, Workflows & Features
 
  * "git interpret-trailers" has been taught a "--parse" and a few
    other options to make it easier for scripts to grab existing
-   trailer lines from a commit log message.
+   trailer lines from a cummit log message.
 
  * The "--format=%(trailers)" option "git log" and its friends take
    learned to take the 'unfold' and 'only' modifiers to normalize its
@@ -100,7 +100,7 @@ UI, Workflows & Features
    option can be passed to Git to disable them.
 
  * "git for-each-ref --format=..." learned a new format element,
-   %(trailers), to show only the commit log trailer part of the log
+   %(trailers), to show only the cummit log trailer part of the log
    message.
 
 
@@ -136,10 +136,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * The "ref-store" code reorganization continues.
 
- * "git commit" used to discard the index and re-read from the filesystem
+ * "git cummit" used to discard the index and re-read from the filesystem
    just in case the pre-commit hook has updated it in the middle; this
    has been optimized out when we know we do not run the pre-commit hook.
-   (merge 680ee550d7 kw/commit-keep-index-when-pre-commit-is-not-run later to maint).
+   (merge 680ee550d7 kw/cummit-keep-index-when-pre-cummit-is-not-run later to maint).
 
  * Updates to the HTTP layer we made recently unconditionally used
    features of libCurl without checking the existence of them, causing
@@ -181,8 +181,8 @@ Performance, Internal Implementation, Development Support etc.
    a mechanism for developers to mark that the region of memory
    pointed by a pointer is not lost/leaking to help these tools.
 
- * As "git commit" to conclude a conflicted "git merge" honors the
-   commit-msg hook, "git merge" that records a merge commit that
+ * As "git cummit" to conclude a conflicted "git merge" honors the
+   cummit-msg hook, "git merge" that records a merge cummit that
    cleanly auto-merges should, but it didn't.
 
  * The codepath for "git merge-recursive" has been cleaned up.
@@ -257,7 +257,7 @@ Fixes since v2.14
  * Numerous bugs in walking of reflogs via "log -g" and friends have
    been fixed.
 
- * "git commit" when seeing an totally empty message said "you did not
+ * "git cummit" when seeing an totally empty message said "you did not
    edit the message", which is clearly wrong.  The message has been
    corrected.
 
@@ -306,7 +306,7 @@ Fixes since v2.14
 
  * Memory leak in an error codepath has been plugged.
 
- * "git stash -u" used the contents of the committed version of the
+ * "git stash -u" used the contents of the cummitted version of the
    ".gitignore" file to decide which paths are ignored, even when the
    file has local changes.  The command has been taught to instead use
    the locally modified contents.
@@ -331,7 +331,7 @@ Fixes since v2.14
 
  * Killing "git merge --edit" before the editor returns control left
    the repository in a state with MERGE_MSG but without MERGE_HEAD,
-   which incorrectly tells the subsequent "git commit" that there was
+   which incorrectly tells the subsequent "git cummit" that there was
    a squash merge in progress.  This has been fixed.
 
  * "git archive" did not work well with pathspecs and the
@@ -359,7 +359,7 @@ Fixes since v2.14
    "--recurse-submodules" option was given from the command line.
    This has been corrected.
 
- * Unlike "git commit-tree < file", "git commit-tree -F file" did not
+ * Unlike "git cummit-tree < file", "git cummit-tree -F file" did not
    pass the contents of the file verbatim and instead completed an
    incomplete line at the end, if exists.  The latter has been updated
    to match the behaviour of the former.
@@ -378,9 +378,9 @@ Fixes since v2.14
 
  * API error-proofing which happens to also squelch warnings from GCC.
 
- * The explanation of the cut-line in the commit log editor has been
+ * The explanation of the cut-line in the cummit log editor has been
    slightly tweaked.
-   (merge 8c4b1a3593 ks/commit-do-not-touch-cut-line later to maint).
+   (merge 8c4b1a3593 ks/cummit-do-not-touch-cut-line later to maint).
 
  * "git gc" tries to avoid running two instances at the same time by
    reading and writing pid/host from and to a lock file; it used to

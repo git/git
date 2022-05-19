@@ -53,7 +53,7 @@ test_expect_success 'wildcard files submit back to p4, add' '
 		echo git-wild-at >git-wild@at &&
 		echo git-wild-percent >git-wild%percent &&
 		git add git-wild* &&
-		git commit -m "add some wildcard filenames" &&
+		git cummit -m "add some wildcard filenames" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit
 	) &&
@@ -82,7 +82,7 @@ test_expect_success 'wildcard files submit back to p4, modify' '
 		echo new-line >>git-wild@at &&
 		echo new-line >>git-wild%percent &&
 		git add git-wild* &&
-		git commit -m "modify the wildcard files" &&
+		git cummit -m "modify the wildcard files" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit
 	) &&
@@ -107,7 +107,7 @@ test_expect_success 'wildcard files submit back to p4, copy' '
 		git add git-wild-cp#hash &&
 		cp git-wild#hash file-wild-3 &&
 		git add file-wild-3 &&
-		git commit -m "wildcard copies" &&
+		git cummit -m "wildcard copies" &&
 		git config git-p4.detectCopies true &&
 		git config git-p4.detectCopiesHarder true &&
 		git config git-p4.skipSubmitEdit true &&
@@ -127,7 +127,7 @@ test_expect_success 'wildcard files submit back to p4, rename' '
 		cd "$git" &&
 		git mv git-wild@at file-wild-4 &&
 		git mv file-wild-3 git-wild-cp%percent &&
-		git commit -m "wildcard renames" &&
+		git cummit -m "wildcard renames" &&
 		git config git-p4.detectRenames true &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit
@@ -145,7 +145,7 @@ test_expect_success 'wildcard files submit back to p4, delete' '
 	(
 		cd "$git" &&
 		git rm git-wild* &&
-		git commit -m "delete the wildcard files" &&
+		git cummit -m "delete the wildcard files" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit
 	) &&
@@ -206,7 +206,7 @@ test_expect_success 'wildcard files requiring keyword scrub' '
 		git config git-p4.attemptRCSCleanup true &&
 		sed "s/^line2/line2 edit/" <scrub@wild >scrub@wild.tmp &&
 		mv -f scrub@wild.tmp scrub@wild &&
-		git commit -m "scrub at wild line2 edit" scrub@wild &&
+		git cummit -m "scrub at wild line2 edit" scrub@wild &&
 		git p4 submit
 	)
 '

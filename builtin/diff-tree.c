@@ -2,7 +2,7 @@
 #include "cache.h"
 #include "config.h"
 #include "diff.h"
-#include "commit.h"
+#include "cummit.h"
 #include "log-tree.h"
 #include "builtin.h"
 #include "submodule.h"
@@ -10,34 +10,34 @@
 
 static struct rev_info log_tree_opt;
 
-static int diff_tree_commit_oid(const struct object_id *oid)
+static int diff_tree_cummit_oid(const struct object_id *oid)
 {
-	struct commit *commit = lookup_commit_reference(the_repository, oid);
-	if (!commit)
+	struct cummit *cummit = lookup_cummit_reference(the_repository, oid);
+	if (!cummit)
 		return -1;
-	return log_tree_commit(&log_tree_opt, commit);
+	return log_tree_cummit(&log_tree_opt, cummit);
 }
 
-/* Diff one or more commits. */
-static int stdin_diff_commit(struct commit *commit, const char *p)
+/* Diff one or more cummits. */
+static int stdin_diff_cummit(struct cummit *cummit, const char *p)
 {
 	struct object_id oid;
-	struct commit_list **pptr = NULL;
+	struct cummit_list **pptr = NULL;
 
-	/* Graft the fake parents locally to the commit */
+	/* Graft the fake parents locally to the cummit */
 	while (isspace(*p++) && !parse_oid_hex(p, &oid, &p)) {
-		struct commit *parent = lookup_commit(the_repository, &oid);
+		struct cummit *parent = lookup_cummit(the_repository, &oid);
 		if (!pptr) {
 			/* Free the real parent list */
-			free_commit_list(commit->parents);
-			commit->parents = NULL;
-			pptr = &(commit->parents);
+			free_cummit_list(cummit->parents);
+			cummit->parents = NULL;
+			pptr = &(cummit->parents);
 		}
 		if (parent) {
-			pptr = &commit_list_insert(parent, pptr)->next;
+			pptr = &cummit_list_insert(parent, pptr)->next;
 		}
 	}
-	return log_tree_commit(&log_tree_opt, commit);
+	return log_tree_cummit(&log_tree_opt, cummit);
 }
 
 /* Diff two trees. */
@@ -73,11 +73,11 @@ static int diff_tree_stdin(char *line)
 	obj = parse_object(the_repository, &oid);
 	if (!obj)
 		return -1;
-	if (obj->type == OBJ_COMMIT)
-		return stdin_diff_commit((struct commit *)obj, p);
+	if (obj->type == OBJ_cummit)
+		return stdin_diff_cummit((struct cummit *)obj, p);
 	if (obj->type == OBJ_TREE)
 		return stdin_diff_trees((struct tree *)obj, p);
-	error("Object %s is a %s, not a commit or tree",
+	error("Object %s is a %s, not a cummit or tree",
 	      oid_to_hex(&oid), type_name(obj->type));
 	return -1;
 }
@@ -86,11 +86,11 @@ static const char diff_tree_usage[] =
 "git diff-tree [--stdin] [-m] [-c | --cc] [-s] [-v] [--pretty] [-t] [-r] [--root] "
 "[<common-diff-options>] <tree-ish> [<tree-ish>] [<path>...]\n"
 "  -r            diff recursively\n"
-"  -c            show combined diff for merge commits\n"
-"  --cc          show combined diff for merge commits removing uninteresting hunks\n"
+"  -c            show combined diff for merge cummits\n"
+"  --cc          show combined diff for merge cummits removing uninteresting hunks\n"
 "  --combined-all-paths\n"
 "                show name of file in all parents for combined diffs\n"
-"  --root        include the initial commit as diff against /dev/null\n"
+"  --root        include the initial cummit as diff against /dev/null\n"
 COMMON_DIFF_OPTIONS_HELP;
 
 static void diff_tree_tweak_rev(struct rev_info *rev, struct setup_revision_opt *opt)
@@ -154,7 +154,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	if (read_stdin && merge_base)
 		die(_("options '%s' and '%s' cannot be used together"), "--stdin", "--merge-base");
 	if (merge_base && opt->pending.nr != 2)
-		die(_("--merge-base only works with two commits"));
+		die(_("--merge-base only works with two cummits"));
 
 	opt->diffopt.rotate_to_strict = 1;
 
@@ -172,7 +172,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		break;
 	case 1:
 		tree1 = opt->pending.objects[0].item;
-		diff_tree_commit_oid(&tree1->oid);
+		diff_tree_cummit_oid(&tree1->oid);
 		break;
 	case 2:
 		tree1 = opt->pending.objects[0].item;

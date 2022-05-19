@@ -382,12 +382,12 @@ test_expect_success 'setup history with two files' '
 	echo "a b; c" >a.tex &&
 	echo "a b; c" >z.txt &&
 	git add a.tex z.txt &&
-	git commit -minitial &&
+	git cummit -minitial &&
 
 	# modify both
 	echo "a bx; c" >a.tex &&
 	echo "a bx; c" >z.txt &&
-	git commit -mmodified -a
+	git cummit -mmodified -a
 '
 
 test_expect_success 'wordRegex for the first file does not apply to the second' '

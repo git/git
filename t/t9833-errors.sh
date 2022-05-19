@@ -38,7 +38,7 @@ test_expect_success 'ticket logged out' '
 	echo "newpassword" | p4 login &&
 	(
 		cd "$git" &&
-		test_commit "ticket-auth-check" &&
+		test_cummit "ticket-auth-check" &&
 		p4 logout &&
 		test_must_fail git p4 submit 2>errmsg &&
 		grep -q "failure accessing depot" errmsg

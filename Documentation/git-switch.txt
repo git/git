@@ -16,7 +16,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Switch to a specified branch. The working tree and the index are
-updated to match the branch. All new commits will be added to the tip
+updated to match the branch. All new cummits will be added to the tip
 of this branch.
 
 Optionally a new branch could be created with either `-c`, `-C`,
@@ -47,7 +47,7 @@ OPTIONS
 	from some other point.)
 +
 You can use the `@{-N}` syntax to refer to the N-th last
-branch/commit switched to using "git switch" or "git checkout"
+branch/cummit switched to using "git switch" or "git checkout"
 operation. You may also specify `-` which is synonymous to `@{-1}`.
 This is often used to switch quickly between two branches, or to undo
 a branch switch by mistake.
@@ -80,7 +80,7 @@ $ git switch <new-branch>
 
 -d::
 --detach::
-	Switch to a commit for inspection and discardable
+	Switch to a cummit for inspection and discardable
 	experiments. See the "DETACHED HEAD" section in
 	linkgit:git-checkout[1] for details.
 
@@ -183,7 +183,7 @@ name, the guessing is aborted.  You can explicitly give a name with
 --recurse-submodules::
 --no-recurse-submodules::
 	Using `--recurse-submodules` will update the content of all
-	active submodules according to the commit recorded in the
+	active submodules according to the cummit recorded in the
 	superproject. If nothing (or `--no-recurse-submodules`) is
 	used, submodules working trees will not be updated. Just
 	like linkgit:git-submodule[1], this will detach `HEAD` of the
@@ -233,7 +233,7 @@ To switch back to the previous branch before we switched to mytopic
 $ git switch -
 ------------
 
-You can grow a new branch from any commit. For example, switch to
+You can grow a new branch from any cummit. For example, switch to
 "HEAD~3" and create branch "fixup":
 
 ------------
@@ -250,7 +250,7 @@ Branch 'new-topic' set up to track remote branch 'new-topic' from 'origin'
 Switched to a new branch 'new-topic'
 ------------
 
-To check out commit `HEAD~3` for temporary inspection or experiment
+To check out cummit `HEAD~3` for temporary inspection or experiment
 without creating a new branch:
 
 ------------

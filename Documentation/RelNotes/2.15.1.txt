@@ -23,8 +23,8 @@ Fixes since v2.15
  * Some codepaths did not check for errors when asking what branch the
    HEAD points at, which have been fixed.
 
- * "git commit", after making a commit, did not check for errors when
-   asking on what branch it made the commit, which has been corrected.
+ * "git cummit", after making a cummit, did not check for errors when
+   asking on what branch it made the cummit, which has been corrected.
 
  * "git status --ignored -u" did not stop at a working tree of a
    separate project that is embedded in an ignored directory and

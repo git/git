@@ -12,7 +12,7 @@ scalar clone [--single-branch] [--branch <main-branch>] [--full-clone] <url> [<e
 scalar list
 scalar register [<enlistment>]
 scalar unregister [<enlistment>]
-scalar run ( all | config | commit-graph | fetch | loose-objects | pack-files ) [<enlistment>]
+scalar run ( all | config | cummit-graph | fetch | loose-objects | pack-files ) [<enlistment>]
 scalar reconfigure [ --all | <enlistment> ]
 scalar delete <enlistment>
 
@@ -54,7 +54,7 @@ Clone
 
 clone [<options>] <url> [<enlistment>]::
 	Clones the specified repository, similar to linkgit:git-clone[1]. By
-	default, only commit and tree objects are cloned. Once finished, the
+	default, only cummit and tree objects are cloned. Once finished, the
 	worktree is located at `<enlistment>/src`.
 +
 The sparse-checkout feature is enabled (except when run with `--full-clone`)
@@ -114,7 +114,7 @@ unregister [<enlistment>]::
 Run
 ~~~
 
-scalar run ( all | config | commit-graph | fetch | loose-objects | pack-files ) [<enlistment>]::
+scalar run ( all | config | cummit-graph | fetch | loose-objects | pack-files ) [<enlistment>]::
 	Run the given maintenance task (or all tasks, if `all` was specified).
 	Except for `all` and `config`, this subcommand simply hands off to
 	linkgit:git-maintenance[1] (mapping `fetch` to `prefetch` and

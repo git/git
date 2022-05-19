@@ -18,7 +18,7 @@ such as compressing file revisions (to reduce disk space and increase
 performance), removing unreachable objects which may have been
 created from prior invocations of 'git add', packing refs, pruning
 reflog, rerere metadata or stale working trees. May also update ancillary
-indexes such as the commit-graph.
+indexes such as the cummit-graph.
 
 When common porcelain operations that create objects are run, they
 will check whether the repository has grown substantially since the
@@ -118,7 +118,7 @@ NOTES
 anywhere in your repository. In particular, it will keep not only
 objects referenced by your current set of branches and tags, but also
 objects referenced by the index, remote-tracking branches, reflogs
-(which may reference commits in branches that were later amended or
+(which may reference cummits in branches that were later amended or
 rewound), and anything else in the refs/* namespace. Note that a note
 (of the kind created by 'git notes') attached to an object does not
 contribute in keeping the object alive. If you are expecting some

@@ -39,7 +39,7 @@ The "show" subcommand (which is also the default, in the absence of
 any subcommands) shows the log of the reference provided in the
 command-line (or `HEAD`, by default). The reflog covers all recent
 actions, and in addition the `HEAD` reflog records branch switching.
-`git reflog show` is an alias for `git log -g --abbrev-commit
+`git reflog show` is an alias for `git log -g --abbrev-cummit
 --pretty=oneline`; see linkgit:git-log[1] for more information.
 
 The "expire" subcommand prunes older reflog entries. Entries older
@@ -106,10 +106,10 @@ Options for `expire`
 	now precedes it.
 
 --stale-fix::
-	Prune any reflog entries that point to "broken commits". A
-	broken commit is a commit that is not reachable from any of
+	Prune any reflog entries that point to "broken cummits". A
+	broken cummit is a cummit that is not reachable from any of
 	the reference tips and that refers, directly or indirectly, to
-	a missing commit, tree, or blob object.
+	a missing cummit, tree, or blob object.
 +
 This computation involves traversing all the reachable objects, i.e. it
 has the same cost as 'git prune'.  It is primarily intended to fix

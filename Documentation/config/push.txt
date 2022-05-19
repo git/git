@@ -99,11 +99,11 @@ This will result in only b (a and c are cleared).
 ----
 
 push.recurseSubmodules::
-	Make sure all submodule commits used by the revisions to be pushed
+	Make sure all submodule cummits used by the revisions to be pushed
 	are available on a remote-tracking branch. If the value is 'check'
-	then Git will verify that all submodule commits that changed in the
+	then Git will verify that all submodule cummits that changed in the
 	revisions to be pushed are available on at least one remote of the
-	submodule. If any commits are missing, the push will be aborted and
+	submodule. If any cummits are missing, the push will be aborted and
 	exit with non-zero status. If the value is 'on-demand' then all
 	submodules that changed in the revisions to be pushed will be
 	pushed. If on-demand was not able to push all necessary revisions
@@ -123,6 +123,6 @@ push.useForceIfIncludes::
 push.negotiate::
 	If set to "true", attempt to reduce the size of the packfile
 	sent by rounds of negotiation in which the client and the
-	server attempt to find commits in common. If "false", Git will
-	rely solely on the server's ref advertisement to find commits
+	server attempt to find cummits in common. If "false", Git will
+	rely solely on the server's ref advertisement to find cummits
 	in common.

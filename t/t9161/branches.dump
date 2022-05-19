@@ -19,7 +19,7 @@ Content-length: 114
 K 7
 svn:log
 V 12
-Base commit
+Base cummit
 
 K 10
 svn:author
@@ -181,7 +181,7 @@ Content-length: 110
 K 7
 svn:log
 V 9
-b1 commit
+b1 cummit
 K 10
 svn:author
 V 7
@@ -211,7 +211,7 @@ Content-length: 110
 K 7
 svn:log
 V 9
-b2 commit
+b2 cummit
 K 10
 svn:author
 V 7
@@ -241,7 +241,7 @@ Content-length: 110
 K 7
 svn:log
 V 9
-b3 commit
+b3 cummit
 K 10
 svn:author
 V 7
@@ -271,7 +271,7 @@ Content-length: 110
 K 7
 svn:log
 V 9
-b4 commit
+b4 cummit
 K 10
 svn:author
 V 7
@@ -301,7 +301,7 @@ Content-length: 110
 K 7
 svn:log
 V 9
-b5 commit
+b5 cummit
 K 10
 svn:author
 V 7
@@ -334,7 +334,7 @@ V 90
 Merge remote-tracking branch 'svnb5' into HEAD
 
 * svnb5:
-  b5 commit
+  b5 cummit
   Create branch svnb5
 K 10
 svn:author

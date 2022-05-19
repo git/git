@@ -29,7 +29,7 @@ Fixes since v1.8.4
 
  * The auto-tag-following code in "git fetch" tries to reuse the
    same transport twice when the serving end does not cooperate and
-   does not give tags that point to commits that are asked for as
+   does not give tags that point to cummits that are asked for as
    part of the primary transfer.  Unfortunately, Git-aware transport
    helper interface is not designed to be used more than once, hence
    this did not work over smart-http transfer.  Fixed.

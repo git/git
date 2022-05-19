@@ -696,7 +696,7 @@ static int unresolve_one(const char *path)
 static void read_head_pointers(void)
 {
 	if (read_ref("HEAD", &head_oid))
-		die("No HEAD -- no initial commit yet?");
+		die("No HEAD -- no initial cummit yet?");
 	if (read_ref("MERGE_HEAD", &merge_head_oid)) {
 		fprintf(stderr, "Not in the middle of a merge.\n");
 		exit(0);
@@ -739,7 +739,7 @@ static int do_reupdate(int ac, const char **av,
 
 	if (read_ref("HEAD", &head_oid))
 		/* If there is no HEAD, that means it is an initial
-		 * commit.  Update everything in the index.
+		 * cummit.  Update everything in the index.
 		 */
 		has_head = 0;
  redo:
@@ -1260,7 +1260,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				exit(128);
 			unable_to_lock_die(get_index_file(), lock_error);
 		}
-		if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
+		if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
 			die("Unable to write new index file");
 	}
 

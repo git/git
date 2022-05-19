@@ -1355,7 +1355,7 @@ void run_active_slot(struct active_request_slot *slot)
 			/*
 			 * It can happen that curl_multi_timeout returns a pathologically
 			 * long timeout when curl_multi_fdset returns no file descriptors
-			 * to read.  See commit message for more details.
+			 * to read.  See cummit message for more details.
 			 */
 			if (max_fd < 0 &&
 			    (select_timeout.tv_sec > 0 ||

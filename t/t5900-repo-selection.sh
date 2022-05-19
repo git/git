@@ -9,15 +9,15 @@ reset() {
 
 make_tree() {
 	git init "$1" &&
-	(cd "$1" && test_commit "$1")
+	(cd "$1" && test_cummit "$1")
 }
 
 make_bare() {
 	git init --bare "$1" &&
 	(cd "$1" &&
 	 tree=$(git hash-object -w -t tree /dev/null) &&
-	 commit=$(echo "$1" | git commit-tree $tree) &&
-	 git update-ref HEAD $commit
+	 cummit=$(echo "$1" | git cummit-tree $tree) &&
+	 git update-ref HEAD $cummit
 	)
 }
 

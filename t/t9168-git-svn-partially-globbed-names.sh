@@ -22,23 +22,23 @@ test_expect_success 'test refspec prefixed globbing' '
 		mkdir branches tags &&
 		svn_cmd add branches tags &&
 		svn_cmd cp trunk branches/b_start &&
-		svn_cmd commit -m "start a new branch" &&
+		svn_cmd cummit -m "start a new branch" &&
 		svn_cmd up &&
 		echo "hi" >>branches/b_start/src/b/readme &&
 		poke branches/b_start/src/b/readme &&
 		echo "hey" >>branches/b_start/src/a/readme &&
 		poke branches/b_start/src/a/readme &&
-		svn_cmd commit -m "hi" &&
+		svn_cmd cummit -m "hi" &&
 		svn_cmd up &&
 		svn_cmd cp branches/b_start tags/t_end &&
 		echo "bye" >>tags/t_end/src/b/readme &&
 		poke tags/t_end/src/b/readme &&
 		echo "aye" >>tags/t_end/src/a/readme &&
 		poke tags/t_end/src/a/readme &&
-		svn_cmd commit -m "the end" &&
+		svn_cmd cummit -m "the end" &&
 		echo "byebye" >>tags/t_end/src/b/readme &&
 		poke tags/t_end/src/b/readme &&
-		svn_cmd commit -m "nothing to see here"
+		svn_cmd cummit -m "nothing to see here"
 	) &&
 	git config --add svn-remote.svn.url "$svnrepo" &&
 	git config --add svn-remote.svn.fetch \
@@ -75,7 +75,7 @@ test_expect_success 'test left-hand-side only prefixed globbing' '
 		cd tmp &&
 		echo "try try" >>tags/t_end/src/b/readme &&
 		poke tags/t_end/src/b/readme &&
-		svn_cmd commit -m "try to try"
+		svn_cmd cummit -m "try to try"
 	) &&
 	git svn fetch two &&
 	git rev-list refs/remotes/two/tags/t_end >actual &&
@@ -93,8 +93,8 @@ test_expect_success 'test left-hand-side only prefixed globbing' '
 
 test_expect_success 'prepare test prefixed globs match just prefix' '
 	cat >expect.three <<EOF
-Tag commit to t_
-Branch commit to b_
+Tag cummit to t_
+Branch cummit to b_
 initial
 EOF
 	'
@@ -110,13 +110,13 @@ test_expect_success 'test prefixed globs match just prefix' '
 	(
 		cd tmp &&
 		svn_cmd cp trunk branches/b_ &&
-		echo "Branch commit to b_" >>branches/b_/src/a/readme &&
+		echo "Branch cummit to b_" >>branches/b_/src/a/readme &&
 		poke branches/b_/src/a/readme &&
-		svn_cmd commit -m "Branch commit to b_" &&
+		svn_cmd cummit -m "Branch cummit to b_" &&
 		svn_cmd up && svn_cmd cp branches/b_ tags/t_ &&
-		echo "Tag commit to t_" >>tags/t_/src/a/readme &&
+		echo "Tag cummit to t_" >>tags/t_/src/a/readme &&
 		poke tags/t_/src/a/readme &&
-		svn_cmd commit -m "Tag commit to t_" &&
+		svn_cmd cummit -m "Tag cummit to t_" &&
 		svn_cmd up
 	) &&
 	git svn fetch three &&
@@ -152,7 +152,7 @@ test_expect_success 'test disallow prefixed multi-globs' '
 		cd tmp &&
 		echo "try try" >>tags/t_end/src/b/readme &&
 		poke tags/t_end/src/b/readme &&
-		svn_cmd commit -m "try to try"
+		svn_cmd cummit -m "try to try"
 	) &&
 	test_must_fail git svn fetch four 2>stderr.four &&
 	test_cmp expect.four stderr.four &&
@@ -162,8 +162,8 @@ test_expect_success 'test disallow prefixed multi-globs' '
 
 test_expect_success 'prepare test globbing in the middle of the word' '
 	cat >expect.five <<EOF
-Tag commit to fghij
-Branch commit to abcde
+Tag cummit to fghij
+Branch cummit to abcde
 initial
 EOF
 	'
@@ -179,14 +179,14 @@ test_expect_success 'test globbing in the middle of the word' '
 	(
 		cd tmp &&
 		svn_cmd cp trunk branches/abcde &&
-		echo "Branch commit to abcde" >>branches/abcde/src/a/readme &&
+		echo "Branch cummit to abcde" >>branches/abcde/src/a/readme &&
 		poke branches/b_/src/a/readme &&
-		svn_cmd commit -m "Branch commit to abcde" &&
+		svn_cmd cummit -m "Branch cummit to abcde" &&
 		svn_cmd up &&
 		svn_cmd cp branches/abcde tags/fghij &&
-		echo "Tag commit to fghij" >>tags/fghij/src/a/readme &&
+		echo "Tag cummit to fghij" >>tags/fghij/src/a/readme &&
 		poke tags/fghij/src/a/readme &&
-		svn_cmd commit -m "Tag commit to fghij" &&
+		svn_cmd cummit -m "Tag cummit to fghij" &&
 		svn_cmd up
 	) &&
 	git svn fetch five &&
@@ -220,7 +220,7 @@ test_expect_success 'test disallow multiple asterisks in one word' '
 		cd tmp &&
 		echo "try try" >>tags/fghij/src/b/readme &&
 		poke tags/fghij/src/b/readme &&
-		svn_cmd commit -m "try to try"
+		svn_cmd cummit -m "try to try"
 	) &&
 	test_must_fail git svn fetch six 2>stderr.six &&
 	test_cmp expect.six stderr.six

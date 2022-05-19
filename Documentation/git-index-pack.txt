@@ -123,7 +123,7 @@ This option cannot be used with --stdin.
 include::object-format-disclaimer.txt[]
 
 --promisor[=<message>]::
-	Before committing the pack-index, create a .promisor file for this
+	Before cummitting the pack-index, create a .promisor file for this
 	pack. Particularly helpful when writing a promisor pack with --fix-thin
 	since the name of the pack is not final until the pack has been fully
 	written. If a `<message>` is provided, then that content will be

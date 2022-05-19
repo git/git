@@ -34,22 +34,22 @@ enum show_ignored_type {
 	SHOW_MATCHING_IGNORED,
 };
 
-/* from where does this commit originate */
-enum commit_whence {
-	FROM_COMMIT,     /* normal */
-	FROM_MERGE,      /* commit came from merge */
-	FROM_CHERRY_PICK_SINGLE, /* commit came from cherry-pick */
-	FROM_CHERRY_PICK_MULTI, /* commit came from a sequence of cherry-picks */
-	FROM_REBASE_PICK /* commit came from a pick/reword/edit */
+/* from where does this cummit originate */
+enum cummit_whence {
+	FROM_cummit,     /* normal */
+	FROM_MERGE,      /* cummit came from merge */
+	FROM_CHERRY_PICK_SINGLE, /* cummit came from cherry-pick */
+	FROM_CHERRY_PICK_MULTI, /* cummit came from a sequence of cherry-picks */
+	FROM_REBASE_PICK /* cummit came from a pick/reword/edit */
 };
 
-static inline int is_from_cherry_pick(enum commit_whence whence)
+static inline int is_from_cherry_pick(enum cummit_whence whence)
 {
 	return whence == FROM_CHERRY_PICK_SINGLE ||
 		whence == FROM_CHERRY_PICK_MULTI;
 }
 
-static inline int is_from_rebase(enum commit_whence whence)
+static inline int is_from_rebase(enum cummit_whence whence)
 {
 	return whence == FROM_REBASE_PICK;
 }
@@ -64,7 +64,7 @@ struct wt_status_change_data {
 	int rename_score;
 	char *rename_source;
 	unsigned dirty_submodule       : 2;
-	unsigned new_submodule_commits : 1;
+	unsigned new_submodule_cummits : 1;
 };
 
 enum wt_status_format {
@@ -107,7 +107,7 @@ struct wt_status {
 	struct pathspec pathspec;
 	int verbose;
 	int amend;
-	enum commit_whence whence;
+	enum cummit_whence whence;
 	int nowarn;
 	int use_color;
 	int no_gettext;
@@ -120,7 +120,7 @@ struct wt_status {
 	char color_palette[WT_STATUS_MAXSLOT][COLOR_MAXLEN];
 	unsigned colopts;
 	int null_termination;
-	int commit_template;
+	int cummit_template;
 	int show_branch;
 	int show_stash;
 	int hints;
@@ -130,10 +130,10 @@ struct wt_status {
 	int rename_limit;
 	enum wt_status_format status_format;
 	struct wt_status_state state;
-	struct object_id oid_commit; /* when not Initial */
+	struct object_id oid_cummit; /* when not Initial */
 
 	/* These are computed during processing of the individual sections */
-	int committable;
+	int cummittable;
 	int workdir_dirty;
 	const char *index_file;
 	FILE *fp;
@@ -174,7 +174,7 @@ void status_printf(struct wt_status *s, const char *color, const char *fmt, ...)
 /* The following functions expect that the caller took care of reading the index. */
 int has_unstaged_changes(struct repository *repo,
 			 int ignore_submodules);
-int has_uncommitted_changes(struct repository *repo,
+int has_uncummitted_changes(struct repository *repo,
 			    int ignore_submodules);
 int require_clean_work_tree(struct repository *repo,
 			    const char *action,

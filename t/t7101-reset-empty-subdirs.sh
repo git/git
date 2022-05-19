@@ -13,7 +13,7 @@ test_expect_success 'creating initial files' '
      mkdir path0 &&
      COPYING_test_data >path0/COPYING &&
      git add path0/COPYING &&
-     git commit -m add -a
+     git cummit -m add -a
 '
 
 test_expect_success 'creating second files' '
@@ -27,7 +27,7 @@ test_expect_success 'creating second files' '
      git add path1/COPYING &&
      git add COPYING &&
      git add path0/COPYING-TOO &&
-     git commit -m change -a
+     git cummit -m change -a
 '
 
 test_expect_success 'resetting tree HEAD^' '

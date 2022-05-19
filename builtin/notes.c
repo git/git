@@ -32,7 +32,7 @@ static const char * const git_notes_usage[] = {
 	N_("git notes [--ref <notes-ref>] edit [--allow-empty] [<object>]"),
 	N_("git notes [--ref <notes-ref>] show [<object>]"),
 	N_("git notes [--ref <notes-ref>] merge [-v | -q] [-s <strategy>] <notes-ref>"),
-	"git notes merge --commit [-v | -q]",
+	"git notes merge --cummit [-v | -q]",
 	"git notes merge --abort [-v | -q]",
 	N_("git notes [--ref <notes-ref>] remove [<object>...]"),
 	N_("git notes [--ref <notes-ref>] prune [-n] [-v]"),
@@ -73,7 +73,7 @@ static const char * const git_notes_show_usage[] = {
 
 static const char * const git_notes_merge_usage[] = {
 	N_("git notes merge [<options>] <notes-ref>"),
-	N_("git notes merge --commit [<options>]"),
+	N_("git notes merge --cummit [<options>]"),
 	N_("git notes merge --abort [<options>]"),
 	NULL
 };
@@ -328,7 +328,7 @@ static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 	}
 
 	if (!rewrite_cmd) {
-		commit_notes(the_repository, t, msg);
+		cummit_notes(the_repository, t, msg);
 		free_notes(t);
 	} else {
 		finish_copy_notes_for_rewrite(the_repository, c, msg);
@@ -467,13 +467,13 @@ static int add(int argc, const char **argv, const char *prefix)
 		write_note_data(&d, &new_note);
 		if (add_note(t, &object, &new_note, combine_notes_overwrite))
 			BUG("combine_notes_overwrite failed");
-		commit_notes(the_repository, t,
+		cummit_notes(the_repository, t,
 			     "Notes added by 'git notes add'");
 	} else {
 		fprintf(stderr, _("Removing note for object %s\n"),
 			oid_to_hex(&object));
 		remove_note(t, object.hash);
-		commit_notes(the_repository, t,
+		cummit_notes(the_repository, t,
 			     "Notes removed by 'git notes add'");
 	}
 
@@ -552,7 +552,7 @@ static int copy(int argc, const char **argv, const char *prefix)
 
 	if (add_note(t, &object, from_note, combine_notes_overwrite))
 		BUG("combine_notes_overwrite failed");
-	commit_notes(the_repository, t,
+	cummit_notes(the_repository, t,
 		     "Notes added by 'git notes copy'");
 out:
 	free_notes(t);
@@ -637,7 +637,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		remove_note(t, object.hash);
 		logmsg = xstrfmt("Notes removed by 'git notes %s'", argv[0]);
 	}
-	commit_notes(the_repository, t, logmsg);
+	cummit_notes(the_repository, t, logmsg);
 
 	free(logmsg);
 	free_note_data(&d);
@@ -701,12 +701,12 @@ static int merge_abort(struct notes_merge_options *o)
 	return ret;
 }
 
-static int merge_commit(struct notes_merge_options *o)
+static int merge_cummit(struct notes_merge_options *o)
 {
 	struct strbuf msg = STRBUF_INIT;
 	struct object_id oid, parent_oid;
 	struct notes_tree *t;
-	struct commit *partial;
+	struct cummit *partial;
 	struct pretty_print_context pretty_ctx;
 	void *local_ref_to_free;
 	int ret;
@@ -718,10 +718,10 @@ static int merge_commit(struct notes_merge_options *o)
 
 	if (get_oid("NOTES_MERGE_PARTIAL", &oid))
 		die(_("failed to read ref NOTES_MERGE_PARTIAL"));
-	else if (!(partial = lookup_commit_reference(the_repository, &oid)))
-		die(_("could not find commit from NOTES_MERGE_PARTIAL."));
-	else if (parse_commit(partial))
-		die(_("could not parse commit from NOTES_MERGE_PARTIAL."));
+	else if (!(partial = lookup_cummit_reference(the_repository, &oid)))
+		die(_("could not find cummit from NOTES_MERGE_PARTIAL."));
+	else if (parse_cummit(partial))
+		die(_("could not parse cummit from NOTES_MERGE_PARTIAL."));
 
 	if (partial->parents)
 		oidcpy(&parent_oid, &partial->parents->item->object.oid);
@@ -736,12 +736,12 @@ static int merge_commit(struct notes_merge_options *o)
 	if (!o->local_ref)
 		die(_("failed to resolve NOTES_MERGE_REF"));
 
-	if (notes_merge_commit(o, t, partial, &oid))
+	if (notes_merge_cummit(o, t, partial, &oid))
 		die(_("failed to finalize notes merge"));
 
-	/* Reuse existing commit message in reflog message */
+	/* Reuse existing cummit message in reflog message */
 	memset(&pretty_ctx, 0, sizeof(pretty_ctx));
-	format_commit_message(partial, "%s", &msg, &pretty_ctx);
+	format_cummit_message(partial, "%s", &msg, &pretty_ctx);
 	strbuf_trim(&msg);
 	strbuf_insertstr(&msg, 0, "notes: ");
 	update_ref(msg.buf, o->local_ref, &oid,
@@ -775,7 +775,7 @@ static int merge(int argc, const char **argv, const char *prefix)
 	struct object_id result_oid;
 	struct notes_tree *t;
 	struct notes_merge_options o;
-	int do_merge = 0, do_commit = 0, do_abort = 0;
+	int do_merge = 0, do_cummit = 0, do_abort = 0;
 	int verbosity = 0, result;
 	const char *strategy = NULL;
 	struct option options[] = {
@@ -785,9 +785,9 @@ static int merge(int argc, const char **argv, const char *prefix)
 		OPT_STRING('s', "strategy", &strategy, N_("strategy"),
 			   N_("resolve notes conflicts using the given strategy "
 			      "(manual/ours/theirs/union/cat_sort_uniq)")),
-		OPT_GROUP(N_("Committing unmerged notes")),
-		OPT_SET_INT_F(0, "commit", &do_commit,
-			      N_("finalize notes merge by committing unmerged notes"),
+		OPT_GROUP(N_("cummitting unmerged notes")),
+		OPT_SET_INT_F(0, "cummit", &do_cummit,
+			      N_("finalize notes merge by cummitting unmerged notes"),
 			      1, PARSE_OPT_NONEG),
 		OPT_GROUP(N_("Aborting notes merge resolution")),
 		OPT_SET_INT_F(0, "abort", &do_abort,
@@ -799,10 +799,10 @@ static int merge(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options,
 			     git_notes_merge_usage, 0);
 
-	if (strategy || do_commit + do_abort == 0)
+	if (strategy || do_cummit + do_abort == 0)
 		do_merge = 1;
-	if (do_merge + do_commit + do_abort != 1) {
-		error(_("cannot mix --commit, --abort or -s/--strategy"));
+	if (do_merge + do_cummit + do_abort != 1) {
+		error(_("cannot mix --cummit, --abort or -s/--strategy"));
 		usage_with_options(git_notes_merge_usage, options);
 	}
 
@@ -819,8 +819,8 @@ static int merge(int argc, const char **argv, const char *prefix)
 
 	if (do_abort)
 		return merge_abort(&o);
-	if (do_commit)
-		return merge_commit(&o);
+	if (do_cummit)
+		return merge_cummit(&o);
 
 	o.local_ref = default_notes_ref();
 	strbuf_addstr(&remote_ref, argv[0]);
@@ -852,12 +852,12 @@ static int merge(int argc, const char **argv, const char *prefix)
 
 	strbuf_addf(&msg, "notes: Merged notes from %s into %s",
 		    remote_ref.buf, default_notes_ref());
-	strbuf_add(&(o.commit_msg), msg.buf + 7, msg.len - 7); /* skip "notes: " */
+	strbuf_add(&(o.cummit_msg), msg.buf + 7, msg.len - 7); /* skip "notes: " */
 
 	result = notes_merge(&o, t, &result_oid);
 
 	if (result >= 0) /* Merge resulted (trivially) in result_oid */
-		/* Update default notes ref with new commit */
+		/* Update default notes ref with new cummit */
 		update_ref(msg.buf, default_notes_ref(), &result_oid, NULL, 0,
 			   UPDATE_REFS_DIE_ON_ERR);
 	else { /* Merge has unresolved conflicts */
@@ -878,7 +878,7 @@ static int merge(int argc, const char **argv, const char *prefix)
 			die(_("failed to store link to current notes ref (%s)"),
 			    default_notes_ref());
 		fprintf(stderr, _("Automatic notes merge failed. Fix conflicts in %s "
-				  "and commit the result with 'git notes merge --commit', "
+				  "and cummit the result with 'git notes merge --cummit', "
 				  "or abort the merge with 'git notes merge --abort'.\n"),
 			git_path(NOTES_MERGE_WORKTREE));
 	}
@@ -942,7 +942,7 @@ static int remove_cmd(int argc, const char **argv, const char *prefix)
 		strbuf_release(&sb);
 	}
 	if (!retval)
-		commit_notes(the_repository, t,
+		cummit_notes(the_repository, t,
 			     "Notes removed by 'git notes remove'");
 	free_notes(t);
 	return retval;
@@ -971,7 +971,7 @@ static int prune(int argc, const char **argv, const char *prefix)
 	prune_notes(t, (verbose ? NOTES_PRUNE_VERBOSE : 0) |
 		(show_only ? NOTES_PRUNE_VERBOSE|NOTES_PRUNE_DRYRUN : 0) );
 	if (!show_only)
-		commit_notes(the_repository, t,
+		cummit_notes(the_repository, t,
 			     "Notes removed by 'git notes prune'");
 	free_notes(t);
 	return 0;

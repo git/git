@@ -57,7 +57,7 @@ void oidset_parse_file_carefully(struct oidset *set, const char *path,
 
 		/*
 		 * Allow trailing comments, leading whitespace
-		 * (including before commits), and empty or whitespace
+		 * (including before cummits), and empty or whitespace
 		 * only lines.
 		 */
 		name = strchr(sb.buf, '#');

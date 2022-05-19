@@ -23,21 +23,21 @@ test_expect_success 'setup for prompt tests' '
 	echo 1 >file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag -a -m msg1 t1 &&
 	git checkout -b b1 &&
 	echo 2 >file &&
-	git commit -m "second b1" file &&
+	git cummit -m "second b1" file &&
 	echo 3 >file &&
-	git commit -m "third b1" file &&
+	git cummit -m "third b1" file &&
 	git tag -a -m msg2 t2 &&
 	git checkout -b b2 main &&
 	echo 0 >file &&
-	git commit -m "second b2" file &&
+	git cummit -m "second b2" file &&
 	echo 00 >file &&
-	git commit -m "another b2" file &&
+	git cummit -m "another b2" file &&
 	echo 000 >file &&
-	git commit -m "yet another b2" file &&
+	git cummit -m "yet another b2" file &&
 	mkdir ignored_dir &&
 	echo "ignored_dir/" >>.gitignore &&
 	git checkout main
@@ -604,7 +604,7 @@ test_expect_success 'prompt - bash color pc mode - dirty status indicator - dirt
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - bash color pc mode - dirty status indicator - before root commit' '
+test_expect_success 'prompt - bash color pc mode - dirty status indicator - before root cummit' '
 	printf "BEFORE: (${c_green}\${__git_ps1_branch_name}${c_clear} ${c_green}#${c_clear}):AFTER\\nmain" >expected &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&

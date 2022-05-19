@@ -18,11 +18,11 @@ Imports a project from one or more GNU Arch repositories.
 It will follow branches
 and repositories within the namespaces defined by the <archive>/<branch>
 parameters supplied. If it cannot find the remote branch a merge comes from
-it will just import it as a regular commit. If it can find it, it will mark it
+it will just import it as a regular cummit. If it can find it, it will mark it
 as a merge whenever possible (see discussion below).
 
 The script expects you to provide the key roots where it can start the import
-from an 'initial import' or 'tag' type of Arch commit. It will follow and
+from an 'initial import' or 'tag' type of Arch cummit. It will follow and
 import new branches within the provided roots.
 
 It expects to be dealing with one project only. If it sees
@@ -48,7 +48,7 @@ branch names and convert Arch jargon to Git jargon, for example mapping a
 "PROJECT{litdd}devo{litdd}VERSION" branch to "master".
 
 Associating multiple Arch branches to one Git branch is possible; the
-result will make the most sense only if no commits are made to the first
+result will make the most sense only if no cummits are made to the first
 branch, after the second branch is created.  Still, this is useful to
 convert Arch repositories that had been rotated periodically.
 
@@ -57,7 +57,7 @@ MERGES
 ------
 Patch merge data from Arch is used to mark merges in Git as well. Git
 does not care much about tracking patches, and only considers a merge when a
-branch incorporates all the commits since the point they forked. The end result
+branch incorporates all the cummits since the point they forked. The end result
 is that Git will have a good idea of how far branches have diverged. So the
 import process does lose some patch-trading metadata.
 
@@ -75,7 +75,7 @@ OPTIONS
 	Verbose output.
 
 -T::
-	Many tags. Will create a tag for every commit, reflecting the commit
+	Many tags. Will create a tag for every cummit, reflecting the cummit
 	name in the Arch repository.
 
 -f::

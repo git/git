@@ -27,16 +27,16 @@ create_bogus_ref () {
 }
 
 test_expect_success 'create history reachable only from a bogus-named ref' '
-	test_tick && git commit --allow-empty -m main &&
+	test_tick && git cummit --allow-empty -m main &&
 	base=$(git rev-parse HEAD) &&
-	test_tick && git commit --allow-empty -m bogus &&
+	test_tick && git cummit --allow-empty -m bogus &&
 	bogus=$(git rev-parse HEAD) &&
-	git cat-file commit $bogus >saved &&
+	git cat-file cummit $bogus >saved &&
 	git reset --hard HEAD^
 '
 
 test_expect_success 'pruning does not drop bogus object' '
-	test_when_finished "git hash-object -w -t commit saved" &&
+	test_when_finished "git hash-object -w -t cummit saved" &&
 	create_bogus_ref &&
 	test_must_fail git prune --expire=now &&
 	git cat-file -e $bogus
@@ -86,11 +86,11 @@ test_expect_success 'destructive repack not confused by dangling symref' '
 # as we want to make sure we test the case where we
 # pick up the reference to "two" by iterating the refs,
 # not by resolving HEAD.
-test_expect_success 'create history with missing tip commit' '
-	test_tick && git commit --allow-empty -m one &&
+test_expect_success 'create history with missing tip cummit' '
+	test_tick && git cummit --allow-empty -m one &&
 	recoverable=$(git rev-parse HEAD) &&
-	git cat-file commit $recoverable >saved &&
-	test_tick && git commit --allow-empty -m two &&
+	git cat-file cummit $recoverable >saved &&
+	test_tick && git cummit --allow-empty -m two &&
 	missing=$(git rev-parse HEAD) &&
 	git checkout --detach $base &&
 	rm .git/objects/$(echo $missing | sed "s,..,&/,") &&
@@ -98,7 +98,7 @@ test_expect_success 'create history with missing tip commit' '
 '
 
 test_expect_success 'pruning with a corrupted tip does not drop history' '
-	test_when_finished "git hash-object -w -t commit saved" &&
+	test_when_finished "git hash-object -w -t cummit saved" &&
 	test_must_fail git prune --expire=now &&
 	git cat-file -e $recoverable
 '

@@ -28,7 +28,7 @@
 static int trust_exit_code;
 
 static const char *const builtin_difftool_usage[] = {
-	N_("git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"),
+	N_("git difftool [<options>] [<cummit> [<cummit>]] [--] [<path>...]"),
 	NULL
 };
 
@@ -440,11 +440,11 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 
 		if (S_ISGITLINK(lmode) || S_ISGITLINK(rmode)) {
 			strbuf_reset(&buf);
-			strbuf_addf(&buf, "Subproject commit %s",
+			strbuf_addf(&buf, "Subproject cummit %s",
 				    oid_to_hex(&loid));
 			add_left_or_right(&submodules, src_path, buf.buf, 0);
 			strbuf_reset(&buf);
-			strbuf_addf(&buf, "Subproject commit %s",
+			strbuf_addf(&buf, "Subproject cummit %s",
 				    oid_to_hex(&roid));
 			if (oideq(&loid, &roid))
 				strbuf_addstr(&buf, "-dirty");
@@ -608,7 +608,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s/wtindex", tmpdir.buf);
 			if (hold_lock_file_for_update(&lock, buf.buf, 0) < 0 ||
-			    write_locked_index(&wtindex, &lock, COMMIT_LOCK)) {
+			    write_locked_index(&wtindex, &lock, cummit_LOCK)) {
 				ret = error("could not write %s", buf.buf);
 				goto finish;
 			}

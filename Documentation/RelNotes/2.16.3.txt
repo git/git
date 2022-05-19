@@ -9,8 +9,8 @@ Fixes since v2.16.2
    making that appear "added") detected it as a rename, but did not
    report the  old and new pathnames correctly.
 
- * "git commit --fixup" did not allow "-m<message>" option to be used
-   at the same time; allow it to annotate resulting commit with more
+ * "git cummit --fixup" did not allow "-m<message>" option to be used
+   at the same time; allow it to annotate resulting cummit with more
    text.
 
  * When resetting the working tree files recursively, the working tree

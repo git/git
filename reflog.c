@@ -52,7 +52,7 @@ static int tree_is_complete(const struct object_id *oid)
 	return complete;
 }
 
-static int commit_is_complete(struct commit *commit)
+static int cummit_is_complete(struct cummit *cummit)
 {
 	struct object_array study;
 	struct object_array found;
@@ -60,27 +60,27 @@ static int commit_is_complete(struct commit *commit)
 	int i;
 
 	/* early return */
-	if (commit->object.flags & SEEN)
+	if (cummit->object.flags & SEEN)
 		return 1;
-	if (commit->object.flags & INCOMPLETE)
+	if (cummit->object.flags & INCOMPLETE)
 		return 0;
 	/*
-	 * Find all commits that are reachable and are not marked as
+	 * Find all cummits that are reachable and are not marked as
 	 * SEEN.  Then make sure the trees and blobs contained are
-	 * complete.  After that, mark these commits also as SEEN.
+	 * complete.  After that, mark these cummits also as SEEN.
 	 * If some of the objects that are needed to complete this
-	 * commit are missing, mark this commit as INCOMPLETE.
+	 * cummit are missing, mark this cummit as INCOMPLETE.
 	 */
 	memset(&study, 0, sizeof(study));
 	memset(&found, 0, sizeof(found));
-	add_object_array(&commit->object, NULL, &study);
-	add_object_array(&commit->object, NULL, &found);
-	commit->object.flags |= STUDYING;
+	add_object_array(&cummit->object, NULL, &study);
+	add_object_array(&cummit->object, NULL, &found);
+	cummit->object.flags |= STUDYING;
 	while (study.nr) {
-		struct commit *c;
-		struct commit_list *parent;
+		struct cummit *c;
+		struct cummit_list *parent;
 
-		c = (struct commit *)object_array_pop(&study);
+		c = (struct cummit *)object_array_pop(&study);
 		if (!c->object.parsed && !parse_object(the_repository, &c->object.oid))
 			c->object.flags |= INCOMPLETE;
 
@@ -91,7 +91,7 @@ static int commit_is_complete(struct commit *commit)
 		else if (c->object.flags & SEEN)
 			continue;
 		for (parent = c->parents; parent; parent = parent->next) {
-			struct commit *p = parent->item;
+			struct cummit *p = parent->item;
 			if (p->object.flags & STUDYING)
 				continue;
 			p->object.flags |= STUDYING;
@@ -101,19 +101,19 @@ static int commit_is_complete(struct commit *commit)
 	}
 	if (!is_incomplete) {
 		/*
-		 * make sure all commits in "found" array have all the
+		 * make sure all cummits in "found" array have all the
 		 * necessary objects.
 		 */
 		for (i = 0; i < found.nr; i++) {
-			struct commit *c =
-				(struct commit *)found.objects[i].item;
-			if (!tree_is_complete(get_commit_tree_oid(c))) {
+			struct cummit *c =
+				(struct cummit *)found.objects[i].item;
+			if (!tree_is_complete(get_cummit_tree_oid(c))) {
 				is_incomplete = 1;
 				c->object.flags |= INCOMPLETE;
 			}
 		}
 		if (!is_incomplete) {
-			/* mark all found commits as complete, iow SEEN */
+			/* mark all found cummits as complete, iow SEEN */
 			for (i = 0; i < found.nr; i++)
 				found.objects[i].item->flags |= SEEN;
 		}
@@ -122,14 +122,14 @@ static int commit_is_complete(struct commit *commit)
 	for (i = 0; i < found.nr; i++)
 		found.objects[i].item->flags &= ~STUDYING;
 	if (is_incomplete)
-		commit->object.flags |= INCOMPLETE;
+		cummit->object.flags |= INCOMPLETE;
 	else {
 		/*
 		 * If we come here, we have (1) traversed the ancestry chain
-		 * from the "commit" until we reach SEEN commits (which are
-		 * known to be complete), and (2) made sure that the commits
+		 * from the "cummit" until we reach SEEN cummits (which are
+		 * known to be complete), and (2) made sure that the cummits
 		 * encountered during the above traversal refer to trees that
-		 * are complete.  Which means that we know *all* the commits
+		 * are complete.  Which means that we know *all* the cummits
 		 * we have seen during this process are complete.
 		 */
 		for (i = 0; i < found.nr; i++)
@@ -141,91 +141,91 @@ static int commit_is_complete(struct commit *commit)
 	return !is_incomplete;
 }
 
-static int keep_entry(struct commit **it, struct object_id *oid)
+static int keep_entry(struct cummit **it, struct object_id *oid)
 {
-	struct commit *commit;
+	struct cummit *cummit;
 
 	if (is_null_oid(oid))
 		return 1;
-	commit = lookup_commit_reference_gently(the_repository, oid, 1);
-	if (!commit)
+	cummit = lookup_cummit_reference_gently(the_repository, oid, 1);
+	if (!cummit)
 		return 0;
 
 	/*
-	 * Make sure everything in this commit exists.
+	 * Make sure everything in this cummit exists.
 	 *
 	 * We have walked all the objects reachable from the refs
-	 * and cache earlier.  The commits reachable by this commit
-	 * must meet SEEN commits -- and then we should mark them as
+	 * and cache earlier.  The cummits reachable by this cummit
+	 * must meet SEEN cummits -- and then we should mark them as
 	 * SEEN as well.
 	 */
-	if (!commit_is_complete(commit))
+	if (!cummit_is_complete(cummit))
 		return 0;
-	*it = commit;
+	*it = cummit;
 	return 1;
 }
 
 /*
- * Starting from commits in the cb->mark_list, mark commits that are
- * reachable from them.  Stop the traversal at commits older than
+ * Starting from cummits in the cb->mark_list, mark cummits that are
+ * reachable from them.  Stop the traversal at cummits older than
  * the expire_limit and queue them back, so that the caller can call
  * us again to restart the traversal with longer expire_limit.
  */
 static void mark_reachable(struct expire_reflog_policy_cb *cb)
 {
-	struct commit_list *pending;
+	struct cummit_list *pending;
 	timestamp_t expire_limit = cb->mark_limit;
-	struct commit_list *leftover = NULL;
+	struct cummit_list *leftover = NULL;
 
 	for (pending = cb->mark_list; pending; pending = pending->next)
 		pending->item->object.flags &= ~REACHABLE;
 
 	pending = cb->mark_list;
 	while (pending) {
-		struct commit_list *parent;
-		struct commit *commit = pop_commit(&pending);
-		if (commit->object.flags & REACHABLE)
+		struct cummit_list *parent;
+		struct cummit *cummit = pop_cummit(&pending);
+		if (cummit->object.flags & REACHABLE)
 			continue;
-		if (parse_commit(commit))
+		if (parse_cummit(cummit))
 			continue;
-		commit->object.flags |= REACHABLE;
-		if (commit->date < expire_limit) {
-			commit_list_insert(commit, &leftover);
+		cummit->object.flags |= REACHABLE;
+		if (cummit->date < expire_limit) {
+			cummit_list_insert(cummit, &leftover);
 			continue;
 		}
-		commit->object.flags |= REACHABLE;
-		parent = commit->parents;
+		cummit->object.flags |= REACHABLE;
+		parent = cummit->parents;
 		while (parent) {
-			commit = parent->item;
+			cummit = parent->item;
 			parent = parent->next;
-			if (commit->object.flags & REACHABLE)
+			if (cummit->object.flags & REACHABLE)
 				continue;
-			commit_list_insert(commit, &pending);
+			cummit_list_insert(cummit, &pending);
 		}
 	}
 	cb->mark_list = leftover;
 }
 
-static int unreachable(struct expire_reflog_policy_cb *cb, struct commit *commit, struct object_id *oid)
+static int unreachable(struct expire_reflog_policy_cb *cb, struct cummit *cummit, struct object_id *oid)
 {
 	/*
-	 * We may or may not have the commit yet - if not, look it
+	 * We may or may not have the cummit yet - if not, look it
 	 * up using the supplied sha1.
 	 */
-	if (!commit) {
+	if (!cummit) {
 		if (is_null_oid(oid))
 			return 0;
 
-		commit = lookup_commit_reference_gently(the_repository, oid,
+		cummit = lookup_cummit_reference_gently(the_repository, oid,
 							1);
 
-		/* Not a commit -- keep it */
-		if (!commit)
+		/* Not a cummit -- keep it */
+		if (!cummit)
 			return 0;
 	}
 
 	/* Reachable from the current ref?  Don't prune. */
-	if (commit->object.flags & REACHABLE)
+	if (cummit->object.flags & REACHABLE)
 		return 0;
 
 	if (cb->mark_list && cb->mark_limit) {
@@ -233,7 +233,7 @@ static int unreachable(struct expire_reflog_policy_cb *cb, struct commit *commit
 		mark_reachable(cb);
 	}
 
-	return !(commit->object.flags & REACHABLE);
+	return !(cummit->object.flags & REACHABLE);
 }
 
 /*
@@ -244,14 +244,14 @@ int should_expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 			     const char *message, void *cb_data)
 {
 	struct expire_reflog_policy_cb *cb = cb_data;
-	struct commit *old_commit, *new_commit;
+	struct cummit *old_cummit, *new_cummit;
 
 	if (timestamp < cb->cmd.expire_total)
 		return 1;
 
-	old_commit = new_commit = NULL;
+	old_cummit = new_cummit = NULL;
 	if (cb->cmd.stalefix &&
-	    (!keep_entry(&old_commit, ooid) || !keep_entry(&new_commit, noid)))
+	    (!keep_entry(&old_cummit, ooid) || !keep_entry(&new_cummit, noid)))
 		return 1;
 
 	if (timestamp < cb->cmd.expire_unreachable) {
@@ -260,7 +260,7 @@ int should_expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 			return 1;
 		case UE_NORMAL:
 		case UE_HEAD:
-			if (unreachable(cb, old_commit, ooid) || unreachable(cb, new_commit, noid))
+			if (unreachable(cb, old_cummit, ooid) || unreachable(cb, new_cummit, noid))
 				return 1;
 			break;
 		}
@@ -297,14 +297,14 @@ int should_expire_reflog_ent_verbose(struct object_id *ooid,
 static int push_tip_to_list(const char *refname, const struct object_id *oid,
 			    int flags, void *cb_data)
 {
-	struct commit_list **list = cb_data;
-	struct commit *tip_commit;
+	struct cummit_list **list = cb_data;
+	struct cummit *tip_cummit;
 	if (flags & REF_ISSYMREF)
 		return 0;
-	tip_commit = lookup_commit_reference_gently(the_repository, oid, 1);
-	if (!tip_commit)
+	tip_cummit = lookup_cummit_reference_gently(the_repository, oid, 1);
+	if (!tip_cummit)
 		return 0;
-	commit_list_insert(tip_commit, list);
+	cummit_list_insert(tip_cummit, list);
 	return 0;
 }
 
@@ -327,16 +327,16 @@ void reflog_expiry_prepare(const char *refname,
 			   void *cb_data)
 {
 	struct expire_reflog_policy_cb *cb = cb_data;
-	struct commit_list *elem;
-	struct commit *commit = NULL;
+	struct cummit_list *elem;
+	struct cummit *cummit = NULL;
 
 	if (!cb->cmd.expire_unreachable || is_head(refname)) {
 		cb->unreachable_expire_kind = UE_HEAD;
 	} else {
-		commit = lookup_commit(the_repository, oid);
-		if (commit && is_null_oid(&commit->object.oid))
-			commit = NULL;
-		cb->unreachable_expire_kind = commit ? UE_NORMAL : UE_ALWAYS;
+		cummit = lookup_cummit(the_repository, oid);
+		if (cummit && is_null_oid(&cummit->object.oid))
+			cummit = NULL;
+		cb->unreachable_expire_kind = cummit ? UE_NORMAL : UE_ALWAYS;
 	}
 
 	if (cb->cmd.expire_unreachable <= cb->cmd.expire_total)
@@ -348,12 +348,12 @@ void reflog_expiry_prepare(const char *refname,
 	case UE_HEAD:
 		for_each_ref(push_tip_to_list, &cb->tips);
 		for (elem = cb->tips; elem; elem = elem->next)
-			commit_list_insert(elem->item, &cb->mark_list);
+			cummit_list_insert(elem->item, &cb->mark_list);
 		break;
 	case UE_NORMAL:
-		commit_list_insert(commit, &cb->mark_list);
+		cummit_list_insert(cummit, &cb->mark_list);
 		/* For reflog_expiry_cleanup() below */
-		cb->tip_commit = commit;
+		cb->tip_cummit = cummit;
 	}
 	cb->mark_limit = cb->cmd.expire_total;
 	mark_reachable(cb);
@@ -362,18 +362,18 @@ void reflog_expiry_prepare(const char *refname,
 void reflog_expiry_cleanup(void *cb_data)
 {
 	struct expire_reflog_policy_cb *cb = cb_data;
-	struct commit_list *elem;
+	struct cummit_list *elem;
 
 	switch (cb->unreachable_expire_kind) {
 	case UE_ALWAYS:
 		return;
 	case UE_HEAD:
 		for (elem = cb->tips; elem; elem = elem->next)
-			clear_commit_marks(elem->item, REACHABLE);
-		free_commit_list(cb->tips);
+			clear_cummit_marks(elem->item, REACHABLE);
+		free_cummit_list(cb->tips);
 		break;
 	case UE_NORMAL:
-		clear_commit_marks(cb->tip_commit, REACHABLE);
+		clear_cummit_marks(cb->tip_cummit, REACHABLE);
 		break;
 	}
 }

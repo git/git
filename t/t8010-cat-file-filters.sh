@@ -8,7 +8,7 @@ test_expect_success 'setup ' '
 	echo "hello" | append_cr >world.txt &&
 	git add .gitattributes world.txt &&
 	test_tick &&
-	git commit -m "Initial commit"
+	git cummit -m "Initial cummit"
 '
 
 has_cr () {

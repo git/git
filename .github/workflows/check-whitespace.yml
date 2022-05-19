@@ -1,7 +1,7 @@
 name: check-whitespace
 
-# Get the repository with all commits to ensure that we can analyze
-# all of the commits contributed via the Pull Request.
+# Get the repository with all cummits to ensure that we can analyze
+# all of the cummits contributed via the Pull Request.
 # Process `git log --check` output to extract just the check errors.
 # Exit with failure upon white-space issues.
 
@@ -21,23 +21,23 @@ jobs:
       id: check_out
       run: |
         log=
-        commit=
+        cummit=
         while read dash etc
         do
           case "${dash}" in
           "---")
-            commit="${etc}"
+            cummit="${etc}"
             ;;
           "")
             ;;
           *)
-            if test -n "${commit}"
+            if test -n "${cummit}"
             then
-              log="${log}\n${commit}"
+              log="${log}\n${cummit}"
               echo ""
-              echo "--- ${commit}"
+              echo "--- ${cummit}"
             fi
-            commit=
+            cummit=
             log="${log}\n${dash} ${etc}"
             echo "${dash} ${etc}"
             ;;

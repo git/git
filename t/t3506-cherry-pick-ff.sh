@@ -11,14 +11,14 @@ test_expect_success setup '
 	echo first > file1 &&
 	git add file1 &&
 	test_tick &&
-	git commit -m "first" &&
+	git cummit -m "first" &&
 	git tag first &&
 
 	git checkout -b other &&
 	echo second >> file1 &&
 	git add file1 &&
 	test_tick &&
-	git commit -m "second" &&
+	git cummit -m "second" &&
 	git tag second &&
 	test_oid_cache <<-EOF
 	cp_ff sha1:1df192cd8bc58a2b275d842cede4d221ad9000d1
@@ -57,13 +57,13 @@ test_expect_success 'merge setup' '
 	echo new line >A &&
 	git add A &&
 	test_tick &&
-	git commit -m "add line to A" A &&
+	git cummit -m "add line to A" A &&
 	git tag A &&
 	git checkout -b side first &&
 	echo new line >B &&
 	git add B &&
 	test_tick &&
-	git commit -m "add line to B" B &&
+	git cummit -m "add line to B" B &&
 	git tag B &&
 	git checkout main &&
 	git merge side &&
@@ -102,12 +102,12 @@ test_expect_success 'cherry pick a merge relative to nonexistent parent with --f
 	test_must_fail git cherry-pick --ff -m 3 C
 '
 
-test_expect_success 'cherry pick a root commit with --ff' '
+test_expect_success 'cherry pick a root cummit with --ff' '
 	git reset --hard first -- &&
 	git rm file1 &&
 	echo first >file2 &&
 	git add file2 &&
-	git commit --amend -m "file2" &&
+	git cummit --amend -m "file2" &&
 	git cherry-pick --ff first &&
 	test "$(git rev-parse --verify HEAD)" = "$(test_oid cp_ff)"
 '

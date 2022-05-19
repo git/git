@@ -28,8 +28,8 @@ Fixes since v2.6.4
    such as WinXP.
 
  * "git p4" used to import Perforce CLs that touch only paths outside
-   the client spec as empty commits.  It has been corrected to ignore
-   them instead, with a new configuration git-p4.keepEmptyCommits as a
+   the client spec as empty cummits.  It has been corrected to ignore
+   them instead, with a new configuration git-p4.keepEmptycummits as a
    backward compatibility knob.
 
  * The exit code of git-fsck did not reflect some types of errors

@@ -44,7 +44,7 @@ test_expect_success 'update-index --remove --again' '
 	cmp current expected
 '
 
-test_expect_success 'first commit' 'git commit -m initial'
+test_expect_success 'first cummit' 'git cummit -m initial'
 
 test_expect_success 'update-index again' '
 	mkdir -p dir1 &&

@@ -2,26 +2,26 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "lockfile.h"
-#include "commit.h"
+#include "cummit.h"
 #include "run-command.h"
 #include "resolve-undo.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"
 #include "dir.h"
 
-static const char *merge_argument(struct commit *commit)
+static const char *merge_argument(struct cummit *cummit)
 {
-	return oid_to_hex(commit ? &commit->object.oid : the_hash_algo->empty_tree);
+	return oid_to_hex(cummit ? &cummit->object.oid : the_hash_algo->empty_tree);
 }
 
 int try_merge_command(struct repository *r,
 		      const char *strategy, size_t xopts_nr,
-		      const char **xopts, struct commit_list *common,
-		      const char *head_arg, struct commit_list *remotes)
+		      const char **xopts, struct cummit_list *common,
+		      const char *head_arg, struct cummit_list *remotes)
 {
 	struct strvec args = STRVEC_INIT;
 	int i, ret;
-	struct commit_list *j;
+	struct cummit_list *j;
 
 	strvec_pushf(&args, "merge-%s", strategy);
 	for (i = 0; i < xopts_nr; i++)
@@ -98,7 +98,7 @@ int checkout_fast_forward(struct repository *r,
 	}
 	clear_unpack_trees_porcelain(&opts);
 
-	if (write_locked_index(r->index, &lock_file, COMMIT_LOCK))
+	if (write_locked_index(r->index, &lock_file, cummit_LOCK))
 		return error(_("unable to write new index file"));
 	return 0;
 }

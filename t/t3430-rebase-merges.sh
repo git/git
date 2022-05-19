@@ -6,7 +6,7 @@
 test_description='git rebase -i --rebase-merges
 
 This test runs git rebase "interactively", retaining the branch structure by
-recreating merge commits.
+recreating merge cummits.
 
 Initial setup:
 
@@ -36,33 +36,33 @@ test_expect_success 'setup' '
 	cp script-from-scratch "$1"
 	EOF
 
-	test_commit A &&
+	test_cummit A &&
 	git checkout -b first &&
-	test_commit B &&
+	test_cummit B &&
 	b=$(git rev-parse --short HEAD) &&
 	git checkout main &&
-	test_commit C &&
+	test_cummit C &&
 	c=$(git rev-parse --short HEAD) &&
-	test_commit D &&
+	test_cummit D &&
 	d=$(git rev-parse --short HEAD) &&
-	git merge --no-commit B &&
+	git merge --no-cummit B &&
 	test_tick &&
-	git commit -m E &&
+	git cummit -m E &&
 	git tag -m E E &&
 	e=$(git rev-parse --short HEAD) &&
 	git checkout -b second C &&
-	test_commit F &&
+	test_cummit F &&
 	f=$(git rev-parse --short HEAD) &&
-	test_commit G &&
+	test_cummit G &&
 	g=$(git rev-parse --short HEAD) &&
 	git checkout main &&
-	git merge --no-commit G &&
+	git merge --no-cummit G &&
 	test_tick &&
-	git commit -m H &&
+	git cummit -m H &&
 	h=$(git rev-parse --short HEAD) &&
 	git tag -m H H &&
 	git checkout A &&
-	test_commit conflicting-G G.t
+	test_cummit conflicting-G G.t
 '
 
 test_expect_success 'create completely different structure' '
@@ -129,7 +129,7 @@ test_expect_success 'generate correct todo list' '
 
 test_expect_success '`reset` refuses to overwrite untracked files' '
 	git checkout -b refuse-to-reset &&
-	test_commit dont-overwrite-untracked &&
+	test_cummit dont-overwrite-untracked &&
 	git checkout @{-1} &&
 	: >dont-overwrite-untracked.t &&
 	echo "reset refs/tags/dont-overwrite-untracked" >script-from-scratch &&
@@ -172,7 +172,7 @@ test_expect_success 'failed `merge <branch>` does not crash' '
 	grep "^Merge branch ${SQ}G${SQ}$" .git/rebase-merge/message
 '
 
-test_expect_success 'merge -c commits before rewording and reloads todo-list' '
+test_expect_success 'merge -c cummits before rewording and reloads todo-list' '
 	cat >script-from-scratch <<-\EOF &&
 	merge -c E B
 	merge -c H G
@@ -184,7 +184,7 @@ test_expect_success 'merge -c commits before rewording and reloads todo-list' '
 		GIT_SEQUENCE_EDITOR="\"$PWD/replace-editor.sh\"" \
 			git rebase -i -r D
 	) &&
-	check_reworded_commits E H
+	check_reworded_cummits E H
 '
 
 test_expect_success 'merge -c rewords when a strategy is given' '
@@ -209,10 +209,10 @@ test_expect_success 'with a branch tip that was cherry-picked already' '
 	git checkout -b already-upstream main &&
 	base="$(git rev-parse --verify HEAD)" &&
 
-	test_commit A1 &&
-	test_commit A2 &&
+	test_cummit A1 &&
+	test_cummit A2 &&
 	git reset --hard $base &&
-	test_commit B1 &&
+	test_cummit B1 &&
 	test_tick &&
 	git merge -m "Merge branch A" A2 &&
 
@@ -283,13 +283,13 @@ test_expect_success '--quit cleans up refs/rewritten' '
 
 test_expect_success 'post-rewrite hook and fixups work for merges' '
 	git checkout -b post-rewrite H &&
-	test_commit same1 &&
+	test_cummit same1 &&
 	git reset --hard HEAD^ &&
-	test_commit same2 &&
+	test_cummit same2 &&
 	git merge -m "to fix up" same1 &&
 	echo same old same old >same2.t &&
 	test_tick &&
-	git commit --fixup HEAD same2.t &&
+	git cummit --fixup HEAD same2.t &&
 	fixup="$(git rev-parse HEAD)" &&
 
 	test_hook post-rewrite <<-\EOF &&
@@ -314,11 +314,11 @@ test_expect_success 'refuse to merge ancestors of HEAD' '
 	test_cmp_rev HEAD $before
 '
 
-test_expect_success 'root commits' '
+test_expect_success 'root cummits' '
 	git checkout --orphan unrelated &&
 	(GIT_AUTHOR_NAME="Parsnip" GIT_AUTHOR_EMAIL="root@example.com" \
-	 test_commit second-root) &&
-	test_commit third-root &&
+	 test_cummit second-root) &&
+	test_cummit third-root &&
 	cat >script-from-scratch <<-\EOF &&
 	pick third-root
 	label first-branch
@@ -348,7 +348,7 @@ test_expect_success 'root commits' '
 	test_cmp_rev HEAD $before
 '
 
-test_expect_success 'a "merge" into a root commit is a fast-forward' '
+test_expect_success 'a "merge" into a root cummit is a fast-forward' '
 	head=$(git rev-parse HEAD) &&
 	cat >script-from-scratch <<-EOF &&
 	reset [new root]
@@ -360,11 +360,11 @@ test_expect_success 'a "merge" into a root commit is a fast-forward' '
 	test_cmp_rev HEAD $head
 '
 
-test_expect_success 'A root commit can be a cousin, treat it that way' '
+test_expect_success 'A root cummit can be a cousin, treat it that way' '
 	git checkout --orphan khnum &&
-	test_commit yama &&
+	test_cummit yama &&
 	git checkout -b asherah main &&
-	test_commit shamkat &&
+	test_cummit shamkat &&
 	git merge --allow-unrelated-histories khnum &&
 	test_tick &&
 	git rebase -f -r HEAD^ &&
@@ -388,12 +388,12 @@ test_expect_success 'A root commit can be a cousin, treat it that way' '
 
 test_expect_success 'labels that are object IDs are rewritten' '
 	git checkout -b third B &&
-	test_commit I &&
+	test_cummit I &&
 	third=$(git rev-parse HEAD) &&
 	git checkout -b labels main &&
-	git merge --no-commit third &&
+	git merge --no-cummit third &&
 	test_tick &&
-	git commit -m "Merge commit '\''$third'\'' into labels" &&
+	git cummit -m "Merge cummit '\''$third'\'' into labels" &&
 	echo noop >script-from-scratch &&
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
 	test_tick &&
@@ -404,12 +404,12 @@ test_expect_success 'labels that are object IDs are rewritten' '
 
 test_expect_success 'octopus merges' '
 	git checkout -b three &&
-	test_commit before-octopus &&
-	test_commit three &&
+	test_cummit before-octopus &&
+	test_cummit three &&
 	git checkout -b two HEAD^ &&
-	test_commit two &&
+	test_cummit two &&
 	git checkout -b one HEAD^ &&
-	test_commit one &&
+	test_cummit one &&
 	test_tick &&
 	(GIT_AUTHOR_NAME="Hank" GIT_AUTHOR_EMAIL="hank@sea.world" \
 	 git merge -m "Tüntenfüsch" two three) &&
@@ -440,7 +440,7 @@ test_expect_success 'with --autosquash and --exec' '
 	git checkout -b with-exec H &&
 	echo Booh >B.t &&
 	test_tick &&
-	git commit --fixup B B.t &&
+	git cummit --fixup B B.t &&
 	write_script show.sh <<-\EOF &&
 	subject="$(git show -s --format=%s HEAD)"
 	content="$(git diff HEAD^ HEAD | tail -n 1)"
@@ -490,7 +490,7 @@ test_expect_success '--rebase-merges with strategies' '
 	test_cmp expect G.t
 '
 
-test_expect_success '--rebase-merges with commit that can generate bad characters for filename' '
+test_expect_success '--rebase-merges with cummit that can generate bad characters for filename' '
 	git checkout -b colon-in-label E &&
 	git merge -m "colon: this should work" G &&
 	git rebase --rebase-merges --force-rebase E

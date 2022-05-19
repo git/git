@@ -3,7 +3,7 @@
 # Copyright (c) 2007 Johannes E. Schindelin
 #
 
-test_description='Test commit notes index (expensive!)'
+test_description='Test cummit notes index (expensive!)'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -11,66 +11,66 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 create_repo () {
-	number_of_commits=$1
+	number_of_cummits=$1
 	nr=0
 	test -d .git || {
 	git init &&
 	(
-		while test $nr -lt $number_of_commits
+		while test $nr -lt $number_of_cummits
 		do
 			nr=$(($nr+1))
 			mark=$(($nr+$nr))
 			notemark=$(($mark+1))
 			test_tick &&
 			cat <<-INPUT_END &&
-			commit refs/heads/main
+			cummit refs/heads/main
 			mark :$mark
-			committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-			data <<COMMIT
-			commit #$nr
-			COMMIT
+			cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+			data <<cummit
+			cummit #$nr
+			cummit
 
 			M 644 inline file
 			data <<EOF
-			file in commit #$nr
+			file in cummit #$nr
 			EOF
 
 			blob
 			mark :$notemark
 			data <<EOF
-			note for commit #$nr
+			note for cummit #$nr
 			EOF
 
 			INPUT_END
-			echo "N :$notemark :$mark" >>note_commit
+			echo "N :$notemark :$mark" >>note_cummit
 		done &&
 		test_tick &&
 		cat <<-INPUT_END &&
-		commit refs/notes/commits
-		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-		data <<COMMIT
+		cummit refs/notes/cummits
+		cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+		data <<cummit
 		notes
-		COMMIT
+		cummit
 
 		INPUT_END
 
-		cat note_commit
+		cat note_cummit
 	) |
 	git fast-import --quiet &&
-	git config core.notesRef refs/notes/commits
+	git config core.notesRef refs/notes/cummits
 	}
 }
 
 test_notes () {
 	count=$1 &&
-	git config core.notesRef refs/notes/commits &&
+	git config core.notesRef refs/notes/cummits &&
 	git log >tmp &&
 	grep "^    " tmp >output &&
 	i=$count &&
 	while test $i -gt 0
 	do
-		echo "    commit #$i" &&
-		echo "    note for commit #$i" &&
+		echo "    cummit #$i" &&
+		echo "    note for cummit #$i" &&
 		i=$(($i-1))
 	done >expect &&
 	test_cmp expect output

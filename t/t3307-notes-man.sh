@@ -7,9 +7,9 @@ Make sure the manual is not full of lies.'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit A &&
-	test_commit B &&
-	test_commit C
+	test_cummit A &&
+	test_cummit B &&
+	test_cummit C
 '
 
 test_expect_success 'example 1: notes to add an Acked-by line' '
@@ -20,7 +20,7 @@ test_expect_success 'example 1: notes to add an Acked-by line' '
 	    Acked-by: A C Ker <acker@example.com>
 	EOF
 	git notes add -m "Acked-by: A C Ker <acker@example.com>" B &&
-	git show -s B^{commit} >log &&
+	git show -s B^{cummit} >log &&
 	tail -n 4 log >actual &&
 	test_cmp expect actual
 '

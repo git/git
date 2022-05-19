@@ -3,7 +3,7 @@
 #if ZLIB_VERNUM < 0x1290
 /* taken from zlib's uncompr.c
 
-   commit cacf7f1d4e3d44d871b605da3b647f07d718623f
+   cummit cacf7f1d4e3d44d871b605da3b647f07d718623f
    Author: Mark Adler <madler@alumni.caltech.edu>
    Date:   Sun Jan 15 09:18:46 2017 -0800
 

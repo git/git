@@ -22,7 +22,7 @@ test_expect_success setup '
 	git add caskly xyzzy yomin nitfol rezrov/bozbar &&
 
 	test_tick &&
-	git commit -m initial
+	git cummit -m initial
 
 '
 
@@ -49,7 +49,7 @@ test_expect_success modify '
 		cd yomin &&
 		git init &&
 		git add yomin &&
-		git commit -m "sub initial"
+		git cummit -m "sub initial"
 	) &&
 	yomin=$(GIT_DIR=yomin/.git git rev-parse HEAD) &&
 	# yonk is added and then turned into a submodule
@@ -63,7 +63,7 @@ test_expect_success modify '
 		cd yonk &&
 		git init &&
 		git add yonk &&
-		git commit -m "sub initial"
+		git cummit -m "sub initial"
 	) &&
 	yonk=$(GIT_DIR=yonk/.git git rev-parse HEAD) &&
 	# zifmia is added and then removed
@@ -131,13 +131,13 @@ test_expect_success 'add -u' '
 	test_cmp expect-final actual
 '
 
-test_expect_success 'commit -a' '
+test_expect_success 'cummit -a' '
 	if test -f ".git/saved-index"
 	then
 		rm -f ".git/index" &&
 		mv ".git/saved-index" ".git/index"
 	fi &&
-	git commit -m "second" -a &&
+	git cummit -m "second" -a &&
 	git ls-files -s >actual &&
 	test_cmp expect-final actual &&
 	rm -f .git/index &&

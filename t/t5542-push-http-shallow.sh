@@ -9,25 +9,25 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
-commit() {
+cummit() {
 	echo "$1" >tracked &&
 	git add tracked &&
-	git commit -m "$1"
+	git cummit -m "$1"
 }
 
 test_expect_success 'setup' '
 	git config --global transfer.fsckObjects true &&
-	commit 1 &&
-	commit 2 &&
-	commit 3 &&
-	commit 4 &&
+	cummit 1 &&
+	cummit 2 &&
+	cummit 3 &&
+	cummit 4 &&
 	git clone . full &&
 	(
 	git init full-abc &&
 	cd full-abc &&
-	commit a &&
-	commit b &&
-	commit c
+	cummit a &&
+	cummit b &&
+	cummit c
 	) &&
 	git clone --no-local --depth=2 .git shallow &&
 	git --git-dir=shallow/.git log --format=%s >actual &&
@@ -53,7 +53,7 @@ test_expect_success 'push to shallow repo via http' '
 	) &&
 	(
 	cd full &&
-	commit 9 &&
+	cummit 9 &&
 	git push $HTTPD_URL/smart/repo.git +main:refs/remotes/top/main
 	) &&
 	(
@@ -76,7 +76,7 @@ test_expect_success 'push from shallow repo via http' '
 	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	git config http.receivepack true
 	) &&
-	commit 10 &&
+	cummit 10 &&
 	git push $HTTPD_URL/smart/repo.git +main:refs/remotes/top/main &&
 	(
 	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&

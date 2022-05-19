@@ -9,16 +9,16 @@ test_expect_success 'setup' '
 	>b.txt &&
 	>delete.txt &&
 	git add a.txt b.txt delete.txt &&
-	git commit -m base &&
+	git cummit -m base &&
 	echo a >a.txt &&
 	echo b >b.txt &&
 	echo delete >delete.txt &&
 	git add a.txt b.txt delete.txt &&
-	git commit -m tip &&
+	git cummit -m tip &&
 	git tag tip &&
 	git reset --hard HEAD^ &&
 	echo change >a.txt &&
-	git commit -a -m side &&
+	git cummit -a -m side &&
 	git tag side
 '
 

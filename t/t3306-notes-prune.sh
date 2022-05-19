@@ -4,33 +4,33 @@ test_description='Test git notes prune'
 
 . ./test-lib.sh
 
-test_expect_success 'setup: create a few commits with notes' '
+test_expect_success 'setup: create a few cummits with notes' '
 
 	: > file1 &&
 	git add file1 &&
 	test_tick &&
-	git commit -m 1st &&
+	git cummit -m 1st &&
 	git notes add -m "Note #1" &&
 	first=$(git rev-parse HEAD) &&
 	: > file2 &&
 	git add file2 &&
 	test_tick &&
-	git commit -m 2nd &&
+	git cummit -m 2nd &&
 	git notes add -m "Note #2" &&
 	second=$(git rev-parse HEAD) &&
 	: > file3 &&
 	git add file3 &&
 	test_tick &&
-	git commit -m 3rd &&
+	git cummit -m 3rd &&
 	third=$(git rev-parse HEAD) &&
-	COMMIT_FILE=$(echo $third | sed "s!^..!.git/objects/&/!") &&
-	test -f $COMMIT_FILE &&
-	test-tool chmtime =+0 $COMMIT_FILE &&
+	cummit_FILE=$(echo $third | sed "s!^..!.git/objects/&/!") &&
+	test -f $cummit_FILE &&
+	test-tool chmtime =+0 $cummit_FILE &&
 	git notes add -m "Note #3"
 '
 
 cat > expect <<END_OF_LOG
-commit $third
+cummit $third
 Author: A U Thor <author@example.com>
 Date:   Thu Apr 7 15:15:13 2005 -0700
 
@@ -39,7 +39,7 @@ Date:   Thu Apr 7 15:15:13 2005 -0700
 Notes:
     Note #3
 
-commit $second
+cummit $second
 Author: A U Thor <author@example.com>
 Date:   Thu Apr 7 15:14:13 2005 -0700
 
@@ -48,7 +48,7 @@ Date:   Thu Apr 7 15:14:13 2005 -0700
 Notes:
     Note #2
 
-commit $first
+cummit $first
 Author: A U Thor <author@example.com>
 Date:   Thu Apr 7 15:13:13 2005 -0700
 
@@ -58,20 +58,20 @@ Notes:
     Note #1
 END_OF_LOG
 
-test_expect_success 'verify commits and notes' '
+test_expect_success 'verify cummits and notes' '
 
 	git log > actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'remove some commits' '
+test_expect_success 'remove some cummits' '
 
 	git reset --hard HEAD~1 &&
 	git reflog expire --expire=now HEAD &&
 	git gc --prune=now
 '
 
-test_expect_success 'verify that commits are gone' '
+test_expect_success 'verify that cummits are gone' '
 
 	test_must_fail git cat-file -p $third &&
 	git cat-file -p $second &&
@@ -114,7 +114,7 @@ test_expect_success 'verify that notes are gone' '
 	git notes show $first
 '
 
-test_expect_success 'remove some commits' '
+test_expect_success 'remove some cummits' '
 
 	git reset --hard HEAD~1 &&
 	git reflog expire --expire=now HEAD &&

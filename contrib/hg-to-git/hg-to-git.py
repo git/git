@@ -63,17 +63,17 @@ def getgitenv(user, date):
     elems = re.compile('(.*?)\s+<(.*)>').match(user)
     if elems:
         env += 'export GIT_AUTHOR_NAME="%s" ;' % elems.group(1)
-        env += 'export GIT_COMMITTER_NAME="%s" ;' % elems.group(1)
+        env += 'export GIT_cummitTER_NAME="%s" ;' % elems.group(1)
         env += 'export GIT_AUTHOR_EMAIL="%s" ;' % elems.group(2)
-        env += 'export GIT_COMMITTER_EMAIL="%s" ;' % elems.group(2)
+        env += 'export GIT_cummitTER_EMAIL="%s" ;' % elems.group(2)
     else:
         env += 'export GIT_AUTHOR_NAME="%s" ;' % user
-        env += 'export GIT_COMMITTER_NAME="%s" ;' % user
+        env += 'export GIT_cummitTER_NAME="%s" ;' % user
         env += 'export GIT_AUTHOR_EMAIL= ;'
-        env += 'export GIT_COMMITTER_EMAIL= ;'
+        env += 'export GIT_cummitTER_EMAIL= ;'
 
     env += 'export GIT_AUTHOR_DATE="%s" ;' % date
-    env += 'export GIT_COMMITTER_DATE="%s" ;' % date
+    env += 'export GIT_cummitTER_DATE="%s" ;' % date
     return env
 
 #------------------------------------------------------------------------------
@@ -210,7 +210,7 @@ for cset in range(int(tip) + 1):
         else:
             otherbranch = hgbranch[parent]
         print('merging', otherbranch, 'into', hgbranch[str(cset)])
-        os.system(getgitenv(user, date) + 'git merge --no-commit -s ours "" %s %s' % (hgbranch[str(cset)], otherbranch))
+        os.system(getgitenv(user, date) + 'git merge --no-cummit -s ours "" %s %s' % (hgbranch[str(cset)], otherbranch))
 
     # remove everything except .git and .hg directories
     os.system('find . \( -path "./.hg" -o -path "./.git" \) -prune -o ! -name "." -print | xargs rm -rf')
@@ -223,8 +223,8 @@ for cset in range(int(tip) + 1):
     # delete removed files
     os.system('git ls-files -x .hg --deleted | git update-index --remove --stdin')
 
-    # commit
-    os.system(getgitenv(user, date) + 'git commit --allow-empty --allow-empty-message -a -F %s' % filecomment)
+    # cummit
+    os.system(getgitenv(user, date) + 'git cummit --allow-empty --allow-empty-message -a -F %s' % filecomment)
     os.unlink(filecomment)
 
     # tag

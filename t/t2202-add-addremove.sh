@@ -19,7 +19,7 @@ test_expect_success setup '
 	>will-remove &&
 	git add --all &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git ls-files >actual &&
 	test_cmp expect actual
 '

@@ -14,15 +14,15 @@ test_expect_success setup '
 
 	>file &&
 	git add file &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	git checkout -b side &&
 	echo side >file &&
-	git commit -a -m side &&
+	git cummit -a -m side &&
 
 	git checkout main &&
 	echo next >file &&
-	git commit -a -m next
+	git cummit -a -m next
 '
 
 test_expect_success 'non-fast-forward fetch' '

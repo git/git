@@ -255,7 +255,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			       PARSE_OPT_NONEG,
 			       expire_unreachable_callback),
 		OPT_BOOL(0, "stale-fix", &cmd.stalefix,
-			 N_("prune any reflog entries that point to broken commits")),
+			 N_("prune any reflog entries that point to broken cummits")),
 		OPT_BOOL(0, "all", &do_all, N_("process the reflogs of all references")),
 		OPT_BOOL(1, "single-worktree", &all_worktrees,
 			 N_("limits processing to reflogs from the current worktree only")),
@@ -266,7 +266,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	default_reflog_expire = now - 90 * 24 * 3600;
 	git_config(reflog_expire_config, NULL);
 
-	save_commit_buffer = 0;
+	save_cummit_buffer = 0;
 	do_all = status = 0;
 
 	cmd.explicit_expiry = 0;
@@ -279,7 +279,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		should_prune_fn = should_expire_reflog_ent_verbose;
 
 	/*
-	 * We can trust the commits and objects reachable from refs
+	 * We can trust the cummits and objects reachable from refs
 	 * even in older repository.  We cannot trust what's reachable
 	 * from reflog if the repository was pruned with older git.
 	 */

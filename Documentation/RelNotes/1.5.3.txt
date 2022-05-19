@@ -4,7 +4,7 @@ GIT v1.5.3 Release Notes
 Updates since v1.5.2
 --------------------
 
-* The commit walkers other than http are officially deprecated,
+* The cummit walkers other than http are officially deprecated,
   but still supported for now.
 
 * The submodule support has Porcelain layer.
@@ -43,7 +43,7 @@ Updates since v1.5.2
     progress and replay it later on an updated state.
 
   - "git rebase" learned an "interactive" mode that let you
-    pick and reorder which commits to rebuild.
+    pick and reorder which cummits to rebuild.
 
   - "git fsck" can save its findings in $GIT_DIR/lost-found, without a
     separate invocation of "git lost-found" command.  The blobs stored by
@@ -61,7 +61,7 @@ Updates since v1.5.2
 
   - "git filter-branch" lets you rewrite the revision history of
     specified branches. You can specify a number of filters to
-    modify the commits, files and trees.
+    modify the cummits, files and trees.
 
   - "git cvsserver" learned new options (--base-path, --export-all,
     --strict-paths) inspired by "git daemon".
@@ -69,8 +69,8 @@ Updates since v1.5.2
   - "git daemon --base-path-relaxed" can help migrating a repository URL
     that did not use to use --base-path to use --base-path.
 
-  - "git commit" can use "-t templatefile" option and commit.template
-    configuration variable to prime the commit message given to you in the
+  - "git cummit" can use "-t templatefile" option and cummit.template
+    configuration variable to prime the cummit message given to you in the
     editor.
 
   - "git submodule" command helps you manage the projects from
@@ -102,7 +102,7 @@ Updates since v1.5.2
     exceeding limit specified with "--max-pack-size".
 
   - "git fsck" gained --verbose option.  This is really really
-    verbose but it might help you identify exact commit that is
+    verbose but it might help you identify exact cummit that is
     corrupt in your repository.
 
   - "git format-patch" learned --numbered-files option.  This
@@ -116,7 +116,7 @@ Updates since v1.5.2
 
   - "git cvsimport" can optionally use the separate-remote layout.
 
-  - "git blame" can be told to see through commits that change
+  - "git blame" can be told to see through cummits that change
     whitespaces and indentation levels with "-w" option.
 
   - "git send-email" can be told not to thread the messages when
@@ -195,7 +195,7 @@ Updates since v1.5.2
     "git format-patch --root A A" for a long time, but was not
     properly documented.
 
-  - "git svn dcommit" retains local merge information.
+  - "git svn dcummit" retains local merge information.
 
   - "git svnimport" allows an empty string to be specified as the
     trunk/ directory.  This is necessary to suck data from a SVN
@@ -211,7 +211,7 @@ Updates since v1.5.2
   - "git mergetool" chooses its backend more wisely, taking
     notice of its environment such as use of X, Gnome/KDE, etc.
 
-  - "gitweb" shows merge commits a lot nicer than before.  The
+  - "gitweb" shows merge cummits a lot nicer than before.  The
     default view uses more compact --cc format, while the UI
     allows to choose normal diff with any parent.
 
@@ -231,7 +231,7 @@ Updates since v1.5.2
   - The diffstat given after a merge (or a pull) honors the
     color.diff configuration.
 
-  - "git commit --amend" is now compatible with various message source
+  - "git cummit --amend" is now compatible with various message source
     options such as -m/-C/-c/-F.
 
   - "git apply --whitespace=strip" removes blank lines added at
@@ -269,11 +269,11 @@ Updates since v1.5.2
 
   - "gitview" (in contrib) has a better blame interface.
 
-  - "git log" and friends did not handle a commit log message
+  - "git log" and friends did not handle a cummit log message
     that is larger than 16kB; they do now.
 
   - "--pretty=oneline" output format for "git log" and friends
-    deals with "malformed" commit log messages that have more
+    deals with "malformed" cummit log messages that have more
     than one lines in the first paragraph better.  We used to
     show the first line, cutting the title at mid-sentence; we
     concatenate them into a single line and treat the result as
@@ -324,7 +324,7 @@ Updates since v1.5.2
     when switching branches that have differences in only a
     handful paths.
 
-  - "git add paths..." and "git commit paths..." has also been
+  - "git add paths..." and "git cummit paths..." has also been
     heavily optimized.
 
 Fixes since v1.5.2
@@ -338,12 +338,12 @@ this release, unless otherwise noted.
   - "gitweb" had trouble handling non UTF-8 text with older
     Encode.pm Perl module.
 
-  - "git svn" misparsed the data from the commits in the repository when
+  - "git svn" misparsed the data from the cummits in the repository when
     the user had "color.diff = true" in the configuration.  This has been
     fixed.
 
-  - There was a case where "git svn dcommit" clobbered changes made on the
-    SVN side while committing multiple changes.
+  - There was a case where "git svn dcummit" clobbered changes made on the
+    SVN side while cummitting multiple changes.
 
   - "git-write-tree" had a bad interaction with racy-git avoidance and
     gitattributes mechanisms.
@@ -363,4 +363,4 @@ this release, unless otherwise noted.
     inconsistency was introduced somewhere in v1.3.0 series but now has
     been corrected.
 
-  - "git rebase -m" incorrectly displayed commits that were skipped.
+  - "git rebase -m" incorrectly displayed cummits that were skipped.

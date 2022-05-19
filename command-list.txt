@@ -69,15 +69,15 @@ git-citool                              mainporcelain
 git-clean                               mainporcelain
 git-clone                               mainporcelain           init
 git-column                              purehelpers
-git-commit                              mainporcelain           history
-git-commit-graph                        plumbingmanipulators
-git-commit-tree                         plumbingmanipulators
+git-cummit                              mainporcelain           history
+git-cummit-graph                        plumbingmanipulators
+git-cummit-tree                         plumbingmanipulators
 git-config                              ancillarymanipulators           complete
 git-count-objects                       ancillaryinterrogators
 git-credential                          purehelpers
 git-credential-cache                    purehelpers
 git-credential-store                    purehelpers
-git-cvsexportcommit                     foreignscminterface
+git-cvsexportcummit                     foreignscminterface
 git-cvsimport                           foreignscminterface
 git-cvsserver                           foreignscminterface
 git-daemon                              synchingrepositories
@@ -98,7 +98,7 @@ git-for-each-repo                       plumbinginterrogators
 git-format-patch                        mainporcelain
 git-fsck                                ancillaryinterrogators          complete
 git-gc                                  mainporcelain
-git-get-tar-commit-id                   plumbinginterrogators
+git-get-tar-cummit-id                   plumbinginterrogators
 git-grep                                mainporcelain           info
 git-gui                                 mainporcelain
 git-hash-object                         plumbingmanipulators
@@ -186,7 +186,7 @@ git-update-server-info                  synchingrepositories
 git-upload-archive                      synchelpers
 git-upload-pack                         synchelpers
 git-var                                 plumbinginterrogators
-git-verify-commit                       ancillaryinterrogators
+git-verify-cummit                       ancillaryinterrogators
 git-verify-pack                         plumbinginterrogators
 git-verify-tag                          ancillaryinterrogators
 git-whatchanged                         ancillaryinterrogators          complete

@@ -9,7 +9,7 @@ This test verifies that, when .gitmodules is in the current branch but is not
 in the working tree reading from it still works but writing to it does not.
 
 The test setup uses a sparse checkout, however the same scenario can be set up
-also by committing .gitmodules and then just removing it from the filesystem.
+also by cummitting .gitmodules and then just removing it from the filesystem.
 '
 
 GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
@@ -24,12 +24,12 @@ test_expect_success 'sparse checkout setup which hides .gitmodules' '
 		echo file >file &&
 		git add file &&
 		test_tick &&
-		git commit -m "Add file"
+		git cummit -m "Add file"
 	) &&
 	(cd upstream &&
 		git submodule add ../submodule &&
 		test_tick &&
-		git commit -m "Add submodule"
+		git cummit -m "Add submodule"
 	) &&
 	git clone upstream super &&
 	(cd super &&
@@ -83,13 +83,13 @@ test_expect_success 're-updating submodule when the gitmodules config is not che
 		echo file2 >file2 &&
 		git add file2 &&
 		test_tick &&
-		git commit -m "Add file2 to submodule"
+		git cummit -m "Add file2 to submodule"
 	) &&
 	(cd upstream &&
 		git submodule update --remote &&
 		git add submodule &&
 		test_tick &&
-		git commit -m "Update submodule"
+		git cummit -m "Update submodule"
 	) &&
 	git -C super pull &&
 	# The --for-status options reads the gitmodules config

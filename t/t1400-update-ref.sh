@@ -14,25 +14,25 @@ n=$n_dir/fixes
 outside=refs/foo
 bare=bare-repo
 
-create_test_commits ()
+create_test_cummits ()
 {
 	prfx="$1"
 	for name in A B C D E F
 	do
 		test_tick &&
 		T=$(git write-tree) &&
-		sha1=$(echo $name | git commit-tree $T) &&
+		sha1=$(echo $name | git cummit-tree $T) &&
 		eval $prfx$name=$sha1
 	done
 }
 
 test_expect_success setup '
 	git checkout --orphan main &&
-	create_test_commits "" &&
+	create_test_cummits "" &&
 	mkdir $bare &&
 	cd $bare &&
 	git init --bare -b main &&
-	create_test_commits "bare" &&
+	create_test_cummits "bare" &&
 	cd -
 '
 
@@ -199,7 +199,7 @@ test_expect_success 'delete symref without dereference' '
 	test_when_finished "git update-ref -d $m" &&
 	echo foo >foo.c &&
 	git add foo.c &&
-	git commit -m foo &&
+	git cummit -m foo &&
 	git symbolic-ref SYMREF $m &&
 	git update-ref --no-deref -d SYMREF &&
 	git show-ref --verify -q $m &&
@@ -211,7 +211,7 @@ test_expect_success 'delete symref without dereference when the referred ref is 
 	test_when_finished "git update-ref -d $m" &&
 	echo foo >foo.c &&
 	git add foo.c &&
-	git commit -m foo &&
+	git cummit -m foo &&
 	git symbolic-ref SYMREF $m &&
 	git pack-refs --all &&
 	git update-ref --no-deref -d SYMREF &&
@@ -268,19 +268,19 @@ test_expect_success "(not) changed .git/$m" '
 rm -f .git/logs/refs/heads/main
 test_expect_success "create $m (logged by touch)" '
 	test_config core.logAllRefUpdates false &&
-	GIT_COMMITTER_DATE="2005-05-26 23:30" \
+	GIT_cummitTER_DATE="2005-05-26 23:30" \
 	git update-ref --create-reflog HEAD $A -m "Initial Creation" &&
 	test $A = $(git show-ref -s --verify $m)
 '
 test_expect_success "update $m (logged by touch)" '
 	test_config core.logAllRefUpdates false &&
-	GIT_COMMITTER_DATE="2005-05-26 23:31" \
+	GIT_cummitTER_DATE="2005-05-26 23:31" \
 	git update-ref HEAD $B $A -m "Switch" &&
 	test $B = $(git show-ref -s --verify $m)
 '
 test_expect_success "set $m (logged by touch)" '
 	test_config core.logAllRefUpdates false &&
-	GIT_COMMITTER_DATE="2005-05-26 23:41" \
+	GIT_cummitTER_DATE="2005-05-26 23:41" \
 	git update-ref HEAD $A &&
 	test $A = $(git show-ref -s --verify $m)
 '
@@ -313,9 +313,9 @@ test_expect_success 'symref empty directory removal' '
 '
 
 cat >expect <<EOF
-$Z $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	Initial Creation
-$A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150260 +0000	Switch
-$B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150860 +0000
+$Z $A $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150200 +0000	Initial Creation
+$A $B $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150260 +0000	Switch
+$B $A $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150860 +0000
 EOF
 test_expect_success "verifying $m's log (logged by touch)" '
 	test_when_finished "git update-ref -d $m && rm -rf .git/logs actual expect" &&
@@ -325,27 +325,27 @@ test_expect_success "verifying $m's log (logged by touch)" '
 
 test_expect_success "create $m (logged by config)" '
 	test_config core.logAllRefUpdates true &&
-	GIT_COMMITTER_DATE="2005-05-26 23:32" \
+	GIT_cummitTER_DATE="2005-05-26 23:32" \
 	git update-ref HEAD $A -m "Initial Creation" &&
 	test $A = $(git show-ref -s --verify $m)
 '
 test_expect_success "update $m (logged by config)" '
 	test_config core.logAllRefUpdates true &&
-	GIT_COMMITTER_DATE="2005-05-26 23:33" \
+	GIT_cummitTER_DATE="2005-05-26 23:33" \
 	git update-ref HEAD $B $A -m "Switch" &&
 	test $B = $(git show-ref -s --verify $m)
 '
 test_expect_success "set $m (logged by config)" '
 	test_config core.logAllRefUpdates true &&
-	GIT_COMMITTER_DATE="2005-05-26 23:43" \
+	GIT_cummitTER_DATE="2005-05-26 23:43" \
 	git update-ref HEAD $A &&
 	test $A = $(git show-ref -s --verify $m)
 '
 
 cat >expect <<EOF
-$Z $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 +0000	Initial Creation
-$A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 +0000	Switch
-$B $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 +0000
+$Z $A $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150320 +0000	Initial Creation
+$A $B $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150380 +0000	Switch
+$B $A $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150980 +0000
 EOF
 test_expect_success "verifying $m's log (logged by config)" '
 	test_when_finished "git update-ref -d $m && rm -rf .git/logs actual expect" &&
@@ -356,11 +356,11 @@ test_expect_success "verifying $m's log (logged by config)" '
 test_expect_success 'set up for querying the reflog' '
 	git update-ref $m $D &&
 	cat >.git/logs/$m <<-EOF
-	$Z $C $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150320 -0500
-	$C $A $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150350 -0500
-	$A $B $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150380 -0500
-	$F $Z $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150680 -0500
-	$Z $E $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150980 -0500
+	$Z $C $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150320 -0500
+	$C $A $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150350 -0500
+	$A $B $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150380 -0500
+	$F $Z $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150680 -0500
+	$Z $E $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150980 -0500
 	EOF
 '
 
@@ -441,31 +441,31 @@ test_expect_success 'creating initial files' '
 	echo TEST >F &&
 	git add F &&
 	GIT_AUTHOR_DATE="2005-05-26 23:30" \
-	GIT_COMMITTER_DATE="2005-05-26 23:30" git commit -m add -a &&
+	GIT_cummitTER_DATE="2005-05-26 23:30" git cummit -m add -a &&
 	h_TEST=$(git rev-parse --verify HEAD) &&
 	echo The other day this did not work. >M &&
 	echo And then Bob told me how to fix it. >>M &&
 	echo OTHER >F &&
 	GIT_AUTHOR_DATE="2005-05-26 23:41" \
-	GIT_COMMITTER_DATE="2005-05-26 23:41" git commit -F M -a &&
+	GIT_cummitTER_DATE="2005-05-26 23:41" git cummit -F M -a &&
 	h_OTHER=$(git rev-parse --verify HEAD) &&
 	GIT_AUTHOR_DATE="2005-05-26 23:44" \
-	GIT_COMMITTER_DATE="2005-05-26 23:44" git commit --amend &&
+	GIT_cummitTER_DATE="2005-05-26 23:44" git cummit --amend &&
 	h_FIXED=$(git rev-parse --verify HEAD) &&
-	echo Merged initial commit and a later commit. >M &&
+	echo Merged initial cummit and a later cummit. >M &&
 	echo $h_TEST >.git/MERGE_HEAD &&
 	GIT_AUTHOR_DATE="2005-05-26 23:45" \
-	GIT_COMMITTER_DATE="2005-05-26 23:45" git commit -F M &&
+	GIT_cummitTER_DATE="2005-05-26 23:45" git cummit -F M &&
 	h_MERGED=$(git rev-parse --verify HEAD)
 '
 
 cat >expect <<EOF
-$Z $h_TEST $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	commit (initial): add
-$h_TEST $h_OTHER $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150860 +0000	commit: The other day this did not work.
-$h_OTHER $h_FIXED $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117151040 +0000	commit (amend): The other day this did not work.
-$h_FIXED $h_MERGED $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117151100 +0000	commit (merge): Merged initial commit and a later commit.
+$Z $h_TEST $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150200 +0000	cummit (initial): add
+$h_TEST $h_OTHER $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117150860 +0000	cummit: The other day this did not work.
+$h_OTHER $h_FIXED $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117151040 +0000	cummit (amend): The other day this did not work.
+$h_FIXED $h_MERGED $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 1117151100 +0000	cummit (merge): Merged initial cummit and a later cummit.
 EOF
-test_expect_success 'git commit logged updates' '
+test_expect_success 'git cummit logged updates' '
 	test-tool ref-store main for-each-reflog-ent $m >actual &&
 	test_cmp expect actual
 '
@@ -551,7 +551,7 @@ pws='path with space'
 test_expect_success 'stdin test setup' '
 	echo "$pws" >"$pws" &&
 	git add -- "$pws" &&
-	git commit -m "$pws"
+	git cummit -m "$pws"
 '
 
 test_expect_success '-z fails without --stdin' '
@@ -1387,11 +1387,11 @@ test_expect_success ULIMIT_FILE_DESCRIPTORS 'large transaction deleting branches
 '
 
 test_expect_success 'handle per-worktree refs in refs/bisect' '
-	git commit --allow-empty -m "initial commit" &&
+	git cummit --allow-empty -m "initial cummit" &&
 	git worktree add -b branch worktree &&
 	(
 		cd worktree &&
-		git commit --allow-empty -m "test commit"  &&
+		git cummit --allow-empty -m "test cummit"  &&
 		git for-each-ref >for-each-ref.out &&
 		! grep refs/bisect for-each-ref.out &&
 		git update-ref refs/bisect/something HEAD &&
@@ -1406,33 +1406,33 @@ test_expect_success 'handle per-worktree refs in refs/bisect' '
 	! test_cmp main-head worktree-head
 '
 
-test_expect_success 'transaction handles empty commit' '
+test_expect_success 'transaction handles empty cummit' '
 	cat >stdin <<-EOF &&
 	start
 	prepare
-	commit
+	cummit
 	EOF
 	git update-ref --stdin <stdin >actual &&
-	printf "%s: ok\n" start prepare commit >expect &&
+	printf "%s: ok\n" start prepare cummit >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'transaction handles empty commit with missing prepare' '
+test_expect_success 'transaction handles empty cummit with missing prepare' '
 	cat >stdin <<-EOF &&
 	start
-	commit
+	cummit
 	EOF
 	git update-ref --stdin <stdin >actual &&
-	printf "%s: ok\n" start commit >expect &&
+	printf "%s: ok\n" start cummit >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'transaction handles sole commit' '
+test_expect_success 'transaction handles sole cummit' '
 	cat >stdin <<-EOF &&
-	commit
+	cummit
 	EOF
 	git update-ref --stdin <stdin >actual &&
-	printf "%s: ok\n" commit >expect &&
+	printf "%s: ok\n" cummit >expect &&
 	test_cmp expect actual
 '
 
@@ -1488,14 +1488,14 @@ test_expect_success 'transaction handles sole abort' '
 	test_cmp expect actual
 '
 
-test_expect_success 'transaction can handle commit' '
+test_expect_success 'transaction can handle cummit' '
 	cat >stdin <<-EOF &&
 	start
 	create $a HEAD
-	commit
+	cummit
 	EOF
 	git update-ref --stdin <stdin >actual &&
-	printf "%s: ok\n" start commit >expect &&
+	printf "%s: ok\n" start cummit >expect &&
 	test_cmp expect actual &&
 	git rev-parse HEAD >expect &&
 	git rev-parse $a >actual &&
@@ -1537,17 +1537,17 @@ test_expect_success 'transaction with prepare aborts by default' '
 	test_must_fail git show-ref --verify -q $b
 '
 
-test_expect_success 'transaction can commit multiple times' '
+test_expect_success 'transaction can cummit multiple times' '
 	cat >stdin <<-EOF &&
 	start
 	create refs/heads/branch-1 $A
-	commit
+	cummit
 	start
 	create refs/heads/branch-2 $B
-	commit
+	cummit
 	EOF
 	git update-ref --stdin <stdin >actual &&
-	printf "%s: ok\n" start commit start commit >expect &&
+	printf "%s: ok\n" start cummit start cummit >expect &&
 	test_cmp expect actual &&
 	echo "$A" >expect &&
 	git rev-parse refs/heads/branch-1 >actual &&
@@ -1561,27 +1561,27 @@ test_expect_success 'transaction can create and delete' '
 	cat >stdin <<-EOF &&
 	start
 	create refs/heads/create-and-delete $A
-	commit
+	cummit
 	start
 	delete refs/heads/create-and-delete $A
-	commit
+	cummit
 	EOF
 	git update-ref --stdin <stdin >actual &&
-	printf "%s: ok\n" start commit start commit >expect &&
+	printf "%s: ok\n" start cummit start cummit >expect &&
 	test_must_fail git show-ref --verify refs/heads/create-and-delete
 '
 
-test_expect_success 'transaction can commit after abort' '
+test_expect_success 'transaction can cummit after abort' '
 	cat >stdin <<-EOF &&
 	start
 	create refs/heads/abort $A
 	abort
 	start
 	create refs/heads/abort $A
-	commit
+	cummit
 	EOF
 	git update-ref --stdin <stdin >actual &&
-	printf "%s: ok\n" start abort start commit >expect &&
+	printf "%s: ok\n" start abort start cummit >expect &&
 	echo "$A" >expect &&
 	git rev-parse refs/heads/abort >actual &&
 	test_cmp expect actual
@@ -1592,7 +1592,7 @@ test_expect_success 'transaction cannot restart ongoing transaction' '
 	start
 	create refs/heads/restart $A
 	start
-	commit
+	cummit
 	EOF
 	test_must_fail git update-ref --stdin <stdin >actual &&
 	test_must_fail git show-ref --verify refs/heads/restart
@@ -1625,8 +1625,8 @@ test_expect_success PIPE 'transaction flushes status updates' '
 	test_must_fail git update-ref refs/heads/flush $B 2>stderr &&
 	grep "fatal: update_ref failed for ref ${SQ}refs/heads/flush${SQ}: cannot lock ref" stderr &&
 
-	echo commit >&9 &&
-	echo "commit: ok" >expected &&
+	echo cummit >&9 &&
+	echo "cummit: ok" >expected &&
 	read line <&8 &&
 	echo "$line" >actual &&
 	test_cmp expected actual

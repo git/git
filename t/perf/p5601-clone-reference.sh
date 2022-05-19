@@ -16,7 +16,7 @@ test_expect_success 'advance base repository' '
 	# sub-optimal order, skewing the results.
 	echo content >new-file-that-does-not-exist &&
 	git add new-file-that-does-not-exist &&
-	git commit -m "new commit"
+	git cummit -m "new cummit"
 '
 
 test_perf 'clone --reference' '

@@ -11,15 +11,15 @@ base_path=$(pwd -P)
 
 test_expect_success 'setup: create origin repos'  '
 	git init origin/sub &&
-	test_commit -C origin/sub file1 &&
+	test_cummit -C origin/sub file1 &&
 	git init origin/main &&
-	test_commit -C origin/main first &&
+	test_cummit -C origin/main first &&
 	git -C origin/main submodule add ../sub &&
-	git -C origin/main commit -m "add sub" &&
-	test_commit -C origin/sub "file1 updated" file1 file1updated file1updated &&
+	git -C origin/main cummit -m "add sub" &&
+	test_cummit -C origin/sub "file1 updated" file1 file1updated file1updated &&
 	git -C origin/main/sub pull &&
 	git -C origin/main add sub &&
-	git -C origin/main commit -m "sub updated"
+	git -C origin/main cummit -m "sub updated"
 '
 
 test_expect_success 'setup: clone superproject to create main worktree' '

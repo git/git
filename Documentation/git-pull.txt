@@ -51,8 +51,8 @@ Assume the following history exists and the current branch is
 
 Then "`git pull`" will fetch and replay the changes from the remote
 `master` branch since it diverged from the local `master` (i.e., `E`)
-until its current commit (`C`) on top of `master` and record the
-result in a new commit along with the names of the two parent commits
+until its current cummit (`C`) on top of `master` and record the
+result in a new cummit along with the names of the two parent cummits
 and a log message from the user describing the changes.
 
 ------------
@@ -66,10 +66,10 @@ are presented and handled.
 
 In Git 1.7.0 or later, to cancel a conflicting merge, use
 `git reset --merge`.  *Warning*: In older versions of Git, running 'git pull'
-with uncommitted changes is discouraged: while possible, it leaves you
+with uncummitted changes is discouraged: while possible, it leaves you
 in a state that may be hard to back out of in the case of a conflict.
 
-If any of the remote changes overlap with local uncommitted changes,
+If any of the remote changes overlap with local uncummitted changes,
 the merge will be automatically canceled and the work tree untouched.
 It is generally best to get any local changes in working order before
 pulling or stash them away with linkgit:git-stash[1].
@@ -88,12 +88,12 @@ OPTIONS
 	Pass --verbose to git-fetch and git-merge.
 
 --[no-]recurse-submodules[=yes|on-demand|no]::
-	This option controls if new commits of populated submodules should
+	This option controls if new cummits of populated submodules should
 	be fetched, and if the working trees of active submodules should be
 	updated, too (see linkgit:git-fetch[1], linkgit:git-config[1] and
 	linkgit:gitmodules[5]).
 +
-If the checkout is done via rebase, local submodule commits are rebased as well.
+If the checkout is done via rebase, local submodule cummits are rebased as well.
 +
 If the update is done via merge, the submodule conflicts are resolved and checked out.
 
@@ -113,7 +113,7 @@ include::merge-options.txt[]
 	to avoid rebasing non-local changes.
 +
 When set to `merges`, rebase using `git rebase --rebase-merges` so that
-the local merge commits are included in the rebase (see
+the local merge cummits are included in the rebase (see
 linkgit:git-rebase[1] for details).
 +
 When false, merge the upstream branch into the current branch.
@@ -238,9 +238,9 @@ include::transfer-data-leaks.txt[]
 
 BUGS
 ----
-Using --recurse-submodules can only fetch new commits in already checked
+Using --recurse-submodules can only fetch new cummits in already checked
 out submodules right now. When e.g. upstream added a new submodule in the
-just fetched commits of the superproject the submodule itself cannot be
+just fetched cummits of the superproject the submodule itself cannot be
 fetched, making it impossible to check out that submodule later without
 having to do a fetch again. This is expected to be fixed in a future Git
 version.

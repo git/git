@@ -6,16 +6,16 @@ test_description='ext::cmd remote "connect" helper'
 test_expect_success setup '
 	git config --global protocol.ext.allow user &&
 	test_tick &&
-	git commit --allow-empty -m initial &&
+	git cummit --allow-empty -m initial &&
 	test_tick &&
-	git commit --allow-empty -m second &&
+	git cummit --allow-empty -m second &&
 	test_tick &&
-	git commit --allow-empty -m third &&
+	git cummit --allow-empty -m third &&
 	test_tick &&
 	git tag -a -m "tip three" three &&
 
 	test_tick &&
-	git commit --allow-empty -m fourth
+	git cummit --allow-empty -m fourth
 '
 
 test_expect_success clone '
@@ -32,7 +32,7 @@ test_expect_success clone '
 
 test_expect_success 'update following tag' '
 	test_tick &&
-	git commit --allow-empty -m fifth &&
+	git cummit --allow-empty -m fifth &&
 	test_tick &&
 	git tag -a -m "tip five" five &&
 	git for-each-ref refs/heads/ refs/tags/ >expect &&
@@ -46,7 +46,7 @@ test_expect_success 'update following tag' '
 
 test_expect_success 'update backfilled tag' '
 	test_tick &&
-	git commit --allow-empty -m sixth &&
+	git cummit --allow-empty -m sixth &&
 	test_tick &&
 	git tag -a -m "tip two" two three^1 &&
 	git for-each-ref refs/heads/ refs/tags/ >expect &&

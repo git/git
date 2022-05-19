@@ -133,7 +133,7 @@ valid_ref !MINGW "$ref" '--refspec-pattern --allow-onelevel --normalize'
 
 test_expect_success "check-ref-format --branch @{-1}" '
 	T=$(git write-tree) &&
-	sha1=$(echo A | git commit-tree $T) &&
+	sha1=$(echo A | git cummit-tree $T) &&
 	git update-ref refs/heads/main $sha1 &&
 	git update-ref refs/remotes/origin/main $sha1 &&
 	git checkout main &&
@@ -153,7 +153,7 @@ test_expect_success 'check-ref-format --branch from subdir' '
 	mkdir subdir &&
 
 	T=$(git write-tree) &&
-	sha1=$(echo A | git commit-tree $T) &&
+	sha1=$(echo A | git cummit-tree $T) &&
 	git update-ref refs/heads/main $sha1 &&
 	git update-ref refs/remotes/origin/main $sha1 &&
 	git checkout main &&

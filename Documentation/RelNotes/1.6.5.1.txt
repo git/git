@@ -12,7 +12,7 @@ Fixes since v1.6.5
 
  * "git grep -f filename" used uninitialized variable and segfaulted.
 
- * "git clone -b branch" gave a wrong commit object name to post-checkout
+ * "git clone -b branch" gave a wrong cummit object name to post-checkout
    hook.
 
  * "git pull" over http did not work on msys.

@@ -62,18 +62,18 @@ test_expect_success "setup case tests" '
 	git config core.ignorecase true &&
 	touch camelcase &&
 	git add camelcase &&
-	git commit -m "initial" &&
+	git cummit -m "initial" &&
 	git tag initial &&
 	git checkout -b topic &&
 	git mv camelcase tmp &&
 	git mv tmp CamelCase &&
-	git commit -m "rename" &&
+	git cummit -m "rename" &&
 	git checkout -f main
 '
 
 test_expect_success 'rename (case change)' '
 	git mv camelcase CamelCase &&
-	git commit -m "rename"
+	git cummit -m "rename"
 '
 
 test_expect_success 'merge (case change)' '
@@ -116,18 +116,18 @@ test_expect_success "setup unicode normalization tests" '
 	git config core.precomposeunicode false &&
 	touch "$aumlcdiar" &&
 	git add "$aumlcdiar" &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag initial &&
 	git checkout -b topic &&
 	git mv $aumlcdiar tmp &&
 	git mv tmp "$auml" &&
-	git commit -m rename &&
+	git cummit -m rename &&
 	git checkout -f main
 '
 
 $test_unicode 'rename (silent unicode normalization)' '
 	git mv "$aumlcdiar" "$auml" &&
-	git commit -m rename
+	git cummit -m rename
 '
 
 $test_unicode 'merge (silent unicode normalization)' '
@@ -142,14 +142,14 @@ test_expect_success CASE_INSENSITIVE_FS 'checkout with no pathspec and a case in
 
 		>Gitweb &&
 		git add Gitweb &&
-		git commit -m "add Gitweb" &&
+		git cummit -m "add Gitweb" &&
 
 		git checkout --orphan todo &&
 		git reset --hard &&
 		mkdir -p gitweb/subdir &&
 		>gitweb/subdir/file &&
 		git add gitweb &&
-		git commit -m "add gitweb/subdir/file" &&
+		git cummit -m "add gitweb/subdir/file" &&
 
 		git checkout main
 	)

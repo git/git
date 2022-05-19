@@ -8,7 +8,7 @@ test_expect_success 'setup' "
 	mkdir -p sub/dir sub/dir2 &&
 	touch a b c sub/d sub/dir/e sub/dir2/e &&
 	git add -A &&
-	git commit -m files &&
+	git cummit -m files &&
 
 	cat >sparse_error_header <<-EOF &&
 	The following paths and/or pathspecs matched paths that exist
@@ -150,7 +150,7 @@ test_expect_success 'recursive mv refuses to move (possible) sparse' '
 	test_cmp expect stderr &&
 	git mv --sparse sub sub2 2>stderr &&
 	test_must_be_empty stderr &&
-	git commit -m "moved sub to sub2" &&
+	git cummit -m "moved sub to sub2" &&
 	git rev-parse HEAD~1:sub >expect &&
 	git rev-parse HEAD:sub2 >actual &&
 	test_cmp expect actual &&
@@ -177,7 +177,7 @@ test_expect_success 'recursive mv refuses to move sparse' '
 	test_cmp expect stderr &&
 	git mv --sparse sub sub2 2>stderr &&
 	test_must_be_empty stderr &&
-	git commit -m "moved sub to sub2" &&
+	git cummit -m "moved sub to sub2" &&
 	git rev-parse HEAD~1:sub >expect &&
 	git rev-parse HEAD:sub2 >actual &&
 	test_cmp expect actual &&

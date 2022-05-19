@@ -37,7 +37,7 @@ test_expect_success 'setup remote repository' '
 	: >path1 &&
 	git add path1 &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	cd - &&
 	git clone --bare test_repo test_repo.git &&
 	cd test_repo.git &&
@@ -68,7 +68,7 @@ test_expect_success 'push to remote repository with packed refs' '
 	: >path2 &&
 	git add path2 &&
 	test_tick &&
-	git commit -m path2 &&
+	git cummit -m path2 &&
 	HEAD=$(git rev-parse --verify HEAD) &&
 	git push &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
@@ -131,7 +131,7 @@ test_expect_success 'create and delete remote branch' '
 	: >path3 &&
 	git add path3 &&
 	test_tick &&
-	git commit -m dev &&
+	git cummit -m dev &&
 	git push origin dev &&
 	git push origin :dev &&
 	test_must_fail git show-ref --verify refs/remotes/origin/dev
@@ -142,12 +142,12 @@ test_expect_success 'non-force push fails if not up to date' '
 	git -C "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo_conflict.git update-server-info &&
 	git clone $HTTPD_URL/dumb/test_repo_conflict.git "$ROOT_PATH"/c1 &&
 	git clone $HTTPD_URL/dumb/test_repo_conflict.git "$ROOT_PATH"/c2 &&
-	test_commit -C "$ROOT_PATH/c1" path1 &&
+	test_cummit -C "$ROOT_PATH/c1" path1 &&
 	git -C "$ROOT_PATH/c1" push origin HEAD &&
 	git -C "$ROOT_PATH/c2" pull &&
-	test_commit -C "$ROOT_PATH/c1" path2 &&
+	test_cummit -C "$ROOT_PATH/c1" path2 &&
 	git -C "$ROOT_PATH/c1" push origin HEAD &&
-	test_commit -C "$ROOT_PATH/c2" path3 &&
+	test_cummit -C "$ROOT_PATH/c2" path3 &&
 	git -C "$ROOT_PATH/c1" log --graph --all &&
 	git -C "$ROOT_PATH/c2" log --graph --all &&
 	test_must_fail git -C "$ROOT_PATH/c2" push origin HEAD
@@ -177,7 +177,7 @@ test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
 	"$ROOT_PATH"/test_repo_clone main
 
 test_expect_success 'push to password-protected repository (user in URL)' '
-	test_commit pw-user &&
+	test_cummit pw-user &&
 	set_askpass user@host pass@host &&
 	git push "$HTTPD_URL_USER/auth/dumb/test_repo.git" HEAD &&
 	git rev-parse --verify HEAD >expect &&
@@ -191,7 +191,7 @@ test_expect_failure 'user was prompted only once for password' '
 '
 
 test_expect_failure 'push to password-protected repository (no user in URL)' '
-	test_commit pw-nouser &&
+	test_cummit pw-nouser &&
 	set_askpass user@host pass@host &&
 	git push "$HTTPD_URL/auth/dumb/test_repo.git" HEAD &&
 	expect_askpass both user@host &&

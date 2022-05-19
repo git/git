@@ -8,9 +8,9 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success setup '
-	test_commit PRE &&
+	test_cummit PRE &&
 	PRE_OID=$(git rev-parse PRE) &&
-	test_commit POST &&
+	test_cummit POST &&
 	POST_OID=$(git rev-parse POST)
 '
 
@@ -21,7 +21,7 @@ test_expect_success 'hook allows updating ref if successful' '
 	EOF
 	cat >expect <<-EOF &&
 		prepared
-		committed
+		cummitted
 	EOF
 	git update-ref HEAD POST &&
 	test_cmp expect actual
@@ -62,11 +62,11 @@ test_expect_success 'hook gets all queued updates in prepared state' '
 	test_cmp expect actual
 '
 
-test_expect_success 'hook gets all queued updates in committed state' '
+test_expect_success 'hook gets all queued updates in cummitted state' '
 	test_when_finished "rm actual" &&
 	git reset --hard PRE &&
 	test_hook reference-transaction <<-\EOF &&
-		if test "$1" = committed
+		if test "$1" = cummitted
 		then
 			while read -r line
 			do
@@ -123,10 +123,10 @@ test_expect_success 'interleaving hook calls succeed' '
 	cat >expect <<-EOF &&
 		hooks/update refs/tags/PRE $ZERO_OID $PRE_OID
 		hooks/reference-transaction prepared
-		hooks/reference-transaction committed
+		hooks/reference-transaction cummitted
 		hooks/update refs/tags/POST $ZERO_OID $POST_OID
 		hooks/reference-transaction prepared
-		hooks/reference-transaction committed
+		hooks/reference-transaction cummitted
 	EOF
 
 	git push ./target-repo.git PRE POST &&

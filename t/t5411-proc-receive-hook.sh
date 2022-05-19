@@ -20,10 +20,10 @@ setup_upstream_and_workbench () {
 		rm -rf workbench &&
 		git init --bare upstream.git &&
 		git init workbench &&
-		create_commits_in workbench A B &&
+		create_cummits_in workbench A B &&
 		(
 			cd workbench &&
-			# Try to make a stable fixed width for abbreviated commit ID,
+			# Try to make a stable fixed width for abbreviated cummit ID,
 			# this fixed-width oid will be replaced with "<OID>".
 			git config core.abbrev 7 &&
 			git tag -m "v123" v123 $A &&

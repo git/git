@@ -1,24 +1,24 @@
---commit::
---no-commit::
-	Perform the merge and commit the result. This option can
-	be used to override --no-commit.
+--cummit::
+--no-cummit::
+	Perform the merge and cummit the result. This option can
+	be used to override --no-cummit.
 ifdef::git-pull[]
 	Only useful when merging.
 endif::git-pull[]
 +
-With --no-commit perform the merge and stop just before creating
-a merge commit, to give the user a chance to inspect and further
-tweak the merge result before committing.
+With --no-cummit perform the merge and stop just before creating
+a merge cummit, to give the user a chance to inspect and further
+tweak the merge result before cummitting.
 +
-Note that fast-forward updates do not create a merge commit and
-therefore there is no way to stop those merges with --no-commit.
+Note that fast-forward updates do not create a merge cummit and
+therefore there is no way to stop those merges with --no-cummit.
 Thus, if you want to ensure your branch is not changed or updated
-by the merge command, use --no-ff with --no-commit.
+by the merge command, use --no-ff with --no-cummit.
 
 --edit::
 -e::
 --no-edit::
-	Invoke an editor before committing successful mechanical merge to
+	Invoke an editor before cummitting successful mechanical merge to
 	further edit the auto-generated merge message, so that the user
 	can explain and justify the merge. The `--no-edit` option can be
 	used to accept the auto-generated message (this is generally
@@ -37,9 +37,9 @@ set to `no` at the beginning of them.
 
 --cleanup=<mode>::
 	This option determines how the merge message will be cleaned up before
-	committing. See linkgit:git-commit[1] for more details. In addition, if
+	cummitting. See linkgit:git-cummit[1] for more details. In addition, if
 	the '<mode>' is given a value of `scissors`, scissors will be appended
-	to `MERGE_MSG` before being passed on to the commit machinery in the
+	to `MERGE_MSG` before being passed on to the cummit machinery in the
 	case of a merge conflict.
 
 ifdef::git-merge[]
@@ -70,10 +70,10 @@ endif::git-pull[]
 +
 With `--ff`, when possible resolve the merge as a fast-forward (only
 update the branch pointer to match the merged branch; do not create a
-merge commit).  When not possible (when the merged-in history is not a
-descendant of the current history), create a merge commit.
+merge cummit).  When not possible (when the merged-in history is not a
+descendant of the current history), create a merge cummit.
 +
-With `--no-ff`, create a merge commit in all cases, even when the merge
+With `--no-ff`, create a merge cummit in all cases, even when the merge
 could instead be resolved as a fast-forward.
 ifdef::git-merge[]
 +
@@ -84,23 +84,23 @@ endif::git-merge[]
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
 --no-gpg-sign::
-	GPG-sign the resulting merge commit. The `keyid` argument is
-	optional and defaults to the committer identity; if specified,
+	GPG-sign the resulting merge cummit. The `keyid` argument is
+	optional and defaults to the cummitter identity; if specified,
 	it must be stuck to the option without a space. `--no-gpg-sign`
-	is useful to countermand both `commit.gpgSign` configuration variable,
+	is useful to countermand both `cummit.gpgSign` configuration variable,
 	and earlier `--gpg-sign`.
 
 --log[=<n>]::
 --no-log::
 	In addition to branch names, populate the log message with
-	one-line descriptions from at most <n> actual commits that are being
+	one-line descriptions from at most <n> actual cummits that are being
 	merged. See also linkgit:git-fmt-merge-msg[1].
 ifdef::git-pull[]
 	Only useful when merging.
 endif::git-pull[]
 +
 With --no-log do not list one-line descriptions from the
-actual commits being merged.
+actual cummits being merged.
 
 include::signoff-option.txt[]
 
@@ -117,23 +117,23 @@ merge.
 --no-squash::
 	Produce the working tree and index state as if a real merge
 	happened (except for the merge information), but do not actually
-	make a commit, move the `HEAD`, or record `$GIT_DIR/MERGE_HEAD`
-	(to cause the next `git commit` command to create a merge
-	commit).  This allows you to create a single commit on top of
+	make a cummit, move the `HEAD`, or record `$GIT_DIR/MERGE_HEAD`
+	(to cause the next `git cummit` command to create a merge
+	cummit).  This allows you to create a single cummit on top of
 	the current branch whose effect is the same as merging another
 	branch (or more in case of an octopus).
 +
-With --no-squash perform the merge and commit the result. This
+With --no-squash perform the merge and cummit the result. This
 option can be used to override --squash.
 +
-With --squash, --commit is not allowed, and will fail.
+With --squash, --cummit is not allowed, and will fail.
 ifdef::git-pull[]
 +
 Only useful when merging.
 endif::git-pull[]
 
 --[no-]verify::
-	By default, the pre-merge and commit-msg hooks are run.
+	By default, the pre-merge and cummit-msg hooks are run.
 	When `--no-verify` is given, these are bypassed.
 	See also linkgit:githooks[5].
 ifdef::git-pull[]
@@ -155,10 +155,10 @@ endif::git-pull[]
 
 --verify-signatures::
 --no-verify-signatures::
-	Verify that the tip commit of the side branch being merged is
+	Verify that the tip cummit of the side branch being merged is
 	signed with a valid key, i.e. a key that has a valid uid: in the
 	default trust model, this means the signing key has been signed by
-	a trusted key.  If the tip commit of the side branch is not signed
+	a trusted key.  If the tip cummit of the side branch is not signed
 	with a valid key, the merge is aborted.
 ifdef::git-pull[]
 +

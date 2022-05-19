@@ -41,33 +41,33 @@ test_expect_success "proc-receive: multiple rewrite for one ref, no refname for 
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
-	> remote: proc-receive> option old-oid <COMMIT-A>        Z
-	> remote: proc-receive> option new-oid <COMMIT-B>        Z
+	> remote: proc-receive> option old-oid <cummit-A>        Z
+	> remote: proc-receive> option new-oid <cummit-B>        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: proc-receive> option refname refs/changes/24/124/1        Z
 	> remote: proc-receive> option old-oid <ZERO-OID>        Z
-	> remote: proc-receive> option new-oid <COMMIT-A>        Z
+	> remote: proc-receive> option new-oid <cummit-A>        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: proc-receive> option refname refs/changes/25/125/1        Z
-	> remote: proc-receive> option old-oid <COMMIT-A>        Z
-	> remote: proc-receive> option new-oid <COMMIT-B>        Z
+	> remote: proc-receive> option old-oid <cummit-A>        Z
+	> remote: proc-receive> option new-oid <cummit-B>        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/for/main/topic        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/changes/24/124/1        Z
-	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/changes/25/125/1        Z
+	> remote: post-receive< <cummit-A> <cummit-B> refs/for/main/topic        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/changes/24/124/1        Z
+	> remote: post-receive< <cummit-A> <cummit-B> refs/changes/25/125/1        Z
 	> To <URL/of/upstream.git>
-	>    <COMMIT-A>..<COMMIT-B>  HEAD -> refs/for/main/topic
+	>    <cummit-A>..<cummit-B>  HEAD -> refs/for/main/topic
 	>  * [new reference]   HEAD -> refs/changes/24/124/1
-	>    <COMMIT-A>..<COMMIT-B>  HEAD -> refs/changes/25/125/1
+	>    <cummit-A>..<cummit-B>  HEAD -> refs/changes/25/125/1
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<COMMIT-A> refs/heads/main
+	<cummit-A> refs/heads/main
 	EOF
 '
 
@@ -76,9 +76,9 @@ test_expect_success "proc-receive: check remote-tracking #1 ($PROTOCOL)" '
 		grep -v -e refs/remotes -e refs/heads -e refs/tags >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
-	<COMMIT-A> refs/t/changes/24/124/1
-	<COMMIT-B> refs/t/changes/25/125/1
-	<COMMIT-B> refs/t/for/main/topic
+	<cummit-A> refs/t/changes/24/124/1
+	<cummit-B> refs/t/changes/25/125/1
+	<cummit-B> refs/t/for/main/topic
 	EOF
 	test_cmp expect actual &&
 	git -C workbench update-ref -d refs/t/for/main/topic &&
@@ -115,34 +115,34 @@ test_expect_success "proc-receive: multiple rewrites for one ref, no refname for
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: proc-receive> option refname refs/changes/24/124/1        Z
 	> remote: proc-receive> option old-oid <ZERO-OID>        Z
-	> remote: proc-receive> option new-oid <COMMIT-A>        Z
+	> remote: proc-receive> option new-oid <cummit-A>        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
-	> remote: proc-receive> option old-oid <COMMIT-A>        Z
-	> remote: proc-receive> option new-oid <COMMIT-B>        Z
+	> remote: proc-receive> option old-oid <cummit-A>        Z
+	> remote: proc-receive> option new-oid <cummit-B>        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: proc-receive> option refname refs/changes/25/125/1        Z
-	> remote: proc-receive> option old-oid <COMMIT-B>        Z
-	> remote: proc-receive> option new-oid <COMMIT-A>        Z
+	> remote: proc-receive> option old-oid <cummit-B>        Z
+	> remote: proc-receive> option new-oid <cummit-A>        Z
 	> remote: proc-receive> option forced-update        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/changes/24/124/1        Z
-	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/for/main/topic        Z
-	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/changes/25/125/1        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/changes/24/124/1        Z
+	> remote: post-receive< <cummit-A> <cummit-B> refs/for/main/topic        Z
+	> remote: post-receive< <cummit-B> <cummit-A> refs/changes/25/125/1        Z
 	> To <URL/of/upstream.git>
 	>  * [new reference]   HEAD -> refs/changes/24/124/1
-	>    <COMMIT-A>..<COMMIT-B>  HEAD -> refs/for/main/topic
-	>  + <COMMIT-B>...<COMMIT-A> HEAD -> refs/changes/25/125/1 (forced update)
+	>    <cummit-A>..<cummit-B>  HEAD -> refs/for/main/topic
+	>  + <cummit-B>...<cummit-A> HEAD -> refs/changes/25/125/1 (forced update)
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<COMMIT-A> refs/heads/main
+	<cummit-A> refs/heads/main
 	EOF
 '
 
@@ -151,9 +151,9 @@ test_expect_success "proc-receive: check remote-tracking #2 ($PROTOCOL)" '
 		grep -v -e refs/remotes -e refs/heads -e refs/tags >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
-	<COMMIT-A> refs/t/changes/24/124/1
-	<COMMIT-A> refs/t/changes/25/125/1
-	<COMMIT-B> refs/t/for/main/topic
+	<cummit-A> refs/t/changes/24/124/1
+	<cummit-A> refs/t/changes/25/125/1
+	<cummit-B> refs/t/for/main/topic
 	EOF
 	test_cmp expect actual &&
 	git -C workbench update-ref -d refs/t/for/main/topic &&
@@ -184,26 +184,26 @@ test_expect_success "proc-receive: multiple rewrites for one ref ($PROTOCOL)" '
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: proc-receive> option refname refs/changes/23/123/1        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: proc-receive> option refname refs/changes/24/124/2        Z
-	> remote: proc-receive> option old-oid <COMMIT-A>        Z
-	> remote: proc-receive> option new-oid <COMMIT-B>        Z
+	> remote: proc-receive> option old-oid <cummit-A>        Z
+	> remote: proc-receive> option new-oid <cummit-B>        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/changes/23/123/1        Z
-	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/changes/24/124/2        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/changes/23/123/1        Z
+	> remote: post-receive< <cummit-A> <cummit-B> refs/changes/24/124/2        Z
 	> To <URL/of/upstream.git>
 	>  * [new reference]   HEAD -> refs/changes/23/123/1
-	>    <COMMIT-A>..<COMMIT-B>  HEAD -> refs/changes/24/124/2
+	>    <cummit-A>..<cummit-B>  HEAD -> refs/changes/24/124/2
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<COMMIT-A> refs/heads/main
+	<cummit-A> refs/heads/main
 	EOF
 '
 
@@ -212,8 +212,8 @@ test_expect_success "proc-receive: check remote-tracking #3 ($PROTOCOL)" '
 		grep -v -e refs/remotes -e refs/heads -e refs/tags >out &&
 	make_user_friendly_and_stable_output <out >actual &&
 	cat >expect <<-EOF &&
-	<COMMIT-A> refs/t/changes/23/123/1
-	<COMMIT-B> refs/t/changes/24/124/2
+	<cummit-A> refs/t/changes/23/123/1
+	<cummit-B> refs/t/changes/24/124/2
 	EOF
 	test_cmp expect actual &&
 	git -C workbench update-ref -d refs/t/changes/24/124/1 &&

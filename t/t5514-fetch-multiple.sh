@@ -14,12 +14,12 @@ setup_repository () {
 	>file &&
 	git add file &&
 	test_tick &&
-	git commit -m "Initial" &&
+	git cummit -m "Initial" &&
 	git checkout -b side &&
 	>elif &&
 	git add elif &&
 	test_tick &&
-	git commit -m "Second" &&
+	git cummit -m "Second" &&
 	git checkout main
 	)
 }
@@ -175,7 +175,7 @@ test_expect_success 'git fetch --all --tags' '
 	git clone test7 test8 &&
 	(
 		cd test7 &&
-		test_commit test-tag &&
+		test_cummit test-tag &&
 		git reset --hard HEAD^
 	) &&
 	(

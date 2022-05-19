@@ -66,9 +66,9 @@ test_expect_success 'one push option works for a single branch' '
 	git -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git push --mirror up &&
-		test_commit two &&
+		test_cummit two &&
 		git push --push-option=asdf up main
 	) &&
 	test_refs main main &&
@@ -82,9 +82,9 @@ test_expect_success 'push option denied by remote' '
 	git -C upstream config receive.advertisePushOptions false &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git push --mirror up &&
-		test_commit two &&
+		test_cummit two &&
 		test_must_fail git push --push-option=asdf up main
 	) &&
 	test_refs main HEAD@{1}
@@ -95,9 +95,9 @@ test_expect_success 'two push options work' '
 	git -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git push --mirror up &&
-		test_commit two &&
+		test_cummit two &&
 		git push --push-option=asdf --push-option="more structured text" up main
 	) &&
 	test_refs main main &&
@@ -112,20 +112,20 @@ test_expect_success 'push options and submodules' '
 	mk_repo_pair &&
 	git -C upstream config receive.advertisePushOptions true &&
 	cp -r upstream parent_upstream &&
-	test_commit -C upstream one &&
+	test_cummit -C upstream one &&
 
 	test_create_repo parent &&
 	git -C parent remote add up ../parent_upstream &&
-	test_commit -C parent one &&
+	test_cummit -C parent one &&
 	git -C parent push --mirror up &&
 
 	git -C parent submodule add ../upstream workbench &&
 	git -C parent/workbench remote add up ../../upstream &&
-	git -C parent commit -m "add submodule" &&
+	git -C parent cummit -m "add submodule" &&
 
-	test_commit -C parent/workbench two &&
+	test_cummit -C parent/workbench two &&
 	git -C parent add workbench &&
-	git -C parent commit -m "update workbench" &&
+	git -C parent cummit -m "update workbench" &&
 
 	git -C parent push \
 		--push-option=asdf --push-option="more structured text" \
@@ -151,9 +151,9 @@ test_expect_success 'default push option' '
 	git -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git push --mirror up &&
-		test_commit two &&
+		test_cummit two &&
 		git -c push.pushOption=default push up main
 	) &&
 	test_refs main main &&
@@ -167,9 +167,9 @@ test_expect_success 'two default push options' '
 	git -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git push --mirror up &&
-		test_commit two &&
+		test_cummit two &&
 		git -c push.pushOption=default1 -c push.pushOption=default2 push up main
 	) &&
 	test_refs main main &&
@@ -183,9 +183,9 @@ test_expect_success 'push option from command line overrides from-config push op
 	git -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git push --mirror up &&
-		test_commit two &&
+		test_cummit two &&
 		git -c push.pushOption=default push --push-option=manual up main
 	) &&
 	test_refs main main &&
@@ -199,9 +199,9 @@ test_expect_success 'empty value of push.pushOption in config clears the list' '
 	git -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git push --mirror up &&
-		test_commit two &&
+		test_cummit two &&
 		git -c push.pushOption=default1 -c push.pushOption= -c push.pushOption=default2 push up main
 	) &&
 	test_refs main main &&
@@ -215,9 +215,9 @@ test_expect_success 'invalid push option in config' '
 	git -C upstream config receive.advertisePushOptions true &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git push --mirror up &&
-		test_commit two &&
+		test_cummit two &&
 		test_must_fail git -c push.pushOption push up main
 	) &&
 	test_refs main HEAD@{1}
@@ -226,7 +226,7 @@ test_expect_success 'invalid push option in config' '
 test_expect_success 'push options keep quoted characters intact (direct)' '
 	mk_repo_pair &&
 	git -C upstream config receive.advertisePushOptions true &&
-	test_commit -C workbench one &&
+	test_cummit -C workbench one &&
 	git -C workbench push --push-option="\"embedded quotes\"" up main &&
 	echo "\"embedded quotes\"" >expect &&
 	test_cmp expect upstream/.git/hooks/pre-receive.push_options
@@ -249,7 +249,7 @@ mk_http_pair () {
 
 test_expect_success 'push option denied properly by http server' '
 	mk_http_pair false &&
-	test_commit -C test_http_clone one &&
+	test_cummit -C test_http_clone one &&
 	test_must_fail git -C test_http_clone push --push-option=asdf origin main 2>actual &&
 	test_i18ngrep "the receiving end does not support push options" actual &&
 	git -C test_http_clone push origin main
@@ -258,13 +258,13 @@ test_expect_success 'push option denied properly by http server' '
 test_expect_success 'push options work properly across http' '
 	mk_http_pair true &&
 
-	test_commit -C test_http_clone one &&
+	test_cummit -C test_http_clone one &&
 	git -C test_http_clone push origin main &&
 	git -C "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git rev-parse --verify main >expect &&
 	git -C test_http_clone rev-parse --verify main >actual &&
 	test_cmp expect actual &&
 
-	test_commit -C test_http_clone two &&
+	test_cummit -C test_http_clone two &&
 	git -C test_http_clone push --push-option=asdf --push-option="more structured text" origin main &&
 	printf "asdf\nmore structured text\n" >expect &&
 	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git/hooks/pre-receive.push_options &&
@@ -278,7 +278,7 @@ test_expect_success 'push options work properly across http' '
 test_expect_success 'push options keep quoted characters intact (http)' '
 	mk_http_pair true &&
 
-	test_commit -C test_http_clone one &&
+	test_cummit -C test_http_clone one &&
 	git -C test_http_clone push --push-option="\"embedded quotes\"" origin main &&
 	echo "\"embedded quotes\"" >expect &&
 	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH"/upstream.git/hooks/pre-receive.push_options

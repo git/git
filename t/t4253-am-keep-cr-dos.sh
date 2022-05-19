@@ -36,12 +36,12 @@ EOF
 test_expect_success 'setup repository with dos files' '
 	append_cr <file1 >file &&
 	git add file &&
-	git commit -m Initial &&
+	git cummit -m Initial &&
 	git tag initial &&
 	append_cr <file2 >file &&
-	git commit -a -m Second &&
+	git cummit -a -m Second &&
 	append_cr <file3 >file &&
-	git commit -a -m Third
+	git cummit -a -m Third
 '
 
 test_expect_success 'am with dos files without --keep-cr' '
@@ -80,7 +80,7 @@ test_expect_success 'am with dos files with --keep-cr continue' '
 	git checkout -b dosfiles-keep-cr-continue initial &&
 	git format-patch -k initial..main &&
 	append_cr <file1a >file &&
-	git commit -m "different patch" file &&
+	git cummit -m "different patch" file &&
 	test_must_fail git am --keep-cr -k -3 000*.patch &&
 	append_cr <file2 >file &&
 	git add file &&
@@ -92,7 +92,7 @@ test_expect_success 'am with unix files config am.keepcr overridden by --no-keep
 	git config am.keepcr 1 &&
 	git checkout -b unixfiles-conf-keepcr-override initial &&
 	cp -f file1 file &&
-	git commit -m "line ending to unix" file &&
+	git cummit -m "line ending to unix" file &&
 	git format-patch -k initial..main &&
 	git am -k -3 --no-keep-cr 000*.patch &&
 	git diff --exit-code -w main

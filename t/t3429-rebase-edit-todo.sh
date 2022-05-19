@@ -6,9 +6,9 @@ test_description='rebase should reread the todo file if an exec modifies it'
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
 test_expect_success 'setup' '
-	test_commit first file &&
-	test_commit second file &&
-	test_commit third file
+	test_cummit first file &&
+	test_cummit second file &&
+	test_cummit third file
 '
 
 test_expect_success 'rebase exec modifies rebase-todo' '
@@ -31,10 +31,10 @@ test_expect_success 'loose object cache vs re-reading todo list' '
 		$(printf "%s\\n" \
 			"tree $EMPTY_TREE" \
 			"author A U Thor <author@example.org> $1 +0000" \
-			"committer A U Thor <author@example.org> $1 +0000" \
+			"cummitter A U Thor <author@example.org> $1 +0000" \
 			"" \
 			"$1" |
-		  git hash-object -t commit -w --stdin))" >>$GIT_REBASE_TODO
+		  git hash-object -t cummit -w --stdin))" >>$GIT_REBASE_TODO
 
 	shift
 	test -z "$*" ||

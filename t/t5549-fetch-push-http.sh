@@ -21,15 +21,15 @@ grep_wrote () {
 setup_client_and_server () {
 	git init client &&
 	test_when_finished 'rm -rf client' &&
-	test_commit -C client first_commit &&
-	test_commit -C client second_commit &&
+	test_cummit -C client first_cummit &&
+	test_cummit -C client second_cummit &&
 
 	git init "$SERVER" &&
 	test_when_finished 'rm -rf "$SERVER"' &&
 	test_config -C "$SERVER" http.receivepack true &&
-	test_commit -C "$SERVER" unrelated_commit &&
-	git -C client push "$URI" first_commit:refs/remotes/origin/first_commit &&
-	git -C "$SERVER" config receive.hideRefs refs/remotes/origin/first_commit
+	test_cummit -C "$SERVER" unrelated_cummit &&
+	git -C client push "$URI" first_cummit:refs/remotes/origin/first_cummit &&
+	git -C "$SERVER" config receive.hideRefs refs/remotes/origin/first_cummit
 }
 
 test_expect_success 'push without negotiation (for comparing object counts with the next test)' '
@@ -38,7 +38,7 @@ test_expect_success 'push without negotiation (for comparing object counts with 
 	GIT_TRACE2_EVENT="$(pwd)/event" git -C client -c protocol.version=2 \
 		push "$URI" refs/heads/main:refs/remotes/origin/main &&
 	test_when_finished "rm -f event" &&
-	grep_wrote 6 event # 2 commits, 2 trees, 2 blobs
+	grep_wrote 6 event # 2 cummits, 2 trees, 2 blobs
 '
 
 test_expect_success 'push with negotiation' '
@@ -47,7 +47,7 @@ test_expect_success 'push with negotiation' '
 	GIT_TRACE2_EVENT="$(pwd)/event" git -C client -c protocol.version=2 -c push.negotiate=1 \
 		push "$URI" refs/heads/main:refs/remotes/origin/main &&
 	test_when_finished "rm -f event" &&
-	grep_wrote 3 event # 1 commit, 1 tree, 1 blob
+	grep_wrote 3 event # 1 cummit, 1 tree, 1 blob
 '
 
 test_expect_success 'push with negotiation proceeds anyway even if negotiation fails' '
@@ -59,7 +59,7 @@ test_expect_success 'push with negotiation proceeds anyway even if negotiation f
 	GIT_TEST_PROTOCOL_VERSION=0 GIT_TRACE2_EVENT="$(pwd)/event" git -C client -c push.negotiate=1 \
 		push "$URI" refs/heads/main:refs/remotes/origin/main 2>err &&
 	test_when_finished "rm -f event" &&
-	grep_wrote 6 event && # 2 commits, 2 trees, 2 blobs
+	grep_wrote 6 event && # 2 cummits, 2 trees, 2 blobs
 
 	cat >warning-expect <<-EOF &&
 	warning: --negotiate-only requires protocol v2

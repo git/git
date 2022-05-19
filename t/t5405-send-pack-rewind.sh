@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='forced push to replace commit we do not have'
+test_description='forced push to replace cummit we do not have'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -10,7 +10,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success setup '
 
 	>file1 && git add file1 && test_tick &&
-	git commit -m Initial &&
+	git cummit -m Initial &&
 	git config receive.denyCurrentBranch warn &&
 
 	mkdir another && (
@@ -20,7 +20,7 @@ test_expect_success setup '
 	) &&
 
 	>file2 && git add file2 && test_tick &&
-	git commit -m Second
+	git cummit -m Second
 
 '
 

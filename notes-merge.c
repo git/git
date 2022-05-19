@@ -1,5 +1,5 @@
 #include "cache.h"
-#include "commit.h"
+#include "cummit.h"
 #include "refs.h"
 #include "object-store.h"
 #include "repository.h"
@@ -12,7 +12,7 @@
 #include "notes-merge.h"
 #include "strbuf.h"
 #include "notes-utils.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 
 struct notes_merge_pair {
 	struct object_id obj, base, local, remote;
@@ -22,7 +22,7 @@ void init_notes_merge_options(struct repository *r,
 			      struct notes_merge_options *o)
 {
 	memset(o, 0, sizeof(struct notes_merge_options));
-	strbuf_init(&(o->commit_msg), 0);
+	strbuf_init(&(o->cummit_msg), 0);
 	o->verbosity = NOTES_MERGE_VERBOSITY_DEFAULT;
 	o->repo = r;
 }
@@ -275,8 +275,8 @@ static void check_notes_merge_worktree(struct notes_merge_options *o)
 			if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
 				die(_("You have not concluded your previous "
 				    "notes merge (%s exists).\nPlease, use "
-				    "'git notes merge --commit' or 'git notes "
-				    "merge --abort' to commit/abort the "
+				    "'git notes merge --cummit' or 'git notes "
+				    "merge --abort' to cummit/abort the "
 				    "previous merge before you start a new "
 				    "notes merge."), git_path("NOTES_MERGE_*"));
 			else
@@ -381,11 +381,11 @@ static int merge_one_change_manual(struct notes_merge_options *o,
 	       oid_to_hex(&p->obj), oid_to_hex(&p->base),
 	       oid_to_hex(&p->local), oid_to_hex(&p->remote));
 
-	/* add "Conflicts:" section to commit message first time through */
+	/* add "Conflicts:" section to cummit message first time through */
 	if (!o->has_worktree)
-		strbuf_addstr(&(o->commit_msg), "\n\nConflicts:\n");
+		strbuf_addstr(&(o->cummit_msg), "\n\nConflicts:\n");
 
-	strbuf_addf(&(o->commit_msg), "\t%s\n", oid_to_hex(&p->obj));
+	strbuf_addf(&(o->cummit_msg), "\t%s\n", oid_to_hex(&p->obj));
 
 	if (o->verbosity >= 2)
 		printf("Auto-merging notes for %s\n", oid_to_hex(&p->obj));
@@ -542,8 +542,8 @@ int notes_merge(struct notes_merge_options *o,
 		struct object_id *result_oid)
 {
 	struct object_id local_oid, remote_oid;
-	struct commit *local, *remote;
-	struct commit_list *bases = NULL;
+	struct cummit *local, *remote;
+	struct cummit_list *bases = NULL;
 	const struct object_id *base_oid, *base_tree_oid;
 	int result = 0;
 
@@ -560,10 +560,10 @@ int notes_merge(struct notes_merge_options *o,
 	else if (!check_refname_format(o->local_ref, 0) &&
 		is_null_oid(&local_oid))
 		local = NULL; /* local_oid == null_oid indicates unborn ref */
-	else if (!(local = lookup_commit_reference(o->repo, &local_oid)))
-		die("Could not parse local commit %s (%s)",
+	else if (!(local = lookup_cummit_reference(o->repo, &local_oid)))
+		die("Could not parse local cummit %s (%s)",
 		    oid_to_hex(&local_oid), o->local_ref);
-	trace_printf("\tlocal commit: %.7s\n", oid_to_hex(&local_oid));
+	trace_printf("\tlocal cummit: %.7s\n", oid_to_hex(&local_oid));
 
 	/* Dereference o->remote_ref into remote_oid */
 	if (get_oid(o->remote_ref, &remote_oid)) {
@@ -578,22 +578,22 @@ int notes_merge(struct notes_merge_options *o,
 			die("Failed to resolve remote notes ref '%s'",
 			    o->remote_ref);
 		}
-	} else if (!(remote = lookup_commit_reference(o->repo, &remote_oid))) {
-		die("Could not parse remote commit %s (%s)",
+	} else if (!(remote = lookup_cummit_reference(o->repo, &remote_oid))) {
+		die("Could not parse remote cummit %s (%s)",
 		    oid_to_hex(&remote_oid), o->remote_ref);
 	}
-	trace_printf("\tremote commit: %.7s\n", oid_to_hex(&remote_oid));
+	trace_printf("\tremote cummit: %.7s\n", oid_to_hex(&remote_oid));
 
 	if (!local && !remote)
 		die("Cannot merge empty notes ref (%s) into empty notes ref "
 		    "(%s)", o->remote_ref, o->local_ref);
 	if (!local) {
-		/* result == remote commit */
+		/* result == remote cummit */
 		oidcpy(result_oid, &remote_oid);
 		goto found_result;
 	}
 	if (!remote) {
-		/* result == local commit */
+		/* result == local cummit */
 		oidcpy(result_oid, &local_oid);
 		goto found_result;
 	}
@@ -608,34 +608,34 @@ int notes_merge(struct notes_merge_options *o,
 			printf("No merge base found; doing history-less merge\n");
 	} else if (!bases->next) {
 		base_oid = &bases->item->object.oid;
-		base_tree_oid = get_commit_tree_oid(bases->item);
+		base_tree_oid = get_cummit_tree_oid(bases->item);
 		if (o->verbosity >= 4)
 			printf("One merge base found (%.7s)\n",
 			       oid_to_hex(base_oid));
 	} else {
 		/* TODO: How to handle multiple merge-bases? */
 		base_oid = &bases->item->object.oid;
-		base_tree_oid = get_commit_tree_oid(bases->item);
+		base_tree_oid = get_cummit_tree_oid(bases->item);
 		if (o->verbosity >= 3)
 			printf("Multiple merge bases found. Using the first "
 				"(%.7s)\n", oid_to_hex(base_oid));
 	}
 
 	if (o->verbosity >= 4)
-		printf("Merging remote commit %.7s into local commit %.7s with "
+		printf("Merging remote cummit %.7s into local cummit %.7s with "
 			"merge-base %.7s\n", oid_to_hex(&remote->object.oid),
 			oid_to_hex(&local->object.oid),
 			oid_to_hex(base_oid));
 
 	if (oideq(&remote->object.oid, base_oid)) {
-		/* Already merged; result == local commit */
+		/* Already merged; result == local cummit */
 		if (o->verbosity >= 2)
 			printf_ln("Already up to date.");
 		oidcpy(result_oid, &local->object.oid);
 		goto found_result;
 	}
 	if (oideq(&local->object.oid, base_oid)) {
-		/* Fast-forward; result == remote commit */
+		/* Fast-forward; result == remote cummit */
 		if (o->verbosity >= 2)
 			printf("Fast-forward\n");
 		oidcpy(result_oid, &remote->object.oid);
@@ -643,48 +643,48 @@ int notes_merge(struct notes_merge_options *o,
 	}
 
 	result = merge_from_diffs(o, base_tree_oid,
-				  get_commit_tree_oid(local),
-				  get_commit_tree_oid(remote), local_tree);
+				  get_cummit_tree_oid(local),
+				  get_cummit_tree_oid(remote), local_tree);
 
 	if (result != 0) { /* non-trivial merge (with or without conflicts) */
-		/* Commit (partial) result */
-		struct commit_list *parents = NULL;
-		commit_list_insert(remote, &parents); /* LIFO order */
-		commit_list_insert(local, &parents);
-		create_notes_commit(o->repo, local_tree, parents, o->commit_msg.buf,
-				    o->commit_msg.len, result_oid);
+		/* cummit (partial) result */
+		struct cummit_list *parents = NULL;
+		cummit_list_insert(remote, &parents); /* LIFO order */
+		cummit_list_insert(local, &parents);
+		create_notes_cummit(o->repo, local_tree, parents, o->cummit_msg.buf,
+				    o->cummit_msg.len, result_oid);
 	}
 
 found_result:
-	free_commit_list(bases);
-	strbuf_release(&(o->commit_msg));
+	free_cummit_list(bases);
+	strbuf_release(&(o->cummit_msg));
 	trace_printf("notes_merge(): result = %i, result_oid = %.7s\n",
 	       result, oid_to_hex(result_oid));
 	return result;
 }
 
-int notes_merge_commit(struct notes_merge_options *o,
+int notes_merge_cummit(struct notes_merge_options *o,
 		       struct notes_tree *partial_tree,
-		       struct commit *partial_commit,
+		       struct cummit *partial_cummit,
 		       struct object_id *result_oid)
 {
 	/*
 	 * Iterate through files in .git/NOTES_MERGE_WORKTREE and add all
 	 * found notes to 'partial_tree'. Write the updated notes tree to
-	 * the DB, and commit the resulting tree object while reusing the
-	 * commit message and parents from 'partial_commit'.
-	 * Finally store the new commit object OID into 'result_oid'.
+	 * the DB, and cummit the resulting tree object while reusing the
+	 * cummit message and parents from 'partial_cummit'.
+	 * Finally store the new cummit object OID into 'result_oid'.
 	 */
 	DIR *dir;
 	struct dirent *e;
 	struct strbuf path = STRBUF_INIT;
-	const char *buffer = get_commit_buffer(partial_commit, NULL);
+	const char *buffer = get_cummit_buffer(partial_cummit, NULL);
 	const char *msg = strstr(buffer, "\n\n");
 	int baselen;
 
 	git_path_buf(&path, NOTES_MERGE_WORKTREE);
 	if (o->verbosity >= 3)
-		printf("Committing notes in notes merge worktree at %s\n",
+		printf("cummitting notes in notes merge worktree at %s\n",
 			path.buf);
 
 	if (!msg || msg[2] == '\0')
@@ -723,11 +723,11 @@ int notes_merge_commit(struct notes_merge_options *o,
 		strbuf_setlen(&path, baselen);
 	}
 
-	create_notes_commit(o->repo, partial_tree, partial_commit->parents, msg,
+	create_notes_cummit(o->repo, partial_tree, partial_cummit->parents, msg,
 			    strlen(msg), result_oid);
-	unuse_commit_buffer(partial_commit, buffer);
+	unuse_cummit_buffer(partial_cummit, buffer);
 	if (o->verbosity >= 4)
-		printf("Finalized notes merge commit: %s\n",
+		printf("Finalized notes merge cummit: %s\n",
 			oid_to_hex(result_oid));
 	strbuf_release(&path);
 	closedir(dir);

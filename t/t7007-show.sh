@@ -18,23 +18,23 @@ test_expect_success 'showing a tag that point at a missing object' '
 '
 
 test_expect_success 'set up a bit of history' '
-	test_commit main1 &&
-	test_commit main2 &&
-	test_commit main3 &&
+	test_cummit main1 &&
+	test_cummit main2 &&
+	test_cummit main3 &&
 	git tag -m "annotated tag" annotated &&
 	git checkout -b side HEAD^^ &&
-	test_commit side2 &&
-	test_commit side3 &&
+	test_cummit side2 &&
+	test_cummit side3 &&
 	test_merge merge main3
 '
 
-test_expect_success 'showing two commits' '
+test_expect_success 'showing two cummits' '
 	cat >expect <<-EOF &&
-	commit $(git rev-parse main2)
-	commit $(git rev-parse main3)
+	cummit $(git rev-parse main2)
+	cummit $(git rev-parse main3)
 	EOF
 	git show main2 main3 >actual &&
-	grep ^commit actual >actual.filtered &&
+	grep ^cummit actual >actual.filtered &&
 	test_cmp expect actual.filtered
 '
 
@@ -66,7 +66,7 @@ test_expect_success 'showing two trees' '
 test_expect_success 'showing a trees is not recursive' '
 	git worktree add not-recursive main1 &&
 	mkdir not-recursive/a &&
-	test_commit -C not-recursive a/file &&
+	test_cummit -C not-recursive a/file &&
 	cat >expected <<-EOF &&
 	tree HEAD^{tree}
 
@@ -79,72 +79,72 @@ test_expect_success 'showing a trees is not recursive' '
 
 test_expect_success 'showing a range walks (linear)' '
 	cat >expect <<-EOF &&
-	commit $(git rev-parse main3)
-	commit $(git rev-parse main2)
+	cummit $(git rev-parse main3)
+	cummit $(git rev-parse main2)
 	EOF
 	git show main1..main3 >actual &&
-	grep ^commit actual >actual.filtered &&
+	grep ^cummit actual >actual.filtered &&
 	test_cmp expect actual.filtered
 '
 
 test_expect_success 'showing a range walks (Y shape, ^ first)' '
 	cat >expect <<-EOF &&
-	commit $(git rev-parse main3)
-	commit $(git rev-parse main2)
+	cummit $(git rev-parse main3)
+	cummit $(git rev-parse main2)
 	EOF
 	git show ^side3 main3 >actual &&
-	grep ^commit actual >actual.filtered &&
+	grep ^cummit actual >actual.filtered &&
 	test_cmp expect actual.filtered
 '
 
 test_expect_success 'showing a range walks (Y shape, ^ last)' '
 	cat >expect <<-EOF &&
-	commit $(git rev-parse main3)
-	commit $(git rev-parse main2)
+	cummit $(git rev-parse main3)
+	cummit $(git rev-parse main2)
 	EOF
 	git show main3 ^side3 >actual &&
-	grep ^commit actual >actual.filtered &&
+	grep ^cummit actual >actual.filtered &&
 	test_cmp expect actual.filtered
 '
 
 test_expect_success 'showing with -N walks' '
 	cat >expect <<-EOF &&
-	commit $(git rev-parse main3)
-	commit $(git rev-parse main2)
+	cummit $(git rev-parse main3)
+	cummit $(git rev-parse main2)
 	EOF
 	git show -2 main3 >actual &&
-	grep ^commit actual >actual.filtered &&
+	grep ^cummit actual >actual.filtered &&
 	test_cmp expect actual.filtered
 '
 
 test_expect_success 'showing annotated tag' '
 	cat >expect <<-EOF &&
 	tag annotated
-	commit $(git rev-parse annotated^{commit})
+	cummit $(git rev-parse annotated^{cummit})
 	EOF
 	git show annotated >actual &&
-	grep -E "^(commit|tag)" actual >actual.filtered &&
+	grep -E "^(cummit|tag)" actual >actual.filtered &&
 	test_cmp expect actual.filtered
 '
 
-test_expect_success 'showing annotated tag plus commit' '
+test_expect_success 'showing annotated tag plus cummit' '
 	cat >expect <<-EOF &&
 	tag annotated
-	commit $(git rev-parse annotated^{commit})
-	commit $(git rev-parse side3)
+	cummit $(git rev-parse annotated^{cummit})
+	cummit $(git rev-parse side3)
 	EOF
 	git show annotated side3 >actual &&
-	grep -E "^(commit|tag)" actual >actual.filtered &&
+	grep -E "^(cummit|tag)" actual >actual.filtered &&
 	test_cmp expect actual.filtered
 '
 
 test_expect_success 'showing range' '
 	cat >expect <<-EOF &&
-	commit $(git rev-parse main3)
-	commit $(git rev-parse main2)
+	cummit $(git rev-parse main3)
+	cummit $(git rev-parse main2)
 	EOF
 	git show ^side3 annotated >actual &&
-	grep -E "^(commit|tag)" actual >actual.filtered &&
+	grep -E "^(cummit|tag)" actual >actual.filtered &&
 	test_cmp expect actual.filtered
 '
 

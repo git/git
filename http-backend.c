@@ -475,11 +475,11 @@ static void run_service(const char **argv, int buffer_input)
 	if (!host || !*host)
 		host = "(none)";
 
-	if (!getenv("GIT_COMMITTER_NAME"))
-		strvec_pushf(&cld.env_array, "GIT_COMMITTER_NAME=%s", user);
-	if (!getenv("GIT_COMMITTER_EMAIL"))
+	if (!getenv("GIT_cummitTER_NAME"))
+		strvec_pushf(&cld.env_array, "GIT_cummitTER_NAME=%s", user);
+	if (!getenv("GIT_cummitTER_EMAIL"))
 		strvec_pushf(&cld.env_array,
-			     "GIT_COMMITTER_EMAIL=%s@http.%s", user, host);
+			     "GIT_cummitTER_EMAIL=%s@http.%s", user, host);
 
 	strvec_pushv(&cld.args, argv);
 	if (buffer_input || gzipped_request || req_len >= 0)

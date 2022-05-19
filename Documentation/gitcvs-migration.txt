@@ -27,7 +27,7 @@ Developing against a shared repository
 --------------------------------------
 
 Suppose a shared repository is set up in /pub/repo.git on the host
-foo.com.  Then as an individual committer you can clone the shared
+foo.com.  Then as an individual cummitter you can clone the shared
 repository over ssh with:
 
 ------------------------------------------------
@@ -42,7 +42,7 @@ $ git pull origin
 ------------------------------------------------
 
 which merges in any work that others might have done since the clone
-operation.  If there are uncommitted changes in your working tree, commit
+operation.  If there are uncummitted changes in your working tree, cummit
 them first before running git pull.
 
 [NOTE]
@@ -53,15 +53,15 @@ command; see `git config -l` and the linkgit:git-config[1] man
 page for details.
 ================================
 
-You can update the shared repository with your changes by first committing
+You can update the shared repository with your changes by first cummitting
 your changes, and then using the 'git push' command:
 
 ------------------------------------------------
 $ git push origin master
 ------------------------------------------------
 
-to "push" those commits to the shared repository.  If someone else has
-updated the repository more recently, 'git push', like 'cvs commit', will
+to "push" those cummits to the shared repository.  If someone else has
+updated the repository more recently, 'git push', like 'cvs cummit', will
 complain, in which case you must pull any changes before attempting the
 push again.
 
@@ -103,14 +103,14 @@ machine where the repository is hosted.  If you don't want to give them a
 full shell on the machine, there is a restricted shell which only allows
 users to do Git pushes and pulls; see linkgit:git-shell[1].
 
-Put all the committers in the same group, and make the repository
+Put all the cummitters in the same group, and make the repository
 writable by that group:
 
 ------------------------------------------------
 $ chgrp -R $group /pub/my-repo.git
 ------------------------------------------------
 
-Make sure committers have a umask of at most 027, so that the directories
+Make sure cummitters have a umask of at most 027, so that the directories
 they create are writable and searchable by other group members.
 
 Importing a CVS archive
@@ -157,7 +157,7 @@ Advanced Shared Repository Management
 -------------------------------------
 
 Git allows you to specify scripts called "hooks" to be run at certain
-points.  You can use these, for example, to send all commits to the shared
+points.  You can use these, for example, to send all cummits to the shared
 repository to a mailing list.  See linkgit:githooks[5].
 
 You can enforce finer grained permissions using update hooks.  See
@@ -174,7 +174,7 @@ details.
 Alternative Development Models
 ------------------------------
 
-CVS users are accustomed to giving a group of developers commit access to
+CVS users are accustomed to giving a group of developers cummit access to
 a common repository.  As we've seen, this is also possible with Git.
 However, the distributed nature of Git allows other development models,
 and you may want to first consider whether one of them might be a better

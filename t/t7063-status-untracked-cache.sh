@@ -574,10 +574,10 @@ test_expect_success 'set up for sparse checkout testing' '
 	echo three >>done/.gitignore &&
 	echo two >done/two &&
 	git add -f done/two done/.gitignore &&
-	git commit -m "first commit"
+	git cummit -m "first cummit"
 '
 
-test_expect_success 'status after commit' '
+test_expect_success 'status after cummit' '
 	: >../trace.output &&
 	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.output" \
 	git status --porcelain >../actual &&
@@ -599,7 +599,7 @@ EOF
 	test_cmp ../trace.expect ../trace.relevant
 '
 
-test_expect_success 'untracked cache correct after commit' '
+test_expect_success 'untracked cache correct after cummit' '
 	test-tool dump-untracked-cache >../actual &&
 	cat >../expect <<EOF &&
 info/exclude $(test_oid exclude)
@@ -883,23 +883,23 @@ test_expect_success 'test ident field is working' '
 '
 
 test_expect_success 'untracked cache survives a checkout' '
-	git commit --allow-empty -m empty &&
+	git cummit --allow-empty -m empty &&
 	test-tool dump-untracked-cache >../before &&
 	test_when_finished  "git checkout main" &&
 	git checkout -b other_branch &&
 	test-tool dump-untracked-cache >../after &&
 	test_cmp ../before ../after &&
-	test_commit test &&
+	test_cummit test &&
 	test-tool dump-untracked-cache >../before &&
 	git checkout main &&
 	test-tool dump-untracked-cache >../after &&
 	test_cmp ../before ../after
 '
 
-test_expect_success 'untracked cache survives a commit' '
+test_expect_success 'untracked cache survives a cummit' '
 	test-tool dump-untracked-cache >../before &&
 	git add done/two &&
-	git commit -m commit &&
+	git cummit -m cummit &&
 	test-tool dump-untracked-cache >../after &&
 	test_cmp ../before ../after
 '
@@ -915,11 +915,11 @@ test_expect_success SYMLINKS 'setup worktree for symlink test' '
 	mkdir one two &&
 	touch one/file two/file &&
 	git add one/file two/file &&
-	git commit -m"first commit" &&
+	git cummit -m"first cummit" &&
 	git rm -rf one &&
 	ln -s two one &&
 	git add one &&
-	git commit -m"second commit"
+	git cummit -m"second cummit"
 '
 
 test_expect_success SYMLINKS '"status" after symlink replacement should be clean with UC=true' '
@@ -950,11 +950,11 @@ test_expect_success 'setup worktree for non-symlink test' '
 	mkdir one two &&
 	touch one/file two/file &&
 	git add one/file two/file &&
-	git commit -m"first commit" &&
+	git cummit -m"first cummit" &&
 	git rm -rf one &&
 	cp two/file one &&
 	git add one &&
-	git commit -m"second commit"
+	git cummit -m"second cummit"
 '
 
 test_expect_success '"status" after file replacement should be clean with UC=true' '

@@ -8,8 +8,8 @@ Fixes since v1.7.10.2
 
  * Running "git checkout" on an unborn branch used to corrupt HEAD.
 
- * When checking out another commit from an already detached state, we
-   used to report all commits that are not reachable from any of the
+ * When checking out another cummit from an already detached state, we
+   used to report all cummits that are not reachable from any of the
    refs as lossage, but some of them might be reachable from the new
    HEAD, and there is no need to warn about them.
 

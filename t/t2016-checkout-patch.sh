@@ -9,9 +9,9 @@ test_expect_success PERL 'setup' '
 	echo parent > dir/foo &&
 	echo dummy > bar &&
 	git add bar dir/foo &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	test_tick &&
-	test_commit second dir/foo head &&
+	test_cummit second dir/foo head &&
 	set_and_save_state bar bar_work bar_index &&
 	save_head
 '

@@ -18,7 +18,7 @@
 
 	automated tests for --squash stuff
 
-	"add" command non-obviously requires a commitid; would be easier if
+	"add" command non-obviously requires a cummitid; would be easier if
 		it had a "pull" sort of mode instead
 
 	"pull" and "merge" commands should fail if you've never merged
@@ -26,10 +26,10 @@
 
 	docs should provide an example of "add"
 
-	note that the initial split doesn't *have* to have a commitid
+	note that the initial split doesn't *have* to have a cummitid
 		specified... that's just an optimization
 
-	if you try to add (or maybe merge?) with an invalid commitid, you
+	if you try to add (or maybe merge?) with an invalid cummitid, you
 		get a misleading "prefix must end with /" message from
 		one of the other git tools that git-subtree calls.  Should
 		detect this situation and print the *real* problem.
@@ -45,4 +45,4 @@
 	guess --prefix automatically if possible based on pwd
 
 	make a 'git subtree grafts' that automatically expands --squash'd
-		commits so you can see the full history if you want it.
+		cummits so you can see the full history if you want it.

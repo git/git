@@ -18,7 +18,7 @@ test_expect_success 'two-way setup' '
 	echo >subdir/file1 file one in subdirectory &&
 	echo >subdir/file2 file two in subdirectory &&
 	git update-index --add file1 file2 subdir/file1 subdir/file2 &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	git branch side &&
 	git tag -f branch-point &&
@@ -26,7 +26,7 @@ test_expect_success 'two-way setup' '
 	echo file2 is not tracked on the main branch anymore &&
 	rm -f file2 subdir/file2 &&
 	git update-index --remove file2 subdir/file2 &&
-	git commit -a -m "main removes file2 and subdir/file2"
+	git cummit -a -m "main removes file2 and subdir/file2"
 '
 
 test_expect_success 'two-way not clobbering' '
@@ -82,7 +82,7 @@ test_expect_success 'three-way not complaining on an untracked path in both' '
 	echo >file3 file three &&
 	echo >subdir/file3 file three &&
 	git update-index --add file3 subdir/file3 &&
-	git commit -a -m "side adds file3 and removes file2" &&
+	git cummit -a -m "side adds file3 and removes file2" &&
 
 	git checkout main &&
 	echo >file2 file two is untracked on the main side &&
@@ -125,10 +125,10 @@ test_expect_success '3-way not overwriting local changes (setup)' '
 	git reset --hard &&
 	git checkout -b side-a branch-point &&
 	echo >>file1 "new line to be kept in the merge result" &&
-	git commit -a -m "side-a changes file1" &&
+	git cummit -a -m "side-a changes file1" &&
 	git checkout -b side-b branch-point &&
 	echo >>file2 "new line to be kept in the merge result" &&
-	git commit -a -m "side-b changes file2" &&
+	git cummit -a -m "side-b changes file2" &&
 	git checkout side-a
 
 '
@@ -168,13 +168,13 @@ test_expect_success 'funny symlink in work tree' '
 	mkdir -p a &&
 	>a/b &&
 	git add a/b &&
-	git commit -m "side adds a/b" &&
+	git cummit -m "side adds a/b" &&
 
 	rm -fr a &&
 	git checkout -b sym-a side-a &&
 	mkdir -p a &&
 	test_ln_s_add ../b a/b &&
-	git commit -m "we add a/b" &&
+	git cummit -m "we add a/b" &&
 
 	read_tree_u_must_succeed -m -u sym-a sym-a sym-b
 
@@ -203,7 +203,7 @@ test_expect_success 'D/F setup' '
 	echo qfwfq >subdir/file2/another &&
 	git add subdir/file2/another &&
 	test_tick &&
-	git commit -m "side-a changes file2 to directory"
+	git cummit -m "side-a changes file2 to directory"
 
 '
 

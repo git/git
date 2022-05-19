@@ -12,8 +12,8 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Displays changes in a repository or a selected set of commits. This includes
-visualizing the commit graph, showing information related to each commit, and
+Displays changes in a repository or a selected set of cummits. This includes
+visualizing the cummit graph, showing information related to each cummit, and
 the files in the trees of each revision.
 
 OPTIONS
@@ -22,7 +22,7 @@ OPTIONS
 To control which revisions to show, gitk supports most options
 applicable to the 'git rev-list' command.  It also supports a few
 options applicable to the 'git diff-*' commands to control how the
-changes each commit introduces are shown.  Finally, it supports some
+changes each cummit introduces are shown.  Finally, it supports some
 gitk-specific options.
 
 gitk generally only understands options with arguments in the
@@ -44,34 +44,34 @@ linkgit:git-rev-list[1] for a complete list.
 --remotes[=<pattern>]::
 
 	Pretend as if all the branches (tags, remote branches, resp.)
-	are listed on the command line as '<commit>'. If '<pattern>'
+	are listed on the command line as '<cummit>'. If '<pattern>'
 	is given, limit refs to ones matching given shell glob. If
 	pattern lacks '?', '{asterisk}', or '[', '/{asterisk}' at the
 	end is implied.
 
 --since=<date>::
 
-	Show commits more recent than a specific date.
+	Show cummits more recent than a specific date.
 
 --until=<date>::
 
-	Show commits older than a specific date.
+	Show cummits older than a specific date.
 
 --date-order::
 
-	Sort commits by date when possible.
+	Sort cummits by date when possible.
 
 --merge::
 
-	After an attempt to merge stops with conflicts, show the commits on
+	After an attempt to merge stops with conflicts, show the cummits on
 	the history between two branches (i.e. the HEAD and the MERGE_HEAD)
 	that modify the conflicted files and do not exist on all the heads
 	being merged.
 
 --left-right::
 
-	Mark which side of a symmetric difference a commit is reachable
-	from.  Commits from the left side are prefixed with a `<`
+	Mark which side of a symmetric difference a cummit is reachable
+	from.  cummits from the left side are prefixed with a `<`
 	symbol and those from the right with a `>` symbol.
 
 --full-history::
@@ -84,17 +84,17 @@ linkgit:git-rev-list[1] for a complete list.
 
 	Additional option to `--full-history` to remove some needless
 	merges from the resulting history, as there are no selected
-	commits contributing to this merge.  (See "History
+	cummits contributing to this merge.  (See "History
 	simplification" in linkgit:git-log[1] for a more detailed
 	explanation.)
 
 --ancestry-path::
 
-	When given a range of commits to display
-	(e.g. 'commit1..commit2' or 'commit2 {caret}commit1'), only
-	display commits that exist directly on the ancestry chain
-	between the 'commit1' and 'commit2', i.e. commits that are
-	both descendants of 'commit1', and ancestors of 'commit2'.
+	When given a range of cummits to display
+	(e.g. 'cummit1..cummit2' or 'cummit2 {caret}cummit1'), only
+	display cummits that exist directly on the ancestry chain
+	between the 'cummit1' and 'cummit2', i.e. cummits that are
+	both descendants of 'cummit1', and ancestors of 'cummit2'.
 	(See "History simplification" in linkgit:git-log[1] for a more
 	detailed explanation.)
 
@@ -111,7 +111,7 @@ include::line-range-options.txt[]
 
 <path>...::
 
-	Limit commits to the ones touching files in the given paths. Note, to
+	Limit cummits to the ones touching files in the given paths. Note, to
 	avoid ambiguity with respect to revision names use "--" to separate the paths
 	from any preceding options.
 
@@ -124,12 +124,12 @@ gitk-specific options
 	range to show.  The command is expected to print on its
 	standard output a list of additional revisions to be shown,
 	one per line.  Use this instead of explicitly specifying a
-	'<revision range>' if the set of commits to show may vary
+	'<revision range>' if the set of cummits to show may vary
 	between refreshes.
 
---select-commit=<ref>::
+--select-cummit=<ref>::
 
-	Select the specified commit after loading the graph.
+	Select the specified cummit after loading the graph.
 	Default behavior is equivalent to specifying '--select-commit=HEAD'.
 
 Examples

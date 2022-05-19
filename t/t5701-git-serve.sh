@@ -118,9 +118,9 @@ test_expect_success 'wrong object-format' '
 # Test the basics of ls-refs
 #
 test_expect_success 'setup some refs and tags' '
-	test_commit one &&
+	test_cummit one &&
 	git branch dev main &&
-	test_commit two &&
+	test_cummit two &&
 	git symbolic-ref refs/heads/release refs/heads/main &&
 	git tag -a -m "annotated tag" annotated-tag
 '

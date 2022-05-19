@@ -59,7 +59,7 @@ Design Details
   without any loss of information.
 
 - The MIDX file format uses a chunk-based approach (similar to the
-  commit-graph file) that allows optional data to be added.
+  cummit-graph file) that allows optional data to be added.
 
 Future Work
 -----------
@@ -85,7 +85,7 @@ Future Work
   records flags of information about the packfiles. This allows new
   states, such as 'repacked' or 'redeltified', that can help with
   pack maintenance in a multi-pack environment. It may also be
-  helpful to organize packfiles by object type (commit, tree, blob,
+  helpful to organize packfiles by object type (cummit, tree, blob,
   etc.) and use this metadata to help that maintenance.
 
 Related Links

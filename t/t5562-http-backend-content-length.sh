@@ -49,8 +49,8 @@ test_expect_success 'setup' '
 	HTTP_CONTENT_ENCODING="identity" &&
 	export HTTP_CONTENT_ENCODING &&
 	git config http.receivepack true &&
-	test_commit c0 &&
-	test_commit c1 &&
+	test_cummit c0 &&
+	test_cummit c1 &&
 	hash_head=$(git rev-parse HEAD) &&
 	hash_prev=$(git rev-parse HEAD~1) &&
 	{
@@ -60,7 +60,7 @@ test_expect_success 'setup' '
 		packetize "done"
 	} >fetch_body &&
 	test_copy_bytes 10 <fetch_body >fetch_body.trunc &&
-	hash_next=$(git commit-tree -p HEAD -m next HEAD^{tree}) &&
+	hash_next=$(git cummit-tree -p HEAD -m next HEAD^{tree}) &&
 	{
 		printf "%s %s refs/heads/newbranch\\0report-status object-format=%s\\n" \
 			"$ZERO_OID" "$hash_next" "$(test_oid algo)" | packetize_raw &&

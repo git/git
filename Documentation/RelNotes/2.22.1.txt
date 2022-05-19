@@ -23,7 +23,7 @@ Fixes since v2.22
    value for the HEAD symbolic ref when the namespace feature is in
    use, which has been corrected.
 
- * "git am -i --resolved" segfaulted after trying to see a commit as
+ * "git am -i --resolved" segfaulted after trying to see a cummit as
    if it were a tree, which has been corrected.
 
  * "git bundle verify" needs to see if prerequisite objects exist in
@@ -31,8 +31,8 @@ Fixes since v2.22
    in a repository upfront, which has been corrected.
 
  * "git merge --squash" is designed to update the working tree and the
-   index without creating the commit, and this cannot be countermanded
-   by adding the "--commit" option; the command now refuses to work
+   index without creating the cummit, and this cannot be countermanded
+   by adding the "--cummit" option; the command now refuses to work
    when both options are given.
 
  * The data collected by fsmonitor was not properly written back to
@@ -130,10 +130,10 @@ Fixes since v2.22
  * "git checkout -p" needs to selectively apply a patch in reverse,
    which did not work well.
 
- * The commit-graph file is now part of the "files that the runtime
+ * The cummit-graph file is now part of the "files that the runtime
    may keep open file descriptors on, all of which would need to be
    closed when done with the object store", and the file descriptor to
-   an existing commit-graph file now is closed before "gc" finalizes a
+   an existing cummit-graph file now is closed before "gc" finalizes a
    new instance to replace it.
 
  * Code restructuring during 2.20 period broke fetching tags via

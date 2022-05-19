@@ -24,20 +24,20 @@ Fixes since v2.7
    the '--signoff' option and DCO.
 
  * "git reflog" incorrectly assumed that all objects that used to be
-   at the tip of a ref must be commits, which caused it to segfault.
+   at the tip of a ref must be cummits, which caused it to segfault.
 
  * The ignore mechanism saw a few regressions around untracked file
    listing and sparse checkout selection areas in 2.7.0; the change
    that is responsible for the regression has been reverted.
 
  * Some codepaths used fopen(3) when opening a fixed path in $GIT_DIR
-   (e.g. COMMIT_EDITMSG) that is meant to be left after the command is
+   (e.g. cummit_EDITMSG) that is meant to be left after the command is
    done.  This however did not work well if the repository is set to
    be shared with core.sharedRepository and the umask of the previous
    user is tighter.  They have been made to work better by calling
    unlink(2) and retrying after fopen(3) fails with EPERM.
 
- * Asking gitweb for a nonexistent commit left a warning in the server
+ * Asking gitweb for a nonexistent cummit left a warning in the server
    log.
 
  * "git rebase", unlike all other callers of "gc --auto", did not

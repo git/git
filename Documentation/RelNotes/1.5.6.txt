@@ -60,7 +60,7 @@ Updates since v1.5.5
 
 * "git cherry-pick" and "git revert" can add a sign-off.
 
-* "git commit" mentions the author identity when you are committing
+* "git cummit" mentions the author identity when you are cummitting
   somebody else's changes.
 
 * "git diff/log --dirstat" output is consistent between binary and textual
@@ -94,7 +94,7 @@ Updates since v1.5.5
   summary".
 
 * "git svn" learned --add-author-from option to propagate the authorship
-  by munging the commit log message.
+  by munging the cummit log message.
 
 * new object creation and looking up in "git svn" has been optimized.
 

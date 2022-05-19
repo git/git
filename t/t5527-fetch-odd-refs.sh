@@ -13,12 +13,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'setup repo with odd suffix ref' '
 	echo content >file &&
 	git add . &&
-	git commit -m one &&
+	git cummit -m one &&
 	git update-ref refs/for/refs/heads/main HEAD &&
 	echo content >>file &&
-	git commit -a -m two &&
+	git cummit -a -m two &&
 	echo content >>file &&
-	git commit -a -m three &&
+	git cummit -a -m three &&
 	git checkout HEAD^
 '
 
@@ -35,8 +35,8 @@ test_expect_success 'try to create repo with absurdly long refname' '
 	git init long &&
 	(
 		cd long &&
-		test_commit long &&
-		test_commit main
+		test_cummit long &&
+		test_cummit main
 	) &&
 	if git -C long update-ref refs/heads/$ref1440 long; then
 		test_set_prereq LONG_REF

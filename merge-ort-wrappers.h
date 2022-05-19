@@ -17,9 +17,9 @@ int merge_ort_nonrecursive(struct merge_options *opt,
  * Wrapper mimicking the old merge_recursive() function.
  */
 int merge_ort_recursive(struct merge_options *opt,
-			struct commit *h1,
-			struct commit *h2,
-			struct commit_list *ancestors,
-			struct commit **result);
+			struct cummit *h1,
+			struct cummit *h2,
+			struct cummit_list *ancestors,
+			struct cummit **result);
 
 #endif

@@ -43,10 +43,10 @@ UI, Workflows & Features
  * "git rebase --rebase-merges" mode now handles octopus merges as
    well.
 
- * Add a server-side knob to skip commits in exponential/fibbonacci
+ * Add a server-side knob to skip cummits in exponential/fibbonacci
    stride in an attempt to cover wider swath of history with a smaller
    number of iterations, potentially accepting a larger packfile
-   transfer, instead of going back one commit a time during common
+   transfer, instead of going back one cummit a time during common
    ancestor discovery during the "git fetch" transaction.
    (merge 42cc7485a2 jt/fetch-negotiator-skipping later to maint).
 
@@ -95,10 +95,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * The bulk of "git submodule foreach" has been rewritten in C.
 
- * The in-core "commit" object had an all-purpose "void *util" field,
+ * The in-core "cummit" object had an all-purpose "void *util" field,
    which was tricky to use especially in library-ish part of the
    code.  All of the existing uses of the field has been migrated to a
-   more dedicated "commit-slab" mechanism and the field is eliminated.
+   more dedicated "cummit-slab" mechanism and the field is eliminated.
 
  * A less often used command "git show-index" has been modernized.
    (merge fb3010c31f jk/show-index later to maint).
@@ -155,7 +155,7 @@ Performance, Internal Implementation, Development Support etc.
    while accepting "git push" was a bit overly strict than necessary,
    which has been adjusted.
 
- * "git fsck" learns to make sure the optional commit-graph file is in
+ * "git fsck" learns to make sure the optional cummit-graph file is in
    a sane state.
 
  * "git diff --color-moved" feature has further been tweaked.
@@ -166,14 +166,14 @@ Performance, Internal Implementation, Development Support etc.
  * Parsing of -L[<N>][,[<M>]] parameters "git blame" and "git log"
    take has been tweaked.
 
- * lookup_commit_reference() and friends have been updated to find
+ * lookup_cummit_reference() and friends have been updated to find
    in-core object for a specific in-core repository instance.
 
  * Various glitches in the heuristics of merge-recursive strategy have
    been documented in new tests.
 
  * "git fetch" learned a new option "--negotiation-tip" to limit the
-   set of commits it tells the other end as "have", to reduce wasted
+   set of cummits it tells the other end as "have", to reduce wasted
    bandwidth and cycles, which would be helpful when the receiving
    repository has a lot of refs that have little to do with the
    history at the remote it is fetching from.
@@ -191,7 +191,7 @@ Performance, Internal Implementation, Development Support etc.
  * Look for broken "&&" chains that are hidden in subshell, many of
    which have been found and corrected.
 
- * The singleton commit-graph in-core instance is made per in-core
+ * The singleton cummit-graph in-core instance is made per in-core
    repository instance.
 
  * "make DEVELOPER=1 DEVOPTS=pedantic" allows developers to compile
@@ -297,7 +297,7 @@ Fixes since v2.18
    (merge d067d98887 ms/send-pack-honor-config later to maint).
 
  * "git fetch-pack --all" used to unnecessarily fail upon seeing an
-   annotated tag that points at an object other than a commit.
+   annotated tag that points at an object other than a cummit.
    (merge c12c9df527 jk/fetch-all-peeled-fix later to maint).
 
  * When user edits the patch in "git add -p" and the user's editor is
@@ -310,7 +310,7 @@ Fixes since v2.18
 
  * The code to try seeing if a fetch is necessary in a submodule
    during a fetch with --recurse-submodules got confused when the path
-   to the submodule was changed in the range of commits in the
+   to the submodule was changed in the range of cummits in the
    superproject, sometimes showing "(null)".  This has been corrected.
 
  * Bugfix for "rebase -i" corner case regression.
@@ -325,7 +325,7 @@ Fixes since v2.18
    (merge 6600054e9b dj/runtime-prefix later to maint).
 
  * "git filter-branch" when used with the "--state-branch" option
-   still attempted to rewrite the commits whose filtered result is
+   still attempted to rewrite the cummits whose filtered result is
    known from the previous attempt (which is recorded on the state
    branch); the command has been corrected not to waste cycles doing
    so.
@@ -381,21 +381,21 @@ Fixes since v2.18
    (merge 650161a277 jc/t3404-one-shot-export-fix later to maint).
 
  * "git rev-parse ':/substring'" did not consider the history leading
-   only to HEAD when looking for a commit with the given substring,
+   only to HEAD when looking for a cummit with the given substring,
    when the HEAD is detached.  This has been fixed.
-   (merge 6b3351e799 wc/find-commit-with-pattern-on-detached-head later to maint).
+   (merge 6b3351e799 wc/find-cummit-with-pattern-on-detached-head later to maint).
 
  * Build doc update for Windows.
    (merge ede8d89bb1 nd/command-list later to maint).
 
- * core.commentchar is now honored when preparing the list of commits
+ * core.commentchar is now honored when preparing the list of cummits
    to replay in "rebase -i".
 
  * "git pull --rebase" on a corrupt HEAD caused a segfault.  In
    general we substitute an empty tree object when running the in-core
    equivalent of the diff-index command, and the codepath has been
    corrected to do so as well to fix this issue.
-   (merge 3506dc9445 jk/has-uncommitted-changes-fix later to maint).
+   (merge 3506dc9445 jk/has-uncummitted-changes-fix later to maint).
 
  * httpd tests saw occasional breakage due to the way its access log
    gets inspected by the tests, which has been updated to make them
@@ -504,7 +504,7 @@ Fixes since v2.18
  * The "--exec" option to "git rebase --rebase-merges" placed the exec
    commands at wrong places, which has been corrected.
 
- * "git verify-tag" and "git verify-commit" have been taught to use
+ * "git verify-tag" and "git verify-cummit" have been taught to use
    the exit status of underlying "gpg --verify" to signal bad or
    untrusted signature they found.
    (merge 4e5dc9ca17 jc/gpg-status later to maint).
@@ -529,10 +529,10 @@ Fixes since v2.18
    subsection, which has been corrected.
    (merge bff7df7a87 sb/config-write-fix later to maint).
 
- * When "git rebase -i" is told to squash two or more commits into
-   one, it labeled the log message for each commit with its number.
-   It correctly called the first one "1st commit", but the next one
-   was "commit #1", which was off-by-one.  This has been corrected.
+ * When "git rebase -i" is told to squash two or more cummits into
+   one, it labeled the log message for each cummit with its number.
+   It correctly called the first one "1st cummit", but the next one
+   was "cummit #1", which was off-by-one.  This has been corrected.
    (merge dd2e36ebac pw/rebase-i-squash-number-fix later to maint).
 
  * "git rebase -i", when a 'merge <branch>' insn in its todo list
@@ -567,7 +567,7 @@ Fixes since v2.18
    predictable".
 
  * "git merge-base" in 2.19-rc1 has performance regression when the
-   (experimental) commit-graph feature is in use, which has been
+   (experimental) cummit-graph feature is in use, which has been
    mitigated.
 
  * Code cleanup, docfix, build fix, etc.
@@ -580,7 +580,7 @@ Fixes since v2.18
    (merge d7f590be84 en/rebase-i-microfixes later to maint).
    (merge 81d395cc85 js/rebase-recreate-merge later to maint).
    (merge 51d1863168 tz/exclude-doc-smallfixes later to maint).
-   (merge a9aa3c0927 ds/commit-graph later to maint).
+   (merge a9aa3c0927 ds/cummit-graph later to maint).
    (merge 5cf8e06474 js/enhanced-version-info later to maint).
    (merge 6aaded5509 tb/config-default later to maint).
    (merge 022d2ac1f3 sb/blame-color later to maint).

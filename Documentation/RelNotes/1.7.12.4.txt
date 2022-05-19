@@ -10,7 +10,7 @@ Fixes since v1.7.12.3
  * It was possible to give specific paths for "asciidoc" and other
    tools in the documentation toolchain, but not for "xmlto".
 
- * "gitweb" did not give the correct committer timezone in its feed
+ * "gitweb" did not give the correct cummitter timezone in its feed
    output due to a typo.
 
  * The "-Xours" (and similarly -Xtheirs) backend option to "git

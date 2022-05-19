@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "object-store.h"
-#include "commit.h"
+#include "cummit.h"
 #include "blob.h"
 #include "diff.h"
 #include "diffcore.h"
@@ -319,7 +319,7 @@ static char *grab_blob(struct repository *r,
 
 	if (S_ISGITLINK(mode)) {
 		struct strbuf buf = STRBUF_INIT;
-		strbuf_addf(&buf, "Subproject commit %s\n", oid_to_hex(oid));
+		strbuf_addf(&buf, "Subproject cummit %s\n", oid_to_hex(oid));
 		*size = buf.len;
 		blob = strbuf_detach(&buf, NULL);
 	} else if (is_null_oid(oid)) {
@@ -941,7 +941,7 @@ static void show_combined_header(struct combine_diff_path *elem,
 	int i;
 	int dense = rev->dense_combined_merges;
 
-	if (rev->loginfo && !rev->no_commit_id)
+	if (rev->loginfo && !rev->no_cummit_id)
 		show_log(rev);
 
 	dump_quoted_path(dense ? "diff --cc " : "diff --combined ",
@@ -1236,7 +1236,7 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, struct re
 	if (!line_termination)
 		inter_name_termination = 0;
 
-	if (rev->loginfo && !rev->no_commit_id)
+	if (rev->loginfo && !rev->no_cummit_id)
 		show_log(rev);
 
 
@@ -1502,14 +1502,14 @@ void diff_tree_combined(const struct object_id *oid,
 	if (!num_parent)
 		return;
 
-	show_log_first = !!rev->loginfo && !rev->no_commit_id;
+	show_log_first = !!rev->loginfo && !rev->no_cummit_id;
 	needsep = 0;
 	if (show_log_first) {
 		show_log(rev);
 
 		if (rev->verbose_header && opt->output_format &&
 		    opt->output_format != DIFF_FORMAT_NO_OUTPUT &&
-		    !commit_format_is_empty(rev->commit_format))
+		    !cummit_format_is_empty(rev->cummit_format))
 			printf("%s%c", diff_line_prefix(opt),
 			       opt->line_termination);
 	}
@@ -1637,16 +1637,16 @@ void diff_tree_combined(const struct object_id *oid,
 	clear_pathspec(&diffopts.pathspec);
 }
 
-void diff_tree_combined_merge(const struct commit *commit,
+void diff_tree_combined_merge(const struct cummit *cummit,
 			      struct rev_info *rev)
 {
-	struct commit_list *parent = get_saved_parents(rev, commit);
+	struct cummit_list *parent = get_saved_parents(rev, cummit);
 	struct oid_array parents = OID_ARRAY_INIT;
 
 	while (parent) {
 		oid_array_append(&parents, &parent->item->object.oid);
 		parent = parent->next;
 	}
-	diff_tree_combined(&commit->object.oid, &parents, rev);
+	diff_tree_combined(&cummit->object.oid, &parents, rev);
 	oid_array_clear(&parents);
 }

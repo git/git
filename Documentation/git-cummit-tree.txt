@@ -1,0 +1,101 @@
+git-cummit-tree(1)
+==================
+
+NAME
+----
+git-cummit-tree - Create a new cummit object
+
+
+SYNOPSIS
+--------
+[verse]
+'git cummit-tree' <tree> [(-p <parent>)...]
+'git cummit-tree' [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]
+		  [(-F <file>)...] <tree>
+
+
+DESCRIPTION
+-----------
+This is usually not what an end user wants to run directly.  See
+linkgit:git-cummit[1] instead.
+
+Creates a new cummit object based on the provided tree object and
+emits the new cummit object id on stdout. The log message is read
+from the standard input, unless `-m` or `-F` options are given.
+
+The `-m` and `-F` options can be given any number of times, in any
+order. The cummit log message will be composed in the order in which
+the options are given.
+
+A cummit object may have any number of parents. With exactly one
+parent, it is an ordinary cummit. Having more than one parent makes
+the cummit a merge between several lines of history. Initial (root)
+cummits have no parents.
+
+While a tree represents a particular directory state of a working
+directory, a cummit represents that state in "time", and explains how
+to get there.
+
+Normally a cummit would identify a new "HEAD" state, and while Git
+doesn't care where you save the note about that state, in practice we
+tend to just write the result to the file that is pointed at by
+`.git/HEAD`, so that we can always see what the last cummitted
+state was.
+
+OPTIONS
+-------
+<tree>::
+	An existing tree object.
+
+-p <parent>::
+	Each `-p` indicates the id of a parent cummit object.
+
+-m <message>::
+	A paragraph in the cummit log message. This can be given more than
+	once and each <message> becomes its own paragraph.
+
+-F <file>::
+	Read the cummit log message from the given file. Use `-` to read
+	from the standard input. This can be given more than once and the
+	content of each file becomes its own paragraph.
+
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+--no-gpg-sign::
+	GPG-sign cummits. The `keyid` argument is optional and
+	defaults to the cummitter identity; if specified, it must be
+	stuck to the option without a space. `--no-gpg-sign` is useful to
+	countermand a `--gpg-sign` option given earlier on the command line.
+
+cummit Information
+------------------
+
+A cummit encapsulates:
+
+- all parent object ids
+- author name, email and date
+- cummitter name and email and the cummit time.
+
+A cummit comment is read from stdin. If a changelog
+entry is not provided via "<" redirection, 'git cummit-tree' will just wait
+for one to be entered and terminated with ^D.
+
+include::date-formats.txt[]
+
+Discussion
+----------
+
+include::i18n.txt[]
+
+FILES
+-----
+/etc/mailname
+
+SEE ALSO
+--------
+linkgit:git-write-tree[1]
+linkgit:git-cummit[1]
+
+GIT
+---
+Part of the linkgit:git[1] suite

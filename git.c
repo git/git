@@ -108,7 +108,7 @@ static int list_cmds(const char *spec)
 	return 0;
 }
 
-static void commit_pager_choice(void)
+static void cummit_pager_choice(void)
 {
 	switch (use_pager) {
 	case 0:
@@ -129,7 +129,7 @@ void setup_auto_pager(const char *cmd, int def)
 	use_pager = check_pager_config(cmd);
 	if (use_pager == -1)
 		use_pager = def;
-	commit_pager_choice();
+	cummit_pager_choice();
 }
 
 static int handle_options(const char ***argv, int *argc, int *envchanged)
@@ -354,7 +354,7 @@ static int handle_alias(int *argcp, const char ***argv)
 			/* Aliases expect GIT_PREFIX, GIT_DIR etc to be set */
 			setup_git_directory_gently(&nongit_ok);
 
-			commit_pager_choice();
+			cummit_pager_choice();
 
 			child.use_shell = 1;
 			child.clean_on_exit = 1;
@@ -446,7 +446,7 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 	if (run_setup && startup_info->have_repository)
 		/* get_git_dir() may set up repo, avoid that */
 		trace_repo_setup(prefix);
-	commit_pager_choice();
+	cummit_pager_choice();
 
 	if (!help && get_super_prefix()) {
 		if (!(p->option & SUPPORT_SUPER_PREFIX))
@@ -511,9 +511,9 @@ static struct cmd_struct commands[] = {
 	{ "clean", cmd_clean, RUN_SETUP | NEED_WORK_TREE },
 	{ "clone", cmd_clone },
 	{ "column", cmd_column, RUN_SETUP_GENTLY },
-	{ "commit", cmd_commit, RUN_SETUP | NEED_WORK_TREE },
-	{ "commit-graph", cmd_commit_graph, RUN_SETUP },
-	{ "commit-tree", cmd_commit_tree, RUN_SETUP | NO_PARSEOPT },
+	{ "cummit", cmd_cummit, RUN_SETUP | NEED_WORK_TREE },
+	{ "cummit-graph", cmd_cummit_graph, RUN_SETUP },
+	{ "cummit-tree", cmd_cummit_tree, RUN_SETUP | NO_PARSEOPT },
 	{ "config", cmd_config, RUN_SETUP_GENTLY | DELAY_PAGER_CONFIG },
 	{ "count-objects", cmd_count_objects, RUN_SETUP },
 	{ "credential", cmd_credential, RUN_SETUP_GENTLY | NO_PARSEOPT },
@@ -539,7 +539,7 @@ static struct cmd_struct commands[] = {
 	{ "fsck-objects", cmd_fsck, RUN_SETUP },
 	{ "fsmonitor--daemon", cmd_fsmonitor__daemon, RUN_SETUP },
 	{ "gc", cmd_gc, RUN_SETUP },
-	{ "get-tar-commit-id", cmd_get_tar_commit_id, NO_PARSEOPT },
+	{ "get-tar-cummit-id", cmd_get_tar_cummit_id, NO_PARSEOPT },
 	{ "grep", cmd_grep, RUN_SETUP_GENTLY },
 	{ "hash-object", cmd_hash_object },
 	{ "help", cmd_help },
@@ -621,7 +621,7 @@ static struct cmd_struct commands[] = {
 	{ "upload-archive--writer", cmd_upload_archive_writer, NO_PARSEOPT },
 	{ "upload-pack", cmd_upload_pack },
 	{ "var", cmd_var, RUN_SETUP_GENTLY | NO_PARSEOPT },
-	{ "verify-commit", cmd_verify_commit, RUN_SETUP },
+	{ "verify-cummit", cmd_verify_cummit, RUN_SETUP },
 	{ "verify-pack", cmd_verify_pack },
 	{ "verify-tag", cmd_verify_tag, RUN_SETUP },
 	{ "version", cmd_version },
@@ -730,7 +730,7 @@ static void execv_dashed_external(const char **argv)
 
 	if (use_pager == -1 && !is_builtin(argv[0]))
 		use_pager = check_pager_config(argv[0]);
-	commit_pager_choice();
+	cummit_pager_choice();
 
 	strvec_pushf(&cmd.args, "git-%s", argv[0]);
 	strvec_pushv(&cmd.args, argv + 1);
@@ -789,7 +789,7 @@ static int run_argv(int *argcp, const char ***argv)
 			int i;
 
 			/*
-			 * The current process is committed to launching a
+			 * The current process is cummitted to launching a
 			 * child process to run the command named in (**argv)
 			 * and exiting.  Log a generic string as the trace2
 			 * command verb to indicate this.  Note that the child
@@ -800,7 +800,7 @@ static int run_argv(int *argcp, const char ***argv)
 			if (get_super_prefix())
 				die("%s doesn't support --super-prefix", **argv);
 
-			commit_pager_choice();
+			cummit_pager_choice();
 
 			strvec_push(&args, "git");
 			for (i = 0; i < *argcp; i++)
@@ -897,7 +897,7 @@ int cmd_main(int argc, const char **argv)
 		skip_prefix(argv[0], "--", &argv[0]);
 	} else {
 		/* The user didn't specify a command; give them help */
-		commit_pager_choice();
+		cummit_pager_choice();
 		printf(_("usage: %s\n\n"), git_usage_string);
 		list_common_cmds_help();
 		printf("\n%s\n", _(git_more_info_string));

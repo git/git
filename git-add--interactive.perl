@@ -96,7 +96,7 @@ my $patch_mode;
 my $patch_mode_revision;
 
 sub apply_patch;
-sub apply_patch_for_checkout_commit;
+sub apply_patch_for_checkout_cummit;
 sub apply_patch_for_stash;
 
 my %patch_modes = (
@@ -137,14 +137,14 @@ my %patch_modes = (
 	},
 	'checkout_head' => {
 		DIFF => 'diff-index -p',
-		APPLY => sub { apply_patch_for_checkout_commit '-R', @_ },
+		APPLY => sub { apply_patch_for_checkout_cummit '-R', @_ },
 		APPLY_CHECK => 'apply -R',
 		FILTER => undef,
 		IS_REVERSE => 1,
 	},
 	'checkout_nothead' => {
 		DIFF => 'diff-index -R -p',
-		APPLY => sub { apply_patch_for_checkout_commit '', @_ },
+		APPLY => sub { apply_patch_for_checkout_cummit '', @_ },
 		APPLY_CHECK => 'apply',
 		FILTER => undef,
 		IS_REVERSE => 0,
@@ -214,7 +214,7 @@ my $status_head = sprintf($status_fmt, __('staged'), __('unstaged'), __('path'))
 
 {
 	my $initial;
-	sub is_initial_commit {
+	sub is_initial_cummit {
 		$initial = system('git rev-parse HEAD -- >/dev/null 2>&1') != 0
 			unless defined $initial;
 		return $initial;
@@ -236,7 +236,7 @@ sub get_diff_reference {
 	my $ref = shift;
 	if (defined $ref and $ref ne 'HEAD') {
 		return $ref;
-	} elsif (is_initial_commit()) {
+	} elsif (is_initial_cummit()) {
 		return get_empty_tree();
 	} else {
 		return 'HEAD';
@@ -654,7 +654,7 @@ sub revert_cmd {
 				       HEADER => $status_head, },
 				     list_modified());
 	if (@update) {
-		if (is_initial_commit()) {
+		if (is_initial_cummit()) {
 			system(qw(git rm --cached),
 				map { $_->{VALUE} } @update);
 		}
@@ -1334,7 +1334,7 @@ sub apply_patch {
 	return $ret;
 }
 
-sub apply_patch_for_checkout_commit {
+sub apply_patch_for_checkout_cummit {
 	my $reverse = shift;
 	my $applies_index = run_git_apply 'apply '.$reverse.' --cached --check', @_;
 	my $applies_worktree = run_git_apply 'apply '.$reverse.' --check', @_;
@@ -1796,7 +1796,7 @@ sub diff_cmd {
 				     HEADER => $status_head, },
 				   @mods);
 	return if (!@them);
-	my $reference = (is_initial_commit()) ? get_empty_tree() : 'HEAD';
+	my $reference = (is_initial_cummit()) ? get_empty_tree() : 'HEAD';
 	system(qw(git diff -p --cached), $reference, '--',
 		map { $_->{VALUE} } @them);
 }
@@ -1832,7 +1832,7 @@ sub process_args {
 					$patch_mode_revision = $arg;
 
 					# NEEDSWORK: Instead of comparing to the literal "HEAD",
-					# compare the commit objects instead so that other ways of
+					# compare the cummit objects instead so that other ways of
 					# saying the same thing (such as "@") are also handled
 					# appropriately.
 					#

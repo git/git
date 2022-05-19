@@ -894,12 +894,12 @@ def branchExists(ref):
     return len(rev) > 0
 
 
-def extractLogMessageFromGitCommit(commit):
+def extractLogMessageFromGitcummit(cummit):
     logMessage = ""
 
-    # fixme: title is first line of commit, not 1st paragraph.
+    # fixme: title is first line of cummit, not 1st paragraph.
     foundTitle = False
-    for log in read_pipe_lines(["git", "cat-file", "commit", commit]):
+    for log in read_pipe_lines(["git", "cat-file", "cummit", cummit]):
         if not foundTitle:
             if len(log) == 1:
                 foundTitle = True
@@ -1048,7 +1048,7 @@ def findUpstreamBranchPoint(head="HEAD"):
     branchByDepotPath = {}
     for branch in branches.keys():
         tip = branches[branch]
-        log = extractLogMessageFromGitCommit(tip)
+        log = extractLogMessageFromGitcummit(tip)
         settings = extractSettingsGitLog(log)
         if "depot-paths" in settings:
             paths = ",".join(settings["depot-paths"])
@@ -1057,8 +1057,8 @@ def findUpstreamBranchPoint(head="HEAD"):
     settings = None
     parent = 0
     while parent < 65535:
-        commit = head + "~%s" % parent
-        log = extractLogMessageFromGitCommit(commit)
+        cummit = head + "~%s" % parent
+        log = extractLogMessageFromGitcummit(cummit)
         settings = extractSettingsGitLog(log)
         if "depot-paths" in settings:
             paths = ",".join(settings["depot-paths"])
@@ -1086,7 +1086,7 @@ def createOrUpdateBranchesFromOrigin(localRefPrefix="refs/remotes/p4/", silent=T
         remoteHead = localRefPrefix + headName
         originHead = line
 
-        original = extractSettingsGitLog(extractLogMessageFromGitCommit(originHead))
+        original = extractSettingsGitLog(extractLogMessageFromGitcummit(originHead))
         if 'depot-paths' not in original or 'change' not in original:
             continue
 
@@ -1096,7 +1096,7 @@ def createOrUpdateBranchesFromOrigin(localRefPrefix="refs/remotes/p4/", silent=T
                 print("creating %s" % remoteHead)
             update = True
         else:
-            settings = extractSettingsGitLog(extractLogMessageFromGitCommit(remoteHead))
+            settings = extractSettingsGitLog(extractLogMessageFromGitcummit(remoteHead))
             if 'change' in settings:
                 if settings['depot-paths'] == original['depot-paths']:
                     originP4Change = int(original['change'])
@@ -1453,7 +1453,7 @@ class GitLFS(LargeFileSystem):
         # Git LFS removed the preamble in the output of the 'pointer' command
         # starting from version 1.2.0. Check for the preamble here to support
         # earlier versions.
-        # c.f. https://github.com/github/git-lfs/commit/da2935d9a739592bc775c98d8ef4df9c72ea3b43
+        # c.f. https://github.com/github/git-lfs/cummit/da2935d9a739592bc775c98d8ef4df9c72ea3b43
         if pointerFile.startswith('Git LFS pointer for'):
             pointerFile = re.sub(r'Git LFS pointer for.*\n\n', '', pointerFile)
 
@@ -1625,8 +1625,8 @@ class P4Submit(Command, P4UserMap):
                                      metavar="CHANGELIST",
                                      help="update an existing shelved changelist, implies --shelve, "
                                            "repeat in-order for multiple shelved changelists"),
-                optparse.make_option("--commit", dest="commit", metavar="COMMIT",
-                                     help="submit only the specified commit(s), one commit or xxx..xxx"),
+                optparse.make_option("--cummit", dest="cummit", metavar="cummit",
+                                     help="submit only the specified cummit(s), one cummit or xxx..xxx"),
                 optparse.make_option("--disable-rebase", dest="disable_rebase", action="store_true",
                                      help="Disable rebase after submit is completed. Can be useful if you "
                                      "work from a local git branch that is not master"),
@@ -1673,7 +1673,7 @@ class P4Submit(Command, P4UserMap):
         self.dry_run = False
         self.shelve = False
         self.update_shelve = list()
-        self.commit = ""
+        self.cummit = ""
         self.disable_rebase = gitConfigBool("git-p4.disableRebase")
         self.disable_p4sync = gitConfigBool("git-p4.disableP4Sync")
         self.prepare_p4_only = False
@@ -1692,14 +1692,14 @@ class P4Submit(Command, P4UserMap):
             die("You have files opened with perforce! Close them before starting the sync.")
 
     def separate_jobs_from_description(self, message):
-        """Extract and return a possible Jobs field in the commit message.  It
+        """Extract and return a possible Jobs field in the cummit message.  It
            goes into a separate section in the p4 change specification.
 
            A jobs line starts with "Jobs:" and looks like a new field in a
            form.  Values are white-space separated on the same line or on
            following lines that start with a tab.
 
-           This does not parse and extract the full git commit message like a
+           This does not parse and extract the full git cummit message like a
            p4 form.  It just sees the Jobs: line as a marker to pass everything
            from then on directly into the p4 form, but outside the description
            section.
@@ -1768,8 +1768,8 @@ class P4Submit(Command, P4UserMap):
 
         print("Patched up RCS keywords in %s" % file)
 
-    def p4UserForCommit(self, id):
-        """Return the tuple (perforce user,git email) for a given git commit
+    def p4UserForcummit(self, id):
+        """Return the tuple (perforce user,git email) for a given git cummit
            id.
            """
         self.getUserMapFromPerforceServer()
@@ -1781,12 +1781,12 @@ class P4Submit(Command, P4UserMap):
         else:
             return (self.emails[gitEmail], gitEmail)
 
-    def checkValidP4Users(self, commits):
+    def checkValidP4Users(self, cummits):
         """Check if any git authors cannot be mapped to p4 users."""
-        for id in commits:
-            user, email = self.p4UserForCommit(id)
+        for id in cummits:
+            user, email = self.p4UserForcummit(id)
             if not user:
-                msg = "Cannot find p4 user for email %s in commit %s." % (email, id)
+                msg = "Cannot find p4 user for email %s in cummit %s." % (email, id)
                 if gitConfigBool("git-p4.allowMissingP4Users"):
                     print("%s" % msg)
                 else:
@@ -1858,7 +1858,7 @@ class P4Submit(Command, P4UserMap):
            template in original order, since a human might edit it.
 
            Remove lines in the Files section that show changes to files
-           outside the depot path we're committing into.
+           outside the depot path we're cummitting into.
            """
 
         upstream, settings = findUpstreamBranchPoint()
@@ -1991,13 +1991,13 @@ class P4Submit(Command, P4UserMap):
 
         return (diff + newdiff).replace('\r\n', '\n')
 
-    def applyCommit(self, id):
-        """Apply one commit, return True if it succeeded."""
+    def applycummit(self, id):
+        """Apply one cummit, return True if it succeeded."""
 
         print("Applying", read_pipe(["git", "show", "-s",
                                      "--format=format:%h %s", id]))
 
-        p4User, gitEmail = self.p4UserForCommit(id)
+        p4User, gitEmail = self.p4UserForcummit(id)
 
         diff = read_pipe_lines(
             ["git", "diff-tree", "-r"] + self.diffOpts + ["{}^".format(id), id])
@@ -2158,9 +2158,9 @@ class P4Submit(Command, P4UserMap):
 
         #
         # Build p4 change description, starting with the contents
-        # of the git commit message.
+        # of the git cummit message.
         #
-        logMessage = extractLogMessageFromGitCommit(id)
+        logMessage = extractLogMessageFromGitcummit(id)
         logMessage = logMessage.strip()
         logMessage, jobs = self.separate_jobs_from_description(logMessage)
 
@@ -2168,7 +2168,7 @@ class P4Submit(Command, P4UserMap):
         submitTemplate = self.prepareLogMessage(template, logMessage, jobs)
 
         if self.preserveUser:
-            submitTemplate += "\n######## Actual user %s, modified after commit\n" % p4User
+            submitTemplate += "\n######## Actual user %s, modified after cummit\n" % p4User
 
         if self.checkAuthorship and not self.p4UserIsMe(p4User):
             submitTemplate += "######## git author %s does not match your p4 account.\n" % gitEmail
@@ -2225,7 +2225,7 @@ class P4Submit(Command, P4UserMap):
                 print("To revert the changes, use \"p4 revert ...\", and delete")
                 print("the submit template file \"%s\"" % fileName)
                 if filesToAdd:
-                    print("Since the commit adds new files, they must be deleted:")
+                    print("Since the cummit adds new files, they must be deleted:")
                     for f in filesToAdd:
                         print("  " + f)
                 print("")
@@ -2312,14 +2312,14 @@ class P4Submit(Command, P4UserMap):
                     print("tag %s does not match regexp %s" % (name, validLabelRegexp))
                 continue
 
-            # Get the p4 commit this corresponds to
-            logMessage = extractLogMessageFromGitCommit(name)
+            # Get the p4 cummit this corresponds to
+            logMessage = extractLogMessageFromGitcummit(name)
             values = extractSettingsGitLog(logMessage)
 
             if 'change' not in values:
                 # a tag pointing to something not sent to p4; ignore
                 if verbose:
-                    print("git tag %s does not give a p4 commit" % name)
+                    print("git tag %s does not give a p4 cummit" % name)
                 continue
             else:
                 changelist = values['change']
@@ -2455,24 +2455,24 @@ class P4Submit(Command, P4UserMap):
                 p4_sync("...")
         self.check()
 
-        commits = []
+        cummits = []
         if self.master:
-            committish = self.master
+            cummittish = self.master
         else:
-            committish = 'HEAD'
+            cummittish = 'HEAD'
 
-        if self.commit != "":
-            if self.commit.find("..") != -1:
-                limits_ish = self.commit.split("..")
+        if self.cummit != "":
+            if self.cummit.find("..") != -1:
+                limits_ish = self.cummit.split("..")
                 for line in read_pipe_lines(["git", "rev-list", "--no-merges", "%s..%s" % (limits_ish[0], limits_ish[1])]):
-                    commits.append(line.strip())
-                commits.reverse()
+                    cummits.append(line.strip())
+                cummits.reverse()
             else:
-                commits.append(self.commit)
+                cummits.append(self.cummit)
         else:
-            for line in read_pipe_lines(["git", "rev-list", "--no-merges", "%s..%s" % (self.origin, committish)]):
-                commits.append(line.strip())
-            commits.reverse()
+            for line in read_pipe_lines(["git", "rev-list", "--no-merges", "%s..%s" % (self.origin, cummittish)]):
+                cummits.append(line.strip())
+            cummits.reverse()
 
         if self.preserveUser or gitConfigBool("git-p4.skipUserNameCheck"):
             self.checkAuthorship = False
@@ -2480,11 +2480,11 @@ class P4Submit(Command, P4UserMap):
             self.checkAuthorship = True
 
         if self.preserveUser:
-            self.checkValidP4Users(commits)
+            self.checkValidP4Users(cummits)
 
         #
         # Build up a set of options to be passed to diff when
-        # submitting each commit to p4.
+        # submitting each cummit to p4.
         #
         if self.detectRenames:
             # command-line -M arg
@@ -2514,9 +2514,9 @@ class P4Submit(Command, P4UserMap):
             self.diffOpts.append("--find-copies-harder")
 
         num_shelves = len(self.update_shelve)
-        if num_shelves > 0 and num_shelves != len(commits):
-            sys.exit("number of commits (%d) must match number of shelved changelist (%d)" %
-                     (len(commits), num_shelves))
+        if num_shelves > 0 and num_shelves != len(cummits):
+            sys.exit("number of cummits (%d) must match number of shelved changelist (%d)" %
+                     (len(cummits), num_shelves))
 
         if not self.no_verify:
             try:
@@ -2531,25 +2531,25 @@ class P4Submit(Command, P4UserMap):
                 sys.exit(1)
 
         #
-        # Apply the commits, one at a time.  On failure, ask if should
+        # Apply the cummits, one at a time.  On failure, ask if should
         # continue to try the rest of the patches, or quit.
         #
         if self.dry_run:
             print("Would apply")
         applied = []
-        last = len(commits) - 1
-        for i, commit in enumerate(commits):
+        last = len(cummits) - 1
+        for i, cummit in enumerate(cummits):
             if self.dry_run:
                 print(" ", read_pipe(["git", "show", "-s",
-                                      "--format=format:%h %s", commit]))
+                                      "--format=format:%h %s", cummit]))
                 ok = True
             else:
-                ok = self.applyCommit(commit)
+                ok = self.applycummit(cummit)
             if ok:
-                applied.append(commit)
+                applied.append(cummit)
                 if self.prepare_p4_only:
                     if i < last:
-                        print("Processing only the first commit due to option"
+                        print("Processing only the first cummit due to option"
                                 " --prepare-p4-only")
                     break
             else:
@@ -2557,7 +2557,7 @@ class P4Submit(Command, P4UserMap):
                     # prompt for what to do, or use the option/variable
                     if self.conflict_behavior == "ask":
                         print("What do you want to do?")
-                        response = prompt("[s]kip this commit but apply the rest, or [q]uit? ")
+                        response = prompt("[s]kip this cummit but apply the rest, or [q]uit? ")
                     elif self.conflict_behavior == "skip":
                         response = "s"
                     elif self.conflict_behavior == "quit":
@@ -2567,7 +2567,7 @@ class P4Submit(Command, P4UserMap):
                             self.conflict_behavior)
 
                     if response == "s":
-                        print("Skipping this commit, but applying the rest")
+                        print("Skipping this cummit, but applying the rest")
                     if response == "q":
                         print("Quitting")
                         break
@@ -2578,8 +2578,8 @@ class P4Submit(Command, P4UserMap):
             pass
         elif self.prepare_p4_only:
             pass
-        elif len(commits) == len(applied):
-            print("All commits {0}!".format(shelved_applied))
+        elif len(cummits) == len(applied):
+            print("All cummits {0}!".format(shelved_applied))
 
             sync = P4Sync()
             if self.branch:
@@ -2595,10 +2595,10 @@ class P4Submit(Command, P4UserMap):
 
         else:
             if len(applied) == 0:
-                print("No commits {0}.".format(shelved_applied))
+                print("No cummits {0}.".format(shelved_applied))
             else:
-                print("{0} only the commits marked with '*':".format(shelved_applied.capitalize()))
-                for c in commits:
+                print("{0} only the cummits marked with '*':".format(shelved_applied.capitalize()))
+                for c in cummits:
                     if c in applied:
                         star = "*"
                     else:
@@ -2618,7 +2618,7 @@ class P4Submit(Command, P4UserMap):
             self.exportGitTags(missingGitTags)
 
         # exit with error unless everything applied perfectly
-        if len(commits) != len(applied):
+        if len(cummits) != len(applied):
             sys.exit(1)
 
         return True
@@ -2779,7 +2779,7 @@ class P4Sync(Command, P4UserMap):
         self.usage += " //depot/path[@revRange]"
         self.silent = False
         self.createdBranches = set()
-        self.committedChanges = set()
+        self.cummittedChanges = set()
         self.branch = ""
         self.detectBranches = False
         self.detectLabels = False
@@ -2844,11 +2844,11 @@ class P4Sync(Command, P4UserMap):
                 return True
         return False
 
-    def extractFilesFromCommit(self, commit, shelved=False, shelved_cl=0):
+    def extractFilesFromcummit(self, cummit, shelved=False, shelved_cl=0):
         files = []
         fnum = 0
-        while "depotFile%s" % fnum in commit:
-            path = commit["depotFile%s" % fnum]
+        while "depotFile%s" % fnum in cummit:
+            path = cummit["depotFile%s" % fnum]
             found = self.isPathWanted(decode_path(path))
             if not found:
                 fnum = fnum + 1
@@ -2856,20 +2856,20 @@ class P4Sync(Command, P4UserMap):
 
             file = {}
             file["path"] = path
-            file["rev"] = commit["rev%s" % fnum]
-            file["action"] = commit["action%s" % fnum]
-            file["type"] = commit["type%s" % fnum]
+            file["rev"] = cummit["rev%s" % fnum]
+            file["action"] = cummit["action%s" % fnum]
+            file["type"] = cummit["type%s" % fnum]
             if shelved:
                 file["shelved_cl"] = int(shelved_cl)
             files.append(file)
             fnum = fnum + 1
         return files
 
-    def extractJobsFromCommit(self, commit):
+    def extractJobsFromcummit(self, cummit):
         jobs = []
         jnum = 0
-        while "job%s" % jnum in commit:
-            job = commit["job%s" % jnum]
+        while "job%s" % jnum in cummit:
+            job = cummit["job%s" % jnum]
             jobs.append(job)
             jnum = jnum + 1
         return jobs
@@ -2906,19 +2906,19 @@ class P4Sync(Command, P4UserMap):
         path = wildcard_decode(path)
         return path
 
-    def splitFilesIntoBranches(self, commit):
-        """Look at each depotFile in the commit to figure out to what branch it
+    def splitFilesIntoBranches(self, cummit):
+        """Look at each depotFile in the cummit to figure out to what branch it
            belongs.
            """
 
         if self.clientSpecDirs:
-            files = self.extractFilesFromCommit(commit)
+            files = self.extractFilesFromcummit(cummit)
             self.clientSpecDirs.update_client_spec_path_cache(files)
 
         branches = {}
         fnum = 0
-        while "depotFile%s" % fnum in commit:
-            raw_path = commit["depotFile%s" % fnum]
+        while "depotFile%s" % fnum in cummit:
+            raw_path = cummit["depotFile%s" % fnum]
             path = decode_path(raw_path)
             found = self.isPathWanted(path)
             if not found:
@@ -2927,9 +2927,9 @@ class P4Sync(Command, P4UserMap):
 
             file = {}
             file["path"] = raw_path
-            file["rev"] = commit["rev%s" % fnum]
-            file["action"] = commit["action%s" % fnum]
-            file["type"] = commit["type%s" % fnum]
+            file["rev"] = cummit["rev%s" % fnum]
+            file["action"] = cummit["action%s" % fnum]
+            file["type"] = cummit["type%s" % fnum]
             fnum = fnum + 1
 
             # start with the full relative path where this file would
@@ -2940,7 +2940,7 @@ class P4Sync(Command, P4UserMap):
                 relPath = self.stripRepoPath(path, self.depotPaths)
 
             for branch in self.knownBranches.keys():
-                # add a trailing slash so that a commit into qt/4.2foo
+                # add a trailing slash so that a cummit into qt/4.2foo
                 # doesn't end up in qt/4.2, e.g.
                 if p4PathStartsWith(relPath, branch + "/"):
                     if branch not in branches:
@@ -3089,7 +3089,7 @@ class P4Sync(Command, P4UserMap):
                 if "depotFile" in self.stream_file:
                     f = self.stream_file["depotFile"]
             # force a failure in fast-import, else an empty
-            # commit will be made
+            # cummit will be made
             self.gitStream.write("\n")
             self.gitStream.write("die-now\n")
             self.gitStream.close()
@@ -3135,12 +3135,12 @@ class P4Sync(Command, P4UserMap):
     def streamP4Files(self, files):
         """Stream directly from "p4 files" into "git fast-import."""
 
-        filesForCommit = []
+        filesForcummit = []
         filesToRead = []
         filesToDelete = []
 
         for f in files:
-            filesForCommit.append(f)
+            filesForcummit.append(f)
             if f['action'] in self.delete_actions:
                 filesToDelete.append(f)
             else:
@@ -3184,16 +3184,16 @@ class P4Sync(Command, P4UserMap):
         else:
             return "%s <a@b>" % userid
 
-    def streamTag(self, gitStream, labelName, labelDetails, commit, epoch):
+    def streamTag(self, gitStream, labelName, labelDetails, cummit, epoch):
         """Stream a p4 tag.
 
-           Commit is either a git commit, or a fast-import mark, ":<p4commit>".
+           cummit is either a git cummit, or a fast-import mark, ":<p4cummit>".
            """
 
         if verbose:
-            print("writing tag %s for commit %s" % (labelName, commit))
+            print("writing tag %s for cummit %s" % (labelName, cummit))
         gitStream.write("tag %s\n" % labelName)
-        gitStream.write("from %s\n" % commit)
+        gitStream.write("from %s\n" % cummit)
 
         if 'Owner' in labelDetails:
             owner = labelDetails["Owner"]
@@ -3238,7 +3238,7 @@ class P4Sync(Command, P4UserMap):
         return hasPrefix
 
     def findShadowedFiles(self, files, change):
-        """Perforce allows you commit files and directories with the same name,
+        """Perforce allows you cummit files and directories with the same name,
            so you could have files //depot/foo and //depot/foo/bar both checked
            in.  A p4 sync of a repository in this state fails.  Deleting one of
            the files recovers the repository.
@@ -3276,13 +3276,13 @@ class P4Sync(Command, P4UserMap):
                     'rev': record['headRev'],
                     'type': record['headType']})
 
-    def commit(self, details, files, branch, parent="", allow_empty=False):
+    def cummit(self, details, files, branch, parent="", allow_empty=False):
         epoch = details["time"]
         author = details["user"]
-        jobs = self.extractJobsFromCommit(details)
+        jobs = self.extractJobsFromcummit(details)
 
         if self.verbose:
-            print('commit into {0}'.format(branch))
+            print('cummit into {0}'.format(branch))
 
         files = [f for f in files
             if self.hasBranchPrefix(decode_path(f['path']))]
@@ -3293,23 +3293,23 @@ class P4Sync(Command, P4UserMap):
 
         files = [f for f in files if self.inClientSpec(decode_path(f['path']))]
 
-        if gitConfigBool('git-p4.keepEmptyCommits'):
+        if gitConfigBool('git-p4.keepEmptycummits'):
             allow_empty = True
 
         if not files and not allow_empty:
-            print('Ignoring revision {0} as it would produce an empty commit.'
+            print('Ignoring revision {0} as it would produce an empty cummit.'
                 .format(details['change']))
             return
 
-        self.gitStream.write("commit %s\n" % branch)
+        self.gitStream.write("cummit %s\n" % branch)
         self.gitStream.write("mark :%s\n" % details["change"])
-        self.committedChanges.add(int(details["change"]))
-        committer = ""
+        self.cummittedChanges.add(int(details["change"]))
+        cummitter = ""
         if author not in self.users:
             self.getUserMapFromPerforceServer()
-        committer = "%s %s %s" % (self.make_email(author), epoch, self.tz)
+        cummitter = "%s %s %s" % (self.make_email(author), epoch, self.tz)
 
-        self.gitStream.write("committer %s\n" % committer)
+        self.gitStream.write("cummitter %s\n" % cummitter)
 
         self.gitStream.write("data <<EOT\n")
         self.gitStream.write(details["desc"])
@@ -3412,7 +3412,7 @@ class P4Sync(Command, P4UserMap):
         m = re.compile(validLabelRegexp)
 
         for name in p4Labels:
-            commitFound = False
+            cummitFound = False
 
             if not m.match(name):
                 if verbose:
@@ -3429,21 +3429,21 @@ class P4Sync(Command, P4UserMap):
                                 for p in self.depotPaths])
 
             if 'change' in change:
-                # find the corresponding git commit; take the oldest commit
+                # find the corresponding git cummit; take the oldest cummit
                 changelist = int(change['change'])
-                if changelist in self.committedChanges:
-                    gitCommit = ":%d" % changelist       # use a fast-import mark
-                    commitFound = True
+                if changelist in self.cummittedChanges:
+                    gitcummit = ":%d" % changelist       # use a fast-import mark
+                    cummitFound = True
                 else:
-                    gitCommit = read_pipe(["git", "rev-list", "--max-count=1",
+                    gitcummit = read_pipe(["git", "rev-list", "--max-count=1",
                         "--reverse", ":/\[git-p4:.*change = %d\]" % changelist], ignore_error=True)
-                    if len(gitCommit) == 0:
-                        print("importing label %s: could not find git commit for changelist %d" % (name, changelist))
+                    if len(gitcummit) == 0:
+                        print("importing label %s: could not find git cummit for changelist %d" % (name, changelist))
                     else:
-                        commitFound = True
-                        gitCommit = gitCommit.strip()
+                        cummitFound = True
+                        gitcummit = gitcummit.strip()
 
-                if commitFound:
+                if cummitFound:
                     # Convert from p4 time format
                     try:
                         tmwhen = time.strptime(labelDetails['Update'], "%Y/%m/%d %H:%M:%S")
@@ -3452,14 +3452,14 @@ class P4Sync(Command, P4UserMap):
                         tmwhen = 1
 
                     when = int(time.mktime(tmwhen))
-                    self.streamTag(stream, name, labelDetails, gitCommit, when)
+                    self.streamTag(stream, name, labelDetails, gitcummit, when)
                     if verbose:
-                        print("p4 label %s mapped to git commit %s" % (name, gitCommit))
+                        print("p4 label %s mapped to git cummit %s" % (name, gitcummit))
             else:
                 if verbose:
                     print("Label %s has no changelists - possibly deleted?" % name)
 
-            if not commitFound:
+            if not cummitFound:
                 # We can't import this label; don't try again as it will get very
                 # expensive repeatedly fetching all the files for labels that will
                 # never be imported. If the label is moved in the future, the
@@ -3561,23 +3561,23 @@ class P4Sync(Command, P4UserMap):
 
         return self.refPrefix + self.projectName + branch
 
-    def gitCommitByP4Change(self, ref, change):
+    def gitcummitByP4Change(self, ref, change):
         if self.verbose:
             print("looking in ref " + ref + " for change %s using bisect..." % change)
 
-        earliestCommit = ""
-        latestCommit = parseRevision(ref)
+        earliestcummit = ""
+        latestcummit = parseRevision(ref)
 
         while True:
             if self.verbose:
-                print("trying: earliest %s latest %s" % (earliestCommit, latestCommit))
+                print("trying: earliest %s latest %s" % (earliestcummit, latestcummit))
             next = read_pipe(["git", "rev-list", "--bisect",
-                latestCommit, earliestCommit]).strip()
+                latestcummit, earliestcummit]).strip()
             if len(next) == 0:
                 if self.verbose:
                     print("argh")
                 return ""
-            log = extractLogMessageFromGitCommit(next)
+            log = extractLogMessageFromGitcummit(next)
             settings = extractSettingsGitLog(log)
             currentChange = int(settings['change'])
             if self.verbose:
@@ -3589,11 +3589,11 @@ class P4Sync(Command, P4UserMap):
                 return next
 
             if currentChange < change:
-                earliestCommit = "^%s" % next
+                earliestcummit = "^%s" % next
             else:
-                if next == latestCommit:
+                if next == latestcummit:
                     die("Infinite loop while looking in ref %s for change %s. Check your branch mappings" % (ref, change))
-                latestCommit = "%s^@" % next
+                latestcummit = "%s^@" % next
 
         return ""
 
@@ -3613,7 +3613,7 @@ class P4Sync(Command, P4UserMap):
         sourceRef = self.gitRefForBranch(sourceBranch)
 
         branchParentChange = int(p4Cmd(["changes", "-m", "1", "%s...@1,%s" % (sourceDepotPath, firstChange)])["change"])
-        gitParent = self.gitCommitByP4Change(sourceRef, branchParentChange)
+        gitParent = self.gitcummitByP4Change(sourceRef, branchParentChange)
         if len(gitParent) > 0:
             self.initialParents[self.gitRefForBranch(branch)] = gitParent
 
@@ -3625,13 +3625,13 @@ class P4Sync(Command, P4UserMap):
                                 "{}^{{tree}}".format(target)]).strip()
         for line in read_pipe_lines(["git", "rev-list", "--format=%H %T",
                                      "--no-merges", parent]):
-            if line.startswith("commit "):
+            if line.startswith("cummit "):
                 continue
-            commit, tree = line.strip().split(" ")
+            cummit, tree = line.strip().split(" ")
             if tree == targetTree:
                 if self.verbose:
-                    print("Found parent of %s in commit %s" % (branch, commit))
-                return commit
+                    print("Found parent of %s in cummit %s" % (branch, cummit))
+                return cummit
         return None
 
     def importChanges(self, changes, origin_revision=0):
@@ -3656,7 +3656,7 @@ class P4Sync(Command, P4UserMap):
 
                         parent = ""
 
-                        filesForCommit = branches[branch]
+                        filesForcummit = branches[branch]
 
                         if self.verbose:
                             print("branch is %s" % branch)
@@ -3697,21 +3697,21 @@ class P4Sync(Command, P4UserMap):
                             tempBranch = "%s/%d" % (self.tempBranchLocation, change)
                             if self.verbose:
                                 print("Creating temporary branch: " + tempBranch)
-                            self.commit(description, filesForCommit, tempBranch)
+                            self.cummit(description, filesForcummit, tempBranch)
                             self.tempBranches.append(tempBranch)
                             self.checkpoint()
                             blob = self.searchParent(parent, branch, tempBranch)
                         if blob:
-                            self.commit(description, filesForCommit, branch, blob)
+                            self.cummit(description, filesForcummit, branch, blob)
                         else:
                             if self.verbose:
-                                print("Parent of %s not found. Committing into head of %s" % (branch, parent))
-                            self.commit(description, filesForCommit, branch, parent)
+                                print("Parent of %s not found. cummitting into head of %s" % (branch, parent))
+                            self.cummit(description, filesForcummit, branch, parent)
                 else:
-                    files = self.extractFilesFromCommit(description)
-                    self.commit(description, files, self.branch,
+                    files = self.extractFilesFromcummit(description)
+                    self.cummit(description, files, self.branch,
                                 self.initialParent)
-                    # only needed once, to connect to the previous commit
+                    # only needed once, to connect to the previous cummit
                     self.initialParent = ""
             except IOError:
                 print(self.gitError.read())
@@ -3767,13 +3767,13 @@ class P4Sync(Command, P4UserMap):
         details["change"] = newestRevision
 
         # Use time from top-most change so that all git p4 clones of
-        # the same p4 repo have the same commit SHA1s.
+        # the same p4 repo have the same cummit SHA1s.
         res = p4_describe(newestRevision)
         details["time"] = res["time"]
 
         self.updateOptionDict(details)
         try:
-            self.commit(details, self.extractFilesFromCommit(details), self.branch)
+            self.cummit(details, self.extractFilesFromcummit(details), self.branch)
         except IOError as err:
             print("IO error with git fast-import. Is your git version recent enough?")
             print("IO error details: {}".format(err))
@@ -3899,7 +3899,7 @@ class P4Sync(Command, P4UserMap):
         if self.useClientSpec:
             self.clientSpecDirs = getClientSpec()
 
-        # TODO: should always look at previous commits,
+        # TODO: should always look at previous cummits,
         # merge with previous imports, if possible.
         if args == []:
             if self.hasOrigin:
@@ -3929,7 +3929,7 @@ class P4Sync(Command, P4UserMap):
 
             p4Change = 0
             for branch in self.p4BranchesInGit:
-                logMsg = extractLogMessageFromGitCommit(self.refPrefix + branch)
+                logMsg = extractLogMessageFromGitcummit(self.refPrefix + branch)
 
                 settings = extractSettingsGitLog(logMsg)
 
@@ -4123,7 +4123,7 @@ class P4Rebase(Command):
         if os.system("git update-index --refresh") != 0:
             die("Some files in your working directory are modified and different than what is in your index. You can use git update-index <filename> to bring the index up to date or stash away all your changes with git stash.")
         if len(read_pipe(["git", "diff-index", "HEAD", "--"])) > 0:
-            die("You have uncommitted changes. Please commit them before rebasing or stash them away with git stash.")
+            die("You have uncummitted changes. Please cummit them before rebasing or stash them away with git stash.")
 
         upstream, settings = findUpstreamBranchPoint()
         if len(upstream) == 0:
@@ -4224,14 +4224,14 @@ class P4Unshelve(Command):
         Command.__init__(self)
         self.options = []
         self.origin = "HEAD"
-        self.description = "Unshelve a P4 changelist into a git commit"
+        self.description = "Unshelve a P4 changelist into a git cummit"
         self.usage = "usage: %prog [options] changelist"
         self.options += [
                 optparse.make_option("--origin", dest="origin",
                     help="Use this base revision instead of the default (%s)" % self.origin),
         ]
         self.verbose = False
-        self.noCommit = False
+        self.nocummit = False
         self.destbranch = "refs/remotes/p4-unshelved"
 
     def renameBranch(self, branch_name):
@@ -4252,25 +4252,25 @@ class P4Unshelve(Command):
             sys.exit("gave up trying to rename existing branch {0}".format(sync.branch))
 
     def findLastP4Revision(self, starting_point):
-        """Look back from starting_point for the first commit created by git-p4
-           to find the P4 commit we are based on, and the depot-paths.
+        """Look back from starting_point for the first cummit created by git-p4
+           to find the P4 cummit we are based on, and the depot-paths.
            """
 
         for parent in (range(65535)):
-            log = extractLogMessageFromGitCommit("{0}~{1}".format(starting_point, parent))
+            log = extractLogMessageFromGitcummit("{0}~{1}".format(starting_point, parent))
             settings = extractSettingsGitLog(log)
             if 'change' in settings:
                 return settings
 
-        sys.exit("could not find git-p4 commits in {0}".format(self.origin))
+        sys.exit("could not find git-p4 cummits in {0}".format(self.origin))
 
     def createShelveParent(self, change, branch_name, sync, origin):
-        """Create a commit matching the parent of the shelved changelist
+        """Create a cummit matching the parent of the shelved changelist
            'change'.
            """
         parent_description = p4_describe(change, shelved=True)
         parent_description['desc'] = 'parent for shelved changelist {}\n'.format(change)
-        files = sync.extractFilesFromCommit(parent_description, shelved=False, shelved_cl=change)
+        files = sync.extractFilesFromcummit(parent_description, shelved=False, shelved_cl=change)
 
         parent_files = []
         for f in files:
@@ -4286,9 +4286,9 @@ class P4Unshelve(Command):
 
             parent_files.append(f)
 
-        sync.commit(parent_description, parent_files, branch_name,
+        sync.cummit(parent_description, parent_files, branch_name,
                 parent=origin, allow_empty=True)
-        print("created parent commit for {0} based on {1} in {2}".format(
+        print("created parent cummit for {0} based on {1} in {2}".format(
             change, self.origin, branch_name))
 
     def run(self, args):
@@ -4321,14 +4321,14 @@ class P4Unshelve(Command):
         sync.loadUserMapFromCache()
         sync.silent = True
 
-        # create a commit for the parent of the shelved changelist
+        # create a cummit for the parent of the shelved changelist
         self.createShelveParent(change, branch_name, sync, self.origin)
 
-        # create the commit for the shelved changelist itself
+        # create the cummit for the shelved changelist itself
         description = p4_describe(change, True)
-        files = sync.extractFilesFromCommit(description, True, change)
+        files = sync.extractFilesFromcummit(description, True, change)
 
-        sync.commit(description, files, branch_name, "")
+        sync.cummit(description, files, branch_name, "")
         sync.closeStreams()
 
         print("unshelved changelist {0} into {1}".format(change, branch_name))
@@ -4355,7 +4355,7 @@ class P4Branches(Command):
                 continue
             branch = line
 
-            log = extractLogMessageFromGitCommit("refs/remotes/%s" % branch)
+            log = extractLogMessageFromGitcummit("refs/remotes/%s" % branch)
             settings = extractSettingsGitLog(log)
 
             print("%s <= %s (%s)" % (branch, ",".join(settings["depot-paths"]), settings["change"]))
@@ -4384,7 +4384,7 @@ def printUsage(commands):
 
 commands = {
     "submit": P4Submit,
-    "commit": P4Submit,
+    "cummit": P4Submit,
     "sync": P4Sync,
     "rebase": P4Rebase,
     "clone": P4Clone,

@@ -12,11 +12,11 @@
  *   destination `<filename>`. We create the `<filename>.lock` file
  *   with `O_CREAT|O_EXCL` so that we can notice and fail if somebody
  *   else has already locked the file, then atomically rename the
- *   lockfile to its final destination to commit the changes and
+ *   lockfile to its final destination to cummit the changes and
  *   unlock the file.
  *
  * * Automatic cruft removal. If the program exits after we lock a
- *   file but before the changes have been committed, we want to make
+ *   file but before the changes have been cummitted, we want to make
  *   sure that we remove the lockfile. This is done by remembering the
  *   lockfiles we have created in a linked list and setting up an
  *   `atexit(3)` handler and a signal handler that clean up the
@@ -62,24 +62,24 @@
  * When finished writing, the caller can:
  *
  * * Close the file descriptor and rename the lockfile to its final
- *   destination by calling `commit_lock_file()` or
- *   `commit_lock_file_to()`.
+ *   destination by calling `cummit_lock_file()` or
+ *   `cummit_lock_file_to()`.
  *
  * * Close the file descriptor and remove the lockfile by calling
  *   `rollback_lock_file()`.
  *
  * * Close the file descriptor without removing or renaming the
  *   lockfile by calling `close_lock_file_gently()`, and later call
- *   `commit_lock_file()`, `commit_lock_file_to()`,
+ *   `cummit_lock_file()`, `cummit_lock_file_to()`,
  *   `rollback_lock_file()`, or `reopen_lock_file()`.
  *
- * After the lockfile is committed or rolled back, the `lock_file`
+ * After the lockfile is cummitted or rolled back, the `lock_file`
  * object can be discarded or reused.
  *
- * If the program exits before `commit_lock_file()`,
- * `commit_lock_file_to()`, or `rollback_lock_file()` is called, the
+ * If the program exits before `cummit_lock_file()`,
+ * `cummit_lock_file_to()`, or `rollback_lock_file()` is called, the
  * tempfile module will close and remove the lockfile, thereby rolling
- * back any uncommitted changes.
+ * back any uncummitted changes.
  *
  * If you need to close the file descriptor you obtained from a
  * `hold_lock_file_for_*()` function yourself, do so by calling
@@ -109,9 +109,9 @@
  * failure. Errors can be reported by passing `errno` to
  * `unable_to_lock_message()` or `unable_to_lock_die()`.
  *
- * Similarly, `commit_lock_file`, `commit_lock_file_to`, and
+ * Similarly, `cummit_lock_file`, `cummit_lock_file_to`, and
  * `close_lock_file` return 0 on success. On failure they set `errno`
- * appropriately and return -1. The `commit` variants (but not `close`)
+ * appropriately and return -1. The `cummit` variants (but not `close`)
  * do their best to delete the temporary file before returning.
  */
 
@@ -151,7 +151,7 @@ struct lock_file {
 /*
  * Usually symbolic links in the destination path are resolved. This
  * means that (1) the lockfile is created by adding ".lock" to the
- * resolved path, and (2) upon commit, the resolved path is
+ * resolved path, and (2) upon cummit, the resolved path is
  * overwritten. However, if `LOCK_NO_DEREF` is set, then the lockfile
  * is created by adding ".lock" to the path argument itself. This
  * option is used, for example, when detaching a symbolic reference,
@@ -227,7 +227,7 @@ NORETURN void unable_to_lock_die(const char *path, int err);
  * Associate a stdio stream with the lockfile (which must still be
  * open). Return `NULL` (*without* rolling back the lockfile) on
  * error. The stream is closed automatically when
- * `close_lock_file_gently()` is called or when the file is committed or
+ * `close_lock_file_gently()` is called or when the file is cummitted or
  * rolled back.
  */
 static inline FILE *fdopen_lock_file(struct lock_file *lk, const char *mode)
@@ -265,7 +265,7 @@ char *get_locked_file_path(struct lock_file *lk);
  * has been opened using `fdopen_lock_file()`) without renaming the
  * lockfile over the file being locked. Return 0 upon success. On
  * failure to `close(2)`, return a negative value (the lockfile is not
- * rolled back). Usually `commit_lock_file()`, `commit_lock_file_to()`,
+ * rolled back). Usually `cummit_lock_file()`, `cummit_lock_file_to()`,
  * or `rollback_lock_file()` should eventually be called.
  */
 static inline int close_lock_file_gently(struct lock_file *lk)
@@ -275,7 +275,7 @@ static inline int close_lock_file_gently(struct lock_file *lk)
 
 /*
  * Re-open a lockfile that has been closed using `close_lock_file_gently()`
- * but not yet committed or rolled back. This can be used to implement
+ * but not yet cummitted or rolled back. This can be used to implement
  * a sequence of operations like the following:
  *
  * * Lock file.
@@ -290,7 +290,7 @@ static inline int close_lock_file_gently(struct lock_file *lk)
  * * `reopen_lock_file()` to reopen the lockfile, truncating the existing
  *   contents. Write out the new contents.
  *
- * * `commit_lock_file()` to make the final version permanent.
+ * * `cummit_lock_file()` to make the final version permanent.
  */
 static inline int reopen_lock_file(struct lock_file *lk)
 {
@@ -298,21 +298,21 @@ static inline int reopen_lock_file(struct lock_file *lk)
 }
 
 /*
- * Commit the change represented by `lk`: close the file descriptor
+ * cummit the change represented by `lk`: close the file descriptor
  * and/or file pointer if they are still open and rename the lockfile
  * to its final destination. Return 0 upon success. On failure, roll
  * back the lock file and return -1, with `errno` set to the value
  * from the failing call to `close(2)` or `rename(2)`. It is a bug to
- * call `commit_lock_file()` for a `lock_file` object that is not
+ * call `cummit_lock_file()` for a `lock_file` object that is not
  * currently locked.
  */
-int commit_lock_file(struct lock_file *lk);
+int cummit_lock_file(struct lock_file *lk);
 
 /*
- * Like `commit_lock_file()`, but rename the lockfile to the provided
+ * Like `cummit_lock_file()`, but rename the lockfile to the provided
  * `path`. `path` must be on the same filesystem as the lock file.
  */
-static inline int commit_lock_file_to(struct lock_file *lk, const char *path)
+static inline int cummit_lock_file_to(struct lock_file *lk, const char *path)
 {
 	return rename_tempfile(&lk->tempfile, path);
 }
@@ -320,7 +320,7 @@ static inline int commit_lock_file_to(struct lock_file *lk, const char *path)
 /*
  * Roll back `lk`: close the file descriptor and/or file pointer and
  * remove the lockfile. It is a NOOP to call `rollback_lock_file()`
- * for a `lock_file` object that has already been committed or rolled
+ * for a `lock_file` object that has already been cummitted or rolled
  * back.
  */
 static inline void rollback_lock_file(struct lock_file *lk)

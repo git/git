@@ -17,7 +17,7 @@ then
 	have_reg_illseq=1
 fi
 
-test_expect_success 'create commits in different encodings' '
+test_expect_success 'create cummits in different encodings' '
 	test_tick &&
 	cat >msg <<-EOF &&
 	utf8
@@ -25,14 +25,14 @@ test_expect_success 'create commits in different encodings' '
 	t${utf8_e}st
 	EOF
 	git add msg &&
-	git -c i18n.commitencoding=utf8 commit -F msg &&
+	git -c i18n.cummitencoding=utf8 cummit -F msg &&
 	cat >msg <<-EOF &&
 	latin1
 
 	t${latin1_e}st
 	EOF
 	git add msg &&
-	git -c i18n.commitencoding=ISO-8859-1 commit -F msg
+	git -c i18n.cummitencoding=ISO-8859-1 cummit -F msg
 '
 
 test_expect_success 'log --grep searches in log output encoding (utf8)' '

@@ -31,10 +31,10 @@ add () {
 	tree=$(git write-tree) &&
 	# make sure timestamps are in correct order
 	test_tick &&
-	commit=$(echo "$text" | git commit-tree $tree $parents) &&
-	eval "$name=$commit; export $name" &&
-	git update-ref "refs/heads/$branch" "$commit" &&
-	eval ${branch}TIP=$commit
+	cummit=$(echo "$text" | git cummit-tree $tree $parents) &&
+	eval "$name=$cummit; export $name" &&
+	git update-ref "refs/heads/$branch" "$cummit" &&
+	eval ${branch}TIP=$cummit
 }
 
 pull_to_client () {
@@ -391,16 +391,16 @@ test_expect_success 'clone shallow with packed refs' '
 test_expect_success 'in_vain not triggered before first ACK' '
 	rm -rf myserver myclient &&
 	git init myserver &&
-	test_commit -C myserver foo &&
+	test_cummit -C myserver foo &&
 	git clone "file://$(pwd)/myserver" myclient &&
 
 	# MAX_IN_VAIN is 256. Because of batching, the client will send 496
-	# (16+32+64+128+256) commits, not 256, before giving up. So create 496
-	# irrelevant commits.
-	test_commit_bulk -C myclient 496 &&
+	# (16+32+64+128+256) cummits, not 256, before giving up. So create 496
+	# irrelevant cummits.
+	test_cummit_bulk -C myclient 496 &&
 
-	# The new commit that the client wants to fetch.
-	test_commit -C myserver bar &&
+	# The new cummit that the client wants to fetch.
+	test_cummit -C myserver bar &&
 
 	git -C myclient fetch --progress origin 2>log &&
 	test_i18ngrep "remote: Total 3 " log
@@ -410,28 +410,28 @@ test_expect_success 'in_vain resetted upon ACK' '
 	rm -rf myserver myclient &&
 	git init myserver &&
 
-	# Linked list of commits on main. The first is common; the rest are
+	# Linked list of cummits on main. The first is common; the rest are
 	# not.
-	test_commit -C myserver first_main_commit &&
+	test_cummit -C myserver first_main_cummit &&
 	git clone "file://$(pwd)/myserver" myclient &&
-	test_commit_bulk -C myclient 255 &&
+	test_cummit_bulk -C myclient 255 &&
 
-	# Another linked list of commits on anotherbranch with no connection to
+	# Another linked list of cummits on anotherbranch with no connection to
 	# main. The first is common; the rest are not.
 	git -C myserver checkout --orphan anotherbranch &&
-	test_commit -C myserver first_anotherbranch_commit &&
+	test_cummit -C myserver first_anotherbranch_cummit &&
 	git -C myclient fetch origin anotherbranch:refs/heads/anotherbranch &&
 	git -C myclient checkout anotherbranch &&
-	test_commit_bulk -C myclient 255 &&
+	test_cummit_bulk -C myclient 255 &&
 
-	# The new commit that the client wants to fetch.
+	# The new cummit that the client wants to fetch.
 	git -C myserver checkout main &&
-	test_commit -C myserver to_fetch &&
+	test_cummit -C myserver to_fetch &&
 
-	# The client will send (as "have"s) all 256 commits in anotherbranch
-	# first. The 256th commit is common between the client and the server,
+	# The client will send (as "have"s) all 256 cummits in anotherbranch
+	# first. The 256th cummit is common between the client and the server,
 	# and should reset in_vain. This allows negotiation to continue until
-	# the client reports that first_anotherbranch_commit is common.
+	# the client reports that first_anotherbranch_cummit is common.
 	git -C myclient fetch --progress origin main 2>log &&
 	test_i18ngrep "Total 3 " log
 '
@@ -452,10 +452,10 @@ test_expect_success 'fetch in shallow repo unreachable shallow objects' '
 test_expect_success 'fetch creating new shallow root' '
 	(
 		git clone "file://$(pwd)/." shallow10 &&
-		git commit --allow-empty -m empty &&
+		git cummit --allow-empty -m empty &&
 		cd shallow10 &&
 		git fetch --depth=1 --progress 2>actual &&
-		# This should fetch only the empty commit, no tree or
+		# This should fetch only the empty cummit, no tree or
 		# blob objects
 		test_i18ngrep "remote: Total 1" actual
 	)
@@ -582,8 +582,8 @@ test_expect_success 'test --all, --depth, and explicit tag' '
 '
 
 test_expect_success 'test --all with tag to non-tip' '
-	git commit --allow-empty -m non-tip &&
-	git commit --allow-empty -m tip &&
+	git cummit --allow-empty -m non-tip &&
+	git cummit --allow-empty -m tip &&
 	git tag -m "annotated" non-tip HEAD^ &&
 	(
 		cd client &&
@@ -591,8 +591,8 @@ test_expect_success 'test --all with tag to non-tip' '
 	)
 '
 
-test_expect_success 'test --all wrt tag to non-commits' '
-	# create tag-to-{blob,tree,commit,tag}, making sure all tagged objects
+test_expect_success 'test --all wrt tag to non-cummits' '
+	# create tag-to-{blob,tree,cummit,tag}, making sure all tagged objects
 	# are reachable only via created tag references.
 	blob=$(echo "hello blob" | git hash-object -t blob -w --stdin) &&
 	git tag -a -m "tag -> blob" tag-to-blob $blob &&
@@ -601,8 +601,8 @@ test_expect_success 'test --all wrt tag to non-commits' '
 	git tag -a -m "tag -> tree" tag-to-tree $tree &&
 
 	tree2=$(printf "100644 blob $blob\tfile2" | git mktree) &&
-	commit=$(git commit-tree -m "hello commit" $tree) &&
-	git tag -a -m "tag -> commit" tag-to-commit $commit &&
+	cummit=$(git cummit-tree -m "hello cummit" $tree) &&
+	git tag -a -m "tag -> cummit" tag-to-cummit $cummit &&
 
 	blob2=$(echo "hello blob2" | git hash-object -t blob -w --stdin) &&
 	tag=$(git mktag <<-EOF
@@ -624,7 +624,7 @@ test_expect_success 'test --all wrt tag to non-commits' '
 		git fetch-pack --all .. &&
 		git cat-file blob $blob >/dev/null &&
 		git cat-file tree $tree >/dev/null &&
-		git cat-file commit $commit >/dev/null &&
+		git cat-file cummit $cummit >/dev/null &&
 		git cat-file tag $tag >/dev/null
 	)
 '
@@ -634,9 +634,9 @@ test_expect_success 'shallow fetch with tags does not break the repository' '
 	(
 		cd repo1 &&
 		git init &&
-		test_commit 1 &&
-		test_commit 2 &&
-		test_commit 3 &&
+		test_cummit 1 &&
+		test_cummit 2 &&
+		test_cummit 3 &&
 		mkdir repo2 &&
 		cd repo2 &&
 		git init &&
@@ -649,8 +649,8 @@ test_expect_success 'fetch-pack can fetch a raw sha1' '
 	git init hidden &&
 	(
 		cd hidden &&
-		test_commit 1 &&
-		test_commit 2 &&
+		test_cummit 1 &&
+		test_cummit 2 &&
 		git update-ref refs/hidden/one HEAD^ &&
 		git config transfer.hiderefs refs/hidden &&
 		git config uploadpack.allowtipsha1inwant true
@@ -661,7 +661,7 @@ test_expect_success 'fetch-pack can fetch a raw sha1' '
 test_expect_success 'fetch-pack can fetch a raw sha1 that is advertised as a ref' '
 	rm -rf server client &&
 	git init server &&
-	test_commit -C server 1 &&
+	test_cummit -C server 1 &&
 
 	git init client &&
 	git -C client fetch-pack ../server \
@@ -671,8 +671,8 @@ test_expect_success 'fetch-pack can fetch a raw sha1 that is advertised as a ref
 test_expect_success 'fetch-pack can fetch a raw sha1 overlapping a named ref' '
 	rm -rf server client &&
 	git init server &&
-	test_commit -C server 1 &&
-	test_commit -C server 2 &&
+	test_cummit -C server 1 &&
+	test_cummit -C server 2 &&
 
 	git init client &&
 	git -C client fetch-pack ../server \
@@ -683,9 +683,9 @@ test_expect_success 'fetch-pack cannot fetch a raw sha1 that is not advertised a
 	rm -rf server &&
 
 	git init server &&
-	test_commit -C server 5 &&
+	test_cummit -C server 5 &&
 	git -C server tag -d 5 &&
-	test_commit -C server 6 &&
+	test_cummit -C server 6 &&
 
 	git init client &&
 	# Some protocol versions (e.g. 2) support fetching
@@ -813,9 +813,9 @@ test_expect_success 'clone shallow since ...' '
 	test_create_repo shallow-since &&
 	(
 	cd shallow-since &&
-	GIT_COMMITTER_DATE="100000000 +0700" git commit --allow-empty -m one &&
-	GIT_COMMITTER_DATE="200000000 +0700" git commit --allow-empty -m two &&
-	GIT_COMMITTER_DATE="300000000 +0700" git commit --allow-empty -m three &&
+	GIT_cummitTER_DATE="100000000 +0700" git cummit --allow-empty -m one &&
+	GIT_cummitTER_DATE="200000000 +0700" git cummit --allow-empty -m two &&
+	GIT_cummitTER_DATE="300000000 +0700" git cummit --allow-empty -m three &&
 	git clone --shallow-since "300000000 +0700" "file://$(pwd)/." ../shallow11 &&
 	git -C ../shallow11 log --pretty=tformat:%s HEAD >actual &&
 	echo three >expected &&
@@ -833,20 +833,20 @@ test_expect_success 'fetch shallow since ...' '
 	test_cmp expected actual
 '
 
-test_expect_success 'clone shallow since selects no commits' '
+test_expect_success 'clone shallow since selects no cummits' '
 	test_create_repo shallow-since-the-future &&
 	(
 	cd shallow-since-the-future &&
-	GIT_COMMITTER_DATE="100000000 +0700" git commit --allow-empty -m one &&
-	GIT_COMMITTER_DATE="200000000 +0700" git commit --allow-empty -m two &&
-	GIT_COMMITTER_DATE="300000000 +0700" git commit --allow-empty -m three &&
+	GIT_cummitTER_DATE="100000000 +0700" git cummit --allow-empty -m one &&
+	GIT_cummitTER_DATE="200000000 +0700" git cummit --allow-empty -m two &&
+	GIT_cummitTER_DATE="300000000 +0700" git cummit --allow-empty -m three &&
 	test_must_fail git clone --shallow-since "900000000 +0700" "file://$(pwd)/." ../shallow111
 	)
 '
 
 # A few subtle things about the request in this test:
 #
-#  - the server must have commit-graphs present and enabled
+#  - the server must have cummit-graphs present and enabled
 #
 #  - the history is such that our want/have share a common ancestor ("base"
 #    here)
@@ -854,23 +854,23 @@ test_expect_success 'clone shallow since selects no commits' '
 #  - we send only a single have, which is fewer than a normal client would
 #    send. This ensures that we don't parse "base" up front with
 #    parse_object(), but rather traverse to it as a parent while deciding if we
-#    can stop the "have" negotiation, and call parse_commit(). The former
+#    can stop the "have" negotiation, and call parse_cummit(). The former
 #    sees the actual object data and so always loads the three oid, whereas the
 #    latter will try to load it lazily.
 #
 #  - we must use protocol v2, because it handles the "have" negotiation before
 #    processing the shallow directives
 #
-test_expect_success 'shallow since with commit graph and already-seen commit' '
+test_expect_success 'shallow since with cummit graph and already-seen cummit' '
 	test_create_repo shallow-since-graph &&
 	(
 	cd shallow-since-graph &&
-	test_commit base &&
-	test_commit main &&
+	test_cummit base &&
+	test_cummit main &&
 	git checkout -b other HEAD^ &&
-	test_commit other &&
-	git commit-graph write --reachable &&
-	git config core.commitGraph true &&
+	test_cummit other &&
+	git cummit-graph write --reachable &&
+	git config core.cummitGraph true &&
 
 	GIT_PROTOCOL=version=2 git upload-pack . <<-EOF >/dev/null
 	0012command=fetch
@@ -887,9 +887,9 @@ test_expect_success 'shallow clone exclude tag two' '
 	test_create_repo shallow-exclude &&
 	(
 	cd shallow-exclude &&
-	test_commit one &&
-	test_commit two &&
-	test_commit three &&
+	test_cummit one &&
+	test_cummit two &&
+	test_cummit three &&
 	git clone --shallow-exclude two "file://$(pwd)/." ../shallow12 &&
 	git -C ../shallow12 log --pretty=tformat:%s HEAD >actual &&
 	echo three >expected &&
@@ -908,11 +908,11 @@ test_expect_success 'fetching deepen' '
 	test_create_repo shallow-deepen &&
 	(
 	cd shallow-deepen &&
-	test_commit one &&
-	test_commit two &&
-	test_commit three &&
+	test_cummit one &&
+	test_cummit two &&
+	test_cummit three &&
 	git clone --depth 1 "file://$(pwd)/." deepen &&
-	test_commit four &&
+	test_cummit four &&
 	git -C deepen log --pretty=tformat:%s main >actual &&
 	echo three >expected &&
 	test_cmp expected actual &&
@@ -931,13 +931,13 @@ test_negotiation_algorithm_default () {
 	test_when_finished rm -rf clientv0 clientv2 &&
 	rm -rf server client &&
 	git init server &&
-	test_commit -C server both_have_1 &&
+	test_cummit -C server both_have_1 &&
 	git -C server tag -d both_have_1 &&
-	test_commit -C server both_have_2 &&
+	test_cummit -C server both_have_2 &&
 
 	git clone server client &&
-	test_commit -C server server_has &&
-	test_commit -C client client_has &&
+	test_cummit -C server server_has &&
+	test_cummit -C client client_has &&
 
 	# In both protocol v0 and v2, ensure that the parent of both_have_2 is
 	# not sent as a "have" line. The client should know that the server has
@@ -981,31 +981,31 @@ test_expect_success 'ensure bogus fetch.negotiationAlgorithm yields error' '
 test_expect_success 'filtering by size' '
 	rm -rf server client &&
 	test_create_repo server &&
-	test_commit -C server one &&
+	test_cummit -C server one &&
 	test_config -C server uploadpack.allowfilter 1 &&
 
 	test_create_repo client &&
 	git -C client fetch-pack --filter=blob:limit=0 ../server HEAD &&
 
 	# Ensure that object is not inadvertently fetched
-	commit=$(git -C server rev-parse HEAD) &&
+	cummit=$(git -C server rev-parse HEAD) &&
 	blob=$(git hash-object server/one.t) &&
-	git -C client rev-list --objects --missing=allow-any "$commit" >oids &&
+	git -C client rev-list --objects --missing=allow-any "$cummit" >oids &&
 	! grep "$blob" oids
 '
 
 test_expect_success 'filtering by size has no effect if support for it is not advertised' '
 	rm -rf server client &&
 	test_create_repo server &&
-	test_commit -C server one &&
+	test_cummit -C server one &&
 
 	test_create_repo client &&
 	git -C client fetch-pack --filter=blob:limit=0 ../server HEAD 2> err &&
 
 	# Ensure that object is fetched
-	commit=$(git -C server rev-parse HEAD) &&
+	cummit=$(git -C server rev-parse HEAD) &&
 	blob=$(git hash-object server/one.t) &&
-	git -C client rev-list --objects --missing=allow-any "$commit" >oids &&
+	git -C client rev-list --objects --missing=allow-any "$cummit" >oids &&
 	grep "$blob" oids &&
 
 	test_i18ngrep "filtering not recognized by server" err
@@ -1017,20 +1017,20 @@ fetch_filter_blob_limit_zero () {
 
 	rm -rf "$SERVER" client &&
 	test_create_repo "$SERVER" &&
-	test_commit -C "$SERVER" one &&
+	test_cummit -C "$SERVER" one &&
 	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
 
 	git clone "$URL" client &&
 
-	test_commit -C "$SERVER" two &&
+	test_cummit -C "$SERVER" two &&
 
 	git -C client fetch --filter=blob:limit=0 origin HEAD:somewhere &&
 
-	# Ensure that commit is fetched, but blob is not
-	commit=$(git -C "$SERVER" rev-parse two) &&
+	# Ensure that cummit is fetched, but blob is not
+	cummit=$(git -C "$SERVER" rev-parse two) &&
 	blob=$(git hash-object server/two.t) &&
-	git -C client rev-list --objects --missing=allow-any "$commit" >oids &&
-	grep "$commit" oids &&
+	git -C client rev-list --objects --missing=allow-any "$cummit" >oids &&
+	grep "$cummit" oids &&
 	! grep "$blob" oids
 }
 

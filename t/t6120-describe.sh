@@ -9,7 +9,7 @@ test_description='test describe'
 #          `-o----o----o-'
 #                 A    c
 #
-# First parent of a merge commit is on the same line, second parent below.
+# First parent of a merge cummit is on the same line, second parent below.
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -44,32 +44,32 @@ check_describe () {
 }
 
 test_expect_success setup '
-	test_commit initial file one &&
-	test_commit second file two &&
-	test_commit third file three &&
-	test_commit --annotate A file A &&
-	test_commit c file c &&
+	test_cummit initial file one &&
+	test_cummit second file two &&
+	test_cummit third file three &&
+	test_cummit --annotate A file A &&
+	test_cummit c file c &&
 
 	git reset --hard second &&
-	test_commit --annotate B side B &&
+	test_cummit --annotate B side B &&
 
 	test_tick &&
 	git merge -m Merged c &&
 	merged=$(git rev-parse HEAD) &&
 
 	git reset --hard second &&
-	test_commit --no-tag D another D &&
+	test_cummit --no-tag D another D &&
 
 	test_tick &&
 	git tag -a -m R R &&
 
-	test_commit e another DD &&
-	test_commit --no-tag "yet another" another DDD &&
+	test_cummit e another DD &&
+	test_cummit --no-tag "yet another" another DDD &&
 
 	test_tick &&
 	git merge -m Merged $merged &&
 
-	test_commit --no-tag x file
+	test_cummit --no-tag x file
 '
 
 check_describe A-8-gHASH HEAD
@@ -96,7 +96,7 @@ check_describe A-3-gHASH --long HEAD^^2
 check_describe c-7-gHASH --tags
 check_describe e-3-gHASH --first-parent --tags
 
-test_expect_success 'describe --contains defaults to HEAD without commit-ish' '
+test_expect_success 'describe --contains defaults to HEAD without cummit-ish' '
 	echo "A^0" >expect &&
 	git checkout A &&
 	test_when_finished "git checkout -" &&
@@ -191,15 +191,15 @@ test_expect_success 'set-up matching pattern tests' '
 	git tag -a -m test-annotated test-annotated &&
 	echo >>file &&
 	test_tick &&
-	git commit -a -m "one more" &&
+	git cummit -a -m "one more" &&
 	git tag test1-lightweight &&
 	echo >>file &&
 	test_tick &&
-	git commit -a -m "yet another" &&
+	git cummit -a -m "yet another" &&
 	git tag test2-lightweight &&
 	echo >>file &&
 	test_tick &&
-	git commit -a -m "even more"
+	git cummit -a -m "even more"
 
 '
 
@@ -222,8 +222,8 @@ check_describe "test1-lightweight-2-gHASH" --long --tags --match="test3-*" --mat
 test_expect_success 'set-up branches' '
 	git branch branch_A A &&
 	git branch branch_C c &&
-	git update-ref refs/remotes/origin/remote_branch_A "A^{commit}" &&
-	git update-ref refs/remotes/origin/remote_branch_C "c^{commit}" &&
+	git update-ref refs/remotes/origin/remote_branch_A "A^{cummit}" &&
+	git update-ref refs/remotes/origin/remote_branch_C "c^{cummit}" &&
 	git update-ref refs/original/original_branch_A test-annotated~2
 '
 
@@ -253,8 +253,8 @@ test_expect_success 'name-rev with exact tags' '
 	test_cmp expect actual &&
 
 	echo "A^0" >expect &&
-	tagged_commit=$(git rev-parse "refs/tags/A^0") &&
-	git name-rev --tags --name-only $tagged_commit >actual &&
+	tagged_cummit=$(git rev-parse "refs/tags/A^0") &&
+	git name-rev --tags --name-only $tagged_cummit >actual &&
 	test_cmp expect actual
 '
 
@@ -295,40 +295,40 @@ test_expect_success 'describe --contains with the exact tags' '
 	test_cmp expect actual &&
 
 	echo "A^0" >expect &&
-	tagged_commit=$(git rev-parse "refs/tags/A^0") &&
-	git describe --contains $tagged_commit >actual &&
+	tagged_cummit=$(git rev-parse "refs/tags/A^0") &&
+	git describe --contains $tagged_cummit >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'describe --contains and --match' '
 	echo "A^0" >expect &&
-	tagged_commit=$(git rev-parse "refs/tags/A^0") &&
-	test_must_fail git describe --contains --match="B" $tagged_commit &&
-	git describe --contains --match="B" --match="A" $tagged_commit >actual &&
+	tagged_cummit=$(git rev-parse "refs/tags/A^0") &&
+	test_must_fail git describe --contains --match="B" $tagged_cummit &&
+	git describe --contains --match="B" --match="A" $tagged_cummit >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'describe --exclude' '
 	echo "c~1" >expect &&
-	tagged_commit=$(git rev-parse "refs/tags/A^0") &&
-	test_must_fail git describe --contains --match="B" $tagged_commit &&
-	git describe --contains --match="?" --exclude="A" $tagged_commit >actual &&
+	tagged_cummit=$(git rev-parse "refs/tags/A^0") &&
+	test_must_fail git describe --contains --match="B" $tagged_cummit &&
+	git describe --contains --match="?" --exclude="A" $tagged_cummit >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'describe --contains and --no-match' '
 	echo "A^0" >expect &&
-	tagged_commit=$(git rev-parse "refs/tags/A^0") &&
-	git describe --contains --match="B" --no-match $tagged_commit >actual &&
+	tagged_cummit=$(git rev-parse "refs/tags/A^0") &&
+	git describe --contains --match="B" --no-match $tagged_cummit >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'setup and absorb a submodule' '
 	test_create_repo sub1 &&
-	test_commit -C sub1 initial &&
+	test_cummit -C sub1 initial &&
 	git submodule add ./sub1 &&
 	git submodule absorbgitdirs &&
-	git commit -a -m "add submodule" &&
+	git cummit -a -m "add submodule" &&
 	git describe --dirty >expect &&
 	git describe --broken >out &&
 	test_cmp expect out
@@ -353,9 +353,9 @@ test_expect_success 'describe with --work-tree ignoring a broken submodule' '
 	grep broken out
 '
 
-test_expect_success 'describe a blob at a directly tagged commit' '
+test_expect_success 'describe a blob at a directly tagged cummit' '
 	echo "make it a unique blob" >file &&
-	git add file && git commit -m "content in file" &&
+	git add file && git cummit -m "content in file" &&
 	git tag -a -m "latest annotated tag" unique-file &&
 	git describe HEAD:file >actual &&
 	echo "unique-file:file" >expect &&
@@ -363,11 +363,11 @@ test_expect_success 'describe a blob at a directly tagged commit' '
 '
 
 test_expect_success 'describe a blob with its first introduction' '
-	git commit --allow-empty -m "empty commit" &&
+	git cummit --allow-empty -m "empty cummit" &&
 	git rm file &&
-	git commit -m "delete blob" &&
+	git cummit -m "delete blob" &&
 	git revert HEAD &&
-	git commit --allow-empty -m "empty commit" &&
+	git cummit --allow-empty -m "empty cummit" &&
 	git describe HEAD:file >actual &&
 	echo "unique-file:file" >expect &&
 	test_cmp expect actual
@@ -384,17 +384,17 @@ test_expect_success 'describe directly tagged blob' '
 test_expect_success 'describe tag object' '
 	git tag test-blob-1 -a -m msg unique-file:file &&
 	test_must_fail git describe test-blob-1 2>actual &&
-	test_i18ngrep "fatal: test-blob-1 is neither a commit nor blob" actual
+	test_i18ngrep "fatal: test-blob-1 is neither a cummit nor blob" actual
 '
 
 test_expect_success ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
 	i=1 &&
 	while test $i -lt 8000
 	do
-		echo "commit refs/heads/main
-committer A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
+		echo "cummit refs/heads/main
+cummitter A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
 data <<EOF
-commit #$i
+cummit #$i
 EOF" &&
 		if test $i = 1
 		then
@@ -438,12 +438,12 @@ test_expect_success 'name-rev a rev shortly after epoch' '
 	git checkout --orphan no-timestamp-underflow &&
 	# Any date closer to epoch than the CUTOFF_DATE_SLOP constant
 	# in builtin/name-rev.c.
-	GIT_COMMITTER_DATE="@1234 +0000" \
-	git commit -m "committer date shortly after epoch" &&
-	old_commit_oid=$(git rev-parse HEAD) &&
+	GIT_cummitTER_DATE="@1234 +0000" \
+	git cummit -m "cummitter date shortly after epoch" &&
+	old_cummit_oid=$(git rev-parse HEAD) &&
 
-	echo "$old_commit_oid no-timestamp-underflow" >expect &&
-	git name-rev $old_commit_oid >actual &&
+	echo "$old_cummit_oid no-timestamp-underflow" >expect &&
+	git name-rev $old_cummit_oid >actual &&
 	test_cmp expect actual
 '
 
@@ -461,19 +461,19 @@ test_expect_success 'name-rev covers all conditions while looking at parents' '
 
 		echo A >file &&
 		git add file &&
-		git commit -m A &&
+		git cummit -m A &&
 		A=$(git rev-parse HEAD) &&
 
 		git checkout --detach &&
 		echo B >file &&
-		git commit -m B file &&
+		git cummit -m B file &&
 		B=$(git rev-parse HEAD) &&
 
 		git checkout $A &&
 		git merge --no-ff $B &&  # M1
 
 		echo C >file &&
-		git commit -m C file &&
+		git cummit -m C file &&
 
 		git checkout $A &&
 		git merge --no-ff HEAD@{1} && # M2
@@ -490,24 +490,24 @@ test_expect_success 'name-rev covers all conditions while looking at parents' '
 
 # A-B-C-D-E-main
 #
-# Where C has a non-monotonically increasing commit timestamp w.r.t. other
-# commits
-test_expect_success 'non-monotonic commit dates setup' '
+# Where C has a non-monotonically increasing cummit timestamp w.r.t. other
+# cummits
+test_expect_success 'non-monotonic cummit dates setup' '
 	UNIX_EPOCH_ZERO="@0 +0000" &&
 	git init non-monotonic &&
-	test_commit -C non-monotonic A &&
-	test_commit -C non-monotonic --no-tag B &&
-	test_commit -C non-monotonic --no-tag --date "$UNIX_EPOCH_ZERO" C &&
-	test_commit -C non-monotonic D &&
-	test_commit -C non-monotonic E
+	test_cummit -C non-monotonic A &&
+	test_cummit -C non-monotonic --no-tag B &&
+	test_cummit -C non-monotonic --no-tag --date "$UNIX_EPOCH_ZERO" C &&
+	test_cummit -C non-monotonic D &&
+	test_cummit -C non-monotonic E
 '
 
-test_expect_success 'name-rev with commitGraph handles non-monotonic timestamps' '
-	test_config -C non-monotonic core.commitGraph true &&
+test_expect_success 'name-rev with cummitGraph handles non-monotonic timestamps' '
+	test_config -C non-monotonic core.cummitGraph true &&
 	(
 		cd non-monotonic &&
 
-		git commit-graph write --reachable &&
+		git cummit-graph write --reachable &&
 
 		echo "main~3 tags/D~2" >expect &&
 		git name-rev --tags main~3 >actual &&
@@ -517,11 +517,11 @@ test_expect_success 'name-rev with commitGraph handles non-monotonic timestamps'
 '
 
 test_expect_success 'name-rev --all works with non-monotonic timestamps' '
-	test_config -C non-monotonic core.commitGraph false &&
+	test_config -C non-monotonic core.cummitGraph false &&
 	(
 		cd non-monotonic &&
 
-		rm -rf .git/info/commit-graph* &&
+		rm -rf .git/info/cummit-graph* &&
 
 		cat >tags <<-\EOF &&
 		tags/E
@@ -541,11 +541,11 @@ test_expect_success 'name-rev --all works with non-monotonic timestamps' '
 '
 
 test_expect_success 'name-rev --annotate-stdin works with non-monotonic timestamps' '
-	test_config -C non-monotonic core.commitGraph false &&
+	test_config -C non-monotonic core.cummitGraph false &&
 	(
 		cd non-monotonic &&
 
-		rm -rf .git/info/commit-graph* &&
+		rm -rf .git/info/cummit-graph* &&
 
 		cat >expect <<-\EOF &&
 		E
@@ -561,12 +561,12 @@ test_expect_success 'name-rev --annotate-stdin works with non-monotonic timestam
 	)
 '
 
-test_expect_success 'name-rev --all works with commitGraph' '
-	test_config -C non-monotonic core.commitGraph true &&
+test_expect_success 'name-rev --all works with cummitGraph' '
+	test_config -C non-monotonic core.cummitGraph true &&
 	(
 		cd non-monotonic &&
 
-		git commit-graph write --reachable &&
+		git cummit-graph write --reachable &&
 
 		cat >tags <<-\EOF &&
 		tags/E
@@ -585,12 +585,12 @@ test_expect_success 'name-rev --all works with commitGraph' '
 	)
 '
 
-test_expect_success 'name-rev --annotate-stdin works with commitGraph' '
-	test_config -C non-monotonic core.commitGraph true &&
+test_expect_success 'name-rev --annotate-stdin works with cummitGraph' '
+	test_config -C non-monotonic core.cummitGraph true &&
 	(
 		cd non-monotonic &&
 
-		git commit-graph write --reachable &&
+		git cummit-graph write --reachable &&
 
 		cat >expect <<-\EOF &&
 		E
@@ -612,18 +612,18 @@ test_expect_success 'name-rev --annotate-stdin works with commitGraph' '
 #  o-----o---o----x
 #        A
 #
-test_expect_success 'setup: describe commits with disjoint bases' '
+test_expect_success 'setup: describe cummits with disjoint bases' '
 	git init disjoint1 &&
 	(
 		cd disjoint1 &&
 
-		echo o >> file && git add file && git commit -m o &&
-		echo A >> file && git add file && git commit -m A &&
+		echo o >> file && git add file && git cummit -m o &&
+		echo A >> file && git add file && git cummit -m A &&
 		git tag A -a -m A &&
-		echo o >> file && git add file && git commit -m o &&
+		echo o >> file && git add file && git cummit -m o &&
 
 		git checkout --orphan branch && rm file &&
-		echo B > file2 && git add file2 && git commit -m B &&
+		echo B > file2 && git add file2 && git cummit -m B &&
 		git tag B -a -m B &&
 		git merge --no-ff --allow-unrelated-histories main -m x
 	)
@@ -637,19 +637,19 @@ check_describe -C disjoint1 "A-3-gHASH" HEAD
 #                  o---o---x
 #                  A
 #
-test_expect_success 'setup: describe commits with disjoint bases 2' '
+test_expect_success 'setup: describe cummits with disjoint bases 2' '
 	git init disjoint2 &&
 	(
 		cd disjoint2 &&
 
-		echo A >> file && git add file && GIT_COMMITTER_DATE="2020-01-01 18:00" git commit -m A &&
+		echo A >> file && git add file && GIT_cummitTER_DATE="2020-01-01 18:00" git cummit -m A &&
 		git tag A -a -m A &&
-		echo o >> file && git add file && GIT_COMMITTER_DATE="2020-01-01 18:01" git commit -m o &&
+		echo o >> file && git add file && GIT_cummitTER_DATE="2020-01-01 18:01" git cummit -m o &&
 
 		git checkout --orphan branch &&
-		echo o >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:00" git commit -m o &&
-		echo o >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:01" git commit -m o &&
-		echo B >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:02" git commit -m B &&
+		echo o >> file2 && git add file2 && GIT_cummitTER_DATE="2020-01-01 15:00" git cummit -m o &&
+		echo o >> file2 && git add file2 && GIT_cummitTER_DATE="2020-01-01 15:01" git cummit -m o &&
+		echo B >> file2 && git add file2 && GIT_cummitTER_DATE="2020-01-01 15:02" git cummit -m B &&
 		git tag B -a -m B &&
 		git merge --no-ff --allow-unrelated-histories main -m x
 	)

@@ -8,10 +8,10 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit first &&
+	test_cummit first &&
 	echo first-and-a-half >>first.t &&
 	git add first.t &&
-	test_commit second &&
+	test_cummit second &&
 	echo one >one &&
 	echo two >two &&
 	echo untracked >untracked &&
@@ -90,13 +90,13 @@ test_expect_success 'restore --ignore-unmerged ignores unmerged entries' '
 		echo one >unmerged &&
 		echo one >common &&
 		git add unmerged common &&
-		git commit -m common &&
+		git cummit -m common &&
 		git switch -c first &&
 		echo first >unmerged &&
-		git commit -am first &&
+		git cummit -am first &&
 		git switch -c second main &&
 		echo second >unmerged &&
-		git commit -am second &&
+		git cummit -am second &&
 		test_must_fail git merge first &&
 
 		echo dirty >>common &&
@@ -113,7 +113,7 @@ test_expect_success 'restore --staged adds deleted intent-to-add file back to in
 	echo "nonempty" >nonempty &&
 	>empty &&
 	git add nonempty empty &&
-	git commit -m "create files to be deleted" &&
+	git cummit -m "create files to be deleted" &&
 	git rm --cached nonempty empty &&
 	git add -N nonempty empty &&
 	git restore --staged nonempty empty &&
@@ -126,13 +126,13 @@ test_expect_success 'restore --staged invalidates cache tree for deletions' '
 	>new2 &&
 	git add new1 new2 &&
 
-	# It is important to commit and then reset here, so that the index
+	# It is important to cummit and then reset here, so that the index
 	# contains a valid cache-tree for the "both" tree.
-	git commit -m both &&
+	git cummit -m both &&
 	git reset --soft HEAD^ &&
 
 	git restore --staged new1 &&
-	git commit -m "just new2" &&
+	git cummit -m "just new2" &&
 	git rev-parse HEAD:new2 &&
 	test_must_fail git rev-parse HEAD:new1
 '

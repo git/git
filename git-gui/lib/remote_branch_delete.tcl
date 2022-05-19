@@ -187,7 +187,7 @@ method _delete {} {
  - %s" $check_head [join $not_merged "\n - "]]
 
 		if {$need_fetch} {
-			append msg "\n\n" [mc "One or more of the merge tests failed because you have not fetched the necessary commits.  Try fetching from %s first." $uri]
+			append msg "\n\n" [mc "One or more of the merge tests failed because you have not fetched the necessary cummits.  Try fetching from %s first." $uri]
 		}
 
 		tk_messageBox \

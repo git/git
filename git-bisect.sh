@@ -13,13 +13,13 @@ git bisect (good|old) [<rev>...]
 	mark <rev>... known-good revisions/
 		revisions before change in a given property.
 git bisect terms [--term-good | --term-bad]
-	show the terms used for old and new commits (default: bad, good)
+	show the terms used for old and new cummits (default: bad, good)
 git bisect skip [(<rev>|<range>)...]
 	mark <rev>... untestable revisions.
 git bisect next
 	find next bisection to test and check it out.
-git bisect reset [<commit>]
-	finish bisection search and go back to commit.
+git bisect reset [<cummit>]
+	finish bisection search and go back to cummit.
 git bisect (visualize|view)
 	show bisect status in gitk.
 git bisect replay <logfile>

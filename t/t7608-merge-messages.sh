@@ -13,20 +13,20 @@ check_oneline() {
 }
 
 test_expect_success 'merge local branch' '
-	test_commit main-1 &&
+	test_cummit main-1 &&
 	git checkout -b local-branch &&
-	test_commit branch-1 &&
+	test_cummit branch-1 &&
 	git checkout main &&
-	test_commit main-2 &&
+	test_cummit main-2 &&
 	git merge local-branch &&
 	check_oneline "Merge branch Qlocal-branchQ"
 '
 
 test_expect_success 'merge octopus branches' '
 	git checkout -b octopus-a main &&
-	test_commit octopus-1 &&
+	test_cummit octopus-1 &&
 	git checkout -b octopus-b main &&
-	test_commit octopus-2 &&
+	test_cummit octopus-2 &&
 	git checkout main &&
 	git merge octopus-a octopus-b &&
 	check_oneline "Merge branches Qoctopus-aQ and Qoctopus-bQ"
@@ -34,28 +34,28 @@ test_expect_success 'merge octopus branches' '
 
 test_expect_success 'merge tag' '
 	git checkout -b tag-branch main &&
-	test_commit tag-1 &&
+	test_cummit tag-1 &&
 	git checkout main &&
-	test_commit main-3 &&
+	test_cummit main-3 &&
 	git merge tag-1 &&
 	check_oneline "Merge tag Qtag-1Q"
 '
 
 test_expect_success 'ambiguous tag' '
 	git checkout -b ambiguous main &&
-	test_commit ambiguous &&
+	test_cummit ambiguous &&
 	git checkout main &&
-	test_commit main-4 &&
+	test_cummit main-4 &&
 	git merge ambiguous &&
 	check_oneline "Merge tag QambiguousQ"
 '
 
 test_expect_success 'remote-tracking branch' '
 	git checkout -b remote main &&
-	test_commit remote-1 &&
+	test_cummit remote-1 &&
 	git update-ref refs/remotes/origin/main remote &&
 	git checkout main &&
-	test_commit main-5 &&
+	test_cummit main-5 &&
 	git merge origin/main &&
 	check_oneline "Merge remote-tracking branch Qorigin/mainQ"
 '

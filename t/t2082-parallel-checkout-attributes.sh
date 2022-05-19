@@ -23,7 +23,7 @@ test_expect_success 'parallel-checkout with ident' '
 		echo "\$Id\$" >A &&
 		echo "\$Id\$" >B &&
 		git add -A &&
-		git commit -m id &&
+		git cummit -m id &&
 
 		rm A B &&
 		test_checkout_workers 2 git reset --hard &&
@@ -45,7 +45,7 @@ test_expect_success 'parallel-checkout with re-encoding' '
 		cp utf16-text A &&
 		cp utf8-text B &&
 		git add A B .gitattributes &&
-		git commit -m encoding &&
+		git cummit -m encoding &&
 
 		# Check that A is stored in UTF-8
 		git cat-file -p :A >A.internal &&
@@ -73,7 +73,7 @@ test_expect_success 'parallel-checkout with eol conversions' '
 		cp crlf-text A &&
 		cp lf-text B &&
 		git add A B .gitattributes &&
-		git commit -m eol &&
+		git cummit -m eol &&
 
 		# Check that A is stored with LF format
 		git cat-file -p :A >A.internal &&
@@ -115,7 +115,7 @@ test_expect_success 'parallel-checkout and external filter' '
 		cp original B &&
 		cp original C &&
 		git add A B C .gitattributes &&
-		git commit -m filter &&
+		git cummit -m filter &&
 
 		# Check that A (and only A) was cleaned
 		git cat-file -p :A >A.internal &&
@@ -158,7 +158,7 @@ test_expect_success PERL 'parallel-checkout and delayed checkout' '
 		cp ../original Y &&
 		cp ../original Z &&
 		git add -A &&
-		git commit -m delayed &&
+		git cummit -m delayed &&
 
 		# Check that *.d files were cleaned
 		git cat-file -p :W.d >W.d.internal &&

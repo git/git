@@ -26,7 +26,7 @@ sub new {
 	                             $opts->{r}, $mods);
 
 	# $opts->{ra} functions should not be used after this:
-	my @ce  = $opts->{ra}->get_commit_editor($opts->{log},
+	my @ce  = $opts->{ra}->get_cummit_editor($opts->{log},
 	                                        $opts->{editor_cb}, $pool);
 	my $self = SVN::Delta::Editor->new(@ce, $pool);
 	bless $self, $class;
@@ -544,7 +544,7 @@ __END__
 
 =head1 NAME
 
-Git::SVN::Editor - commit driver for "git svn set-tree" and dcommit
+Git::SVN::Editor - cummit driver for "git svn set-tree" and dcummit
 
 =head1 SYNOPSIS
 
@@ -557,9 +557,9 @@ Git::SVN::Editor - commit driver for "git svn set-tree" and dcommit
 		log => "log message",
 		ra => $ra,
 		config => SVN::Core::config_get_config($svn_config_dir),
-		tree_a => "$commit^",
-		tree_b => "$commit",
-		editor_cb => sub { print "Committed r$_[0]\n"; },
+		tree_a => "$cummit^",
+		tree_b => "$cummit",
+		editor_cb => sub { print "cummitted r$_[0]\n"; },
 		mergeinfo => "/branches/foo:1-10",
 		svn_path => "trunk"
 	);
@@ -576,7 +576,7 @@ This module is an implementation detail of the "git svn" command.
 Do not use it unless you are developing git-svn.
 
 This module adapts the C<SVN::Delta::Editor> object returned by
-C<SVN::Delta::get_commit_editor> and drives it to convey the
+C<SVN::Delta::get_cummit_editor> and drives it to convey the
 difference between two git tree objects to a remote Subversion
 repository.
 

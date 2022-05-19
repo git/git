@@ -26,7 +26,7 @@ test_expect_success CASE_INSENSITIVE_FS 'setup' '
 	100644 $empty_oid	file_x
 	EOF
 	git update-index --index-info <objs &&
-	git commit -m "colliding files" &&
+	git cummit -m "colliding files" &&
 	git tag basename_collision &&
 
 	write_script "$TEST_ROOT"/logger_script <<-\EOF
@@ -142,7 +142,7 @@ test_expect_success CASE_INSENSITIVE_FS,!MINGW,!CYGWIN \
 	git reset --hard basename_collision &&
 	echo "file_x filter=logger" >.gitattributes &&
 	git add .gitattributes &&
-	git commit -m "filter for file_x" &&
+	git cummit -m "filter for file_x" &&
 
 	rm -rf clone-repo &&
 	set_checkout_config 2 0 &&

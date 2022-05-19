@@ -20,16 +20,16 @@ test_expect_success 'trivial merge - combine-diff empty' '
 		echo $i >$i.txt &&
 		git add $i.txt || return 1
 	done &&
-	git commit -m "init" &&
+	git cummit -m "init" &&
 	git checkout -b side &&
 	for i in $(test_seq 2 9)
 	do
 		echo $i/2 >>$i.txt || return 1
 	done &&
-	git commit -a -m "side 2-9" &&
+	git cummit -a -m "side 2-9" &&
 	git checkout main &&
 	echo 1/2 >1.txt &&
-	git commit -a -m "main 1" &&
+	git cummit -a -m "main 1" &&
 	git merge side &&
 	>diffc.expect &&
 	diffc_verify
@@ -43,14 +43,14 @@ test_expect_success 'only one truly conflicting path' '
 		echo $i/3 >>$i.txt || return 1
 	done &&
 	echo "4side" >>4.txt &&
-	git commit -a -m "side 2-9 +4" &&
+	git cummit -a -m "side 2-9 +4" &&
 	git checkout main &&
 	for i in $(test_seq 1 9)
 	do
 		echo $i/3 >>$i.txt || return 1
 	done &&
 	echo "4main" >>4.txt &&
-	git commit -a -m "main 1-9 +4" &&
+	git cummit -a -m "main 1-9 +4" &&
 	test_must_fail git merge side &&
 	cat <<-\EOF >4.txt &&
 	4
@@ -60,7 +60,7 @@ test_expect_success 'only one truly conflicting path' '
 	4side
 	EOF
 	git add 4.txt &&
-	git commit -m "merge side (2)" &&
+	git cummit -m "merge side (2)" &&
 	echo 4.txt >diffc.expect &&
 	diffc_verify
 '
@@ -71,17 +71,17 @@ test_expect_success 'merge introduces new file' '
 	do
 		echo $i/4 >>$i.txt || return 1
 	done &&
-	git commit -a -m "side 5-9" &&
+	git cummit -a -m "side 5-9" &&
 	git checkout main &&
 	for i in $(test_seq 1 3)
 	do
 		echo $i/4 >>$i.txt || return 1
 	done &&
-	git commit -a -m "main 1-3 +4hello" &&
+	git cummit -a -m "main 1-3 +4hello" &&
 	git merge side &&
 	echo "Hello World" >4hello.txt &&
 	git add 4hello.txt &&
-	git commit --amend &&
+	git cummit --amend &&
 	echo 4hello.txt >diffc.expect &&
 	diffc_verify
 '
@@ -92,16 +92,16 @@ test_expect_success 'merge removed a file' '
 	do
 		echo $i/5 >>$i.txt || return 1
 	done &&
-	git commit -a -m "side 5-9" &&
+	git cummit -a -m "side 5-9" &&
 	git checkout main &&
 	for i in $(test_seq 1 3)
 	do
 		echo $i/4 >>$i.txt || return 1
 	done &&
-	git commit -a -m "main 1-3" &&
+	git cummit -a -m "main 1-3" &&
 	git merge side &&
 	git rm 4.txt &&
-	git commit --amend &&
+	git cummit --amend &&
 	echo 4.txt >diffc.expect &&
 	diffc_verify
 '

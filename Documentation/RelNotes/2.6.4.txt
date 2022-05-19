@@ -31,7 +31,7 @@ Fixes since v2.6.3
  * Documentation clarification for "check-ignore" without "--verbose".
 
  * Just like the working tree is cleaned up when the user cancelled
-   submission in P4Submit.applyCommit(), clean up the mess if "p4
+   submission in P4Submit.applycummit(), clean up the mess if "p4
    submit" fails.
 
  * Having a leftover .idx file without corresponding .pack file in

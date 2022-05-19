@@ -24,7 +24,7 @@ test_expect_success 'no config, unedited, say yes' '
 	(
 		cd "$git" &&
 		echo line >>file1 &&
-		git commit -a -m "change 2" &&
+		git cummit -a -m "change 2" &&
 		echo y | git p4 submit &&
 		p4 changes //depot/... >wc &&
 		test_line_count = 2 wc
@@ -37,7 +37,7 @@ test_expect_success 'no config, unedited, say no' '
 	(
 		cd "$git" &&
 		echo line >>file1 &&
-		git commit -a -m "change 3 (not really)" &&
+		git cummit -a -m "change 3 (not really)" &&
 		printf "bad response\nn\n" | test_expect_code 1 git p4 submit &&
 		p4 changes //depot/... >wc &&
 		test_line_count = 2 wc
@@ -53,7 +53,7 @@ test_expect_success 'skipSubmitEdit' '
 		# will fail if editor is even invoked
 		git config core.editor /bin/false &&
 		echo line >>file1 &&
-		git commit -a -m "change 3" &&
+		git cummit -a -m "change 3" &&
 		git p4 submit &&
 		p4 changes //depot/... >wc &&
 		test_line_count = 3 wc
@@ -67,7 +67,7 @@ test_expect_success 'skipSubmitEditCheck' '
 		cd "$git" &&
 		git config git-p4.skipSubmitEditCheck true &&
 		echo line >>file1 &&
-		git commit -a -m "change 4" &&
+		git cummit -a -m "change 4" &&
 		git p4 submit &&
 		p4 changes //depot/... >wc &&
 		test_line_count = 4 wc
@@ -89,7 +89,7 @@ test_expect_success 'no config, edited' '
 	(
 		cd "$git" &&
 		echo line >>file1 &&
-		git commit -a -m "change 5" &&
+		git cummit -a -m "change 5" &&
 		P4EDITOR="\"$TRASH_DIRECTORY/ed.sh\"" &&
 		export P4EDITOR &&
 		git p4 submit &&

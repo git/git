@@ -10,16 +10,16 @@
 
 #include "test-tool.h"
 #include "cache.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "revision.h"
 
-static void print_commit(struct commit *commit)
+static void print_cummit(struct cummit *cummit)
 {
 	struct strbuf sb = STRBUF_INIT;
 	struct pretty_print_context ctx = {0};
 	ctx.date_mode.type = DATE_NORMAL;
-	format_commit_message(commit, " %m %s", &sb, &ctx);
+	format_cummit_message(cummit, " %m %s", &sb, &ctx);
 	printf("%s\n", sb.buf);
 	strbuf_release(&sb);
 }
@@ -27,7 +27,7 @@ static void print_commit(struct commit *commit)
 static int run_revision_walk(void)
 {
 	struct rev_info rev;
-	struct commit *commit;
+	struct cummit *cummit;
 	const char *argv[] = {NULL, "--all", NULL};
 	int argc = ARRAY_SIZE(argv) - 1;
 	int got_revision = 0;
@@ -37,8 +37,8 @@ static int run_revision_walk(void)
 	if (prepare_revision_walk(&rev))
 		die("revision walk setup failed");
 
-	while ((commit = get_revision(&rev)) != NULL) {
-		print_commit(commit);
+	while ((cummit = get_revision(&rev)) != NULL) {
+		print_cummit(cummit);
 		got_revision = 1;
 	}
 

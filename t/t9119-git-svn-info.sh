@@ -19,7 +19,7 @@ case $v in
 esac
 
 # On the "Text Last Updated" line, "git svn info" does not return the
-# same value as "svn info" (i.e. the commit timestamp that touched the
+# same value as "svn info" (i.e. the cummit timestamp that touched the
 # path most recently); do not expect that field to match.
 test_cmp_info () {
 	sed -e '/^Text Last Updated:/d' "$1" >tmp.expect &&
@@ -47,7 +47,7 @@ test_expect_success 'setup repository and import' '
 		cd svnwc &&
 		echo foo >foo &&
 		svn_cmd add foo &&
-		svn_cmd commit -m "change outside directory" &&
+		svn_cmd cummit -m "change outside directory" &&
 		svn_cmd update
 	) &&
 	mkdir gitwc &&

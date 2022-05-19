@@ -9,15 +9,15 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'rename/delete' '
 	echo foo >A &&
 	git add A &&
-	git commit -m "initial" &&
+	git cummit -m "initial" &&
 
 	git checkout -b rename &&
 	git mv A B &&
-	git commit -m "rename" &&
+	git cummit -m "rename" &&
 
 	git checkout main &&
 	git rm A &&
-	git commit -m "delete" &&
+	git cummit -m "delete" &&
 
 	test_must_fail git merge --strategy=recursive rename >output &&
 	test_i18ngrep "CONFLICT (rename/delete): A.* renamed .*to B.* in rename" output &&

@@ -13,7 +13,7 @@ test_expect_success setup '
 	git add sample &&
 
 	test_tick &&
-	git commit -m Initial
+	git cummit -m Initial
 
 '
 

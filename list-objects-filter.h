@@ -13,7 +13,7 @@ struct repository;
  *
  * _ZERO      : Do nothing with the object at this time.  It may
  *              be revisited if it appears in another place in
- *              the tree or in another commit during the overall
+ *              the tree or in another cummit during the overall
  *              traversal.
  *
  * _MARK_SEEN : Mark this object as "SEEN" in the object flags.
@@ -55,7 +55,7 @@ enum list_objects_filter_result {
 };
 
 enum list_objects_filter_situation {
-	LOFS_COMMIT,
+	LOFS_cummit,
 	LOFS_TAG,
 	LOFS_BEGIN_TREE,
 	LOFS_END_TREE,

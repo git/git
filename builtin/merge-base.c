@@ -1,17 +1,17 @@
 #include "builtin.h"
 #include "cache.h"
 #include "config.h"
-#include "commit.h"
+#include "cummit.h"
 #include "refs.h"
 #include "diff.h"
 #include "revision.h"
 #include "parse-options.h"
 #include "repository.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 
-static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
+static int show_merge_base(struct cummit **rev, int rev_nr, int show_all)
 {
-	struct commit_list *result, *r;
+	struct cummit_list *result, *r;
 
 	result = get_merge_bases_many_dirty(rev[0], rev_nr - 1, rev + 1);
 
@@ -24,40 +24,40 @@ static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 			break;
 	}
 
-	free_commit_list(result);
+	free_cummit_list(result);
 	return 0;
 }
 
 static const char * const merge_base_usage[] = {
-	N_("git merge-base [-a | --all] <commit> <commit>..."),
-	N_("git merge-base [-a | --all] --octopus <commit>..."),
-	N_("git merge-base --independent <commit>..."),
-	N_("git merge-base --is-ancestor <commit> <commit>"),
-	N_("git merge-base --fork-point <ref> [<commit>]"),
+	N_("git merge-base [-a | --all] <cummit> <cummit>..."),
+	N_("git merge-base [-a | --all] --octopus <cummit>..."),
+	N_("git merge-base --independent <cummit>..."),
+	N_("git merge-base --is-ancestor <cummit> <cummit>"),
+	N_("git merge-base --fork-point <ref> [<cummit>]"),
 	NULL
 };
 
-static struct commit *get_commit_reference(const char *arg)
+static struct cummit *get_cummit_reference(const char *arg)
 {
 	struct object_id revkey;
-	struct commit *r;
+	struct cummit *r;
 
 	if (get_oid(arg, &revkey))
 		die("Not a valid object name %s", arg);
-	r = lookup_commit_reference(the_repository, &revkey);
+	r = lookup_cummit_reference(the_repository, &revkey);
 	if (!r)
-		die("Not a valid commit name %s", arg);
+		die("Not a valid cummit name %s", arg);
 
 	return r;
 }
 
 static int handle_independent(int count, const char **args)
 {
-	struct commit_list *revs = NULL, *rev;
+	struct cummit_list *revs = NULL, *rev;
 	int i;
 
 	for (i = count - 1; i >= 0; i--)
-		commit_list_insert(get_commit_reference(args[i]), &revs);
+		cummit_list_insert(get_cummit_reference(args[i]), &revs);
 
 	reduce_heads_replace(&revs);
 
@@ -67,21 +67,21 @@ static int handle_independent(int count, const char **args)
 	for (rev = revs; rev; rev = rev->next)
 		printf("%s\n", oid_to_hex(&rev->item->object.oid));
 
-	free_commit_list(revs);
+	free_cummit_list(revs);
 	return 0;
 }
 
 static int handle_octopus(int count, const char **args, int show_all)
 {
-	struct commit_list *revs = NULL;
-	struct commit_list *result, *rev;
+	struct cummit_list *revs = NULL;
+	struct cummit_list *result, *rev;
 	int i;
 
 	for (i = count - 1; i >= 0; i--)
-		commit_list_insert(get_commit_reference(args[i]), &revs);
+		cummit_list_insert(get_cummit_reference(args[i]), &revs);
 
 	result = get_octopus_merge_bases(revs);
-	free_commit_list(revs);
+	free_cummit_list(revs);
 	reduce_heads_replace(&result);
 
 	if (!result)
@@ -93,18 +93,18 @@ static int handle_octopus(int count, const char **args, int show_all)
 			break;
 	}
 
-	free_commit_list(result);
+	free_cummit_list(result);
 	return 0;
 }
 
 static int handle_is_ancestor(int argc, const char **argv)
 {
-	struct commit *one, *two;
+	struct cummit *one, *two;
 
 	if (argc != 2)
-		die("--is-ancestor takes exactly two commits");
-	one = get_commit_reference(argv[0]);
-	two = get_commit_reference(argv[1]);
+		die("--is-ancestor takes exactly two cummits");
+	one = get_cummit_reference(argv[0]);
+	two = get_cummit_reference(argv[1]);
 	if (in_merge_bases(one, two))
 		return 0;
 	else
@@ -114,14 +114,14 @@ static int handle_is_ancestor(int argc, const char **argv)
 static int handle_fork_point(int argc, const char **argv)
 {
 	struct object_id oid;
-	struct commit *derived, *fork_point;
-	const char *commitname;
+	struct cummit *derived, *fork_point;
+	const char *cummitname;
 
-	commitname = (argc == 2) ? argv[1] : "HEAD";
-	if (get_oid(commitname, &oid))
-		die("Not a valid object name: '%s'", commitname);
+	cummitname = (argc == 2) ? argv[1] : "HEAD";
+	if (get_oid(cummitname, &oid))
+		die("Not a valid object name: '%s'", cummitname);
 
-	derived = lookup_commit_reference(the_repository, &oid);
+	derived = lookup_cummit_reference(the_repository, &oid);
 
 	fork_point = get_fork_point(argv[0], derived);
 
@@ -134,7 +134,7 @@ static int handle_fork_point(int argc, const char **argv)
 
 int cmd_merge_base(int argc, const char **argv, const char *prefix)
 {
-	struct commit **rev;
+	struct cummit **rev;
 	int rev_nr = 0;
 	int show_all = 0;
 	int cmdmode = 0;
@@ -149,7 +149,7 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "is-ancestor", &cmdmode,
 			    N_("is the first one ancestor of the other?"), 'a'),
 		OPT_CMDMODE(0, "fork-point", &cmdmode,
-			    N_("find where <commit> forked from reflog of <ref>"), 'f'),
+			    N_("find where <cummit> forked from reflog of <ref>"), 'f'),
 		OPT_END()
 	};
 
@@ -186,7 +186,7 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 
 	ALLOC_ARRAY(rev, argc);
 	while (argc-- > 0)
-		rev[rev_nr++] = get_commit_reference(*argv++);
+		rev[rev_nr++] = get_cummit_reference(*argv++);
 	ret = show_merge_base(rev, rev_nr, show_all);
 	free(rev);
 	return ret;

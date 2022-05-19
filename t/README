@@ -164,7 +164,7 @@ appropriately before running "make". Short options can be bundled, i.e.
 
 --with-dashes::
 	By default tests are run without dashed forms of
-	commands (like git-commit) in the PATH (it only uses
+	commands (like git-cummit) in the PATH (it only uses
 	wrappers from ../bin-wrappers).  Use this option to include
 	the build directory (..) in the PATH, which contains all
 	the dashed forms of commands.  This option is currently
@@ -247,7 +247,7 @@ as pathnames.
 
 You should be able to say something like
 
-    $ GIT_SKIP_TESTS=t9200.8 sh ./t9200-git-cvsexport-commit.sh
+    $ GIT_SKIP_TESTS=t9200.8 sh ./t9200-git-cvsexport-cummit.sh
 
 and even:
 
@@ -288,41 +288,41 @@ the set one by one, from left to right.
 For example, to run only tests up to a specific test (21), one
 could do this:
 
-    $ sh ./t9200-git-cvsexport-commit.sh --run='1-21'
+    $ sh ./t9200-git-cvsexport-cummit.sh --run='1-21'
 
 or this:
 
-    $ sh ./t9200-git-cvsexport-commit.sh --run='-21'
+    $ sh ./t9200-git-cvsexport-cummit.sh --run='-21'
 
 Common case is to run several setup tests (1, 2, 3) and then a
 specific test (21) that relies on that setup:
 
-    $ sh ./t9200-git-cvsexport-commit.sh --run='1,2,3,21'
+    $ sh ./t9200-git-cvsexport-cummit.sh --run='1,2,3,21'
 
 or:
 
-    $ sh ./t9200-git-cvsexport-commit.sh --run=1,2,3,21
+    $ sh ./t9200-git-cvsexport-cummit.sh --run=1,2,3,21
 
 or:
 
-    $ sh ./t9200-git-cvsexport-commit.sh --run='-3,21'
+    $ sh ./t9200-git-cvsexport-cummit.sh --run='-3,21'
 
 As noted above, the test set is built by going through the items
 from left to right, so this:
 
-    $ sh ./t9200-git-cvsexport-commit.sh --run='1-4,!3'
+    $ sh ./t9200-git-cvsexport-cummit.sh --run='1-4,!3'
 
 will run tests 1, 2, and 4.  Items that come later have higher
 precedence.  It means that this:
 
-    $ sh ./t9200-git-cvsexport-commit.sh --run='!3,1-4'
+    $ sh ./t9200-git-cvsexport-cummit.sh --run='!3,1-4'
 
 would just run tests from 1 to 4, including 3.
 
 You may use negation with ranges.  The following will run all
 test in the test suite except from 7 up to 11:
 
-    $ sh ./t9200-git-cvsexport-commit.sh --run='!7-11'
+    $ sh ./t9200-git-cvsexport-cummit.sh --run='!7-11'
 
 Sometimes there may be multiple tests with e.g. "setup" in their name
 that are needed and rather than figuring out the number for all of them
@@ -395,13 +395,13 @@ GIT_TEST_VALIDATE_INDEX_CACHE_ENTRIES=<boolean> checks that cache-tree
 records are valid when the index is written out or after a merge. This
 is mostly to catch missing invalidation. Default is true.
 
-GIT_TEST_COMMIT_GRAPH=<boolean>, when true, forces the commit-graph to
-be written after every 'git commit' command, and overrides the
-'core.commitGraph' setting to true.
+GIT_TEST_cummit_GRAPH=<boolean>, when true, forces the cummit-graph to
+be written after every 'git cummit' command, and overrides the
+'core.cummitGraph' setting to true.
 
-GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=<boolean>, when true, forces
-commit-graph write to compute and write changed path Bloom filters for
-every 'git commit-graph write', as if the `--changed-paths` option was
+GIT_TEST_cummit_GRAPH_CHANGED_PATHS=<boolean>, when true, forces
+cummit-graph write to compute and write changed path Bloom filters for
+every 'git cummit-graph write', as if the `--changed-paths` option was
 passed in.
 
 GIT_TEST_FSMONITOR=$PWD/t7519/fsmonitor-all exercises the fsmonitor
@@ -596,7 +596,7 @@ Here are the "do's:"
    construct the expected value using $(pwd) rather than $PWD,
    $TEST_DIRECTORY, or $TRASH_DIRECTORY. It makes a difference on
    Windows, where the shell (MSYS bash) mangles absolute path names.
-   For details, see the commit message of 4114156ae9.
+   For details, see the cummit message of 4114156ae9.
 
  - Remember that inside the <script> part, the standard output and
    standard error streams are discarded, and the test harness only
@@ -839,22 +839,22 @@ see test-lib-functions.sh for the full list and their options.
 
  - test_tick
 
-   Make commit and tag names consistent by setting the author and
-   committer times to defined state.  Subsequent calls will
+   Make cummit and tag names consistent by setting the author and
+   cummitter times to defined state.  Subsequent calls will
    advance the times by a fixed amount.
 
- - test_commit <message> [<filename> [<contents>]]
+ - test_cummit <message> [<filename> [<contents>]]
 
-   Creates a commit with the given message, committing the given
+   Creates a cummit with the given message, cummitting the given
    file with the given contents (default for both is to reuse the
    message string), and adds a tag (again reusing the message
    string as name).  Calls test_tick to make the SHA-1s
    reproducible.
 
- - test_merge <message> <commit-or-tag>
+ - test_merge <message> <cummit-or-tag>
 
-   Merges the given rev using the given message.  Like test_commit,
-   creates a tag and calls test_tick before committing.
+   Merges the given rev using the given message.  Like test_cummit,
+   creates a tag and calls test_tick before cummitting.
 
  - test_set_prereq <prereq>
 
@@ -946,7 +946,7 @@ see test-lib-functions.sh for the full list and their options.
 
  - test_cmp_rev <expected> <actual>
 
-   Check whether the <expected> rev points to the same commit as the
+   Check whether the <expected> rev points to the same cummit as the
    <actual> rev.
 
  - test_line_count (= | -lt | -ge | ...) <length> <file>
@@ -969,7 +969,7 @@ see test-lib-functions.sh for the full list and their options.
 
    Example:
 
-	test_expect_success 'branch pointing to non-commit' '
+	test_expect_success 'branch pointing to non-cummit' '
 		git rev-parse HEAD^{tree} >.git/refs/heads/invalid &&
 		test_when_finished "git update-ref -d refs/heads/invalid" &&
 		...

@@ -80,7 +80,7 @@ int unix_ss_create(const char *path,
 
 	/*
 	 * Always rollback (just delete) "<path>.lock" because we already created
-	 * "<path>" as a socket and do not want to commit_lock to do the atomic
+	 * "<path>" as a socket and do not want to cummit_lock to do the atomic
 	 * rename trick.
 	 */
 	rollback_lock_file(&lock);

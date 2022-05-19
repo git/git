@@ -76,7 +76,7 @@ test_expect_success 'setup' '
 	EOF
 	git add text.txt &&
 	test_tick &&
-	git commit -m "Initial revision" &&
+	git cummit -m "Initial revision" &&
 
 	git checkout -b remote &&
 	sed -e "
@@ -88,7 +88,7 @@ test_expect_success 'setup' '
 			/CEPHALUS - SOCRATES - POLEMARCHUS/ d
 		" text.txt >text.txt+ &&
 	mv text.txt+ text.txt &&
-	git commit -a -m "Remove cruft" &&
+	git cummit -a -m "Remove cruft" &&
 
 	git checkout main &&
 	sed -e "
@@ -101,7 +101,7 @@ test_expect_success 'setup' '
 			/pay your debts/ s/$/Q/
 		" text.txt | q_to_cr >text.txt+ &&
 	mv text.txt+ text.txt &&
-	git commit -a -m "Clarify" &&
+	git cummit -a -m "Clarify" &&
 	git show-branch --all
 '
 
@@ -119,7 +119,7 @@ test_expect_success '--ignore-space-change makes merge succeed' '
 
 test_expect_success 'naive cherry-pick fails' '
 	git read-tree --reset -u HEAD &&
-	test_must_fail git cherry-pick --no-commit remote &&
+	test_must_fail git cherry-pick --no-cummit remote &&
 	git read-tree --reset -u HEAD &&
 	test_must_fail git cherry-pick remote &&
 	test_must_fail git update-index --refresh &&
@@ -128,7 +128,7 @@ test_expect_success 'naive cherry-pick fails' '
 
 test_expect_success '-Xignore-space-change makes cherry-pick succeed' '
 	git read-tree --reset -u HEAD &&
-	git cherry-pick --no-commit -Xignore-space-change remote
+	git cherry-pick --no-cummit -Xignore-space-change remote
 '
 
 test_expect_success '--ignore-space-change: our w/s-only change wins' '

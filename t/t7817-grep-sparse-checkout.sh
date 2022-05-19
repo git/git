@@ -48,7 +48,7 @@ test_expect_success 'setup' '
 		echo "text" >A/a &&
 		echo "text" >B/b &&
 		git add A B &&
-		git commit -m sub &&
+		git cummit -m sub &&
 		git sparse-checkout init --cone &&
 		git sparse-checkout set B
 	) &&
@@ -58,17 +58,17 @@ test_expect_success 'setup' '
 		cd sub2 &&
 		echo "text" >a &&
 		git add a &&
-		git commit -m sub2
+		git cummit -m sub2
 	) &&
 
 	git submodule add ./sub &&
 	git submodule add ./sub2 &&
 	git add a b dir &&
-	git commit -m super &&
+	git cummit -m super &&
 	git sparse-checkout init --no-cone &&
 	git sparse-checkout set "/*" "!b" "!/*/" "sub" &&
 
-	git tag -am tag-to-commit tag-to-commit HEAD &&
+	git tag -am tag-to-cummit tag-to-commit HEAD &&
 	tree=$(git rev-parse HEAD^{tree}) &&
 	git tag -am tag-to-tree tag-to-tree $tree &&
 
@@ -107,9 +107,9 @@ test_expect_success 'grep searches unmerged file despite not matching sparsity p
 
 	git sparse-checkout disable &&
 	git checkout -b branchY main &&
-	test_commit modified-b-in-branchY b &&
+	test_cummit modified-b-in-branchY b &&
 	git checkout -b branchX main &&
-	test_commit modified-b-in-branchX b &&
+	test_cummit modified-b-in-branchX b &&
 
 	git sparse-checkout init &&
 	test_path_is_missing b &&

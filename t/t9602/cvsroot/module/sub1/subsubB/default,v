@@ -46,9 +46,9 @@ desc
 
 1.3
 log
-@A trunk change to sub1/subsubB/default.  This was committed about an
+@A trunk change to sub1/subsubB/default.  This was cummitted about an
 hour after an earlier change that affected most files on branch
-B_SPLIT.  This file is not on that branch yet, but after this commit,
+B_SPLIT.  This file is not on that branch yet, but after this cummit,
 we'll branch to B_SPLIT, albeit rooted in a revision that didn't exist
 at the time the rest of B_SPLIT was created.
 @
@@ -57,9 +57,9 @@ text
 
 Every directory in the `proj' project has a file named `default'.
 
-This line was added in the second commit (affecting all 7 files).
+This line was added in the second cummit (affecting all 7 files).
 
-This bit was committed on trunk about an hour after an earlier change
+This bit was cummitted on trunk about an hour after an earlier change
 to everyone else on branch B_SPLIT.  Afterwards, we'll finally branch
 this file to B_SPLIT, but rooted in a revision that didn't exist at
 the time the rest of B_SPLIT was created.
@@ -70,20 +70,20 @@ the time the rest of B_SPLIT was created.
 log
 @This change affects sub3/default and sub1/subsubB/default, on branch
 B_SPLIT.  Note that the latter file did not even exist on this branch
-until after some other files had had revisions committed on B_SPLIT.
+until after some other files had had revisions cummitted on B_SPLIT.
 @
 text
 @a10 4
 
 This change affects sub3/default and sub1/subsubB/default, on branch
 B_SPLIT.  Note that the latter file did not even exist on this branch
-until after some other files had had revisions committed on B_SPLIT.
+until after some other files had had revisions cummitted on B_SPLIT.
 @
 
 
 1.2
 log
-@Second commit to proj, affecting all 7 files.
+@Second cummit to proj, affecting all 7 files.
 @
 text
 @d6 5

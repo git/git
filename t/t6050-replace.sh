@@ -10,19 +10,19 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
 
-add_and_commit_file ()
+add_and_cummit_file ()
 {
     _file="$1"
     _msg="$2"
 
     git add $_file || return $?
     test_tick || return $?
-    git commit --quiet -m "$_file: $_msg"
+    git cummit --quiet -m "$_file: $_msg"
 }
 
-commit_buffer_contains_parents ()
+cummit_buffer_contains_parents ()
 {
-    git cat-file commit "$1" >payload &&
+    git cat-file cummit "$1" >payload &&
     sed -n -e '/^$/q' -e '/^parent /p' <payload >actual &&
     shift &&
     for _parent
@@ -32,25 +32,25 @@ commit_buffer_contains_parents ()
     test_cmp expected actual
 }
 
-commit_peeling_shows_parents ()
+cummit_peeling_shows_parents ()
 {
     _parent_number=1
-    _commit="$1"
+    _cummit="$1"
     shift &&
     for _parent
     do
-	_found=$(git rev-parse --verify $_commit^$_parent_number) || return 1
+	_found=$(git rev-parse --verify $_cummit^$_parent_number) || return 1
 	test "$_found" = "$_parent" || return 1
 	_parent_number=$(( $_parent_number + 1 ))
     done &&
-    test_must_fail git rev-parse --verify $_commit^$_parent_number 2>err &&
+    test_must_fail git rev-parse --verify $_cummit^$_parent_number 2>err &&
     test_i18ngrep "Needed a single revision" err
 }
 
 commit_has_parents ()
 {
-    commit_buffer_contains_parents "$@" &&
-    commit_peeling_shows_parents "$@"
+    cummit_buffer_contains_parents "$@" &&
+    cummit_peeling_shows_parents "$@"
 }
 
 HASH1=
@@ -66,78 +66,78 @@ test_expect_success 'set up buggy branch' '
      echo "line 2" >>hello &&
      echo "line 3" >>hello &&
      echo "line 4" >>hello &&
-     add_and_commit_file hello "4 lines" &&
+     add_and_cummit_file hello "4 lines" &&
      HASH1=$(git rev-parse --verify HEAD) &&
      echo "line BUG" >>hello &&
      echo "line 6" >>hello &&
      echo "line 7" >>hello &&
      echo "line 8" >>hello &&
-     add_and_commit_file hello "4 more lines with a BUG" &&
+     add_and_cummit_file hello "4 more lines with a BUG" &&
      HASH2=$(git rev-parse --verify HEAD) &&
      echo "line 9" >>hello &&
      echo "line 10" >>hello &&
-     add_and_commit_file hello "2 more lines" &&
+     add_and_cummit_file hello "2 more lines" &&
      HASH3=$(git rev-parse --verify HEAD) &&
      echo "line 11" >>hello &&
-     add_and_commit_file hello "1 more line" &&
+     add_and_cummit_file hello "1 more line" &&
      HASH4=$(git rev-parse --verify HEAD) &&
      sed -e "s/BUG/5/" hello >hello.new &&
      mv hello.new hello &&
-     add_and_commit_file hello "BUG fixed" &&
+     add_and_cummit_file hello "BUG fixed" &&
      HASH5=$(git rev-parse --verify HEAD) &&
      echo "line 12" >>hello &&
      echo "line 13" >>hello &&
-     add_and_commit_file hello "2 more lines" &&
+     add_and_cummit_file hello "2 more lines" &&
      HASH6=$(git rev-parse --verify HEAD) &&
      echo "line 14" >>hello &&
      echo "line 15" >>hello &&
      echo "line 16" >>hello &&
-     add_and_commit_file hello "again 3 more lines" &&
+     add_and_cummit_file hello "again 3 more lines" &&
      HASH7=$(git rev-parse --verify HEAD)
 '
 
 test_expect_success 'replace the author' '
-     git cat-file commit $HASH2 | grep "author A U Thor" &&
-     R=$(git cat-file commit $HASH2 | sed -e "s/A U/O/" | git hash-object -t commit --stdin -w) &&
-     git cat-file commit $R | grep "author O Thor" &&
+     git cat-file cummit $HASH2 | grep "author A U Thor" &&
+     R=$(git cat-file cummit $HASH2 | sed -e "s/A U/O/" | git hash-object -t cummit --stdin -w) &&
+     git cat-file cummit $R | grep "author O Thor" &&
      git update-ref refs/replace/$HASH2 $R &&
      git show HEAD~5 | grep "O Thor" &&
      git show $HASH2 | grep "O Thor"
 '
 
 test_expect_success 'test --no-replace-objects option' '
-     git cat-file commit $HASH2 | grep "author O Thor" &&
-     git --no-replace-objects cat-file commit $HASH2 | grep "author A U Thor" &&
+     git cat-file cummit $HASH2 | grep "author O Thor" &&
+     git --no-replace-objects cat-file cummit $HASH2 | grep "author A U Thor" &&
      git show $HASH2 | grep "O Thor" &&
      git --no-replace-objects show $HASH2 | grep "A U Thor"
 '
 
 test_expect_success 'test GIT_NO_REPLACE_OBJECTS env variable' '
-     GIT_NO_REPLACE_OBJECTS=1 git cat-file commit $HASH2 | grep "author A U Thor" &&
+     GIT_NO_REPLACE_OBJECTS=1 git cat-file cummit $HASH2 | grep "author A U Thor" &&
      GIT_NO_REPLACE_OBJECTS=1 git show $HASH2 | grep "A U Thor"
 '
 
 test_expect_success 'test core.usereplacerefs config option' '
 	test_config core.usereplacerefs false &&
-	git cat-file commit $HASH2 | grep "author A U Thor" &&
+	git cat-file cummit $HASH2 | grep "author A U Thor" &&
 	git show $HASH2 | grep "A U Thor"
 '
 
 cat >tag.sig <<EOF
 object $HASH2
-type commit
+type cummit
 tag mytag
 tagger T A Gger <> 0 +0000
 
 EOF
 
-test_expect_success 'tag replaced commit' '
+test_expect_success 'tag replaced cummit' '
      git update-ref refs/tags/mytag $(git mktag <tag.sig)
 '
 
 test_expect_success '"git fsck" works' '
      git fsck main >fsck_main.out &&
-     test_i18ngrep "dangling commit $R" fsck_main.out &&
+     test_i18ngrep "dangling cummit $R" fsck_main.out &&
      test_i18ngrep "dangling tag $(git show-ref -s refs/tags/mytag)" fsck_main.out &&
      test -z "$(git fsck)"
 '
@@ -149,13 +149,13 @@ test_expect_success 'repack, clone and fetch work' '
 	  cd clone_dir &&
 	  git show HEAD~5 | grep "A U Thor" &&
 	  git show $HASH2 | grep "A U Thor" &&
-	  git cat-file commit $R &&
+	  git cat-file cummit $R &&
 	  git repack -a -d &&
-	  test_must_fail git cat-file commit $R &&
+	  test_must_fail git cat-file cummit $R &&
 	  git fetch ../ "refs/replace/*:refs/replace/*" &&
 	  git show HEAD~5 | grep "O Thor" &&
 	  git show $HASH2 | grep "O Thor" &&
-	  git cat-file commit $R
+	  git cat-file cummit $R
      )
 '
 
@@ -212,7 +212,7 @@ test_expect_success 'create parallel branch without the bug' '
      git checkout $HASH1 &&
      git cherry-pick $HASH2 &&
      git show $HASH5 | git apply &&
-     git commit --amend -m "hello: 4 more lines WITHOUT the bug" hello &&
+     git cummit --amend -m "hello: 4 more lines WITHOUT the bug" hello &&
      PARA2=$(git rev-parse --verify HEAD) &&
      git cherry-pick $HASH3 &&
      PARA3=$(git rev-parse --verify HEAD) &&
@@ -238,9 +238,9 @@ test_expect_success 'push to cloned repo' '
 '
 
 test_expect_success 'push branch with replacement' '
-     git cat-file commit $PARA3 | grep "author A U Thor" &&
-     S=$(git cat-file commit $PARA3 | sed -e "s/A U/O/" | git hash-object -t commit --stdin -w) &&
-     git cat-file commit $S | grep "author O Thor" &&
+     git cat-file cummit $PARA3 | grep "author A U Thor" &&
+     S=$(git cat-file cummit $PARA3 | sed -e "s/A U/O/" | git hash-object -t cummit --stdin -w) &&
+     git cat-file cummit $S | grep "author O Thor" &&
      git replace $PARA3 $S &&
      git show $HASH6~2 | grep "O Thor" &&
      git show $PARA3 | grep "O Thor" &&
@@ -288,7 +288,7 @@ test_expect_success 'index-pack and replacements' '
 	git index-pack test-*.pack
 '
 
-test_expect_success 'not just commits' '
+test_expect_success 'not just cummits' '
 	echo replaced >file &&
 	git add file &&
 	REPLACED=$(git rev-parse :file) &&
@@ -349,11 +349,11 @@ test_expect_success 'test --format medium' '
 
 test_expect_success 'test --format long' '
 	{
-		echo "$H1 (commit) -> $BLOB (blob)" &&
+		echo "$H1 (cummit) -> $BLOB (blob)" &&
 		echo "$BLOB (blob) -> $REPLACED (blob)" &&
-		echo "$HT (tree) -> $H1 (commit)" &&
-		echo "$PARA3 (commit) -> $S (commit)" &&
-		echo "$MYTAG (tag) -> $HASH1 (commit)"
+		echo "$HT (tree) -> $H1 (cummit)" &&
+		echo "$PARA3 (cummit) -> $S (cummit)" &&
+		echo "$MYTAG (tag) -> $HASH1 (cummit)"
 	} | sort >expected &&
 	git replace --format=long | sort >actual &&
 	test_cmp expected actual
@@ -374,11 +374,11 @@ test_expect_success '--edit with and without already replaced object' '
 	test_must_fail env GIT_EDITOR=./fakeeditor git replace --edit "$PARA3" &&
 	GIT_EDITOR=./fakeeditor git replace --force --edit "$PARA3" &&
 	git replace -l | grep "$PARA3" &&
-	git cat-file commit "$PARA3" | grep "A fake Thor" &&
+	git cat-file cummit "$PARA3" | grep "A fake Thor" &&
 	git replace -d "$PARA3" &&
 	GIT_EDITOR=./fakeeditor git replace --edit "$PARA3" &&
 	git replace -l | grep "$PARA3" &&
-	git cat-file commit "$PARA3" | grep "A fake Thor"
+	git cat-file cummit "$PARA3" | grep "A fake Thor"
 '
 
 test_expect_success '--edit and change nothing or command failed' '
@@ -387,7 +387,7 @@ test_expect_success '--edit and change nothing or command failed' '
 	test_must_fail env GIT_EDITOR="./failingfakeeditor" git replace --edit "$PARA3" &&
 	GIT_EDITOR=./fakeeditor git replace --edit "$PARA3" &&
 	git replace -l | grep "$PARA3" &&
-	git cat-file commit "$PARA3" | grep "A fake Thor"
+	git cat-file cummit "$PARA3" | grep "A fake Thor"
 '
 
 test_expect_success 'replace ref cleanup' '
@@ -431,46 +431,46 @@ test_expect_success '--graft using a tag as the replaced object' '
 	git replace -d $HASH7
 '
 
-test_expect_success GPG 'set up a signed commit' '
+test_expect_success GPG 'set up a signed cummit' '
 	echo "line 17" >>hello &&
 	echo "line 18" >>hello &&
 	git add hello &&
 	test_tick &&
-	git commit --quiet -S -m "hello: 2 more lines in a signed commit" &&
+	git cummit --quiet -S -m "hello: 2 more lines in a signed cummit" &&
 	HASH8=$(git rev-parse --verify HEAD) &&
-	git verify-commit $HASH8
+	git verify-cummit $HASH8
 '
 
-test_expect_success GPG '--graft with a signed commit' '
-	git cat-file commit $HASH8 >orig &&
+test_expect_success GPG '--graft with a signed cummit' '
+	git cat-file cummit $HASH8 >orig &&
 	git replace --graft $HASH8 &&
-	git cat-file commit $HASH8 >repl &&
+	git cat-file cummit $HASH8 >repl &&
 	commit_has_parents $HASH8 &&
-	test_must_fail git verify-commit $HASH8 &&
-	sed -n -e "/^tree /p" -e "/^author /p" -e "/^committer /p" orig >expected &&
+	test_must_fail git verify-cummit $HASH8 &&
+	sed -n -e "/^tree /p" -e "/^author /p" -e "/^cummitter /p" orig >expected &&
 	echo >>expected &&
 	sed -e "/^$/q" repl >actual &&
 	test_cmp expected actual &&
 	git replace -d $HASH8
 '
 
-test_expect_success GPG 'set up a merge commit with a mergetag' '
+test_expect_success GPG 'set up a merge cummit with a mergetag' '
 	git reset --hard HEAD &&
 	git checkout -b test_branch HEAD~2 &&
 	echo "line 1 from test branch" >>hello &&
 	echo "line 2 from test branch" >>hello &&
 	git add hello &&
 	test_tick &&
-	git commit -m "hello: 2 more lines from a test branch" &&
+	git cummit -m "hello: 2 more lines from a test branch" &&
 	HASH9=$(git rev-parse --verify HEAD) &&
 	git tag -s -m "tag for testing with a mergetag" test_tag HEAD &&
 	git checkout main &&
 	git merge -s ours test_tag &&
 	HASH10=$(git rev-parse --verify HEAD) &&
-	git cat-file commit $HASH10 | grep "^mergetag object"
+	git cat-file cummit $HASH10 | grep "^mergetag object"
 '
 
-test_expect_success GPG '--graft on a commit with a mergetag' '
+test_expect_success GPG '--graft on a cummit with a mergetag' '
 	test_must_fail git replace --graft $HASH10 $HASH8^1 &&
 	git replace --graft $HASH10 $HASH8^1 $HASH9 &&
 	git replace -d $HASH10
@@ -478,10 +478,10 @@ test_expect_success GPG '--graft on a commit with a mergetag' '
 
 test_expect_success '--convert-graft-file' '
 	git checkout -b with-graft-file &&
-	test_commit root2 &&
+	test_cummit root2 &&
 	git reset --hard root2^ &&
-	test_commit root1 &&
-	test_commit after-root1 &&
+	test_cummit root1 &&
+	test_cummit after-root1 &&
 	test_tick &&
 	git merge -m merge-root2 root2 &&
 

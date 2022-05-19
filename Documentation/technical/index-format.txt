@@ -148,11 +148,11 @@ Git index format
   Since the index does not record entries for directories, the cache
   entries cannot describe tree objects that already exist in the object
   database for regions of the index that are unchanged from an existing
-  commit. The cache tree extension stores a recursive tree structure that
+  cummit. The cache tree extension stores a recursive tree structure that
   describes the trees that already exist and completely match sections of
   the cache entries. This speeds up tree object generation from the index
-  for a new commit by only computing the trees that are "new" to that
-  commit. It also assists when comparing the index to another tree, such
+  for a new cummit by only computing the trees that are "new" to that
+  cummit. It also assists when comparing the index to another tree, such
   as `HEAD^{tree}`, since sections of the index can be skipped when a tree
   comparison demonstrates equality.
 

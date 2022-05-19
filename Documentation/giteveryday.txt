@@ -17,7 +17,7 @@ Git users can broadly be grouped into four categories for the purposes of
 describing here a small set of useful command for everyday Git.
 
 *	<<STANDALONE,Individual Developer (Standalone)>> commands are essential
-	for anybody who makes a commit, even for somebody who works alone.
+	for anybody who makes a cummit, even for somebody who works alone.
 
 *	If you work with other people, you will need commands listed in
 	the <<PARTICIPANT,Individual Developer (Participant)>> section as well.
@@ -49,7 +49,7 @@ following commands.
   * linkgit:git-diff[1] and linkgit:git-status[1] to see what
     you are in the middle of doing.
 
-  * linkgit:git-commit[1] to advance the current branch.
+  * linkgit:git-cummit[1] to advance the current branch.
 
   * linkgit:git-restore[1] to undo changes.
 
@@ -69,7 +69,7 @@ $ tar zxf frotz.tar.gz
 $ cd frotz
 $ git init
 $ git add . <1>
-$ git commit -m "import of frotz source tree."
+$ git cummit -m "import of frotz source tree."
 $ git tag v2.43 <2>
 ------------
 +
@@ -85,10 +85,10 @@ $ git restore curses/ux_audio_oss.c <2>
 $ git add curses/ux_audio_alsa.c <3>
 $ edit/compile/test
 $ git diff HEAD <4>
-$ git commit -a -s <5>
+$ git cummit -a -s <5>
 $ edit/compile/test
 $ git diff HEAD^ <6>
-$ git commit -a --amend <7>
+$ git cummit -a --amend <7>
 $ git switch master <8>
 $ git merge alsa-audio <9>
 $ git log --since='3 days ago' <10>
@@ -98,16 +98,16 @@ $ git log v2.43.. curses/ <11>
 <1> create a new topic branch.
 <2> revert your botched changes in `curses/ux_audio_oss.c`.
 <3> you need to tell Git if you added a new file; removal and
-modification will be caught if you do `git commit -a` later.
-<4> to see what changes you are committing.
-<5> commit everything, as you have tested, with your sign-off.
-<6> look at all your changes including the previous commit.
-<7> amend the previous commit, adding all your new changes,
+modification will be caught if you do `git cummit -a` later.
+<4> to see what changes you are cummitting.
+<5> cummit everything, as you have tested, with your sign-off.
+<6> look at all your changes including the previous cummit.
+<7> amend the previous cummit, adding all your new changes,
 using your original message.
 <8> switch to the master branch.
 <9> merge a topic branch into your master branch.
-<10> review commit logs; other forms to limit output can be
-combined and include `-10` (to show up to 10 commits),
+<10> review cummit logs; other forms to limit output can be
+combined and include `-10` (to show up to 10 cummits),
 `--until=2005-12-10`, etc.
 <11> view only the changes that touch what's in `curses/`
 directory, since `v2.43` tag.
@@ -148,7 +148,7 @@ Clone the upstream and work on it.  Feed changes to upstream.::
 $ git clone git://git.kernel.org/pub/scm/.../torvalds/linux-2.6 my2.6
 $ cd my2.6
 $ git switch -c mine master <1>
-$ edit/compile/test; git commit -a -s <2>
+$ edit/compile/test; git cummit -a -s <2>
 $ git format-patch master <3>
 $ git send-email --to="person <email@example.com>" 00*.patch <4>
 $ git switch master <5>
@@ -189,7 +189,7 @@ branch.master.remote origin
 branch.master.merge refs/heads/master
 satellite$ git config remote.origin.push \
 	   +refs/heads/*:refs/remotes/satellite/* <3>
-satellite$ edit/compile/test/commit
+satellite$ edit/compile/test/cummit
 satellite$ git push origin <4>
 
 mothership$ cd frotz
@@ -216,7 +216,7 @@ Branch off of a specific tag.::
 +
 ------------
 $ git switch -c private2.6.14 v2.6.14 <1>
-$ edit/compile/test; git commit -a
+$ edit/compile/test; git cummit -a
 $ git checkout master
 $ git cherry-pick v2.6.14..private2.6.14 <2>
 ------------
@@ -256,7 +256,7 @@ as an integrator.
   * linkgit:git-format-patch[1] to prepare and send suggested
     alternative to contributors.
 
-  * linkgit:git-revert[1] to undo botched commits.
+  * linkgit:git-revert[1] to undo botched cummits.
 
   * linkgit:git-push[1] to publish the bleeding edge.
 

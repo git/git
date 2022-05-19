@@ -33,12 +33,12 @@ Fixes since v2.12.2
    code that handled @{-1} and @{upstream} was a bit too loose in
    disambiguating.
 
- * "git fetch" that requests a commit by object name, when the other
+ * "git fetch" that requests a cummit by object name, when the other
    side does not allow such an request, failed without much
    explanation.
 
- * "git filter-branch --prune-empty" drops a single-parent commit that
-   becomes a no-op, but did not drop a root commit whose tree is empty.
+ * "git filter-branch --prune-empty" drops a single-parent cummit that
+   becomes a no-op, but did not drop a root cummit whose tree is empty.
 
  * Recent versions of Git treats http alternates (used in dumb http
    transport) just like HTTP redirects and requires the client to

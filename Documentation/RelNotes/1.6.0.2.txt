@@ -62,7 +62,7 @@ Fixes since v1.6.0.1
   showing the timestamp.
 
 * "git log --author=author" match incorrectly matched with the
-  timestamp part of "author " line in commit objects.
+  timestamp part of "author " line in cummit objects.
 
 * "git log -F --author=author" did not work at all.
 

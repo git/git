@@ -34,7 +34,7 @@ test_expect_success 'setup a tree' '
 		echo content >$path &&
 		git add $path || return 1
 	done <expect &&
-	git commit -m "initial commit" &&
+	git cummit -m "initial cummit" &&
 	git ls-files >actual &&
 	test_cmp expect actual
 '
@@ -66,7 +66,7 @@ test_expect_success 'setup .gitattributes' '
 	fileWrongLabel label☺
 	EOF
 	git add .gitattributes &&
-	git commit -m "add attributes"
+	git cummit -m "add attributes"
 '
 
 test_expect_success 'check specific set attr' '

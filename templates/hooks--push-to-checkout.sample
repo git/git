@@ -10,15 +10,15 @@
 #
 # By default, such a push is refused if the working tree and the index
 # of the remote repository has any difference from the currently
-# checked out commit; when both the working tree and the index match
-# the current commit, they are updated to match the newly pushed tip
+# checked out cummit; when both the working tree and the index match
+# the current cummit, they are updated to match the newly pushed tip
 # of the branch. This hook is to be used to override the default
 # behaviour; however the code below reimplements the default behaviour
 # as a starting point for convenient modification.
 #
-# The hook receives the commit with which the tip of the current
+# The hook receives the cummit with which the tip of the current
 # branch is going to be updated:
-commit=$1
+cummit=$1
 
 # It can exit with a non-zero status to refuse the push (when it does
 # so, it must not modify the index or the working tree).
@@ -29,7 +29,7 @@ die () {
 
 # Or it can make any necessary changes to the working tree and to the
 # index to bring them to the desired state when the tip of the current
-# branch is updated to the new commit, and exit with a zero status.
+# branch is updated to the new cummit, and exit with a zero status.
 #
 # For example, the hook can simply run git read-tree -u -m HEAD "$1"
 # in order to emulate git fetch that is run in the reverse direction
@@ -72,7 +72,7 @@ then
 	die "Working directory has staged changes"
 fi
 
-if ! git read-tree -u -m "$commit"
+if ! git read-tree -u -m "$cummit"
 then
 	die "Could not update working tree to new HEAD"
 fi

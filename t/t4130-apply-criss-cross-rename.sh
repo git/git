@@ -23,7 +23,7 @@ test_expect_success 'setup' '
 	create_file file2 "some other content" &&
 	create_file file3 "again something else" &&
 	git add file1 file2 file3 &&
-	git commit -m 1
+	git cummit -m 1
 '
 
 test_expect_success 'criss-cross rename' '

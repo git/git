@@ -4,7 +4,7 @@
 	conflicts in a failed cherry-pick or revert.
 
 --skip::
-	Skip the current commit and continue with the rest of the
+	Skip the current cummit and continue with the rest of the
 	sequence.
 
 --quit::

@@ -33,9 +33,9 @@
 
 /*
  * Used as a flag in ref_update::flags when the lockfile needs to be
- * committed.
+ * cummitted.
  */
-#define REF_NEEDS_COMMIT (1 << 6)
+#define REF_NEEDS_cummit (1 << 6)
 
 /*
  * Used as a flag in ref_update::flags when the ref_update was via an
@@ -1143,7 +1143,7 @@ static void prune_ref(struct files_ref_store *refs, struct ref_to_prune *r)
 			transaction, r->name,
 			REF_NO_DEREF | REF_HAVE_NEW | REF_HAVE_OLD | REF_IS_PRUNING,
 			null_oid(), &r->oid, NULL);
-	if (ref_transaction_commit(transaction, &err))
+	if (ref_transaction_cummit(transaction, &err))
 		goto cleanup;
 
 	ret = 0;
@@ -1247,7 +1247,7 @@ static int files_pack_refs(struct ref_store *ref_store, unsigned int flags)
 	if (ok != ITER_DONE)
 		die("error while iterating over references");
 
-	if (ref_transaction_commit(transaction, &err))
+	if (ref_transaction_cummit(transaction, &err))
 		die("unable to write new packed-refs: %s", err.buf);
 
 	ref_transaction_free(transaction);
@@ -1370,7 +1370,7 @@ static int rename_tmp_log(struct files_ref_store *refs, const char *newrefname)
 static int write_ref_to_lockfile(struct ref_lock *lock,
 				 const struct object_id *oid,
 				 int skip_oid_verification, struct strbuf *err);
-static int commit_ref_update(struct files_ref_store *refs,
+static int cummit_ref_update(struct files_ref_store *refs,
 			     struct ref_lock *lock,
 			     const struct object_id *oid, const char *logmsg,
 			     struct strbuf *err);
@@ -1516,7 +1516,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	oidcpy(&lock->old_oid, &orig_oid);
 
 	if (write_ref_to_lockfile(lock, &orig_oid, 0, &err) ||
-	    commit_ref_update(refs, lock, &orig_oid, logmsg, &err)) {
+	    cummit_ref_update(refs, lock, &orig_oid, logmsg, &err)) {
 		error("unable to write current sha1 into %s: %s", newrefname, err.buf);
 		strbuf_release(&err);
 		goto rollback;
@@ -1536,7 +1536,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	flag = log_all_ref_updates;
 	log_all_ref_updates = LOG_REFS_NONE;
 	if (write_ref_to_lockfile(lock, &orig_oid, 0, &err) ||
-	    commit_ref_update(refs, lock, &orig_oid, NULL, &err)) {
+	    cummit_ref_update(refs, lock, &orig_oid, NULL, &err)) {
 		error("unable to write current sha1 into %s: %s", oldrefname, err.buf);
 		strbuf_release(&err);
 	}
@@ -1582,7 +1582,7 @@ static int close_ref_gently(struct ref_lock *lock)
 	return 0;
 }
 
-static int commit_ref(struct ref_lock *lock)
+static int cummit_ref(struct ref_lock *lock)
 {
 	char *path = get_locked_file_path(&lock->lk);
 	struct stat st;
@@ -1599,7 +1599,7 @@ static int commit_ref(struct ref_lock *lock)
 		strbuf_attach(&sb_path, path, len, len);
 
 		/*
-		 * If this fails, commit_lock_file() will also fail
+		 * If this fails, cummit_lock_file() will also fail
 		 * and will report the problem.
 		 */
 		remove_empty_directories(&sb_path);
@@ -1608,7 +1608,7 @@ static int commit_ref(struct ref_lock *lock)
 		free(path);
 	}
 
-	if (commit_lock_file(&lock->lk))
+	if (cummit_lock_file(&lock->lk))
 		return -1;
 	return 0;
 }
@@ -1703,12 +1703,12 @@ static int files_create_reflog(struct ref_store *ref_store, const char *refname,
 
 static int log_ref_write_fd(int fd, const struct object_id *old_oid,
 			    const struct object_id *new_oid,
-			    const char *committer, const char *msg)
+			    const char *cummitter, const char *msg)
 {
 	struct strbuf sb = STRBUF_INIT;
 	int ret = 0;
 
-	strbuf_addf(&sb, "%s %s %s", oid_to_hex(old_oid), oid_to_hex(new_oid), committer);
+	strbuf_addf(&sb, "%s %s %s", oid_to_hex(old_oid), oid_to_hex(new_oid), cummitter);
 	if (msg && *msg) {
 		strbuf_addch(&sb, '\t');
 		strbuf_addstr(&sb, msg);
@@ -1740,7 +1740,7 @@ static int files_log_ref_write(struct files_ref_store *refs,
 	if (logfd < 0)
 		return 0;
 	result = log_ref_write_fd(logfd, old_oid, new_oid,
-				  git_committer_info(0), msg);
+				  git_cummitter_info(0), msg);
 	if (result) {
 		struct strbuf sb = STRBUF_INIT;
 		int save_errno = errno;
@@ -1787,10 +1787,10 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 			unlock_ref(lock);
 			return -1;
 		}
-		if (o->type != OBJ_COMMIT && is_branch(lock->ref_name)) {
+		if (o->type != OBJ_cummit && is_branch(lock->ref_name)) {
 			strbuf_addf(
 				err,
-				"trying to write non-commit object %s to branch '%s'",
+				"trying to write non-cummit object %s to branch '%s'",
 				oid_to_hex(oid), lock->ref_name);
 			unlock_ref(lock);
 			return -1;
@@ -1810,16 +1810,16 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 }
 
 /*
- * Commit a change to a loose reference that has already been written
+ * cummit a change to a loose reference that has already been written
  * to the loose reference lockfile. Also update the reflogs if
  * necessary, using the specified lockmsg (which can be NULL).
  */
-static int commit_ref_update(struct files_ref_store *refs,
+static int cummit_ref_update(struct files_ref_store *refs,
 			     struct ref_lock *lock,
 			     const struct object_id *oid, const char *logmsg,
 			     struct strbuf *err)
 {
-	files_assert_main_repository(refs, "commit_ref_update");
+	files_assert_main_repository(refs, "cummit_ref_update");
 
 	clear_loose_ref_cache(refs);
 	if (files_log_ref_write(refs, lock->ref_name,
@@ -1864,7 +1864,7 @@ static int commit_ref_update(struct files_ref_store *refs,
 		}
 	}
 
-	if (commit_ref(lock)) {
+	if (cummit_ref(lock)) {
 		strbuf_addf(err, "couldn't set '%s'", lock->ref_name);
 		unlock_ref(lock);
 		return -1;
@@ -1921,9 +1921,9 @@ static int create_symref_locked(struct files_ref_store *refs,
 
 	update_symref_reflog(refs, lock, refname, target, logmsg);
 
-	/* no error check; commit_ref will check ferror */
+	/* no error check; cummit_ref will check ferror */
 	fprintf(get_lock_file_fp(&lock->lk), "ref: %s\n", target);
-	if (commit_ref(lock) < 0)
+	if (cummit_ref(lock) < 0)
 		return error("unable to write symref for %s: %s", refname,
 			     strerror(errno));
 	return 0;
@@ -2605,10 +2605,10 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			ret = TRANSACTION_GENERIC_ERROR;
 			goto out;
 		} else {
-			update->flags |= REF_NEEDS_COMMIT;
+			update->flags |= REF_NEEDS_cummit;
 		}
 	}
-	if (!(update->flags & REF_NEEDS_COMMIT)) {
+	if (!(update->flags & REF_NEEDS_cummit)) {
 		/*
 		 * We didn't call write_ref_to_lockfile(), so
 		 * the lockfile is still open. Close it to
@@ -2866,12 +2866,12 @@ static int files_transaction_finish(struct ref_store *ref_store,
 	backend_data = transaction->backend_data;
 	packed_transaction = backend_data->packed_transaction;
 
-	/* Perform updates first so live commits remain referenced */
+	/* Perform updates first so live cummits remain referenced */
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 		struct ref_lock *lock = update->backend_data;
 
-		if (update->flags & REF_NEEDS_COMMIT ||
+		if (update->flags & REF_NEEDS_cummit ||
 		    update->flags & REF_LOG_ONLY) {
 			if (files_log_ref_write(refs,
 						lock->ref_name,
@@ -2890,9 +2890,9 @@ static int files_transaction_finish(struct ref_store *ref_store,
 				goto cleanup;
 			}
 		}
-		if (update->flags & REF_NEEDS_COMMIT) {
+		if (update->flags & REF_NEEDS_cummit) {
 			clear_loose_ref_cache(refs);
-			if (commit_ref(lock)) {
+			if (cummit_ref(lock)) {
 				strbuf_addf(err, "couldn't set '%s'", lock->ref_name);
 				unlock_ref(lock);
 				update->backend_data = NULL;
@@ -2930,7 +2930,7 @@ static int files_transaction_finish(struct ref_store *ref_store,
 	 * retaining the packed-refs lock:
 	 */
 	if (packed_transaction) {
-		ret = ref_transaction_commit(packed_transaction, err);
+		ret = ref_transaction_cummit(packed_transaction, err);
 		ref_transaction_free(packed_transaction);
 		packed_transaction = NULL;
 		backend_data->packed_transaction = NULL;
@@ -3002,13 +3002,13 @@ static int ref_present(const char *refname,
 	return string_list_has_string(affected_refnames, refname);
 }
 
-static int files_initial_transaction_commit(struct ref_store *ref_store,
+static int files_initial_transaction_cummit(struct ref_store *ref_store,
 					    struct ref_transaction *transaction,
 					    struct strbuf *err)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE,
-			       "initial_ref_transaction_commit");
+			       "initial_ref_transaction_cummit");
 	size_t i;
 	int ret = 0;
 	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
@@ -3017,7 +3017,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 	assert(err);
 
 	if (transaction->state != REF_TRANSACTION_OPEN)
-		BUG("commit called for transaction that is not open");
+		BUG("cummit called for transaction that is not open");
 
 	/* Fail if a refname appears more than once in the transaction: */
 	for (i = 0; i < transaction->nr; i++)
@@ -3079,7 +3079,7 @@ static int files_initial_transaction_commit(struct ref_store *ref_store,
 		goto cleanup;
 	}
 
-	if (initial_ref_transaction_commit(packed_transaction, err)) {
+	if (initial_ref_transaction_cummit(packed_transaction, err)) {
 		ret = TRANSACTION_GENERIC_ERROR;
 	}
 
@@ -3241,10 +3241,10 @@ static int files_reflog_expire(struct ref_store *ref_store,
 			status |= error("couldn't write %s",
 					get_lock_file_path(&lock->lk));
 			rollback_lock_file(&reflog_lock);
-		} else if (commit_lock_file(&reflog_lock)) {
+		} else if (cummit_lock_file(&reflog_lock)) {
 			status |= error("unable to write reflog '%s' (%s)",
 					log_file, strerror(errno));
-		} else if (update && commit_ref(lock)) {
+		} else if (update && cummit_ref(lock)) {
 			status |= error("couldn't set %s", lock->ref_name);
 		}
 	}
@@ -3287,7 +3287,7 @@ struct ref_storage_be refs_be_files = {
 	.transaction_prepare = files_transaction_prepare,
 	.transaction_finish = files_transaction_finish,
 	.transaction_abort = files_transaction_abort,
-	.initial_transaction_commit = files_initial_transaction_commit,
+	.initial_transaction_cummit = files_initial_transaction_cummit,
 
 	.pack_refs = files_pack_refs,
 	.create_symref = files_create_symref,

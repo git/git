@@ -12,17 +12,17 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 # enables the emitted_symbols list to store the diff in memory.
 
 test_expect_success 'set up history with a merge' '
-	test_commit A &&
-	test_commit B &&
+	test_cummit A &&
+	test_cummit B &&
 	git checkout -b side HEAD^ &&
-	test_commit C &&
+	test_cummit C &&
 	git merge -m M main &&
-	test_commit D
+	test_cummit D
 '
 
 test_expect_success 'log --cc -p --stat --color-moved' '
 	cat >expect <<-EOF &&
-	commit D
+	cummit D
 	---
 	 D.t | 1 +
 	 1 file changed, 1 insertion(+)
@@ -34,11 +34,11 @@ test_expect_success 'log --cc -p --stat --color-moved' '
 	+++ b/D.t
 	@@ -0,0 +1 @@
 	+D
-	commit M
+	cummit M
 
 	 B.t | 1 +
 	 1 file changed, 1 insertion(+)
-	commit C
+	cummit C
 	---
 	 C.t | 1 +
 	 1 file changed, 1 insertion(+)
@@ -50,7 +50,7 @@ test_expect_success 'log --cc -p --stat --color-moved' '
 	+++ b/C.t
 	@@ -0,0 +1 @@
 	+C
-	commit B
+	cummit B
 	---
 	 B.t | 1 +
 	 1 file changed, 1 insertion(+)
@@ -62,7 +62,7 @@ test_expect_success 'log --cc -p --stat --color-moved' '
 	+++ b/B.t
 	@@ -0,0 +1 @@
 	+B
-	commit A
+	cummit A
 	---
 	 A.t | 1 +
 	 1 file changed, 1 insertion(+)
@@ -75,7 +75,7 @@ test_expect_success 'log --cc -p --stat --color-moved' '
 	@@ -0,0 +1 @@
 	+A
 	EOF
-	git log --format="commit %s" --cc -p --stat --color-moved >actual &&
+	git log --format="cummit %s" --cc -p --stat --color-moved >actual &&
 	test_cmp expect actual
 '
 

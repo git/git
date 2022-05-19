@@ -318,10 +318,10 @@ test_expect_success 'git grep' '
 	test_cmp expected.grep actual.grep
 '
 
-test_expect_success 'git commit' '
+test_expect_success 'git cummit' '
 	(
 		cd repo.git &&
-		GIT_DIR=. GIT_WORK_TREE=work git commit -a -m done
+		GIT_DIR=. GIT_WORK_TREE=work git cummit -a -m done
 	)
 '
 
@@ -433,8 +433,8 @@ test_expect_success 'error out gracefully on invalid $GIT_WORK_TREE' '
 
 test_expect_success 'refs work with relative gitdir and work tree' '
 	git init relative &&
-	git -C relative commit --allow-empty -m one &&
-	git -C relative commit --allow-empty -m two &&
+	git -C relative cummit --allow-empty -m one &&
+	git -C relative cummit --allow-empty -m two &&
 
 	GIT_DIR=relative/.git GIT_WORK_TREE=relative git reset HEAD^ &&
 

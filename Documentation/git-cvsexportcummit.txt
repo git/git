@@ -1,0 +1,118 @@
+git-cvsexportcummit(1)
+======================
+
+NAME
+----
+git-cvsexportcummit - Export a single cummit to a CVS checkout
+
+
+SYNOPSIS
+--------
+[verse]
+'git cvsexportcummit' [-h] [-u] [-v] [-c] [-P] [-p] [-a] [-d <cvsroot>]
+	[-w <cvs-workdir>] [-W] [-f] [-m <msgprefix>] [<parent-cummit>] <cummit-id>
+
+
+DESCRIPTION
+-----------
+Exports a cummit from Git to a CVS checkout, making it easier
+to merge patches from a Git repository into a CVS repository.
+
+Specify the name of a CVS checkout using the -w switch or execute it
+from the root of the CVS working copy. In the latter case GIT_DIR must
+be defined. See examples below.
+
+It does its best to do the safe thing, it will check that the files are
+unchanged and up to date in the CVS checkout, and it will not autocummit
+by default.
+
+Supports file additions, removals, and cummits that affect binary files.
+
+If the cummit is a merge cummit, you must tell 'git cvsexportcummit' what
+parent the changeset should be done against.
+
+OPTIONS
+-------
+
+-c::
+	cummit automatically if the patch applied cleanly. It will not
+	cummit if any hunks fail to apply or there were other problems.
+
+-p::
+	Be pedantic (paranoid) when applying patches. Invokes patch with
+	--fuzz=0
+
+-a::
+	Add authorship information. Adds Author line, and cummitter (if
+	different from Author) to the message.
+
+-d::
+	Set an alternative CVSROOT to use.  This corresponds to the CVS
+	-d parameter.  Usually users will not want to set this, except
+	if using CVS in an asymmetric fashion.
+
+-f::
+	Force the merge even if the files are not up to date.
+
+-P::
+	Force the parent cummit, even if it is not a direct parent.
+
+-m::
+	Prepend the cummit message with the provided prefix.
+	Useful for patch series and the like.
+
+-u::
+	Update affected files from CVS repository before attempting export.
+
+-k::
+	Reverse CVS keyword expansion (e.g. $Revision: 1.2.3.4$
+	becomes $Revision$) in working CVS checkout before applying patch.
+
+-w::
+	Specify the location of the CVS checkout to use for the export. This
+	option does not require GIT_DIR to be set before execution if the
+	current directory is within a Git repository.  The default is the
+	value of 'cvsexportcummit.cvsdir'.
+
+-W::
+	Tell cvsexportcummit that the current working directory is not only
+	a Git checkout, but also the CVS checkout.  Therefore, Git will
+	reset the working directory to the parent cummit before proceeding.
+
+-v::
+	Verbose.
+
+CONFIGURATION
+-------------
+cvsexportcummit.cvsdir::
+	The default location of the CVS checkout to use for the export.
+
+EXAMPLES
+--------
+
+Merge one patch into CVS::
++
+------------
+$ export GIT_DIR=~/project/.git
+$ cd ~/project_cvs_checkout
+$ git cvsexportcummit -v <cummit-sha1>
+$ cvs cummit -F .msg <files>
+------------
+
+Merge one patch into CVS (-c and -w options). The working directory is within the Git Repo::
++
+------------
+	$ git cvsexportcummit -v -c -w ~/project_cvs_checkout <cummit-sha1>
+------------
+
+Merge pending patches into CVS automatically -- only if you really know what you are doing::
++
+------------
+$ export GIT_DIR=~/project/.git
+$ cd ~/project_cvs_checkout
+$ git cherry cvshead myhead | sed -n 's/^+ //p' | xargs -l1 git cvsexportcummit -c -p -v
+------------
+
+GIT
+---
+Part of the linkgit:git[1] suite

@@ -32,7 +32,7 @@ test_expect_success 'create some blobs' '
 	# cover systems where modes are ignored
 	git update-index --chmod=+x two &&
 
-	git commit -m base &&
+	git cummit -m base &&
 
 	sha1_one=$(git rev-parse HEAD:one) &&
 	sha1_two=$(git rev-parse HEAD:two)

@@ -2,7 +2,7 @@
 #include "wt-status.h"
 #include "object.h"
 #include "dir.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "revision.h"
 #include "diffcore.h"
@@ -179,7 +179,7 @@ static void wt_longstatus_print_unmerged_header(struct wt_status *s)
 
 	if (!s->hints)
 		return;
-	if (s->whence != FROM_COMMIT)
+	if (s->whence != FROM_cummit)
 		;
 	else if (!s->is_initial) {
 		if (!strcmp(s->reference, "HEAD"))
@@ -208,10 +208,10 @@ static void wt_longstatus_print_cached_header(struct wt_status *s)
 {
 	const char *c = color(WT_STATUS_HEADER, s);
 
-	status_printf_ln(s, c, _("Changes to be committed:"));
+	status_printf_ln(s, c, _("Changes to be cummitted:"));
 	if (!s->hints)
 		return;
-	if (s->whence != FROM_COMMIT)
+	if (s->whence != FROM_cummit)
 		; /* NEEDSWORK: use "git reset --unresolve"??? */
 	else if (!s->is_initial) {
 		if (!strcmp(s->reference, "HEAD"))
@@ -231,16 +231,16 @@ static void wt_longstatus_print_dirty_header(struct wt_status *s,
 {
 	const char *c = color(WT_STATUS_HEADER, s);
 
-	status_printf_ln(s, c, _("Changes not staged for commit:"));
+	status_printf_ln(s, c, _("Changes not staged for cummit:"));
 	if (!s->hints)
 		return;
 	if (!has_deleted)
-		status_printf_ln(s, c, _("  (use \"git add <file>...\" to update what will be committed)"));
+		status_printf_ln(s, c, _("  (use \"git add <file>...\" to update what will be cummitted)"));
 	else
-		status_printf_ln(s, c, _("  (use \"git add/rm <file>...\" to update what will be committed)"));
+		status_printf_ln(s, c, _("  (use \"git add/rm <file>...\" to update what will be cummitted)"));
 	status_printf_ln(s, c, _("  (use \"git restore <file>...\" to discard changes in working directory)"));
 	if (has_dirty_submodules)
-		status_printf_ln(s, c, _("  (commit or discard the untracked or modified content in submodules)"));
+		status_printf_ln(s, c, _("  (cummit or discard the untracked or modified content in submodules)"));
 }
 
 static void wt_longstatus_print_other_header(struct wt_status *s,
@@ -251,7 +251,7 @@ static void wt_longstatus_print_other_header(struct wt_status *s,
 	status_printf_ln(s, c, "%s:", what);
 	if (!s->hints)
 		return;
-	status_printf_ln(s, c, _("  (use \"git %s <file>...\" to include in what will be committed)"), how);
+	status_printf_ln(s, c, _("  (use \"git %s <file>...\" to include in what will be cummitted)"), how);
 }
 
 static void wt_longstatus_print_trailer(struct wt_status *s)
@@ -376,10 +376,10 @@ static void wt_longstatus_print_change_data(struct wt_status *s,
 		status = d->index_status;
 		break;
 	case WT_STATUS_CHANGED:
-		if (d->new_submodule_commits || d->dirty_submodule) {
+		if (d->new_submodule_cummits || d->dirty_submodule) {
 			strbuf_addstr(&extra, " (");
-			if (d->new_submodule_commits)
-				strbuf_addstr(&extra, _("new commits, "));
+			if (d->new_submodule_cummits)
+				strbuf_addstr(&extra, _("new cummits, "));
 			if (d->dirty_submodule & DIRTY_SUBMODULE_MODIFIED)
 				strbuf_addstr(&extra, _("modified content, "));
 			if (d->dirty_submodule & DIRTY_SUBMODULE_UNTRACKED)
@@ -428,7 +428,7 @@ static void wt_longstatus_print_change_data(struct wt_status *s,
 
 static char short_submodule_status(struct wt_status_change_data *d)
 {
-	if (d->new_submodule_commits)
+	if (d->new_submodule_cummits)
 		return 'M';
 	if (d->dirty_submodule & DIRTY_SUBMODULE_MODIFIED)
 		return 'm';
@@ -463,7 +463,7 @@ static void wt_status_collect_changed_cb(struct diff_queue_struct *q,
 			d->worktree_status = p->status;
 		if (S_ISGITLINK(p->two->mode)) {
 			d->dirty_submodule = p->two->dirty_submodule;
-			d->new_submodule_commits = !oideq(&p->one->oid,
+			d->new_submodule_cummits = !oideq(&p->one->oid,
 							  &p->two->oid);
 			if (s->status_format == STATUS_FORMAT_SHORT)
 				d->worktree_status = short_submodule_status(d);
@@ -550,12 +550,12 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 			/* Leave {mode,oid}_head zero for an add. */
 			d->mode_index = p->two->mode;
 			oidcpy(&d->oid_index, &p->two->oid);
-			s->committable = 1;
+			s->cummittable = 1;
 			break;
 		case DIFF_STATUS_DELETED:
 			d->mode_head = p->one->mode;
 			oidcpy(&d->oid_head, &p->one->oid);
-			s->committable = 1;
+			s->cummittable = 1;
 			/* Leave {mode,oid}_index zero for a delete. */
 			break;
 
@@ -573,7 +573,7 @@ static void wt_status_collect_updated_cb(struct diff_queue_struct *q,
 			d->mode_index = p->two->mode;
 			oidcpy(&d->oid_head, &p->one->oid);
 			oidcpy(&d->oid_index, &p->two->oid);
-			s->committable = 1;
+			s->cummittable = 1;
 			break;
 		case DIFF_STATUS_UNMERGED:
 			d->stagemask = unmerged_mask(s->repo->index,
@@ -640,7 +640,7 @@ static void wt_status_collect_changes_index(struct wt_status *s)
 		 * changed submodule SHA-1s when comparing index and HEAD, no
 		 * matter what is configured. Otherwise the user won't be
 		 * shown any submodules manually added (and which are
-		 * staged to be committed), which would be really confusing.
+		 * staged to be cummitted), which would be really confusing.
 		 */
 		handle_ignore_submodules_arg(&rev.diffopt, "dirty");
 	}
@@ -691,7 +691,7 @@ static int add_file_to_list(const struct object_id *oid,
 	/* Leave {mode,oid}_head zero for adds. */
 	d->mode_index = mode;
 	oidcpy(&d->oid_index, oid);
-	s->committable = 1;
+	s->cummittable = 1;
 	strbuf_release(&full_name);
 	return 0;
 }
@@ -745,13 +745,13 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 			 * code will output the stage values directly and not use the
 			 * values in these fields.
 			 */
-			s->committable = 1;
+			s->cummittable = 1;
 		} else {
 			d->index_status = DIFF_STATUS_ADDED;
 			/* Leave {mode,oid}_head zero for adds. */
 			d->mode_index = ce->ce_mode;
 			oidcpy(&d->oid_index, &ce->oid);
-			s->committable = 1;
+			s->cummittable = 1;
 		}
 	}
 }
@@ -835,7 +835,7 @@ void wt_status_collect(struct wt_status *s)
 
 	wt_status_get_state(s->repo, &s->state, s->branch && !strcmp(s->branch, "HEAD"));
 	if (s->state.merge_in_progress && !has_unmerged(s))
-		s->committable = 1;
+		s->cummittable = 1;
 }
 
 void wt_status_collect_free_buffers(struct wt_status *s)
@@ -975,7 +975,7 @@ static void wt_longstatus_print_stash_summary(struct wt_status *s)
 				 stash_count);
 }
 
-static void wt_longstatus_print_submodule_summary(struct wt_status *s, int uncommitted)
+static void wt_longstatus_print_submodule_summary(struct wt_status *s, int uncummitted)
 {
 	struct child_process sm_summary = CHILD_PROCESS_INIT;
 	struct strbuf cmd_stdout = STRBUF_INIT;
@@ -986,11 +986,11 @@ static void wt_longstatus_print_submodule_summary(struct wt_status *s, int uncom
 
 	strvec_push(&sm_summary.args, "submodule");
 	strvec_push(&sm_summary.args, "summary");
-	strvec_push(&sm_summary.args, uncommitted ? "--files" : "--cached");
+	strvec_push(&sm_summary.args, uncummitted ? "--files" : "--cached");
 	strvec_push(&sm_summary.args, "--for-status");
 	strvec_push(&sm_summary.args, "--summary-limit");
 	strvec_pushf(&sm_summary.args, "%d", s->submodule_summary);
-	if (!uncommitted)
+	if (!uncummitted)
 		strvec_push(&sm_summary.args, s->amend ? "HEAD^" : "HEAD");
 
 	sm_summary.git_cmd = 1;
@@ -1000,10 +1000,10 @@ static void wt_longstatus_print_submodule_summary(struct wt_status *s, int uncom
 
 	/* prepend header, only if there's an actual output */
 	if (cmd_stdout.len) {
-		if (uncommitted)
+		if (uncummitted)
 			strbuf_addstr(&summary, _("Submodules changed but not updated:"));
 		else
-			strbuf_addstr(&summary, _("Submodule changes to be committed:"));
+			strbuf_addstr(&summary, _("Submodule changes to be cummitted:"));
 		strbuf_addstr(&summary, "\n\n");
 	}
 	strbuf_addbuf(&summary, &cmd_stdout);
@@ -1123,21 +1123,21 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
 	rev.diffopt.close_file = 0;
 	/*
 	 * If we're not going to stdout, then we definitely don't
-	 * want color, since we are going to the commit message
+	 * want color, since we are going to the cummit message
 	 * file (and even the "auto" setting won't work, since it
 	 * will have checked isatty on stdout). But we then do want
 	 * to insert the scissor line here to reliably remove the
-	 * diff before committing.
+	 * diff before cummitting.
 	 */
 	if (s->fp != stdout) {
 		rev.diffopt.use_color = 0;
 		wt_status_add_cut_line(s->fp);
 	}
-	if (s->verbose > 1 && s->committable) {
+	if (s->verbose > 1 && s->cummittable) {
 		/* print_updated() printed a header, so do we */
 		if (s->fp != stdout)
 			wt_longstatus_print_trailer(s);
-		status_printf_ln(s, c, _("Changes to be committed:"));
+		status_printf_ln(s, c, _("Changes to be cummitted:"));
 		rev.diffopt.a_prefix = "c/";
 		rev.diffopt.b_prefix = "i/";
 	} /* else use prefix as per user config */
@@ -1146,7 +1146,7 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
 	    wt_status_check_worktree_changes(s, &dirty_submodules)) {
 		status_printf_ln(s, c,
 			"--------------------------------------------------");
-		status_printf_ln(s, c, _("Changes not staged for commit:"));
+		status_printf_ln(s, c, _("Changes not staged for cummit:"));
 		setup_work_tree();
 		rev.diffopt.a_prefix = "i/";
 		rev.diffopt.b_prefix = "w/";
@@ -1210,7 +1210,7 @@ static void show_merge_in_progress(struct wt_status *s,
 		status_printf_ln(s, color, _("You have unmerged paths."));
 		if (s->hints) {
 			status_printf_ln(s, color,
-					 _("  (fix conflicts and run \"git commit\")"));
+					 _("  (fix conflicts and run \"git cummit\")"));
 			status_printf_ln(s, color,
 					 _("  (use \"git merge --abort\" to abort the merge)"));
 		}
@@ -1219,7 +1219,7 @@ static void show_merge_in_progress(struct wt_status *s,
 			_("All conflicts fixed but you are still merging."));
 		if (s->hints)
 			status_printf_ln(s, color,
-				_("  (use \"git commit\" to conclude merge)"));
+				_("  (use \"git cummit\" to conclude merge)"));
 	}
 	wt_longstatus_print_trailer(s);
 }
@@ -1243,7 +1243,7 @@ static void show_am_in_progress(struct wt_status *s,
 			_("  (use \"git am --skip\" to skip this patch)"));
 		if (am_empty_patch)
 			status_printf_ln(s, color,
-				_("  (use \"git am --allow-empty\" to record this patch as an empty commit)"));
+				_("  (use \"git am --allow-empty\" to record this patch as an empty cummit)"));
 		status_printf_ln(s, color,
 			_("  (use \"git am --abort\" to restore the original branch)"));
 	}
@@ -1268,7 +1268,7 @@ static char *read_line_from_git_path(const char *filename)
 	}
 }
 
-static int split_commit_in_progress(struct wt_status *s)
+static int split_cummit_in_progress(struct wt_status *s)
 {
 	int split_in_progress = 0;
 	char *head, *orig_head, *rebase_amend, *rebase_orig_head;
@@ -1452,30 +1452,30 @@ static void show_rebase_in_progress(struct wt_status *s,
 		if (s->hints)
 			status_printf_ln(s, color,
 				_("  (all conflicts fixed: run \"git rebase --continue\")"));
-	} else if (split_commit_in_progress(s)) {
+	} else if (split_cummit_in_progress(s)) {
 		if (s->state.branch)
 			status_printf_ln(s, color,
-					 _("You are currently splitting a commit while rebasing branch '%s' on '%s'."),
+					 _("You are currently splitting a cummit while rebasing branch '%s' on '%s'."),
 					 s->state.branch,
 					 s->state.onto);
 		else
 			status_printf_ln(s, color,
-					 _("You are currently splitting a commit during a rebase."));
+					 _("You are currently splitting a cummit during a rebase."));
 		if (s->hints)
 			status_printf_ln(s, color,
 				_("  (Once your working directory is clean, run \"git rebase --continue\")"));
 	} else {
 		if (s->state.branch)
 			status_printf_ln(s, color,
-					 _("You are currently editing a commit while rebasing branch '%s' on '%s'."),
+					 _("You are currently editing a cummit while rebasing branch '%s' on '%s'."),
 					 s->state.branch,
 					 s->state.onto);
 		else
 			status_printf_ln(s, color,
-					 _("You are currently editing a commit during a rebase."));
+					 _("You are currently editing a cummit during a rebase."));
 		if (s->hints && !s->amend) {
 			status_printf_ln(s, color,
-				_("  (use \"git commit --amend\" to amend the current commit)"));
+				_("  (use \"git cummit --amend\" to amend the current cummit)"));
 			status_printf_ln(s, color,
 				_("  (use \"git rebase --continue\" once you are satisfied with your changes)"));
 		}
@@ -1491,7 +1491,7 @@ static void show_cherry_pick_in_progress(struct wt_status *s,
 			_("Cherry-pick currently in progress."));
 	else
 		status_printf_ln(s, color,
-			_("You are currently cherry-picking commit %s."),
+			_("You are currently cherry-picking cummit %s."),
 			find_unique_abbrev(&s->state.cherry_pick_head_oid,
 					   DEFAULT_ABBREV));
 
@@ -1521,7 +1521,7 @@ static void show_revert_in_progress(struct wt_status *s,
 			_("Revert currently in progress."));
 	else
 		status_printf_ln(s, color,
-			_("You are currently reverting commit %s."),
+			_("You are currently reverting cummit %s."),
 			find_unique_abbrev(&s->state.revert_head_oid,
 					   DEFAULT_ABBREV));
 	if (s->hints) {
@@ -1641,7 +1641,7 @@ static void wt_status_get_detached_from(struct repository *r,
 					struct wt_status_state *state)
 {
 	struct grab_1st_switch_cbdata cb;
-	struct commit *commit;
+	struct cummit *cummit;
 	struct object_id oid;
 	char *ref = NULL;
 
@@ -1652,11 +1652,11 @@ static void wt_status_get_detached_from(struct repository *r,
 	}
 
 	if (dwim_ref(cb.buf.buf, cb.buf.len, &oid, &ref, 1) == 1 &&
-	    /* oid is a commit? match without further lookup */
+	    /* oid is a cummit? match without further lookup */
 	    (oideq(&cb.noid, &oid) ||
-	     /* perhaps oid is a tag, try to dereference to a commit */
-	     ((commit = lookup_commit_reference_gently(r, &oid, 1)) != NULL &&
-	      oideq(&cb.noid, &commit->object.oid)))) {
+	     /* perhaps oid is a tag, try to dereference to a cummit */
+	     ((cummit = lookup_cummit_reference_gently(r, &oid, 1)) != NULL &&
+	      oideq(&cb.noid, &cummit->object.oid)))) {
 		const char *from = ref;
 		if (!skip_prefix(from, "refs/tags/", &from))
 			skip_prefix(from, "refs/remotes/", &from);
@@ -1847,9 +1847,9 @@ static void wt_longstatus_print(struct wt_status *s)
 	if (s->is_initial) {
 		status_printf_ln(s, color(WT_STATUS_HEADER, s), "%s", "");
 		status_printf_ln(s, color(WT_STATUS_HEADER, s),
-				 s->commit_template
-				 ? _("Initial commit")
-				 : _("No commits yet"));
+				 s->cummit_template
+				 ? _("Initial cummit")
+				 : _("No cummits yet"));
 		status_printf_ln(s, color(WT_STATUS_HEADER, s), "%s", "");
 	}
 
@@ -1874,49 +1874,49 @@ static void wt_longstatus_print(struct wt_status *s)
 					   "new files yourself (see 'git help status')."),
 					 s->untracked_in_ms / 1000.0);
 		}
-	} else if (s->committable)
+	} else if (s->cummittable)
 		status_printf_ln(s, GIT_COLOR_NORMAL, _("Untracked files not listed%s"),
 			s->hints
 			? _(" (use -u option to show untracked files)") : "");
 
 	if (s->verbose)
 		wt_longstatus_print_verbose(s);
-	if (!s->committable) {
+	if (!s->cummittable) {
 		if (s->amend)
 			status_printf_ln(s, GIT_COLOR_NORMAL, _("No changes"));
 		else if (s->nowarn)
 			; /* nothing */
 		else if (s->workdir_dirty) {
 			if (s->hints)
-				fprintf(s->fp, _("no changes added to commit "
+				fprintf(s->fp, _("no changes added to cummit "
 						 "(use \"git add\" and/or "
-						 "\"git commit -a\")\n"));
+						 "\"git cummit -a\")\n"));
 			else
 				fprintf(s->fp, _("no changes added to "
-						 "commit\n"));
+						 "cummit\n"));
 		} else if (s->untracked.nr) {
 			if (s->hints)
-				fprintf(s->fp, _("nothing added to commit but "
+				fprintf(s->fp, _("nothing added to cummit but "
 						 "untracked files present (use "
 						 "\"git add\" to track)\n"));
 			else
-				fprintf(s->fp, _("nothing added to commit but "
+				fprintf(s->fp, _("nothing added to cummit but "
 						 "untracked files present\n"));
 		} else if (s->is_initial) {
 			if (s->hints)
-				fprintf(s->fp, _("nothing to commit (create/"
+				fprintf(s->fp, _("nothing to cummit (create/"
 						 "copy files and use \"git "
 						 "add\" to track)\n"));
 			else
-				fprintf(s->fp, _("nothing to commit\n"));
+				fprintf(s->fp, _("nothing to cummit\n"));
 		} else if (!s->show_untracked_files) {
 			if (s->hints)
-				fprintf(s->fp, _("nothing to commit (use -u to "
+				fprintf(s->fp, _("nothing to cummit (use -u to "
 						 "show untracked files)\n"));
 			else
-				fprintf(s->fp, _("nothing to commit\n"));
+				fprintf(s->fp, _("nothing to cummit\n"));
 		} else
-			fprintf(s->fp, _("nothing to commit, working tree "
+			fprintf(s->fp, _("nothing to cummit, working tree "
 					 "clean\n"));
 	}
 	if(s->show_stash)
@@ -2021,7 +2021,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 #define LABEL(string) (s->no_gettext ? (string) : _(string))
 
 	if (s->is_initial)
-		color_fprintf(s->fp, header_color, LABEL(N_("No commits yet on ")));
+		color_fprintf(s->fp, header_color, LABEL(N_("No cummits yet on ")));
 
 	if (!strcmp(s->branch, "HEAD")) {
 		color_fprintf(s->fp, color(WT_STATUS_NOBRANCH, s), "%s",
@@ -2110,14 +2110,14 @@ static void wt_porcelain_print(struct wt_status *s)
  * Print branch information for porcelain v2 output.  These lines
  * are printed when the '--branch' parameter is given.
  *
- *    # branch.oid <commit><eol>
+ *    # branch.oid <cummit><eol>
  *    # branch.head <head><eol>
  *   [# branch.upstream <upstream><eol>
  *   [# branch.ab +<ahead> -<behind><eol>]]
  *
- *      <commit> ::= the current commit hash or the literal
+ *      <cummit> ::= the current commit hash or the literal
  *                   "(initial)" to indicate an initialized repo
- *                   with no commits.
+ *                   with no cummits.
  *
  *        <head> ::= <branch_name> the current branch name or
  *                   "(detached)" literal when detached head or
@@ -2148,7 +2148,7 @@ static void wt_porcelain_v2_print_tracking(struct wt_status *s)
 	char eol = s->null_termination ? '\0' : '\n';
 
 	fprintf(s->fp, "# branch.oid %s%c",
-			(s->is_initial ? "(initial)" : oid_to_hex(&s->oid_commit)),
+			(s->is_initial ? "(initial)" : oid_to_hex(&s->oid_cummit)),
 			eol);
 
 	if (!s->branch)
@@ -2221,7 +2221,7 @@ static void wt_porcelain_v2_submodule_state(
 		S_ISGITLINK(d->mode_index) ||
 		S_ISGITLINK(d->mode_worktree)) {
 		sub[0] = 'S';
-		sub[1] = d->new_submodule_commits ? 'C' : '.';
+		sub[1] = d->new_submodule_cummits ? 'C' : '.';
 		sub[2] = (d->dirty_submodule & DIRTY_SUBMODULE_MODIFIED) ? 'M' : '.';
 		sub[3] = (d->dirty_submodule & DIRTY_SUBMODULE_UNTRACKED) ? 'U' : '.';
 	} else {
@@ -2549,9 +2549,9 @@ int has_unstaged_changes(struct repository *r, int ignore_submodules)
 }
 
 /**
- * Returns 1 if there are uncommitted changes, 0 otherwise.
+ * Returns 1 if there are uncummitted changes, 0 otherwise.
  */
-int has_uncommitted_changes(struct repository *r,
+int has_uncummitted_changes(struct repository *r,
 			    int ignore_submodules)
 {
 	struct rev_info rev_info;
@@ -2582,7 +2582,7 @@ int has_uncommitted_changes(struct repository *r,
 }
 
 /**
- * If the work tree has unstaged or uncommitted changes, dies with the
+ * If the work tree has unstaged or uncummitted changes, dies with the
  * appropriate message.
  */
 int require_clean_work_tree(struct repository *r,
@@ -2606,11 +2606,11 @@ int require_clean_work_tree(struct repository *r,
 		err = 1;
 	}
 
-	if (has_uncommitted_changes(r, ignore_submodules)) {
+	if (has_uncummitted_changes(r, ignore_submodules)) {
 		if (err)
-			error(_("additionally, your index contains uncommitted changes."));
+			error(_("additionally, your index contains uncummitted changes."));
 		else
-			error(_("cannot %s: Your index contains uncommitted changes."),
+			error(_("cannot %s: Your index contains uncummitted changes."),
 			      _(action));
 		err = 1;
 	}

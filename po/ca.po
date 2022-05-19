@@ -820,7 +820,7 @@ msgid "Cherry-picking is not possible because you have unmerged files."
 msgstr "Fer «cherry pick» no és possible perquè teniu fitxers sense fusionar."
 
 #: advice.c:183
-msgid "Committing is not possible because you have unmerged files."
+msgid "cummitting is not possible because you have unmerged files."
 msgstr "Cometre no és possible perquè teniu fitxers sense fusionar."
 
 #: advice.c:185
@@ -843,7 +843,7 @@ msgstr "No és possible %s perquè teniu fitxers sense fusionar."
 #: advice.c:199
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
-"as appropriate to mark resolution and make a commit."
+"as appropriate to mark resolution and make a cummit."
 msgstr ""
 "Arregleu-los en l'arbre de treball, i després useu\n"
 "«git add/rm <fitxer>» segons sigui apropiat per a\n"
@@ -858,7 +858,7 @@ msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "No heu conclòs la vostra fusió (MERGE_HEAD existeix)."
 
 #: advice.c:214
-msgid "Please, commit your changes before merging."
+msgid "Please, cummit your changes before merging."
 msgstr "Cometeu els vostres canvis abans de fusionar."
 
 #: advice.c:215
@@ -896,10 +896,10 @@ msgid ""
 "Note: switching to '%s'.\n"
 "\n"
 "You are in 'detached HEAD' state. You can look around, make experimental\n"
-"changes and commit them, and you can discard any commits you make in this\n"
+"changes and cummit them, and you can discard any cummits you make in this\n"
 "state without impacting any branches by switching back to a branch.\n"
 "\n"
-"If you want to create a new branch to retain commits you create, you may\n"
+"If you want to create a new branch to retain cummits you create, you may\n"
 "do so (now or later) by using -c with the switch command. Example:\n"
 "\n"
 "  git switch -c <new-branch-name>\n"
@@ -954,8 +954,8 @@ msgstr "opció ignora l'espai en blanc «%s» no reconeguda"
 #: builtin/add.c:515 builtin/add.c:527 builtin/branch.c:755
 #: builtin/checkout.c:472 builtin/checkout.c:475 builtin/checkout.c:1663
 #: builtin/checkout.c:1773 builtin/checkout.c:1776 builtin/clone.c:921
-#: builtin/commit.c:359 builtin/commit.c:362 builtin/commit.c:1200
-#: builtin/commit.c:1256 builtin/commit.c:1273 builtin/describe.c:593
+#: builtin/cummit.c:359 builtin/cummit.c:362 builtin/cummit.c:1200
+#: builtin/cummit.c:1256 builtin/cummit.c:1273 builtin/describe.c:593
 #: builtin/diff-tree.c:155 builtin/difftool.c:733 builtin/fast-export.c:1245
 #: builtin/fetch.c:2141 builtin/fetch.c:2162 builtin/fetch.c:2167
 #: builtin/help.c:602 builtin/index-pack.c:1858 builtin/init-db.c:560
@@ -1707,7 +1707,7 @@ msgid "prepend prefix to each pathname in the archive"
 msgstr "anteposa el prefix a cada nom de camí en l'arxiu"
 
 #: archive.c:554 archive.c:557 builtin/blame.c:881 builtin/blame.c:885
-#: builtin/blame.c:886 builtin/commit-tree.c:115 builtin/config.c:135
+#: builtin/blame.c:886 builtin/cummit-tree.c:115 builtin/config.c:135
 #: builtin/fast-export.c:1181 builtin/fast-export.c:1183
 #: builtin/fast-export.c:1187 builtin/grep.c:936 builtin/hash-object.c:104
 #: builtin/ls-files.c:654 builtin/ls-files.c:657 builtin/notes.c:410
@@ -1763,7 +1763,7 @@ msgstr "Opció inesperada --remote"
 
 #: archive.c:580 fetch-pack.c:300 revision.c:2914 builtin/add.c:530
 #: builtin/add.c:562 builtin/checkout.c:1782 builtin/clone.c:1099
-#: builtin/clone.c:1102 builtin/commit.c:371 builtin/fast-export.c:1230
+#: builtin/clone.c:1102 builtin/cummit.c:371 builtin/fast-export.c:1230
 #: builtin/index-pack.c:1854 builtin/log.c:2140 builtin/reset.c:442
 #: builtin/reset.c:500 builtin/rm.c:281 builtin/stash.c:1708
 #: builtin/worktree.c:580 builtin/worktree.c:781 http-fetch.c:144
@@ -1816,7 +1816,7 @@ msgstr "No podem bisecar més!\n"
 
 #: bisect.c:765
 #, c-format
-msgid "Not a valid commit name %s"
+msgid "Not a valid cummit name %s"
 msgstr "No és un nom de comissió vàlid %s"
 
 #: bisect.c:790
@@ -1841,7 +1841,7 @@ msgstr ""
 #, c-format
 msgid ""
 "The merge base %s is %s.\n"
-"This means the first '%s' commit is between %s and [%s].\n"
+"This means the first '%s' cummit is between %s and [%s].\n"
 msgstr ""
 "La base de fusió %s és %s.\n"
 "Això vol dir que la primera comissió «%s» és entre %s i [%s].\n"
@@ -1861,7 +1861,7 @@ msgstr ""
 #, c-format
 msgid ""
 "the merge base between %s and [%s] must be skipped.\n"
-"So we cannot be sure the first %s commit is between %s and %s.\n"
+"So we cannot be sure the first %s cummit is between %s and %s.\n"
 "We continue anyway."
 msgstr ""
 "s'ha d'ometre la base de fusió entre %s i [%s].\n"
@@ -1900,7 +1900,7 @@ msgstr "%s era ambdós %s i %s\n"
 #: bisect.c:1065
 #, c-format
 msgid ""
-"No testable commit found.\n"
+"No testable cummit found.\n"
 "Maybe you started with bad path arguments?\n"
 msgstr ""
 "No s'ha trobat cap comissió comprovable.\n"
@@ -1927,17 +1927,17 @@ msgid "--contents and --reverse do not blend well."
 msgstr "--contents i --reverse no funcionen bé juntes."
 
 #: blame.c:2787
-msgid "cannot use --contents with final commit object name"
+msgid "cannot use --contents with final cummit object name"
 msgstr "no es pot usar --contents amb el nom d'objecte de la comissió final"
 
 #: blame.c:2808
-msgid "--reverse and --first-parent together require specified latest commit"
+msgid "--reverse and --first-parent together require specified latest cummit"
 msgstr ""
 "--reverse i --first-parent junts requereixen una última comissió "
 "especificada"
 
 #: blame.c:2817 bundle.c:231 midx.c:1058 ref-filter.c:2371 remote.c:2157
-#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/commit.c:1118
+#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/cummit.c:1118
 #: builtin/log.c:437 builtin/log.c:1055 builtin/log.c:1663 builtin/log.c:2096
 #: builtin/log.c:2387 builtin/merge.c:431 builtin/pack-objects.c:3381
 #: builtin/pack-objects.c:3781 builtin/pack-objects.c:3796
@@ -2172,13 +2172,13 @@ msgid "unrecognized header: %s%s (%d)"
 msgstr "capçalera no reconeguda: %s%s (%d)"
 
 #: bundle.c:145 rerere.c:464 rerere.c:675 sequencer.c:2616 sequencer.c:3402
-#: builtin/commit.c:865
+#: builtin/cummit.c:865
 #, c-format
 msgid "could not open '%s'"
 msgstr "no s'ha pogut obrir «%s»"
 
 #: bundle.c:203
-msgid "Repository lacks these prerequisite commits:"
+msgid "Repository lacks these prerequisite cummits:"
 msgstr "Al repositori li manquen aquestes comissions prerequerides:"
 
 #: bundle.c:206
@@ -2273,301 +2273,301 @@ msgstr "el fragment final té un id %<PRIx32> que no és zero"
 msgid "invalid color value: %.*s"
 msgstr "valor de color no vàlid: %.*s"
 
-#: commit-graph.c:204 midx.c:52
+#: cummit-graph.c:204 midx.c:52
 msgid "invalid hash version"
 msgstr "especificació de hash no vàlida"
 
-#: commit-graph.c:262
-msgid "commit-graph file is too small"
+#: cummit-graph.c:262
+msgid "cummit-graph file is too small"
 msgstr "el fitxer del graf de comissions és massa petit"
 
-#: commit-graph.c:355
+#: cummit-graph.c:355
 #, c-format
-msgid "commit-graph signature %X does not match signature %X"
+msgid "cummit-graph signature %X does not match signature %X"
 msgstr ""
 "la signatura del graf de comissions %X no coincideix amb la signatura %X"
 
-#: commit-graph.c:362
+#: cummit-graph.c:362
 #, c-format
-msgid "commit-graph version %X does not match version %X"
+msgid "cummit-graph version %X does not match version %X"
 msgstr "la versió del graf de comissions %X no coincideix amb la versió %X"
 
-#: commit-graph.c:369
+#: cummit-graph.c:369
 #, c-format
-msgid "commit-graph hash version %X does not match version %X"
+msgid "cummit-graph hash version %X does not match version %X"
 msgstr ""
 "la versió del hash del graf de comissions %X no coincideix amb la versió %X"
 
-#: commit-graph.c:386
+#: cummit-graph.c:386
 #, c-format
-msgid "commit-graph file is too small to hold %u chunks"
+msgid "cummit-graph file is too small to hold %u chunks"
 msgstr ""
 "el fitxer del graf de comissions és massa petit per a guardar %u fragments"
 
-#: commit-graph.c:485
-msgid "commit-graph has no base graphs chunk"
+#: cummit-graph.c:485
+msgid "cummit-graph has no base graphs chunk"
 msgstr "el fragment del graf de comissions no té grafs de base"
 
-#: commit-graph.c:495
-msgid "commit-graph chain does not match"
+#: cummit-graph.c:495
+msgid "cummit-graph chain does not match"
 msgstr "la cadena del graf de comissions no coincideix"
 
-#: commit-graph.c:543
+#: cummit-graph.c:543
 #, c-format
-msgid "invalid commit-graph chain: line '%s' not a hash"
+msgid "invalid cummit-graph chain: line '%s' not a hash"
 msgstr ""
 "la cadena del graf de comissions no és vàlida: la línia «%s» no és un hash"
 
-#: commit-graph.c:567
-msgid "unable to find all commit-graph files"
+#: cummit-graph.c:567
+msgid "unable to find all cummit-graph files"
 msgstr "no es poden trobar tots els fitxers del graf de comissions"
 
-#: commit-graph.c:752 commit-graph.c:789
-msgid "invalid commit position. commit-graph is likely corrupt"
+#: cummit-graph.c:752 cummit-graph.c:789
+msgid "invalid cummit position. cummit-graph is likely corrupt"
 msgstr ""
 "posició de la comissió no vàlida. Probablement el graf de comissions està "
 "malmès"
 
-#: commit-graph.c:773
+#: cummit-graph.c:773
 #, c-format
-msgid "could not find commit %s"
+msgid "could not find cummit %s"
 msgstr "no s'ha pogut trobar la comissió %s"
 
-#: commit-graph.c:806
-msgid "commit-graph requires overflow generation data but has none"
+#: cummit-graph.c:806
+msgid "cummit-graph requires overflow generation data but has none"
 msgstr ""
 "el graf de comissions requereix dades de generació de desbordaments però no "
 "en té cap"
 
-#: commit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
+#: cummit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
 #: builtin/clone.c:705
 #, c-format
-msgid "unable to parse commit %s"
+msgid "unable to parse cummit %s"
 msgstr "no s'ha pogut analitzar la comissió %s"
 
-#: commit-graph.c:1373 builtin/pack-objects.c:3078
+#: cummit-graph.c:1373 builtin/pack-objects.c:3078
 #, c-format
 msgid "unable to get type of object %s"
 msgstr "no s'ha pogut obtenir el tipus de l'objecte: %s"
 
-#: commit-graph.c:1404
-msgid "Loading known commits in commit graph"
+#: cummit-graph.c:1404
+msgid "Loading known cummits in cummit graph"
 msgstr "S'estan carregant comissions conegudes al graf de comissions"
 
-#: commit-graph.c:1421
-msgid "Expanding reachable commits in commit graph"
+#: cummit-graph.c:1421
+msgid "Expanding reachable cummits in cummit graph"
 msgstr "S'estan expandint les comissions abastables al graf de comissions"
 
-#: commit-graph.c:1441
-msgid "Clearing commit marks in commit graph"
+#: cummit-graph.c:1441
+msgid "Clearing cummit marks in cummit graph"
 msgstr "S'estan esborrant les marques de comissions al graf de comissions"
 
-#: commit-graph.c:1460
-msgid "Computing commit graph topological levels"
+#: cummit-graph.c:1460
+msgid "Computing cummit graph topological levels"
 msgstr "S'estan calculant els nivells topològics del graf de comissions"
 
-#: commit-graph.c:1513
-msgid "Computing commit graph generation numbers"
+#: cummit-graph.c:1513
+msgid "Computing cummit graph generation numbers"
 msgstr "S'estan calculant els nombres de generació del graf de comissions"
 
-#: commit-graph.c:1598
-msgid "Computing commit changed paths Bloom filters"
+#: cummit-graph.c:1598
+msgid "Computing cummit changed paths Bloom filters"
 msgstr ""
 "S'estan calculant els canvis les rutes de la comissió en els filtres Bloom"
 
-#: commit-graph.c:1675
-msgid "Collecting referenced commits"
+#: cummit-graph.c:1675
+msgid "Collecting referenced cummits"
 msgstr "S'estan recollint els objectes referenciats"
 
-#: commit-graph.c:1701
+#: cummit-graph.c:1701
 #, c-format
-msgid "Finding commits for commit graph in %<PRIuMAX> pack"
-msgid_plural "Finding commits for commit graph in %<PRIuMAX> packs"
+msgid "Finding cummits for cummit graph in %<PRIuMAX> pack"
+msgid_plural "Finding cummits for cummit graph in %<PRIuMAX> packs"
 msgstr[0] ""
 "S'estan cercant les comissions pel graf de comissions en %<PRIuMAX> paquet"
 msgstr[1] ""
 "S'estan cercant les comissions pel graf de comissions en %<PRIuMAX> paquets"
 
-#: commit-graph.c:1714
+#: cummit-graph.c:1714
 #, c-format
 msgid "error adding pack %s"
 msgstr "error en afegir paquet %s"
 
-#: commit-graph.c:1718
+#: cummit-graph.c:1718
 #, c-format
 msgid "error opening index for %s"
 msgstr "s'ha produït un error en obrir l'índex per «%s»"
 
-#: commit-graph.c:1756
-msgid "Finding commits for commit graph among packed objects"
+#: cummit-graph.c:1756
+msgid "Finding cummits for cummit graph among packed objects"
 msgstr ""
 "S'estan cercant les comissions pel graf de comissions entre els objectes "
 "empaquetats"
 
-#: commit-graph.c:1774
-msgid "Finding extra edges in commit graph"
+#: cummit-graph.c:1774
+msgid "Finding extra edges in cummit graph"
 msgstr "S'estan cercant les vores addicionals al graf de comissions"
 
-#: commit-graph.c:1823
+#: cummit-graph.c:1823
 msgid "failed to write correct number of base graph ids"
 msgstr ""
 "s'ha produït un error en escriure el nombre correcte d'ids base del graf"
 
-#: commit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
+#: cummit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
 #, c-format
 msgid "unable to create leading directories of %s"
 msgstr "no s'han pogut crear els directoris inicials de «%s»"
 
-#: commit-graph.c:1868
+#: cummit-graph.c:1868
 msgid "unable to create temporary graph layer"
 msgstr "no s'ha pogut crear una capa de graf temporal"
 
-#: commit-graph.c:1873
+#: cummit-graph.c:1873
 #, c-format
 msgid "unable to adjust shared permissions for '%s'"
 msgstr "no s'han pogut ajustar els permisos compartits per a «%s»"
 
-#: commit-graph.c:1930
+#: cummit-graph.c:1930
 #, c-format
-msgid "Writing out commit graph in %d pass"
-msgid_plural "Writing out commit graph in %d passes"
+msgid "Writing out cummit graph in %d pass"
+msgid_plural "Writing out cummit graph in %d passes"
 msgstr[0] "S'està escrivint el graf de comissions en %d pas"
 msgstr[1] "S'està escrivint el graf de comissions en %d passos"
 
-#: commit-graph.c:1967
-msgid "unable to open commit-graph chain file"
+#: cummit-graph.c:1967
+msgid "unable to open cummit-graph chain file"
 msgstr "no s'ha pogut obrir el fitxer d'encadenament del graf de comissions"
 
-#: commit-graph.c:1983
-msgid "failed to rename base commit-graph file"
+#: cummit-graph.c:1983
+msgid "failed to rename base cummit-graph file"
 msgstr "no s'ha pogut canviar el nom del fitxer base del graf de comissions"
 
-#: commit-graph.c:2004
-msgid "failed to rename temporary commit-graph file"
+#: cummit-graph.c:2004
+msgid "failed to rename temporary cummit-graph file"
 msgstr ""
 "no s'ha pogut canviar el nom del fitxer temporal del graf de comissions"
 
-#: commit-graph.c:2137
-msgid "Scanning merged commits"
+#: cummit-graph.c:2137
+msgid "Scanning merged cummits"
 msgstr "S'estan escanejant les comissions fusionades"
 
-#: commit-graph.c:2181
-msgid "Merging commit-graph"
+#: cummit-graph.c:2181
+msgid "Merging cummit-graph"
 msgstr "S'està fusionant el graf de comissions"
 
-#: commit-graph.c:2289
-msgid "attempting to write a commit-graph, but 'core.commitGraph' is disabled"
+#: cummit-graph.c:2289
+msgid "attempting to write a cummit-graph, but 'core.cummitGraph' is disabled"
 msgstr ""
-"s'està intentant escriure un graf de comissions, però «core.commitGraph» "
+"s'està intentant escriure un graf de comissions, però «core.cummitGraph» "
 "està desactivat"
 
-#: commit-graph.c:2396
-msgid "too many commits to write graph"
+#: cummit-graph.c:2396
+msgid "too many cummits to write graph"
 msgstr "massa comissions per a escriure un graf"
 
-#: commit-graph.c:2494
-msgid "the commit-graph file has incorrect checksum and is likely corrupt"
+#: cummit-graph.c:2494
+msgid "the cummit-graph file has incorrect checksum and is likely corrupt"
 msgstr ""
-"el fitxer commit-graph (graf de comissions) té una suma de verificació "
+"el fitxer cummit-graph (graf de comissions) té una suma de verificació "
 "incorrecta i probablement és corrupte"
 
-#: commit-graph.c:2504
+#: cummit-graph.c:2504
 #, c-format
-msgid "commit-graph has incorrect OID order: %s then %s"
+msgid "cummit-graph has incorrect OID order: %s then %s"
 msgstr "el gràfic de comissions té una ordre OID incorrecta; %s llavors %s"
 
-#: commit-graph.c:2514 commit-graph.c:2529
+#: cummit-graph.c:2514 cummit-graph.c:2529
 #, c-format
-msgid "commit-graph has incorrect fanout value: fanout[%d] = %u != %u"
+msgid "cummit-graph has incorrect fanout value: fanout[%d] = %u != %u"
 msgstr ""
 "el graf de comissions té un valor de «fanout» incorrecte: fanout[%d] = %u !="
 " %u"
 
-#: commit-graph.c:2521
+#: cummit-graph.c:2521
 #, c-format
-msgid "failed to parse commit %s from commit-graph"
+msgid "failed to parse cummit %s from cummit-graph"
 msgstr ""
 "s'ha produït un error en analitzar la comissió %s del graf de comissions"
 
-#: commit-graph.c:2539
-msgid "Verifying commits in commit graph"
+#: cummit-graph.c:2539
+msgid "Verifying cummits in cummit graph"
 msgstr "S'estan verificant les comissions al graf de comissions"
 
-#: commit-graph.c:2554
+#: cummit-graph.c:2554
 #, c-format
-msgid "failed to parse commit %s from object database for commit-graph"
+msgid "failed to parse cummit %s from object database for cummit-graph"
 msgstr ""
 "no s'han pogut analitzar la comissió %s de la base de dades d'objectes per "
 "al graf de comissions"
 
-#: commit-graph.c:2561
+#: cummit-graph.c:2561
 #, c-format
-msgid "root tree OID for commit %s in commit-graph is %s != %s"
+msgid "root tree OID for cummit %s in cummit-graph is %s != %s"
 msgstr ""
 "OID de l'arbre arrel per a comissions %s en el graf de comissions és %s != "
 "%s"
 
-#: commit-graph.c:2571
+#: cummit-graph.c:2571
 #, c-format
-msgid "commit-graph parent list for commit %s is too long"
+msgid "cummit-graph parent list for cummit %s is too long"
 msgstr ""
 "la llista de pares del graf de comissions per a la comissió %s és massa "
 "llarga"
 
-#: commit-graph.c:2580
+#: cummit-graph.c:2580
 #, c-format
-msgid "commit-graph parent for %s is %s != %s"
+msgid "cummit-graph parent for %s is %s != %s"
 msgstr "el pare pel graf de comissions %s és %s != %s"
 
-#: commit-graph.c:2594
+#: cummit-graph.c:2594
 #, c-format
-msgid "commit-graph parent list for commit %s terminates early"
+msgid "cummit-graph parent list for cummit %s terminates early"
 msgstr "la llista pare del graf de comissions per %s acaba aviat"
 
-#: commit-graph.c:2599
+#: cummit-graph.c:2599
 #, c-format
 msgid ""
-"commit-graph has generation number zero for commit %s, but non-zero "
+"cummit-graph has generation number zero for cummit %s, but non-zero "
 "elsewhere"
 msgstr ""
 "el graf de comissions té nombre de generació zero per a la comissió %s, però"
 " té no zero en altres llocs"
 
-#: commit-graph.c:2603
+#: cummit-graph.c:2603
 #, c-format
 msgid ""
-"commit-graph has non-zero generation number for commit %s, but zero "
+"cummit-graph has non-zero generation number for cummit %s, but zero "
 "elsewhere"
 msgstr ""
 "el graf de comissions té un nombre de generació diferent de zero per a "
 "comissió %s però té zero en altres llocs"
 
-#: commit-graph.c:2620
+#: cummit-graph.c:2620
 #, c-format
-msgid "commit-graph generation for commit %s is %<PRIuMAX> < %<PRIuMAX>"
+msgid "cummit-graph generation for cummit %s is %<PRIuMAX> < %<PRIuMAX>"
 msgstr ""
 "generació del graf de comissions per a la comissió %s és %<PRIuMAX> < "
 "%<PRIuMAX>"
 
-#: commit-graph.c:2626
+#: cummit-graph.c:2626
 #, c-format
-msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
+msgid "cummit date for cummit %s in cummit-graph is %<PRIuMAX> != %<PRIuMAX>"
 msgstr ""
 "la data d'enviament per a la comissió %s en el graf de comissions és "
 "%<PRIuMAX> != %<PRIuMAX>"
 
-#: commit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
+#: cummit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
 #: builtin/am.c:450 builtin/am.c:1449 builtin/am.c:2124 builtin/replace.c:456
 #, c-format
 msgid "could not parse %s"
 msgstr "no s'ha pogut analitzar %s"
 
-#: commit.c:56
+#: cummit.c:56
 #, c-format
-msgid "%s %s is not a commit!"
+msgid "%s %s is not a cummit!"
 msgstr "%s %s no és una comissió!"
 
-#: commit.c:197
+#: cummit.c:197
 msgid ""
 "Support for <GIT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
@@ -2587,35 +2587,35 @@ msgstr ""
 "Desactiveu aquest missatge executant\n"
 "«git config advice.graftFileDeprecated false»"
 
-#: commit.c:1252
+#: cummit.c:1252
 #, c-format
-msgid "Commit %s has an untrusted GPG signature, allegedly by %s."
+msgid "cummit %s has an untrusted GPG signature, allegedly by %s."
 msgstr "La comissió %s té una signatura GPG no fiable, suposadament de %s."
 
-#: commit.c:1256
+#: cummit.c:1256
 #, c-format
-msgid "Commit %s has a bad GPG signature allegedly by %s."
+msgid "cummit %s has a bad GPG signature allegedly by %s."
 msgstr "La comissió %s té una signatura GPG incorrecta suposadament de %s."
 
-#: commit.c:1259
+#: cummit.c:1259
 #, c-format
-msgid "Commit %s does not have a GPG signature."
+msgid "cummit %s does not have a GPG signature."
 msgstr "La comissió %s no té signatura GPG."
 
-#: commit.c:1262
+#: cummit.c:1262
 #, c-format
-msgid "Commit %s has a good GPG signature by %s\n"
+msgid "cummit %s has a good GPG signature by %s\n"
 msgstr "La comissió %s té una signatura GPG bona de %s\n"
 
-#: commit.c:1516
+#: cummit.c:1516
 msgid ""
-"Warning: commit message did not conform to UTF-8.\n"
+"Warning: cummit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
-"variable i18n.commitencoding to the encoding your project uses.\n"
+"variable i18n.cummitencoding to the encoding your project uses.\n"
 msgstr ""
 "Advertència: el missatge de comissió no és compatible amb UTF-8.\n"
 "Potser voleu esmenar-lo després de corregir el missatge, o establir\n"
-"la variable de configuració i18n.commitencoding a la codificació que\n"
+"la variable de configuració i18n.cummitencoding a la codificació que\n"
 "usi el vostre projecte.\n"
 
 #: compat/obstack.c:406 compat/obstack.c:408
@@ -3476,7 +3476,7 @@ msgid "--merge-base does not work with ranges"
 msgstr "--merge-base no funciona amb intervals"
 
 #: diff-lib.c:563
-msgid "--merge-base only works with commits"
+msgid "--merge-base only works with cummits"
 msgstr "--merge-base només funciona amb comissions"
 
 #: diff-lib.c:580
@@ -4316,7 +4316,7 @@ msgstr "s'ha rebut %s %d %s"
 
 #: fetch-pack.c:470
 #, c-format
-msgid "invalid commit %s"
+msgid "invalid cummit %s"
 msgstr "comissió no vàlida %s"
 
 #: fetch-pack.c:501
@@ -4404,7 +4404,7 @@ msgstr ""
 "El servidor no és compatible amb el format d'objecte d'aquest repositori"
 
 #: fetch-pack.c:1142
-msgid "no common commits"
+msgid "no common cummits"
 msgstr "cap comissió en comú"
 
 #: fetch-pack.c:1151 fetch-pack.c:1506 builtin/clone.c:1166
@@ -4837,7 +4837,7 @@ msgid "Author identity unknown\n"
 msgstr "Identitat de l'autor desconeguda\n"
 
 #: ident.c:357
-msgid "Committer identity unknown\n"
+msgid "cummitter identity unknown\n"
 msgstr "Es desconeix la identitat del comitent\n"
 
 #: ident.c:363
@@ -4898,7 +4898,7 @@ msgstr "nom d'identitat buit (per <%s>) no és permès"
 msgid "name consists only of disallowed characters: %s"
 msgstr "el nom conté només caràcters no permesos: %s"
 
-#: ident.c:455 builtin/commit.c:649
+#: ident.c:455 builtin/cummit.c:649
 #, c-format
 msgid "invalid date format: %s"
 msgstr "format de data no vàlid: %s"
@@ -4962,7 +4962,7 @@ msgstr "l'entrada «%s» a l'arbre %s té mode blob, però no és un blob"
 
 #: list-objects.c:415
 #, c-format
-msgid "unable to load root tree for commit %s"
+msgid "unable to load root tree for cummit %s"
 msgstr "no s'ha pogut carregar l'arrel de l'arbre per la comissió %s"
 
 #: lockfile.c:152
@@ -4971,7 +4971,7 @@ msgid ""
 "Unable to create '%s.lock': %s.\n"
 "\n"
 "Another git process seems to be running in this repository, e.g.\n"
-"an editor opened by 'git commit'. Please make sure all processes\n"
+"an editor opened by 'git cummit'. Please make sure all processes\n"
 "are terminated then try again. If it still fails, a git process\n"
 "may have crashed in this repository earlier:\n"
 "remove the file manually to continue."
@@ -4979,7 +4979,7 @@ msgstr ""
 "No s'ha pogut crear «%s.lock»: %s.\n"
 "\n"
 "Sembla que un altre procés de git s'està executant en aquest\n"
-"repositori, per exemple, un editor obert per «git commit». \n"
+"repositori, per exemple, un editor obert per «git cummit». \n"
 "Assegureu-vos que tots els processos s'hagin acabat i\n"
 "llavors proveu de nou. Si encara falla, pot ser un procés git\n"
 "ha fallat en aquest repositori abans:\n"
@@ -5015,13 +5015,13 @@ msgstr "S'ha produït un error en fusionar el submòdul %s (no està agafat)"
 
 #: merge-ort.c:1639 merge-recursive.c:1221
 #, c-format
-msgid "Failed to merge submodule %s (commits not present)"
+msgid "Failed to merge submodule %s (cummits not present)"
 msgstr ""
 "S'ha produït un error en fusionar el submòdul %s (no hi ha comissions)"
 
 #: merge-ort.c:1648 merge-recursive.c:1228
 #, c-format
-msgid "Failed to merge submodule %s (commits don't follow merge-base)"
+msgid "Failed to merge submodule %s (cummits don't follow merge-base)"
 msgstr ""
 "S'ha produït un error en fusionar el submòdul %s (les comissions no "
 "segueixen merge-base)"
@@ -5281,7 +5281,7 @@ msgid "Already up to date."
 msgstr "Ja està al dia."
 
 #: merge-recursive.c:353
-msgid "(bad commit)\n"
+msgid "(bad cummit)\n"
 msgstr "(comissió errònia)\n"
 
 #: merge-recursive.c:381
@@ -5341,7 +5341,7 @@ msgstr "no se sap què fer amb %06o %s «%s»"
 
 #: merge-recursive.c:1236 merge-recursive.c:1249
 #, c-format
-msgid "Fast-forwarding submodule %s to the following commit:"
+msgid "Fast-forwarding submodule %s to the following cummit:"
 msgstr "Avançament ràpid del submòdul %s a la següent comissió:"
 
 #: merge-recursive.c:1239 merge-recursive.c:1252
@@ -5351,7 +5351,7 @@ msgstr "Avançament ràpid al submòdul %s"
 
 #: merge-recursive.c:1276
 #, c-format
-msgid "Failed to merge submodule %s (merge following commits not found)"
+msgid "Failed to merge submodule %s (merge following cummits not found)"
 msgstr ""
 "Ha fallat en fusionar el submòdul %s (no s'ha trobat les comissions "
 "següents)"
@@ -5561,7 +5561,7 @@ msgstr[0] "s'ha trobat %u avantpassat en comú:"
 msgstr[1] "s'han trobat %u avantpassats en comú:"
 
 #: merge-recursive.c:3651
-msgid "merge returned no commit"
+msgid "merge returned no cummit"
 msgstr "la fusió no ha retornat cap comissió"
 
 #: merge-recursive.c:3823
@@ -5833,10 +5833,10 @@ msgstr "no s'ha pogut unir el fil «lazy_name»: %s"
 #, c-format
 msgid ""
 "You have not concluded your previous notes merge (%s exists).\n"
-"Please, use 'git notes merge --commit' or 'git notes merge --abort' to commit/abort the previous merge before you start a new notes merge."
+"Please, use 'git notes merge --cummit' or 'git notes merge --abort' to cummit/abort the previous merge before you start a new notes merge."
 msgstr ""
 "No heu acabat la vostra fusió de notes prèvia (%s existeix).\n"
-"Useu «git notes merge --commit» o «git notes merge --abort» per a cometre/avortar la fusió prèvia abans de començar una fusió de notes nova."
+"Useu «git notes merge --cummit» o «git notes merge --abort» per a cometre/avortar la fusió prèvia abans de començar una fusió de notes nova."
 
 #: notes-merge.c:283
 #, c-format
@@ -5844,7 +5844,7 @@ msgid "You have not concluded your notes merge (%s exists)."
 msgstr "No heu conclòs la vostra fusió de notes (%s existeix)."
 
 #: notes-utils.c:46
-msgid "Cannot commit uninitialized/unreferenced notes tree"
+msgid "Cannot cummit uninitialized/unreferenced notes tree"
 msgstr "No es pot cometre un arbre de notes no inicialitzat / no referenciat"
 
 #: notes-utils.c:105
@@ -6061,7 +6061,7 @@ msgid "cannot read object for %s"
 msgstr "no es pot llegir l'objecte per a %s"
 
 #: object-file.c:2151
-msgid "corrupt commit"
+msgid "corrupt cummit"
 msgstr "comissió corrupta"
 
 #: object-file.c:2159
@@ -6136,13 +6136,13 @@ msgstr "no s'han pogut desempaquetar els continguts de %s"
 msgid "%s [bad object]"
 msgstr "%s [objecte incorrecte]"
 
-#. TRANSLATORS: This is a line of ambiguous commit
+#. TRANSLATORS: This is a line of ambiguous cummit
 #. object output. E.g.:
 #. *
-#.    "deadbeef commit 2021-01-01 - Some Commit Message"
+#.    "deadbeef cummit 2021-01-01 - Some cummit Message"
 #: object-name.c:407
 #, c-format
-msgid "%s commit %s - %s"
+msgid "%s cummit %s - %s"
 msgstr "%s comissió %s - %s"
 
 #. TRANSLATORS: This is a line of ambiguous
@@ -6410,7 +6410,7 @@ msgid "offset beyond end of pack index for %s (truncated index?)"
 msgstr ""
 "desplaçament més enllà de la fi d'índex de paquet per a %s (índex truncat?)"
 
-#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/commit-graph.c:175
+#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/cummit-graph.c:175
 #, c-format
 msgid "option `%s' expects a numerical value"
 msgstr "l'opció «%s» espera un valor numèric"
@@ -6737,17 +6737,17 @@ msgstr "no s'ha pogut llegir la sortida de «log»"
 
 #: range-diff.c:98 sequencer.c:5575
 #, c-format
-msgid "could not parse commit '%s'"
+msgid "could not parse cummit '%s'"
 msgstr "no s'ha pogut analitzar la comissió «%s»"
 
 #: range-diff.c:109
 #, c-format
 msgid ""
-"could not parse first line of `log` output: did not start with 'commit ': "
+"could not parse first line of `log` output: did not start with 'cummit ': "
 "'%s'"
 msgstr ""
 "no s'ha pogut analitzar la primera línia de la sortida «log»: no començava "
-"amb «commit»: «%s»"
+"amb «cummit»: «%s»"
 
 #: range-diff.c:132
 #, c-format
@@ -6780,7 +6780,7 @@ msgstr ""
 
 #: read-cache.c:780 builtin/submodule--helper.c:3359
 #, c-format
-msgid "'%s' does not have a commit checked out"
+msgid "'%s' does not have a cummit checked out"
 msgstr "«%s» no té una comissió comprovada"
 
 #: read-cache.c:832
@@ -6876,7 +6876,7 @@ msgstr "entrades «stage» no ordenades per a «%s»"
 #: read-cache.c:2096 read-cache.c:2402 rerere.c:549 rerere.c:583 rerere.c:1096
 #: submodule.c:1831 builtin/add.c:586 builtin/check-ignore.c:183
 #: builtin/checkout.c:532 builtin/checkout.c:724 builtin/clean.c:1016
-#: builtin/commit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
+#: builtin/cummit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
 #: builtin/mv.c:148 builtin/reset.c:506 builtin/rm.c:293
 #: builtin/submodule--helper.c:335 builtin/submodule--helper.c:3319
 msgid "index file corrupt"
@@ -6982,32 +6982,32 @@ msgstr ""
 #: rebase-interactive.c:33
 #, c-format
 msgid ""
-"unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
+"unrecognized setting %s for option rebase.missingcummitsCheck. Ignoring."
 msgstr ""
-"no s'ha reconegut el paràmetre %s per rebase.missingCommitsCheck. S'està "
+"no s'ha reconegut el paràmetre %s per rebase.missingcummitsCheck. S'està "
 "ignorant."
 
 #: rebase-interactive.c:42
 msgid ""
 "\n"
 "Commands:\n"
-"p, pick <commit> = use commit\n"
-"r, reword <commit> = use commit, but edit the commit message\n"
-"e, edit <commit> = use commit, but stop for amending\n"
-"s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup [-C | -c] <commit> = like \"squash\" but keep only the previous\n"
-"                   commit's log message, unless -C is used, in which case\n"
-"                   keep only this commit's message; -c is same as -C but\n"
+"p, pick <cummit> = use cummit\n"
+"r, reword <cummit> = use cummit, but edit the cummit message\n"
+"e, edit <cummit> = use cummit, but stop for amending\n"
+"s, squash <cummit> = use cummit, but meld into previous cummit\n"
+"f, fixup [-C | -c] <cummit> = like \"squash\" but keep only the previous\n"
+"                   cummit's log message, unless -C is used, in which case\n"
+"                   keep only this cummit's message; -c is same as -C but\n"
 "                   opens the editor\n"
 "x, exec <command> = run command (the rest of the line) using shell\n"
 "b, break = stop here (continue rebase later with 'git rebase --continue')\n"
-"d, drop <commit> = remove commit\n"
+"d, drop <cummit> = remove cummit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified); use -c <commit> to reword the commit message\n"
+"m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+".       create a merge cummit using the original merge cummit's\n"
+".       message (or the oneline, if no original merge cummit was\n"
+".       specified); use -c <cummit> to reword the cummit message\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
@@ -7017,7 +7017,7 @@ msgstr ""
 "r, reword <comissió> = usa la comissió, però edita el missatge de comissió\n"
 "e, edit <comissió> = usa la comissió, però atura't per a esmenar-la\n"
 "s, squash <comissió> = usa la comissió, però fusiona-la a la comissió prèvia\n"
-"f, fixup [-C | -c] <commit> = com a «squash», però manté només el missatge\n"
+"f, fixup [-C | -c] <cummit> = com a «squash», però manté només el missatge\n"
 "                   de comissió previ, a menys que s'usi -C, en aquest cas\n"
 "                   manté només el missatge d'aquesta comissió; -c és el mateix\n"
 "                   que -C, però obre l'editor\n"
@@ -7043,7 +7043,7 @@ msgstr[1] "Fes «rebase» de %s a %s (%d ordres)"
 #: rebase-interactive.c:75
 msgid ""
 "\n"
-"Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
+"Do not remove any line. Use 'drop' explicitly to remove a cummit.\n"
 msgstr ""
 "\n"
 "No elimineu cap línia. Useu «drop» explícitament per a eliminar una comissió.\n"
@@ -7051,7 +7051,7 @@ msgstr ""
 #: rebase-interactive.c:78
 msgid ""
 "\n"
-"If you remove a line here THAT COMMIT WILL BE LOST.\n"
+"If you remove a line here THAT cummit WILL BE LOST.\n"
 msgstr ""
 "\n"
 "Si elimineu una línia aquí, ES PERDRÀ AQUELLA COMISSIÓ.\n"
@@ -7095,8 +7095,8 @@ msgstr "no s'ha pogut escriure a «%s»."
 #: rebase-interactive.c:196
 #, c-format
 msgid ""
-"Warning: some commits may have been dropped accidentally.\n"
-"Dropped commits (newer to older):\n"
+"Warning: some cummits may have been dropped accidentally.\n"
+"Dropped cummits (newer to older):\n"
 msgstr ""
 "Advertència: pot ser que algunes comissions s'hagin descartat accidentalment.\n"
 "Les comissions descartades (més nova a més vella):\n"
@@ -7104,15 +7104,15 @@ msgstr ""
 #: rebase-interactive.c:203
 #, c-format
 msgid ""
-"To avoid this message, use \"drop\" to explicitly remove a commit.\n"
+"To avoid this message, use \"drop\" to explicitly remove a cummit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of warnings.\n"
+"Use 'git config rebase.missingcummitsCheck' to change the level of warnings.\n"
 "The possible behaviours are: ignore, warn, error.\n"
 "\n"
 msgstr ""
 "Per a evitar aquest missatge, useu «drop» per a eliminar explícitament una comissió.\n"
 "\n"
-"Useu «git config rebase.missingCommitsCheck» per a canviar el nivell d'advertències.\n"
+"Useu «git config rebase.missingcummitsCheck» per a canviar el nivell d'advertències.\n"
 "Els comportaments possibles són: ignore, warn, error.\n"
 
 #: rebase.c:29
@@ -7354,7 +7354,7 @@ msgstr "nom d'objecte %s mal format"
 
 #: ref-filter.c:2746
 #, c-format
-msgid "option `%s' must point to a commit"
+msgid "option `%s' must point to a cummit"
 msgstr "l'opció «%s» ha d'apuntar a una comissió"
 
 #: reflog.c:407
@@ -7560,7 +7560,7 @@ msgstr ""
 #: remote.c:1231
 #, c-format
 msgid ""
-"The <src> part of the refspec is a commit object.\n"
+"The <src> part of the refspec is a cummit object.\n"
 "Did you mean to create a new branch by pushing to\n"
 "'%s:refs/heads/%s'?"
 msgstr ""
@@ -7691,7 +7691,7 @@ msgstr "La vostra branca està al dia amb «%s».\n"
 
 #: remote.c:2246
 #, c-format
-msgid "Your branch and '%s' refer to different commits.\n"
+msgid "Your branch and '%s' refer to different cummits.\n"
 msgstr "La vostra branca i «%s» es refereixen a diferents comissions.\n"
 
 #: remote.c:2249
@@ -7701,20 +7701,20 @@ msgstr "  (useu «%s» per a detalls)\n"
 
 #: remote.c:2253
 #, c-format
-msgid "Your branch is ahead of '%s' by %d commit.\n"
-msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
+msgid "Your branch is ahead of '%s' by %d cummit.\n"
+msgid_plural "Your branch is ahead of '%s' by %d cummits.\n"
 msgstr[0] "La vostra branca està %2$d comissió per davant de «%1$s».\n"
 msgstr[1] "La vostra branca està %2$d comissions per davant de «%1$s».\n"
 
 #: remote.c:2259
-msgid "  (use \"git push\" to publish your local commits)\n"
+msgid "  (use \"git push\" to publish your local cummits)\n"
 msgstr "  (useu «git push» per a publicar les vostres comissions locals)\n"
 
 #: remote.c:2262
 #, c-format
-msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
+msgid "Your branch is behind '%s' by %d cummit, and can be fast-forwarded.\n"
 msgid_plural ""
-"Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
+"Your branch is behind '%s' by %d cummits, and can be fast-forwarded.\n"
 msgstr[0] ""
 "La vostra branca està %2$d comissió per darrere de «%1$s», i pot avançar-se "
 "ràpidament.\n"
@@ -7730,10 +7730,10 @@ msgstr "  (useu «git pull» per a actualitzar la vostra branca local)\n"
 #, c-format
 msgid ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commit each, respectively.\n"
+"and have %d and %d different cummit each, respectively.\n"
 msgid_plural ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commits each, respectively.\n"
+"and have %d and %d different cummits each, respectively.\n"
 msgstr[0] ""
 "La vostra branca i «%s» han divergit,\n"
 "i tenen %d i %d comissió distinta cada una, respectivament.\n"
@@ -7877,7 +7877,7 @@ msgstr "la vostra branca actual sembla malmesa"
 
 #: revision.c:2715
 #, c-format
-msgid "your current branch '%s' does not have any commits yet"
+msgid "your current branch '%s' does not have any cummits yet"
 msgstr "la branca actual «%s» encara no té cap comissió"
 
 #: revision.c:2901
@@ -7949,7 +7949,7 @@ msgstr "el receptor al destí no admet opcions de pujada"
 
 #: sequencer.c:197
 #, c-format
-msgid "invalid commit message cleanup mode '%s'"
+msgid "invalid cummit message cleanup mode '%s'"
 msgstr "mode de neteja «%s» no vàlid en la comissió del missatge"
 
 #: sequencer.c:325
@@ -7993,7 +7993,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git cherry-pick --continue\".\n"
-"You can instead skip this commit with \"git cherry-pick --skip\".\n"
+"You can instead skip this cummit with \"git cherry-pick --skip\".\n"
 "To abort and get back to the state before \"git cherry-pick\",\n"
 "run \"git cherry-pick --abort\"."
 msgstr ""
@@ -8009,7 +8009,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git revert --continue\".\n"
-"You can instead skip this commit with \"git revert --skip\".\n"
+"You can instead skip this cummit with \"git revert --skip\".\n"
 "To abort and get back to the state before \"git revert\",\n"
 "run \"git revert --abort\"."
 msgstr ""
@@ -8043,7 +8043,7 @@ msgid "failed to finalize '%s'"
 msgstr "s'ha produït un error en finalitzar «%s»"
 
 #: sequencer.c:473 sequencer.c:1930 sequencer.c:3112 sequencer.c:3547
-#: sequencer.c:3675 builtin/am.c:290 builtin/commit.c:837 builtin/merge.c:1154
+#: sequencer.c:3675 builtin/am.c:290 builtin/cummit.c:837 builtin/merge.c:1154
 #, c-format
 msgid "could not read '%s'"
 msgstr "no s'ha pogut llegir «%s»"
@@ -8054,7 +8054,7 @@ msgid "your local changes would be overwritten by %s."
 msgstr "els vostres canvis locals se sobreescriurien per %s."
 
 #: sequencer.c:503
-msgid "commit your changes or stash them to proceed."
+msgid "cummit your changes or stash them to proceed."
 msgstr "cometeu els vostres canvis o feu un «stash» per a procedir."
 
 #: sequencer.c:535
@@ -8079,7 +8079,7 @@ msgid "unable to update cache tree"
 msgstr "no s'ha pogut actualitzar l'arbre cau"
 
 #: sequencer.c:713
-msgid "could not resolve HEAD commit"
+msgid "could not resolve HEAD cummit"
 msgstr "no s'ha pogut resoldre la comissió HEAD"
 
 #: sequencer.c:793
@@ -8131,13 +8131,13 @@ msgstr "falta «GIT_AUTHOR_DATE»"
 #, c-format
 msgid ""
 "you have staged changes in your working tree\n"
-"If these changes are meant to be squashed into the previous commit, run:\n"
+"If these changes are meant to be squashed into the previous cummit, run:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
-"If they are meant to go into a new commit, run:\n"
+"If they are meant to go into a new cummit, run:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
@@ -8146,19 +8146,19 @@ msgstr ""
 "teniu canvis «staged» en el vostre arbre de treball\n"
 "Si aquests canvis estan pensats per a fer «squash» a la comissió prèvia, executeu:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Si són per a formar una comissió nova, executeu:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "En ambdós casos, quan hàgiu terminat, continueu amb:\n"
 "\n"
 "  git rebase --continue\n"
 
 #: sequencer.c:1225
-msgid "'prepare-commit-msg' hook failed"
-msgstr "el lligam «prepare-commit-msg» ha fallat"
+msgid "'prepare-cummit-msg' hook failed"
+msgstr "el lligam «prepare-cummit-msg» ha fallat"
 
 #: sequencer.c:1231
 msgid ""
@@ -8170,9 +8170,9 @@ msgid ""
 "\n"
 "    git config --global --edit\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "S'han configurat el vostre nom i adreça electrònica\n"
 "automàticament basant-se en el vostre nom d'usuari i nom de màquina. \n"
@@ -8185,7 +8185,7 @@ msgstr ""
 "Després de fer això, podeu esmenar la identitat usada per a aquesta\n"
 "comissió amb:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1244
 msgid ""
@@ -8196,9 +8196,9 @@ msgid ""
 "    git config --global user.name \"Your Name\"\n"
 "    git config --global user.email you@example.com\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "S'han configurat el vostre nom i adreça electrònica\n"
 "automàticament basats en el vostre nom d'usuari i nom de màquina. \n"
@@ -8211,18 +8211,18 @@ msgstr ""
 "Després de fer això, podeu arreglar la identitat usada per a aquesta\n"
 "comissió amb:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1287
-msgid "couldn't look up newly created commit"
+msgid "couldn't look up newly created cummit"
 msgstr "no s'ha pogut trobar la comissió novament creada"
 
 #: sequencer.c:1289
-msgid "could not parse newly created commit"
+msgid "could not parse newly created cummit"
 msgstr "no s'ha pogut analitzar la comissió novament creada"
 
 #: sequencer.c:1336
-msgid "unable to resolve HEAD after creating commit"
+msgid "unable to resolve HEAD after creating cummit"
 msgstr "no s'ha pogut resoldre HEAD després de crear la comissió"
 
 #: sequencer.c:1338
@@ -8230,7 +8230,7 @@ msgid "detached HEAD"
 msgstr "HEAD separat"
 
 #: sequencer.c:1342
-msgid " (root-commit)"
+msgid " (root-cummit)"
 msgstr " (comissió arrel)"
 
 #: sequencer.c:1363
@@ -8239,15 +8239,15 @@ msgstr "no s'ha pogut analitzar HEAD"
 
 #: sequencer.c:1365
 #, c-format
-msgid "HEAD %s is not a commit!"
+msgid "HEAD %s is not a cummit!"
 msgstr "HEAD %s no és una comissió!"
 
-#: sequencer.c:1369 sequencer.c:1447 builtin/commit.c:1707
-msgid "could not parse HEAD commit"
+#: sequencer.c:1369 sequencer.c:1447 builtin/cummit.c:1707
+msgid "could not parse HEAD cummit"
 msgstr "no s'ha pogut analitzar la comissió HEAD"
 
 #: sequencer.c:1425 sequencer.c:2310
-msgid "unable to parse commit author"
+msgid "unable to parse cummit author"
 msgstr "no s'ha pogut analitzar l'autor de la comissió"
 
 #: sequencer.c:1436 builtin/am.c:1644 builtin/merge.c:710
@@ -8256,7 +8256,7 @@ msgstr "git write-tree ha fallat en escriure un arbre"
 
 #: sequencer.c:1469 sequencer.c:1589
 #, c-format
-msgid "unable to read commit message from '%s'"
+msgid "unable to read cummit message from '%s'"
 msgstr "no s'ha pogut llegir el missatge de comissió des de «%s»"
 
 #: sequencer.c:1500 sequencer.c:1532
@@ -8268,9 +8268,9 @@ msgstr "identitat d'autor no vàlida: «%s»"
 msgid "corrupt author: missing date information"
 msgstr "autor malmès: falta la informació de la data"
 
-#: sequencer.c:1545 builtin/am.c:1671 builtin/commit.c:1821
+#: sequencer.c:1545 builtin/am.c:1671 builtin/cummit.c:1821
 #: builtin/merge.c:921 builtin/merge.c:946 t/helper/test-fast-rebase.c:78
-msgid "failed to write commit object"
+msgid "failed to write cummit object"
 msgstr "s'ha produït un error en escriure l'objecte de comissió"
 
 #: sequencer.c:1572 sequencer.c:4496 t/helper/test-fast-rebase.c:199
@@ -8281,12 +8281,12 @@ msgstr "no s'ha pogut actualitzar %s"
 
 #: sequencer.c:1621
 #, c-format
-msgid "could not parse commit %s"
+msgid "could not parse cummit %s"
 msgstr "no s'ha pogut analitzar la comissió %s"
 
 #: sequencer.c:1626
 #, c-format
-msgid "could not parse parent commit %s"
+msgid "could not parse parent cummit %s"
 msgstr "no s'ha pogut analitzar la comissió pare %s"
 
 #: sequencer.c:1709 sequencer.c:1990
@@ -8295,26 +8295,26 @@ msgid "unknown command: %d"
 msgstr "ordre desconeguda: %d"
 
 #: sequencer.c:1751
-msgid "This is the 1st commit message:"
+msgid "This is the 1st cummit message:"
 msgstr "Aquest és el 1r missatge de comissió:"
 
 #: sequencer.c:1752
 #, c-format
-msgid "This is the commit message #%d:"
+msgid "This is the cummit message #%d:"
 msgstr "Aquest és el missatge de comissió #%d:"
 
 #: sequencer.c:1753
-msgid "The 1st commit message will be skipped:"
+msgid "The 1st cummit message will be skipped:"
 msgstr "El primer missatge de comissió s'ometrà:"
 
 #: sequencer.c:1754
 #, c-format
-msgid "The commit message #%d will be skipped:"
+msgid "The cummit message #%d will be skipped:"
 msgstr "El missatge de comissió núm. #%d s'ometrà:"
 
 #: sequencer.c:1755
 #, c-format
-msgid "This is a combination of %d commits."
+msgid "This is a combination of %d cummits."
 msgstr "Això és una combinació de %d comissions."
 
 #: sequencer.c:1902 sequencer.c:1959
@@ -8331,12 +8331,12 @@ msgid "could not read HEAD"
 msgstr "no s'ha pogut llegir HEAD"
 
 #: sequencer.c:1953
-msgid "could not read HEAD's commit message"
+msgid "could not read HEAD's cummit message"
 msgstr "no s'ha pogut llegir el missatge de comissió de HEAD"
 
 #: sequencer.c:1977
 #, c-format
-msgid "could not read commit message of %s"
+msgid "could not read cummit message of %s"
 msgstr "no s'ha pogut llegir el missatge de comissió: %s"
 
 #: sequencer.c:2087
@@ -8344,29 +8344,29 @@ msgid "your index file is unmerged."
 msgstr "el vostre fitxer d'índex està sense fusionar."
 
 #: sequencer.c:2094
-msgid "cannot fixup root commit"
+msgid "cannot fixup root cummit"
 msgstr "no es pot arreglar la comissió arrel"
 
 #: sequencer.c:2113
 #, c-format
-msgid "commit %s is a merge but no -m option was given."
+msgid "cummit %s is a merge but no -m option was given."
 msgstr "la comissió %s és una fusió però no s'ha donat cap opció -m."
 
 #: sequencer.c:2121 sequencer.c:2129
 #, c-format
-msgid "commit %s does not have parent %d"
+msgid "cummit %s does not have parent %d"
 msgstr "la comissió %s no té pare %d"
 
 #: sequencer.c:2135
 #, c-format
-msgid "cannot get commit message for %s"
+msgid "cannot get cummit message for %s"
 msgstr "no es pot obtenir el missatge de comissió de %s"
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
 #: sequencer.c:2154
 #, c-format
-msgid "%s: cannot parse parent commit %s"
+msgid "%s: cannot parse parent cummit %s"
 msgstr "%s: no es pot analitzar la comissió pare %s"
 
 #: sequencer.c:2220
@@ -8421,7 +8421,7 @@ msgstr "línia no vàlida %d: %.*s"
 
 #: sequencer.c:2572
 #, c-format
-msgid "cannot '%s' without a previous commit"
+msgid "cannot '%s' without a previous cummit"
 msgstr "no es pot «%s» sense una comissió prèvia"
 
 #: sequencer.c:2620 builtin/rebase.c:185
@@ -8447,7 +8447,7 @@ msgid "unusable instruction sheet: '%s'"
 msgstr "full d'instruccions inusable: «%s»"
 
 #: sequencer.c:2714
-msgid "no commits parsed."
+msgid "no cummits parsed."
 msgstr "no s'ha analitzat cap comissió."
 
 #: sequencer.c:2725
@@ -8468,7 +8468,7 @@ msgid "malformed options sheet: '%s'"
 msgstr "full d'opcions mal format: «%s»"
 
 #: sequencer.c:3029 sequencer.c:4875
-msgid "empty commit set passed"
+msgid "empty cummit set passed"
 msgstr "conjunt de comissions buit passat"
 
 #: sequencer.c:3046
@@ -8543,7 +8543,7 @@ msgid "no cherry-pick in progress"
 msgstr "ni hi ha cap «cherry pick» en curs"
 
 #: sequencer.c:3256
-msgid "failed to skip the commit"
+msgid "failed to skip the cummit"
 msgstr "s'ha produït un error en ometre la comissió"
 
 #: sequencer.c:3263
@@ -8553,7 +8553,7 @@ msgstr "no hi ha res a ometre"
 #: sequencer.c:3266
 #, c-format
 msgid ""
-"have you committed already?\n"
+"have you cummitted already?\n"
 "try \"git %s --continue\""
 msgstr ""
 "heu fet ja una comissió?\n"
@@ -8571,9 +8571,9 @@ msgstr "no s'ha pogut copiar «%s» a «%s»"
 #: sequencer.c:3453
 #, c-format
 msgid ""
-"You can amend the commit now, with\n"
+"You can amend the cummit now, with\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
@@ -8581,7 +8581,7 @@ msgid ""
 msgstr ""
 "Podeu esmenar la comissió ara, amb\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Una vegada que estigueu satisfet amb els vostres canvis, executeu\n"
 "\n"
@@ -8631,7 +8631,7 @@ msgstr "i ha fet canvis a l'índex i/o l'arbre de treball\n"
 msgid ""
 "execution succeeded: %s\n"
 "but left changes to the index and/or the working tree\n"
-"Commit or stash your changes, and then run\n"
+"cummit or stash your changes, and then run\n"
 "\n"
 "  git rebase --continue\n"
 "\n"
@@ -8648,7 +8648,7 @@ msgid "illegal label name: '%.*s'"
 msgstr "nom d'etiqueta no permès: «%.*s»"
 
 #: sequencer.c:3655
-msgid "writing fake root commit"
+msgid "writing fake root cummit"
 msgstr "s'està escrivint una comissió arrel falsa"
 
 #: sequencer.c:3660
@@ -8681,7 +8681,7 @@ msgstr ""
 
 #: sequencer.c:3869
 #, c-format
-msgid "could not get commit message of '%s'"
+msgid "could not get cummit message of '%s'"
 msgstr "no s'ha pogut llegir el missatge de comissió de «%s»"
 
 #: sequencer.c:4013
@@ -8819,7 +8819,7 @@ msgid "cannot rebase: You have unstaged changes."
 msgstr "no es pot fer «rebase»: teniu canvis «unstaged»."
 
 #: sequencer.c:4624
-msgid "cannot amend non-existing commit"
+msgid "cannot amend non-existing cummit"
 msgstr "no es pot esmenar una comissió no existent"
 
 #: sequencer.c:4626
@@ -8835,7 +8835,7 @@ msgstr "contingut no vàlid: «%s»"
 #: sequencer.c:4631
 msgid ""
 "\n"
-"You have uncommitted changes in your working tree. Please, commit them\n"
+"You have uncummitted changes in your working tree. Please, cummit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 "\n"
@@ -8852,7 +8852,7 @@ msgid "could not remove CHERRY_PICK_HEAD"
 msgstr "no s'ha pogut eliminar CHERRY_PICK_HEAD"
 
 #: sequencer.c:4732
-msgid "could not commit staged changes."
+msgid "could not cummit staged changes."
 msgstr "no s'han pogut cometre els canvis «staged»."
 
 #: sequencer.c:4852
@@ -8866,16 +8866,16 @@ msgid "%s: bad revision"
 msgstr "%s: revisió incorrecta"
 
 #: sequencer.c:4891
-msgid "can't revert as initial commit"
+msgid "can't revert as initial cummit"
 msgstr "no es pot revertir com a comissió inicial"
 
 #: sequencer.c:5162 sequencer.c:5391
 #, c-format
-msgid "skipped previously applied commit %s"
+msgid "skipped previously applied cummit %s"
 msgstr "omet les comissions aplicades anteriorment %s"
 
 #: sequencer.c:5232 sequencer.c:5407
-msgid "use --reapply-cherry-picks to include skipped commits"
+msgid "use --reapply-cherry-picks to include skipped cummits"
 msgstr "useu --reapply-cherry-picks per a incloure les comissions omeses"
 
 #: sequencer.c:5378
@@ -9198,7 +9198,7 @@ msgstr "argument incorrecte --ignore-submodules: %s"
 #: submodule.c:866
 #, c-format
 msgid ""
-"Submodule in commit %s at path: '%s' collides with a submodule named the "
+"Submodule in cummit %s at path: '%s' collides with a submodule named the "
 "same. Skipping it."
 msgstr ""
 "El submòdul en la comissió %s al camí: «%s» col·lideix amb un submòdul amb "
@@ -9206,16 +9206,16 @@ msgstr ""
 
 #: submodule.c:987
 #, c-format
-msgid "submodule entry '%s' (%s) is a %s, not a commit"
+msgid "submodule entry '%s' (%s) is a %s, not a cummit"
 msgstr "l'entrada del submòdul «%s» (%s) és a %s, no és una comissió"
 
 #: submodule.c:1069
 #, c-format
 msgid ""
-"Could not run 'git rev-list <commits> --not --remotes -n 1' command in "
+"Could not run 'git rev-list <cummits> --not --remotes -n 1' command in "
 "submodule %s"
 msgstr ""
-"No s'ha pogut executar l'ordre «git rev-list <commits> --not --remotes -n 1»"
+"No s'ha pogut executar l'ordre «git rev-list <cummits> --not --remotes -n 1»"
 " en el submòdul %s"
 
 #: submodule.c:1192
@@ -9249,12 +9249,12 @@ msgstr "No s'ha pogut accedir al submòdul «%s»\n"
 
 #: submodule.c:1618
 #, c-format, fuzzy
-msgid "Could not access submodule '%s' at commit %s\n"
+msgid "Could not access submodule '%s' at cummit %s\n"
 msgstr "No s'ha pogut accedir al submòdul «%s» en els percentatges"
 
 #: submodule.c:1629
 #, c-format, fuzzy
-msgid "Fetching submodule %s%s at commit %s\n"
+msgid "Fetching submodule %s%s at cummit %s\n"
 msgstr ""
 "S'estan recollint els submòduls un percentatge de percentatges a les "
 "comissions"
@@ -9730,7 +9730,7 @@ msgstr "fitxer d'arbre massa curt"
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by checkout:\n"
-"%%sPlease commit your changes or stash them before you switch branches."
+"%%sPlease cummit your changes or stash them before you switch branches."
 msgstr ""
 "Els canvis locals als fitxers següents se sobreescriurien per a agafar:\n"
 "%%sCometeu els vostres canvis o feu «stash» abans de canviar de branca."
@@ -9748,7 +9748,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
-"%%sPlease commit your changes or stash them before you merge."
+"%%sPlease cummit your changes or stash them before you merge."
 msgstr ""
 "Els canvis locals als fitxers següents se sobreescriurien per a fusionar:\n"
 "%%sCometeu els vostres canvis o feu «stash» abans de fusionar."
@@ -9766,7 +9766,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by %s:\n"
-"%%sPlease commit your changes or stash them before you %s."
+"%%sPlease cummit your changes or stash them before you %s."
 msgstr ""
 "Els vostres canvis locals als fitxers següents se sobreescriurien per %s:\n"
 "%%sCometeu els vostres canvis o feu «stash» abans de %s."
@@ -10193,19 +10193,19 @@ msgid "  (use \"git rm <file>...\" to mark resolution)"
 msgstr "  (useu «git rm <fitxer>...» per a senyalar resolució)"
 
 #: wt-status.c:211 wt-status.c:1140
-msgid "Changes to be committed:"
+msgid "Changes to be cummitted:"
 msgstr "Canvis a cometre:"
 
 #: wt-status.c:234 wt-status.c:1149
-msgid "Changes not staged for commit:"
+msgid "Changes not staged for cummit:"
 msgstr "Canvis no «staged» per a cometre:"
 
 #: wt-status.c:238
-msgid "  (use \"git add <file>...\" to update what will be committed)"
+msgid "  (use \"git add <file>...\" to update what will be cummitted)"
 msgstr "  (useu «git add <fitxer>...» per a actualitzar què es cometrà)"
 
 #: wt-status.c:240
-msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
+msgid "  (use \"git add/rm <file>...\" to update what will be cummitted)"
 msgstr "  (useu «git add/rm <fitxer>...» per a actualitzar què es cometrà)"
 
 #: wt-status.c:241
@@ -10215,13 +10215,13 @@ msgstr ""
 "treball)"
 
 #: wt-status.c:243
-msgid "  (commit or discard the untracked or modified content in submodules)"
+msgid "  (cummit or discard the untracked or modified content in submodules)"
 msgstr ""
 "  (cometeu o descarteu el contingut modificat o no seguit en els submòduls)"
 
 #: wt-status.c:254
 #, c-format
-msgid "  (use \"git %s <file>...\" to include in what will be committed)"
+msgid "  (use \"git %s <file>...\" to include in what will be cummitted)"
 msgstr "  (useu «git %s <fitxer>...» per a incloure'ls en la comissió)"
 
 #: wt-status.c:266
@@ -10285,7 +10285,7 @@ msgid "unmerged:"
 msgstr "sense fusionar:"
 
 #: wt-status.c:382
-msgid "new commits, "
+msgid "new cummits, "
 msgstr "comissions noves, "
 
 #: wt-status.c:384
@@ -10308,7 +10308,7 @@ msgid "Submodules changed but not updated:"
 msgstr "Submòduls canviats però no actualitzats:"
 
 #: wt-status.c:1006
-msgid "Submodule changes to be committed:"
+msgid "Submodule changes to be cummitted:"
 msgstr "Canvis de submòdul a cometre:"
 
 #: wt-status.c:1088
@@ -10335,8 +10335,8 @@ msgid "You have unmerged paths."
 msgstr "Teniu camins sense fusionar."
 
 #: wt-status.c:1213
-msgid "  (fix conflicts and run \"git commit\")"
-msgstr "  (arregleu els conflictes i executeu «git commit»)"
+msgid "  (fix conflicts and run \"git cummit\")"
+msgstr "  (arregleu els conflictes i executeu «git cummit»)"
 
 #: wt-status.c:1215
 msgid "  (use \"git merge --abort\" to abort the merge)"
@@ -10347,8 +10347,8 @@ msgid "All conflicts fixed but you are still merging."
 msgstr "Tots els conflictes estan arreglats però encara esteu fusionant."
 
 #: wt-status.c:1222
-msgid "  (use \"git commit\" to conclude merge)"
-msgstr "  (useu «git commit» per a concloure la fusió)"
+msgid "  (use \"git cummit\" to conclude merge)"
+msgstr "  (useu «git cummit» per a concloure la fusió)"
 
 #: wt-status.c:1233
 msgid "You are in the middle of an am session."
@@ -10367,7 +10367,7 @@ msgid "  (use \"git am --skip\" to skip this patch)"
 msgstr "  (useu «git am --skip» per a ometre aquest pedaç)"
 
 #: wt-status.c:1246
-msgid "  (use \"git am --allow-empty\" to record this patch as an empty commit)"
+msgid "  (use \"git am --allow-empty\" to record this patch as an empty cummit)"
 msgstr ""
 "  (useu «git am --allow-empty» per a enregistrar aquest pedaç com una "
 "comissió buida)"
@@ -10441,13 +10441,13 @@ msgstr ""
 #: wt-status.c:1458
 #, c-format
 msgid ""
-"You are currently splitting a commit while rebasing branch '%s' on '%s'."
+"You are currently splitting a cummit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Actualment esteu dividint una comissió mentre es fa «rebase» de la branca "
 "«%s» en «%s»."
 
 #: wt-status.c:1463
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a cummit during a rebase."
 msgstr "Actualment esteu dividint una comissió durant un «rebase»."
 
 #: wt-status.c:1466
@@ -10458,18 +10458,18 @@ msgstr ""
 
 #: wt-status.c:1470
 #, c-format
-msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
+msgid "You are currently editing a cummit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Actualment esteu editant una comissió mentre es fa «rebase» de la branca "
 "«%s» en «%s»."
 
 #: wt-status.c:1475
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a cummit during a rebase."
 msgstr "Actualment esteu editant una comissió durant un «rebase»."
 
 #: wt-status.c:1478
-msgid "  (use \"git commit --amend\" to amend the current commit)"
-msgstr "  (useu «git commit --amend» per a esmenar la comissió actual)"
+msgid "  (use \"git cummit --amend\" to amend the current cummit)"
+msgstr "  (useu «git cummit --amend» per a esmenar la comissió actual)"
 
 #: wt-status.c:1480
 msgid "  (use \"git rebase --continue\" once you are satisfied with your changes)"
@@ -10483,7 +10483,7 @@ msgstr "Hi ha «cherry pick» actualment en curs."
 
 #: wt-status.c:1494
 #, c-format
-msgid "You are currently cherry-picking commit %s."
+msgid "You are currently cherry-picking cummit %s."
 msgstr "Actualment esteu fent «cherry pick» a la comissió %s."
 
 #: wt-status.c:1501
@@ -10516,7 +10516,7 @@ msgstr "Una reversió està actualment en curs."
 
 #: wt-status.c:1524
 #, c-format
-msgid "You are currently reverting commit %s."
+msgid "You are currently reverting cummit %s."
 msgstr "Actualment esteu revertint la comissió %s."
 
 #: wt-status.c:1530
@@ -10588,11 +10588,11 @@ msgid "Not currently on any branch."
 msgstr "Actualment no s'és en cap branca."
 
 #: wt-status.c:1851
-msgid "Initial commit"
+msgid "Initial cummit"
 msgstr "Comissió inicial"
 
 #: wt-status.c:1852
-msgid "No commits yet"
+msgid "No cummits yet"
 msgstr "No s'ha fet cap comissió encara"
 
 #: wt-status.c:1866
@@ -10630,18 +10630,18 @@ msgstr "Sense canvis"
 
 #: wt-status.c:1891
 #, c-format
-msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
-msgstr "no hi ha canvis afegits a cometre (useu «git add» o «git commit -a»)\n"
+msgid "no changes added to cummit (use \"git add\" and/or \"git cummit -a\")\n"
+msgstr "no hi ha canvis afegits a cometre (useu «git add» o «git cummit -a»)\n"
 
 #: wt-status.c:1895
 #, c-format
-msgid "no changes added to commit\n"
+msgid "no changes added to cummit\n"
 msgstr "no hi ha canvis afegits a cometre\n"
 
 #: wt-status.c:1899
 #, c-format
 msgid ""
-"nothing added to commit but untracked files present (use \"git add\" to "
+"nothing added to cummit but untracked files present (use \"git add\" to "
 "track)\n"
 msgstr ""
 "no hi ha res afegit a cometre però hi ha fitxers no seguits (useu «git add» "
@@ -10649,33 +10649,33 @@ msgstr ""
 
 #: wt-status.c:1903
 #, c-format
-msgid "nothing added to commit but untracked files present\n"
+msgid "nothing added to cummit but untracked files present\n"
 msgstr "no hi ha res afegit a cometre però hi ha fitxers no seguits\n"
 
 #: wt-status.c:1907
 #, c-format
-msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
+msgid "nothing to cummit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
 "no hi ha res a cometre (creeu/copieu fitxers i useu «git add» per a seguir-"
 "los)\n"
 
 #: wt-status.c:1911 wt-status.c:1917
 #, c-format
-msgid "nothing to commit\n"
+msgid "nothing to cummit\n"
 msgstr "no hi ha res a cometre\n"
 
 #: wt-status.c:1914
 #, c-format
-msgid "nothing to commit (use -u to show untracked files)\n"
+msgid "nothing to cummit (use -u to show untracked files)\n"
 msgstr "no hi ha res a cometre (useu -u per a mostrar els fitxers no seguits)\n"
 
 #: wt-status.c:1919
 #, c-format
-msgid "nothing to commit, working tree clean\n"
+msgid "nothing to cummit, working tree clean\n"
 msgstr "no hi ha res a cometre, l'arbre de treball està net\n"
 
 #: wt-status.c:2024
-msgid "No commits yet on "
+msgid "No cummits yet on "
 msgstr "No s'ha fet cap comissió encara a "
 
 #: wt-status.c:2028
@@ -10701,12 +10701,12 @@ msgid "cannot %s: You have unstaged changes."
 msgstr "no es pot %s: Teniu canvis «unstaged»."
 
 #: wt-status.c:2611
-msgid "additionally, your index contains uncommitted changes."
+msgid "additionally, your index contains uncummitted changes."
 msgstr "addicionalment, el vostre índex conté canvis sense cometre."
 
 #: wt-status.c:2613
 #, c-format
-msgid "cannot %s: Your index contains uncommitted changes."
+msgid "cannot %s: Your index contains uncummitted changes."
 msgstr "no es pot %s: El vostre índex conté canvis sense cometre."
 
 #: compat/simple-ipc/ipc-unix-socket.c:205
@@ -10756,7 +10756,7 @@ msgstr "no es pot fer chmod %cx «%s»"
 msgid "unexpected diff status %c"
 msgstr "estat de diff inesperat %c"
 
-#: builtin/add.c:110 builtin/commit.c:299
+#: builtin/add.c:110 builtin/cummit.c:299
 msgid "updating files failed"
 msgstr "s'ha produït un error en actualitzar els fitxers"
 
@@ -10805,7 +10805,7 @@ msgstr "Els camins següents s'ignoren per un dels vostres fitxers .gitignore:\n
 msgid "dry run"
 msgstr "fes una prova"
 
-#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/commit.c:1483
+#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/cummit.c:1483
 #: builtin/count-objects.c:98 builtin/fsck.c:789 builtin/log.c:2338
 #: builtin/mv.c:123 builtin/read-tree.c:120
 msgid "be verbose"
@@ -10928,7 +10928,7 @@ msgstr "l'afegiment de fitxers ha fallat"
 msgid "--chmod param '%s' must be either -x or +x"
 msgstr "el paràmetre --chmod «%s» ha de ser o -x o +x"
 
-#: builtin/add.c:555 builtin/checkout.c:1770 builtin/commit.c:365
+#: builtin/add.c:555 builtin/checkout.c:1770 builtin/cummit.c:365
 #: builtin/reset.c:436 builtin/rm.c:275 builtin/stash.c:1702
 #, c-format
 msgid "'%s' and pathspec arguments cannot be used together"
@@ -11018,7 +11018,7 @@ msgstr "Si preferiu ometre aquest pedaç, executeu «%s --skip» en lloc d'això
 
 #: builtin/am.c:1160
 #, c-format
-msgid "To record the empty patch as an empty commit, run \"%s --allow-empty\"."
+msgid "To record the empty patch as an empty cummit, run \"%s --allow-empty\"."
 msgstr ""
 "Per a enregistrar un pedaç buit com a comissió buida, executeu «%s --allow-"
 "empty»."
@@ -11039,7 +11039,7 @@ msgstr ""
 
 #: builtin/am.c:1345
 #, c-format
-msgid "missing author line in commit %s"
+msgid "missing author line in cummit %s"
 msgstr "manca la línia d'autor en la comissió %s"
 
 #: builtin/am.c:1348
@@ -11083,7 +11083,7 @@ msgid "cannot resume: %s does not exist."
 msgstr "no es pot reprendre: %s no existeix."
 
 #: builtin/am.c:1726
-msgid "Commit Body is:"
+msgid "cummit Body is:"
 msgstr "El cos de la comissió és:"
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
@@ -11096,7 +11096,7 @@ msgstr ""
 "Voleu aplicar-lo? [y]es/[n]o/[e]dita/[v]isualitza el pedaç/[a]ccepta'ls "
 "tots: "
 
-#: builtin/am.c:1782 builtin/commit.c:410
+#: builtin/am.c:1782 builtin/cummit.c:410
 msgid "unable to write index file"
 msgstr "no s'ha pogut escriure el fitxer d'índex"
 
@@ -11112,7 +11112,7 @@ msgstr "S'està ometent: %.*s"
 
 #: builtin/am.c:1833
 #, c-format
-msgid "Creating an empty commit: %.*s"
+msgid "Creating an empty cummit: %.*s"
 msgstr "S'està creant una comissió buida: %.*s"
 
 #: builtin/am.c:1837
@@ -11139,7 +11139,7 @@ msgstr ""
 "Useu «git am --show-current-patch=diff» per a veure el pedaç que ha fallat"
 
 #: builtin/am.c:1921
-msgid "No changes - recorded it as an empty commit."
+msgid "No changes - recorded it as an empty cummit."
 msgstr "No hi ha canvis - enregistrat com una comissió buida."
 
 #: builtin/am.c:1923
@@ -11211,7 +11211,7 @@ msgid "be quiet"
 msgstr "silenciós"
 
 #: builtin/am.c:2337
-msgid "add a Signed-off-by trailer to the commit message"
+msgid "add a Signed-off-by trailer to the cummit message"
 msgstr "afegeix un «trailer» tipus «Signed-off-by» al missatge de comissió"
 
 #: builtin/am.c:2340
@@ -11253,7 +11253,7 @@ msgstr "passa-ho a través del git-mailinfo"
 msgid "pass it through git-apply"
 msgstr "passa-ho a través de git-apply"
 
-#: builtin/am.c:2376 builtin/commit.c:1514 builtin/fmt-merge-msg.c:18
+#: builtin/am.c:2376 builtin/cummit.c:1514 builtin/fmt-merge-msg.c:18
 #: builtin/fmt-merge-msg.c:21 builtin/grep.c:920 builtin/merge.c:263
 #: builtin/pull.c:142 builtin/pull.c:204 builtin/pull.c:221
 #: builtin/rebase.c:1074 builtin/repack.c:657 builtin/repack.c:661
@@ -11303,25 +11303,25 @@ msgid "show the patch being applied"
 msgstr "mostra el pedaç que s'està aplicant"
 
 #: builtin/am.c:2411
-msgid "record the empty patch as an empty commit"
+msgid "record the empty patch as an empty cummit"
 msgstr "registra el pedaç buit com una comissió buida"
 
 #: builtin/am.c:2415
-msgid "lie about committer date"
+msgid "lie about cummitter date"
 msgstr "menteix sobre la data del comitent"
 
 #: builtin/am.c:2417
 msgid "use current timestamp for author date"
 msgstr "usa la marca de temps actual per a la data d'autor"
 
-#: builtin/am.c:2419 builtin/commit-tree.c:118 builtin/commit.c:1642
+#: builtin/am.c:2419 builtin/cummit-tree.c:118 builtin/cummit.c:1642
 #: builtin/merge.c:302 builtin/pull.c:179 builtin/rebase.c:1127
 #: builtin/revert.c:117 builtin/tag.c:461
 msgid "key-id"
 msgstr "ID de clau"
 
 #: builtin/am.c:2420 builtin/rebase.c:1128
-msgid "GPG-sign commits"
+msgid "GPG-sign cummits"
 msgstr "signa les comissions amb GPG"
 
 #: builtin/am.c:2423
@@ -11398,7 +11398,7 @@ msgid "git archive: expected a flush"
 msgstr "git archive: s'esperava una neteja"
 
 #: builtin/bisect--helper.c:24
-msgid "git bisect--helper --bisect-reset [<commit>]"
+msgid "git bisect--helper --bisect-reset [<cummit>]"
 msgstr "git bisect--helper --bisect-reset [<comissió>]"
 
 #: builtin/bisect--helper.c:26
@@ -11472,16 +11472,16 @@ msgstr "No estem bisecant.\n"
 
 #: builtin/bisect--helper.c:218
 #, c-format
-msgid "'%s' is not a valid commit"
+msgid "'%s' is not a valid cummit"
 msgstr "«%s» no és una comissió vàlida"
 
 #: builtin/bisect--helper.c:227
 #, c-format
 msgid ""
-"could not check out original HEAD '%s'. Try 'git bisect reset <commit>'."
+"could not check out original HEAD '%s'. Try 'git bisect reset <cummit>'."
 msgstr ""
 "no s'ha pogut agafar la HEAD original «%s». Proveu «git bisect reset "
-"<commit>»."
+"<cummit>»."
 
 #: builtin/bisect--helper.c:271
 #, c-format
@@ -11525,7 +11525,7 @@ msgstr ""
 
 #: builtin/bisect--helper.c:365
 #, c-format
-msgid "bisecting only with a %s commit"
+msgid "bisecting only with a %s cummit"
 msgstr "bisecant amb només una comissió %s"
 
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -11630,7 +11630,7 @@ msgstr "Entrada amb revisió errònia: %s"
 
 #: builtin/bisect--helper.c:904
 #, c-format
-msgid "Bad rev input (not a commit): %s"
+msgid "Bad rev input (not a cummit): %s"
 msgstr "Entrada de revisió errònia (no és una comissió): %s"
 
 #: builtin/bisect--helper.c:936
@@ -11689,7 +11689,7 @@ msgstr "execució de bisecció amb èxit"
 
 #: builtin/bisect--helper.c:1218
 #, c-format
-msgid "bisect found first bad commit"
+msgid "bisect found first bad cummit"
 msgstr "la bisecció ha trobat una primera comissió errònia"
 
 #: builtin/bisect--helper.c:1221
@@ -11718,7 +11718,7 @@ msgid "start the bisect session"
 msgstr "inicia la sessió bisecció"
 
 #: builtin/bisect--helper.c:1261
-msgid "find the next bisection commit"
+msgid "find the next bisection cummit"
 msgstr "troba la comissió de bisecció següent"
 
 #: builtin/bisect--helper.c:1263
@@ -11734,7 +11734,7 @@ msgid "replay the bisection process from the given file"
 msgstr "torna a reproduir el procés de bisecció des del fitxer donat"
 
 #: builtin/bisect--helper.c:1269
-msgid "skip some commits for checkout"
+msgid "skip some cummits for checkout"
 msgstr "omet algunes comissions en agafar"
 
 #: builtin/bisect--helper.c:1271
@@ -11750,7 +11750,7 @@ msgid "no log for BISECT_WRITE"
 msgstr "no hi ha registre per a BISECT_WRITE"
 
 #: builtin/bisect--helper.c:1290
-msgid "--bisect-reset requires either no argument or a commit"
+msgid "--bisect-reset requires either no argument or a cummit"
 msgstr "--bisect-reset no requereix cap argument ni comissió"
 
 #: builtin/bisect--helper.c:1295
@@ -11796,13 +11796,13 @@ msgid "show blame entries as we find them, incrementally"
 msgstr "mostra les entrades «blame» mentre les trobem, incrementalment"
 
 #: builtin/blame.c:865
-msgid "do not show object names of boundary commits (Default: off)"
+msgid "do not show object names of boundary cummits (Default: off)"
 msgstr ""
 "no mostris els noms d'objectes de les comissions de frontera (per defecte: "
 "desactivat)"
 
 #: builtin/blame.c:866
-msgid "do not treat root commits as boundaries (Default: off)"
+msgid "do not treat root cummits as boundaries (Default: off)"
 msgstr ""
 "no tractis les comissions arrel com de frontera (per defecte: desactivat)"
 
@@ -11811,7 +11811,7 @@ msgid "show work cost statistics"
 msgstr "mostra les estadístiques de preu de treball"
 
 #: builtin/blame.c:868 builtin/checkout.c:1554 builtin/clone.c:98
-#: builtin/commit-graph.c:75 builtin/commit-graph.c:228 builtin/fetch.c:181
+#: builtin/cummit-graph.c:75 builtin/cummit-graph.c:228 builtin/fetch.c:181
 #: builtin/merge.c:301 builtin/multi-pack-index.c:103
 #: builtin/multi-pack-index.c:154 builtin/multi-pack-index.c:180
 #: builtin/multi-pack-index.c:208 builtin/pull.c:120 builtin/push.c:566
@@ -11836,7 +11836,7 @@ msgid "show in a format designed for machine consumption"
 msgstr "presenta en un format dissenyat per a ser consumit per una màquina"
 
 #: builtin/blame.c:873
-msgid "show porcelain format with per-line commit information"
+msgid "show porcelain format with per-line cummit information"
 msgstr "mostra en format de porcellana amb informació de comissió per línia"
 
 #: builtin/blame.c:874
@@ -11849,7 +11849,7 @@ msgid "show raw timestamp (Default: off)"
 msgstr "mostra la marca de temps en cru (per defecte: desactivat)"
 
 #: builtin/blame.c:876
-msgid "show long commit SHA1 (Default: off)"
+msgid "show long cummit SHA1 (Default: off)"
 msgstr "mostra l'SHA1 de comissió llarg (per defecte: desactivat)"
 
 #: builtin/blame.c:877
@@ -12004,7 +12004,7 @@ msgstr ""
 
 #: builtin/branch.c:183
 #, c-format
-msgid "Couldn't look up commit object for '%s'"
+msgid "Couldn't look up cummit object for '%s'"
 msgstr "No s'ha pogut trobar l'objecte de comissió de «%s»"
 
 #: builtin/branch.c:187
@@ -12025,7 +12025,7 @@ msgid "cannot use -a with -d"
 msgstr "no es pot usar -a amb -d"
 
 #: builtin/branch.c:242
-msgid "Couldn't look up commit object for HEAD"
+msgid "Couldn't look up cummit object for HEAD"
 msgstr "No s'ha pogut trobar l'objecte de comissió de HEAD"
 
 #: builtin/branch.c:259
@@ -12177,11 +12177,11 @@ msgid "act on remote-tracking branches"
 msgstr "actua en branques amb seguiment remot"
 
 #: builtin/branch.c:666 builtin/branch.c:668
-msgid "print only branches that contain the commit"
+msgid "print only branches that contain the cummit"
 msgstr "imprimeix només les branques que continguin la comissió"
 
 #: builtin/branch.c:667 builtin/branch.c:669
-msgid "print only branches that don't contain the commit"
+msgid "print only branches that don't contain the cummit"
 msgstr "imprimeix només les branques que no continguin la comissió"
 
 #: builtin/branch.c:672
@@ -12301,7 +12301,7 @@ msgstr "no es pot editar la descripció de més d'una branca"
 
 #: builtin/branch.c:814
 #, c-format
-msgid "No commit on branch '%s' yet."
+msgid "No cummit on branch '%s' yet."
 msgstr "Encara no hi ha cap comissió en la branca «%s»."
 
 #: builtin/branch.c:817
@@ -12606,9 +12606,9 @@ msgstr "Emet els atributs de l'objecte  objectbroken]"
 
 #: builtin/cat-file.c:842
 #, fuzzy
-msgid "show object type (one of 'blob', 'tree', 'commit', 'tag', ...)"
+msgid "show object type (one of 'blob', 'tree', 'cummit', 'tag', ...)"
 msgstr ""
-"mostra el tipus d'objecte (un de 'blob', 'tree', 'commit', 'tag', ...)"
+"mostra el tipus d'objecte (un de 'blob', 'tree', 'cummit', 'tag', ...)"
 
 #: builtin/cat-file.c:843
 msgid "show object size"
@@ -13036,12 +13036,12 @@ msgstr " ... i %d més.\n"
 #: builtin/checkout.c:1023
 #, c-format
 msgid ""
-"Warning: you are leaving %d commit behind, not connected to\n"
+"Warning: you are leaving %d cummit behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"Warning: you are leaving %d commits behind, not connected to\n"
+"Warning: you are leaving %d cummits behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
@@ -13165,12 +13165,12 @@ msgstr "s'espera una branca, s'ha obtingut «%s»"
 
 #: builtin/checkout.c:1420
 #, c-format
-msgid "a branch is expected, got commit '%s'"
+msgid "a branch is expected, got cummit '%s'"
 msgstr "s'espera una branca, s'ha obtingut la comissió «%s»"
 
 #: builtin/checkout.c:1429
 msgid ""
-"If you want to detach HEAD at the commit, try again with the --detach "
+"If you want to detach HEAD at the cummit, try again with the --detach "
 "option."
 msgstr ""
 "Si voleu desacoblar HEAD a la comissió, torneu-ho a provar amb l'opció "
@@ -13242,11 +13242,11 @@ msgstr "«%s» no pot prendre <start-point>"
 
 #: builtin/checkout.c:1505
 #, c-format
-msgid "Cannot switch branch to a non-commit '%s'"
+msgid "Cannot switch branch to a non-cummit '%s'"
 msgstr "No es pot canviar la branca a la no comissió «%s»"
 
 #: builtin/checkout.c:1512
-msgid "missing branch or commit argument"
+msgid "missing branch or cummit argument"
 msgstr "manca branca o argument de comissió"
 
 #: builtin/checkout.c:1555
@@ -13262,7 +13262,7 @@ msgid "conflict style (merge, diff3, or zdiff3)"
 msgstr "estil de conflicte (merge, diff3, o zdiff3)"
 
 #: builtin/checkout.c:1569 builtin/worktree.c:560
-msgid "detach HEAD at named commit"
+msgid "detach HEAD at named cummit"
 msgstr "separa HEAD a la comissió anomenada"
 
 #: builtin/checkout.c:1574
@@ -13322,7 +13322,7 @@ msgstr "especificació de camí no vàlida"
 
 #: builtin/checkout.c:1760
 #, c-format
-msgid "'%s' is not a commit and a branch '%s' cannot be created from it"
+msgid "'%s' is not a cummit and a branch '%s' cannot be created from it"
 msgstr ""
 "«%s» no és una comissió i la branca «%s» no es pot crear a partir d'aquesta "
 "comissió"
@@ -13993,224 +13993,224 @@ msgstr "espai de farciment entre columnes"
 msgid "--command must be the first argument"
 msgstr "--command ha de ser el primer argument"
 
-#: builtin/commit-graph.c:13
+#: builtin/cummit-graph.c:13
 msgid ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] "
+"git cummit-graph verify [--object-dir <objdir>] [--shallow] "
 "[--[no-]progress]"
 msgstr ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] "
+"git cummit-graph verify [--object-dir <objdir>] [--shallow] "
 "[--[no-]progress]"
 
-#: builtin/commit-graph.c:16
+#: builtin/cummit-graph.c:16
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] "
-"[--split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] "
+"git cummit-graph write [--object-dir <objdir>] [--append] "
+"[--split[=<strategy>]] [--reachable|--stdin-packs|--stdin-cummits] "
 "[--changed-paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split "
 "options>"
 msgstr ""
-"git commit-graph write [--object-dir <objdir>] [--append] "
-"[--split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] "
+"git cummit-graph write [--object-dir <objdir>] [--append] "
+"[--split[=<strategy>]] [--reachable|--stdin-packs|--stdin-cummits] "
 "[--changed-paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split "
 "options>"
 
-#: builtin/commit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
+#: builtin/cummit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
 msgid "dir"
 msgstr "directori"
 
-#: builtin/commit-graph.c:52
+#: builtin/cummit-graph.c:52
 msgid "the object directory to store the graph"
 msgstr "el directori d'objectes a emmagatzemar al graf"
 
-#: builtin/commit-graph.c:73
-msgid "if the commit-graph is split, only verify the tip file"
+#: builtin/cummit-graph.c:73
+msgid "if the cummit-graph is split, only verify the tip file"
 msgstr ""
 "si el graf de comissions està dividit només, verifica el fitxer de consell"
 
-#: builtin/commit-graph.c:100
+#: builtin/cummit-graph.c:100
 #, c-format
-msgid "Could not open commit-graph '%s'"
+msgid "Could not open cummit-graph '%s'"
 msgstr "No s'ha pogut obrir el graf de comissions «%s»"
 
-#: builtin/commit-graph.c:137
+#: builtin/cummit-graph.c:137
 #, c-format
 msgid "unrecognized --split argument, %s"
 msgstr "argument --split no reconegut, %s"
 
-#: builtin/commit-graph.c:150
+#: builtin/cummit-graph.c:150
 #, c-format
 msgid "unexpected non-hex object ID: %s"
 msgstr "ID de l'objecte no hexadecimal inesperat: %s"
 
-#: builtin/commit-graph.c:155
+#: builtin/cummit-graph.c:155
 #, c-format
 msgid "invalid object: %s"
 msgstr "no és un objecte vàlid: %s"
 
-#: builtin/commit-graph.c:205
+#: builtin/cummit-graph.c:205
 msgid "start walk at all refs"
 msgstr "comença el recorregut en totes les referències"
 
-#: builtin/commit-graph.c:207
-msgid "scan pack-indexes listed by stdin for commits"
+#: builtin/cummit-graph.c:207
+msgid "scan pack-indexes listed by stdin for cummits"
 msgstr "explora els índexs del paquet llistats per a stdin per a comissions"
 
-#: builtin/commit-graph.c:209
-msgid "start walk at commits listed by stdin"
+#: builtin/cummit-graph.c:209
+msgid "start walk at cummits listed by stdin"
 msgstr "comença el recorregut per les comissions llistades per stdin"
 
-#: builtin/commit-graph.c:211
-msgid "include all commits already in the commit-graph file"
+#: builtin/cummit-graph.c:211
+msgid "include all cummits already in the cummit-graph file"
 msgstr "inclou ja totes les comissions al fitxer del graf de comissions"
 
-#: builtin/commit-graph.c:213
+#: builtin/cummit-graph.c:213
 msgid "enable computation for changed paths"
 msgstr "habilita la computació per als camins canviats"
 
-#: builtin/commit-graph.c:215
-msgid "allow writing an incremental commit-graph file"
+#: builtin/cummit-graph.c:215
+msgid "allow writing an incremental cummit-graph file"
 msgstr "permet escriure un fitxer de graf de comissions incrementals"
 
-#: builtin/commit-graph.c:219
-msgid "maximum number of commits in a non-base split commit-graph"
+#: builtin/cummit-graph.c:219
+msgid "maximum number of cummits in a non-base split cummit-graph"
 msgstr ""
 "nombre màxim de comissions en un graf de comissions separades sense base"
 
-#: builtin/commit-graph.c:221
-msgid "maximum ratio between two levels of a split commit-graph"
+#: builtin/cummit-graph.c:221
+msgid "maximum ratio between two levels of a split cummit-graph"
 msgstr "ràtio màxima entre dos nivells d'un graf de comissions dividit"
 
-#: builtin/commit-graph.c:223
+#: builtin/cummit-graph.c:223
 msgid "only expire files older than a given date-time"
 msgstr "fes caducar només els objectes més antics que l'hora i data donades"
 
-#: builtin/commit-graph.c:225
+#: builtin/cummit-graph.c:225
 msgid "maximum number of changed-path Bloom filters to compute"
 msgstr "nombre màxim de canvis de camí en filtres Bloom a calcular"
 
-#: builtin/commit-graph.c:251
-msgid "use at most one of --reachable, --stdin-commits, or --stdin-packs"
-msgstr "usa com a màxim un --reachable, --stdin-commits, o --stdin-packs"
+#: builtin/cummit-graph.c:251
+msgid "use at most one of --reachable, --stdin-cummits, or --stdin-packs"
+msgstr "usa com a màxim un --reachable, --stdin-cummits, o --stdin-packs"
 
-#: builtin/commit-graph.c:282
-msgid "Collecting commits from input"
+#: builtin/cummit-graph.c:282
+msgid "Collecting cummits from input"
 msgstr "S'estan recollint les comissions de l'entrada"
 
-#: builtin/commit-graph.c:328 builtin/multi-pack-index.c:259
+#: builtin/cummit-graph.c:328 builtin/multi-pack-index.c:259
 #, c-format
 msgid "unrecognized subcommand: %s"
 msgstr "subordre no reconeguda: %s"
 
-#: builtin/commit-tree.c:18
+#: builtin/cummit-tree.c:18
 msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
+"git cummit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
 "<file>)...] <tree>"
 msgstr ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
+"git cummit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
 "<file>)...] <tree>"
 
-#: builtin/commit-tree.c:31
+#: builtin/cummit-tree.c:31
 #, c-format
 msgid "duplicate parent %s ignored"
 msgstr "s'han ignorat el pare %s duplicat"
 
-#: builtin/commit-tree.c:56 builtin/commit-tree.c:134 builtin/log.c:590
+#: builtin/cummit-tree.c:56 builtin/cummit-tree.c:134 builtin/log.c:590
 #, c-format
 msgid "not a valid object name %s"
 msgstr "no és un nom d'objecte vàlid %s"
 
-#: builtin/commit-tree.c:94
+#: builtin/cummit-tree.c:94
 #, c-format
-msgid "git commit-tree: failed to read '%s'"
-msgstr "git commit-tree: ha fallat en llegir «%s»"
+msgid "git cummit-tree: failed to read '%s'"
+msgstr "git cummit-tree: ha fallat en llegir «%s»"
 
-#: builtin/commit-tree.c:96
+#: builtin/cummit-tree.c:96
 #, c-format
-msgid "git commit-tree: failed to close '%s'"
-msgstr "git commit-tree: ha fallat en tancar «%s»"
+msgid "git cummit-tree: failed to close '%s'"
+msgstr "git cummit-tree: ha fallat en tancar «%s»"
 
-#: builtin/commit-tree.c:109
+#: builtin/cummit-tree.c:109
 msgid "parent"
 msgstr "pare"
 
-#: builtin/commit-tree.c:110
-msgid "id of a parent commit object"
+#: builtin/cummit-tree.c:110
+msgid "id of a parent cummit object"
 msgstr "id d'un objecte de comissió pare"
 
-#: builtin/commit-tree.c:112 builtin/commit.c:1626 builtin/merge.c:284
+#: builtin/cummit-tree.c:112 builtin/cummit.c:1626 builtin/merge.c:284
 #: builtin/notes.c:407 builtin/notes.c:573 builtin/stash.c:1666
 #: builtin/tag.c:455
 msgid "message"
 msgstr "missatge"
 
-#: builtin/commit-tree.c:113 builtin/commit.c:1626
-msgid "commit message"
+#: builtin/cummit-tree.c:113 builtin/cummit.c:1626
+msgid "cummit message"
 msgstr "missatge de comissió"
 
-#: builtin/commit-tree.c:116
-msgid "read commit log message from file"
+#: builtin/cummit-tree.c:116
+msgid "read cummit log message from file"
 msgstr "llegeix el missatge de registre de comissió des d'un fitxer"
 
-#: builtin/commit-tree.c:119 builtin/commit.c:1643 builtin/merge.c:303
+#: builtin/cummit-tree.c:119 builtin/cummit.c:1643 builtin/merge.c:303
 #: builtin/pull.c:180 builtin/revert.c:118
-msgid "GPG sign commit"
+msgid "GPG sign cummit"
 msgstr "signa la comissió amb GPG"
 
-#: builtin/commit-tree.c:131
+#: builtin/cummit-tree.c:131
 msgid "must give exactly one tree"
 msgstr "ha de donar exactament un arbre"
 
-#: builtin/commit-tree.c:138
-msgid "git commit-tree: failed to read"
-msgstr "git commit-tree: ha fallat en llegir"
+#: builtin/cummit-tree.c:138
+msgid "git cummit-tree: failed to read"
+msgstr "git cummit-tree: ha fallat en llegir"
 
-#: builtin/commit.c:43
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<opcions>] [--] <especificació-de-camí>..."
+#: builtin/cummit.c:43
+msgid "git cummit [<options>] [--] <pathspec>..."
+msgstr "git cummit [<opcions>] [--] <especificació-de-camí>..."
 
-#: builtin/commit.c:48
+#: builtin/cummit.c:48
 msgid "git status [<options>] [--] <pathspec>..."
 msgstr "git status [<opcions>] [--] <especificació-de-camí>..."
 
-#: builtin/commit.c:53
+#: builtin/cummit.c:53
 msgid ""
-"You asked to amend the most recent commit, but doing so would make\n"
+"You asked to amend the most recent cummit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
-"remove the commit entirely with \"git reset HEAD^\".\n"
+"remove the cummit entirely with \"git reset HEAD^\".\n"
 msgstr ""
 "Heu demanat esmenar la comissió més recent, però fer això la\n"
 "deixaria buida. Podeu repetir la vostra ordre amb --allow-empty, o\n"
 "podeu eliminar la comissió per complet amb «git reset HEAD^».\n"
 
-#: builtin/commit.c:58
+#: builtin/cummit.c:58
 msgid ""
 "The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
-"If you wish to commit it anyway, use:\n"
+"If you wish to cummit it anyway, use:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 msgstr ""
 "El «cherry pick» previ està ara buit, possiblement a causa de resolució de conflictes.\n"
 "Si el voleu cometre de totes maneres, useu:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 
-#: builtin/commit.c:65
+#: builtin/cummit.c:65
 msgid "Otherwise, please use 'git rebase --skip'\n"
 msgstr "Altrament, si us plau useu «git rebase --skip»\n"
 
-#: builtin/commit.c:68
+#: builtin/cummit.c:68
 msgid "Otherwise, please use 'git cherry-pick --skip'\n"
 msgstr "Altrament, si us plau useu «git cherry-pick --skip»\n"
 
-#: builtin/commit.c:71
+#: builtin/cummit.c:71
 msgid ""
 "and then use:\n"
 "\n"
 "    git cherry-pick --continue\n"
 "\n"
-"to resume cherry-picking the remaining commits.\n"
-"If you wish to skip this commit, use:\n"
+"to resume cherry-picking the remaining cummits.\n"
+"If you wish to skip this cummit, use:\n"
 "\n"
 "    git cherry-pick --skip\n"
 "\n"
@@ -14225,155 +14225,155 @@ msgstr ""
 "    git cherry-pick --skip\n"
 "\n"
 
-#: builtin/commit.c:326
+#: builtin/cummit.c:326
 msgid "failed to unpack HEAD tree object"
 msgstr "s'ha produït un error en desempaquetar l'objecte d'arbre HEAD"
 
-#: builtin/commit.c:376
+#: builtin/cummit.c:376
 msgid "No paths with --include/--only does not make sense."
 msgstr "--include/--only no té sentit sense camí."
 
-#: builtin/commit.c:388
+#: builtin/cummit.c:388
 msgid "unable to create temporary index"
 msgstr "no s'ha pogut crear un índex temporal"
 
-#: builtin/commit.c:397
+#: builtin/cummit.c:397
 msgid "interactive add failed"
 msgstr "l'afegiment interactiu ha fallat"
 
-#: builtin/commit.c:412
+#: builtin/cummit.c:412
 msgid "unable to update temporary index"
 msgstr "no s'ha pogut actualitzar l'índex temporal"
 
-#: builtin/commit.c:414
+#: builtin/cummit.c:414
 msgid "Failed to update main cache tree"
 msgstr "S'ha produït un error en actualitzar l'arbre principal de memòria cau"
 
-#: builtin/commit.c:439 builtin/commit.c:462 builtin/commit.c:510
+#: builtin/cummit.c:439 builtin/cummit.c:462 builtin/cummit.c:510
 msgid "unable to write new_index file"
 msgstr "no s'ha pogut escriure el fitxer new_index"
 
-#: builtin/commit.c:491
-msgid "cannot do a partial commit during a merge."
+#: builtin/cummit.c:491
+msgid "cannot do a partial cummit during a merge."
 msgstr "no es pot fer una comissió parcial durant una fusió."
 
-#: builtin/commit.c:493
-msgid "cannot do a partial commit during a cherry-pick."
+#: builtin/cummit.c:493
+msgid "cannot do a partial cummit during a cherry-pick."
 msgstr "no es pot fer una comissió parcial durant un «cherry pick»."
 
-#: builtin/commit.c:495
-msgid "cannot do a partial commit during a rebase."
+#: builtin/cummit.c:495
+msgid "cannot do a partial cummit during a rebase."
 msgstr "no es pot fer una comissió parcial durant un «rebase»."
 
-#: builtin/commit.c:503
+#: builtin/cummit.c:503
 msgid "cannot read the index"
 msgstr "no es pot llegir l'índex"
 
-#: builtin/commit.c:522
+#: builtin/cummit.c:522
 msgid "unable to write temporary index file"
 msgstr "no s'ha pogut escriure un fitxer d'índex temporal"
 
-#: builtin/commit.c:620
+#: builtin/cummit.c:620
 #, c-format
-msgid "commit '%s' lacks author header"
+msgid "cummit '%s' lacks author header"
 msgstr "a la comissió «%s» li manca la capçalera d'autor"
 
-#: builtin/commit.c:622
+#: builtin/cummit.c:622
 #, c-format
-msgid "commit '%s' has malformed author line"
+msgid "cummit '%s' has malformed author line"
 msgstr "la comissió «%s» té una línia d'autor mal formada"
 
-#: builtin/commit.c:641
+#: builtin/cummit.c:641
 msgid "malformed --author parameter"
 msgstr "paràmetre --author mal format"
 
-#: builtin/commit.c:694
+#: builtin/cummit.c:694
 msgid ""
 "unable to select a comment character that is not used\n"
-"in the current commit message"
+"in the current cummit message"
 msgstr ""
 "no es pot seleccionar un caràcter de comentari que\n"
 "no sigui usat en el missatge de comissió actual"
 
-#: builtin/commit.c:750 builtin/commit.c:784 builtin/commit.c:1170
+#: builtin/cummit.c:750 builtin/cummit.c:784 builtin/cummit.c:1170
 #, c-format
-msgid "could not lookup commit %s"
+msgid "could not lookup cummit %s"
 msgstr "no s'ha pogut cercar la comissió %s"
 
-#: builtin/commit.c:762 builtin/shortlog.c:417
+#: builtin/cummit.c:762 builtin/shortlog.c:417
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr "(s'està llegint el missatge de registre des de l'entrada estàndard)\n"
 
-#: builtin/commit.c:764
+#: builtin/cummit.c:764
 msgid "could not read log from standard input"
 msgstr "no s'ha pogut llegir el registre des de l'entrada estàndard"
 
-#: builtin/commit.c:768
+#: builtin/cummit.c:768
 #, c-format
 msgid "could not read log file '%s'"
 msgstr "no s'ha pogut llegir el fitxer de registre «%s»"
 
-#: builtin/commit.c:805
+#: builtin/cummit.c:805
 #, c-format
 msgid "options '%s' and '%s:%s' cannot be used together"
 msgstr "les opcions «%s» i «%s:%s» no es poden usar juntes"
 
-#: builtin/commit.c:817 builtin/commit.c:833
+#: builtin/cummit.c:817 builtin/cummit.c:833
 msgid "could not read SQUASH_MSG"
 msgstr "no s'ha pogut llegir SQUASH_MSG"
 
-#: builtin/commit.c:824
+#: builtin/cummit.c:824
 msgid "could not read MERGE_MSG"
 msgstr "no s'ha pogut llegir MERGE_MSG"
 
-#: builtin/commit.c:884
-msgid "could not write commit template"
+#: builtin/cummit.c:884
+msgid "could not write cummit template"
 msgstr "no s'ha pogut escriure la plantilla de comissió"
 
-#: builtin/commit.c:897
+#: builtin/cummit.c:897
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be ignored.\n"
 msgstr ""
 "Introduïu el missatge de comissió per als vostres canvis.\n"
 "S'ignoraran les línies que comencin amb «%c».\n"
 
-#: builtin/commit.c:899
+#: builtin/cummit.c:899
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be ignored, and an empty message aborts the commit.\n"
+"Please enter the cummit message for your changes. Lines starting\n"
+"with '%c' will be ignored, and an empty message aborts the cummit.\n"
 msgstr ""
 "Introduïu el missatge de comissió dels vostres canvis.\n"
 "S'ignoraran les línies que comencin amb «%c». Un missatge de\n"
 "comissió buit avorta la comissió.\n"
 
-#: builtin/commit.c:903
+#: builtin/cummit.c:903
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
 msgstr ""
 "Introduïu el missatge de comissió pels vostres canvis. Es mantindran\n"
 "les línies que comencin amb «%c»; podeu eliminar-les si voleu.\n"
 
-#: builtin/commit.c:907
+#: builtin/cummit.c:907
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
-"An empty message aborts the commit.\n"
+"An empty message aborts the cummit.\n"
 msgstr ""
 "Introduïu el missatge de comissió dels vostres canvis.\n"
 "Es mantindran les línies que comencin amb «%c»; podeu eliminar-les vosaltres\n"
 "mateixos si voleu. Un missatge buit avorta la comissió.\n"
 
-#: builtin/commit.c:919
+#: builtin/cummit.c:919
 msgid ""
 "\n"
-"It looks like you may be committing a merge.\n"
+"It looks like you may be cummitting a merge.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d MERGE_HEAD\n"
 "and try again.\n"
@@ -14384,10 +14384,10 @@ msgstr ""
 "\tgit update-ref -d MERGE_HEAD\n"
 "i intenteu-ho de nou.\n"
 
-#: builtin/commit.c:924
+#: builtin/cummit.c:924
 msgid ""
 "\n"
-"It looks like you may be committing a cherry-pick.\n"
+"It looks like you may be cummitting a cherry-pick.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "and try again.\n"
@@ -14398,149 +14398,149 @@ msgstr ""
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "i intenteu-ho de nou.\n"
 
-#: builtin/commit.c:951
+#: builtin/cummit.c:951
 #, c-format
 msgid "%sAuthor:    %.*s <%.*s>"
 msgstr "%sAutor:    %.*s <%.*s>"
 
-#: builtin/commit.c:959
+#: builtin/cummit.c:959
 #, c-format
 msgid "%sDate:      %s"
 msgstr "%sData:      %s"
 
-#: builtin/commit.c:966
+#: builtin/cummit.c:966
 #, c-format
-msgid "%sCommitter: %.*s <%.*s>"
+msgid "%scummitter: %.*s <%.*s>"
 msgstr "%sComitent: %.*s <%.*s>"
 
-#: builtin/commit.c:984
+#: builtin/cummit.c:984
 msgid "Cannot read index"
 msgstr "No es pot llegir l'índex"
 
-#: builtin/commit.c:1029
+#: builtin/cummit.c:1029
 msgid "unable to pass trailers to --trailers"
 msgstr "no s'han pogut passar els «trailers» a --trailers"
 
-#: builtin/commit.c:1069
+#: builtin/cummit.c:1069
 msgid "Error building trees"
 msgstr "Error en construir els arbres"
 
-#: builtin/commit.c:1083 builtin/tag.c:317
+#: builtin/cummit.c:1083 builtin/tag.c:317
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr "Especifiqueu el missatge usant l'opció -m o l'opció -F.\n"
 
-#: builtin/commit.c:1128
+#: builtin/cummit.c:1128
 #, c-format
 msgid "--author '%s' is not 'Name <email>' and matches no existing author"
 msgstr ""
 "--author «%s» no és «Nom <adreça-electrònica>» i no coincideix amb\n"
 "cap autor existent"
 
-#: builtin/commit.c:1142
+#: builtin/cummit.c:1142
 #, c-format
 msgid "Invalid ignored mode '%s'"
 msgstr "Mode d'ignorància no vàlid «%s»"
 
-#: builtin/commit.c:1160 builtin/commit.c:1450
+#: builtin/cummit.c:1160 builtin/cummit.c:1450
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr "Mode de fitxers no seguits no vàlid «%s»"
 
-#: builtin/commit.c:1231
+#: builtin/cummit.c:1231
 msgid "You are in the middle of a merge -- cannot reword."
 msgstr "Esteu enmig d'una fusió -- no es pot fer «reword»."
 
-#: builtin/commit.c:1233
+#: builtin/cummit.c:1233
 msgid "You are in the middle of a cherry-pick -- cannot reword."
 msgstr "Esteu enmig d'un «cherry pick» -- no es pot fer «reword»."
 
-#: builtin/commit.c:1236
+#: builtin/cummit.c:1236
 #, c-format
 msgid "reword option of '%s' and path '%s' cannot be used together"
 msgstr "les opcions de «reword» «%s» i camí «%s» no es poden usar juntes"
 
-#: builtin/commit.c:1238
+#: builtin/cummit.c:1238
 #, c-format
 msgid "reword option of '%s' and '%s' cannot be used together"
 msgstr "les opcions de «reword» «%s» i «%s» no es poden usar juntes"
 
-#: builtin/commit.c:1263
+#: builtin/cummit.c:1263
 msgid "You have nothing to amend."
 msgstr "No teniu res a esmenar."
 
-#: builtin/commit.c:1266
+#: builtin/cummit.c:1266
 msgid "You are in the middle of a merge -- cannot amend."
 msgstr "Esteu enmig d'una fusió -- no es pot esmenar."
 
-#: builtin/commit.c:1268
+#: builtin/cummit.c:1268
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Esteu enmig d'un «cherry pick» -- no es pot esmenar."
 
-#: builtin/commit.c:1270
+#: builtin/cummit.c:1270
 msgid "You are in the middle of a rebase -- cannot amend."
 msgstr "Esteu enmig d'un «rebase» -- no es pot esmenar."
 
-#: builtin/commit.c:1290
+#: builtin/cummit.c:1290
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "--reset-author només es pot usar amb -C, -c o --amend."
 
-#: builtin/commit.c:1337
+#: builtin/cummit.c:1337
 #, c-format
 msgid "unknown option: --fixup=%s:%s"
 msgstr "opció desconeguda: --fixup=%s:%s"
 
-#: builtin/commit.c:1354
+#: builtin/cummit.c:1354
 #, c-format
 msgid "paths '%s ...' with -a does not make sense"
 msgstr "els camins «%s ...» amb -a no tenen sentit"
 
-#: builtin/commit.c:1485 builtin/commit.c:1654
+#: builtin/cummit.c:1485 builtin/cummit.c:1654
 msgid "show status concisely"
 msgstr "mostra l'estat concisament"
 
-#: builtin/commit.c:1487 builtin/commit.c:1656
+#: builtin/cummit.c:1487 builtin/cummit.c:1656
 msgid "show branch information"
 msgstr "mostra la informació de branca"
 
-#: builtin/commit.c:1489
+#: builtin/cummit.c:1489
 msgid "show stash information"
 msgstr "mostra la informació de «stash»"
 
-#: builtin/commit.c:1491 builtin/commit.c:1658
+#: builtin/cummit.c:1491 builtin/cummit.c:1658
 msgid "compute full ahead/behind values"
 msgstr "calcula els valors complets endavant/darrere"
 
-#: builtin/commit.c:1493
+#: builtin/cummit.c:1493
 msgid "version"
 msgstr "versió"
 
-#: builtin/commit.c:1493 builtin/commit.c:1660 builtin/push.c:551
+#: builtin/cummit.c:1493 builtin/cummit.c:1660 builtin/push.c:551
 #: builtin/worktree.c:765
 msgid "machine-readable output"
 msgstr "sortida llegible per una màquina"
 
-#: builtin/commit.c:1496 builtin/commit.c:1662
+#: builtin/cummit.c:1496 builtin/cummit.c:1662
 msgid "show status in long format (default)"
 msgstr "mostra l'estat en format llarg (per defecte)"
 
-#: builtin/commit.c:1499 builtin/commit.c:1665
+#: builtin/cummit.c:1499 builtin/cummit.c:1665
 msgid "terminate entries with NUL"
 msgstr "acaba les entrades amb NUL"
 
-#: builtin/commit.c:1501 builtin/commit.c:1505 builtin/commit.c:1668
+#: builtin/cummit.c:1501 builtin/cummit.c:1505 builtin/cummit.c:1668
 #: builtin/fast-export.c:1172 builtin/fast-export.c:1175
 #: builtin/fast-export.c:1178 builtin/rebase.c:1139 parse-options.h:368
 msgid "mode"
 msgstr "mode"
 
-#: builtin/commit.c:1502 builtin/commit.c:1668
+#: builtin/cummit.c:1502 builtin/cummit.c:1668
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
 "mostra els fitxers no seguits, modes opcionals: all, normal, no. (Per "
 "defecte: all)"
 
-#: builtin/commit.c:1506
+#: builtin/cummit.c:1506
 msgid ""
 "show ignored files, optional modes: traditional, matching, no. (Default: "
 "traditional)"
@@ -14548,11 +14548,11 @@ msgstr ""
 "mostra els fitxers ignorats, modes opcionals: traditional, matching, no. "
 "(Per defecte: traditional, matching, no.)"
 
-#: builtin/commit.c:1508 parse-options.h:197
+#: builtin/cummit.c:1508 parse-options.h:197
 msgid "when"
 msgstr "quan"
 
-#: builtin/commit.c:1509
+#: builtin/cummit.c:1509
 msgid ""
 "ignore changes to submodules, optional when: all, dirty, untracked. "
 "(Default: all)"
@@ -14560,196 +14560,196 @@ msgstr ""
 "ignora els canvis als submòduls, opcional quan: all, dirty, untracked. (Per "
 "defecte: all)"
 
-#: builtin/commit.c:1511
+#: builtin/cummit.c:1511
 msgid "list untracked files in columns"
 msgstr "mostra els fitxers no seguits en columnes"
 
-#: builtin/commit.c:1512
+#: builtin/cummit.c:1512
 msgid "do not detect renames"
 msgstr "no detectis canvis de noms"
 
-#: builtin/commit.c:1514
+#: builtin/cummit.c:1514
 msgid "detect renames, optionally set similarity index"
 msgstr ""
 "detecta canvis de noms, i opcionalment estableix un índex de semblança"
 
-#: builtin/commit.c:1537
+#: builtin/cummit.c:1537
 msgid "Unsupported combination of ignored and untracked-files arguments"
 msgstr ""
 "No s'admet la combinació d'arguments d'ignorància i de fitxers no seguits"
 
-#: builtin/commit.c:1619
-msgid "suppress summary after successful commit"
+#: builtin/cummit.c:1619
+msgid "suppress summary after successful cummit"
 msgstr "omet el resum després d'una comissió reeixida"
 
-#: builtin/commit.c:1620
-msgid "show diff in commit message template"
+#: builtin/cummit.c:1620
+msgid "show diff in cummit message template"
 msgstr "mostra la diferència en la plantilla de missatge de comissió"
 
-#: builtin/commit.c:1622
-msgid "Commit message options"
+#: builtin/cummit.c:1622
+msgid "cummit message options"
 msgstr "Opcions de missatge de comissió"
 
-#: builtin/commit.c:1623 builtin/merge.c:288 builtin/tag.c:457
+#: builtin/cummit.c:1623 builtin/merge.c:288 builtin/tag.c:457
 msgid "read message from file"
 msgstr "llegiu el missatge des d'un fitxer"
 
-#: builtin/commit.c:1624
+#: builtin/cummit.c:1624
 msgid "author"
 msgstr "autor"
 
-#: builtin/commit.c:1624
-msgid "override author for commit"
+#: builtin/cummit.c:1624
+msgid "override author for cummit"
 msgstr "sobreescriu l'autor de la comissió"
 
-#: builtin/commit.c:1625 builtin/gc.c:551
+#: builtin/cummit.c:1625 builtin/gc.c:551
 msgid "date"
 msgstr "data"
 
-#: builtin/commit.c:1625
-msgid "override date for commit"
+#: builtin/cummit.c:1625
+msgid "override date for cummit"
 msgstr "sobreescriu la data de la comissió"
 
-#: builtin/commit.c:1627 builtin/commit.c:1628 builtin/commit.c:1634
+#: builtin/cummit.c:1627 builtin/cummit.c:1628 builtin/cummit.c:1634
 #: parse-options.h:360 ref-filter.h:89
-msgid "commit"
+msgid "cummit"
 msgstr "comissió"
 
-#: builtin/commit.c:1627
-msgid "reuse and edit message from specified commit"
+#: builtin/cummit.c:1627
+msgid "reuse and edit message from specified cummit"
 msgstr "reusa i edita el missatge de la comissió especificada"
 
-#: builtin/commit.c:1628
-msgid "reuse message from specified commit"
+#: builtin/cummit.c:1628
+msgid "reuse message from specified cummit"
 msgstr "reusa el missatge de la comissió especificada"
 
 #. TRANSLATORS: Leave "[(amend|reword):]" as-is,
-#. and only translate <commit>.
-#: builtin/commit.c:1633
-msgid "[(amend|reword):]commit"
-msgstr "[(amend|reword):]commit"
+#. and only translate <cummit>.
+#: builtin/cummit.c:1633
+msgid "[(amend|reword):]cummit"
+msgstr "[(amend|reword):]cummit"
 
-#: builtin/commit.c:1633
+#: builtin/cummit.c:1633
 msgid ""
-"use autosquash formatted message to fixup or amend/reword specified commit"
+"use autosquash formatted message to fixup or amend/reword specified cummit"
 msgstr ""
 "usa un missatge amb format de «squash» automàtic per a esmenar la comissió "
 "especificada"
 
-#: builtin/commit.c:1634
-msgid "use autosquash formatted message to squash specified commit"
+#: builtin/cummit.c:1634
+msgid "use autosquash formatted message to squash specified cummit"
 msgstr ""
 "usa un missatge amb format de «squash» automàtic per a fer «squash» de la "
 "comissió especificada"
 
-#: builtin/commit.c:1635
-msgid "the commit is authored by me now (used with -C/-c/--amend)"
+#: builtin/cummit.c:1635
+msgid "the cummit is authored by me now (used with -C/-c/--amend)"
 msgstr "l'autor de la comissió soc jo ara (s'usa amb -C/-c/--amend)"
 
-#: builtin/commit.c:1636 builtin/interpret-trailers.c:111
+#: builtin/cummit.c:1636 builtin/interpret-trailers.c:111
 msgid "trailer"
 msgstr "remolc"
 
-#: builtin/commit.c:1636
+#: builtin/cummit.c:1636
 msgid "add custom trailer(s)"
 msgstr "afegeix un «trailer» personalitzat"
 
-#: builtin/commit.c:1637 builtin/log.c:1788 builtin/merge.c:306
+#: builtin/cummit.c:1637 builtin/log.c:1788 builtin/merge.c:306
 #: builtin/pull.c:146 builtin/revert.c:110
 msgid "add a Signed-off-by trailer"
 msgstr "afegeix un «trailer» tipus «Signed-off-by»"
 
-#: builtin/commit.c:1638
+#: builtin/cummit.c:1638
 msgid "use specified template file"
 msgstr "usa el fitxer de plantilla especificat"
 
-#: builtin/commit.c:1639
-msgid "force edit of commit"
+#: builtin/cummit.c:1639
+msgid "force edit of cummit"
 msgstr "força l'edició de la comissió"
 
-#: builtin/commit.c:1641
-msgid "include status in commit message template"
+#: builtin/cummit.c:1641
+msgid "include status in cummit message template"
 msgstr "inclou l'estat en la plantilla de missatge de comissió"
 
-#: builtin/commit.c:1646
-msgid "Commit contents options"
+#: builtin/cummit.c:1646
+msgid "cummit contents options"
 msgstr "Opcions per al contingut de les comissions"
 
-#: builtin/commit.c:1647
-msgid "commit all changed files"
+#: builtin/cummit.c:1647
+msgid "cummit all changed files"
 msgstr "comet tots els fitxers canviats"
 
-#: builtin/commit.c:1648
-msgid "add specified files to index for commit"
+#: builtin/cummit.c:1648
+msgid "add specified files to index for cummit"
 msgstr "afegeix els fitxers especificats a l'índex per a cometre"
 
-#: builtin/commit.c:1649
+#: builtin/cummit.c:1649
 msgid "interactively add files"
 msgstr "afegeix els fitxers interactivament"
 
-#: builtin/commit.c:1650
+#: builtin/cummit.c:1650
 msgid "interactively add changes"
 msgstr "afegeix els canvis interactivament"
 
-#: builtin/commit.c:1651
-msgid "commit only specified files"
+#: builtin/cummit.c:1651
+msgid "cummit only specified files"
 msgstr "comet només els fitxers especificats"
 
-#: builtin/commit.c:1652
-msgid "bypass pre-commit and commit-msg hooks"
+#: builtin/cummit.c:1652
+msgid "bypass pre-cummit and cummit-msg hooks"
 msgstr "evita els lligams de precomissió i missatge de comissió"
 
-#: builtin/commit.c:1653
-msgid "show what would be committed"
+#: builtin/cummit.c:1653
+msgid "show what would be cummitted"
 msgstr "mostra què es cometria"
 
-#: builtin/commit.c:1666
-msgid "amend previous commit"
+#: builtin/cummit.c:1666
+msgid "amend previous cummit"
 msgstr "esmena la comissió anterior"
 
-#: builtin/commit.c:1667
+#: builtin/cummit.c:1667
 msgid "bypass post-rewrite hook"
 msgstr "evita el lligam de post escriptura"
 
-#: builtin/commit.c:1674
+#: builtin/cummit.c:1674
 msgid "ok to record an empty change"
 msgstr "està bé registrar un canvi buit"
 
-#: builtin/commit.c:1676
+#: builtin/cummit.c:1676
 msgid "ok to record a change with an empty message"
 msgstr "està bé registrar un canvi amb missatge buit"
 
-#: builtin/commit.c:1752
+#: builtin/cummit.c:1752
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "Fitxer MERGE_HEAD malmès (%s)"
 
-#: builtin/commit.c:1759
+#: builtin/cummit.c:1759
 msgid "could not read MERGE_MODE"
 msgstr "no s'ha pogut llegir MERGE_MODE"
 
-#: builtin/commit.c:1780
+#: builtin/cummit.c:1780
 #, c-format
-msgid "could not read commit message: %s"
+msgid "could not read cummit message: %s"
 msgstr "no s'ha pogut llegir el missatge de comissió: %s"
 
-#: builtin/commit.c:1787
+#: builtin/cummit.c:1787
 #, c-format
-msgid "Aborting commit due to empty commit message.\n"
+msgid "Aborting cummit due to empty cummit message.\n"
 msgstr "S'està avortant la comissió a causa d'un missatge de comissió buit.\n"
 
-#: builtin/commit.c:1792
+#: builtin/cummit.c:1792
 #, c-format
-msgid "Aborting commit; you did not edit the message.\n"
+msgid "Aborting cummit; you did not edit the message.\n"
 msgstr "S'està avortant la comissió; no heu editat el missatge.\n"
 
-#: builtin/commit.c:1803
+#: builtin/cummit.c:1803
 #, c-format
-msgid "Aborting commit due to empty commit message body.\n"
+msgid "Aborting cummit due to empty cummit message body.\n"
 msgstr ""
 "S'està interrompent la comissió a causa d'un missatge de comissió buit.\n"
 
-#: builtin/commit.c:1839
+#: builtin/cummit.c:1839
 msgid ""
 "repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -15136,7 +15136,7 @@ msgstr ""
 "ms"
 
 #: builtin/describe.c:26
-msgid "git describe [<options>] [<commit-ish>...]"
+msgid "git describe [<options>] [<cummit-ish>...]"
 msgstr "git describe [<opcions>] [<comissió>...]"
 
 #: builtin/describe.c:27
@@ -15202,7 +15202,7 @@ msgstr ""
 
 #: builtin/describe.c:458
 #, c-format
-msgid "traversed %lu commits\n"
+msgid "traversed %lu cummits\n"
 msgstr "%lu comissions travessades\n"
 
 #: builtin/describe.c:461
@@ -15226,11 +15226,11 @@ msgstr "%s no és un nom d'objecte vàlid"
 
 #: builtin/describe.c:540
 #, c-format
-msgid "%s is neither a commit nor blob"
+msgid "%s is neither a cummit nor blob"
 msgstr "%s no és una comissió o un blob"
 
 #: builtin/describe.c:554
-msgid "find the tag that comes after the commit"
+msgid "find the tag that comes after the cummit"
 msgstr "troba l'etiqueta que vingui després de la comissió"
 
 #: builtin/describe.c:555
@@ -15270,7 +15270,7 @@ msgid "do not consider tags matching <pattern>"
 msgstr "no consideris les etiquetes que no coincideixen amb <patró>"
 
 #: builtin/describe.c:570 builtin/name-rev.c:595
-msgid "show abbreviated commit object as fallback"
+msgid "show abbreviated cummit object as fallback"
 msgstr "mostra l'objecte de comissió abreviat com a sistema alternatiu"
 
 #: builtin/describe.c:571 builtin/describe.c:574
@@ -15291,11 +15291,11 @@ msgstr "No s'ha trobat cap nom, no es pot descriure res."
 
 #: builtin/describe.c:673 builtin/describe.c:675
 #, c-format
-msgid "option '%s' and commit-ishes cannot be used together"
+msgid "option '%s' and cummit-ishes cannot be used together"
 msgstr "les opcions «%s» i de comissió no es poden usar juntes"
 
 #: builtin/diff-tree.c:157
-msgid "--merge-base only works with two commits"
+msgid "--merge-base only works with two cummits"
 msgstr "--merge-base només funciona amb dues comissions"
 
 #: builtin/diff.c:92
@@ -15338,8 +15338,8 @@ msgid "%s...%s: multiple merge bases, using %s"
 msgstr "%s...%s: múltiples bases de fusió, utilitzant %s"
 
 #: builtin/difftool.c:31
-msgid "git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"
-msgstr "git difftool [<opcions>] [<commit> [<commit>]] [--] [<camí>...]"
+msgid "git difftool [<options>] [<cummit> [<cummit>]] [--] [<path>...]"
+msgstr "git difftool [<opcions>] [<cummit> [<cummit>]] [--] [<camí>...]"
 
 #: builtin/difftool.c:287
 #, c-format
@@ -15498,7 +15498,7 @@ msgid "select handling of tags that tag filtered objects"
 msgstr "selecciona la gestió de les etiquetes que etiquetin objectes filtrats"
 
 #: builtin/fast-export.c:1179
-msgid "select handling of commit messages in an alternate encoding"
+msgid "select handling of cummit messages in an alternate encoding"
 msgstr ""
 "selecciona la gestió dels missatges de publicació en una codificació "
 "alternativa"
@@ -15520,7 +15520,7 @@ msgid "fake a tagger when tags lack one"
 msgstr "fingeix un etiquetador quan en falti un a les etiquetes"
 
 #: builtin/fast-export.c:1192
-msgid "output full tree for each commit"
+msgid "output full tree for each cummit"
 msgstr "imprimeix l'arbre complet de per a cada comissió"
 
 #: builtin/fast-export.c:1194
@@ -15558,7 +15558,7 @@ msgstr ""
 "identificador d'objecte"
 
 #: builtin/fast-export.c:1205
-msgid "show original object ids of blobs/commits"
+msgid "show original object ids of blobs/cummits"
 msgstr "mostra els ID dels objectes originals dels blobs i comissions"
 
 #: builtin/fast-export.c:1207
@@ -15714,7 +15714,7 @@ msgstr "converteix en un repositori complet"
 
 #: builtin/fetch.c:194
 #, fuzzy
-msgid "re-fetch without negotiating common commits"
+msgid "re-fetch without negotiating common cummits"
 msgstr "tornar a capturar sense negociar comissions comunes"
 
 #: builtin/fetch.c:197
@@ -15762,7 +15762,7 @@ msgstr ""
 "actualitzades"
 
 #: builtin/fetch.c:224
-msgid "write the commit-graph after fetching"
+msgid "write the cummit-graph after fetching"
 msgstr "escriu el graf de comissions després de recollir"
 
 #: builtin/fetch.c:226
@@ -16066,11 +16066,11 @@ msgid "git for-each-ref [--points-at <object>]"
 msgstr "git for-each-ref [--points-at <objecte>]"
 
 #: builtin/for-each-ref.c:12
-msgid "git for-each-ref [--merged [<commit>]] [--no-merged [<commit>]]"
-msgstr "git for-each-ref [--merged [<commit>]] [--no-merged [<commit>]]"
+msgid "git for-each-ref [--merged [<cummit>]] [--no-merged [<cummit>]]"
+msgstr "git for-each-ref [--merged [<cummit>]] [--no-merged [<cummit>]]"
 
 #: builtin/for-each-ref.c:13
-msgid "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
+msgid "git for-each-ref [--contains [<cummit>]] [--no-contains [<cummit>]]"
 msgstr ""
 "git for-each-ref [--contains [<comissió>]] [--no-contains [<comissió>]]"
 
@@ -16112,11 +16112,11 @@ msgid "print only refs that are not merged"
 msgstr "imprimeix només les referències que no s'han fusionat"
 
 #: builtin/for-each-ref.c:49
-msgid "print only refs which contain the commit"
+msgid "print only refs which contain the cummit"
 msgstr "imprimeix només les referències que continguin la comissió"
 
 #: builtin/for-each-ref.c:50
-msgid "print only refs which don't contain the commit"
+msgid "print only refs which don't contain the cummit"
 msgstr "imprimeix només les referències que no continguin la comissió"
 
 #: builtin/for-each-repo.c:9
@@ -16244,7 +16244,7 @@ msgstr "%s: punter %s sha1 no vàlid"
 
 #: builtin/fsck.c:537
 #, c-format
-msgid "%s: not a commit"
+msgid "%s: not a cummit"
 msgstr "%s: no és una comissió"
 
 #: builtin/fsck.c:591
@@ -16621,7 +16621,7 @@ msgid "unrecognized --schedule argument '%s'"
 msgstr "argument --schedule no reconegut, «%s»"
 
 #: builtin/gc.c:870
-msgid "failed to write commit-graph"
+msgid "failed to write cummit-graph"
 msgstr "s'ha produït un error en escriure el graf de comissions"
 
 #: builtin/gc.c:906
@@ -17853,7 +17853,7 @@ msgstr "dos directoris de sortida?"
 
 #: builtin/log.c:1536 builtin/log.c:2369 builtin/log.c:2371 builtin/log.c:2383
 #, c-format
-msgid "unknown commit %s"
+msgid "unknown cummit %s"
 msgstr "comissió desconeguda %s"
 
 #: builtin/log.c:1547 builtin/replace.c:58 builtin/replace.c:207
@@ -17868,24 +17868,24 @@ msgstr "no s'ha pogut trobar la base exacta de la fusió"
 
 #: builtin/log.c:1566
 msgid ""
-"failed to get upstream, if you want to record base commit automatically,\n"
+"failed to get upstream, if you want to record base cummit automatically,\n"
 "please use git branch --set-upstream-to to track a remote branch.\n"
-"Or you could specify base commit by --base=<base-commit-id> manually"
+"Or you could specify base cummit by --base=<base-cummit-id> manually"
 msgstr ""
 "no s'ha pogut obtenir la font, si voleu registrar la comissió base\n"
 "automàticament, useu git branch --set-upstream-to per a seguir una\n"
-"una branca remota. També podeu especificar la comissió base amb --base=<base-commit-id> manualment"
+"una branca remota. També podeu especificar la comissió base amb --base=<base-cummit-id> manualment"
 
 #: builtin/log.c:1589
 msgid "failed to find exact merge base"
 msgstr "no s'ha pogut trobar la base exacta de la fusió"
 
 #: builtin/log.c:1606
-msgid "base commit should be the ancestor of revision list"
+msgid "base cummit should be the ancestor of revision list"
 msgstr "la comissió base ha de ser l'avantpassat de la llista de revisions"
 
 #: builtin/log.c:1616
-msgid "base commit shouldn't be in revision list"
+msgid "base cummit shouldn't be in revision list"
 msgstr "la comissió base no ha de ser en la llista de revisions"
 
 #: builtin/log.c:1674
@@ -17982,7 +17982,7 @@ msgid "output all-zero hash in From header"
 msgstr "emet un hash de tots zeros en la capçalera From"
 
 #: builtin/log.c:1823
-msgid "don't include a patch matching a commit upstream"
+msgid "don't include a patch matching a cummit upstream"
 msgstr "no incloguis pedaços que coincideixin amb comissions a la font"
 
 #: builtin/log.c:1825
@@ -18019,7 +18019,7 @@ msgid "ident"
 msgstr "identitat"
 
 #: builtin/log.c:1833
-msgid "set From address to <ident> (or committer ident if absent)"
+msgid "set From address to <ident> (or cummitter ident if absent)"
 msgstr ""
 "estableix l'adreça From a <identitat> (o la identitat del comitent si manca)"
 
@@ -18056,7 +18056,7 @@ msgid "add a signature"
 msgstr "afegeix una signatura"
 
 #: builtin/log.c:1849
-msgid "base-commit"
+msgid "base-cummit"
 msgstr "comissió base"
 
 #: builtin/log.c:1850
@@ -18404,12 +18404,12 @@ msgid "keep non patch brackets in subject"
 msgstr "mantén els parèntesis que no són del pedaç en l'assumpte"
 
 #: builtin/mailinfo.c:62
-msgid "copy Message-ID to the end of commit message"
+msgid "copy Message-ID to the end of cummit message"
 msgstr "copia el Message-ID al final del missatge de comissió"
 
 #: builtin/mailinfo.c:64
-msgid "re-code metadata to i18n.commitEncoding"
-msgstr "torna a codificar les metadades a i18n.commitEncoding"
+msgid "re-code metadata to i18n.cummitEncoding"
+msgstr "torna a codificar les metadades a i18n.cummitEncoding"
 
 #: builtin/mailinfo.c:67
 msgid "disable charset re-coding of metadata"
@@ -18450,23 +18450,23 @@ msgid "empty mbox: '%s'"
 msgstr "mbox buit: «%s»"
 
 #: builtin/merge-base.c:32
-msgid "git merge-base [-a | --all] <commit> <commit>..."
+msgid "git merge-base [-a | --all] <cummit> <cummit>..."
 msgstr "git merge-base [-a | --all] <comissió> <comissió>..."
 
 #: builtin/merge-base.c:33
-msgid "git merge-base [-a | --all] --octopus <commit>..."
+msgid "git merge-base [-a | --all] --octopus <cummit>..."
 msgstr "git merge-base [-a | --all] --octopus <comissió>..."
 
 #: builtin/merge-base.c:34
-msgid "git merge-base --independent <commit>..."
+msgid "git merge-base --independent <cummit>..."
 msgstr "git merge-base --independent <comissió>..."
 
 #: builtin/merge-base.c:35
-msgid "git merge-base --is-ancestor <commit> <commit>"
+msgid "git merge-base --is-ancestor <cummit> <cummit>"
 msgstr "git merge-base --is-ancestor <comissió> <comissió>"
 
 #: builtin/merge-base.c:36
-msgid "git merge-base --fork-point <ref> [<commit>]"
+msgid "git merge-base --fork-point <ref> [<cummit>]"
 msgstr "git merge-base --fork-point <referència> [<comissió>]"
 
 #: builtin/merge-base.c:144
@@ -18486,7 +18486,7 @@ msgid "is the first one ancestor of the other?"
 msgstr "és la primera un avantpassat de l'altre?"
 
 #: builtin/merge-base.c:152
-msgid "find where <commit> forked from reflog of <ref>"
+msgid "find where <cummit> forked from reflog of <ref>"
 msgstr ""
 "troba on <comissió> s'ha bifurcat del registre de referències de "
 "<referència>"
@@ -18567,7 +18567,7 @@ msgid "Merging %s with %s\n"
 msgstr "S'està fusionant %s amb %s\n"
 
 #: builtin/merge.c:59
-msgid "git merge [<options>] [<commit>...]"
+msgid "git merge [<options>] [<cummit>...]"
 msgstr "git merge [<opcions>] [<comissió>...]"
 
 #: builtin/merge.c:125
@@ -18607,21 +18607,21 @@ msgid "(synonym to --stat)"
 msgstr "(sinònim de --stat)"
 
 #: builtin/merge.c:264 builtin/pull.c:143
-msgid "add (at most <n>) entries from shortlog to merge commit message"
+msgid "add (at most <n>) entries from shortlog to merge cummit message"
 msgstr ""
 "afegeix (com a màxim <n>) entrades del registre curt al missatge de comissió"
 " de fusió"
 
 #: builtin/merge.c:267 builtin/pull.c:149
-msgid "create a single commit instead of doing a merge"
+msgid "create a single cummit instead of doing a merge"
 msgstr "crea una única comissió en lloc de fusionar"
 
 #: builtin/merge.c:269 builtin/pull.c:152
-msgid "perform a commit if the merge succeeds (default)"
+msgid "perform a cummit if the merge succeeds (default)"
 msgstr "realitza una comissió si la fusió té èxit (per defecte)"
 
 #: builtin/merge.c:271 builtin/pull.c:155
-msgid "edit message before committing"
+msgid "edit message before cummitting"
 msgstr "edita el missatge abans de cometre"
 
 #: builtin/merge.c:273
@@ -18654,7 +18654,7 @@ msgid "option for selected merge strategy"
 msgstr "opció per a l'estratègia de fusió seleccionada"
 
 #: builtin/merge.c:285
-msgid "merge commit message (for a non-fast-forward merge)"
+msgid "merge cummit message (for a non-fast-forward merge)"
 msgstr "missatge de comissió de fusió (per a una fusió no d'avanç ràpid)"
 
 #: builtin/merge.c:291
@@ -18678,8 +18678,8 @@ msgid "allow merging unrelated histories"
 msgstr "permet fusionar històries no relacionades"
 
 #: builtin/merge.c:307
-msgid "bypass pre-merge-commit and commit-msg hooks"
-msgstr "evita els lligams pre-merge-commit i commit-msg"
+msgid "bypass pre-merge-cummit and cummit-msg hooks"
+msgstr "evita els lligams pre-merge-cummit i cummit-msg"
 
 #: builtin/merge.c:323
 msgid "could not run stash."
@@ -18704,7 +18704,7 @@ msgstr "Ja està actualitzat. (res a fer «squash»)"
 
 #: builtin/merge.c:417
 #, c-format
-msgid "Squash commit -- not updating HEAD\n"
+msgid "Squash cummit -- not updating HEAD\n"
 msgstr "Comissió «squash» -- no s'està actualitzant HEAD\n"
 
 #: builtin/merge.c:467
@@ -18714,7 +18714,7 @@ msgstr "Cap missatge de fusió -- no s'està actualitzant HEAD\n"
 
 #: builtin/merge.c:517
 #, c-format
-msgid "'%s' does not point to a commit"
+msgid "'%s' does not point to a cummit"
 msgstr "«%s» no assenyala una comissió"
 
 #: builtin/merge.c:605
@@ -18743,13 +18743,13 @@ msgstr "No s'ha pogut llegir de «%s»"
 
 #: builtin/merge.c:825
 #, c-format
-msgid "Not committing merge; use 'git commit' to complete the merge.\n"
+msgid "Not cummitting merge; use 'git cummit' to complete the merge.\n"
 msgstr ""
-"No s'està cometent la fusió; useu «git commit» per a completar la fusió.\n"
+"No s'està cometent la fusió; useu «git cummit» per a completar la fusió.\n"
 
 #: builtin/merge.c:831
 msgid ""
-"Please enter a commit message to explain why this merge is necessary,\n"
+"Please enter a cummit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
 "\n"
 msgstr ""
@@ -18758,20 +18758,20 @@ msgstr ""
 "\n"
 
 #: builtin/merge.c:836
-msgid "An empty message aborts the commit.\n"
+msgid "An empty message aborts the cummit.\n"
 msgstr "Un missatge buit interromp la comissió.\n"
 
 #: builtin/merge.c:839
 #, c-format
 msgid ""
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
-"the commit.\n"
+"the cummit.\n"
 msgstr ""
 "Les línies que comencen amb «%c» seran ignorades i un missatge buit "
 "interromp la comissió.\n"
 
 #: builtin/merge.c:900
-msgid "Empty commit message."
+msgid "Empty cummit message."
 msgstr "El missatge de comissió és buit."
 
 #: builtin/merge.c:915
@@ -18781,7 +18781,7 @@ msgstr "Meravellós.\n"
 
 #: builtin/merge.c:976
 #, c-format
-msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
+msgid "Automatic merge failed; fix conflicts and then cummit the result.\n"
 msgstr ""
 "La fusió automàtica ha fallat; arregleu els conflictes i després cometeu el "
 "resultat.\n"
@@ -18840,7 +18840,7 @@ msgstr "No hi ha cap fusió en curs (manca MERGE_HEAD)."
 #: builtin/merge.c:1385
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "No heu conclòs la vostra fusió (MERGE_HEAD existeix).\n"
 "Cometeu els vostres canvis abans de fusionar."
@@ -18848,7 +18848,7 @@ msgstr ""
 #: builtin/merge.c:1392
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "No heu conclòs el vostre «cherry pick» (CHERRY_PICK_HEAD existeix).\n"
 "Cometeu els vostres canvis abans de fusionar."
@@ -18858,17 +18858,17 @@ msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
 msgstr "No heu conclòs el vostre «cherry pick» (CHERRY_PICK_HEAD existeix)."
 
 #: builtin/merge.c:1427
-msgid "No commit specified and merge.defaultToUpstream not set."
+msgid "No cummit specified and merge.defaultToUpstream not set."
 msgstr ""
 "No hi ha una comissió especificada i merge.defaultToUpstream no està "
 "establert."
 
 #: builtin/merge.c:1444
-msgid "Squash commit into empty head not supported yet"
+msgid "Squash cummit into empty head not supported yet"
 msgstr "Una comissió «squash» a un HEAD buit encara no es permet"
 
 #: builtin/merge.c:1446
-msgid "Non-fast-forward commit does not make sense into an empty head"
+msgid "Non-fast-forward cummit does not make sense into an empty head"
 msgstr "Una comissió no d'avanç ràpid no té sentit a un HEAD buit"
 
 #: builtin/merge.c:1451
@@ -18877,7 +18877,7 @@ msgid "%s - not something we can merge"
 msgstr "%s - no és una cosa que puguem fusionar"
 
 #: builtin/merge.c:1453
-msgid "Can merge only exactly one commit into empty head"
+msgid "Can merge only exactly one cummit into empty head"
 msgstr "Es pot fusionar només una comissió a un HEAD buit"
 
 #: builtin/merge.c:1540
@@ -18926,7 +18926,7 @@ msgstr "S'està usant l'estratègia %s per a preparar la resolució a mà.\n"
 
 #: builtin/merge.c:1753
 #, c-format
-msgid "Automatic merge went well; stopped before committing as requested\n"
+msgid "Automatic merge went well; stopped before cummitting as requested\n"
 msgstr ""
 "La fusió automàtica ha sortit bé; s'ha aturat abans de cometre com s'havia "
 "demanat\n"
@@ -19024,7 +19024,7 @@ msgid "write multi-pack index containing only given indexes"
 msgstr "escriu un índex multipaquet que contingui només els índexs donats"
 
 #: builtin/multi-pack-index.c:107
-msgid "refs snapshot for selecting bitmap commits"
+msgid "refs snapshot for selecting bitmap cummits"
 msgstr ""
 "instantània de referències per a seleccionar les comissions de mapa de bits"
 
@@ -19135,7 +19135,7 @@ msgid "renaming '%s' failed"
 msgstr "el canvi del nom de «%s» ha fallat"
 
 #: builtin/name-rev.c:524
-msgid "git name-rev [<options>] <commit>..."
+msgid "git name-rev [<options>] <cummit>..."
 msgstr "git name-rev [<opcions>] <comissió>..."
 
 #: builtin/name-rev.c:525
@@ -19152,7 +19152,7 @@ msgstr ""
 "imprimeix només els noms basats en referències (no els noms d'objecte)"
 
 #: builtin/name-rev.c:584
-msgid "only use tags to name the commits"
+msgid "only use tags to name the cummits"
 msgstr "només usa les etiquetes per a anomenar les comissions"
 
 #: builtin/name-rev.c:586
@@ -19164,7 +19164,7 @@ msgid "ignore refs matching <pattern>"
 msgstr "ignora les referències que coincideixin amb <patró>"
 
 #: builtin/name-rev.c:590
-msgid "list all commits reachable from all refs"
+msgid "list all cummits reachable from all refs"
 msgstr "llista totes les comissions abastables de totes les referències"
 
 #: builtin/name-rev.c:591
@@ -19270,8 +19270,8 @@ msgid "git notes merge [<options>] <notes-ref>"
 msgstr "git notes merge [<opcions>] <referència-de-notes>"
 
 #: builtin/notes.c:76
-msgid "git notes merge --commit [<options>]"
-msgstr "git notes merge --commit [<opcions>]"
+msgid "git notes merge --cummit [<options>]"
+msgstr "git notes merge --cummit [<opcions>]"
 
 #: builtin/notes.c:77
 msgid "git notes merge --abort [<options>]"
@@ -19458,11 +19458,11 @@ msgid "failed to read ref NOTES_MERGE_PARTIAL"
 msgstr "s'ha produït un error en llegir la referència NOTES_MERGE_PARTIAL"
 
 #: builtin/notes.c:722
-msgid "could not find commit from NOTES_MERGE_PARTIAL."
+msgid "could not find cummit from NOTES_MERGE_PARTIAL."
 msgstr "no s'ha pogut trobar cap comissió de NOTES_MERGE_PARTIAL."
 
 #: builtin/notes.c:724
-msgid "could not parse commit from NOTES_MERGE_PARTIAL."
+msgid "could not parse cummit from NOTES_MERGE_PARTIAL."
 msgstr "no s'ha pogut analitzar la comissió de NOTES_MERGE_PARTIAL."
 
 #: builtin/notes.c:737
@@ -19495,11 +19495,11 @@ msgstr ""
 "(manual/ours/theirs/union/cat_sort_uniq)"
 
 #: builtin/notes.c:788
-msgid "Committing unmerged notes"
+msgid "cummitting unmerged notes"
 msgstr "S'estan cometent les notes sense fusionar"
 
 #: builtin/notes.c:790
-msgid "finalize notes merge by committing unmerged notes"
+msgid "finalize notes merge by cummitting unmerged notes"
 msgstr "finalitza la fusió de notes cometent les notes sense fusionar"
 
 #: builtin/notes.c:792
@@ -19511,8 +19511,8 @@ msgid "abort notes merge"
 msgstr "avorta la fusió de notes"
 
 #: builtin/notes.c:805
-msgid "cannot mix --commit, --abort or -s/--strategy"
-msgstr "no es pot combinar --commit, --abort i -s/--strategy"
+msgid "cannot mix --cummit, --abort or -s/--strategy"
+msgstr "no es pot combinar --cummit, --abort i -s/--strategy"
 
 #: builtin/notes.c:810
 msgid "must specify a notes ref to merge"
@@ -19538,12 +19538,12 @@ msgstr ""
 #: builtin/notes.c:880
 #, c-format
 msgid ""
-"Automatic notes merge failed. Fix conflicts in %s and commit the result with"
-" 'git notes merge --commit', or abort the merge with 'git notes merge "
+"Automatic notes merge failed. Fix conflicts in %s and cummit the result with"
+" 'git notes merge --cummit', or abort the merge with 'git notes merge "
 "--abort'.\n"
 msgstr ""
 "La fusió de notes automàtica ha fallat. Arregleu els conflictes en %s i "
-"cometeu el resultat amb «git notes merge --commit», o avorteu la fusió amb "
+"cometeu el resultat amb «git notes merge --cummit», o avorteu la fusió amb "
 "«git notes merge --abort».\n"
 
 #: builtin/notes.c:899 builtin/tag.c:595
@@ -19931,7 +19931,7 @@ msgid "pack compression level"
 msgstr "nivell de compressió de paquet"
 
 #: builtin/pack-objects.c:3972
-msgid "do not hide commits by grafts"
+msgid "do not hide cummits by grafts"
 msgstr "no amaguis les comissions per empelt"
 
 #: builtin/pack-objects.c:3974
@@ -20087,8 +20087,8 @@ msgid "allow fast-forward"
 msgstr "permet l'avanç ràpid"
 
 #: builtin/pull.c:165
-msgid "control use of pre-merge-commit and commit-msg hooks"
-msgstr "controla l'ús dels lligams pre-merge-commit i commit-msg"
+msgid "control use of pre-merge-cummit and cummit-msg hooks"
+msgstr "controla l'ús dels lligams pre-merge-cummit i cummit-msg"
 
 #: builtin/pull.c:171 parse-options.h:371
 msgid "automatically stash/stash pop before and after"
@@ -20188,7 +20188,7 @@ msgstr ""
 
 #: builtin/pull.c:600
 #, c-format
-msgid "unable to access commit %s"
+msgid "unable to access cummit %s"
 msgstr "no s'ha pogut accedir a la comissió %s"
 
 #: builtin/pull.c:908
@@ -20233,7 +20233,7 @@ msgid "pull with rebase"
 msgstr "baixar fent «rebase»"
 
 #: builtin/pull.c:1052
-msgid "please commit or stash them."
+msgid "please cummit or stash them."
 msgstr "cometeu-los o emmagatzemeu-los."
 
 #: builtin/pull.c:1077
@@ -20241,7 +20241,7 @@ msgstr "cometeu-los o emmagatzemeu-los."
 msgid ""
 "fetch updated the current branch head.\n"
 "fast-forwarding your working tree from\n"
-"commit %s."
+"cummit %s."
 msgstr ""
 "l'obtenció ha actualitzat HEAD de la branca actual.\n"
 "s'està avançant ràpidament el vostre arbre de treball des de\n"
@@ -20432,8 +20432,8 @@ msgstr ""
 
 #: builtin/push.c:280
 msgid ""
-"You cannot update a remote ref that points at a non-commit object,\n"
-"or update a remote ref to make it point at a non-commit object,\n"
+"You cannot update a remote ref that points at a non-cummit object,\n"
+"or update a remote ref to make it point at a non-cummit object,\n"
 "without using the '--force' option.\n"
 msgstr ""
 "No podeu actualitzar una referència remota que assenyala un\n"
@@ -20612,7 +20612,7 @@ msgstr "emet només la sortida relacionada amb el segon interval"
 
 #: builtin/range-diff.c:60 builtin/range-diff.c:64
 #, c-format
-msgid "not a commit range: '%s'"
+msgid "not a cummit range: '%s'"
 msgstr "no és un rang de comissions: «%s»"
 
 #: builtin/range-diff.c:74
@@ -20620,7 +20620,7 @@ msgid "single arg format must be symmetric range"
 msgstr "el format de l'argument únic ha de ser de rang simètric"
 
 #: builtin/range-diff.c:89
-msgid "need two commit ranges"
+msgid "need two cummit ranges"
 msgstr "calen dos rangs de comissió"
 
 #: builtin/read-tree.c:41
@@ -20735,7 +20735,7 @@ msgid "could not generate todo list"
 msgstr "no s'ha pogut generar la llista per a fer"
 
 #: builtin/rebase.c:332
-msgid "a base commit must be provided with --upstream or --onto"
+msgid "a base cummit must be provided with --upstream or --onto"
 msgstr "s'ha de proporcionar una comissió base amb --upstream o --onto"
 
 #: builtin/rebase.c:391
@@ -20762,7 +20762,7 @@ msgstr "s'ignora allow_rerere_autoupdate no vàlid: «%s»"
 msgid ""
 "Resolve all conflicts manually, mark them as resolved with\n"
 "\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
+"You can instead skip this cummit: run \"git rebase --skip\".\n"
 "To abort and get back to the state before \"git rebase\", run \"git rebase --abort\"."
 msgstr ""
 "Resoleu tots els conflictes manualment, marqueu-los com a resolts amb\n"
@@ -20863,11 +20863,11 @@ msgid "do not show diffstat of what changed upstream"
 msgstr "no mostris «diffstat» del que ha canviat a la font"
 
 #: builtin/rebase.c:1066
-msgid "add a Signed-off-by trailer to each commit"
+msgid "add a Signed-off-by trailer to each cummit"
 msgstr "afegeix un «trailer» tipus «Signed-off-by» a cada comissió"
 
 #: builtin/rebase.c:1069
-msgid "make committer date match author date"
+msgid "make cummitter date match author date"
 msgstr "fes que la data del «comitter» coincideixi amb la data de l'autor"
 
 #: builtin/rebase.c:1071
@@ -20887,7 +20887,7 @@ msgid "ignore changes in whitespace"
 msgstr "ignora els canvis d'espais en blanc"
 
 #: builtin/rebase.c:1081 builtin/rebase.c:1084
-msgid "cherry-pick all commits, even if unchanged"
+msgid "cherry-pick all cummits, even if unchanged"
 msgstr "«cherry pick» totes les comissions, inclús les no canviades"
 
 #: builtin/rebase.c:1086
@@ -20923,7 +20923,7 @@ msgid "use merging strategies to rebase"
 msgstr "utilitza estratègies de fusió per a fer «rebase»"
 
 #: builtin/rebase.c:1109
-msgid "let the user edit the list of commits to rebase"
+msgid "let the user edit the list of cummits to rebase"
 msgstr "permet a l'usuari editar la llista de comissions a fer «rebase»"
 
 #: builtin/rebase.c:1113
@@ -20931,23 +20931,23 @@ msgid "(DEPRECATED) try to recreate merges instead of ignoring them"
 msgstr "(EN DESÚS) intenta recrear fusions en lloc d'ignorar-les"
 
 #: builtin/rebase.c:1118
-msgid "how to handle commits that become empty"
+msgid "how to handle cummits that become empty"
 msgstr "com gestionar les comissions que queden buides"
 
 #: builtin/rebase.c:1121
-msgid "keep commits which start empty"
+msgid "keep cummits which start empty"
 msgstr "manté les comissions que comencen en blanc"
 
 #: builtin/rebase.c:1125
-msgid "move commits that begin with squash!/fixup! under -i"
+msgid "move cummits that begin with squash!/fixup! under -i"
 msgstr "mou les comissions que comencen amb squash!/fixup! sota -i"
 
 #: builtin/rebase.c:1132
-msgid "add exec lines after each commit of the editable list"
+msgid "add exec lines after each cummit of the editable list"
 msgstr "afegeix línies d'exec després de cada comissió de la llista editable"
 
 #: builtin/rebase.c:1136
-msgid "allow rebasing commits with empty messages"
+msgid "allow rebasing cummits with empty messages"
 msgstr "permet fer «rebase» de les comissions amb missatges buits"
 
 #: builtin/rebase.c:1140
@@ -20971,7 +20971,7 @@ msgid "pass the argument through to the merge strategy"
 msgstr "passa l'argument a l'estratègia de fusió"
 
 #: builtin/rebase.c:1151
-msgid "rebase all reachable commits up to the root(s)"
+msgid "rebase all reachable cummits up to the root(s)"
 msgstr "fes «rebase» de totes les comissions accessibles fins a l'arrel"
 
 #: builtin/rebase.c:1154
@@ -21071,7 +21071,7 @@ msgid "invalid upstream '%s'"
 msgstr "font no vàlida: «%s»"
 
 #: builtin/rebase.c:1571
-msgid "Could not create new root commit"
+msgid "Could not create new root cummit"
 msgstr "No s'ha pogut crear una comissió arrel nova"
 
 #: builtin/rebase.c:1597
@@ -21086,12 +21086,12 @@ msgstr "«%s»: necessita exactament una base de fusió"
 
 #: builtin/rebase.c:1609
 #, c-format
-msgid "Does not point to a valid commit '%s'"
+msgid "Does not point to a valid cummit '%s'"
 msgstr "No apunta a una comissió vàlida «%s»"
 
 #: builtin/rebase.c:1636
 #, c-format
-msgid "no such branch/commit '%s'"
+msgid "no such branch/cummit '%s'"
 msgstr "no existeix aquesta branca o comissió «%s»"
 
 #: builtin/rebase.c:1647 builtin/submodule--helper.c:43
@@ -21105,7 +21105,7 @@ msgid "Could not resolve HEAD to a revision"
 msgstr "No s'ha pogut resoldre HEAD a una revisió"
 
 #: builtin/rebase.c:1679
-msgid "Please commit or stash them."
+msgid "Please cummit or stash them."
 msgstr "Cometeu-los o emmagatzemeu-los."
 
 #: builtin/rebase.c:1714
@@ -21291,7 +21291,7 @@ msgstr ""
 
 #: builtin/reflog.c:258
 #, fuzzy
-msgid "prune any reflog entries that point to broken commits"
+msgid "prune any reflog entries that point to broken cummits"
 msgstr "poda qualsevol entrada de reflog que apunti a comissions trencades"
 
 #: builtin/reflog.c:259
@@ -22021,7 +22021,7 @@ msgid "git replace [-f] --edit <object>"
 msgstr "git replace [-f] --edit <objecte>"
 
 #: builtin/replace.c:24
-msgid "git replace [-f] --graft <commit> [<parent>...]"
+msgid "git replace [-f] --graft <cummit> [<parent>...]"
 msgstr "git replace [-f] --graft <comissió> [<parent>...]"
 
 #: builtin/replace.c:26
@@ -22127,23 +22127,23 @@ msgstr "l'objecte nou és el mateix que l'antic: «%s»"
 
 #: builtin/replace.c:383
 #, c-format
-msgid "could not parse %s as a commit"
+msgid "could not parse %s as a cummit"
 msgstr "no s'ha pogut analitzar %s com a comissió"
 
 #: builtin/replace.c:415
 #, c-format
-msgid "bad mergetag in commit '%s'"
+msgid "bad mergetag in cummit '%s'"
 msgstr "etiqueta de fusió incorrecta en la comissió «%s»"
 
 #: builtin/replace.c:417
 #, c-format
-msgid "malformed mergetag in commit '%s'"
+msgid "malformed mergetag in cummit '%s'"
 msgstr "etiqueta de fusió mal formada en la comissió «%s»"
 
 #: builtin/replace.c:429
 #, c-format
 msgid ""
-"original commit '%s' contains mergetag '%s' that is discarded; use --edit "
+"original cummit '%s' contains mergetag '%s' that is discarded; use --edit "
 "instead of --graft"
 msgstr ""
 "la comissió original «%s» conté l'etiqueta de fusió «%s» que es descarta; "
@@ -22151,16 +22151,16 @@ msgstr ""
 
 #: builtin/replace.c:468
 #, c-format
-msgid "the original commit '%s' has a gpg signature"
+msgid "the original cummit '%s' has a gpg signature"
 msgstr "la comissió original «%s» té una signatura gpg"
 
 #: builtin/replace.c:469
-msgid "the signature will be removed in the replacement commit!"
+msgid "the signature will be removed in the replacement cummit!"
 msgstr "s'eliminarà la signatura en la comissió de reemplaçament!"
 
 #: builtin/replace.c:479
 #, c-format
-msgid "could not write replacement commit for: '%s'"
+msgid "could not write replacement cummit for: '%s'"
 msgstr "no s'ha pogut escriure la comissió de reemplaçament per a: «%s»"
 
 #: builtin/replace.c:487
@@ -22170,7 +22170,7 @@ msgstr "«graft» per a «%s» innecessari"
 
 #: builtin/replace.c:491
 #, c-format
-msgid "new commit is the same as the old one: '%s'"
+msgid "new cummit is the same as the old one: '%s'"
 msgstr "la comissió nova és la mateixa que l'antiga: «%s»"
 
 #: builtin/replace.c:526
@@ -22195,7 +22195,7 @@ msgid "edit existing object"
 msgstr "edita un objecte existent"
 
 #: builtin/replace.c:550
-msgid "change a commit's parents"
+msgid "change a cummit's parents"
 msgstr "canvia els pares d'una comissió"
 
 #: builtin/replace.c:551
@@ -22270,7 +22270,7 @@ msgstr "no s'ha pogut generar el diff per a «%s»"
 
 #: builtin/reset.c:33
 msgid ""
-"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
+"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"
 msgstr ""
 "git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<comissió>]"
 
@@ -22504,7 +22504,7 @@ msgid "unknown mode for --show-object-format: %s"
 msgstr "mode desconegut per a --show-object-format: %s"
 
 #: builtin/revert.c:24
-msgid "git revert [<options>] <commit-ish>..."
+msgid "git revert [<options>] <cummit-ish>..."
 msgstr "git revert [<opcions>] <comissió>..."
 
 #: builtin/revert.c:25
@@ -22512,7 +22512,7 @@ msgid "git revert <subcommand>"
 msgstr "git revert <subordre>"
 
 #: builtin/revert.c:30
-msgid "git cherry-pick [<options>] <commit-ish>..."
+msgid "git cherry-pick [<options>] <cummit-ish>..."
 msgstr "git cherry-pick [<opcions>] <comissió>..."
 
 #: builtin/revert.c:31
@@ -22542,15 +22542,15 @@ msgid "cancel revert or cherry-pick sequence"
 msgstr "cancel·la la seqüència de reversió o el «cherry pick»"
 
 #: builtin/revert.c:105
-msgid "skip current commit and continue"
+msgid "skip current cummit and continue"
 msgstr "omet la comissió actual i continua"
 
 #: builtin/revert.c:107
-msgid "don't automatically commit"
+msgid "don't automatically cummit"
 msgstr "no cometis automàticament"
 
 #: builtin/revert.c:108
-msgid "edit the commit message"
+msgid "edit the cummit message"
 msgstr "edita el missatge de comissió"
 
 #: builtin/revert.c:111
@@ -22570,19 +22570,19 @@ msgid "option for merge strategy"
 msgstr "opció d'estratègia de fusió"
 
 #: builtin/revert.c:125
-msgid "append commit name"
+msgid "append cummit name"
 msgstr "nom de la comissió a annexar"
 
 #: builtin/revert.c:127
-msgid "preserve initially empty commits"
+msgid "preserve initially empty cummits"
 msgstr "conserva les comissions inicialment buides"
 
 #: builtin/revert.c:128
-msgid "allow commits with empty messages"
+msgid "allow cummits with empty messages"
 msgstr "permet les comissions amb missatges buits"
 
 #: builtin/revert.c:129
-msgid "keep redundant, empty commits"
+msgid "keep redundant, empty cummits"
 msgstr "retén les comissions redundants i buides"
 
 #: builtin/revert.c:241
@@ -22729,15 +22729,15 @@ msgid "unknown group type: %s"
 msgstr "tipus de grup desconegut: %s"
 
 #: builtin/shortlog.c:351
-msgid "group by committer rather than author"
+msgid "group by cummitter rather than author"
 msgstr "agrupa per «comitter» en comptes de per autor"
 
 #: builtin/shortlog.c:354
-msgid "sort output according to the number of commits per author"
+msgid "sort output according to the number of cummits per author"
 msgstr "ordena la sortida segons el nombre de comissions per autor"
 
 #: builtin/shortlog.c:356
-msgid "suppress commit descriptions, only provides commit count"
+msgid "suppress cummit descriptions, only provides cummit count"
 msgstr ""
 "omet les descripcions de les comissions, només proveeix el recompte de "
 "comissions"
@@ -22808,7 +22808,7 @@ msgid "color '*!+-' corresponding to the branch"
 msgstr "colora «*!+-» corresponent a la branca"
 
 #: builtin/show-branch.c:651
-msgid "show <n> more commits after the common ancestor"
+msgid "show <n> more cummits after the common ancestor"
 msgstr "mostra <n> comissions després de l'avantpassat comú"
 
 #: builtin/show-branch.c:653
@@ -22824,7 +22824,7 @@ msgid "include the current branch"
 msgstr "inclou la branca actual"
 
 #: builtin/show-branch.c:658
-msgid "name commits with their object names"
+msgid "name cummits with their object names"
 msgstr "anomena les comissions amb els seus noms d'objecte"
 
 #: builtin/show-branch.c:660
@@ -22836,11 +22836,11 @@ msgid "show refs unreachable from any other ref"
 msgstr "mostra les referències inabastables de qualsevol altra referència"
 
 #: builtin/show-branch.c:664
-msgid "show commits in topological order"
+msgid "show cummits in topological order"
 msgstr "mostra les comissions en ordre topològic"
 
 #: builtin/show-branch.c:667
-msgid "show only commits not on the first branch"
+msgid "show only cummits not on the first branch"
 msgstr "mostra només les comissions que no siguin en la primera branca"
 
 #: builtin/show-branch.c:669
@@ -22893,7 +22893,7 @@ msgstr "«%s» no és una referència vàlida."
 
 #: builtin/show-branch.c:838
 #, c-format
-msgid "cannot find commit %s (%s)"
+msgid "cannot find cummit %s (%s)"
 msgstr "no es pot trobar la comissió %s (%s)"
 
 #: builtin/show-index.c:21
@@ -23159,8 +23159,8 @@ msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
 msgstr "git stash apply [--index] [-q|--quiet] [<stash>]"
 
 #: builtin/stash.c:75
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
-msgstr "git stash store [-m|--message <missatge>] [-q|--quiet] <commit>"
+msgid "git stash store [-m|--message <message>] [-q|--quiet] <cummit>"
+msgstr "git stash store [-m|--message <missatge>] [-q|--quiet] <cummit>"
 
 #: builtin/stash.c:80
 msgid ""
@@ -23182,7 +23182,7 @@ msgstr ""
 
 #: builtin/stash.c:130
 #, c-format
-msgid "'%s' is not a stash-like commit"
+msgid "'%s' is not a stash-like cummit"
 msgstr "«%s» no és una comissió de tipus «stash»"
 
 #: builtin/stash.c:150
@@ -23297,7 +23297,7 @@ msgid "stash message"
 msgstr "missatge «stash»"
 
 #: builtin/stash.c:958
-msgid "\"git stash store\" requires one <commit> argument"
+msgid "\"git stash store\" requires one <cummit> argument"
 msgstr "«git stash store» requereix un argument <comissió>"
 
 #: builtin/stash.c:1143
@@ -23309,7 +23309,7 @@ msgid "No changes selected"
 msgstr "No hi ha canvis seleccionats"
 
 #: builtin/stash.c:1304
-msgid "You do not have the initial commit yet"
+msgid "You do not have the initial cummit yet"
 msgstr "Encara no teniu la comissió inicial"
 
 #: builtin/stash.c:1331
@@ -23520,7 +23520,7 @@ msgstr "suprimeix la sortida de l'estat del submòdul"
 
 #: builtin/submodule--helper.c:875
 msgid ""
-"use commit stored in the index instead of the one stored in the submodule "
+"use cummit stored in the index instead of the one stored in the submodule "
 "HEAD"
 msgstr ""
 "utilitza la comissió emmagatzemada a l'índex en lloc de l'emmagatzemada al "
@@ -23560,13 +23560,13 @@ msgid "unexpected mode %o\n"
 msgstr "mode inesperat %o\n"
 
 #: builtin/submodule--helper.c:1288
-msgid "use the commit stored in the index instead of the submodule HEAD"
+msgid "use the cummit stored in the index instead of the submodule HEAD"
 msgstr ""
 "utilitza la comissió emmagatzemada a l'índex en lloc de l'emmagatzemada al "
 "HEAD del submòdul"
 
 #: builtin/submodule--helper.c:1290
-msgid "compare the commit in the index with that in the submodule HEAD"
+msgid "compare the cummit in the index with that in the submodule HEAD"
 msgstr ""
 "compara la comissió emmagatzemada a l'índex en lloc de l'emmagatzemada al "
 "HEAD del submòdul"
@@ -23580,8 +23580,8 @@ msgid "limit the summary size"
 msgstr "limita la mida del resum"
 
 #: builtin/submodule--helper.c:1299
-msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
-msgstr "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
+msgid "git submodule--helper summary [<options>] [<cummit>] [--] [<path>]"
+msgstr "git submodule--helper summary [<options>] [<cummit>] [--] [<path>]"
 
 #: builtin/submodule--helper.c:1323
 msgid "could not fetch a revision for HEAD"
@@ -23848,7 +23848,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Fetched in submodule path '%s', but it did not contain %s. Direct fetching "
-"of that commit failed."
+"of that cummit failed."
 msgstr ""
 "S'ha obtingut en un camí de submòdul «%s», però no contenia %s. L'obtenció "
 "directa d'aquesta comissió ha fallat."
@@ -24190,10 +24190,10 @@ msgstr "git tag -d <nom-d'etiqueta>..."
 
 #: builtin/tag.c:29
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--points-at <object>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] [<pattern>...]"
+"git tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--points-at <object>]\n"
+"        [--format=<format>] [--merged <cummit>] [--no-merged <cummit>] [<pattern>...]"
 msgstr ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--points-at <object>]\n"
+"git tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--points-at <object>]\n"
 "        [--format=<format>] [--merged <comissió>] [--no-merged <comissió>] [<patró>...]"
 
 #: builtin/tag.c:31
@@ -24323,11 +24323,11 @@ msgid "show tag list in columns"
 msgstr "mostra la llista d'etiquetes en columnes"
 
 #: builtin/tag.c:468 builtin/tag.c:470
-msgid "print only tags that contain the commit"
+msgid "print only tags that contain the cummit"
 msgstr "imprimeix només les etiquetes que continguin la comissió"
 
 #: builtin/tag.c:469 builtin/tag.c:471
-msgid "print only tags that don't contain the commit"
+msgid "print only tags that don't contain the cummit"
 msgstr "imprimeix només les etiquetes que no continguin la comissió"
 
 #: builtin/tag.c:472
@@ -24689,15 +24689,15 @@ msgstr ""
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "interromp la transferència després de <n> segons d'inactivitat"
 
-#: builtin/verify-commit.c:19
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] <comissió>..."
+#: builtin/verify-cummit.c:19
+msgid "git verify-cummit [-v | --verbose] <cummit>..."
+msgstr "git verify-cummit [-v | --verbose] <comissió>..."
 
-#: builtin/verify-commit.c:68
-msgid "print commit contents"
+#: builtin/verify-cummit.c:68
+msgid "print cummit contents"
 msgstr "imprimeix els continguts de la comissió"
 
-#: builtin/verify-commit.c:69 builtin/verify-tag.c:37
+#: builtin/verify-cummit.c:69 builtin/verify-tag.c:37
 msgid "print raw gpg status output"
 msgstr "imprimeix la sortida crua de l'estat gpg"
 
@@ -24722,8 +24722,8 @@ msgid "print tag contents"
 msgstr "imprimeix els continguts de l'etiqueta"
 
 #: builtin/worktree.c:19
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
-msgstr "git worktree add [<opcions>] <camí> [<commit-ish>]"
+msgid "git worktree add [<options>] <path> [<cummit-ish>]"
+msgstr "git worktree add [<opcions>] <camí> [<cummit-ish>]"
 
 #: builtin/worktree.c:20
 msgid "git worktree list [<options>]"
@@ -25182,11 +25182,11 @@ msgstr "s'ha produït un error en preparar les revisions"
 
 #: t/helper/test-reach.c:154
 #, c-format
-msgid "commit %s is not marked reachable"
+msgid "cummit %s is not marked reachable"
 msgstr "la comissió %s no està marcada com abastable"
 
 #: t/helper/test-reach.c:164
-msgid "too many commits marked reachable"
+msgid "too many cummits marked reachable"
 msgstr "hi ha massa comissions marcades com abastables"
 
 #: t/helper/test-serve-v2.c:7
@@ -25714,7 +25714,7 @@ msgid "Apply a series of patches from a mailbox"
 msgstr "Aplica una sèrie de pedaços des d'una bústia de correu"
 
 #: command-list.h:52
-msgid "Annotate file lines with commit information"
+msgid "Annotate file lines with cummit information"
 msgstr "Anota les línies del fitxer amb la informació de la comissió"
 
 #: command-list.h:53
@@ -25730,7 +25730,7 @@ msgid "Create an archive of files from a named tree"
 msgstr "Crea un arxiu de fitxers des d'un arbre amb nom"
 
 #: command-list.h:56
-msgid "Use binary search to find the commit that introduced a bug"
+msgid "Use binary search to find the cummit that introduced a bug"
 msgstr "Troba per cerca binària el canvi que hagi introduït un defecte"
 
 #: command-list.h:57
@@ -25782,16 +25782,16 @@ msgid "Copy files from the index to the working tree"
 msgstr "Copia fitxers des de l'índex a l'arbre de treball"
 
 #: command-list.h:68
-msgid "Find commits yet to be applied to upstream"
+msgid "Find cummits yet to be applied to upstream"
 msgstr "Troba les comissions que encara s'han d'aplicar a la font"
 
 #: command-list.h:69
-msgid "Apply the changes introduced by some existing commits"
+msgid "Apply the changes introduced by some existing cummits"
 msgstr "Aplica els canvis introduïts per algunes comissions existents"
 
 #: command-list.h:70
-msgid "Graphical alternative to git-commit"
-msgstr "Alternativa gràfica a git-commit"
+msgid "Graphical alternative to git-cummit"
+msgstr "Alternativa gràfica a git-cummit"
 
 #: command-list.h:71
 msgid "Remove untracked files from the working tree"
@@ -25810,11 +25810,11 @@ msgid "Record changes to the repository"
 msgstr "Registra els canvis al repositori"
 
 #: command-list.h:75
-msgid "Write and verify Git commit-graph files"
-msgstr "Escriu i verifica els fitxers commit-graph de Git"
+msgid "Write and verify Git cummit-graph files"
+msgstr "Escriu i verifica els fitxers cummit-graph de Git"
 
 #: command-list.h:76
-msgid "Create a new commit object"
+msgid "Create a new cummit object"
 msgstr "Crea un objecte de comissió nou"
 
 #: command-list.h:77
@@ -25838,7 +25838,7 @@ msgid "Helper to store credentials on disk"
 msgstr "Ajudant per a emmagatzemar credencials a disc"
 
 #: command-list.h:82
-msgid "Export a single commit to a CVS checkout"
+msgid "Export a single cummit to a CVS checkout"
 msgstr "Exporta en una sola comissió a CVS checkout"
 
 #: command-list.h:83
@@ -25860,7 +25860,7 @@ msgstr ""
 "Dona un nom llegible per a humans basant-se en les referències disponibles"
 
 #: command-list.h:87
-msgid "Show changes between commits, commit and working tree, etc"
+msgid "Show changes between cummits, cummit and working tree, etc"
 msgstr ""
 "Mostra els canvis entre comissions, la comissió i l'arbre de treball, etc"
 
@@ -25903,7 +25903,7 @@ msgid "Rewrite branches"
 msgstr "Torna a escriure les branques"
 
 #: command-list.h:97
-msgid "Produce a merge commit message"
+msgid "Produce a merge cummit message"
 msgstr "Produeix un missatge de comissió de fusió"
 
 #: command-list.h:98
@@ -25927,7 +25927,7 @@ msgid "Cleanup unnecessary files and optimize the local repository"
 msgstr "Neteja els fitxers innecessaris i optimitza el repositori local"
 
 #: command-list.h:103
-msgid "Extract commit ID from an archive created using git-archive"
+msgid "Extract cummit ID from an archive created using git-archive"
 msgstr "Extreu l'ID de la comissió d'un arxiu creat amb el git-archive"
 
 #: command-list.h:104
@@ -25983,12 +25983,12 @@ msgid "Instantly browse your working repository in gitweb"
 msgstr "Navegueu instantàniament pel vostre repositori de treball a gitweb"
 
 #: command-list.h:116
-msgid "Add or parse structured information in commit messages"
+msgid "Add or parse structured information in cummit messages"
 msgstr ""
 "Afegeix o analitza la informació estructurada en els missatges de comissió"
 
 #: command-list.h:117
-msgid "Show commit logs"
+msgid "Show cummit logs"
 msgstr "Mostra els registres de comissió"
 
 #: command-list.h:118
@@ -26111,7 +26111,7 @@ msgid "Applies a quilt patchset onto the current branch"
 msgstr "Aplica un conjunt de pedaços a la branca actual"
 
 #: command-list.h:147
-msgid "Compare two commit ranges (e.g. two versions of a branch)"
+msgid "Compare two cummit ranges (e.g. two versions of a branch)"
 msgstr "Compara dos rangs de comissions (p. ex. dues versions d'una branca)"
 
 #: command-list.h:148
@@ -26119,7 +26119,7 @@ msgid "Reads tree information into the index"
 msgstr "Llegeix la informació de l'arbre a l'índex"
 
 #: command-list.h:149
-msgid "Reapply commits on top of another base tip"
+msgid "Reapply cummits on top of another base tip"
 msgstr "Torna a aplicar les comissions sobre un altre punt de basament"
 
 #: command-list.h:150
@@ -26159,7 +26159,7 @@ msgid "Restore working tree files"
 msgstr "Restaura els fitxers de l'arbre de treball"
 
 #: command-list.h:159
-msgid "Lists commit objects in reverse chronological order"
+msgid "Lists cummit objects in reverse chronological order"
 msgstr "Mostra les comissions en ordre topològic invers"
 
 #: command-list.h:160
@@ -26167,7 +26167,7 @@ msgid "Pick out and massage parameters"
 msgstr "Trieu i personalitzeu els paràmetres"
 
 #: command-list.h:161
-msgid "Revert some existing commits"
+msgid "Revert some existing cummits"
 msgstr "Reverteix comissions existents"
 
 #: command-list.h:162
@@ -26204,7 +26204,7 @@ msgid "Show various types of objects"
 msgstr "Mostra diversos tipus d'objectes"
 
 #: command-list.h:170
-msgid "Show branches and their commits"
+msgid "Show branches and their cummits"
 msgstr "Mostra les branques i les seves comissions"
 
 #: command-list.h:171
@@ -26294,7 +26294,7 @@ msgid "Show a Git logical variable"
 msgstr "Mostra una variable lògica del Git"
 
 #: command-list.h:191
-msgid "Check the GPG signature of commits"
+msgid "Check the GPG signature of cummits"
 msgstr "Verifica la signatura GPG de les comissions"
 
 #: command-list.h:192
@@ -26306,7 +26306,7 @@ msgid "Check the GPG signature of tags"
 msgstr "Verifica la signatura GPG de les etiquetes"
 
 #: command-list.h:194
-msgid "Show logs with difference each commit introduces"
+msgid "Show logs with difference each cummit introduces"
 msgstr "Mostra registres amb la diferència introduïda per cada comissió"
 
 #: command-list.h:195
@@ -26366,7 +26366,7 @@ msgid "The Git repository browser"
 msgstr "El navegador de repositoris Git"
 
 #: command-list.h:209
-msgid "Map author/committer names and/or E-Mail addresses"
+msgid "Map author/cummitter names and/or E-Mail addresses"
 msgstr "Assigna noms d'autor i comitent i/o adreces de correu electrònic"
 
 #: command-list.h:210
@@ -26427,7 +26427,7 @@ msgstr "No s'ha de fer un «octopus»."
 
 #: git-merge-octopus.sh:73
 #, sh-format
-msgid "Unable to find common commit with $pretty_name"
+msgid "Unable to find common cummit with $pretty_name"
 msgstr "No s'ha pogut trobar cap comissió en comú amb $pretty_name"
 
 #: git-merge-octopus.sh:77
@@ -26478,11 +26478,11 @@ msgstr "No es pot $action: Teniu canvis «unstaged»."
 
 #: git-sh-setup.sh:226
 #, sh-format
-msgid "Cannot $action: Your index contains uncommitted changes."
+msgid "Cannot $action: Your index contains uncummitted changes."
 msgstr "No es pot $action: El vostre índex conté canvis sense cometre."
 
 #: git-sh-setup.sh:228
-msgid "Additionally, your index contains uncommitted changes."
+msgid "Additionally, your index contains uncummitted changes."
 msgstr "Addicionalment, el vostre índex conté canvis sense cometre."
 
 #: git-sh-setup.sh:348
@@ -26909,7 +26909,7 @@ msgstr "avís: no es pot reconèixer la línia sendmail: %s\n"
 #: git-send-email.perl:747
 #, perl-format
 msgid ""
-"File '%s' exists but it could also be the range of commits\n"
+"File '%s' exists but it could also be the range of cummits\n"
 "to produce patches for.  Please disambiguate by...\n"
 "\n"
 "    * Saying \"./%s\" if you mean a file; or\n"
@@ -27039,7 +27039,7 @@ msgstr "el camí CA «%s» no existeix"
 #: git-send-email.perl:1565
 msgid ""
 "    The Cc list above has been expanded by additional\n"
-"    addresses found in the patch commit message. By default\n"
+"    addresses found in the patch cummit message. By default\n"
 "    send-email prompts before sending whenever this occurs.\n"
 "    This behavior is controlled by the sendemail.confirm\n"
 "    configuration setting.\n"
@@ -27327,8 +27327,8 @@ msgstr "Esteu segur que voleu enviar %s? [y|N]: "
 #~ msgid "read from stdin"
 #~ msgstr "llegeix de stdin"
 
-#~ msgid "git notes merge --commit [-v | -q]"
-#~ msgstr "git notes merge --commit [-v | -q]"
+#~ msgid "git notes merge --cummit [-v | -q]"
+#~ msgstr "git notes merge --cummit [-v | -q]"
 
 #~ msgid "git notes merge --abort [-v | -q]"
 #~ msgstr "git notes merge --abort [-v | -q]"

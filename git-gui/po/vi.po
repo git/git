@@ -91,12 +91,12 @@ msgid "Scanning for modified files ..."
 msgstr "Đang quét đĩa tìm tập tin thay đổi..."
 
 #: git-gui.sh:1636
-msgid "Calling prepare-commit-msg hook..."
-msgstr "Đang gọi móc prepare-commit-msg..."
+msgid "Calling prepare-cummit-msg hook..."
+msgstr "Đang gọi móc prepare-cummit-msg..."
 
 #: git-gui.sh:1653
-msgid "Commit declined by prepare-commit-msg hook."
-msgstr "Lần chuyển giao bị chối từ do móc prepare-commit-msg."
+msgid "cummit declined by prepare-cummit-msg hook."
+msgstr "Lần chuyển giao bị chối từ do móc prepare-cummit-msg."
 
 #: git-gui.sh:1811 lib/browser.tcl:252
 msgid "Ready."
@@ -116,15 +116,15 @@ msgid "Modified, not staged"
 msgstr "Đã sửa nhưng chưa đánh dấu để chuyển giao"
 
 #: git-gui.sh:2098 git-gui.sh:2110
-msgid "Staged for commit"
+msgid "Staged for cummit"
 msgstr "Đánh dấu để chuyển giao"
 
 #: git-gui.sh:2099 git-gui.sh:2111
-msgid "Portions staged for commit"
+msgid "Portions staged for cummit"
 msgstr "Các phần được đánh dấu là cần chuyển giao"
 
 #: git-gui.sh:2100 git-gui.sh:2112
-msgid "Staged for commit, missing"
+msgid "Staged for cummit, missing"
 msgstr "Đã đánh dấu là cần chuyển giao, thiếu"
 
 #: git-gui.sh:2102
@@ -132,7 +132,7 @@ msgid "File type changed, not staged"
 msgstr "Đã đổi kiểu tập tin nhưng chưa được đánh dấu cần chuyển giao"
 
 #: git-gui.sh:2103 git-gui.sh:2104
-msgid "File type changed, old type staged for commit"
+msgid "File type changed, old type staged for cummit"
 msgstr "Đã đổi kiểu tập tin, kiểu cũ đã được đánh dấu cần chuyển giao"
 
 #: git-gui.sh:2105
@@ -196,7 +196,7 @@ msgid "Branch"
 msgstr "Nhánh"
 
 #: git-gui.sh:2654 lib/choose_rev.tcl:554
-msgid "Commit@@noun"
+msgid "cummit@@noun"
 msgstr "Chuyển giao@@noun"
 
 #: git-gui.sh:2657 lib/merge.tcl:123 lib/merge.tcl:152 lib/merge.tcl:170
@@ -321,15 +321,15 @@ msgid "Done"
 msgstr "Xong"
 
 #: git-gui.sh:2813
-msgid "Commit@@verb"
+msgid "cummit@@verb"
 msgstr "Chuyển giao@@verb"
 
 #: git-gui.sh:2822 git-gui.sh:3303
-msgid "New Commit"
+msgid "New cummit"
 msgstr "Lần chuyển giao mới"
 
 #: git-gui.sh:2830 git-gui.sh:3310
-msgid "Amend Last Commit"
+msgid "Amend Last cummit"
 msgstr "Tu bổ lần chuyển giao cuối"
 
 #: git-gui.sh:2840 git-gui.sh:3264 lib/remote_branch_delete.tcl:101
@@ -337,15 +337,15 @@ msgid "Rescan"
 msgstr "Quét lại"
 
 #: git-gui.sh:2846
-msgid "Stage To Commit"
+msgid "Stage To cummit"
 msgstr "Đưa lên bệ phóng để chuyển giao"
 
 #: git-gui.sh:2852
-msgid "Stage Changed Files To Commit"
+msgid "Stage Changed Files To cummit"
 msgstr "Đánh dấu các tập tin đã thay đổi cần chuyển giao"
 
 #: git-gui.sh:2858
-msgid "Unstage From Commit"
+msgid "Unstage From cummit"
 msgstr "Đưa ra khỏi bệ phóng để không chuyển giao"
 
 #: git-gui.sh:2864 lib/index.tcl:442
@@ -430,7 +430,7 @@ msgid "Current Branch:"
 msgstr "Nhánh hiện hành:"
 
 #: git-gui.sh:3179
-msgid "Staged Changes (Will Commit)"
+msgid "Staged Changes (Will cummit)"
 msgstr "Đánh dấu các thay đổi (Sẽ chuyển giao)"
 
 #: git-gui.sh:3199
@@ -446,27 +446,27 @@ msgid "Push"
 msgstr "Đẩy lên"
 
 #: git-gui.sh:3324
-msgid "Initial Commit Message:"
+msgid "Initial cummit Message:"
 msgstr "Phần chú thích cho lần chuyển giao khởi tạo:"
 
 #: git-gui.sh:3325
-msgid "Amended Commit Message:"
+msgid "Amended cummit Message:"
 msgstr "Phần chú giải cho lần chuyển giao tu bổ:"
 
 #: git-gui.sh:3326
-msgid "Amended Initial Commit Message:"
+msgid "Amended Initial cummit Message:"
 msgstr "Phần chú giải cho lần chuyển giao tu bổ lần khởi tạo:"
 
 #: git-gui.sh:3327
-msgid "Amended Merge Commit Message:"
+msgid "Amended Merge cummit Message:"
 msgstr "Phần chú giải cho lần chuyển giao tu bổ lần hòa trộn"
 
 #: git-gui.sh:3328
-msgid "Merge Commit Message:"
+msgid "Merge cummit Message:"
 msgstr "Ghi chú của lần chuyển giao hòa trộn:"
 
 #: git-gui.sh:3329
-msgid "Commit Message:"
+msgid "cummit Message:"
 msgstr "Chú thích của lần chuyển giao:"
 
 #: git-gui.sh:3378 git-gui.sh:3532 lib/console.tcl:73
@@ -534,27 +534,27 @@ msgid "Start git gui In The Submodule"
 msgstr "Khởi chạy git gui trong mô-đun-con"
 
 #: git-gui.sh:3667
-msgid "Unstage Hunk From Commit"
+msgid "Unstage Hunk From cummit"
 msgstr "Bỏ đánh dấu đoạn cần chuyển giao"
 
 #: git-gui.sh:3669
-msgid "Unstage Lines From Commit"
+msgid "Unstage Lines From cummit"
 msgstr "Bỏ đánh dấu các dòng cần chuyển giao"
 
 #: git-gui.sh:3671
-msgid "Unstage Line From Commit"
+msgid "Unstage Line From cummit"
 msgstr "Bỏ đánh dấu dòng cần chuyển giao"
 
 #: git-gui.sh:3674
-msgid "Stage Hunk For Commit"
+msgid "Stage Hunk For cummit"
 msgstr "Đánh dấu đoạn cần chuyển giao"
 
 #: git-gui.sh:3676
-msgid "Stage Lines For Commit"
+msgid "Stage Lines For cummit"
 msgstr "Đánh dấu các dòng cần chuyển giao"
 
 #: git-gui.sh:3678
-msgid "Stage Line For Commit"
+msgid "Stage Line For cummit"
 msgstr "Đánh dấu dòng cần chuyển giao"
 
 #: git-gui.sh:3703
@@ -613,11 +613,11 @@ msgid "File Viewer"
 msgstr "Bộ Xem Tập Tin"
 
 #: lib/blame.tcl:79
-msgid "Commit:"
+msgid "cummit:"
 msgstr "Lần chuyển giao:"
 
 #: lib/blame.tcl:280
-msgid "Copy Commit"
+msgid "Copy cummit"
 msgstr "Chép lần chuyển giao"
 
 #: lib/blame.tcl:284
@@ -637,7 +637,7 @@ msgid "Show History Context"
 msgstr "Hiển thị nội dung của lịch sử"
 
 #: lib/blame.tcl:304
-msgid "Blame Parent Commit"
+msgid "Blame Parent cummit"
 msgstr "Xem công trạng của lần chuyển giao cha mẹ"
 
 #: lib/blame.tcl:466
@@ -682,7 +682,7 @@ msgid "Author:"
 msgstr "Tác giả:"
 
 #: lib/blame.tcl:1004
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "Người chuyển giao:"
 
 #: lib/blame.tcl:1009
@@ -690,11 +690,11 @@ msgid "Original File:"
 msgstr "Tập tin gốc:"
 
 #: lib/blame.tcl:1057
-msgid "Cannot find HEAD commit:"
+msgid "Cannot find HEAD cummit:"
 msgstr "Không thể tìm thấy HEAD của lần chuyển giao:"
 
 #: lib/blame.tcl:1112
-msgid "Cannot find parent commit:"
+msgid "Cannot find parent cummit:"
 msgstr "Không thể tìm thấy lần chuyển giao mẹ:"
 
 #: lib/blame.tcl:1127
@@ -1026,11 +1026,11 @@ msgstr "Đã lấy ra '%s'."
 
 #: lib/checkout_op.tcl:535
 #, tcl-format
-msgid "Resetting '%s' to '%s' will lose the following commits:"
+msgid "Resetting '%s' to '%s' will lose the following cummits:"
 msgstr "Đặt lại '%s' thành '%s' sẽ làm mất những lần chuyển giao sau đây:"
 
 #: lib/checkout_op.tcl:557
-msgid "Recovering lost commits may not be easy."
+msgid "Recovering lost cummits may not be easy."
 msgstr "Lấy lại những lần chuyển giao đã mất là không dễ."
 
 #: lib/checkout_op.tcl:562
@@ -1287,7 +1287,7 @@ msgstr "Không tìm thấy nhánh mặc định."
 
 #: lib/choose_repository.tcl:928
 #, tcl-format
-msgid "Cannot resolve %s as a commit."
+msgid "Cannot resolve %s as a cummit."
 msgstr "Không thể phân giải %s như là một lần chuyển giao."
 
 #: lib/choose_repository.tcl:940
@@ -1357,11 +1357,11 @@ msgstr "Đã cập nhật"
 msgid "URL"
 msgstr "URL"
 
-#: lib/commit.tcl:9
+#: lib/cummit.tcl:9
 msgid ""
 "There is nothing to amend.\n"
 "\n"
-"You are about to create the initial commit.  There is no commit before this "
+"You are about to create the initial cummit.  There is no cummit before this "
 "to amend.\n"
 msgstr ""
 "Ở đây chẳng có gì để tu bổ cả.\n"
@@ -1369,12 +1369,12 @@ msgstr ""
 "Bạn đang tạo lần chuyển giao khởi tạo. Ở đây không có lần chuyển giao trước "
 "nào để mà tu bổ.\n"
 
-#: lib/commit.tcl:18
+#: lib/cummit.tcl:18
 msgid ""
 "Cannot amend while merging.\n"
 "\n"
 "You are currently in the middle of a merge that has not been fully "
-"completed.  You cannot amend the prior commit unless you first abort the "
+"completed.  You cannot amend the prior cummit unless you first abort the "
 "current merge activity.\n"
 msgstr ""
 "Không thể tu bổ trong khi hòa trộn.\n"
@@ -1383,29 +1383,29 @@ msgstr ""
 "tu bổ  lần chuyển giao tiền nhiệm trừ phi bạn bãi bỏ lần hòa trộn hiện đang "
 "kích hoạt.\n"
 
-#: lib/commit.tcl:48
-msgid "Error loading commit data for amend:"
+#: lib/cummit.tcl:48
+msgid "Error loading cummit data for amend:"
 msgstr "Gặp lỗi khi tải dữ liệu chuyển giao cho lệnh tu bổ:"
 
-#: lib/commit.tcl:75
+#: lib/cummit.tcl:75
 msgid "Unable to obtain your identity:"
 msgstr "Không thể lấy được định danh của bạn:"
 
-#: lib/commit.tcl:80
-msgid "Invalid GIT_COMMITTER_IDENT:"
-msgstr "GIT_COMMITTER_IDENT không hợp lệ:"
+#: lib/cummit.tcl:80
+msgid "Invalid GIT_cummitTER_IDENT:"
+msgstr "GIT_cummitTER_IDENT không hợp lệ:"
 
-#: lib/commit.tcl:129
+#: lib/cummit.tcl:129
 #, tcl-format
 msgid "warning: Tcl does not support encoding '%s'."
 msgstr "cảnh báo: Tcl không hỗ trợ bảng mã '%s'."
 
-#: lib/commit.tcl:149
+#: lib/cummit.tcl:149
 msgid ""
 "Last scanned state does not match repository state.\n"
 "\n"
 "Another Git program has modified this repository since the last scan.  A "
-"rescan must be performed before another commit can be created.\n"
+"rescan must be performed before another cummit can be created.\n"
 "\n"
 "The rescan will be automatically started now.\n"
 msgstr ""
@@ -1416,46 +1416,46 @@ msgstr ""
 "\n"
 "Sẽ thực hiện việc quét lại ngay bây giời.\n"
 
-#: lib/commit.tcl:173
+#: lib/cummit.tcl:173
 #, tcl-format
 msgid ""
-"Unmerged files cannot be committed.\n"
+"Unmerged files cannot be cummitted.\n"
 "\n"
 "File %s has merge conflicts.  You must resolve them and stage the file "
-"before committing.\n"
+"before cummitting.\n"
 msgstr ""
 "Các tập tin chưa hòa trộn không thể được chuyển giao.\n"
 "\n"
 "Tập tin %s có xung đột hòa trộn. Bạn phải giải quyết chúng và đưa lên bệ "
 "phóng trước khi chuyển giao.\n"
 
-#: lib/commit.tcl:181
+#: lib/cummit.tcl:181
 #, tcl-format
 msgid ""
 "Unknown file state %s detected.\n"
 "\n"
-"File %s cannot be committed by this program.\n"
+"File %s cannot be cummitted by this program.\n"
 msgstr ""
 "Tìm thấy trạng thái tập tim không hiểu %s.\n"
 "\n"
 "Tập tin %s không thể được chuyển giao bởi chương trình này.\n"
 
-#: lib/commit.tcl:189
+#: lib/cummit.tcl:189
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"You must stage at least 1 file before you can commit.\n"
+"You must stage at least 1 file before you can cummit.\n"
 msgstr ""
 "Không có thay đổi nào cần chuyển giao.\n"
 "\n"
 "Bạn phải đưa lên bệ phóng ít nhất là một tập tin trước khi có thể chuyển "
 "giao.\n"
 
-#: lib/commit.tcl:204
+#: lib/cummit.tcl:204
 msgid ""
-"Please supply a commit message.\n"
+"Please supply a cummit message.\n"
 "\n"
-"A good commit message has the following format:\n"
+"A good cummit message has the following format:\n"
 "\n"
 "- First line: Describe in one sentence what you did.\n"
 "- Second line: Blank\n"
@@ -1469,22 +1469,22 @@ msgstr ""
 "- Dòng thứ hai: Để trống\n"
 "- Các dòng còn lại: Mô tả xem vì sao những thay đổi này là cần thiết.\n"
 
-#: lib/commit.tcl:235
+#: lib/cummit.tcl:235
 msgid "Calling pre-commit hook..."
-msgstr "Đang gọi móc (hook) pre-commit..."
+msgstr "Đang gọi móc (hook) pre-cummit..."
 
-#: lib/commit.tcl:250
-msgid "Commit declined by pre-commit hook."
-msgstr "Lần chuyển giao bị khước từ do móc pre-commit."
+#: lib/cummit.tcl:250
+msgid "cummit declined by pre-commit hook."
+msgstr "Lần chuyển giao bị khước từ do móc pre-cummit."
 
-#: lib/commit.tcl:269
+#: lib/cummit.tcl:269
 msgid ""
-"You are about to commit on a detached head. This is a potentially dangerous "
+"You are about to cummit on a detached head. This is a potentially dangerous "
 "thing to do because if you switch to another branch you will lose your "
 "changes and it can be difficult to retrieve them later from the reflog. You "
-"should probably cancel this commit and create a new branch to continue.\n"
+"should probably cancel this cummit and create a new branch to continue.\n"
 " \n"
-" Do you really want to proceed with your Commit?"
+" Do you really want to proceed with your cummit?"
 msgstr ""
 "Bạn thực hiện chuyển giao ở chỗ đã tách rời khỏi các đầu. Điều này là nguy "
 "hiểm bởi nếu bạn chuyển sang nhánh khác thì bạn sẽ mất những thay đổi này và "
@@ -1493,36 +1493,36 @@ msgstr ""
 " \n"
 " Bạn có thực sự muốn tiếp tục chuyển giao?"
 
-#: lib/commit.tcl:290
-msgid "Calling commit-msg hook..."
-msgstr "Đang gọi móc commit-msg..."
+#: lib/cummit.tcl:290
+msgid "Calling cummit-msg hook..."
+msgstr "Đang gọi móc cummit-msg..."
 
-#: lib/commit.tcl:305
-msgid "Commit declined by commit-msg hook."
-msgstr "Lần chuyển giao bị khước từ do móc commit-msg."
+#: lib/cummit.tcl:305
+msgid "cummit declined by cummit-msg hook."
+msgstr "Lần chuyển giao bị khước từ do móc cummit-msg."
 
-#: lib/commit.tcl:318
-msgid "Committing changes..."
+#: lib/cummit.tcl:318
+msgid "cummitting changes..."
 msgstr "Chuyển giao các thay đổi..."
 
-#: lib/commit.tcl:334
+#: lib/cummit.tcl:334
 msgid "write-tree failed:"
 msgstr "gặp lỗi khi write-tree:"
 
-#: lib/commit.tcl:335 lib/commit.tcl:379 lib/commit.tcl:400
-msgid "Commit failed."
+#: lib/cummit.tcl:335 lib/cummit.tcl:379 lib/cummit.tcl:400
+msgid "cummit failed."
 msgstr "Gặp lỗi khi chuyển giao."
 
-#: lib/commit.tcl:352
+#: lib/cummit.tcl:352
 #, tcl-format
-msgid "Commit %s appears to be corrupt"
+msgid "cummit %s appears to be corrupt"
 msgstr "Lần chuyển giao %s có vẻ đã hư hỏng"
 
-#: lib/commit.tcl:357
+#: lib/cummit.tcl:357
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"No files were modified by this commit and it was not a merge commit.\n"
+"No files were modified by this cummit and it was not a merge cummit.\n"
 "\n"
 "A rescan will be automatically started now.\n"
 msgstr ""
@@ -1533,21 +1533,21 @@ msgstr ""
 "\n"
 "Sẽ thực hiện việc quét lại ngay bây giờ.\n"
 
-#: lib/commit.tcl:364
-msgid "No changes to commit."
+#: lib/cummit.tcl:364
+msgid "No changes to cummit."
 msgstr "Không có thay đổi nào để chuyển giao."
 
-#: lib/commit.tcl:378
-msgid "commit-tree failed:"
-msgstr "commit-tree gặp lỗi:"
+#: lib/cummit.tcl:378
+msgid "cummit-tree failed:"
+msgstr "cummit-tree gặp lỗi:"
 
-#: lib/commit.tcl:399
+#: lib/cummit.tcl:399
 msgid "update-ref failed:"
 msgstr "cập nhật tham chiếu thất bại:"
 
-#: lib/commit.tcl:492
+#: lib/cummit.tcl:492
 #, tcl-format
-msgid "Created commit %s: %s"
+msgid "Created cummit %s: %s"
 msgstr "Lần chuyển giao đã tạo %s: %s"
 
 #: lib/console.tcl:59
@@ -1747,7 +1747,7 @@ msgid "warning"
 msgstr "cảnh báo"
 
 #: lib/error.tcl:96
-msgid "You must correct the above errors before committing."
+msgid "You must correct the above errors before cummitting."
 msgstr "Bạn phải sửa các lỗi trên trước khi chuyển giao."
 
 #: lib/index.tcl:6
@@ -1776,11 +1776,11 @@ msgstr "Bỏ khóa mục lục"
 
 #: lib/index.tcl:298
 #, tcl-format
-msgid "Unstaging %s from commit"
+msgid "Unstaging %s from cummit"
 msgstr "Bỏ %s ra khỏi việc chuyển giao"
 
 #: lib/index.tcl:337
-msgid "Ready to commit."
+msgid "Ready to cummit."
 msgstr "Đã chuyển giao rồi."
 
 #: lib/index.tcl:350
@@ -1833,7 +1833,7 @@ msgstr "Nhảy"
 msgid ""
 "Cannot merge while amending.\n"
 "\n"
-"You must finish amending this commit before starting any type of merge.\n"
+"You must finish amending this cummit before starting any type of merge.\n"
 msgstr ""
 "Không thể hòa trộn trong khi tu bổ.\n"
 "\n"
@@ -1863,7 +1863,7 @@ msgid ""
 "\n"
 "File %s has merge conflicts.\n"
 "\n"
-"You must resolve them, stage the file, and commit to complete the current "
+"You must resolve them, stage the file, and cummit to complete the current "
 "merge.  Only then can you begin another merge.\n"
 msgstr ""
 "Bạn đang ở giữa việc thay đổi.\n"
@@ -1880,7 +1880,7 @@ msgid ""
 "\n"
 "File %s is modified.\n"
 "\n"
-"You should complete the current commit before starting a merge.  Doing so "
+"You should complete the current cummit before starting a merge.  Doing so "
 "will help you abort a failed merge, should the need arise.\n"
 msgstr ""
 "Bạn đang ở giữa việc thay đổi.\n"
@@ -1921,7 +1921,7 @@ msgstr "Điểm cần hòa trộn"
 msgid ""
 "Cannot abort while amending.\n"
 "\n"
-"You must finish amending this commit.\n"
+"You must finish amending this cummit.\n"
 msgstr ""
 "Không thể hủy bỏ trong khi đang tu bổ.\n"
 "\n"
@@ -1931,7 +1931,7 @@ msgstr ""
 msgid ""
 "Abort merge?\n"
 "\n"
-"Aborting the current merge will cause *ALL* uncommitted changes to be lost.\n"
+"Aborting the current merge will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with aborting the current merge?"
 msgstr ""
@@ -1946,7 +1946,7 @@ msgstr ""
 msgid ""
 "Reset changes?\n"
 "\n"
-"Resetting the changes will cause *ALL* uncommitted changes to be lost.\n"
+"Resetting the changes will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with resetting the current changes?"
 msgstr ""
@@ -2097,7 +2097,7 @@ msgid "Email Address"
 msgstr "Địa chỉ thư điện tử"
 
 #: lib/option.tcl:143
-msgid "Summarize Merge Commits"
+msgid "Summarize Merge cummits"
 msgstr "Tổng hợp về hòa trộn các lần chuyển giao"
 
 #: lib/option.tcl:144
@@ -2153,7 +2153,7 @@ msgid "Additional Diff Parameters"
 msgstr "Đối số bổ xung cho Diff"
 
 #: lib/option.tcl:158
-msgid "Commit Message Text Width"
+msgid "cummit Message Text Width"
 msgstr "Chiều rộng của phần chú thích"
 
 #: lib/option.tcl:159
@@ -2165,7 +2165,7 @@ msgid "Default File Contents Encoding"
 msgstr "Bảng mã dành cho nội dung tập tin mặc định"
 
 #: lib/option.tcl:161
-msgid "Warn before committing to a detached head"
+msgid "Warn before cummitting to a detached head"
 msgstr "Cảnh báo trước khi chuyển giao một đầu bị tách rời"
 
 #: lib/option.tcl:162
@@ -2328,7 +2328,7 @@ msgstr ""
 #, tcl-format
 msgid ""
 "One or more of the merge tests failed because you have not fetched the "
-"necessary commits.  Try fetching from %s first."
+"necessary cummits.  Try fetching from %s first."
 msgstr ""
 "Một hay nhiều hơn kiểm tra hòa trộn không đạt bởi vì bạn đã không lấy về "
 "những lần chuyển giao cần thiết. Hãy lấy về từ %s trước đã."

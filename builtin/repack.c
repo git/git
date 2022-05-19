@@ -481,7 +481,7 @@ static int midx_snapshot_ref_one(const char *refname,
 	if (oidset_insert(&data->seen, oid))
 		return 0; /* already seen */
 
-	if (oid_object_info(the_repository, oid, NULL) != OBJ_COMMIT)
+	if (oid_object_info(the_repository, oid, NULL) != OBJ_cummit)
 		return 0;
 
 	fprintf(data->f->fp, "%s%s\n", data->preferred ? "+" : "",

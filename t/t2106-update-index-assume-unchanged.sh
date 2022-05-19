@@ -9,11 +9,11 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'setup' '
 	: >file &&
 	git add file &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git branch other &&
 	echo upstream >file &&
 	git add file &&
-	git commit -m upstream
+	git cummit -m upstream
 '
 
 test_expect_success 'do not switch branches with dirty file' '

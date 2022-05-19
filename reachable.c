@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "refs.h"
 #include "tag.h"
-#include "commit.h"
+#include "cummit.h"
 #include "blob.h"
 #include "diff.h"
 #include "revision.h"
@@ -52,7 +52,7 @@ static void mark_object(struct object *obj, const char *name, void *data)
 	update_progress(data);
 }
 
-static void mark_commit(struct commit *c, void *data)
+static void mark_cummit(struct cummit *c, void *data)
 {
 	mark_object(&c->object, NULL, data);
 }
@@ -77,7 +77,7 @@ static void add_recent_object(const struct object_id *oid,
 	 * inflating blobs and trees could be very expensive.
 	 * However, we do need to know the correct type for
 	 * later processing, and the revision machinery expects
-	 * commits and tags to have been parsed.
+	 * cummits and tags to have been parsed.
 	 */
 	type = oid_object_info(the_repository, oid, NULL);
 	if (type < 0)
@@ -85,7 +85,7 @@ static void add_recent_object(const struct object_id *oid,
 
 	switch (type) {
 	case OBJ_TAG:
-	case OBJ_COMMIT:
+	case OBJ_cummit:
 		obj = parse_object_or_die(oid, NULL);
 		break;
 	case OBJ_TREE:
@@ -182,7 +182,7 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 
 	/*
 	 * Set up revision parsing, and mark us as being interested
-	 * in all object types, not just commits.
+	 * in all object types, not just cummits.
 	 */
 	revs->tag_objects = 1;
 	revs->blob_objects = 1;
@@ -207,12 +207,12 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 
 	bitmap_git = prepare_bitmap_walk(revs, 0);
 	if (bitmap_git) {
-		traverse_bitmap_commit_list(bitmap_git, revs, mark_object_seen);
+		traverse_bitmap_cummit_list(bitmap_git, revs, mark_object_seen);
 		free_bitmap_index(bitmap_git);
 	} else {
 		if (prepare_revision_walk(revs))
 			die("revision walk setup failed");
-		traverse_commit_list(revs, mark_commit, mark_object, &cp);
+		traverse_cummit_list(revs, mark_cummit, mark_object, &cp);
 	}
 
 	if (mark_recent) {
@@ -221,7 +221,7 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 			die("unable to mark recent objects");
 		if (prepare_revision_walk(revs))
 			die("revision walk setup failed");
-		traverse_commit_list(revs, mark_commit, mark_object, &cp);
+		traverse_cummit_list(revs, mark_cummit, mark_object, &cp);
 	}
 
 	display_progress(cp.progress, cp.count);

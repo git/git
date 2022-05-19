@@ -11,7 +11,7 @@ image create photo ::browser::img_symlink -data {R0lGODlhEAAQAIQAAPwCBCwqLLSytLy
 image create photo ::browser::img_unknown -data {R0lGODlhEAAQAIUAAPwCBFxaXIyKjNTW1Nze3LS2tJyanER2RGS+VPz+/PTu5GxqbPz69BQ6BCxeLFSqRPT29HRydMzOzDQyNERmPKSypCRWHIyKhERCRDyGPKz2nESiLBxGHCyCHGxubPz6/PTy7Ozi1Ly2rKSipOzm3LyqlKSWhCRyFOzizLymhNTKtNzOvOzaxOTStPz27OzWvOTOpLSupLyedMS+rMS6pMSulLyqjLymfLyifAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAAALAAAAAAQABAAAAamQIAQECgajcOkYEBoDgoBQyAJOCCuiENCsWBIh9aGw9F4HCARiXciRDQoBUnlYRlcIgsMG5CxXAgMGhscBRAEBRd7AB0eBBoIgxUfICEiikSPgyMMIAokJZcBkBybJgomIaBJAZoMpyCmqkMBFCcVCrgKKAwpoSorKqchKCwtvasIFBIhLiYvLzDHsxQNMcMKLDAwMqEz3jQ1NTY3ONyrE+jp6hN+QQAh/mhDcmVhdGVkIGJ5IEJNUFRvR0lGIFBybyB2ZXJzaW9uIDIuNQ0KqSBEZXZlbENvciAxOTk3LDE5OTguIEFsbCByaWdodHMgcmVzZXJ2ZWQuDQpodHRwOi8vd3d3LmRldmVsY29yLmNvbQA7}
 
 field w
-field browser_commit
+field browser_cummit
 field browser_path
 field browser_files  {}
 field browser_status [mc "Starting..."]
@@ -20,7 +20,7 @@ field browser_busy   1
 
 field ls_buf     {}; # Buffered record output from ls-tree
 
-constructor new {commit {path {}}} {
+constructor new {cummit {path {}}} {
 	global cursor_ptr M1B use_ttk NS
 	make_dialog top w
 	wm withdraw $top
@@ -32,8 +32,8 @@ constructor new {commit {path {}}} {
 		}
 	}
 
-	set browser_commit $commit
-	set browser_path "$browser_commit:[escape_path $path]"
+	set browser_cummit $cummit
+	set browser_path "$browser_cummit:[escape_path $path]"
 
 	${NS}::label $w.path \
 		-textvariable @browser_path \
@@ -86,9 +86,9 @@ constructor new {commit {path {}}} {
 	wm deiconify $top
 	set w $w_list
 	if {$path ne {}} {
-		_ls $this $browser_commit:$path $path
+		_ls $this $browser_cummit:$path $path
 	} else {
-		_ls $this $browser_commit $path
+		_ls $this $browser_cummit $path
 	}
 	return $this
 }
@@ -157,7 +157,7 @@ method _enter {} {
 				append p [lindex $n 1]
 			}
 			append p $name
-			blame::new $browser_commit $p {}
+			blame::new $browser_cummit $p {}
 		}
 		}
 	}
@@ -306,7 +306,7 @@ constructor dialog {} {
 }
 
 method _open {} {
-	if {[catch {$w_rev commit_or_die} err]} {
+	if {[catch {$w_rev cummit_or_die} err]} {
 		return
 	}
 	set name [$w_rev get]

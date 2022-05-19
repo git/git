@@ -13,14 +13,14 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success setup '
 
 	test_ln_s_add path1/path2/path3/path4/path5 link1 &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	git branch side &&
 
 	rm -f link? &&
 
 	test_ln_s_add htap6 link1 &&
-	git commit -m second &&
+	git cummit -m second &&
 
 	git diff-tree -p HEAD^ HEAD >patch  &&
 	git apply --stat --summary patch

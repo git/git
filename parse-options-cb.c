@@ -2,7 +2,7 @@
 #include "parse-options.h"
 #include "branch.h"
 #include "cache.h"
-#include "commit.h"
+#include "cummit.h"
 #include "color.h"
 #include "string-list.h"
 #include "strvec.h"
@@ -82,10 +82,10 @@ int parse_opt_verbosity_cb(const struct option *opt, const char *arg,
 	return 0;
 }
 
-int parse_opt_commits(const struct option *opt, const char *arg, int unset)
+int parse_opt_cummits(const struct option *opt, const char *arg, int unset)
 {
 	struct object_id oid;
-	struct commit *commit;
+	struct cummit *cummit;
 
 	BUG_ON_OPT_NEG(unset);
 
@@ -93,18 +93,18 @@ int parse_opt_commits(const struct option *opt, const char *arg, int unset)
 		return -1;
 	if (get_oid(arg, &oid))
 		return error("malformed object name %s", arg);
-	commit = lookup_commit_reference(the_repository, &oid);
-	if (!commit)
-		return error("no such commit %s", arg);
-	commit_list_insert(commit, opt->value);
+	cummit = lookup_cummit_reference(the_repository, &oid);
+	if (!cummit)
+		return error("no such cummit %s", arg);
+	cummit_list_insert(cummit, opt->value);
 	return 0;
 }
 
-int parse_opt_commit(const struct option *opt, const char *arg, int unset)
+int parse_opt_cummit(const struct option *opt, const char *arg, int unset)
 {
 	struct object_id oid;
-	struct commit *commit;
-	struct commit **target = opt->value;
+	struct cummit *cummit;
+	struct cummit **target = opt->value;
 
 	BUG_ON_OPT_NEG(unset);
 
@@ -112,10 +112,10 @@ int parse_opt_commit(const struct option *opt, const char *arg, int unset)
 		return -1;
 	if (get_oid(arg, &oid))
 		return error("malformed object name %s", arg);
-	commit = lookup_commit_reference(the_repository, &oid);
-	if (!commit)
-		return error("no such commit %s", arg);
-	*target = commit;
+	cummit = lookup_cummit_reference(the_repository, &oid);
+	if (!cummit)
+		return error("no such cummit %s", arg);
+	*target = cummit;
 	return 0;
 }
 

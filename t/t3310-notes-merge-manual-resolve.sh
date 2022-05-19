@@ -8,12 +8,12 @@ test_description='Test notes merging with manual conflict resolution'
 . ./test-lib.sh
 
 # Set up a notes merge scenario with different kinds of conflicts
-test_expect_success 'setup commits' '
-	test_commit 1st &&
-	test_commit 2nd &&
-	test_commit 3rd &&
-	test_commit 4th &&
-	test_commit 5th &&
+test_expect_success 'setup cummits' '
+	test_cummit 1st &&
+	test_cummit 2nd &&
+	test_cummit 3rd &&
+	test_cummit 4th &&
+	test_cummit 5th &&
 
 	test_oid_cache <<-EOF
 	hash04a sha1:6e8e3febca3c2bb896704335cc4d0c34cb2f8715
@@ -48,11 +48,11 @@ test_expect_success 'setup commits' '
 	EOF
 '
 
-commit_sha1=$(git rev-parse 1st^{commit})
-commit_sha2=$(git rev-parse 2nd^{commit})
-commit_sha3=$(git rev-parse 3rd^{commit})
-commit_sha4=$(git rev-parse 4th^{commit})
-commit_sha5=$(git rev-parse 5th^{commit})
+cummit_sha1=$(git rev-parse 1st^{cummit})
+cummit_sha2=$(git rev-parse 2nd^{cummit})
+cummit_sha3=$(git rev-parse 3rd^{cummit})
+cummit_sha4=$(git rev-parse 4th^{cummit})
+cummit_sha5=$(git rev-parse 5th^{cummit})
 
 verify_notes () {
 	notes_ref="$1"
@@ -71,102 +71,102 @@ notes_merge_files_gone () {
 }
 
 cat <<EOF | sort >expect_notes_x
-$(test_oid hash04a) $commit_sha4
-$(test_oid hash03a) $commit_sha3
-$(test_oid hash02a) $commit_sha2
+$(test_oid hash04a) $cummit_sha4
+$(test_oid hash03a) $cummit_sha3
+$(test_oid hash02a) $cummit_sha2
 EOF
 
 cat >expect_log_x <<EOF
-$commit_sha5 5th
+$cummit_sha5 5th
 
-$commit_sha4 4th
-x notes on 4th commit
+$cummit_sha4 4th
+x notes on 4th cummit
 
-$commit_sha3 3rd
-x notes on 3rd commit
+$cummit_sha3 3rd
+x notes on 3rd cummit
 
-$commit_sha2 2nd
-x notes on 2nd commit
+$cummit_sha2 2nd
+x notes on 2nd cummit
 
-$commit_sha1 1st
+$cummit_sha1 1st
 
 EOF
 
 test_expect_success 'setup merge base (x)' '
 	git config core.notesRef refs/notes/x &&
-	git notes add -m "x notes on 2nd commit" 2nd &&
-	git notes add -m "x notes on 3rd commit" 3rd &&
-	git notes add -m "x notes on 4th commit" 4th &&
+	git notes add -m "x notes on 2nd cummit" 2nd &&
+	git notes add -m "x notes on 3rd cummit" 3rd &&
+	git notes add -m "x notes on 4th cummit" 4th &&
 	verify_notes x
 '
 
 cat <<EOF | sort >expect_notes_y
-$(test_oid hash04b) $commit_sha4
-$(test_oid hash03b) $commit_sha3
-$(test_oid hash01b) $commit_sha1
+$(test_oid hash04b) $cummit_sha4
+$(test_oid hash03b) $cummit_sha3
+$(test_oid hash01b) $cummit_sha1
 EOF
 
 cat >expect_log_y <<EOF
-$commit_sha5 5th
+$cummit_sha5 5th
 
-$commit_sha4 4th
-y notes on 4th commit
+$cummit_sha4 4th
+y notes on 4th cummit
 
-$commit_sha3 3rd
-y notes on 3rd commit
+$cummit_sha3 3rd
+y notes on 3rd cummit
 
-$commit_sha2 2nd
+$cummit_sha2 2nd
 
-$commit_sha1 1st
-y notes on 1st commit
+$cummit_sha1 1st
+y notes on 1st cummit
 
 EOF
 
 test_expect_success 'setup local branch (y)' '
 	git update-ref refs/notes/y refs/notes/x &&
 	git config core.notesRef refs/notes/y &&
-	git notes add -f -m "y notes on 1st commit" 1st &&
+	git notes add -f -m "y notes on 1st cummit" 1st &&
 	git notes remove 2nd &&
-	git notes add -f -m "y notes on 3rd commit" 3rd &&
-	git notes add -f -m "y notes on 4th commit" 4th &&
+	git notes add -f -m "y notes on 3rd cummit" 3rd &&
+	git notes add -f -m "y notes on 4th cummit" 4th &&
 	verify_notes y
 '
 
 cat <<EOF | sort >expect_notes_z
-$(test_oid hash04c) $commit_sha4
-$(test_oid hash02c) $commit_sha2
-$(test_oid hash01c) $commit_sha1
+$(test_oid hash04c) $cummit_sha4
+$(test_oid hash02c) $cummit_sha2
+$(test_oid hash01c) $cummit_sha1
 EOF
 
 cat >expect_log_z <<EOF
-$commit_sha5 5th
+$cummit_sha5 5th
 
-$commit_sha4 4th
-z notes on 4th commit
+$cummit_sha4 4th
+z notes on 4th cummit
 
-$commit_sha3 3rd
+$cummit_sha3 3rd
 
-$commit_sha2 2nd
-z notes on 2nd commit
+$cummit_sha2 2nd
+z notes on 2nd cummit
 
-$commit_sha1 1st
-z notes on 1st commit
+$cummit_sha1 1st
+z notes on 1st cummit
 
 EOF
 
 test_expect_success 'setup remote branch (z)' '
 	git update-ref refs/notes/z refs/notes/x &&
 	git config core.notesRef refs/notes/z &&
-	git notes add -f -m "z notes on 1st commit" 1st &&
-	git notes add -f -m "z notes on 2nd commit" 2nd &&
+	git notes add -f -m "z notes on 1st cummit" 1st &&
+	git notes add -f -m "z notes on 2nd cummit" 2nd &&
 	git notes remove 3rd &&
-	git notes add -f -m "z notes on 4th commit" 4th &&
+	git notes add -f -m "z notes on 4th cummit" 4th &&
 	verify_notes z
 '
 
 # At this point, before merging z into y, we have the following status:
 #
-# commit | base/x  | local/y | remote/z | diff from x to y/z
+# cummit | base/x  | local/y | remote/z | diff from x to y/z
 # -------|---------|---------|----------|---------------------------
 # 1st    | [none]  | b0a6021 | 0a81da8  | added     / added (diff)
 # 2nd    | ceefa67 | [none]  | 283b482  | removed   / changed
@@ -175,33 +175,33 @@ test_expect_success 'setup remote branch (z)' '
 # 5th    | [none]  | [none]  | [none]   | [none]
 
 cat <<EOF | sort >expect_conflicts
-$commit_sha1
-$commit_sha2
-$commit_sha3
-$commit_sha4
+$cummit_sha1
+$cummit_sha2
+$cummit_sha3
+$cummit_sha4
 EOF
 
-cat >expect_conflict_$commit_sha1 <<EOF
+cat >expect_conflict_$cummit_sha1 <<EOF
 <<<<<<< refs/notes/m
-y notes on 1st commit
+y notes on 1st cummit
 =======
-z notes on 1st commit
+z notes on 1st cummit
 >>>>>>> refs/notes/z
 EOF
 
-cat >expect_conflict_$commit_sha2 <<EOF
-z notes on 2nd commit
+cat >expect_conflict_$cummit_sha2 <<EOF
+z notes on 2nd cummit
 EOF
 
-cat >expect_conflict_$commit_sha3 <<EOF
-y notes on 3rd commit
+cat >expect_conflict_$cummit_sha3 <<EOF
+y notes on 3rd cummit
 EOF
 
-cat >expect_conflict_$commit_sha4 <<EOF
+cat >expect_conflict_$cummit_sha4 <<EOF
 <<<<<<< refs/notes/m
-y notes on 4th commit
+y notes on 4th cummit
 =======
-z notes on 4th commit
+z notes on 4th cummit
 >>>>>>> refs/notes/z
 EOF
 
@@ -231,31 +231,31 @@ test_expect_success 'merge z into m (== y) with default ("manual") resolver => C
 '
 
 cat <<EOF | sort >expect_notes_z
-$(test_oid hash04d) $commit_sha4
-$(test_oid hash02c) $commit_sha2
-$(test_oid hash01c) $commit_sha1
+$(test_oid hash04d) $cummit_sha4
+$(test_oid hash02c) $cummit_sha2
+$(test_oid hash01c) $cummit_sha1
 EOF
 
 cat >expect_log_z <<EOF
-$commit_sha5 5th
+$cummit_sha5 5th
 
-$commit_sha4 4th
-z notes on 4th commit
+$cummit_sha4 4th
+z notes on 4th cummit
 
-More z notes on 4th commit
+More z notes on 4th cummit
 
-$commit_sha3 3rd
+$cummit_sha3 3rd
 
-$commit_sha2 2nd
-z notes on 2nd commit
+$cummit_sha2 2nd
+z notes on 2nd cummit
 
-$commit_sha1 1st
-z notes on 1st commit
+$cummit_sha1 1st
+z notes on 1st cummit
 
 EOF
 
 test_expect_success 'change notes in z' '
-	git notes --ref z append -m "More z notes on 4th commit" 4th &&
+	git notes --ref z append -m "More z notes on 4th cummit" 4th &&
 	verify_notes z
 '
 
@@ -269,53 +269,53 @@ test_expect_success 'cannot do merge w/conflicts when previous merge is unfinish
 # Setup non-conflicting merge between x and new notes ref w
 
 cat <<EOF | sort >expect_notes_w
-$(test_oid hash02a) $commit_sha2
-$(test_oid hash01e) $commit_sha1
+$(test_oid hash02a) $cummit_sha2
+$(test_oid hash01e) $cummit_sha1
 EOF
 
 cat >expect_log_w <<EOF
-$commit_sha5 5th
+$cummit_sha5 5th
 
-$commit_sha4 4th
+$cummit_sha4 4th
 
-$commit_sha3 3rd
+$cummit_sha3 3rd
 
-$commit_sha2 2nd
-x notes on 2nd commit
+$cummit_sha2 2nd
+x notes on 2nd cummit
 
-$commit_sha1 1st
-w notes on 1st commit
+$cummit_sha1 1st
+w notes on 1st cummit
 
 EOF
 
 test_expect_success 'setup unrelated notes ref (w)' '
 	git config core.notesRef refs/notes/w &&
-	git notes add -m "w notes on 1st commit" 1st &&
-	git notes add -m "x notes on 2nd commit" 2nd &&
+	git notes add -m "w notes on 1st cummit" 1st &&
+	git notes add -m "x notes on 2nd cummit" 2nd &&
 	verify_notes w
 '
 
 cat <<EOF | sort >expect_notes_w
-$(test_oid hash04a) $commit_sha4
-$(test_oid hash03a) $commit_sha3
-$(test_oid hash02a) $commit_sha2
-$(test_oid hash01e) $commit_sha1
+$(test_oid hash04a) $cummit_sha4
+$(test_oid hash03a) $cummit_sha3
+$(test_oid hash02a) $cummit_sha2
+$(test_oid hash01e) $cummit_sha1
 EOF
 
 cat >expect_log_w <<EOF
-$commit_sha5 5th
+$cummit_sha5 5th
 
-$commit_sha4 4th
-x notes on 4th commit
+$cummit_sha4 4th
+x notes on 4th cummit
 
-$commit_sha3 3rd
-x notes on 3rd commit
+$cummit_sha3 3rd
+x notes on 3rd cummit
 
-$commit_sha2 2nd
-x notes on 2nd commit
+$cummit_sha2 2nd
+x notes on 2nd cummit
 
-$commit_sha1 1st
-w notes on 1st commit
+$cummit_sha1 1st
+w notes on 1st cummit
 
 EOF
 
@@ -329,35 +329,35 @@ test_expect_success 'can do merge without conflicts even if previous merge is un
 '
 
 cat <<EOF | sort >expect_notes_m
-$(test_oid hash04f) $commit_sha4
-$(test_oid hash03b) $commit_sha3
-$(test_oid hash02c) $commit_sha2
-$(test_oid hash01f) $commit_sha1
+$(test_oid hash04f) $cummit_sha4
+$(test_oid hash03b) $cummit_sha3
+$(test_oid hash02c) $cummit_sha2
+$(test_oid hash01f) $cummit_sha1
 EOF
 
 cat >expect_log_m <<EOF
-$commit_sha5 5th
+$cummit_sha5 5th
 
-$commit_sha4 4th
-y and z notes on 4th commit
+$cummit_sha4 4th
+y and z notes on 4th cummit
 
-$commit_sha3 3rd
-y notes on 3rd commit
+$cummit_sha3 3rd
+y notes on 3rd cummit
 
-$commit_sha2 2nd
-z notes on 2nd commit
+$cummit_sha2 2nd
+z notes on 2nd cummit
 
-$commit_sha1 1st
-y and z notes on 1st commit
+$cummit_sha1 1st
+y and z notes on 1st cummit
 
 EOF
 
-test_expect_success 'do not allow mixing --commit and --abort' '
-	test_must_fail git notes merge --commit --abort
+test_expect_success 'do not allow mixing --cummit and --abort' '
+	test_must_fail git notes merge --cummit --abort
 '
 
-test_expect_success 'do not allow mixing --commit and --strategy' '
-	test_must_fail git notes merge --commit --strategy theirs
+test_expect_success 'do not allow mixing --cummit and --strategy' '
+	test_must_fail git notes merge --cummit --strategy theirs
 '
 
 test_expect_success 'do not allow mixing --abort and --strategy' '
@@ -366,25 +366,25 @@ test_expect_success 'do not allow mixing --abort and --strategy' '
 
 test_expect_success 'finalize conflicting merge (z => m)' '
 	# Resolve conflicts and finalize merge
-	cat >.git/NOTES_MERGE_WORKTREE/$commit_sha1 <<EOF &&
-y and z notes on 1st commit
+	cat >.git/NOTES_MERGE_WORKTREE/$cummit_sha1 <<EOF &&
+y and z notes on 1st cummit
 EOF
-	cat >.git/NOTES_MERGE_WORKTREE/$commit_sha4 <<EOF &&
-y and z notes on 4th commit
+	cat >.git/NOTES_MERGE_WORKTREE/$cummit_sha4 <<EOF &&
+y and z notes on 4th cummit
 EOF
-	git notes merge --commit &&
+	git notes merge --cummit &&
 	notes_merge_files_gone &&
 	# Merge commit has pre-merge y and pre-merge z as parents
 	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
 	test "$(git rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
-	# Merge commit mentions the notes refs merged
-	git log -1 --format=%B refs/notes/m > merge_commit_msg &&
-	grep -q refs/notes/m merge_commit_msg &&
-	grep -q refs/notes/z merge_commit_msg &&
-	# Merge commit mentions conflicting notes
-	grep -q "Conflicts" merge_commit_msg &&
+	# Merge cummit mentions the notes refs merged
+	git log -1 --format=%B refs/notes/m > merge_cummit_msg &&
+	grep -q refs/notes/m merge_cummit_msg &&
+	grep -q refs/notes/z merge_cummit_msg &&
+	# Merge cummit mentions conflicting notes
+	grep -q "Conflicts" merge_cummit_msg &&
 	( for sha1 in $(cat expect_conflicts); do
-		grep -q "$sha1" merge_commit_msg ||
+		grep -q "$sha1" merge_cummit_msg ||
 		exit 1
 	done ) &&
 	# Verify contents of merge result
@@ -396,13 +396,13 @@ EOF
 	verify_notes z
 '
 
-cat >expect_conflict_$commit_sha4 <<EOF
+cat >expect_conflict_$cummit_sha4 <<EOF
 <<<<<<< refs/notes/m
-y notes on 4th commit
+y notes on 4th cummit
 =======
-z notes on 4th commit
+z notes on 4th cummit
 
-More z notes on 4th commit
+More z notes on 4th cummit
 >>>>>>> refs/notes/z
 EOF
 
@@ -464,52 +464,52 @@ test_expect_success 'redo merge of z into m (== y) with default ("manual") resol
 '
 
 cat <<EOF | sort >expect_notes_m
-$(test_oid hash05g) $commit_sha5
-$(test_oid hash02c) $commit_sha2
-$(test_oid hash01f) $commit_sha1
+$(test_oid hash05g) $cummit_sha5
+$(test_oid hash02c) $cummit_sha2
+$(test_oid hash01f) $cummit_sha1
 EOF
 
 cat >expect_log_m <<EOF
-$commit_sha5 5th
-new note on 5th commit
+$cummit_sha5 5th
+new note on 5th cummit
 
-$commit_sha4 4th
+$cummit_sha4 4th
 
-$commit_sha3 3rd
+$cummit_sha3 3rd
 
-$commit_sha2 2nd
-z notes on 2nd commit
+$cummit_sha2 2nd
+z notes on 2nd cummit
 
-$commit_sha1 1st
-y and z notes on 1st commit
+$cummit_sha1 1st
+y and z notes on 1st cummit
 
 EOF
 
 test_expect_success 'add + remove notes in finalized merge (z => m)' '
 	# Resolve one conflict
-	cat >.git/NOTES_MERGE_WORKTREE/$commit_sha1 <<EOF &&
-y and z notes on 1st commit
+	cat >.git/NOTES_MERGE_WORKTREE/$cummit_sha1 <<EOF &&
+y and z notes on 1st cummit
 EOF
 	# Remove another conflict
-	rm .git/NOTES_MERGE_WORKTREE/$commit_sha4 &&
+	rm .git/NOTES_MERGE_WORKTREE/$cummit_sha4 &&
 	# Remove a D/F conflict
-	rm .git/NOTES_MERGE_WORKTREE/$commit_sha3 &&
+	rm .git/NOTES_MERGE_WORKTREE/$cummit_sha3 &&
 	# Add a new note
-	echo "new note on 5th commit" > .git/NOTES_MERGE_WORKTREE/$commit_sha5 &&
+	echo "new note on 5th cummit" > .git/NOTES_MERGE_WORKTREE/$cummit_sha5 &&
 	# Finalize merge
-	git notes merge --commit &&
+	git notes merge --cummit &&
 	notes_merge_files_gone &&
 	# Merge commit has pre-merge y and pre-merge z as parents
 	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
 	test "$(git rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
-	# Merge commit mentions the notes refs merged
-	git log -1 --format=%B refs/notes/m > merge_commit_msg &&
-	grep -q refs/notes/m merge_commit_msg &&
-	grep -q refs/notes/z merge_commit_msg &&
-	# Merge commit mentions conflicting notes
-	grep -q "Conflicts" merge_commit_msg &&
+	# Merge cummit mentions the notes refs merged
+	git log -1 --format=%B refs/notes/m > merge_cummit_msg &&
+	grep -q refs/notes/m merge_cummit_msg &&
+	grep -q refs/notes/z merge_cummit_msg &&
+	# Merge cummit mentions conflicting notes
+	grep -q "Conflicts" merge_cummit_msg &&
 	( for sha1 in $(cat expect_conflicts); do
-		grep -q "$sha1" merge_commit_msg ||
+		grep -q "$sha1" merge_cummit_msg ||
 		exit 1
 	done ) &&
 	# Verify contents of merge result
@@ -553,21 +553,21 @@ test_expect_success 'reset notes ref m to somewhere else (w)' '
 
 test_expect_success 'fail to finalize conflicting merge if underlying ref has moved in the meantime (m != NOTES_MERGE_PARTIAL^1)' '
 	# Resolve conflicts
-	cat >.git/NOTES_MERGE_WORKTREE/$commit_sha1 <<EOF &&
-y and z notes on 1st commit
+	cat >.git/NOTES_MERGE_WORKTREE/$cummit_sha1 <<EOF &&
+y and z notes on 1st cummit
 EOF
-	cat >.git/NOTES_MERGE_WORKTREE/$commit_sha4 <<EOF &&
-y and z notes on 4th commit
+	cat >.git/NOTES_MERGE_WORKTREE/$cummit_sha4 <<EOF &&
+y and z notes on 4th cummit
 EOF
 	# Fail to finalize merge
-	test_must_fail git notes merge --commit >output 2>&1 &&
+	test_must_fail git notes merge --cummit >output 2>&1 &&
 	# .git/NOTES_MERGE_* must remain
 	test -f .git/NOTES_MERGE_PARTIAL &&
 	test -f .git/NOTES_MERGE_REF &&
-	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha1 &&
-	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha2 &&
-	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha3 &&
-	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha4 &&
+	test -f .git/NOTES_MERGE_WORKTREE/$cummit_sha1 &&
+	test -f .git/NOTES_MERGE_WORKTREE/$cummit_sha2 &&
+	test -f .git/NOTES_MERGE_WORKTREE/$cummit_sha3 &&
+	test -f .git/NOTES_MERGE_WORKTREE/$cummit_sha4 &&
 	# Refs are unchanged
 	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)" &&
 	test "$(git rev-parse refs/notes/y)" = "$(git rev-parse NOTES_MERGE_PARTIAL^1)" &&
@@ -600,7 +600,7 @@ foo
 bar
 EOF
 
-test_expect_success 'switch cwd before committing notes merge' '
+test_expect_success 'switch cwd before cummitting notes merge' '
 	git notes add -m foo HEAD &&
 	git notes --ref=other add -m bar HEAD &&
 	test_must_fail git notes merge refs/notes/other &&
@@ -608,7 +608,7 @@ test_expect_success 'switch cwd before committing notes merge' '
 		cd .git/NOTES_MERGE_WORKTREE &&
 		echo "foo" > $(git rev-parse HEAD) &&
 		echo "bar" >> $(git rev-parse HEAD) &&
-		git notes merge --commit
+		git notes merge --cummit
 	) &&
 	git notes show HEAD > actual_notes &&
 	test_cmp expect_notes actual_notes

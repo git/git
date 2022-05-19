@@ -11,7 +11,7 @@ test_expect_success 'preparing first repository' '
 		cd A &&
 		echo "Hello World" > file1 &&
 		git add file1 &&
-		git commit -m "Initial commit" file1 &&
+		git cummit -m "Initial cummit" file1 &&
 		git repack -a -d &&
 		git prune
 	)
@@ -22,7 +22,7 @@ test_expect_success 'preparing second repository' '
 		cd B &&
 		echo "foo bar" > file2 &&
 		git add file2 &&
-		git commit -m "next commit" file2 &&
+		git cummit -m "next cummit" file2 &&
 		git repack -a -d -l &&
 		git prune
 	)
@@ -33,7 +33,7 @@ test_expect_success 'preparing third repository' '
 		cd C &&
 		echo "Goodbye, cruel world" > file3 &&
 		git add file3 &&
-		git commit -m "one more" file3 &&
+		git cummit -m "one more" file3 &&
 		git repack -a -d -l &&
 		git prune
 	)

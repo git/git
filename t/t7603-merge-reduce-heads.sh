@@ -16,30 +16,30 @@ Testing octopus merge when reducing parents to independent branches.'
 test_expect_success 'setup' '
 	echo c0 > c0.c &&
 	git add c0.c &&
-	git commit -m c0 &&
+	git cummit -m c0 &&
 	git tag c0 &&
 	echo c1 > c1.c &&
 	git add c1.c &&
-	git commit -m c1 &&
+	git cummit -m c1 &&
 	git tag c1 &&
 	git reset --hard c0 &&
 	echo c2 > c2.c &&
 	git add c2.c &&
-	git commit -m c2 &&
+	git cummit -m c2 &&
 	git tag c2 &&
 	git reset --hard c0 &&
 	echo c3 > c3.c &&
 	git add c3.c &&
-	git commit -m c3 &&
+	git cummit -m c3 &&
 	git tag c3 &&
 	git reset --hard c0 &&
 	echo c4 > c4.c &&
 	git add c4.c &&
-	git commit -m c4 &&
+	git cummit -m c4 &&
 	git tag c4 &&
 	echo c5 > c5.c &&
 	git add c5.c &&
-	git commit -m c5 &&
+	git cummit -m c5 &&
 	git tag c5
 '
 
@@ -94,7 +94,7 @@ test_expect_success 'setup' '
 	do
 		echo $i > $i.c &&
 		git add $i.c &&
-		git commit -m $i &&
+		git cummit -m $i &&
 		git tag $i || return 1
 	done &&
 	git reset --hard A &&
@@ -102,7 +102,7 @@ test_expect_success 'setup' '
 	do
 		echo $i > $i.c &&
 		git add $i.c &&
-		git commit -m $i &&
+		git cummit -m $i &&
 		git tag $i || return 1
 	done
 '
@@ -121,12 +121,12 @@ test_expect_success 'add conflicts' '
 	git reset --hard E &&
 	echo foo > file.c &&
 	git add file.c &&
-	git commit -m E2 &&
+	git cummit -m E2 &&
 	git tag E2 &&
 	git reset --hard I &&
 	echo bar >file.c &&
 	git add file.c &&
-	git commit -m I2 &&
+	git cummit -m I2 &&
 	git tag I2
 '
 
@@ -135,7 +135,7 @@ test_expect_success 'merge E2 and I2, causing a conflict and resolve it' '
 	test_must_fail git merge E2 I2 &&
 	echo baz > file.c &&
 	git add file.c &&
-	git commit -m "resolve conflict"
+	git cummit -m "resolve conflict"
 '
 
 test_expect_success 'verify merge result' '

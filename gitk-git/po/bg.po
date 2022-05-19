@@ -60,11 +60,11 @@ msgid "Reading"
 msgstr "Прочитане"
 
 #: gitk:496 gitk:4549
-msgid "Reading commits..."
+msgid "Reading cummits..."
 msgstr "Прочитане на подаванията…"
 
 #: gitk:499 gitk:1641 gitk:4552
-msgid "No commits selected"
+msgid "No cummits selected"
 msgstr "Не са избрани подавания"
 
 #: gitk:1449 gitk:4069 gitk:12583
@@ -76,7 +76,7 @@ msgid "Can't parse git log output:"
 msgstr "Изходът от „git log“ не може да се анализира:"
 
 #: gitk:1744
-msgid "No commit information available"
+msgid "No cummit information available"
 msgstr "Липсва информация за подавания"
 
 #: gitk:1907 gitk:1936 gitk:4339 gitk:9789 gitk:11388 gitk:11668
@@ -169,7 +169,7 @@ msgid "Find"
 msgstr "Търсене"
 
 #: gitk:2313
-msgid "commit"
+msgid "cummit"
 msgstr "подаване"
 
 #: gitk:2317 gitk:2319 gitk:4711 gitk:4734 gitk:4758 gitk:6779 gitk:6851
@@ -219,7 +219,7 @@ msgid "Author"
 msgstr "Автор"
 
 #: gitk:2337 gitk:4895 gitk:6810 gitk:7350
-msgid "Committer"
+msgid "cummitter"
 msgstr "Подаващ"
 
 #: gitk:2371
@@ -275,11 +275,11 @@ msgid "Create tag"
 msgstr "Създаване на етикет"
 
 #: gitk:2643
-msgid "Copy commit summary"
+msgid "Copy cummit summary"
 msgstr "Копиране на информацията за подаване"
 
 #: gitk:2644 gitk:9414
-msgid "Write commit to file"
+msgid "Write cummit to file"
 msgstr "Запазване на подаването във файл"
 
 #: gitk:2645
@@ -287,7 +287,7 @@ msgid "Create new branch"
 msgstr "Създаване на нов клон"
 
 #: gitk:2646
-msgid "Cherry-pick this commit"
+msgid "Cherry-pick this cummit"
 msgstr "Отбиране на това подаване"
 
 #: gitk:2647
@@ -295,7 +295,7 @@ msgid "Reset HEAD branch to here"
 msgstr "Привеждане на върха на клона към текущото подаване"
 
 #: gitk:2648
-msgid "Mark this commit"
+msgid "Mark this cummit"
 msgstr "Отбелязване на това подаване"
 
 #: gitk:2649
@@ -307,19 +307,19 @@ msgid "Find descendant of this and mark"
 msgstr "Откриване и отбелязване на наследниците"
 
 #: gitk:2651
-msgid "Compare with marked commit"
+msgid "Compare with marked cummit"
 msgstr "Сравнение с отбелязаното подаване"
 
 #: gitk:2652 gitk:2663
-msgid "Diff this -> marked commit"
+msgid "Diff this -> marked cummit"
 msgstr "Разлики между това и отбелязаното"
 
 #: gitk:2653 gitk:2664
-msgid "Diff marked commit -> this"
+msgid "Diff marked cummit -> this"
 msgstr "Разлики между отбелязаното и това"
 
 #: gitk:2654
-msgid "Revert this commit"
+msgid "Revert this cummit"
 msgstr "Отмяна на това подаване"
 
 #: gitk:2670
@@ -351,7 +351,7 @@ msgid "External diff"
 msgstr "Външна програма за разлики"
 
 #: gitk:2683
-msgid "Blame parent commit"
+msgid "Blame parent cummit"
 msgstr "Анотиране на родителското подаване"
 
 #: gitk:2684
@@ -373,7 +373,7 @@ msgstr "Относно gitk"
 #: gitk:3038
 msgid ""
 "\n"
-"Gitk - a commit viewer for git\n"
+"Gitk - a cummit viewer for git\n"
 "\n"
 "Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
@@ -409,19 +409,19 @@ msgid "<%s-W>\t\tClose window"
 msgstr "<%s-W>\t\tЗатваряне на прозореца"
 
 #: gitk:3074
-msgid "<Home>\t\tMove to first commit"
+msgid "<Home>\t\tMove to first cummit"
 msgstr "<Home>\t\tКъм първото подаване"
 
 #: gitk:3075
-msgid "<End>\t\tMove to last commit"
+msgid "<End>\t\tMove to last cummit"
 msgstr "<End>\t\tКъм последното подаване"
 
 #: gitk:3076
-msgid "<Up>, p, k\tMove up one commit"
+msgid "<Up>, p, k\tMove up one cummit"
 msgstr "<Up>, p, k\tЕдно подаване нагоре"
 
 #: gitk:3077
-msgid "<Down>, n, j\tMove down one commit"
+msgid "<Down>, n, j\tMove down one cummit"
 msgstr "<Down>, n, j\tЕдно подаване надолу"
 
 #: gitk:3078
@@ -434,53 +434,53 @@ msgstr "<Right>, x, l\tНапред в историята"
 
 #: gitk:3080
 #, tcl-format
-msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgid "<%s-n>\tGo to n-th parent of current cummit in history list"
 msgstr "<%s-n>\tКъм n-тия родител на текущото подаване в историята"
 
 #: gitk:3081
-msgid "<PageUp>\tMove up one page in commit list"
+msgid "<PageUp>\tMove up one page in cummit list"
 msgstr "<PageUp>\tСтраница нагоре в списъка с подаванията"
 
 #: gitk:3082
-msgid "<PageDown>\tMove down one page in commit list"
+msgid "<PageDown>\tMove down one page in cummit list"
 msgstr "<PageDown>\tСтраница надолу в списъка с подаванията"
 
 #: gitk:3083
 #, tcl-format
-msgid "<%s-Home>\tScroll to top of commit list"
+msgid "<%s-Home>\tScroll to top of cummit list"
 msgstr "<%s-Home>\tКъм началото на списъка с подаванията"
 
 #: gitk:3084
 #, tcl-format
-msgid "<%s-End>\tScroll to bottom of commit list"
+msgid "<%s-End>\tScroll to bottom of cummit list"
 msgstr "<%s-End>\tКъм края на списъка с подаванията"
 
 #: gitk:3085
 #, tcl-format
-msgid "<%s-Up>\tScroll commit list up one line"
+msgid "<%s-Up>\tScroll cummit list up one line"
 msgstr "<%s-Up>\tРед нагоре в списъка с подавания"
 
 #: gitk:3086
 #, tcl-format
-msgid "<%s-Down>\tScroll commit list down one line"
+msgid "<%s-Down>\tScroll cummit list down one line"
 msgstr "<%s-Down>\tРед надолу в списъка с подавания"
 
 #: gitk:3087
 #, tcl-format
-msgid "<%s-PageUp>\tScroll commit list up one page"
+msgid "<%s-PageUp>\tScroll cummit list up one page"
 msgstr "<%s-PageUp>\tСтраница нагоре в списъка с подавания"
 
 #: gitk:3088
 #, tcl-format
-msgid "<%s-PageDown>\tScroll commit list down one page"
+msgid "<%s-PageDown>\tScroll cummit list down one page"
 msgstr "<%s-PageDown>\tСтраница надолу в списъка с подавания"
 
 #: gitk:3089
-msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgid "<Shift-Up>\tFind backwards (upwards, later cummits)"
 msgstr "<Shift-Up>\tТърсене назад (визуално нагоре, исторически — последващи)"
 
 #: gitk:3090
-msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgid "<Shift-Down>\tFind forwards (downwards, earlier cummits)"
 msgstr ""
 "<Shift-Down>\tТърсене напред (визуално надолу, исторически — предхождащи)"
 
@@ -519,7 +519,7 @@ msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\tКъм следващата поява"
 
 #: gitk:3099
-msgid "g\t\tGo to commit"
+msgid "g\t\tGo to cummit"
 msgstr "g\t\tКъм последното подаване"
 
 #: gitk:3100
@@ -583,7 +583,7 @@ msgid "command failed:"
 msgstr "неуспешно изпълнение на команда:"
 
 #: gitk:3808
-msgid "No such commit"
+msgid "No such cummit"
 msgstr "Такова подаване няма"
 
 #: gitk:3822
@@ -616,7 +616,7 @@ msgstr "Грешка при изпълнението на „git blame“: %s"
 
 #: gitk:3949
 #, tcl-format
-msgid "That line comes from commit %s,  which is not in this view"
+msgid "That line comes from cummit %s,  which is not in this view"
 msgstr "Този ред идва от подаването %s, което не е в изгледа"
 
 #: gitk:3963
@@ -664,7 +664,7 @@ msgid "All remote-tracking branches"
 msgstr "Всички следящи клони"
 
 #: gitk:4105
-msgid "Commit Info (regular expressions):"
+msgid "cummit Info (regular expressions):"
 msgstr "Информация за подаване (рег. изр.):"
 
 #: gitk:4106
@@ -672,19 +672,19 @@ msgid "Author:"
 msgstr "Автор:"
 
 #: gitk:4107
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "Подал:"
 
 #: gitk:4108
-msgid "Commit Message:"
+msgid "cummit Message:"
 msgstr "Съобщение при подаване:"
 
 #: gitk:4109
-msgid "Matches all Commit Info criteria"
+msgid "Matches all cummit Info criteria"
 msgstr "Съвпадение по всички характеристики на подаването"
 
 #: gitk:4110
-msgid "Matches no Commit Info criteria"
+msgid "Matches no cummit Info criteria"
 msgstr "Не съвпада по никоя от характеристиките на подаването"
 
 #: gitk:4111
@@ -705,7 +705,7 @@ msgstr "Низ за търсене:"
 
 #: gitk:4115
 msgid ""
-"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"cummit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 msgstr ""
 "Дата на подаване („2 weeks ago“ (преди 2 седмици), „2009-03-17 15:27:38“, "
@@ -762,7 +762,7 @@ msgid "Enter files and directories to include, one per line:"
 msgstr "Въведете файловете и директориите за включване, по елемент на ред"
 
 #: gitk:4128
-msgid "Command to generate more commits to include:"
+msgid "Command to generate more cummits to include:"
 msgstr ""
 "Команда за генерирането на допълнителни подавания, които да бъдат включени:"
 
@@ -783,7 +783,7 @@ msgid "Apply (F5)"
 msgstr "Прилагане (F5)"
 
 #: gitk:4378
-msgid "Error in commit selection arguments:"
+msgid "Error in cummit selection arguments:"
 msgstr "Грешка в аргументите за избор на подавания:"
 
 #: gitk:4433 gitk:4486 gitk:4948 gitk:4962 gitk:6232 gitk:12524 gitk:12525
@@ -807,11 +807,11 @@ msgid "Not ancestor"
 msgstr "Не е предшественик"
 
 #: gitk:5348
-msgid "Local changes checked in to index but not committed"
+msgid "Local changes checked in to index but not cummitted"
 msgstr "Локални промени добавени към индекса, но неподадени"
 
 #: gitk:5384
-msgid "Local uncommitted changes, not checked in to index"
+msgid "Local uncummitted changes, not checked in to index"
 msgstr "Локални промени извън индекса"
 
 #: gitk:7158
@@ -893,7 +893,7 @@ msgid "Detached head: can't reset"
 msgstr "Несвързан връх: невъзможно зануляване"
 
 #: gitk:9034 gitk:9040
-msgid "Skipping merge commit "
+msgid "Skipping merge cummit "
 msgstr "Пропускане на подаването на сливането"
 
 #: gitk:9049 gitk:9054
@@ -905,7 +905,7 @@ msgid " - stopping\n"
 msgstr " — спиране\n"
 
 #: gitk:9060 gitk:9063 gitk:9071 gitk:9085 gitk:9094
-msgid "Commit "
+msgid "cummit "
 msgstr "Подаване"
 
 #: gitk:9064
@@ -926,7 +926,7 @@ msgstr ""
 
 #: gitk:9074
 msgid ""
-"Diff of commits:\n"
+"Diff of cummits:\n"
 "\n"
 msgstr ""
 "Разлика между подаванията:\n"
@@ -939,12 +939,12 @@ msgstr " има %s деца — спиране\n"
 
 #: gitk:9114
 #, tcl-format
-msgid "Error writing commit to file: %s"
+msgid "Error writing cummit to file: %s"
 msgstr "Грешка при запазването на подаването във файл: %s"
 
 #: gitk:9120
 #, tcl-format
-msgid "Error diffing commits: %s"
+msgid "Error diffing cummits: %s"
 msgstr "Грешка при изчисляването на разликите между подаванията: %s"
 
 #: gitk:9166
@@ -1029,7 +1029,7 @@ msgid "Write"
 msgstr "Запазване"
 
 #: gitk:9451
-msgid "Error writing commit:"
+msgid "Error writing cummit:"
 msgstr "Грешка при запазването на подаването:"
 
 #: gitk:9473
@@ -1064,7 +1064,7 @@ msgstr "Укажете ново име за клона"
 
 #: gitk:9650
 #, tcl-format
-msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgid "cummit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
 "Подаването „%s“ вече е включено в клона „%s“ — да бъде ли приложено отново?"
 
@@ -1076,7 +1076,7 @@ msgstr "Отбиране"
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
-"Please commit, reset or stash your changes and try again."
+"Please cummit, reset or stash your changes and try again."
 msgstr ""
 "Неуспешно отбиране, защото във файла „%s“ има локални промени.\n"
 "Подайте, занулете или ги скатайте и пробвайте отново."
@@ -1090,12 +1090,12 @@ msgstr ""
 "Искате ли да ги коригирате чрез „git citool“?"
 
 #: gitk:9686 gitk:9744
-msgid "No changes committed"
+msgid "No changes cummitted"
 msgstr "Не са подадени промени"
 
 #: gitk:9713
 #, tcl-format
-msgid "Commit %s is not included in branch %s -- really revert it?"
+msgid "cummit %s is not included in branch %s -- really revert it?"
 msgstr "Подаването „%s“ не е включено в клона „%s“. Да бъде ли отменено?"
 
 #: gitk:9718
@@ -1106,7 +1106,7 @@ msgstr "Отмяна"
 #, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
-"commit, reset or stash  your changes and try again."
+"cummit, reset or stash  your changes and try again."
 msgstr ""
 "Неуспешна отмяна, защото във файла „%s“ има локални промени.\n"
 "Подайте, занулете или ги скатайте и пробвайте отново."
@@ -1168,7 +1168,7 @@ msgstr "Текущо изтегленият клон не може да бъде
 #: gitk:9949
 #, tcl-format
 msgid ""
-"The commits on branch %s aren't on any other branch.\n"
+"The cummits on branch %s aren't on any other branch.\n"
 "Really delete branch %s?"
 msgstr ""
 "Подаванията на клона „%s“ не са на никой друг клон.\n"
@@ -1185,7 +1185,7 @@ msgstr "Филтриране"
 
 #: gitk:10293
 msgid ""
-"Error reading commit topology information; branch and preceding/following "
+"Error reading cummit topology information; branch and preceding/following "
 "tag information will be incomplete."
 msgstr ""
 "Грешка при прочитането на топологията на подаванията. Информацията за клона "
@@ -1212,7 +1212,7 @@ msgid "I"
 msgstr "К"
 
 #: gitk:11495
-msgid "Commit list display options"
+msgid "cummit list display options"
 msgstr "Настройки на списъка с подавания"
 
 #: gitk:11498

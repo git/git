@@ -1,7 +1,7 @@
 --pretty[=<format>]::
 --format=<format>::
 
-	Pretty-print the contents of the commit logs in a given format,
+	Pretty-print the contents of the cummit logs in a given format,
 	where '<format>' can be one of 'oneline', 'short', 'medium',
 	'full', 'fuller', 'reference', 'email', 'raw', 'format:<string>'
 	and 'tformat:<string>'.  When '<format>' is none of the above,
@@ -14,8 +14,8 @@ format.  When '=<format>' part is omitted, it defaults to 'medium'.
 Note: you can specify the default pretty format in the repository
 configuration (see linkgit:git-config[1]).
 
---abbrev-commit::
-	Instead of showing the full 40-byte hexadecimal commit object
+--abbrev-cummit::
+	Instead of showing the full 40-byte hexadecimal cummit object
 	name, show a prefix that names the object uniquely.
 	"--abbrev=<n>" (which also modifies diff output, if it is displayed)
 	option can be used to specify the minimum length of the prefix.
@@ -23,25 +23,25 @@ configuration (see linkgit:git-config[1]).
 This should make "--pretty=oneline" a whole lot more readable for
 people using 80-column terminals.
 
---no-abbrev-commit::
-	Show the full 40-byte hexadecimal commit object name. This negates
-	`--abbrev-commit`, either explicit or implied by other options such
-	as "--oneline". It also overrides the `log.abbrevCommit` variable.
+--no-abbrev-cummit::
+	Show the full 40-byte hexadecimal cummit object name. This negates
+	`--abbrev-cummit`, either explicit or implied by other options such
+	as "--oneline". It also overrides the `log.abbrevcummit` variable.
 
 --oneline::
-	This is a shorthand for "--pretty=oneline --abbrev-commit"
+	This is a shorthand for "--pretty=oneline --abbrev-cummit"
 	used together.
 
 --encoding=<encoding>::
-	Commit objects record the character encoding used for the log message
+	cummit objects record the character encoding used for the log message
 	in their encoding header; this option can be used to tell the
-	command to re-code the commit log message in the encoding
+	command to re-code the cummit log message in the encoding
 	preferred by the user.  For non plumbing commands this
 	defaults to UTF-8. Note that if an object claims to be encoded
 	in `X` and we are outputting in `X`, we will output the object
 	verbatim; this means that invalid sequences in the original
-	commit may be copied to the output. Likewise, if iconv(3) fails
-	to convert the commit, we will quietly output the original
+	cummit may be copied to the output. Likewise, if iconv(3) fails
+	to convert the cummit, we will quietly output the original
 	object verbatim.
 
 --expand-tabs=<n>::
@@ -61,7 +61,7 @@ and 'fuller').
 ifndef::git-rev-list[]
 --notes[=<ref>]::
 	Show the notes (see linkgit:git-notes[1]) that annotate the
-	commit, when showing the commit log message.  This is the default
+	cummit, when showing the cummit log message.  This is the default
 	for `git log`, `git show` and `git whatchanged` commands when
 	there is no `--pretty`, `--format`, or `--oneline` option given
 	on the command line.
@@ -94,5 +94,5 @@ being displayed. Examples: "--notes=foo" will show only notes from
 endif::git-rev-list[]
 
 --show-signature::
-	Check the validity of a signed commit object by passing the signature
+	Check the validity of a signed cummit object by passing the signature
 	to `gpg --verify` and show the output.

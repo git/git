@@ -12,19 +12,19 @@ struct parsed_object_pool {
 	/* TODO: migrate alloc_states to mem-pool? */
 	struct alloc_state *blob_state;
 	struct alloc_state *tree_state;
-	struct alloc_state *commit_state;
+	struct alloc_state *cummit_state;
 	struct alloc_state *tag_state;
 	struct alloc_state *object_state;
 
 	/* parent substitutions from .git/info/grafts and .git/shallow */
-	struct commit_graft **grafts;
+	struct cummit_graft **grafts;
 	int grafts_alloc, grafts_nr;
 
 	int is_shallow;
 	struct stat_validity *shallow_stat;
 	char *alternate_shallow_file;
 
-	int commit_graft_prepared;
+	int cummit_graft_prepared;
 	int substituted_parent;
 
 	struct buffer_slab *buffer_slab;
@@ -68,8 +68,8 @@ struct object_array {
  * bisect.c:                                        16
  * bundle.c:                                        16
  * http-push.c:                          11-----14
- * commit-graph.c:                                15
- * commit-reach.c:                                  16-----19
+ * cummit-graph.c:                                15
+ * cummit-reach.c:                                  16-----19
  * sha1-name.c:                                              20
  * list-objects-filter.c:                                      21
  * builtin/fsck.c:           0--3
@@ -110,8 +110,8 @@ struct object *get_indexed_object(unsigned int);
  * it can return "yes we have, and here is a half-initialised object"
  * for an object that we haven't loaded/parsed yet.
  *
- * When parsing a commit to create an in-core commit object, its
- * parents list holds commit objects that represent its parents, but
+ * When parsing a cummit to create an in-core cummit object, its
+ * parents list holds cummit objects that represent its parents, but
  * they are expected to be lazily initialized and do not know what
  * their trees or parents are yet.  When this function returns such a
  * half-initialised objects, the caller is expected to initialize them
@@ -158,7 +158,7 @@ struct object *parse_object_buffer(struct repository *r, const struct object_id 
 struct object *lookup_unknown_object(struct repository *r, const struct object_id *oid);
 
 /*
- * Dispatch to the appropriate lookup_blob(), lookup_commit(), etc, based on
+ * Dispatch to the appropriate lookup_blob(), lookup_cummit(), etc, based on
  * "type".
  */
 struct object *lookup_object_by_type(struct repository *r, const struct object_id *oid,
@@ -208,9 +208,9 @@ void object_array_clear(struct object_array *array);
 void clear_object_flags(unsigned flags);
 
 /*
- * Clear the specified object flags from all in-core commit objects from
+ * Clear the specified object flags from all in-core cummit objects from
  * the specified repository.
  */
-void repo_clear_commit_marks(struct repository *r, unsigned int flags);
+void repo_clear_cummit_marks(struct repository *r, unsigned int flags);
 
 #endif /* OBJECT_H */

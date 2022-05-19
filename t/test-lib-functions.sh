@@ -129,9 +129,9 @@ test_tick () {
 	else
 		test_tick=$(($test_tick + 60))
 	fi
-	GIT_COMMITTER_DATE="$test_tick -0700"
+	GIT_cummitTER_DATE="$test_tick -0700"
 	GIT_AUTHOR_DATE="$test_tick -0700"
-	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
+	export GIT_cummitTER_DATE GIT_AUTHOR_DATE
 }
 
 # Stop execution and start a shell. This is useful for debugging tests.
@@ -243,11 +243,11 @@ debug () {
 	done
 }
 
-# Usage: test_commit [options] <message> [<file> [<contents> [<tag>]]]
+# Usage: test_cummit [options] <message> [<file> [<contents> [<tag>]]]
 #   -C <dir>:
 #	Run all git commands in directory <dir>
 #   --notick
-#	Do not call test_tick before making a commit
+#	Do not call test_tick before making a cummit
 #   --append
 #	Use ">>" instead of ">" when writing "<contents>" to "<file>"
 #   --printf
@@ -257,22 +257,22 @@ debug () {
 #       supports nothing but the FORMAT of printf(1), i.e. no custom
 #       ARGUMENT(s).
 #   --signoff
-#	Invoke "git commit" with --signoff
+#	Invoke "git cummit" with --signoff
 #   --author <author>
-#	Invoke "git commit" with --author <author>
+#	Invoke "git cummit" with --author <author>
 #   --no-tag
-#	Do not tag the resulting commit
+#	Do not tag the resulting cummit
 #   --annotate
 #	Create an annotated tag with "--annotate -m <message>". Calls
-#	test_tick between making the commit and tag, unless --notick
+#	test_tick between making the cummit and tag, unless --notick
 #	is given.
 #
-# This will commit a file with the given contents and the given commit
-# message, and tag the resulting commit with the given tag name.
+# This will cummit a file with the given contents and the given cummit
+# message, and tag the resulting cummit with the given tag name.
 #
 # <file>, <contents>, and <tag> all default to <message>.
 
-test_commit () {
+test_cummit () {
 	notick= &&
 	echo=echo &&
 	append= &&
@@ -301,7 +301,7 @@ test_commit () {
 			;;
 		--date)
 			notick=yes
-			GIT_COMMITTER_DATE="$2"
+			GIT_cummitTER_DATE="$2"
 			GIT_AUTHOR_DATE="$2"
 			shift
 			;;
@@ -334,7 +334,7 @@ test_commit () {
 	then
 		test_tick
 	fi &&
-	git ${indir:+ -C "$indir"} commit \
+	git ${indir:+ -C "$indir"} cummit \
 	    ${author:+ --author "$author"} \
 	    $signoff -m "$1" &&
 	case "$tag" in
@@ -353,8 +353,8 @@ test_commit () {
 	esac
 }
 
-# Call test_merge with the arguments "<message> <commit>", where <commit>
-# can be a tag pointing to the commit-to-merge.
+# Call test_merge with the arguments "<message> <cummit>", where <cummit>
+# can be a tag pointing to the cummit-to-merge.
 
 test_merge () {
 	label="$1" &&
@@ -364,38 +364,38 @@ test_merge () {
 	git tag "$label"
 }
 
-# Efficiently create <nr> commits, each with a unique number (from 1 to <nr>
-# by default) in the commit message.
+# Efficiently create <nr> cummits, each with a unique number (from 1 to <nr>
+# by default) in the cummit message.
 #
-# Usage: test_commit_bulk [options] <nr>
+# Usage: test_cummit_bulk [options] <nr>
 #   -C <dir>:
 #	Run all git commands in directory <dir>
 #   --ref=<n>:
-#	ref on which to create commits (default: HEAD)
+#	ref on which to create cummits (default: HEAD)
 #   --start=<n>:
-#	number commit messages from <n> (default: 1)
+#	number cummit messages from <n> (default: 1)
 #   --message=<msg>:
-#	use <msg> as the commit mesasge (default: "commit %s")
+#	use <msg> as the cummit mesasge (default: "cummit %s")
 #   --filename=<fn>:
-#	modify <fn> in each commit (default: %s.t)
+#	modify <fn> in each cummit (default: %s.t)
 #   --contents=<string>:
 #	place <string> in each file (default: "content %s")
 #   --id=<string>:
 #	shorthand to use <string> and %s in message, filename, and contents
 #
 # The message, filename, and contents strings are evaluated by printf, with the
-# first "%s" replaced by the current commit number. So you can do:
+# first "%s" replaced by the current cummit number. So you can do:
 #
-#   test_commit_bulk --filename=file --contents="modification %s"
+#   test_cummit_bulk --filename=file --contents="modification %s"
 #
-# to have every commit touch the same file, but with unique content.
+# to have every cummit touch the same file, but with unique content.
 #
-test_commit_bulk () {
-	tmpfile=.bulk-commit.input
+test_cummit_bulk () {
+	tmpfile=.bulk-cummit.input
 	indir=.
 	ref=HEAD
 	n=1
-	message='commit %s'
+	message='cummit %s'
 	filename='%s.t'
 	contents='content %s'
 	while test $# -gt 0
@@ -426,7 +426,7 @@ test_commit_bulk () {
 			contents="${1#--*=} %s"
 			;;
 		-*)
-			BUG "invalid test_commit_bulk option: $1"
+			BUG "invalid test_cummit_bulk option: $1"
 			;;
 		*)
 			break
@@ -445,15 +445,15 @@ test_commit_bulk () {
 	while test "$total" -gt 0
 	do
 		test_tick &&
-		echo "commit $ref"
+		echo "cummit $ref"
 		printf 'author %s <%s> %s\n' \
 			"$GIT_AUTHOR_NAME" \
 			"$GIT_AUTHOR_EMAIL" \
 			"$GIT_AUTHOR_DATE"
-		printf 'committer %s <%s> %s\n' \
-			"$GIT_COMMITTER_NAME" \
-			"$GIT_COMMITTER_EMAIL" \
-			"$GIT_COMMITTER_DATE"
+		printf 'cummitter %s <%s> %s\n' \
+			"$GIT_cummitTER_NAME" \
+			"$GIT_cummitTER_EMAIL" \
+			"$GIT_cummitTER_DATE"
 		echo "data <<EOF"
 		printf "$message\n" $n
 		echo "EOF"

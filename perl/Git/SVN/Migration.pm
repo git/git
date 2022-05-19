@@ -198,7 +198,7 @@ sub minimize_connections {
 
 			# make sure we can read when connecting to
 			# a higher level of a repository
-			my ($last_rev, undef) = $gs->last_rev_commit;
+			my ($last_rev, undef) = $gs->last_rev_cummit;
 			if (!defined $last_rev) {
 				$last_rev = eval {
 					$root_ra->get_latest_revnum;

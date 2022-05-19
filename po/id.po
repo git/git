@@ -754,7 +754,7 @@ msgid "Cherry-picking is not possible because you have unmerged files."
 msgstr "Pemetikan ceri tidak mungkin sebab Anda punya berkas tak tergabung."
 
 #: advice.c:183
-msgid "Committing is not possible because you have unmerged files."
+msgid "cummitting is not possible because you have unmerged files."
 msgstr "Pengkomitan tidak mungkin sebab Anda punya berkas tak tergabung."
 
 #: advice.c:185
@@ -777,7 +777,7 @@ msgstr "Tidak mungkin untuk %s sebab Anda punya berkas tak tergabung."
 #: advice.c:199
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
-"as appropriate to mark resolution and make a commit."
+"as appropriate to mark resolution and make a cummit."
 msgstr ""
 "Perbaiki di dalam pohon kerja, lalu gunakan 'git add/rm <berkas>'\n"
 "sebagaimana mestinya untuk menandai resolusi dan membuat sebuah komit."
@@ -791,7 +791,7 @@ msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "Anda belum mengakhiri penggabungan Anda (MERGE_HEAD ada)."
 
 #: advice.c:214
-msgid "Please, commit your changes before merging."
+msgid "Please, cummit your changes before merging."
 msgstr "Mohon komit perubahan Anda sebelum menggabungkan."
 
 #: advice.c:215
@@ -829,10 +829,10 @@ msgid ""
 "Note: switching to '%s'.\n"
 "\n"
 "You are in 'detached HEAD' state. You can look around, make experimental\n"
-"changes and commit them, and you can discard any commits you make in this\n"
+"changes and cummit them, and you can discard any cummits you make in this\n"
 "state without impacting any branches by switching back to a branch.\n"
 "\n"
-"If you want to create a new branch to retain commits you create, you may\n"
+"If you want to create a new branch to retain cummits you create, you may\n"
 "do so (now or later) by using -c with the switch command. Example:\n"
 "\n"
 "  git switch -c <new-branch-name>\n"
@@ -893,8 +893,8 @@ msgstr "opsi abai spasi putih tidak dikenal '%s'"
 #: builtin/add.c:515 builtin/add.c:527 builtin/branch.c:755
 #: builtin/checkout.c:472 builtin/checkout.c:475 builtin/checkout.c:1663
 #: builtin/checkout.c:1773 builtin/checkout.c:1776 builtin/clone.c:921
-#: builtin/commit.c:359 builtin/commit.c:362 builtin/commit.c:1200
-#: builtin/commit.c:1256 builtin/commit.c:1273 builtin/describe.c:593
+#: builtin/cummit.c:359 builtin/cummit.c:362 builtin/cummit.c:1200
+#: builtin/cummit.c:1256 builtin/cummit.c:1273 builtin/describe.c:593
 #: builtin/diff-tree.c:155 builtin/difftool.c:733 builtin/fast-export.c:1245
 #: builtin/fetch.c:2141 builtin/fetch.c:2162 builtin/fetch.c:2167
 #: builtin/help.c:602 builtin/index-pack.c:1858 builtin/init-db.c:560
@@ -1630,7 +1630,7 @@ msgid "prepend prefix to each pathname in the archive"
 msgstr "tambahkan prefiks di depan setiap nama jalur dalam arsip"
 
 #: archive.c:554 archive.c:557 builtin/blame.c:881 builtin/blame.c:885
-#: builtin/blame.c:886 builtin/commit-tree.c:115 builtin/config.c:135
+#: builtin/blame.c:886 builtin/cummit-tree.c:115 builtin/config.c:135
 #: builtin/fast-export.c:1181 builtin/fast-export.c:1183
 #: builtin/fast-export.c:1187 builtin/grep.c:936 builtin/hash-object.c:104
 #: builtin/ls-files.c:654 builtin/ls-files.c:657 builtin/notes.c:410
@@ -1686,7 +1686,7 @@ msgstr "Opsi --remote tak diharapkan"
 
 #: archive.c:580 fetch-pack.c:300 revision.c:2914 builtin/add.c:530
 #: builtin/add.c:562 builtin/checkout.c:1782 builtin/clone.c:1099
-#: builtin/clone.c:1102 builtin/commit.c:371 builtin/fast-export.c:1230
+#: builtin/clone.c:1102 builtin/cummit.c:371 builtin/fast-export.c:1230
 #: builtin/index-pack.c:1854 builtin/log.c:2140 builtin/reset.c:442
 #: builtin/reset.c:500 builtin/rm.c:281 builtin/stash.c:1708
 #: builtin/worktree.c:580 builtin/worktree.c:781 http-fetch.c:144
@@ -1737,7 +1737,7 @@ msgstr "Kami tidak dapat membagi dua lagi!\n"
 
 #: bisect.c:765
 #, c-format
-msgid "Not a valid commit name %s"
+msgid "Not a valid cummit name %s"
 msgstr "Bukan sebuah nama komit yang valid %s"
 
 #: bisect.c:790
@@ -1762,7 +1762,7 @@ msgstr ""
 #, c-format
 msgid ""
 "The merge base %s is %s.\n"
-"This means the first '%s' commit is between %s and [%s].\n"
+"This means the first '%s' cummit is between %s and [%s].\n"
 msgstr ""
 "Dasar penggabungan %s adalah %s.\n"
 "Ini berarti komit '%s' pertama adalah di antara %s dan [%s].\n"
@@ -1782,7 +1782,7 @@ msgstr ""
 #, c-format
 msgid ""
 "the merge base between %s and [%s] must be skipped.\n"
-"So we cannot be sure the first %s commit is between %s and %s.\n"
+"So we cannot be sure the first %s cummit is between %s and %s.\n"
 "We continue anyway."
 msgstr ""
 "dasar penggabungan antara %s dan [%s] harus dilewatkan.\n"
@@ -1821,7 +1821,7 @@ msgstr "%s sama-sama %s dan %s\n"
 #: bisect.c:1065
 #, c-format
 msgid ""
-"No testable commit found.\n"
+"No testable cummit found.\n"
 "Maybe you started with bad path arguments?\n"
 msgstr ""
 "Tidak ada komit yang bisa diuji ditemukan.\n"
@@ -1849,16 +1849,16 @@ msgid "--contents and --reverse do not blend well."
 msgstr "--contents dan --reverse tidak dapat dipadu dengan baik."
 
 #: blame.c:2787
-msgid "cannot use --contents with final commit object name"
+msgid "cannot use --contents with final cummit object name"
 msgstr "tidak dapat menggunakan --contents dengan nama objek komit final"
 
 #: blame.c:2808
-msgid "--reverse and --first-parent together require specified latest commit"
+msgid "--reverse and --first-parent together require specified latest cummit"
 msgstr ""
 "--reverse dan --first-parent bersama-sama butuh komit terbaru yang disebutkan"
 
 #: blame.c:2817 bundle.c:231 midx.c:1058 ref-filter.c:2371 remote.c:2157
-#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/commit.c:1118
+#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/cummit.c:1118
 #: builtin/log.c:437 builtin/log.c:1055 builtin/log.c:1663 builtin/log.c:2096
 #: builtin/log.c:2387 builtin/merge.c:431 builtin/pack-objects.c:3381
 #: builtin/pack-objects.c:3781 builtin/pack-objects.c:3796
@@ -2078,13 +2078,13 @@ msgid "unrecognized header: %s%s (%d)"
 msgstr "kepala tidak dikenal: %s%s (%d)"
 
 #: bundle.c:145 rerere.c:464 rerere.c:675 sequencer.c:2616 sequencer.c:3402
-#: builtin/commit.c:865
+#: builtin/cummit.c:865
 #, c-format
 msgid "could not open '%s'"
 msgstr "tidak dapat membuka '%s'"
 
 #: bundle.c:203
-msgid "Repository lacks these prerequisite commits:"
+msgid "Repository lacks these prerequisite cummits:"
 msgstr "Repositori kekurangan komit prasyarat berikut:"
 
 #: bundle.c:206
@@ -2178,263 +2178,263 @@ msgstr ""
 msgid "invalid color value: %.*s"
 msgstr ""
 
-#: commit-graph.c:204 midx.c:52
+#: cummit-graph.c:204 midx.c:52
 msgid "invalid hash version"
 msgstr ""
 
-#: commit-graph.c:262
-msgid "commit-graph file is too small"
+#: cummit-graph.c:262
+msgid "cummit-graph file is too small"
 msgstr ""
 
-#: commit-graph.c:355
+#: cummit-graph.c:355
 #, c-format
-msgid "commit-graph signature %X does not match signature %X"
+msgid "cummit-graph signature %X does not match signature %X"
 msgstr ""
 
-#: commit-graph.c:362
+#: cummit-graph.c:362
 #, c-format
-msgid "commit-graph version %X does not match version %X"
+msgid "cummit-graph version %X does not match version %X"
 msgstr ""
 
-#: commit-graph.c:369
+#: cummit-graph.c:369
 #, c-format
-msgid "commit-graph hash version %X does not match version %X"
+msgid "cummit-graph hash version %X does not match version %X"
 msgstr ""
 
-#: commit-graph.c:386
+#: cummit-graph.c:386
 #, c-format
-msgid "commit-graph file is too small to hold %u chunks"
+msgid "cummit-graph file is too small to hold %u chunks"
 msgstr ""
 
-#: commit-graph.c:485
-msgid "commit-graph has no base graphs chunk"
+#: cummit-graph.c:485
+msgid "cummit-graph has no base graphs chunk"
 msgstr ""
 
-#: commit-graph.c:495
-msgid "commit-graph chain does not match"
+#: cummit-graph.c:495
+msgid "cummit-graph chain does not match"
 msgstr ""
 
-#: commit-graph.c:543
+#: cummit-graph.c:543
 #, c-format
-msgid "invalid commit-graph chain: line '%s' not a hash"
+msgid "invalid cummit-graph chain: line '%s' not a hash"
 msgstr ""
 
-#: commit-graph.c:567
-msgid "unable to find all commit-graph files"
+#: cummit-graph.c:567
+msgid "unable to find all cummit-graph files"
 msgstr ""
 
-#: commit-graph.c:752 commit-graph.c:789
-msgid "invalid commit position. commit-graph is likely corrupt"
+#: cummit-graph.c:752 cummit-graph.c:789
+msgid "invalid cummit position. cummit-graph is likely corrupt"
 msgstr ""
 
-#: commit-graph.c:773
+#: cummit-graph.c:773
 #, c-format
-msgid "could not find commit %s"
+msgid "could not find cummit %s"
 msgstr ""
 
-#: commit-graph.c:806
-msgid "commit-graph requires overflow generation data but has none"
+#: cummit-graph.c:806
+msgid "cummit-graph requires overflow generation data but has none"
 msgstr ""
 
-#: commit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
+#: cummit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
 #: builtin/clone.c:705
 #, c-format
-msgid "unable to parse commit %s"
+msgid "unable to parse cummit %s"
 msgstr ""
 
-#: commit-graph.c:1373 builtin/pack-objects.c:3078
+#: cummit-graph.c:1373 builtin/pack-objects.c:3078
 #, c-format
 msgid "unable to get type of object %s"
 msgstr ""
 
-#: commit-graph.c:1404
-msgid "Loading known commits in commit graph"
+#: cummit-graph.c:1404
+msgid "Loading known cummits in cummit graph"
 msgstr ""
 
-#: commit-graph.c:1421
-msgid "Expanding reachable commits in commit graph"
+#: cummit-graph.c:1421
+msgid "Expanding reachable cummits in cummit graph"
 msgstr ""
 
-#: commit-graph.c:1441
-msgid "Clearing commit marks in commit graph"
+#: cummit-graph.c:1441
+msgid "Clearing cummit marks in cummit graph"
 msgstr ""
 
-#: commit-graph.c:1460
-msgid "Computing commit graph topological levels"
+#: cummit-graph.c:1460
+msgid "Computing cummit graph topological levels"
 msgstr ""
 
-#: commit-graph.c:1513
-msgid "Computing commit graph generation numbers"
+#: cummit-graph.c:1513
+msgid "Computing cummit graph generation numbers"
 msgstr ""
 
-#: commit-graph.c:1598
-msgid "Computing commit changed paths Bloom filters"
+#: cummit-graph.c:1598
+msgid "Computing cummit changed paths Bloom filters"
 msgstr ""
 
-#: commit-graph.c:1675
-msgid "Collecting referenced commits"
+#: cummit-graph.c:1675
+msgid "Collecting referenced cummits"
 msgstr ""
 
-#: commit-graph.c:1701
+#: cummit-graph.c:1701
 #, c-format
-msgid "Finding commits for commit graph in %<PRIuMAX> pack"
-msgid_plural "Finding commits for commit graph in %<PRIuMAX> packs"
+msgid "Finding cummits for cummit graph in %<PRIuMAX> pack"
+msgid_plural "Finding cummits for cummit graph in %<PRIuMAX> packs"
 msgstr[0] ""
 msgstr[1] ""
 
-#: commit-graph.c:1714
+#: cummit-graph.c:1714
 #, c-format
 msgid "error adding pack %s"
 msgstr ""
 
-#: commit-graph.c:1718
+#: cummit-graph.c:1718
 #, c-format
 msgid "error opening index for %s"
 msgstr ""
 
-#: commit-graph.c:1756
-msgid "Finding commits for commit graph among packed objects"
+#: cummit-graph.c:1756
+msgid "Finding cummits for cummit graph among packed objects"
 msgstr ""
 
-#: commit-graph.c:1774
-msgid "Finding extra edges in commit graph"
+#: cummit-graph.c:1774
+msgid "Finding extra edges in cummit graph"
 msgstr ""
 
-#: commit-graph.c:1823
+#: cummit-graph.c:1823
 msgid "failed to write correct number of base graph ids"
 msgstr ""
 
-#: commit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
+#: cummit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
 #, c-format
 msgid "unable to create leading directories of %s"
 msgstr ""
 
-#: commit-graph.c:1868
+#: cummit-graph.c:1868
 msgid "unable to create temporary graph layer"
 msgstr ""
 
-#: commit-graph.c:1873
+#: cummit-graph.c:1873
 #, c-format
 msgid "unable to adjust shared permissions for '%s'"
 msgstr ""
 
-#: commit-graph.c:1930
+#: cummit-graph.c:1930
 #, c-format
-msgid "Writing out commit graph in %d pass"
-msgid_plural "Writing out commit graph in %d passes"
+msgid "Writing out cummit graph in %d pass"
+msgid_plural "Writing out cummit graph in %d passes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: commit-graph.c:1967
-msgid "unable to open commit-graph chain file"
+#: cummit-graph.c:1967
+msgid "unable to open cummit-graph chain file"
 msgstr ""
 
-#: commit-graph.c:1983
-msgid "failed to rename base commit-graph file"
+#: cummit-graph.c:1983
+msgid "failed to rename base cummit-graph file"
 msgstr ""
 
-#: commit-graph.c:2004
-msgid "failed to rename temporary commit-graph file"
+#: cummit-graph.c:2004
+msgid "failed to rename temporary cummit-graph file"
 msgstr ""
 
-#: commit-graph.c:2137
-msgid "Scanning merged commits"
+#: cummit-graph.c:2137
+msgid "Scanning merged cummits"
 msgstr ""
 
-#: commit-graph.c:2181
-msgid "Merging commit-graph"
+#: cummit-graph.c:2181
+msgid "Merging cummit-graph"
 msgstr ""
 
-#: commit-graph.c:2289
-msgid "attempting to write a commit-graph, but 'core.commitGraph' is disabled"
+#: cummit-graph.c:2289
+msgid "attempting to write a cummit-graph, but 'core.cummitGraph' is disabled"
 msgstr ""
 
-#: commit-graph.c:2396
-msgid "too many commits to write graph"
+#: cummit-graph.c:2396
+msgid "too many cummits to write graph"
 msgstr ""
 
-#: commit-graph.c:2494
-msgid "the commit-graph file has incorrect checksum and is likely corrupt"
+#: cummit-graph.c:2494
+msgid "the cummit-graph file has incorrect checksum and is likely corrupt"
 msgstr ""
 
-#: commit-graph.c:2504
+#: cummit-graph.c:2504
 #, c-format
-msgid "commit-graph has incorrect OID order: %s then %s"
+msgid "cummit-graph has incorrect OID order: %s then %s"
 msgstr ""
 
-#: commit-graph.c:2514 commit-graph.c:2529
+#: cummit-graph.c:2514 cummit-graph.c:2529
 #, c-format
-msgid "commit-graph has incorrect fanout value: fanout[%d] = %u != %u"
+msgid "cummit-graph has incorrect fanout value: fanout[%d] = %u != %u"
 msgstr ""
 
-#: commit-graph.c:2521
+#: cummit-graph.c:2521
 #, c-format
-msgid "failed to parse commit %s from commit-graph"
+msgid "failed to parse cummit %s from cummit-graph"
 msgstr ""
 
-#: commit-graph.c:2539
-msgid "Verifying commits in commit graph"
+#: cummit-graph.c:2539
+msgid "Verifying cummits in cummit graph"
 msgstr ""
 
-#: commit-graph.c:2554
+#: cummit-graph.c:2554
 #, c-format
-msgid "failed to parse commit %s from object database for commit-graph"
+msgid "failed to parse cummit %s from object database for cummit-graph"
 msgstr ""
 
-#: commit-graph.c:2561
+#: cummit-graph.c:2561
 #, c-format
-msgid "root tree OID for commit %s in commit-graph is %s != %s"
+msgid "root tree OID for cummit %s in cummit-graph is %s != %s"
 msgstr ""
 
-#: commit-graph.c:2571
+#: cummit-graph.c:2571
 #, c-format
-msgid "commit-graph parent list for commit %s is too long"
+msgid "cummit-graph parent list for cummit %s is too long"
 msgstr ""
 
-#: commit-graph.c:2580
+#: cummit-graph.c:2580
 #, c-format
-msgid "commit-graph parent for %s is %s != %s"
+msgid "cummit-graph parent for %s is %s != %s"
 msgstr ""
 
-#: commit-graph.c:2594
+#: cummit-graph.c:2594
 #, c-format
-msgid "commit-graph parent list for commit %s terminates early"
+msgid "cummit-graph parent list for cummit %s terminates early"
 msgstr ""
 
-#: commit-graph.c:2599
-#, c-format
-msgid ""
-"commit-graph has generation number zero for commit %s, but non-zero elsewhere"
-msgstr ""
-
-#: commit-graph.c:2603
+#: cummit-graph.c:2599
 #, c-format
 msgid ""
-"commit-graph has non-zero generation number for commit %s, but zero elsewhere"
+"cummit-graph has generation number zero for cummit %s, but non-zero elsewhere"
 msgstr ""
 
-#: commit-graph.c:2620
+#: cummit-graph.c:2603
 #, c-format
-msgid "commit-graph generation for commit %s is %<PRIuMAX> < %<PRIuMAX>"
+msgid ""
+"cummit-graph has non-zero generation number for cummit %s, but zero elsewhere"
 msgstr ""
 
-#: commit-graph.c:2626
+#: cummit-graph.c:2620
 #, c-format
-msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
+msgid "cummit-graph generation for cummit %s is %<PRIuMAX> < %<PRIuMAX>"
 msgstr ""
 
-#: commit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
+#: cummit-graph.c:2626
+#, c-format
+msgid "cummit date for cummit %s in cummit-graph is %<PRIuMAX> != %<PRIuMAX>"
+msgstr ""
+
+#: cummit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
 #: builtin/am.c:450 builtin/am.c:1449 builtin/am.c:2124 builtin/replace.c:456
 #, c-format
 msgid "could not parse %s"
 msgstr ""
 
-#: commit.c:56
+#: cummit.c:56
 #, c-format
-msgid "%s %s is not a commit!"
+msgid "%s %s is not a cummit!"
 msgstr ""
 
-#: commit.c:197
+#: cummit.c:197
 msgid ""
 "Support for <GIT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
@@ -2446,31 +2446,31 @@ msgid ""
 "\"git config advice.graftFileDeprecated false\""
 msgstr ""
 
-#: commit.c:1252
+#: cummit.c:1252
 #, c-format
-msgid "Commit %s has an untrusted GPG signature, allegedly by %s."
+msgid "cummit %s has an untrusted GPG signature, allegedly by %s."
 msgstr ""
 
-#: commit.c:1256
+#: cummit.c:1256
 #, c-format
-msgid "Commit %s has a bad GPG signature allegedly by %s."
+msgid "cummit %s has a bad GPG signature allegedly by %s."
 msgstr ""
 
-#: commit.c:1259
+#: cummit.c:1259
 #, c-format
-msgid "Commit %s does not have a GPG signature."
+msgid "cummit %s does not have a GPG signature."
 msgstr ""
 
-#: commit.c:1262
+#: cummit.c:1262
 #, c-format
-msgid "Commit %s has a good GPG signature by %s\n"
+msgid "cummit %s has a good GPG signature by %s\n"
 msgstr ""
 
-#: commit.c:1516
+#: cummit.c:1516
 msgid ""
-"Warning: commit message did not conform to UTF-8.\n"
+"Warning: cummit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
-"variable i18n.commitencoding to the encoding your project uses.\n"
+"variable i18n.cummitencoding to the encoding your project uses.\n"
 msgstr ""
 
 #: compat/obstack.c:406 compat/obstack.c:408
@@ -3301,7 +3301,7 @@ msgid "--merge-base does not work with ranges"
 msgstr ""
 
 #: diff-lib.c:563
-msgid "--merge-base only works with commits"
+msgid "--merge-base only works with cummits"
 msgstr ""
 
 #: diff-lib.c:580
@@ -4121,7 +4121,7 @@ msgstr "dapat %s %d %s"
 
 #: fetch-pack.c:470
 #, c-format
-msgid "invalid commit %s"
+msgid "invalid cummit %s"
 msgstr "komit tidak valid %s"
 
 #: fetch-pack.c:501
@@ -4207,7 +4207,7 @@ msgid "Server does not support this repository's object format"
 msgstr "Peladen tidak mendukung objek format repositori ini"
 
 #: fetch-pack.c:1142
-msgid "no common commits"
+msgid "no common cummits"
 msgstr "tidak ada komit umum"
 
 #: fetch-pack.c:1151 fetch-pack.c:1506 builtin/clone.c:1166
@@ -4641,7 +4641,7 @@ msgid "Author identity unknown\n"
 msgstr "Identitas pengarang tidak dikenal\n"
 
 #: ident.c:357
-msgid "Committer identity unknown\n"
+msgid "cummitter identity unknown\n"
 msgstr "Identitas pengkomit tidak dikenal\n"
 
 #: ident.c:363
@@ -4698,7 +4698,7 @@ msgstr "nama identitas kosong (untuk <%s>) tidak diperbolehkan"
 msgid "name consists only of disallowed characters: %s"
 msgstr "nama hanya terdiri dari karakter yang tidak diperbolehkan: %s"
 
-#: ident.c:455 builtin/commit.c:649
+#: ident.c:455 builtin/cummit.c:649
 #, c-format
 msgid "invalid date format: %s"
 msgstr "format tanggal tidak valid: %s"
@@ -4760,7 +4760,7 @@ msgstr ""
 
 #: list-objects.c:415
 #, c-format
-msgid "unable to load root tree for commit %s"
+msgid "unable to load root tree for cummit %s"
 msgstr ""
 
 #: lockfile.c:152
@@ -4769,7 +4769,7 @@ msgid ""
 "Unable to create '%s.lock': %s.\n"
 "\n"
 "Another git process seems to be running in this repository, e.g.\n"
-"an editor opened by 'git commit'. Please make sure all processes\n"
+"an editor opened by 'git cummit'. Please make sure all processes\n"
 "are terminated then try again. If it still fails, a git process\n"
 "may have crashed in this repository earlier:\n"
 "remove the file manually to continue."
@@ -4805,12 +4805,12 @@ msgstr "Gagal menggabungkan submodul %s (tidak di-checkout)"
 
 #: merge-ort.c:1639 merge-recursive.c:1221
 #, c-format
-msgid "Failed to merge submodule %s (commits not present)"
+msgid "Failed to merge submodule %s (cummits not present)"
 msgstr "Gagal menggabungkan submodul %s (komit tidak ada)"
 
 #: merge-ort.c:1648 merge-recursive.c:1228
 #, c-format
-msgid "Failed to merge submodule %s (commits don't follow merge-base)"
+msgid "Failed to merge submodule %s (cummits don't follow merge-base)"
 msgstr ""
 "Gagal menggabungkan submodul %s (komit tidak mengikuti dasar penggabungan)"
 
@@ -5069,7 +5069,7 @@ msgid "Already up to date."
 msgstr "Sudah terbaru."
 
 #: merge-recursive.c:353
-msgid "(bad commit)\n"
+msgid "(bad cummit)\n"
 msgstr "(komit jelek)\n"
 
 #: merge-recursive.c:381
@@ -5129,7 +5129,7 @@ msgstr "tidak tahu apa yang dilakukan dengan %06o %s '%s'"
 
 #: merge-recursive.c:1236 merge-recursive.c:1249
 #, c-format
-msgid "Fast-forwarding submodule %s to the following commit:"
+msgid "Fast-forwarding submodule %s to the following cummit:"
 msgstr "Memaju-cepat submodul %s ke komit berikut:"
 
 #: merge-recursive.c:1239 merge-recursive.c:1252
@@ -5139,7 +5139,7 @@ msgstr "Memaju-cepat submodul %s"
 
 #: merge-recursive.c:1276
 #, c-format
-msgid "Failed to merge submodule %s (merge following commits not found)"
+msgid "Failed to merge submodule %s (merge following cummits not found)"
 msgstr ""
 "Gagal menggabungkan submodul %s (penggabungan komit berikutnya tidak "
 "ditemukan)"
@@ -5344,7 +5344,7 @@ msgstr[0] "%u leluhur umum ditemukan:"
 msgstr[1] "%u leluhur umum ditemukan:"
 
 #: merge-recursive.c:3651
-msgid "merge returned no commit"
+msgid "merge returned no cummit"
 msgstr "penggabungan tidak mengembalikan komit"
 
 #: merge-recursive.c:3823
@@ -5605,8 +5605,8 @@ msgstr ""
 #, c-format
 msgid ""
 "You have not concluded your previous notes merge (%s exists).\n"
-"Please, use 'git notes merge --commit' or 'git notes merge --abort' to "
-"commit/abort the previous merge before you start a new notes merge."
+"Please, use 'git notes merge --cummit' or 'git notes merge --abort' to "
+"cummit/abort the previous merge before you start a new notes merge."
 msgstr ""
 
 #: notes-merge.c:283
@@ -5615,7 +5615,7 @@ msgid "You have not concluded your notes merge (%s exists)."
 msgstr ""
 
 #: notes-utils.c:46
-msgid "Cannot commit uninitialized/unreferenced notes tree"
+msgid "Cannot cummit uninitialized/unreferenced notes tree"
 msgstr ""
 
 #: notes-utils.c:105
@@ -5825,7 +5825,7 @@ msgid "cannot read object for %s"
 msgstr ""
 
 #: object-file.c:2151
-msgid "corrupt commit"
+msgid "corrupt cummit"
 msgstr ""
 
 #: object-file.c:2159
@@ -5901,14 +5901,14 @@ msgstr ""
 msgid "%s [bad object]"
 msgstr ""
 
-#. TRANSLATORS: This is a line of ambiguous commit
+#. TRANSLATORS: This is a line of ambiguous cummit
 #. object output. E.g.:
 #. *
-#.    "deadbeef commit 2021-01-01 - Some Commit Message"
+#.    "deadbeef cummit 2021-01-01 - Some cummit Message"
 #.
 #: object-name.c:407
 #, c-format
-msgid "%s commit %s - %s"
+msgid "%s cummit %s - %s"
 msgstr ""
 
 #. TRANSLATORS: This is a line of ambiguous
@@ -6159,7 +6159,7 @@ msgstr ""
 msgid "offset beyond end of pack index for %s (truncated index?)"
 msgstr ""
 
-#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/commit-graph.c:175
+#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/cummit-graph.c:175
 #, c-format
 msgid "option `%s' expects a numerical value"
 msgstr ""
@@ -6479,13 +6479,13 @@ msgstr ""
 
 #: range-diff.c:98 sequencer.c:5575
 #, c-format
-msgid "could not parse commit '%s'"
+msgid "could not parse cummit '%s'"
 msgstr ""
 
 #: range-diff.c:109
 #, c-format
 msgid ""
-"could not parse first line of `log` output: did not start with 'commit ': "
+"could not parse first line of `log` output: did not start with 'cummit ': "
 "'%s'"
 msgstr ""
 
@@ -6519,7 +6519,7 @@ msgstr ""
 
 #: read-cache.c:780 builtin/submodule--helper.c:3359
 #, c-format
-msgid "'%s' does not have a commit checked out"
+msgid "'%s' does not have a cummit checked out"
 msgstr ""
 
 #: read-cache.c:832
@@ -6611,7 +6611,7 @@ msgstr ""
 #: read-cache.c:2096 read-cache.c:2402 rerere.c:549 rerere.c:583 rerere.c:1096
 #: submodule.c:1831 builtin/add.c:586 builtin/check-ignore.c:183
 #: builtin/checkout.c:532 builtin/checkout.c:724 builtin/clean.c:1016
-#: builtin/commit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
+#: builtin/cummit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
 #: builtin/mv.c:148 builtin/reset.c:506 builtin/rm.c:293
 #: builtin/submodule--helper.c:335 builtin/submodule--helper.c:3319
 msgid "index file corrupt"
@@ -6718,31 +6718,31 @@ msgstr ""
 #: rebase-interactive.c:33
 #, c-format
 msgid ""
-"unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
+"unrecognized setting %s for option rebase.missingcummitsCheck. Ignoring."
 msgstr ""
-"setelan %s tidak dikenal untuk opsi rebase.missingCommitsCheck. Abaikan."
+"setelan %s tidak dikenal untuk opsi rebase.missingcummitsCheck. Abaikan."
 
 #: rebase-interactive.c:42
 msgid ""
 "\n"
 "Commands:\n"
-"p, pick <commit> = use commit\n"
-"r, reword <commit> = use commit, but edit the commit message\n"
-"e, edit <commit> = use commit, but stop for amending\n"
-"s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup [-C | -c] <commit> = like \"squash\" but keep only the previous\n"
-"                   commit's log message, unless -C is used, in which case\n"
-"                   keep only this commit's message; -c is same as -C but\n"
+"p, pick <cummit> = use cummit\n"
+"r, reword <cummit> = use cummit, but edit the cummit message\n"
+"e, edit <cummit> = use cummit, but stop for amending\n"
+"s, squash <cummit> = use cummit, but meld into previous cummit\n"
+"f, fixup [-C | -c] <cummit> = like \"squash\" but keep only the previous\n"
+"                   cummit's log message, unless -C is used, in which case\n"
+"                   keep only this cummit's message; -c is same as -C but\n"
 "                   opens the editor\n"
 "x, exec <command> = run command (the rest of the line) using shell\n"
 "b, break = stop here (continue rebase later with 'git rebase --continue')\n"
-"d, drop <commit> = remove commit\n"
+"d, drop <cummit> = remove cummit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified); use -c <commit> to reword the commit message\n"
+"m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+".       create a merge cummit using the original merge cummit's\n"
+".       message (or the oneline, if no original merge cummit was\n"
+".       specified); use -c <cummit> to reword the cummit message\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
@@ -6780,7 +6780,7 @@ msgstr[1] "Dasarkan ulang %s kepada %s (%d perintah)"
 #: rebase-interactive.c:75
 msgid ""
 "\n"
-"Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
+"Do not remove any line. Use 'drop' explicitly to remove a cummit.\n"
 msgstr ""
 "\n"
 "Jangan hapus baris apapun. Gunakan 'drop' secara eksplisit untuk menghapus "
@@ -6789,7 +6789,7 @@ msgstr ""
 #: rebase-interactive.c:78
 msgid ""
 "\n"
-"If you remove a line here THAT COMMIT WILL BE LOST.\n"
+"If you remove a line here THAT cummit WILL BE LOST.\n"
 msgstr ""
 "\n"
 "Jika Anda menghapus sebaris disini KOMIT TERSEBUT AKAN HILANG.\n"
@@ -6835,8 +6835,8 @@ msgstr "tidak dapat menulis '%s'."
 #: rebase-interactive.c:196
 #, c-format
 msgid ""
-"Warning: some commits may have been dropped accidentally.\n"
-"Dropped commits (newer to older):\n"
+"Warning: some cummits may have been dropped accidentally.\n"
+"Dropped cummits (newer to older):\n"
 msgstr ""
 "Peringatan: beberapa komit mungkin sudah tidak sengaja dihapus.\n"
 "Komit terhapus (terbaru ke terlama):\n"
@@ -6844,16 +6844,16 @@ msgstr ""
 #: rebase-interactive.c:203
 #, c-format
 msgid ""
-"To avoid this message, use \"drop\" to explicitly remove a commit.\n"
+"To avoid this message, use \"drop\" to explicitly remove a cummit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
+"Use 'git config rebase.missingcummitsCheck' to change the level of "
 "warnings.\n"
 "The possible behaviours are: ignore, warn, error.\n"
 "\n"
 msgstr ""
 "Untuk menghindari pesan ini, gunakan \"drop\" untuk menghapus sebuah komit "
 "eksplisit.\n"
-"Gunakan 'git config rebase.missingCommitsCheck untuk' mengganti tingkat "
+"Gunakan 'git config rebase.missingcummitsCheck untuk' mengganti tingkat "
 "peringatan.\n"
 "Kelakuan yang mungkin adalah: ignore, warn, error.\n"
 "\n"
@@ -7095,7 +7095,7 @@ msgstr ""
 
 #: ref-filter.c:2746
 #, c-format
-msgid "option `%s' must point to a commit"
+msgid "option `%s' must point to a cummit"
 msgstr ""
 
 #: reflog.c:407
@@ -7303,7 +7303,7 @@ msgstr ""
 #: remote.c:1231
 #, c-format
 msgid ""
-"The <src> part of the refspec is a commit object.\n"
+"The <src> part of the refspec is a cummit object.\n"
 "Did you mean to create a new branch by pushing to\n"
 "'%s:refs/heads/%s'?"
 msgstr ""
@@ -7432,7 +7432,7 @@ msgstr "Cabang Anda mutakhir dengan '%s'.\n"
 
 #: remote.c:2246
 #, c-format
-msgid "Your branch and '%s' refer to different commits.\n"
+msgid "Your branch and '%s' refer to different cummits.\n"
 msgstr "Cabang Anda dan '%s' merujuk pada komit yang berbeda.\n"
 
 #: remote.c:2249
@@ -7442,20 +7442,20 @@ msgstr "  (gunakan \"%s\" untuk selengkapnya)\n"
 
 #: remote.c:2253
 #, c-format
-msgid "Your branch is ahead of '%s' by %d commit.\n"
-msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
+msgid "Your branch is ahead of '%s' by %d cummit.\n"
+msgid_plural "Your branch is ahead of '%s' by %d cummits.\n"
 msgstr[0] ""
 msgstr[1] ""
 
 #: remote.c:2259
-msgid "  (use \"git push\" to publish your local commits)\n"
+msgid "  (use \"git push\" to publish your local cummits)\n"
 msgstr "  (gunakan \"git push\" untuk terbitkan komit lokal Anda)\n"
 
 #: remote.c:2262
 #, c-format
-msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
+msgid "Your branch is behind '%s' by %d cummit, and can be fast-forwarded.\n"
 msgid_plural ""
-"Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
+"Your branch is behind '%s' by %d cummits, and can be fast-forwarded.\n"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -7467,10 +7467,10 @@ msgstr "  (gunakan \"git pull\" untuk perbarui cabang lokal Anda)\n"
 #, c-format
 msgid ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commit each, respectively.\n"
+"and have %d and %d different cummit each, respectively.\n"
 msgid_plural ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commits each, respectively.\n"
+"and have %d and %d different cummits each, respectively.\n"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -7610,7 +7610,7 @@ msgstr "sepertinya cabang Anda saat ini rusak"
 
 #: revision.c:2715
 #, c-format
-msgid "your current branch '%s' does not have any commits yet"
+msgid "your current branch '%s' does not have any cummits yet"
 msgstr "cabang Anda saat ini '%s' belum memiliki komit apapun"
 
 #: revision.c:2901
@@ -7678,7 +7678,7 @@ msgstr "ujung penerima tidak mendukung opsi dorong"
 
 #: sequencer.c:197
 #, c-format
-msgid "invalid commit message cleanup mode '%s'"
+msgid "invalid cummit message cleanup mode '%s'"
 msgstr "mode pembersihan pesan komit tidak valid '%s'"
 
 #: sequencer.c:325
@@ -7722,7 +7722,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git cherry-pick --continue\".\n"
-"You can instead skip this commit with \"git cherry-pick --skip\".\n"
+"You can instead skip this cummit with \"git cherry-pick --skip\".\n"
 "To abort and get back to the state before \"git cherry-pick\",\n"
 "run \"git cherry-pick --abort\"."
 msgstr ""
@@ -7738,7 +7738,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git revert --continue\".\n"
-"You can instead skip this commit with \"git revert --skip\".\n"
+"You can instead skip this cummit with \"git revert --skip\".\n"
 "To abort and get back to the state before \"git revert\",\n"
 "run \"git revert --abort\"."
 msgstr ""
@@ -7772,7 +7772,7 @@ msgid "failed to finalize '%s'"
 msgstr "gagal mengakhiri '%s'"
 
 #: sequencer.c:473 sequencer.c:1930 sequencer.c:3112 sequencer.c:3547
-#: sequencer.c:3675 builtin/am.c:290 builtin/commit.c:837 builtin/merge.c:1154
+#: sequencer.c:3675 builtin/am.c:290 builtin/cummit.c:837 builtin/merge.c:1154
 #, c-format
 msgid "could not read '%s'"
 msgstr "tidak dapat membaca '%s'"
@@ -7783,7 +7783,7 @@ msgid "your local changes would be overwritten by %s."
 msgstr "perubahan lokal Anda akan ditimpa oleh %s."
 
 #: sequencer.c:503
-msgid "commit your changes or stash them to proceed."
+msgid "cummit your changes or stash them to proceed."
 msgstr "komit perubahan Anda atau stase untuk melanjutkan."
 
 #: sequencer.c:535
@@ -7809,7 +7809,7 @@ msgid "unable to update cache tree"
 msgstr "tidak dapat memperbarui pohon tembolok"
 
 #: sequencer.c:713
-msgid "could not resolve HEAD commit"
+msgid "could not resolve HEAD cummit"
 msgstr "tidak dapat menguraikan komit HEAD"
 
 #: sequencer.c:793
@@ -7861,13 +7861,13 @@ msgstr "'GIT_AUTHOR_DATE' hilang"
 #, c-format
 msgid ""
 "you have staged changes in your working tree\n"
-"If these changes are meant to be squashed into the previous commit, run:\n"
+"If these changes are meant to be squashed into the previous cummit, run:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
-"If they are meant to go into a new commit, run:\n"
+"If they are meant to go into a new cummit, run:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
@@ -7877,18 +7877,18 @@ msgstr ""
 "Apabila perubahan tersebut dimaksudkan untuk dilumat ke komit sebelumnya, "
 "jalankan:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Apabila dimaksudkan untuk masuk ke komit baru, jalankan:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "Pada kedua kasus tersebut, setelah selesai, lanjutkan dengan:\n"
 "\n"
 "  git rebase --continue\n"
 
 #: sequencer.c:1225
-msgid "'prepare-commit-msg' hook failed"
-msgstr "kait 'prepare-commit-msg' gagal"
+msgid "'prepare-cummit-msg' hook failed"
+msgstr "kait 'prepare-cummit-msg' gagal"
 
 #: sequencer.c:1231
 msgid ""
@@ -7900,9 +7900,9 @@ msgid ""
 "\n"
 "    git config --global --edit\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Nama dan email Anda dikonfigurasikan otomatis berdasarkan nama pengguna\n"
 "dan nama host Anda. Periksa jika itu benar. Anda dapat mematikan pesan\n"
@@ -7914,7 +7914,7 @@ msgstr ""
 "Setelah itu, Anda dapat memperbaiki identitas yang digunakan untuk komit\n"
 "ini dengan:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1244
 msgid ""
@@ -7925,9 +7925,9 @@ msgid ""
 "    git config --global user.name \"Your Name\"\n"
 "    git config --global user.email you@example.com\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Nama dan email Anda dikonfigurasikan otomatis berdasarkan nama pengguna\n"
 "dan nama host Anda. Periksa jika itu benar. Anda dapat mematikan pesan\n"
@@ -7939,18 +7939,18 @@ msgstr ""
 "Setelah itu, Anda dapat memperbaiki identitas yang digunakan untuk komit\n"
 "ini dengan:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1287
-msgid "couldn't look up newly created commit"
+msgid "couldn't look up newly created cummit"
 msgstr "tidak dapat mencari komit yang baru saja dibuat"
 
 #: sequencer.c:1289
-msgid "could not parse newly created commit"
+msgid "could not parse newly created cummit"
 msgstr "tidak dapat menguraikan komit yang baru saja dibuat"
 
 #: sequencer.c:1336
-msgid "unable to resolve HEAD after creating commit"
+msgid "unable to resolve HEAD after creating cummit"
 msgstr "tidak dapat menguraikan HEAD setelah membuat komit"
 
 #: sequencer.c:1338
@@ -7958,7 +7958,7 @@ msgid "detached HEAD"
 msgstr "HEAD terpisah"
 
 #: sequencer.c:1342
-msgid " (root-commit)"
+msgid " (root-cummit)"
 msgstr " (komit-akar)"
 
 #: sequencer.c:1363
@@ -7967,15 +7967,15 @@ msgstr "tidak dapat menguraikan HEAD"
 
 #: sequencer.c:1365
 #, c-format
-msgid "HEAD %s is not a commit!"
+msgid "HEAD %s is not a cummit!"
 msgstr "HEAD %s bukan sebuah komit!"
 
-#: sequencer.c:1369 sequencer.c:1447 builtin/commit.c:1707
-msgid "could not parse HEAD commit"
+#: sequencer.c:1369 sequencer.c:1447 builtin/cummit.c:1707
+msgid "could not parse HEAD cummit"
 msgstr "tidak dapat menguraikan komit HEAD"
 
 #: sequencer.c:1425 sequencer.c:2310
-msgid "unable to parse commit author"
+msgid "unable to parse cummit author"
 msgstr "tidak dapat menguraikan pengarang komit"
 
 #: sequencer.c:1436 builtin/am.c:1644 builtin/merge.c:710
@@ -7984,7 +7984,7 @@ msgstr "git write-tree gagal menulis sebuah pohon"
 
 #: sequencer.c:1469 sequencer.c:1589
 #, c-format
-msgid "unable to read commit message from '%s'"
+msgid "unable to read cummit message from '%s'"
 msgstr "tidak dapat membaca pesan komit dari '%s'"
 
 #: sequencer.c:1500 sequencer.c:1532
@@ -7996,9 +7996,9 @@ msgstr "identitas pengarang tidak valid '%s'"
 msgid "corrupt author: missing date information"
 msgstr "pengarang rusak: informasi tanggal hilang"
 
-#: sequencer.c:1545 builtin/am.c:1671 builtin/commit.c:1821 builtin/merge.c:921
+#: sequencer.c:1545 builtin/am.c:1671 builtin/cummit.c:1821 builtin/merge.c:921
 #: builtin/merge.c:946 t/helper/test-fast-rebase.c:78
-msgid "failed to write commit object"
+msgid "failed to write cummit object"
 msgstr "gagal menulis objek komit"
 
 #: sequencer.c:1572 sequencer.c:4496 t/helper/test-fast-rebase.c:199
@@ -8009,12 +8009,12 @@ msgstr "tidak dapat memperbarui %s"
 
 #: sequencer.c:1621
 #, c-format
-msgid "could not parse commit %s"
+msgid "could not parse cummit %s"
 msgstr "tidak dapat menguraikan komit %s"
 
 #: sequencer.c:1626
 #, c-format
-msgid "could not parse parent commit %s"
+msgid "could not parse parent cummit %s"
 msgstr "tidak dapat menguraikan komit induk %s"
 
 #: sequencer.c:1709 sequencer.c:1990
@@ -8023,26 +8023,26 @@ msgid "unknown command: %d"
 msgstr "perintah tidak dikenal: %d"
 
 #: sequencer.c:1751
-msgid "This is the 1st commit message:"
+msgid "This is the 1st cummit message:"
 msgstr "Ini komit pertama:"
 
 #: sequencer.c:1752
 #, c-format
-msgid "This is the commit message #%d:"
+msgid "This is the cummit message #%d:"
 msgstr "Ini komit ke-%d:"
 
 #: sequencer.c:1753
-msgid "The 1st commit message will be skipped:"
+msgid "The 1st cummit message will be skipped:"
 msgstr "Pesan komit pertama akan dilewati:"
 
 #: sequencer.c:1754
 #, c-format
-msgid "The commit message #%d will be skipped:"
+msgid "The cummit message #%d will be skipped:"
 msgstr "Pesan komit ke-%d akan dilewati"
 
 #: sequencer.c:1755
 #, c-format
-msgid "This is a combination of %d commits."
+msgid "This is a combination of %d cummits."
 msgstr "Ini kombinasi dari %d komit."
 
 #: sequencer.c:1902 sequencer.c:1959
@@ -8059,12 +8059,12 @@ msgid "could not read HEAD"
 msgstr "tidak dapat membaca HEAD"
 
 #: sequencer.c:1953
-msgid "could not read HEAD's commit message"
+msgid "could not read HEAD's cummit message"
 msgstr "tidak dapat membaca pesan komit HEAD"
 
 #: sequencer.c:1977
 #, c-format
-msgid "could not read commit message of %s"
+msgid "could not read cummit message of %s"
 msgstr "tidak dapat membaca pesan komit %s"
 
 #: sequencer.c:2087
@@ -8072,29 +8072,29 @@ msgid "your index file is unmerged."
 msgstr "berkas indeks Anda tak tergabung."
 
 #: sequencer.c:2094
-msgid "cannot fixup root commit"
+msgid "cannot fixup root cummit"
 msgstr "tidak dapat memperbaiki komit akar"
 
 #: sequencer.c:2113
 #, c-format
-msgid "commit %s is a merge but no -m option was given."
+msgid "cummit %s is a merge but no -m option was given."
 msgstr "komit %s adalah penggabungan tetapi opsi -m tidak diberikan."
 
 #: sequencer.c:2121 sequencer.c:2129
 #, c-format
-msgid "commit %s does not have parent %d"
+msgid "cummit %s does not have parent %d"
 msgstr "komit %s tidak punya induk %d"
 
 #: sequencer.c:2135
 #, c-format
-msgid "cannot get commit message for %s"
+msgid "cannot get cummit message for %s"
 msgstr "tidak dapat mendapatkan pesan komit untuk %s"
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
 #: sequencer.c:2154
 #, c-format
-msgid "%s: cannot parse parent commit %s"
+msgid "%s: cannot parse parent cummit %s"
 msgstr "%s: tidak dapat menguraikan komit induk %s"
 
 #: sequencer.c:2220
@@ -8149,7 +8149,7 @@ msgstr "baris %d tidak valid: %.*s"
 
 #: sequencer.c:2572
 #, c-format
-msgid "cannot '%s' without a previous commit"
+msgid "cannot '%s' without a previous cummit"
 msgstr "tidak dapat '%s' tanpa komit sebelumnya"
 
 #: sequencer.c:2620 builtin/rebase.c:185
@@ -8175,7 +8175,7 @@ msgid "unusable instruction sheet: '%s'"
 msgstr "lembar perintah tidak dapat digunakan: '%s'"
 
 #: sequencer.c:2714
-msgid "no commits parsed."
+msgid "no cummits parsed."
 msgstr "tidak ada komit yang diuraikan."
 
 #: sequencer.c:2725
@@ -8196,7 +8196,7 @@ msgid "malformed options sheet: '%s'"
 msgstr "lembar opsi jelek: '%s'"
 
 #: sequencer.c:3029 sequencer.c:4875
-msgid "empty commit set passed"
+msgid "empty cummit set passed"
 msgstr "himpunan komit kosong dilewatkan"
 
 #: sequencer.c:3046
@@ -8273,7 +8273,7 @@ msgid "no cherry-pick in progress"
 msgstr "tidak ada pemetikan ceri yang sedang berjalan"
 
 #: sequencer.c:3256
-msgid "failed to skip the commit"
+msgid "failed to skip the cummit"
 msgstr "gagal melewati komit"
 
 #: sequencer.c:3263
@@ -8283,7 +8283,7 @@ msgstr "tidak ada yang dilewati"
 #: sequencer.c:3266
 #, c-format
 msgid ""
-"have you committed already?\n"
+"have you cummitted already?\n"
 "try \"git %s --continue\""
 msgstr ""
 "sudahkah Anda komit?\n"
@@ -8301,9 +8301,9 @@ msgstr "tidak dapat menyalin '%s' ke '%s'"
 #: sequencer.c:3453
 #, c-format
 msgid ""
-"You can amend the commit now, with\n"
+"You can amend the cummit now, with\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
@@ -8311,7 +8311,7 @@ msgid ""
 msgstr ""
 "Anda dapat mengubah komit sekarang, dengan\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Setelah Anda puas dengan perubahan Anda, jalankan\n"
 "\n"
@@ -8361,7 +8361,7 @@ msgstr "dan buat perubahan ke indeks dan/atau pohon kerja\n"
 msgid ""
 "execution succeeded: %s\n"
 "but left changes to the index and/or the working tree\n"
-"Commit or stash your changes, and then run\n"
+"cummit or stash your changes, and then run\n"
 "\n"
 "  git rebase --continue\n"
 "\n"
@@ -8379,7 +8379,7 @@ msgid "illegal label name: '%.*s'"
 msgstr "nama label ilegal: '%.*s'"
 
 #: sequencer.c:3655
-msgid "writing fake root commit"
+msgid "writing fake root cummit"
 msgstr "menulis komit akar palsu"
 
 #: sequencer.c:3660
@@ -8411,7 +8411,7 @@ msgstr "penggabungan gurita tidak dapat dieksekusi di atas sebuah [akar baru]"
 
 #: sequencer.c:3869
 #, c-format
-msgid "could not get commit message of '%s'"
+msgid "could not get cummit message of '%s'"
 msgstr "tidak dapat mendapatkan pesan komit dari '%s'"
 
 #: sequencer.c:4013
@@ -8548,7 +8548,7 @@ msgid "cannot rebase: You have unstaged changes."
 msgstr "tidak dapat mendasarkan ulang: Anda punya perubahan tak tergelar."
 
 #: sequencer.c:4624
-msgid "cannot amend non-existing commit"
+msgid "cannot amend non-existing cummit"
 msgstr "tidak dapat mengubah komit yang tidak ada"
 
 #: sequencer.c:4626
@@ -8564,7 +8564,7 @@ msgstr "konten tidak valid: '%s'"
 #: sequencer.c:4631
 msgid ""
 "\n"
-"You have uncommitted changes in your working tree. Please, commit them\n"
+"You have uncummitted changes in your working tree. Please, cummit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 "\n"
@@ -8581,7 +8581,7 @@ msgid "could not remove CHERRY_PICK_HEAD"
 msgstr "tidak dapat menghapus CHERRY_PICK_HEAD"
 
 #: sequencer.c:4732
-msgid "could not commit staged changes."
+msgid "could not cummit staged changes."
 msgstr "tidak dapat mengkomit perubahan tergelar."
 
 #: sequencer.c:4852
@@ -8595,16 +8595,16 @@ msgid "%s: bad revision"
 msgstr "%s: revisi jelek"
 
 #: sequencer.c:4891
-msgid "can't revert as initial commit"
+msgid "can't revert as initial cummit"
 msgstr "tidak dapat membalikkan sebagai komit awal"
 
 #: sequencer.c:5162 sequencer.c:5391
 #, c-format
-msgid "skipped previously applied commit %s"
+msgid "skipped previously applied cummit %s"
 msgstr "melewatkan komit yang sudah diterapkan sebelumnya %s"
 
 #: sequencer.c:5232 sequencer.c:5407
-msgid "use --reapply-cherry-picks to include skipped commits"
+msgid "use --reapply-cherry-picks to include skipped cummits"
 msgstr "gunakan --reapply-cherry-picks untuk memasukkan komit yang terlewat"
 
 #: sequencer.c:5378
@@ -8935,7 +8935,7 @@ msgstr "argumen --ignore-submodules jelek: %s"
 #: submodule.c:866
 #, c-format
 msgid ""
-"Submodule in commit %s at path: '%s' collides with a submodule named the "
+"Submodule in cummit %s at path: '%s' collides with a submodule named the "
 "same. Skipping it."
 msgstr ""
 "Submodul dalam komit %s pada jalur '%s' bertabrakan dengan submodul yang "
@@ -8943,13 +8943,13 @@ msgstr ""
 
 #: submodule.c:987
 #, c-format
-msgid "submodule entry '%s' (%s) is a %s, not a commit"
+msgid "submodule entry '%s' (%s) is a %s, not a cummit"
 msgstr "entri submodul '%s' (%s) adalah %s, bukan komit"
 
 #: submodule.c:1069
 #, c-format
 msgid ""
-"Could not run 'git rev-list <commits> --not --remotes -n 1' command in "
+"Could not run 'git rev-list <cummits> --not --remotes -n 1' command in "
 "submodule %s"
 msgstr ""
 "Tidak dapat menjalankan perintah 'git rev-list <komit> --not --remotes -n 1' "
@@ -8986,12 +8986,12 @@ msgstr "Tidak dapat mengakses submodul '%s'\n"
 
 #: submodule.c:1618
 #, c-format
-msgid "Could not access submodule '%s' at commit %s\n"
+msgid "Could not access submodule '%s' at cummit %s\n"
 msgstr "Tidak dapat mengakses submodul '%s' pada komit %s\n"
 
 #: submodule.c:1629
 #, c-format
-msgid "Fetching submodule %s%s at commit %s\n"
+msgid "Fetching submodule %s%s at cummit %s\n"
 msgstr "Mengambil submodul %s%s pada komit %s\n"
 
 #: submodule.c:1849
@@ -9445,7 +9445,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by checkout:\n"
-"%%sPlease commit your changes or stash them before you switch branches."
+"%%sPlease cummit your changes or stash them before you switch branches."
 msgstr ""
 
 #: unpack-trees.c:120
@@ -9459,7 +9459,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
-"%%sPlease commit your changes or stash them before you merge."
+"%%sPlease cummit your changes or stash them before you merge."
 msgstr ""
 
 #: unpack-trees.c:125
@@ -9473,7 +9473,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by %s:\n"
-"%%sPlease commit your changes or stash them before you %s."
+"%%sPlease cummit your changes or stash them before you %s."
 msgstr ""
 
 #: unpack-trees.c:130
@@ -9856,20 +9856,20 @@ msgid "  (use \"git rm <file>...\" to mark resolution)"
 msgstr "  (gunakan \"git rm <berkas>\" untuk menandai penyelesaian)"
 
 #: wt-status.c:211 wt-status.c:1140
-msgid "Changes to be committed:"
+msgid "Changes to be cummitted:"
 msgstr "Perubahan yang akan dikomit:"
 
 #: wt-status.c:234 wt-status.c:1149
-msgid "Changes not staged for commit:"
+msgid "Changes not staged for cummit:"
 msgstr "Perubahan yang tidak digelar untuk komit:"
 
 #: wt-status.c:238
-msgid "  (use \"git add <file>...\" to update what will be committed)"
+msgid "  (use \"git add <file>...\" to update what will be cummitted)"
 msgstr ""
 "  (gunakan \"git add <berkas>...\" untuk memperbarui apa yang akan dikomit)"
 
 #: wt-status.c:240
-msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
+msgid "  (use \"git add/rm <file>...\" to update what will be cummitted)"
 msgstr ""
 "  (gunakan \"git add/rm <berkas>...\" untuk memperbarui apa yang akan "
 "dikomit)"
@@ -9882,13 +9882,13 @@ msgstr ""
 "kerja)"
 
 #: wt-status.c:243
-msgid "  (commit or discard the untracked or modified content in submodules)"
+msgid "  (cummit or discard the untracked or modified content in submodules)"
 msgstr ""
 "  (komit atau buang konten yang tak dilacak atau diubah dalam submodul)"
 
 #: wt-status.c:254
 #, c-format
-msgid "  (use \"git %s <file>...\" to include in what will be committed)"
+msgid "  (use \"git %s <file>...\" to include in what will be cummitted)"
 msgstr "  (use \"git %s <berkas>...\" untuk menyertakan apa yang akan dikomit)"
 
 #: wt-status.c:266
@@ -9952,7 +9952,7 @@ msgid "unmerged:"
 msgstr "tidak digabung:"
 
 #: wt-status.c:382
-msgid "new commits, "
+msgid "new cummits, "
 msgstr "komit baru, "
 
 #: wt-status.c:384
@@ -9975,7 +9975,7 @@ msgid "Submodules changed but not updated:"
 msgstr "Submodul berubah tapi tak diperbarui:"
 
 #: wt-status.c:1006
-msgid "Submodule changes to be committed:"
+msgid "Submodule changes to be cummitted:"
 msgstr "Perubahan submodul yang akan dikomit:"
 
 #: wt-status.c:1088
@@ -10002,8 +10002,8 @@ msgid "You have unmerged paths."
 msgstr "Anda punya jalur yang tak tergabung."
 
 #: wt-status.c:1213
-msgid "  (fix conflicts and run \"git commit\")"
-msgstr "  (selesaikan konflik dan jalankan \"git commit\")"
+msgid "  (fix conflicts and run \"git cummit\")"
+msgstr "  (selesaikan konflik dan jalankan \"git cummit\")"
 
 #: wt-status.c:1215
 msgid "  (use \"git merge --abort\" to abort the merge)"
@@ -10014,8 +10014,8 @@ msgid "All conflicts fixed but you are still merging."
 msgstr "Semua konflik sudah selesai tapi Anda masih menggabungkan."
 
 #: wt-status.c:1222
-msgid "  (use \"git commit\" to conclude merge)"
-msgstr "  (gunakan \"git commit\" untuk mengakhiri penggabungan)"
+msgid "  (use \"git cummit\" to conclude merge)"
+msgstr "  (gunakan \"git cummit\" untuk mengakhiri penggabungan)"
 
 #: wt-status.c:1233
 msgid "You are in the middle of an am session."
@@ -10035,7 +10035,7 @@ msgstr "  (gunakan \"git am --skip\" untuk lewati tambalan ini)"
 
 #: wt-status.c:1246
 msgid ""
-"  (use \"git am --allow-empty\" to record this patch as an empty commit)"
+"  (use \"git am --allow-empty\" to record this patch as an empty cummit)"
 msgstr ""
 "  (gunakan \"git am --allow-empty\" untuk merekam tambalan ini sebagai komit "
 "kosong)"
@@ -10107,12 +10107,12 @@ msgstr "  (semua konflik sudah selesai: jalankan \"git rebase --continue\")"
 #: wt-status.c:1458
 #, c-format
 msgid ""
-"You are currently splitting a commit while rebasing branch '%s' on '%s'."
+"You are currently splitting a cummit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Anda sedang membelah komit saat mendasarkan ulang cabang '%s' pada '%s'."
 
 #: wt-status.c:1463
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a cummit during a rebase."
 msgstr "Anda sedang membelah komit saat mendasarkan ulang."
 
 #: wt-status.c:1466
@@ -10122,17 +10122,17 @@ msgstr ""
 
 #: wt-status.c:1470
 #, c-format
-msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
+msgid "You are currently editing a cummit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Anda sedang menyunting komit saat mendasarkan ulang cabang '%s' pada '%s'."
 
 #: wt-status.c:1475
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a cummit during a rebase."
 msgstr "Anda sedang menyunting komit saat mendasarkan ulang."
 
 #: wt-status.c:1478
-msgid "  (use \"git commit --amend\" to amend the current commit)"
-msgstr "  (gunakan \"git commit --amend\" untuk mengubah komit saat ini)"
+msgid "  (use \"git cummit --amend\" to amend the current cummit)"
+msgstr "  (gunakan \"git cummit --amend\" untuk mengubah komit saat ini)"
 
 #: wt-status.c:1480
 msgid ""
@@ -10146,7 +10146,7 @@ msgstr "Petik ceri sedang berjalan."
 
 #: wt-status.c:1494
 #, c-format
-msgid "You are currently cherry-picking commit %s."
+msgid "You are currently cherry-picking cummit %s."
 msgstr "Anda sedang memetik ceri komit %s."
 
 #: wt-status.c:1501
@@ -10177,7 +10177,7 @@ msgstr "Pengembalian sedang berjalang."
 
 #: wt-status.c:1524
 #, c-format
-msgid "You are currently reverting commit %s."
+msgid "You are currently reverting cummit %s."
 msgstr "Anda sedang mengembalikan komit %s."
 
 #: wt-status.c:1530
@@ -10248,11 +10248,11 @@ msgid "Not currently on any branch."
 msgstr "Tidak sedang berada pada cabang apapun."
 
 #: wt-status.c:1851
-msgid "Initial commit"
+msgid "Initial cummit"
 msgstr "Komit awal"
 
 #: wt-status.c:1852
-msgid "No commits yet"
+msgid "No cummits yet"
 msgstr "Tidak ada komit"
 
 #: wt-status.c:1866
@@ -10289,20 +10289,20 @@ msgstr "Tidak ada perubahan"
 
 #: wt-status.c:1891
 #, c-format
-msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
+msgid "no changes added to cummit (use \"git add\" and/or \"git cummit -a\")\n"
 msgstr ""
-"tidak ada perubahan untuk dikomit (gunakan \"git add\" dan/atau \"git commit "
+"tidak ada perubahan untuk dikomit (gunakan \"git add\" dan/atau \"git cummit "
 "-a\")\n"
 
 #: wt-status.c:1895
 #, c-format
-msgid "no changes added to commit\n"
+msgid "no changes added to cummit\n"
 msgstr "tidak ada perubahan untuk dikomit\n"
 
 #: wt-status.c:1899
 #, c-format
 msgid ""
-"nothing added to commit but untracked files present (use \"git add\" to "
+"nothing added to cummit but untracked files present (use \"git add\" to "
 "track)\n"
 msgstr ""
 "tidak ada perubahan untuk dikomit tapi berkas yang tak terlacak ada(gunakan "
@@ -10310,33 +10310,33 @@ msgstr ""
 
 #: wt-status.c:1903
 #, c-format
-msgid "nothing added to commit but untracked files present\n"
+msgid "nothing added to cummit but untracked files present\n"
 msgstr "tidak ada perubahan untuk dikomit tapi berkas yang tak terlacak ada\n"
 
 #: wt-status.c:1907
 #, c-format
-msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
+msgid "nothing to cummit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
 "tidak ada yang dikomit (buat/salin berkas dan gunakan \"git add\" untuk "
 "lacak)\n"
 
 #: wt-status.c:1911 wt-status.c:1917
 #, c-format
-msgid "nothing to commit\n"
+msgid "nothing to cummit\n"
 msgstr "tidak ada yang dikomit\n"
 
 #: wt-status.c:1914
 #, c-format
-msgid "nothing to commit (use -u to show untracked files)\n"
+msgid "nothing to cummit (use -u to show untracked files)\n"
 msgstr "tidak ada yang dikomit (gunakan -u untuk lihat berkas tak terlacak)\n"
 
 #: wt-status.c:1919
 #, c-format
-msgid "nothing to commit, working tree clean\n"
+msgid "nothing to cummit, working tree clean\n"
 msgstr "tidak ada yang dikomit, pohon kerja bersih\n"
 
 #: wt-status.c:2024
-msgid "No commits yet on "
+msgid "No cummits yet on "
 msgstr "Tidak ada komit apapun pada "
 
 #: wt-status.c:2028
@@ -10362,12 +10362,12 @@ msgid "cannot %s: You have unstaged changes."
 msgstr "tidak dapat %s: Anda punya perubahan yang tidak digelar."
 
 #: wt-status.c:2611
-msgid "additionally, your index contains uncommitted changes."
+msgid "additionally, your index contains uncummitted changes."
 msgstr "juga indeks Anda berisi perubahan yang belum dikomit."
 
 #: wt-status.c:2613
 #, c-format
-msgid "cannot %s: Your index contains uncommitted changes."
+msgid "cannot %s: Your index contains uncummitted changes."
 msgstr "tidak dapat %s: indeks Anda berisi perubahan yang belum dikomit."
 
 #: compat/simple-ipc/ipc-unix-socket.c:205
@@ -10415,7 +10415,7 @@ msgstr "tidak dapat chmod %cx '%s'"
 msgid "unexpected diff status %c"
 msgstr "status diff tak diharapkan %c"
 
-#: builtin/add.c:110 builtin/commit.c:299
+#: builtin/add.c:110 builtin/cummit.c:299
 msgid "updating files failed"
 msgstr "gagal memperbarui berkas"
 
@@ -10464,7 +10464,7 @@ msgstr "Jalur berikut diabaikan oleh salah satu dari berkas .gitignore Anda:\n"
 msgid "dry run"
 msgstr "latihan"
 
-#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/commit.c:1483
+#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/cummit.c:1483
 #: builtin/count-objects.c:98 builtin/fsck.c:789 builtin/log.c:2338
 #: builtin/mv.c:123 builtin/read-tree.c:120
 msgid "be verbose"
@@ -10585,7 +10585,7 @@ msgstr "gagal menambahkan berkas"
 msgid "--chmod param '%s' must be either -x or +x"
 msgstr "--chmod param '%s' harus berupa -x atau +x"
 
-#: builtin/add.c:555 builtin/checkout.c:1770 builtin/commit.c:365
+#: builtin/add.c:555 builtin/checkout.c:1770 builtin/cummit.c:365
 #: builtin/reset.c:436 builtin/rm.c:275 builtin/stash.c:1702
 #, c-format
 msgid "'%s' and pathspec arguments cannot be used together"
@@ -10677,7 +10677,7 @@ msgstr ""
 
 #: builtin/am.c:1160
 #, c-format
-msgid "To record the empty patch as an empty commit, run \"%s --allow-empty\"."
+msgid "To record the empty patch as an empty cummit, run \"%s --allow-empty\"."
 msgstr ""
 "Untuk merekam tambalan kosong sebagai komit kosong, jalankan \"%s --allow-"
 "empty\"."
@@ -10697,7 +10697,7 @@ msgstr ""
 
 #: builtin/am.c:1345
 #, c-format
-msgid "missing author line in commit %s"
+msgid "missing author line in cummit %s"
 msgstr "baris pengarang hilang dalam komit %s"
 
 #: builtin/am.c:1348
@@ -10741,7 +10741,7 @@ msgid "cannot resume: %s does not exist."
 msgstr "tidak dapat melanjutkan: %s tidak ada."
 
 #: builtin/am.c:1726
-msgid "Commit Body is:"
+msgid "cummit Body is:"
 msgstr "Badan komit adalah:"
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
@@ -10754,7 +10754,7 @@ msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "
 msgstr ""
 "Terapkan? [y]a/[n] tidak/[e] sunting/[v] lihat tambalan/terim[a] semua: "
 
-#: builtin/am.c:1782 builtin/commit.c:410
+#: builtin/am.c:1782 builtin/cummit.c:410
 msgid "unable to write index file"
 msgstr "tidak dapat menulis berkas indeks"
 
@@ -10770,7 +10770,7 @@ msgstr "Melewatkan: %.*s"
 
 #: builtin/am.c:1833
 #, c-format
-msgid "Creating an empty commit: %.*s"
+msgid "Creating an empty cummit: %.*s"
 msgstr "Membuat sebuah komit kosong: %.*s"
 
 #: builtin/am.c:1837
@@ -10797,7 +10797,7 @@ msgstr ""
 "Gunakan 'git am --show-current-patch=diff' untuk melihat tambalan yang gagal"
 
 #: builtin/am.c:1921
-msgid "No changes - recorded it as an empty commit."
+msgid "No changes - recorded it as an empty cummit."
 msgstr "Tidak ada perubahan - direkam sebagai komit kosong."
 
 #: builtin/am.c:1923
@@ -10872,7 +10872,7 @@ msgid "be quiet"
 msgstr "jadi senyap"
 
 #: builtin/am.c:2337
-msgid "add a Signed-off-by trailer to the commit message"
+msgid "add a Signed-off-by trailer to the cummit message"
 msgstr "tambahkan trailer Signed-off-by kepada pesan komit"
 
 #: builtin/am.c:2340
@@ -10914,7 +10914,7 @@ msgstr "lewatkannya melalui git-mailinfo"
 msgid "pass it through git-apply"
 msgstr "lewatkannya melalui git-apply"
 
-#: builtin/am.c:2376 builtin/commit.c:1514 builtin/fmt-merge-msg.c:18
+#: builtin/am.c:2376 builtin/cummit.c:1514 builtin/fmt-merge-msg.c:18
 #: builtin/fmt-merge-msg.c:21 builtin/grep.c:920 builtin/merge.c:263
 #: builtin/pull.c:142 builtin/pull.c:204 builtin/pull.c:221
 #: builtin/rebase.c:1074 builtin/repack.c:657 builtin/repack.c:661
@@ -10964,25 +10964,25 @@ msgid "show the patch being applied"
 msgstr "perlihatkan tambalan yang diterapkan"
 
 #: builtin/am.c:2411
-msgid "record the empty patch as an empty commit"
+msgid "record the empty patch as an empty cummit"
 msgstr "rekam tambalan kosong sebagai komit kosong"
 
 #: builtin/am.c:2415
-msgid "lie about committer date"
+msgid "lie about cummitter date"
 msgstr "berbohong soal tanggal pengkomit"
 
 #: builtin/am.c:2417
 msgid "use current timestamp for author date"
 msgstr "gunakan stempel waktu saat ini untuk tanggal pengarang"
 
-#: builtin/am.c:2419 builtin/commit-tree.c:118 builtin/commit.c:1642
+#: builtin/am.c:2419 builtin/cummit-tree.c:118 builtin/cummit.c:1642
 #: builtin/merge.c:302 builtin/pull.c:179 builtin/rebase.c:1127
 #: builtin/revert.c:117 builtin/tag.c:461
 msgid "key-id"
 msgstr "key-id"
 
 #: builtin/am.c:2420 builtin/rebase.c:1128
-msgid "GPG-sign commits"
+msgid "GPG-sign cummits"
 msgstr "tandatangani komit dengan GPG"
 
 #: builtin/am.c:2423
@@ -11058,7 +11058,7 @@ msgid "git archive: expected a flush"
 msgstr "git archive: sebuah bilasan diharapkan"
 
 #: builtin/bisect--helper.c:24
-msgid "git bisect--helper --bisect-reset [<commit>]"
+msgid "git bisect--helper --bisect-reset [<cummit>]"
 msgstr "git bisect--helper --bisect-reset [<komit>]"
 
 #: builtin/bisect--helper.c:26
@@ -11132,13 +11132,13 @@ msgstr "Kami tidak sedang membagi dua.\n"
 
 #: builtin/bisect--helper.c:218
 #, c-format
-msgid "'%s' is not a valid commit"
+msgid "'%s' is not a valid cummit"
 msgstr "'%s' bukan sebuah komit yang valid"
 
 #: builtin/bisect--helper.c:227
 #, c-format
 msgid ""
-"could not check out original HEAD '%s'. Try 'git bisect reset <commit>'."
+"could not check out original HEAD '%s'. Try 'git bisect reset <cummit>'."
 msgstr ""
 "tidak dapat men-checkout HEAD asli '%s'. Coba 'git bisect reset <komit>'."
 
@@ -11184,7 +11184,7 @@ msgstr ""
 
 #: builtin/bisect--helper.c:365
 #, c-format
-msgid "bisecting only with a %s commit"
+msgid "bisecting only with a %s cummit"
 msgstr "membagi dua hanya dengan sebuah komit %s"
 
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -11290,7 +11290,7 @@ msgstr "Masukan revisi jelek: %s"
 
 #: builtin/bisect--helper.c:904
 #, c-format
-msgid "Bad rev input (not a commit): %s"
+msgid "Bad rev input (not a cummit): %s"
 msgstr "Masukan revisi jelek (bukan sebuah komit): %s"
 
 #: builtin/bisect--helper.c:936
@@ -11347,7 +11347,7 @@ msgstr "bisect run sukses"
 
 #: builtin/bisect--helper.c:1218
 #, c-format
-msgid "bisect found first bad commit"
+msgid "bisect found first bad cummit"
 msgstr "pembagian dua menemukan komit jelek pertama"
 
 #: builtin/bisect--helper.c:1221
@@ -11376,7 +11376,7 @@ msgid "start the bisect session"
 msgstr "mulai sesi pembagian dua"
 
 #: builtin/bisect--helper.c:1261
-msgid "find the next bisection commit"
+msgid "find the next bisection cummit"
 msgstr "temukan komit pembagian dua berikutnya"
 
 #: builtin/bisect--helper.c:1263
@@ -11392,7 +11392,7 @@ msgid "replay the bisection process from the given file"
 msgstr "mainkan ulang proses pembagian dua dari berkas yang diberikan"
 
 #: builtin/bisect--helper.c:1269
-msgid "skip some commits for checkout"
+msgid "skip some cummits for checkout"
 msgstr "lewati beberapa komit untuk checkout"
 
 #: builtin/bisect--helper.c:1271
@@ -11408,7 +11408,7 @@ msgid "no log for BISECT_WRITE"
 msgstr "tidak ada log untuk BISECT_WRITE"
 
 #: builtin/bisect--helper.c:1290
-msgid "--bisect-reset requires either no argument or a commit"
+msgid "--bisect-reset requires either no argument or a cummit"
 msgstr "--bisect-reset butuh baik tanpa argumen atau sebuah komit"
 
 #: builtin/bisect--helper.c:1295
@@ -11454,11 +11454,11 @@ msgid "show blame entries as we find them, incrementally"
 msgstr "perlihatkan entri penyalahan seperti yang kami temukan secara bertahap"
 
 #: builtin/blame.c:865
-msgid "do not show object names of boundary commits (Default: off)"
+msgid "do not show object names of boundary cummits (Default: off)"
 msgstr "jangan perlihatkan nama objek dari komit perbatasan (asali: off)"
 
 #: builtin/blame.c:866
-msgid "do not treat root commits as boundaries (Default: off)"
+msgid "do not treat root cummits as boundaries (Default: off)"
 msgstr "jangan perlakukan komit akar sebagai perbatasan (asali: off)"
 
 #: builtin/blame.c:867
@@ -11466,7 +11466,7 @@ msgid "show work cost statistics"
 msgstr "perlihatkan statistik biaya usaha"
 
 #: builtin/blame.c:868 builtin/checkout.c:1554 builtin/clone.c:98
-#: builtin/commit-graph.c:75 builtin/commit-graph.c:228 builtin/fetch.c:181
+#: builtin/cummit-graph.c:75 builtin/cummit-graph.c:228 builtin/fetch.c:181
 #: builtin/merge.c:301 builtin/multi-pack-index.c:103
 #: builtin/multi-pack-index.c:154 builtin/multi-pack-index.c:180
 #: builtin/multi-pack-index.c:208 builtin/pull.c:120 builtin/push.c:566
@@ -11491,7 +11491,7 @@ msgid "show in a format designed for machine consumption"
 msgstr "perlihatkan dalam format yang didesain untuk konsumsi mesin"
 
 #: builtin/blame.c:873
-msgid "show porcelain format with per-line commit information"
+msgid "show porcelain format with per-line cummit information"
 msgstr "perlihatkan format porselen dengan informasi komit per baris"
 
 #: builtin/blame.c:874
@@ -11503,7 +11503,7 @@ msgid "show raw timestamp (Default: off)"
 msgstr "perlihatkan stempel waktu mentah (asali: off)"
 
 #: builtin/blame.c:876
-msgid "show long commit SHA1 (Default: off)"
+msgid "show long cummit SHA1 (Default: off)"
 msgstr "perlihatkan SHA1 komit panjang (asali: off)"
 
 #: builtin/blame.c:877
@@ -11653,7 +11653,7 @@ msgstr ""
 
 #: builtin/branch.c:183
 #, c-format
-msgid "Couldn't look up commit object for '%s'"
+msgid "Couldn't look up cummit object for '%s'"
 msgstr "Tidak dapat mencari objek komit untuk '%s'"
 
 #: builtin/branch.c:187
@@ -11674,7 +11674,7 @@ msgid "cannot use -a with -d"
 msgstr "tidak dapat gunakan -a dengan -d"
 
 #: builtin/branch.c:242
-msgid "Couldn't look up commit object for HEAD"
+msgid "Couldn't look up cummit object for HEAD"
 msgstr "Tidak dapat mencari objek komit untuk HEAD"
 
 #: builtin/branch.c:259
@@ -11822,11 +11822,11 @@ msgid "act on remote-tracking branches"
 msgstr "lakukan pada cabang pelacak remote"
 
 #: builtin/branch.c:666 builtin/branch.c:668
-msgid "print only branches that contain the commit"
+msgid "print only branches that contain the cummit"
 msgstr "cetak hanya cabang yang berisi komit"
 
 #: builtin/branch.c:667 builtin/branch.c:669
-msgid "print only branches that don't contain the commit"
+msgid "print only branches that don't contain the cummit"
 msgstr "cetak hanya cabang yang tak berisi komit"
 
 #: builtin/branch.c:672
@@ -11946,7 +11946,7 @@ msgstr "tidak dapat menyunting deskripsi lebih dari satu cabang"
 
 #: builtin/branch.c:814
 #, c-format
-msgid "No commit on branch '%s' yet."
+msgid "No cummit on branch '%s' yet."
 msgstr "Belum ada komit pada cabang '%s'."
 
 #: builtin/branch.c:817
@@ -12234,8 +12234,8 @@ msgid "Emit [broken] object attributes"
 msgstr "Keluarkan atribut objek [rusak]"
 
 #: builtin/cat-file.c:842
-msgid "show object type (one of 'blob', 'tree', 'commit', 'tag', ...)"
-msgstr "perlihatkan tipe objek (salah satu dari 'blob', 'commit', 'tag', ...)"
+msgid "show object type (one of 'blob', 'tree', 'cummit', 'tag', ...)"
+msgstr "perlihatkan tipe objek (salah satu dari 'blob', 'cummit', 'tag', ...)"
 
 #: builtin/cat-file.c:843
 msgid "show object size"
@@ -12652,12 +12652,12 @@ msgstr "... dan %d lainnya.\n"
 #: builtin/checkout.c:1023
 #, c-format
 msgid ""
-"Warning: you are leaving %d commit behind, not connected to\n"
+"Warning: you are leaving %d cummit behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"Warning: you are leaving %d commits behind, not connected to\n"
+"Warning: you are leaving %d cummits behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
@@ -12777,12 +12777,12 @@ msgstr "sebuah cabang diharapkan, dapat '%s'"
 
 #: builtin/checkout.c:1420
 #, c-format
-msgid "a branch is expected, got commit '%s'"
+msgid "a branch is expected, got cummit '%s'"
 msgstr "sebuah cabang diharapkan, dapat komit '%s'"
 
 #: builtin/checkout.c:1429
 msgid ""
-"If you want to detach HEAD at the commit, try again with the --detach option."
+"If you want to detach HEAD at the cummit, try again with the --detach option."
 msgstr "Jika Anda ingin lepas HEAD pada komit, coba lagi dengan opsi --detach."
 
 #: builtin/checkout.c:1442
@@ -12855,11 +12855,11 @@ msgstr "'%s' tidak bisa mengambil <titik-awal>"
 
 #: builtin/checkout.c:1505
 #, c-format
-msgid "Cannot switch branch to a non-commit '%s'"
+msgid "Cannot switch branch to a non-cummit '%s'"
 msgstr "Tidak dapat mengganti cabang ke bukan komit '%s'"
 
 #: builtin/checkout.c:1512
-msgid "missing branch or commit argument"
+msgid "missing branch or cummit argument"
 msgstr "kehilangan argumen cabang atau komit"
 
 #: builtin/checkout.c:1555
@@ -12875,7 +12875,7 @@ msgid "conflict style (merge, diff3, or zdiff3)"
 msgstr "gaya konflik (merge, diff3, atau zdiff3)"
 
 #: builtin/checkout.c:1569 builtin/worktree.c:560
-msgid "detach HEAD at named commit"
+msgid "detach HEAD at named cummit"
 msgstr "lepas HEAD pada komit bernama"
 
 #: builtin/checkout.c:1574
@@ -12936,8 +12936,8 @@ msgstr "spesifikasi jalur tidak valid"
 
 #: builtin/checkout.c:1760
 #, c-format
-msgid "'%s' is not a commit and a branch '%s' cannot be created from it"
-msgstr "'%s' bukanlah commit dan cabang '%s' tidak dapat dibuat dari itu"
+msgid "'%s' is not a cummit and a branch '%s' cannot be created from it"
+msgstr "'%s' bukanlah cummit dan cabang '%s' tidak dapat dibuat dari itu"
 
 #: builtin/checkout.c:1764
 #, c-format
@@ -13600,215 +13600,215 @@ msgstr ""
 msgid "--command must be the first argument"
 msgstr ""
 
-#: builtin/commit-graph.c:13
+#: builtin/cummit-graph.c:13
 msgid ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
+"git cummit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
 msgstr ""
 
-#: builtin/commit-graph.c:16
+#: builtin/cummit-graph.c:16
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--"
-"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
+"git cummit-graph write [--object-dir <objdir>] [--append] [--"
+"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-cummits] [--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
 msgstr ""
 
-#: builtin/commit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
+#: builtin/cummit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
 msgid "dir"
 msgstr ""
 
-#: builtin/commit-graph.c:52
+#: builtin/cummit-graph.c:52
 msgid "the object directory to store the graph"
 msgstr ""
 
-#: builtin/commit-graph.c:73
-msgid "if the commit-graph is split, only verify the tip file"
+#: builtin/cummit-graph.c:73
+msgid "if the cummit-graph is split, only verify the tip file"
 msgstr ""
 
-#: builtin/commit-graph.c:100
+#: builtin/cummit-graph.c:100
 #, c-format
-msgid "Could not open commit-graph '%s'"
+msgid "Could not open cummit-graph '%s'"
 msgstr ""
 
-#: builtin/commit-graph.c:137
+#: builtin/cummit-graph.c:137
 #, c-format
 msgid "unrecognized --split argument, %s"
 msgstr ""
 
-#: builtin/commit-graph.c:150
+#: builtin/cummit-graph.c:150
 #, c-format
 msgid "unexpected non-hex object ID: %s"
 msgstr ""
 
-#: builtin/commit-graph.c:155
+#: builtin/cummit-graph.c:155
 #, c-format
 msgid "invalid object: %s"
 msgstr ""
 
-#: builtin/commit-graph.c:205
+#: builtin/cummit-graph.c:205
 msgid "start walk at all refs"
 msgstr ""
 
-#: builtin/commit-graph.c:207
-msgid "scan pack-indexes listed by stdin for commits"
+#: builtin/cummit-graph.c:207
+msgid "scan pack-indexes listed by stdin for cummits"
 msgstr ""
 
-#: builtin/commit-graph.c:209
-msgid "start walk at commits listed by stdin"
+#: builtin/cummit-graph.c:209
+msgid "start walk at cummits listed by stdin"
 msgstr ""
 
-#: builtin/commit-graph.c:211
-msgid "include all commits already in the commit-graph file"
+#: builtin/cummit-graph.c:211
+msgid "include all cummits already in the cummit-graph file"
 msgstr ""
 
-#: builtin/commit-graph.c:213
+#: builtin/cummit-graph.c:213
 msgid "enable computation for changed paths"
 msgstr ""
 
-#: builtin/commit-graph.c:215
-msgid "allow writing an incremental commit-graph file"
+#: builtin/cummit-graph.c:215
+msgid "allow writing an incremental cummit-graph file"
 msgstr ""
 
-#: builtin/commit-graph.c:219
-msgid "maximum number of commits in a non-base split commit-graph"
+#: builtin/cummit-graph.c:219
+msgid "maximum number of cummits in a non-base split cummit-graph"
 msgstr ""
 
-#: builtin/commit-graph.c:221
-msgid "maximum ratio between two levels of a split commit-graph"
+#: builtin/cummit-graph.c:221
+msgid "maximum ratio between two levels of a split cummit-graph"
 msgstr ""
 
-#: builtin/commit-graph.c:223
+#: builtin/cummit-graph.c:223
 msgid "only expire files older than a given date-time"
 msgstr ""
 
-#: builtin/commit-graph.c:225
+#: builtin/cummit-graph.c:225
 msgid "maximum number of changed-path Bloom filters to compute"
 msgstr ""
 
-#: builtin/commit-graph.c:251
-msgid "use at most one of --reachable, --stdin-commits, or --stdin-packs"
+#: builtin/cummit-graph.c:251
+msgid "use at most one of --reachable, --stdin-cummits, or --stdin-packs"
 msgstr ""
 
-#: builtin/commit-graph.c:282
-msgid "Collecting commits from input"
+#: builtin/cummit-graph.c:282
+msgid "Collecting cummits from input"
 msgstr ""
 
-#: builtin/commit-graph.c:328 builtin/multi-pack-index.c:259
+#: builtin/cummit-graph.c:328 builtin/multi-pack-index.c:259
 #, c-format
 msgid "unrecognized subcommand: %s"
 msgstr ""
 
-#: builtin/commit-tree.c:18
+#: builtin/cummit-tree.c:18
 msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
+"git cummit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
 "<file>)...] <tree>"
 msgstr ""
-"git commit-tree [(-p <induk>)...] [-S[<id kunci>]] [(-m <pesan>)...] [(-F "
+"git cummit-tree [(-p <induk>)...] [-S[<id kunci>]] [(-m <pesan>)...] [(-F "
 "<berkas>)...] <pohon>"
 
-#: builtin/commit-tree.c:31
+#: builtin/cummit-tree.c:31
 #, c-format
 msgid "duplicate parent %s ignored"
 msgstr "induk duplikat %s diabaikan"
 
-#: builtin/commit-tree.c:56 builtin/commit-tree.c:134 builtin/log.c:590
+#: builtin/cummit-tree.c:56 builtin/cummit-tree.c:134 builtin/log.c:590
 #, c-format
 msgid "not a valid object name %s"
 msgstr "bukan nama objek valid %s"
 
-#: builtin/commit-tree.c:94
+#: builtin/cummit-tree.c:94
 #, c-format
-msgid "git commit-tree: failed to read '%s'"
-msgstr "git commit-tree: gagal membaca '%s'"
+msgid "git cummit-tree: failed to read '%s'"
+msgstr "git cummit-tree: gagal membaca '%s'"
 
-#: builtin/commit-tree.c:96
+#: builtin/cummit-tree.c:96
 #, c-format
-msgid "git commit-tree: failed to close '%s'"
-msgstr "git commit-tree: gagal menutup '%s'"
+msgid "git cummit-tree: failed to close '%s'"
+msgstr "git cummit-tree: gagal menutup '%s'"
 
-#: builtin/commit-tree.c:109
+#: builtin/cummit-tree.c:109
 msgid "parent"
 msgstr "induk"
 
-#: builtin/commit-tree.c:110
-msgid "id of a parent commit object"
+#: builtin/cummit-tree.c:110
+msgid "id of a parent cummit object"
 msgstr "id objek komit induk"
 
-#: builtin/commit-tree.c:112 builtin/commit.c:1626 builtin/merge.c:284
+#: builtin/cummit-tree.c:112 builtin/cummit.c:1626 builtin/merge.c:284
 #: builtin/notes.c:407 builtin/notes.c:573 builtin/stash.c:1666
 #: builtin/tag.c:455
 msgid "message"
 msgstr "pesan"
 
-#: builtin/commit-tree.c:113 builtin/commit.c:1626
-msgid "commit message"
+#: builtin/cummit-tree.c:113 builtin/cummit.c:1626
+msgid "cummit message"
 msgstr "pesan komit"
 
-#: builtin/commit-tree.c:116
-msgid "read commit log message from file"
+#: builtin/cummit-tree.c:116
+msgid "read cummit log message from file"
 msgstr "baca pesan log komit dari berkas"
 
-#: builtin/commit-tree.c:119 builtin/commit.c:1643 builtin/merge.c:303
+#: builtin/cummit-tree.c:119 builtin/cummit.c:1643 builtin/merge.c:303
 #: builtin/pull.c:180 builtin/revert.c:118
-msgid "GPG sign commit"
+msgid "GPG sign cummit"
 msgstr "Tandatangani komit dengan GPG"
 
-#: builtin/commit-tree.c:131
+#: builtin/cummit-tree.c:131
 msgid "must give exactly one tree"
 msgstr "harus berikan tepat satu pohon"
 
-#: builtin/commit-tree.c:138
-msgid "git commit-tree: failed to read"
-msgstr "git commit-tree: gagal membaca"
+#: builtin/cummit-tree.c:138
+msgid "git cummit-tree: failed to read"
+msgstr "git cummit-tree: gagal membaca"
 
-#: builtin/commit.c:43
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<opsi>] [--] <spek jalur>..."
+#: builtin/cummit.c:43
+msgid "git cummit [<options>] [--] <pathspec>..."
+msgstr "git cummit [<opsi>] [--] <spek jalur>..."
 
-#: builtin/commit.c:48
+#: builtin/cummit.c:48
 msgid "git status [<options>] [--] <pathspec>..."
 msgstr "git status [<opsi>] [--] <spek jalur>..."
 
-#: builtin/commit.c:53
+#: builtin/cummit.c:53
 msgid ""
-"You asked to amend the most recent commit, but doing so would make\n"
+"You asked to amend the most recent cummit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
-"remove the commit entirely with \"git reset HEAD^\".\n"
+"remove the cummit entirely with \"git reset HEAD^\".\n"
 msgstr ""
 "Anda diminta untuk mengubah komit terkini, tetapi melakukan\n"
 "hal itu akan membuat komit kosong. Anda dapat mengulangi perintah\n"
 "dengan --allow-empty, atau Anda dapat menghapus keseluruhan komit\n"
 "dengan \"git reset HEAD^\".\n"
 
-#: builtin/commit.c:58
+#: builtin/cummit.c:58
 msgid ""
 "The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
-"If you wish to commit it anyway, use:\n"
+"If you wish to cummit it anyway, use:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 msgstr ""
 "Petik ceri sebelumnya sekarang kosong, kemungkinan karena resolusi konflik.\n"
 "Jika Anda ingin komit, gunakan:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 
-#: builtin/commit.c:65
+#: builtin/cummit.c:65
 msgid "Otherwise, please use 'git rebase --skip'\n"
 msgstr "Selain itu, gunakan 'git rebase --skip'\n"
 
-#: builtin/commit.c:68
+#: builtin/cummit.c:68
 msgid "Otherwise, please use 'git cherry-pick --skip'\n"
 msgstr "Selain itu, gunakan 'git cherry-pick --skip'\n"
 
-#: builtin/commit.c:71
+#: builtin/cummit.c:71
 msgid ""
 "and then use:\n"
 "\n"
 "    git cherry-pick --continue\n"
 "\n"
-"to resume cherry-picking the remaining commits.\n"
-"If you wish to skip this commit, use:\n"
+"to resume cherry-picking the remaining cummits.\n"
+"If you wish to skip this cummit, use:\n"
 "\n"
 "    git cherry-pick --skip\n"
 "\n"
@@ -13822,154 +13822,154 @@ msgstr ""
 "    git cherry-pick --skip\n"
 "\n"
 
-#: builtin/commit.c:326
+#: builtin/cummit.c:326
 msgid "failed to unpack HEAD tree object"
 msgstr "gagal membuka objek pohon HEAD"
 
-#: builtin/commit.c:376
+#: builtin/cummit.c:376
 msgid "No paths with --include/--only does not make sense."
 msgstr "Tanpa jalur dengan --include/--only tidak masuk akal."
 
-#: builtin/commit.c:388
+#: builtin/cummit.c:388
 msgid "unable to create temporary index"
 msgstr "tidak dapat membuat indeks sementara"
 
-#: builtin/commit.c:397
+#: builtin/cummit.c:397
 msgid "interactive add failed"
 msgstr "penambahan interaktif gagal"
 
-#: builtin/commit.c:412
+#: builtin/cummit.c:412
 msgid "unable to update temporary index"
 msgstr "tidak dapat memperbarui indeks sementara"
 
-#: builtin/commit.c:414
+#: builtin/cummit.c:414
 msgid "Failed to update main cache tree"
 msgstr "gagal memperbarui tembolok pohon utama"
 
-#: builtin/commit.c:439 builtin/commit.c:462 builtin/commit.c:510
+#: builtin/cummit.c:439 builtin/cummit.c:462 builtin/cummit.c:510
 msgid "unable to write new_index file"
 msgstr "tidak dapat menulis berkas new_index"
 
-#: builtin/commit.c:491
-msgid "cannot do a partial commit during a merge."
+#: builtin/cummit.c:491
+msgid "cannot do a partial cummit during a merge."
 msgstr "tidak dapat melakukan komit sebagian selama penggabungan."
 
-#: builtin/commit.c:493
-msgid "cannot do a partial commit during a cherry-pick."
+#: builtin/cummit.c:493
+msgid "cannot do a partial cummit during a cherry-pick."
 msgstr "tidak dapat melakukan komit sebagian selama pemetikan ceri."
 
-#: builtin/commit.c:495
-msgid "cannot do a partial commit during a rebase."
+#: builtin/cummit.c:495
+msgid "cannot do a partial cummit during a rebase."
 msgstr "tidak dapat melakukan komit sebagian selama pendasaran ulang."
 
-#: builtin/commit.c:503
+#: builtin/cummit.c:503
 msgid "cannot read the index"
 msgstr "tidak dapat membaca indeks"
 
-#: builtin/commit.c:522
+#: builtin/cummit.c:522
 msgid "unable to write temporary index file"
 msgstr "tidak dapat menulis berkas indeks sementara"
 
-#: builtin/commit.c:620
+#: builtin/cummit.c:620
 #, c-format
-msgid "commit '%s' lacks author header"
+msgid "cummit '%s' lacks author header"
 msgstr "komit '%s' kurang kepala pengarang"
 
-#: builtin/commit.c:622
+#: builtin/cummit.c:622
 #, c-format
-msgid "commit '%s' has malformed author line"
+msgid "cummit '%s' has malformed author line"
 msgstr "komit '%s' ada baris pengarang cacat"
 
-#: builtin/commit.c:641
+#: builtin/cummit.c:641
 msgid "malformed --author parameter"
 msgstr "parameter --author cacat"
 
-#: builtin/commit.c:694
+#: builtin/cummit.c:694
 msgid ""
 "unable to select a comment character that is not used\n"
-"in the current commit message"
+"in the current cummit message"
 msgstr ""
 "tidak dapat memilih karakter komentar yang tidak terpakai\n"
 "dalam pesan komit saat ini"
 
-#: builtin/commit.c:750 builtin/commit.c:784 builtin/commit.c:1170
+#: builtin/cummit.c:750 builtin/cummit.c:784 builtin/cummit.c:1170
 #, c-format
-msgid "could not lookup commit %s"
+msgid "could not lookup cummit %s"
 msgstr "tidak dapat mencari komit %s"
 
-#: builtin/commit.c:762 builtin/shortlog.c:417
+#: builtin/cummit.c:762 builtin/shortlog.c:417
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr "(baca pesan log dari standar masukan)\n"
 
-#: builtin/commit.c:764
+#: builtin/cummit.c:764
 msgid "could not read log from standard input"
 msgstr "tidak dapat membaca log dari standar masukan"
 
-#: builtin/commit.c:768
+#: builtin/cummit.c:768
 #, c-format
 msgid "could not read log file '%s'"
 msgstr "tidak dapat membaca berkas log '%s'"
 
-#: builtin/commit.c:805
+#: builtin/cummit.c:805
 #, c-format
 msgid "options '%s' and '%s:%s' cannot be used together"
 msgstr "opsi '%s' dan '%s:%s' tidak dapat digunakan bersamaan"
 
-#: builtin/commit.c:817 builtin/commit.c:833
+#: builtin/cummit.c:817 builtin/cummit.c:833
 msgid "could not read SQUASH_MSG"
 msgstr "tidak dapat membaca SQUASH_MSG"
 
-#: builtin/commit.c:824
+#: builtin/cummit.c:824
 msgid "could not read MERGE_MSG"
 msgstr "tidak dapat membaca MERGE_MSG"
 
-#: builtin/commit.c:884
-msgid "could not write commit template"
+#: builtin/cummit.c:884
+msgid "could not write cummit template"
 msgstr "tidak dapat menulis templat komit"
 
-#: builtin/commit.c:897
+#: builtin/cummit.c:897
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be ignored.\n"
 msgstr ""
 "Mohon masukkan pesan komit untuk perubahan Anda. Baris yang diawali\n"
 "dengan '%c' akan diabaikan.\n"
 
-#: builtin/commit.c:899
+#: builtin/cummit.c:899
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be ignored, and an empty message aborts the commit.\n"
+"Please enter the cummit message for your changes. Lines starting\n"
+"with '%c' will be ignored, and an empty message aborts the cummit.\n"
 msgstr ""
 "Mohon masukkan pesan komit untuk perubahan Anda. Baris yang diawali\n"
 "dengan '%c' akan diabaikan, dan pesan kosong batalkan komit.\n"
 
-#: builtin/commit.c:903
+#: builtin/cummit.c:903
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
 msgstr ""
 "Mohon masukkan pesan komit untuk perubahan Anda. Baris yang diawali\n"
 "dengan '%c' akan tetap; Anda dapat menghapus itu jika Anda mau.\n"
 
-#: builtin/commit.c:907
+#: builtin/cummit.c:907
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
-"An empty message aborts the commit.\n"
+"An empty message aborts the cummit.\n"
 msgstr ""
 "Mohon masukkan pesan komit untuk perubahan Anda. Baris yang diawali\n"
 "dengan '%c' akan tetap; Anda dapat menghapus itu jika Anda mau.\n"
 "Pesan kosong batalkan komit.\n"
 
-#: builtin/commit.c:919
+#: builtin/cummit.c:919
 msgid ""
 "\n"
-"It looks like you may be committing a merge.\n"
+"It looks like you may be cummitting a merge.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d MERGE_HEAD\n"
 "and try again.\n"
@@ -13980,10 +13980,10 @@ msgstr ""
 "\tgit update-ref -d MERGE_HEAD\n"
 "dan coba lagi.\n"
 
-#: builtin/commit.c:924
+#: builtin/cummit.c:924
 msgid ""
 "\n"
-"It looks like you may be committing a cherry-pick.\n"
+"It looks like you may be cummitting a cherry-pick.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "and try again.\n"
@@ -13994,147 +13994,147 @@ msgstr ""
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "dan coba lagi.\n"
 
-#: builtin/commit.c:951
+#: builtin/cummit.c:951
 #, c-format
 msgid "%sAuthor:    %.*s <%.*s>"
 msgstr "%sPengarang:    %.*s <%.*s>"
 
-#: builtin/commit.c:959
+#: builtin/cummit.c:959
 #, c-format
 msgid "%sDate:      %s"
 msgstr "%sTanggal:       %s"
 
-#: builtin/commit.c:966
+#: builtin/cummit.c:966
 #, c-format
-msgid "%sCommitter: %.*s <%.*s>"
+msgid "%scummitter: %.*s <%.*s>"
 msgstr "%sPengkomit: %.*s <%.*s>"
 
-#: builtin/commit.c:984
+#: builtin/cummit.c:984
 msgid "Cannot read index"
 msgstr "Tidak dapat membaca indeks"
 
-#: builtin/commit.c:1029
+#: builtin/cummit.c:1029
 msgid "unable to pass trailers to --trailers"
 msgstr "tidak dapat melewatkan trailer ke --trailers"
 
-#: builtin/commit.c:1069
+#: builtin/cummit.c:1069
 msgid "Error building trees"
 msgstr "Kesalahan membangun pohon"
 
-#: builtin/commit.c:1083 builtin/tag.c:317
+#: builtin/cummit.c:1083 builtin/tag.c:317
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr "Mohon berikan pesan baik dengan opsi -m atau -F.\n"
 
-#: builtin/commit.c:1128
+#: builtin/cummit.c:1128
 #, c-format
 msgid "--author '%s' is not 'Name <email>' and matches no existing author"
 msgstr ""
 "--author '%s' bukan 'Nama <email>' dan tidak cocok dengan pengarang yang ada"
 
-#: builtin/commit.c:1142
+#: builtin/cummit.c:1142
 #, c-format
 msgid "Invalid ignored mode '%s'"
 msgstr "Mode terabaikan '%s' tidak valid"
 
-#: builtin/commit.c:1160 builtin/commit.c:1450
+#: builtin/cummit.c:1160 builtin/cummit.c:1450
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr "Mode berkas tak terlacak '%s' tidak valid"
 
-#: builtin/commit.c:1231
+#: builtin/cummit.c:1231
 msgid "You are in the middle of a merge -- cannot reword."
 msgstr "Anda berada di tengah penggabungan -- tidak dapat menulis ulang."
 
-#: builtin/commit.c:1233
+#: builtin/cummit.c:1233
 msgid "You are in the middle of a cherry-pick -- cannot reword."
 msgstr "Anda berada di tengah pemetikan ceri -- tidak dapat menulis ulang."
 
-#: builtin/commit.c:1236
+#: builtin/cummit.c:1236
 #, c-format
 msgid "reword option of '%s' and path '%s' cannot be used together"
 msgstr "opsi reword '%s' dan jalur '%s' tidak dapat digunakan bersamaan"
 
-#: builtin/commit.c:1238
+#: builtin/cummit.c:1238
 #, c-format
 msgid "reword option of '%s' and '%s' cannot be used together"
 msgstr "opsi reword '%s' dan '%s' tidak dapat digunakan bersamaan"
 
-#: builtin/commit.c:1263
+#: builtin/cummit.c:1263
 msgid "You have nothing to amend."
 msgstr "Anda tidak punya apapun untuk diubah."
 
-#: builtin/commit.c:1266
+#: builtin/cummit.c:1266
 msgid "You are in the middle of a merge -- cannot amend."
 msgstr "Anda berada di tengah penggabungan -- tidak dapat mengubah."
 
-#: builtin/commit.c:1268
+#: builtin/cummit.c:1268
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Anda berada di tengah pemetikan ceri -- tidak dapat mengubah."
 
-#: builtin/commit.c:1270
+#: builtin/cummit.c:1270
 msgid "You are in the middle of a rebase -- cannot amend."
 msgstr "Anda berada di tengah pendasaran ulang -- tidak dapat mengubah."
 
-#: builtin/commit.c:1290
+#: builtin/cummit.c:1290
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "--reset-author hanya dapat digunakan dengan -C, -c atau --amend."
 
-#: builtin/commit.c:1337
+#: builtin/cummit.c:1337
 #, c-format
 msgid "unknown option: --fixup=%s:%s"
 msgstr "opsi tidak dikenal: --fixup=%s:%s"
 
-#: builtin/commit.c:1354
+#: builtin/cummit.c:1354
 #, c-format
 msgid "paths '%s ...' with -a does not make sense"
 msgstr "jalur '%s ...' dengan -a tidak masuk akal"
 
-#: builtin/commit.c:1485 builtin/commit.c:1654
+#: builtin/cummit.c:1485 builtin/cummit.c:1654
 msgid "show status concisely"
 msgstr "perlihatkan status dengan ringkas"
 
-#: builtin/commit.c:1487 builtin/commit.c:1656
+#: builtin/cummit.c:1487 builtin/cummit.c:1656
 msgid "show branch information"
 msgstr "perlihatkan informasi cabang"
 
-#: builtin/commit.c:1489
+#: builtin/cummit.c:1489
 msgid "show stash information"
 msgstr "perlihatkan informasi stase"
 
-#: builtin/commit.c:1491 builtin/commit.c:1658
+#: builtin/cummit.c:1491 builtin/cummit.c:1658
 msgid "compute full ahead/behind values"
 msgstr "hitung nilai didepan/dibelakang penuh"
 
-#: builtin/commit.c:1493
+#: builtin/cummit.c:1493
 msgid "version"
 msgstr "versi"
 
-#: builtin/commit.c:1493 builtin/commit.c:1660 builtin/push.c:551
+#: builtin/cummit.c:1493 builtin/cummit.c:1660 builtin/push.c:551
 #: builtin/worktree.c:765
 msgid "machine-readable output"
 msgstr "keluaran yang dapat dibaca mesin"
 
-#: builtin/commit.c:1496 builtin/commit.c:1662
+#: builtin/cummit.c:1496 builtin/cummit.c:1662
 msgid "show status in long format (default)"
 msgstr "perlihatkan status dalam format panjang (asali)"
 
-#: builtin/commit.c:1499 builtin/commit.c:1665
+#: builtin/cummit.c:1499 builtin/cummit.c:1665
 msgid "terminate entries with NUL"
 msgstr "akhiri entri dengan NUL"
 
-#: builtin/commit.c:1501 builtin/commit.c:1505 builtin/commit.c:1668
+#: builtin/cummit.c:1501 builtin/cummit.c:1505 builtin/cummit.c:1668
 #: builtin/fast-export.c:1172 builtin/fast-export.c:1175
 #: builtin/fast-export.c:1178 builtin/rebase.c:1139 parse-options.h:368
 msgid "mode"
 msgstr "mode"
 
-#: builtin/commit.c:1502 builtin/commit.c:1668
+#: builtin/cummit.c:1502 builtin/cummit.c:1668
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
 "perlihatkan berkas tak terlacak, mode opsional: all, normal, no. (Asali: all)"
 
-#: builtin/commit.c:1506
+#: builtin/cummit.c:1506
 msgid ""
 "show ignored files, optional modes: traditional, matching, no. (Default: "
 "traditional)"
@@ -14142,11 +14142,11 @@ msgstr ""
 "perlihatkan berkas terabaikan, mode opsional: traditional, matching, no. "
 "(Asali: traditional)"
 
-#: builtin/commit.c:1508 parse-options.h:197
+#: builtin/cummit.c:1508 parse-options.h:197
 msgid "when"
 msgstr "bila"
 
-#: builtin/commit.c:1509
+#: builtin/cummit.c:1509
 msgid ""
 "ignore changes to submodules, optional when: all, dirty, untracked. "
 "(Default: all)"
@@ -14154,192 +14154,192 @@ msgstr ""
 "abaikan perubahan submodul, bila opsional: all, dirty, untracked. (Asali: "
 "all)"
 
-#: builtin/commit.c:1511
+#: builtin/cummit.c:1511
 msgid "list untracked files in columns"
 msgstr "sebut berkas tak terlacak dalam kolom"
 
-#: builtin/commit.c:1512
+#: builtin/cummit.c:1512
 msgid "do not detect renames"
 msgstr "jangan deteksi penggantian nama"
 
-#: builtin/commit.c:1514
+#: builtin/cummit.c:1514
 msgid "detect renames, optionally set similarity index"
 msgstr "deteksi penggantian nama, setel indeks kemiripan secara opsional"
 
-#: builtin/commit.c:1537
+#: builtin/cummit.c:1537
 msgid "Unsupported combination of ignored and untracked-files arguments"
 msgstr "Kombinasi argumen berkas terabaikan dan tak terlacak tidak didukung"
 
-#: builtin/commit.c:1619
-msgid "suppress summary after successful commit"
+#: builtin/cummit.c:1619
+msgid "suppress summary after successful cummit"
 msgstr "sembunyikan rangkuman setelah komit berhasil"
 
-#: builtin/commit.c:1620
-msgid "show diff in commit message template"
+#: builtin/cummit.c:1620
+msgid "show diff in cummit message template"
 msgstr "perlihatkan diff dalam templat pesan komit"
 
-#: builtin/commit.c:1622
-msgid "Commit message options"
+#: builtin/cummit.c:1622
+msgid "cummit message options"
 msgstr "Opsi pesan komit"
 
-#: builtin/commit.c:1623 builtin/merge.c:288 builtin/tag.c:457
+#: builtin/cummit.c:1623 builtin/merge.c:288 builtin/tag.c:457
 msgid "read message from file"
 msgstr "Baca pesan dari berkas"
 
-#: builtin/commit.c:1624
+#: builtin/cummit.c:1624
 msgid "author"
 msgstr "pengarang"
 
-#: builtin/commit.c:1624
-msgid "override author for commit"
+#: builtin/cummit.c:1624
+msgid "override author for cummit"
 msgstr "timpa pengarang komit"
 
-#: builtin/commit.c:1625 builtin/gc.c:551
+#: builtin/cummit.c:1625 builtin/gc.c:551
 msgid "date"
 msgstr "tangal"
 
-#: builtin/commit.c:1625
-msgid "override date for commit"
+#: builtin/cummit.c:1625
+msgid "override date for cummit"
 msgstr "timpa tanggal komit"
 
-#: builtin/commit.c:1627 builtin/commit.c:1628 builtin/commit.c:1634
+#: builtin/cummit.c:1627 builtin/cummit.c:1628 builtin/cummit.c:1634
 #: parse-options.h:360 ref-filter.h:89
-msgid "commit"
+msgid "cummit"
 msgstr "komit"
 
-#: builtin/commit.c:1627
-msgid "reuse and edit message from specified commit"
+#: builtin/cummit.c:1627
+msgid "reuse and edit message from specified cummit"
 msgstr "gunakan kembali dan sunting pesan dari komit tersebut"
 
-#: builtin/commit.c:1628
-msgid "reuse message from specified commit"
+#: builtin/cummit.c:1628
+msgid "reuse message from specified cummit"
 msgstr "gunakan kembali pesan dari komit tersebut"
 
 #. TRANSLATORS: Leave "[(amend|reword):]" as-is,
-#. and only translate <commit>.
+#. and only translate <cummit>.
 #.
-#: builtin/commit.c:1633
-msgid "[(amend|reword):]commit"
+#: builtin/cummit.c:1633
+msgid "[(amend|reword):]cummit"
 msgstr "[(amend|reword):]komit"
 
-#: builtin/commit.c:1633
+#: builtin/cummit.c:1633
 msgid ""
-"use autosquash formatted message to fixup or amend/reword specified commit"
+"use autosquash formatted message to fixup or amend/reword specified cummit"
 msgstr ""
 "gunakan pesan terformat autosquash untuk perbaiki atau ubah/tulis ulang "
 "komit yang disebutkan"
 
-#: builtin/commit.c:1634
-msgid "use autosquash formatted message to squash specified commit"
+#: builtin/cummit.c:1634
+msgid "use autosquash formatted message to squash specified cummit"
 msgstr "gunakan pesan terformat autosquash untuk lumat komit tersebut"
 
-#: builtin/commit.c:1635
-msgid "the commit is authored by me now (used with -C/-c/--amend)"
+#: builtin/cummit.c:1635
+msgid "the cummit is authored by me now (used with -C/-c/--amend)"
 msgstr "komit sekarang dikarang olehku (gunakan dengan -C/-c/--amend)"
 
-#: builtin/commit.c:1636 builtin/interpret-trailers.c:111
+#: builtin/cummit.c:1636 builtin/interpret-trailers.c:111
 msgid "trailer"
 msgstr "trailer"
 
-#: builtin/commit.c:1636
+#: builtin/cummit.c:1636
 msgid "add custom trailer(s)"
 msgstr "tambahkan trailer kustom"
 
-#: builtin/commit.c:1637 builtin/log.c:1788 builtin/merge.c:306
+#: builtin/cummit.c:1637 builtin/log.c:1788 builtin/merge.c:306
 #: builtin/pull.c:146 builtin/revert.c:110
 msgid "add a Signed-off-by trailer"
 msgstr "tambahkan trailer Signed-off-by"
 
-#: builtin/commit.c:1638
+#: builtin/cummit.c:1638
 msgid "use specified template file"
 msgstr "gunakan templat berkas tersebut"
 
-#: builtin/commit.c:1639
-msgid "force edit of commit"
+#: builtin/cummit.c:1639
+msgid "force edit of cummit"
 msgstr "paksa sunting komit"
 
-#: builtin/commit.c:1641
-msgid "include status in commit message template"
+#: builtin/cummit.c:1641
+msgid "include status in cummit message template"
 msgstr "masukkan status dalam templat pesaan komit"
 
-#: builtin/commit.c:1646
-msgid "Commit contents options"
+#: builtin/cummit.c:1646
+msgid "cummit contents options"
 msgstr "Opsi isi komit"
 
-#: builtin/commit.c:1647
-msgid "commit all changed files"
+#: builtin/cummit.c:1647
+msgid "cummit all changed files"
 msgstr "komit semua berkas terubah"
 
-#: builtin/commit.c:1648
-msgid "add specified files to index for commit"
+#: builtin/cummit.c:1648
+msgid "add specified files to index for cummit"
 msgstr "tambahakn berkas tersebut ke indeks untuk dikomit"
 
-#: builtin/commit.c:1649
+#: builtin/cummit.c:1649
 msgid "interactively add files"
 msgstr "tambah berkas secara interaktif"
 
-#: builtin/commit.c:1650
+#: builtin/cummit.c:1650
 msgid "interactively add changes"
 msgstr "tambah perubahan secara interaktif"
 
-#: builtin/commit.c:1651
-msgid "commit only specified files"
+#: builtin/cummit.c:1651
+msgid "cummit only specified files"
 msgstr "hanya komit berkas tersebut"
 
-#: builtin/commit.c:1652
-msgid "bypass pre-commit and commit-msg hooks"
-msgstr "lewati kail pre-commit dan commit-msg"
+#: builtin/cummit.c:1652
+msgid "bypass pre-cummit and cummit-msg hooks"
+msgstr "lewati kail pre-cummit dan cummit-msg"
 
-#: builtin/commit.c:1653
-msgid "show what would be committed"
+#: builtin/cummit.c:1653
+msgid "show what would be cummitted"
 msgstr "perlihatkan apa yang akan dikomit"
 
-#: builtin/commit.c:1666
-msgid "amend previous commit"
+#: builtin/cummit.c:1666
+msgid "amend previous cummit"
 msgstr "ubah komit sebelumnya"
 
-#: builtin/commit.c:1667
+#: builtin/cummit.c:1667
 msgid "bypass post-rewrite hook"
 msgstr "lewati kail post-rewrite"
 
-#: builtin/commit.c:1674
+#: builtin/cummit.c:1674
 msgid "ok to record an empty change"
 msgstr "ok merekam perubahan kosong"
 
-#: builtin/commit.c:1676
+#: builtin/cummit.c:1676
 msgid "ok to record a change with an empty message"
 msgstr "ok merekam perubahan dengan pesan kosong"
 
-#: builtin/commit.c:1752
+#: builtin/cummit.c:1752
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "Berkas MERGE_HEAD (%s) rusak"
 
-#: builtin/commit.c:1759
+#: builtin/cummit.c:1759
 msgid "could not read MERGE_MODE"
 msgstr "tidak dapat membaca MERGE_MODE"
 
-#: builtin/commit.c:1780
+#: builtin/cummit.c:1780
 #, c-format
-msgid "could not read commit message: %s"
+msgid "could not read cummit message: %s"
 msgstr "tidak dapat membaca pesan komit: %s"
 
-#: builtin/commit.c:1787
+#: builtin/cummit.c:1787
 #, c-format
-msgid "Aborting commit due to empty commit message.\n"
+msgid "Aborting cummit due to empty cummit message.\n"
 msgstr "Batalkan komit karena pesan komit kosong.\n"
 
-#: builtin/commit.c:1792
+#: builtin/cummit.c:1792
 #, c-format
-msgid "Aborting commit; you did not edit the message.\n"
+msgid "Aborting cummit; you did not edit the message.\n"
 msgstr "Batalkan komit; Anda tidak menyunting pesan.\n"
 
-#: builtin/commit.c:1803
+#: builtin/cummit.c:1803
 #, c-format
-msgid "Aborting commit due to empty commit message body.\n"
+msgid "Aborting cummit due to empty cummit message body.\n"
 msgstr "Batalkan komit karena badan pesan komit kosong.\n"
 
-#: builtin/commit.c:1839
+#: builtin/cummit.c:1839
 msgid ""
 "repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -14710,7 +14710,7 @@ msgid "unable to get credential storage lock in %d ms"
 msgstr ""
 
 #: builtin/describe.c:26
-msgid "git describe [<options>] [<commit-ish>...]"
+msgid "git describe [<options>] [<cummit-ish>...]"
 msgstr "git describe [<opsi>] [<mirip-komit>...]"
 
 #: builtin/describe.c:27
@@ -14776,7 +14776,7 @@ msgstr ""
 
 #: builtin/describe.c:458
 #, c-format
-msgid "traversed %lu commits\n"
+msgid "traversed %lu cummits\n"
 msgstr "%lu komit dilintasi\n"
 
 #: builtin/describe.c:461
@@ -14800,11 +14800,11 @@ msgstr "Bukan nama objek yang valid %s"
 
 #: builtin/describe.c:540
 #, c-format
-msgid "%s is neither a commit nor blob"
+msgid "%s is neither a cummit nor blob"
 msgstr "%s bukan sebuah komit atau blob"
 
 #: builtin/describe.c:554
-msgid "find the tag that comes after the commit"
+msgid "find the tag that comes after the cummit"
 msgstr "temukan tag yang datang setelah komit"
 
 #: builtin/describe.c:555
@@ -14844,7 +14844,7 @@ msgid "do not consider tags matching <pattern>"
 msgstr "jangan pertimbangkan tag yang cocok dengan <pola>"
 
 #: builtin/describe.c:570 builtin/name-rev.c:595
-msgid "show abbreviated commit object as fallback"
+msgid "show abbreviated cummit object as fallback"
 msgstr "perlihatkan objek komit singkat sebagai langkah terakhir"
 
 #: builtin/describe.c:571 builtin/describe.c:574
@@ -14865,11 +14865,11 @@ msgstr "Tidak ada nama yang ditemukan, tidak dapat menjelaskan apapun."
 
 #: builtin/describe.c:673 builtin/describe.c:675
 #, c-format
-msgid "option '%s' and commit-ishes cannot be used together"
+msgid "option '%s' and cummit-ishes cannot be used together"
 msgstr "opsi '%s' dan mirip-komit tidak dapat digunakan bersamaan"
 
 #: builtin/diff-tree.c:157
-msgid "--merge-base only works with two commits"
+msgid "--merge-base only works with two cummits"
 msgstr "--merge-base hanya bekerja dengan dua komit"
 
 #: builtin/diff.c:92
@@ -14912,7 +14912,7 @@ msgid "%s...%s: multiple merge bases, using %s"
 msgstr "%s...%s: banyak dasar penggabungan, menggunakan %s"
 
 #: builtin/difftool.c:31
-msgid "git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"
+msgid "git difftool [<options>] [<cummit> [<cummit>]] [--] [<path>...]"
 msgstr "git difftool [<opsi>] [<komit> [<komit>]] [--] [<jalur>...]"
 
 #: builtin/difftool.c:287
@@ -15068,7 +15068,7 @@ msgid "select handling of tags that tag filtered objects"
 msgstr "pilih penanganan tag yang men-tag objek tersaring"
 
 #: builtin/fast-export.c:1179
-msgid "select handling of commit messages in an alternate encoding"
+msgid "select handling of cummit messages in an alternate encoding"
 msgstr "pilih penanganan pesan komit dalam pengkodean alternatif"
 
 #: builtin/fast-export.c:1182
@@ -15088,7 +15088,7 @@ msgid "fake a tagger when tags lack one"
 msgstr "palsukan pen-tag ketika tidak ada pada tag"
 
 #: builtin/fast-export.c:1192
-msgid "output full tree for each commit"
+msgid "output full tree for each cummit"
 msgstr "keluarkan pohon penuh untuk setiap komit"
 
 #: builtin/fast-export.c:1194
@@ -15124,7 +15124,7 @@ msgid "reference parents which are not in fast-export stream by object id"
 msgstr "referensikan induk yang tidak ada dalam arus fast-export oleh id objek"
 
 #: builtin/fast-export.c:1205
-msgid "show original object ids of blobs/commits"
+msgid "show original object ids of blobs/cummits"
 msgstr "perlihatkan id objek asli dari blob/komit"
 
 #: builtin/fast-export.c:1207
@@ -15274,7 +15274,7 @@ msgid "convert to a complete repository"
 msgstr "ubah ke repositori penuh"
 
 #: builtin/fetch.c:194
-msgid "re-fetch without negotiating common commits"
+msgid "re-fetch without negotiating common cummits"
 msgstr ""
 
 #: builtin/fetch.c:197
@@ -15320,7 +15320,7 @@ msgid "check for forced-updates on all updated branches"
 msgstr "periksa pembaruan terpaksa pada semua cabang"
 
 #: builtin/fetch.c:224
-msgid "write the commit-graph after fetching"
+msgid "write the cummit-graph after fetching"
 msgstr "tulis grafik komit setelah pengambilan"
 
 #: builtin/fetch.c:226
@@ -15623,11 +15623,11 @@ msgid "git for-each-ref [--points-at <object>]"
 msgstr ""
 
 #: builtin/for-each-ref.c:12
-msgid "git for-each-ref [--merged [<commit>]] [--no-merged [<commit>]]"
+msgid "git for-each-ref [--merged [<cummit>]] [--no-merged [<cummit>]]"
 msgstr ""
 
 #: builtin/for-each-ref.c:13
-msgid "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
+msgid "git for-each-ref [--contains [<cummit>]] [--no-contains [<cummit>]]"
 msgstr ""
 
 #: builtin/for-each-ref.c:31
@@ -15667,11 +15667,11 @@ msgid "print only refs that are not merged"
 msgstr ""
 
 #: builtin/for-each-ref.c:49
-msgid "print only refs which contain the commit"
+msgid "print only refs which contain the cummit"
 msgstr ""
 
 #: builtin/for-each-ref.c:50
-msgid "print only refs which don't contain the commit"
+msgid "print only refs which don't contain the cummit"
 msgstr ""
 
 #: builtin/for-each-repo.c:9
@@ -15799,7 +15799,7 @@ msgstr "%s: penunjuk sha1 tidak valid %s"
 
 #: builtin/fsck.c:537
 #, c-format
-msgid "%s: not a commit"
+msgid "%s: not a cummit"
 msgstr "%s: bukan sebuah komit"
 
 #: builtin/fsck.c:591
@@ -16164,7 +16164,7 @@ msgid "unrecognized --schedule argument '%s'"
 msgstr "argumen --schedule tidak dikenal '%s'"
 
 #: builtin/gc.c:870
-msgid "failed to write commit-graph"
+msgid "failed to write cummit-graph"
 msgstr "gagal menulis grafik komit"
 
 #: builtin/gc.c:906
@@ -17381,7 +17381,7 @@ msgstr "dua direktori keluaran?"
 
 #: builtin/log.c:1536 builtin/log.c:2369 builtin/log.c:2371 builtin/log.c:2383
 #, c-format
-msgid "unknown commit %s"
+msgid "unknown cummit %s"
 msgstr "komit tidak dikenal %s"
 
 #: builtin/log.c:1547 builtin/replace.c:58 builtin/replace.c:207
@@ -17396,9 +17396,9 @@ msgstr "tidak dapat menemukan dasar penggabungan eksak"
 
 #: builtin/log.c:1566
 msgid ""
-"failed to get upstream, if you want to record base commit automatically,\n"
+"failed to get upstream, if you want to record base cummit automatically,\n"
 "please use git branch --set-upstream-to to track a remote branch.\n"
-"Or you could specify base commit by --base=<base-commit-id> manually"
+"Or you could specify base cummit by --base=<base-cummit-id> manually"
 msgstr ""
 "gagal mendapatkan hulu, jika Anda ingin merekam dasar komit secara "
 "otomatis,\n"
@@ -17411,11 +17411,11 @@ msgid "failed to find exact merge base"
 msgstr "tidak dapat menemukan dasar penggabungan eksak"
 
 #: builtin/log.c:1606
-msgid "base commit should be the ancestor of revision list"
+msgid "base cummit should be the ancestor of revision list"
 msgstr "dasar komit seharusnya menjadi leluhur daftar revisi"
 
 #: builtin/log.c:1616
-msgid "base commit shouldn't be in revision list"
+msgid "base cummit shouldn't be in revision list"
 msgstr "dasar komit tidak seharusnya dalam daftar revisi"
 
 #: builtin/log.c:1674
@@ -17508,7 +17508,7 @@ msgid "output all-zero hash in From header"
 msgstr "keluarkan hash semua-nol di kepala From"
 
 #: builtin/log.c:1823
-msgid "don't include a patch matching a commit upstream"
+msgid "don't include a patch matching a cummit upstream"
 msgstr "jangan termasuk tambalan yang cocok dengan komit hulu"
 
 #: builtin/log.c:1825
@@ -17544,7 +17544,7 @@ msgid "ident"
 msgstr "ident"
 
 #: builtin/log.c:1833
-msgid "set From address to <ident> (or committer ident if absent)"
+msgid "set From address to <ident> (or cummitter ident if absent)"
 msgstr ""
 "setel alamat From ke <identitas> (atau identitas pengkomit jika tidak ada)"
 
@@ -17581,7 +17581,7 @@ msgid "add a signature"
 msgstr "tambah tanda tangan"
 
 #: builtin/log.c:1849
-msgid "base-commit"
+msgid "base-cummit"
 msgstr "dasar komit"
 
 #: builtin/log.c:1850
@@ -17927,11 +17927,11 @@ msgid "keep non patch brackets in subject"
 msgstr ""
 
 #: builtin/mailinfo.c:62
-msgid "copy Message-ID to the end of commit message"
+msgid "copy Message-ID to the end of cummit message"
 msgstr ""
 
 #: builtin/mailinfo.c:64
-msgid "re-code metadata to i18n.commitEncoding"
+msgid "re-code metadata to i18n.cummitEncoding"
 msgstr ""
 
 #: builtin/mailinfo.c:67
@@ -17972,23 +17972,23 @@ msgid "empty mbox: '%s'"
 msgstr ""
 
 #: builtin/merge-base.c:32
-msgid "git merge-base [-a | --all] <commit> <commit>..."
+msgid "git merge-base [-a | --all] <cummit> <cummit>..."
 msgstr "git merge-base [-a | --all] <komit> <komit>..."
 
 #: builtin/merge-base.c:33
-msgid "git merge-base [-a | --all] --octopus <commit>..."
+msgid "git merge-base [-a | --all] --octopus <cummit>..."
 msgstr "git merge-base [-a | --all] --octopus <komit>..."
 
 #: builtin/merge-base.c:34
-msgid "git merge-base --independent <commit>..."
+msgid "git merge-base --independent <cummit>..."
 msgstr "git merge-base --independent <komit>..."
 
 #: builtin/merge-base.c:35
-msgid "git merge-base --is-ancestor <commit> <commit>"
+msgid "git merge-base --is-ancestor <cummit> <cummit>"
 msgstr "git merge-base --is-ancestor <komit> <komit>"
 
 #: builtin/merge-base.c:36
-msgid "git merge-base --fork-point <ref> [<commit>]"
+msgid "git merge-base --fork-point <ref> [<cummit>]"
 msgstr "git merge-base --fork-point <referensi> [<komit>]"
 
 #: builtin/merge-base.c:144
@@ -18008,7 +18008,7 @@ msgid "is the first one ancestor of the other?"
 msgstr "apakah yang pertama leluhur yang lain?"
 
 #: builtin/merge-base.c:152
-msgid "find where <commit> forked from reflog of <ref>"
+msgid "find where <cummit> forked from reflog of <ref>"
 msgstr "temukan dimana <komit> digarpu dari log referensi <referensi>"
 
 #: builtin/merge-file.c:9
@@ -18085,7 +18085,7 @@ msgid "Merging %s with %s\n"
 msgstr ""
 
 #: builtin/merge.c:59
-msgid "git merge [<options>] [<commit>...]"
+msgid "git merge [<options>] [<cummit>...]"
 msgstr "git merge [<opsi>] [<komit>...]"
 
 #: builtin/merge.c:125
@@ -18125,20 +18125,20 @@ msgid "(synonym to --stat)"
 msgstr "(sinonim untuk --stat)"
 
 #: builtin/merge.c:264 builtin/pull.c:143
-msgid "add (at most <n>) entries from shortlog to merge commit message"
+msgid "add (at most <n>) entries from shortlog to merge cummit message"
 msgstr ""
 "tambah (paling banyak <n>) entri dari log pendek ke pesan komit penggabungan"
 
 #: builtin/merge.c:267 builtin/pull.c:149
-msgid "create a single commit instead of doing a merge"
+msgid "create a single cummit instead of doing a merge"
 msgstr "buat satu komit daripada melakukan penggabungan"
 
 #: builtin/merge.c:269 builtin/pull.c:152
-msgid "perform a commit if the merge succeeds (default)"
+msgid "perform a cummit if the merge succeeds (default)"
 msgstr "lakukan komit jika penggabungan sukses (asali)"
 
 #: builtin/merge.c:271 builtin/pull.c:155
-msgid "edit message before committing"
+msgid "edit message before cummitting"
 msgstr "sunting pesan sebelum komit"
 
 #: builtin/merge.c:273
@@ -18171,7 +18171,7 @@ msgid "option for selected merge strategy"
 msgstr "opsi untuk strategi penggabungan yang dipilih"
 
 #: builtin/merge.c:285
-msgid "merge commit message (for a non-fast-forward merge)"
+msgid "merge cummit message (for a non-fast-forward merge)"
 msgstr "pesan komit penggabungan (untuk penggabungan bukan maju cepat)"
 
 #: builtin/merge.c:291
@@ -18195,8 +18195,8 @@ msgid "allow merging unrelated histories"
 msgstr "perbolehkan penggabungan riwayat yang tak terkait"
 
 #: builtin/merge.c:307
-msgid "bypass pre-merge-commit and commit-msg hooks"
-msgstr "lewati kail pre-merge-commit dan commit-msg"
+msgid "bypass pre-merge-cummit and cummit-msg hooks"
+msgstr "lewati kail pre-merge-cummit dan cummit-msg"
 
 #: builtin/merge.c:323
 msgid "could not run stash."
@@ -18221,7 +18221,7 @@ msgstr "Sudah diperbarui. (tidak ada yang bisa dilumat)"
 
 #: builtin/merge.c:417
 #, c-format
-msgid "Squash commit -- not updating HEAD\n"
+msgid "Squash cummit -- not updating HEAD\n"
 msgstr "Lumat komit -- tak perbarui HEAD\n"
 
 #: builtin/merge.c:467
@@ -18231,7 +18231,7 @@ msgstr "Tidak ada pesan komit -- tak perbarui HEAD\n"
 
 #: builtin/merge.c:517
 #, c-format
-msgid "'%s' does not point to a commit"
+msgid "'%s' does not point to a cummit"
 msgstr "'%s' tidak menunjuk pada sebuah komit"
 
 #: builtin/merge.c:605
@@ -18260,14 +18260,14 @@ msgstr "Tidak dapat membaca dari '%s'"
 
 #: builtin/merge.c:825
 #, c-format
-msgid "Not committing merge; use 'git commit' to complete the merge.\n"
+msgid "Not cummitting merge; use 'git cummit' to complete the merge.\n"
 msgstr ""
-"Tak mengkomit penggabungan; gunakan 'git commit' untuk menyelesaikan "
+"Tak mengkomit penggabungan; gunakan 'git cummit' untuk menyelesaikan "
 "penggabungan.\n"
 
 #: builtin/merge.c:831
 msgid ""
-"Please enter a commit message to explain why this merge is necessary,\n"
+"Please enter a cummit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
 "\n"
 msgstr ""
@@ -18276,20 +18276,20 @@ msgstr ""
 "topik.\n"
 
 #: builtin/merge.c:836
-msgid "An empty message aborts the commit.\n"
+msgid "An empty message aborts the cummit.\n"
 msgstr "Pesan kosong membatalkan komit.\n"
 
 #: builtin/merge.c:839
 #, c-format
 msgid ""
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
-"the commit.\n"
+"the cummit.\n"
 msgstr ""
 "Baris yang diawali dengan '%c' akan diabaikan, dan pesan kosong batalkan\n"
 "komit.\n"
 
 #: builtin/merge.c:900
-msgid "Empty commit message."
+msgid "Empty cummit message."
 msgstr "Pesan komit kosong"
 
 #: builtin/merge.c:915
@@ -18299,7 +18299,7 @@ msgstr "Luar biasa.\n"
 
 #: builtin/merge.c:976
 #, c-format
-msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
+msgid "Automatic merge failed; fix conflicts and then cummit the result.\n"
 msgstr "Penggabungan otomatis gagal; selesaikan konflik lalu komit hasilnya.\n"
 
 #: builtin/merge.c:1015
@@ -18356,7 +18356,7 @@ msgstr "Tidak ada penggabungan yang sedang berlangsung (MERGE_HEAD hilang)."
 #: builtin/merge.c:1385
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Anda belum mengakhiri penggabungan Anda (MERGE_HEAD ada).\n"
 "Mohon komit perubahan Anda sebelum Anda gabungkan."
@@ -18364,7 +18364,7 @@ msgstr ""
 #: builtin/merge.c:1392
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Anda belum mengakhiri pemetikan ceri Anda (CHERRY_PICK_HEAD ada).\n"
 "Mohon komit perubahan Anda sebelum Anda gabungkan."
@@ -18374,16 +18374,16 @@ msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
 msgstr "Anda belum mengakhiri pemetikan ceri Anda (CHERRY_PICK_HEAD ada)."
 
 #: builtin/merge.c:1427
-msgid "No commit specified and merge.defaultToUpstream not set."
+msgid "No cummit specified and merge.defaultToUpstream not set."
 msgstr ""
 "Tidak ada komit yang disebutkan dan merge.defaultToUpstream tidak disetel."
 
 #: builtin/merge.c:1444
-msgid "Squash commit into empty head not supported yet"
+msgid "Squash cummit into empty head not supported yet"
 msgstr "Lumat komit ke kepala kosong belum didukung"
 
 #: builtin/merge.c:1446
-msgid "Non-fast-forward commit does not make sense into an empty head"
+msgid "Non-fast-forward cummit does not make sense into an empty head"
 msgstr "Komit nir maju cepat tidak masuk akal ke kepala kosong"
 
 #: builtin/merge.c:1451
@@ -18392,7 +18392,7 @@ msgid "%s - not something we can merge"
 msgstr "%s - bukan sesuatu yang kami bisa gabungkan"
 
 #: builtin/merge.c:1453
-msgid "Can merge only exactly one commit into empty head"
+msgid "Can merge only exactly one cummit into empty head"
 msgstr "Hanya bisa menggabungkan tepantnya satu komit ke kepala kosong"
 
 #: builtin/merge.c:1540
@@ -18441,7 +18441,7 @@ msgstr "Menggunakan strategi %s untuk menyiapkan penyelesaian dengan tangan.\n"
 
 #: builtin/merge.c:1753
 #, c-format
-msgid "Automatic merge went well; stopped before committing as requested\n"
+msgid "Automatic merge went well; stopped before cummitting as requested\n"
 msgstr ""
 "Penggabungan otomatis berjalan baik; berhenti sebelum mengkomit seperti yang "
 "diminta\n"
@@ -18536,7 +18536,7 @@ msgid "write multi-pack index containing only given indexes"
 msgstr "tulis indeks multipak yang hanya berisi indeks yang diberikan"
 
 #: builtin/multi-pack-index.c:107
-msgid "refs snapshot for selecting bitmap commits"
+msgid "refs snapshot for selecting bitmap cummits"
 msgstr "potret referensi untuk memilih komit bitmap"
 
 #: builtin/multi-pack-index.c:206
@@ -18645,7 +18645,7 @@ msgid "renaming '%s' failed"
 msgstr "gagal mengganti nama '%s'"
 
 #: builtin/name-rev.c:524
-msgid "git name-rev [<options>] <commit>..."
+msgid "git name-rev [<options>] <cummit>..."
 msgstr ""
 
 #: builtin/name-rev.c:525
@@ -18661,7 +18661,7 @@ msgid "print only ref-based names (no object names)"
 msgstr ""
 
 #: builtin/name-rev.c:584
-msgid "only use tags to name the commits"
+msgid "only use tags to name the cummits"
 msgstr ""
 
 #: builtin/name-rev.c:586
@@ -18673,7 +18673,7 @@ msgid "ignore refs matching <pattern>"
 msgstr ""
 
 #: builtin/name-rev.c:590
-msgid "list all commits reachable from all refs"
+msgid "list all cummits reachable from all refs"
 msgstr ""
 
 #: builtin/name-rev.c:591
@@ -18777,8 +18777,8 @@ msgid "git notes merge [<options>] <notes-ref>"
 msgstr "git notes merge [<opsi>] <referensi catatan>"
 
 #: builtin/notes.c:76
-msgid "git notes merge --commit [<options>]"
-msgstr "git notes merge --commit [<opsi>]"
+msgid "git notes merge --cummit [<options>]"
+msgstr "git notes merge --cummit [<opsi>]"
 
 #: builtin/notes.c:77
 msgid "git notes merge --abort [<options>]"
@@ -18964,11 +18964,11 @@ msgid "failed to read ref NOTES_MERGE_PARTIAL"
 msgstr "gagal membaca referensi NOTES_MERGE_PARTIAL"
 
 #: builtin/notes.c:722
-msgid "could not find commit from NOTES_MERGE_PARTIAL."
+msgid "could not find cummit from NOTES_MERGE_PARTIAL."
 msgstr "gagal menemukan komit dari NOTES_MERGE_PARTIAL."
 
 #: builtin/notes.c:724
-msgid "could not parse commit from NOTES_MERGE_PARTIAL."
+msgid "could not parse cummit from NOTES_MERGE_PARTIAL."
 msgstr "gagal menguraikan komit dari NOTES_MERGE_PARTIAL."
 
 #: builtin/notes.c:737
@@ -19001,11 +19001,11 @@ msgstr ""
 "theirs/union/cat_sort_uniq)"
 
 #: builtin/notes.c:788
-msgid "Committing unmerged notes"
+msgid "cummitting unmerged notes"
 msgstr "Mengkomitkan catatan tak tergabung"
 
 #: builtin/notes.c:790
-msgid "finalize notes merge by committing unmerged notes"
+msgid "finalize notes merge by cummitting unmerged notes"
 msgstr ""
 "selesaikan penggabungan catatan dengan mengkomitkan catatan tak tergabung"
 
@@ -19018,8 +19018,8 @@ msgid "abort notes merge"
 msgstr "batalkan penggabungan catatan"
 
 #: builtin/notes.c:805
-msgid "cannot mix --commit, --abort or -s/--strategy"
-msgstr "tidak dapat mencampurkan --commit, --abort atau -s/--strategy"
+msgid "cannot mix --cummit, --abort or -s/--strategy"
+msgstr "tidak dapat mencampurkan --cummit, --abort atau -s/--strategy"
 
 #: builtin/notes.c:810
 msgid "must specify a notes ref to merge"
@@ -19043,12 +19043,12 @@ msgstr "gagal menyimpan tautan ke referensi catatan saat ini (%s)"
 #: builtin/notes.c:880
 #, c-format
 msgid ""
-"Automatic notes merge failed. Fix conflicts in %s and commit the result with "
-"'git notes merge --commit', or abort the merge with 'git notes merge --"
+"Automatic notes merge failed. Fix conflicts in %s and cummit the result with "
+"'git notes merge --cummit', or abort the merge with 'git notes merge --"
 "abort'.\n"
 msgstr ""
 "Penggabungan catatan otomatis gagal. Selesaikan konflik dalam %s dan komit "
-"hasilnya dengan 'git notes merge --commit', atau batalkan penggabungan "
+"hasilnya dengan 'git notes merge --cummit', atau batalkan penggabungan "
 "dengan 'git notes merge --abort'.\n"
 
 #: builtin/notes.c:899 builtin/tag.c:595
@@ -19406,7 +19406,7 @@ msgid "pack compression level"
 msgstr ""
 
 #: builtin/pack-objects.c:3972
-msgid "do not hide commits by grafts"
+msgid "do not hide cummits by grafts"
 msgstr ""
 
 #: builtin/pack-objects.c:3974
@@ -19548,8 +19548,8 @@ msgid "allow fast-forward"
 msgstr "perbolehkan maju cepat"
 
 #: builtin/pull.c:165
-msgid "control use of pre-merge-commit and commit-msg hooks"
-msgstr "kontrol penggunaan kail pre-merge-commit dan commit-msg"
+msgid "control use of pre-merge-cummit and cummit-msg hooks"
+msgstr "kontrol penggunaan kail pre-merge-cummit dan cummit-msg"
 
 #: builtin/pull.c:171 parse-options.h:371
 msgid "automatically stash/stash pop before and after"
@@ -19649,7 +19649,7 @@ msgstr ""
 
 #: builtin/pull.c:600
 #, c-format
-msgid "unable to access commit %s"
+msgid "unable to access cummit %s"
 msgstr "Tidak dapat mengakses komit %s"
 
 #: builtin/pull.c:908
@@ -19698,7 +19698,7 @@ msgid "pull with rebase"
 msgstr "tarik dengan pendasaran ulang"
 
 #: builtin/pull.c:1052
-msgid "please commit or stash them."
+msgid "please cummit or stash them."
 msgstr "mohon komit atau stase itu."
 
 #: builtin/pull.c:1077
@@ -19706,7 +19706,7 @@ msgstr "mohon komit atau stase itu."
 msgid ""
 "fetch updated the current branch head.\n"
 "fast-forwarding your working tree from\n"
-"commit %s."
+"cummit %s."
 msgstr ""
 "fetch memperbarui kepala cabang saat ini.\n"
 "memajukan-cepat pohon kerja Anda dari komit %s."
@@ -19890,8 +19890,8 @@ msgstr "Pembaruan ditolak karena tag sudah ada di remote."
 
 #: builtin/push.c:280
 msgid ""
-"You cannot update a remote ref that points at a non-commit object,\n"
-"or update a remote ref to make it point at a non-commit object,\n"
+"You cannot update a remote ref that points at a non-cummit object,\n"
+"or update a remote ref to make it point at a non-cummit object,\n"
 "without using the '--force' option.\n"
 msgstr ""
 "Anda tidak dapat memperbarui referensi remote yang menunjuk ke objek\n"
@@ -20070,7 +20070,7 @@ msgstr ""
 
 #: builtin/range-diff.c:60 builtin/range-diff.c:64
 #, c-format
-msgid "not a commit range: '%s'"
+msgid "not a cummit range: '%s'"
 msgstr ""
 
 #: builtin/range-diff.c:74
@@ -20078,7 +20078,7 @@ msgid "single arg format must be symmetric range"
 msgstr ""
 
 #: builtin/range-diff.c:89
-msgid "need two commit ranges"
+msgid "need two cummit ranges"
 msgstr ""
 
 #: builtin/read-tree.c:41
@@ -20194,7 +20194,7 @@ msgid "could not generate todo list"
 msgstr "tidak dapat membuat daftar todo"
 
 #: builtin/rebase.c:332
-msgid "a base commit must be provided with --upstream or --onto"
+msgid "a base cummit must be provided with --upstream or --onto"
 msgstr "basis komit harus diberikan dengan --upstream atau --onto"
 
 #: builtin/rebase.c:391
@@ -20221,7 +20221,7 @@ msgstr "abaikan allow_rerere_autoupdate yang tak valid: '%s'"
 msgid ""
 "Resolve all conflicts manually, mark them as resolved with\n"
 "\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
+"You can instead skip this cummit: run \"git rebase --skip\".\n"
 "To abort and get back to the state before \"git rebase\", run \"git rebase --"
 "abort\"."
 msgstr ""
@@ -20328,11 +20328,11 @@ msgid "do not show diffstat of what changed upstream"
 msgstr "jangan perlihatkan diffstat apa yang berubah di hulu"
 
 #: builtin/rebase.c:1066
-msgid "add a Signed-off-by trailer to each commit"
+msgid "add a Signed-off-by trailer to each cummit"
 msgstr "tambahkan trailer Signed-off-by ke setiap komit"
 
 #: builtin/rebase.c:1069
-msgid "make committer date match author date"
+msgid "make cummitter date match author date"
 msgstr "jadikan tanggal pengkomit sama dengan tanggal pengarang"
 
 #: builtin/rebase.c:1071
@@ -20352,7 +20352,7 @@ msgid "ignore changes in whitespace"
 msgstr "abaikan perubahan spasi"
 
 #: builtin/rebase.c:1081 builtin/rebase.c:1084
-msgid "cherry-pick all commits, even if unchanged"
+msgid "cherry-pick all cummits, even if unchanged"
 msgstr "petik ceri semua komit, bahkan jika tak berubah"
 
 #: builtin/rebase.c:1086
@@ -20388,7 +20388,7 @@ msgid "use merging strategies to rebase"
 msgstr "gunakan strategi penggabungan ke pendasaran ulang"
 
 #: builtin/rebase.c:1109
-msgid "let the user edit the list of commits to rebase"
+msgid "let the user edit the list of cummits to rebase"
 msgstr "biarkan pengguna menyunting daftar komit untuk didasarkan ulang"
 
 #: builtin/rebase.c:1113
@@ -20396,24 +20396,24 @@ msgid "(DEPRECATED) try to recreate merges instead of ignoring them"
 msgstr "(USANG) coba buat ulang penggabungan daripada abaikan itu"
 
 #: builtin/rebase.c:1118
-msgid "how to handle commits that become empty"
+msgid "how to handle cummits that become empty"
 msgstr "bagaimana cara menangani komit yang menjadi kosong"
 
 #: builtin/rebase.c:1121
-msgid "keep commits which start empty"
+msgid "keep cummits which start empty"
 msgstr "simpan komit yang dimulai kosong"
 
 #: builtin/rebase.c:1125
-msgid "move commits that begin with squash!/fixup! under -i"
+msgid "move cummits that begin with squash!/fixup! under -i"
 msgstr "pindahakan komit yang diawali dengan squash!/fixup! di bawah -i"
 
 #: builtin/rebase.c:1132
-msgid "add exec lines after each commit of the editable list"
+msgid "add exec lines after each cummit of the editable list"
 msgstr ""
 "tambahkan baris exec setelah setiap komit dari daftar yang bisa disunting"
 
 #: builtin/rebase.c:1136
-msgid "allow rebasing commits with empty messages"
+msgid "allow rebasing cummits with empty messages"
 msgstr "perbolehkan mendasarkan ulang komit dengan pesan kosong"
 
 #: builtin/rebase.c:1140
@@ -20437,7 +20437,7 @@ msgid "pass the argument through to the merge strategy"
 msgstr "lewatkan argumen ke strategi penggabungan"
 
 #: builtin/rebase.c:1151
-msgid "rebase all reachable commits up to the root(s)"
+msgid "rebase all reachable cummits up to the root(s)"
 msgstr "dasarkan ulang semua komit yang bisa dicapai hingga ke akar"
 
 #: builtin/rebase.c:1154
@@ -20539,7 +20539,7 @@ msgid "invalid upstream '%s'"
 msgstr "hulu tidak valid '%s'"
 
 #: builtin/rebase.c:1571
-msgid "Could not create new root commit"
+msgid "Could not create new root cummit"
 msgstr "tidak dapat membuat komit akar baru"
 
 #: builtin/rebase.c:1597
@@ -20554,12 +20554,12 @@ msgstr "'%s': butuh tepatnya satu dasar penggabungan"
 
 #: builtin/rebase.c:1609
 #, c-format
-msgid "Does not point to a valid commit '%s'"
+msgid "Does not point to a valid cummit '%s'"
 msgstr "Tidak menunjuk pada komit yang valid '%s'"
 
 #: builtin/rebase.c:1636
 #, c-format
-msgid "no such branch/commit '%s'"
+msgid "no such branch/cummit '%s'"
 msgstr "tidak ada cabang/komit seperti '%s'"
 
 #: builtin/rebase.c:1647 builtin/submodule--helper.c:43
@@ -20573,7 +20573,7 @@ msgid "Could not resolve HEAD to a revision"
 msgstr "Tidak dapat menguraikan HEAD ke sebuah revisi"
 
 #: builtin/rebase.c:1679
-msgid "Please commit or stash them."
+msgid "Please cummit or stash them."
 msgstr "Mohon komit atau stase itu."
 
 #: builtin/rebase.c:1714
@@ -20752,7 +20752,7 @@ msgstr ""
 "cabang saat ini"
 
 #: builtin/reflog.c:258
-msgid "prune any reflog entries that point to broken commits"
+msgid "prune any reflog entries that point to broken cummits"
 msgstr "pangkas entri reflog apapun yang menunjuk ke komit yang rusak"
 
 #: builtin/reflog.c:259
@@ -21473,7 +21473,7 @@ msgid "git replace [-f] --edit <object>"
 msgstr ""
 
 #: builtin/replace.c:24
-msgid "git replace [-f] --graft <commit> [<parent>...]"
+msgid "git replace [-f] --graft <cummit> [<parent>...]"
 msgstr ""
 
 #: builtin/replace.c:26
@@ -21574,38 +21574,38 @@ msgstr ""
 
 #: builtin/replace.c:383
 #, c-format
-msgid "could not parse %s as a commit"
+msgid "could not parse %s as a cummit"
 msgstr ""
 
 #: builtin/replace.c:415
 #, c-format
-msgid "bad mergetag in commit '%s'"
+msgid "bad mergetag in cummit '%s'"
 msgstr ""
 
 #: builtin/replace.c:417
 #, c-format
-msgid "malformed mergetag in commit '%s'"
+msgid "malformed mergetag in cummit '%s'"
 msgstr ""
 
 #: builtin/replace.c:429
 #, c-format
 msgid ""
-"original commit '%s' contains mergetag '%s' that is discarded; use --edit "
+"original cummit '%s' contains mergetag '%s' that is discarded; use --edit "
 "instead of --graft"
 msgstr ""
 
 #: builtin/replace.c:468
 #, c-format
-msgid "the original commit '%s' has a gpg signature"
+msgid "the original cummit '%s' has a gpg signature"
 msgstr ""
 
 #: builtin/replace.c:469
-msgid "the signature will be removed in the replacement commit!"
+msgid "the signature will be removed in the replacement cummit!"
 msgstr ""
 
 #: builtin/replace.c:479
 #, c-format
-msgid "could not write replacement commit for: '%s'"
+msgid "could not write replacement cummit for: '%s'"
 msgstr ""
 
 #: builtin/replace.c:487
@@ -21615,7 +21615,7 @@ msgstr ""
 
 #: builtin/replace.c:491
 #, c-format
-msgid "new commit is the same as the old one: '%s'"
+msgid "new cummit is the same as the old one: '%s'"
 msgstr ""
 
 #: builtin/replace.c:526
@@ -21638,7 +21638,7 @@ msgid "edit existing object"
 msgstr ""
 
 #: builtin/replace.c:550
-msgid "change a commit's parents"
+msgid "change a cummit's parents"
 msgstr ""
 
 #: builtin/replace.c:551
@@ -21712,7 +21712,7 @@ msgstr ""
 
 #: builtin/reset.c:33
 msgid ""
-"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
+"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"
 msgstr ""
 "git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<komit>]"
 
@@ -21945,7 +21945,7 @@ msgid "unknown mode for --show-object-format: %s"
 msgstr "mode untuk --show-object-format tidak dikenal: %s"
 
 #: builtin/revert.c:24
-msgid "git revert [<options>] <commit-ish>..."
+msgid "git revert [<options>] <cummit-ish>..."
 msgstr "git revert [<opsi>] <mirip-komit>..."
 
 #: builtin/revert.c:25
@@ -21953,7 +21953,7 @@ msgid "git revert <subcommand>"
 msgstr "git revert <subperintah>"
 
 #: builtin/revert.c:30
-msgid "git cherry-pick [<options>] <commit-ish>..."
+msgid "git cherry-pick [<options>] <cummit-ish>..."
 msgstr "git cherry-pick [<opsi>] <mirip-komit>..."
 
 #: builtin/revert.c:31
@@ -21983,15 +21983,15 @@ msgid "cancel revert or cherry-pick sequence"
 msgstr "batalkan rangkaian pembalikan atau pemetikan ceri"
 
 #: builtin/revert.c:105
-msgid "skip current commit and continue"
+msgid "skip current cummit and continue"
 msgstr "lewati komit saat ini dan lanjutkan"
 
 #: builtin/revert.c:107
-msgid "don't automatically commit"
+msgid "don't automatically cummit"
 msgstr "jangan komit otomatis"
 
 #: builtin/revert.c:108
-msgid "edit the commit message"
+msgid "edit the cummit message"
 msgstr "sunting pesan komit"
 
 #: builtin/revert.c:111
@@ -22011,19 +22011,19 @@ msgid "option for merge strategy"
 msgstr "opsi untuk strategi penggabungan"
 
 #: builtin/revert.c:125
-msgid "append commit name"
+msgid "append cummit name"
 msgstr "tambahkan nama komit"
 
 #: builtin/revert.c:127
-msgid "preserve initially empty commits"
+msgid "preserve initially empty cummits"
 msgstr "pertahankan komit kosong awal"
 
 #: builtin/revert.c:128
-msgid "allow commits with empty messages"
+msgid "allow cummits with empty messages"
 msgstr "perbolehkan komit dengan pesan kosong"
 
 #: builtin/revert.c:129
-msgid "keep redundant, empty commits"
+msgid "keep redundant, empty cummits"
 msgstr "simpan komit kosong mubazir"
 
 #: builtin/revert.c:241
@@ -22170,15 +22170,15 @@ msgid "unknown group type: %s"
 msgstr "tipe kelompok tidak dikenal: %s"
 
 #: builtin/shortlog.c:351
-msgid "group by committer rather than author"
+msgid "group by cummitter rather than author"
 msgstr "kelompokkan oleh pengkomit daripada pengarang"
 
 #: builtin/shortlog.c:354
-msgid "sort output according to the number of commits per author"
+msgid "sort output according to the number of cummits per author"
 msgstr "urutkan keluaran berdasarkan jumlah komit per pengarang"
 
 #: builtin/shortlog.c:356
-msgid "suppress commit descriptions, only provides commit count"
+msgid "suppress cummit descriptions, only provides cummit count"
 msgstr "sembunyikan deskripsi komit, hanya sediakan hitungan komit"
 
 #: builtin/shortlog.c:358
@@ -22246,7 +22246,7 @@ msgid "color '*!+-' corresponding to the branch"
 msgstr "warna '*!+-' bersesuaian pada cabang"
 
 #: builtin/show-branch.c:651
-msgid "show <n> more commits after the common ancestor"
+msgid "show <n> more cummits after the common ancestor"
 msgstr "perlihatkan <n> komit lagi setelah nenek moyang yang sama"
 
 #: builtin/show-branch.c:653
@@ -22262,7 +22262,7 @@ msgid "include the current branch"
 msgstr "masukkan cabang saat ini"
 
 #: builtin/show-branch.c:658
-msgid "name commits with their object names"
+msgid "name cummits with their object names"
 msgstr "namai komit dengan nama objeknya"
 
 #: builtin/show-branch.c:660
@@ -22275,11 +22275,11 @@ msgstr ""
 "perlihatkan referensi yang tidak dapat dicapai dari referensi yang lainnya"
 
 #: builtin/show-branch.c:664
-msgid "show commits in topological order"
+msgid "show cummits in topological order"
 msgstr "perlihatkan komit dalam urutan topologis"
 
 #: builtin/show-branch.c:667
-msgid "show only commits not on the first branch"
+msgid "show only cummits not on the first branch"
 msgstr "hanya perlihatkan komit yang bukan pada cabang pertama"
 
 #: builtin/show-branch.c:669
@@ -22332,7 +22332,7 @@ msgstr "'%s' bukan sebuah referensi yang valid."
 
 #: builtin/show-branch.c:838
 #, c-format
-msgid "cannot find commit %s (%s)"
+msgid "cannot find cummit %s (%s)"
 msgstr "tidak dapat menemukan komit %s (%s)"
 
 #: builtin/show-index.c:21
@@ -22590,7 +22590,7 @@ msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
 msgstr "git stash apply [--index] [-q|--quiet] [<stase>]"
 
 #: builtin/stash.c:75
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
+msgid "git stash store [-m|--message <message>] [-q|--quiet] <cummit>"
 msgstr "git stash store [-m|--message <pesan>] [-q|--quiet] <komit>"
 
 #: builtin/stash.c:80
@@ -22613,7 +22613,7 @@ msgstr ""
 
 #: builtin/stash.c:130
 #, c-format
-msgid "'%s' is not a stash-like commit"
+msgid "'%s' is not a stash-like cummit"
 msgstr "'%s' bukan komit mirip stase"
 
 #: builtin/stash.c:150
@@ -22729,7 +22729,7 @@ msgid "stash message"
 msgstr "pesan stase"
 
 #: builtin/stash.c:958
-msgid "\"git stash store\" requires one <commit> argument"
+msgid "\"git stash store\" requires one <cummit> argument"
 msgstr "\"git stash store\" butuh satu argumen <komit>"
 
 #: builtin/stash.c:1143
@@ -22741,7 +22741,7 @@ msgid "No changes selected"
 msgstr "Tidak ada perubahan yang dipilih"
 
 #: builtin/stash.c:1304
-msgid "You do not have the initial commit yet"
+msgid "You do not have the initial cummit yet"
 msgstr "Anda belum punya komit awal"
 
 #: builtin/stash.c:1331
@@ -22954,7 +22954,7 @@ msgstr "sembunyikan keluaran status submodul"
 
 #: builtin/submodule--helper.c:875
 msgid ""
-"use commit stored in the index instead of the one stored in the submodule "
+"use cummit stored in the index instead of the one stored in the submodule "
 "HEAD"
 msgstr ""
 "gunakan komit yang disimpan di dalam indeks daripada yang disimpan di dalam "
@@ -22994,11 +22994,11 @@ msgid "unexpected mode %o\n"
 msgstr "mode tidak diharapkan %o\n"
 
 #: builtin/submodule--helper.c:1288
-msgid "use the commit stored in the index instead of the submodule HEAD"
+msgid "use the cummit stored in the index instead of the submodule HEAD"
 msgstr "gunakan komit yang disimpan di dalam indeks daripada HEAD submodul"
 
 #: builtin/submodule--helper.c:1290
-msgid "compare the commit in the index with that in the submodule HEAD"
+msgid "compare the cummit in the index with that in the submodule HEAD"
 msgstr "bandingkan komit di dalam indeks dengan yang di dalam HEAD submodul"
 
 #: builtin/submodule--helper.c:1292
@@ -23010,8 +23010,8 @@ msgid "limit the summary size"
 msgstr "batasi ukuran ringkasan"
 
 #: builtin/submodule--helper.c:1299
-msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
-msgstr "git submodule--helper summary [<opsi>] [<commit>] -- [<jalur>]"
+msgid "git submodule--helper summary [<options>] [<cummit>] [--] [<path>]"
+msgstr "git submodule--helper summary [<opsi>] [<cummit>] -- [<jalur>]"
 
 #: builtin/submodule--helper.c:1323
 msgid "could not fetch a revision for HEAD"
@@ -23275,7 +23275,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Fetched in submodule path '%s', but it did not contain %s. Direct fetching "
-"of that commit failed."
+"of that cummit failed."
 msgstr ""
 "Terambil di dalam jalur submodul '%s', tetapi itu tidak berisi %s. "
 "Pengambilan langsung komit tersebut gagal."
@@ -23610,9 +23610,9 @@ msgstr "git tag -d <nama tag>..."
 
 #: builtin/tag.c:29
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
+"git tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--"
 "points-at <object>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] "
+"        [--format=<format>] [--merged <cummit>] [--no-merged <cummit>] "
 "[<pattern>...]"
 msgstr ""
 "git tag -l [-n[<angka>]] [--contains <komit>] [--no-contains <komit>] [--"
@@ -23750,11 +23750,11 @@ msgid "show tag list in columns"
 msgstr "perlihatkan daftar tag dalam kolom"
 
 #: builtin/tag.c:468 builtin/tag.c:470
-msgid "print only tags that contain the commit"
+msgid "print only tags that contain the cummit"
 msgstr "hanya cetak tag yang berisi komit"
 
 #: builtin/tag.c:469 builtin/tag.c:471
-msgid "print only tags that don't contain the commit"
+msgid "print only tags that don't contain the cummit"
 msgstr "hanya cetak tag yang tidak berisi komit"
 
 #: builtin/tag.c:472
@@ -24101,15 +24101,15 @@ msgstr "jangan coba <direktori>.git/ jika <direktori> bukan direktori Git"
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "interupsi transfer setelah <n> detik niraktivitas"
 
-#: builtin/verify-commit.c:19
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] <komit>..."
+#: builtin/verify-cummit.c:19
+msgid "git verify-cummit [-v | --verbose] <cummit>..."
+msgstr "git verify-cummit [-v | --verbose] <komit>..."
 
-#: builtin/verify-commit.c:68
-msgid "print commit contents"
+#: builtin/verify-cummit.c:68
+msgid "print cummit contents"
 msgstr "cetak isi komit"
 
-#: builtin/verify-commit.c:69 builtin/verify-tag.c:37
+#: builtin/verify-cummit.c:69 builtin/verify-tag.c:37
 msgid "print raw gpg status output"
 msgstr "cetak keluaran status gpg mentah"
 
@@ -24134,7 +24134,7 @@ msgid "print tag contents"
 msgstr "cetak isi tag"
 
 #: builtin/worktree.c:19
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
+msgid "git worktree add [<options>] <path> [<cummit-ish>]"
 msgstr "git worktree add [<opsi>] <jalur> [<mirip komit>]"
 
 #: builtin/worktree.c:20
@@ -24591,11 +24591,11 @@ msgstr ""
 
 #: t/helper/test-reach.c:154
 #, c-format
-msgid "commit %s is not marked reachable"
+msgid "cummit %s is not marked reachable"
 msgstr ""
 
 #: t/helper/test-reach.c:164
-msgid "too many commits marked reachable"
+msgid "too many cummits marked reachable"
 msgstr ""
 
 #: t/helper/test-serve-v2.c:7
@@ -25100,7 +25100,7 @@ msgid "Apply a series of patches from a mailbox"
 msgstr ""
 
 #: command-list.h:52
-msgid "Annotate file lines with commit information"
+msgid "Annotate file lines with cummit information"
 msgstr ""
 
 #: command-list.h:53
@@ -25116,7 +25116,7 @@ msgid "Create an archive of files from a named tree"
 msgstr ""
 
 #: command-list.h:56
-msgid "Use binary search to find the commit that introduced a bug"
+msgid "Use binary search to find the cummit that introduced a bug"
 msgstr ""
 
 #: command-list.h:57
@@ -25164,15 +25164,15 @@ msgid "Copy files from the index to the working tree"
 msgstr ""
 
 #: command-list.h:68
-msgid "Find commits yet to be applied to upstream"
+msgid "Find cummits yet to be applied to upstream"
 msgstr ""
 
 #: command-list.h:69
-msgid "Apply the changes introduced by some existing commits"
+msgid "Apply the changes introduced by some existing cummits"
 msgstr ""
 
 #: command-list.h:70
-msgid "Graphical alternative to git-commit"
+msgid "Graphical alternative to git-cummit"
 msgstr ""
 
 #: command-list.h:71
@@ -25192,11 +25192,11 @@ msgid "Record changes to the repository"
 msgstr ""
 
 #: command-list.h:75
-msgid "Write and verify Git commit-graph files"
+msgid "Write and verify Git cummit-graph files"
 msgstr ""
 
 #: command-list.h:76
-msgid "Create a new commit object"
+msgid "Create a new cummit object"
 msgstr ""
 
 #: command-list.h:77
@@ -25220,7 +25220,7 @@ msgid "Helper to store credentials on disk"
 msgstr ""
 
 #: command-list.h:82
-msgid "Export a single commit to a CVS checkout"
+msgid "Export a single cummit to a CVS checkout"
 msgstr ""
 
 #: command-list.h:83
@@ -25240,7 +25240,7 @@ msgid "Give an object a human readable name based on an available ref"
 msgstr ""
 
 #: command-list.h:87
-msgid "Show changes between commits, commit and working tree, etc"
+msgid "Show changes between cummits, cummit and working tree, etc"
 msgstr ""
 
 #: command-list.h:88
@@ -25280,7 +25280,7 @@ msgid "Rewrite branches"
 msgstr ""
 
 #: command-list.h:97
-msgid "Produce a merge commit message"
+msgid "Produce a merge cummit message"
 msgstr ""
 
 #: command-list.h:98
@@ -25304,7 +25304,7 @@ msgid "Cleanup unnecessary files and optimize the local repository"
 msgstr ""
 
 #: command-list.h:103
-msgid "Extract commit ID from an archive created using git-archive"
+msgid "Extract cummit ID from an archive created using git-archive"
 msgstr ""
 
 #: command-list.h:104
@@ -25356,11 +25356,11 @@ msgid "Instantly browse your working repository in gitweb"
 msgstr ""
 
 #: command-list.h:116
-msgid "Add or parse structured information in commit messages"
+msgid "Add or parse structured information in cummit messages"
 msgstr ""
 
 #: command-list.h:117
-msgid "Show commit logs"
+msgid "Show cummit logs"
 msgstr ""
 
 #: command-list.h:118
@@ -25480,7 +25480,7 @@ msgid "Applies a quilt patchset onto the current branch"
 msgstr ""
 
 #: command-list.h:147
-msgid "Compare two commit ranges (e.g. two versions of a branch)"
+msgid "Compare two cummit ranges (e.g. two versions of a branch)"
 msgstr ""
 
 #: command-list.h:148
@@ -25488,7 +25488,7 @@ msgid "Reads tree information into the index"
 msgstr ""
 
 #: command-list.h:149
-msgid "Reapply commits on top of another base tip"
+msgid "Reapply cummits on top of another base tip"
 msgstr ""
 
 #: command-list.h:150
@@ -25528,7 +25528,7 @@ msgid "Restore working tree files"
 msgstr ""
 
 #: command-list.h:159
-msgid "Lists commit objects in reverse chronological order"
+msgid "Lists cummit objects in reverse chronological order"
 msgstr ""
 
 #: command-list.h:160
@@ -25536,7 +25536,7 @@ msgid "Pick out and massage parameters"
 msgstr ""
 
 #: command-list.h:161
-msgid "Revert some existing commits"
+msgid "Revert some existing cummits"
 msgstr ""
 
 #: command-list.h:162
@@ -25572,7 +25572,7 @@ msgid "Show various types of objects"
 msgstr ""
 
 #: command-list.h:170
-msgid "Show branches and their commits"
+msgid "Show branches and their cummits"
 msgstr ""
 
 #: command-list.h:171
@@ -25656,7 +25656,7 @@ msgid "Show a Git logical variable"
 msgstr ""
 
 #: command-list.h:191
-msgid "Check the GPG signature of commits"
+msgid "Check the GPG signature of cummits"
 msgstr ""
 
 #: command-list.h:192
@@ -25668,7 +25668,7 @@ msgid "Check the GPG signature of tags"
 msgstr ""
 
 #: command-list.h:194
-msgid "Show logs with difference each commit introduces"
+msgid "Show logs with difference each cummit introduces"
 msgstr ""
 
 #: command-list.h:195
@@ -25728,7 +25728,7 @@ msgid "The Git repository browser"
 msgstr ""
 
 #: command-list.h:209
-msgid "Map author/committer names and/or E-Mail addresses"
+msgid "Map author/cummitter names and/or E-Mail addresses"
 msgstr ""
 
 #: command-list.h:210
@@ -25787,7 +25787,7 @@ msgstr ""
 
 #: git-merge-octopus.sh:73
 #, sh-format
-msgid "Unable to find common commit with $pretty_name"
+msgid "Unable to find common cummit with $pretty_name"
 msgstr ""
 
 #: git-merge-octopus.sh:77
@@ -25835,11 +25835,11 @@ msgstr ""
 
 #: git-sh-setup.sh:226
 #, sh-format
-msgid "Cannot $action: Your index contains uncommitted changes."
+msgid "Cannot $action: Your index contains uncummitted changes."
 msgstr ""
 
 #: git-sh-setup.sh:228
-msgid "Additionally, your index contains uncommitted changes."
+msgid "Additionally, your index contains uncummitted changes."
 msgstr ""
 
 #: git-sh-setup.sh:348
@@ -26198,7 +26198,7 @@ msgstr "peringatan: baris sendmail tidak dikenal: %s\n"
 #: git-send-email.perl:747
 #, perl-format
 msgid ""
-"File '%s' exists but it could also be the range of commits\n"
+"File '%s' exists but it could also be the range of cummits\n"
 "to produce patches for.  Please disambiguate by...\n"
 "\n"
 "    * Saying \"./%s\" if you mean a file; or\n"
@@ -26329,7 +26329,7 @@ msgstr "Jalur CA \"%s\" tidak ada"
 #: git-send-email.perl:1565
 msgid ""
 "    The Cc list above has been expanded by additional\n"
-"    addresses found in the patch commit message. By default\n"
+"    addresses found in the patch cummit message. By default\n"
 "    send-email prompts before sending whenever this occurs.\n"
 "    This behavior is controlled by the sendemail.confirm\n"
 "    configuration setting.\n"

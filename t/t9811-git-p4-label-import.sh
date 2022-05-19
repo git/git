@@ -120,7 +120,7 @@ test_expect_success 'export git tags to p4' '
 		git tag -m "A tag created in git:xyzzy" GIT_TAG_1 &&
 		echo "hello world" >main/f10 &&
 		git add main/f10 &&
-		git commit -m "Adding file for export test" &&
+		git cummit -m "Adding file for export test" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit &&
 		git tag -m "Another git tag" GIT_TAG_2 &&
@@ -144,7 +144,7 @@ test_expect_success 'export git tags to p4' '
 
 # Export a tag from git where an affected file is deleted later on
 # Need to create git tags after rebase, since only then can the
-# git commits be mapped to p4 changelists.
+# git cummits be mapped to p4 changelists.
 test_expect_success 'export git tags to p4 with deletion' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot@all &&
@@ -153,11 +153,11 @@ test_expect_success 'export git tags to p4 with deletion' '
 		git p4 sync --import-labels &&
 		echo "deleted file" >main/deleted_file &&
 		git add main/deleted_file &&
-		git commit -m "create deleted file" &&
+		git cummit -m "create deleted file" &&
 		git rm main/deleted_file &&
 		echo "new file" >main/f11 &&
 		git add main/f11 &&
-		git commit -m "delete the deleted file" &&
+		git cummit -m "delete the deleted file" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit &&
 		git p4 rebase --import-labels --verbose &&
@@ -186,7 +186,7 @@ test_expect_success 'tag that cannot be exported' '
 		git checkout -b a_branch &&
 		echo "hello" >main/f12 &&
 		git add main/f12 &&
-		git commit -m "adding f12" &&
+		git cummit -m "adding f12" &&
 		git tag -m "tag on a_branch" GIT_TAG_ON_A_BRANCH &&
 		git checkout main &&
 		git p4 submit --export-labels
@@ -221,8 +221,8 @@ p4_head_revision() {
 	p4 changes -m 1 "$@" | awk '{print $2}'
 }
 
-# Importing a label that references a P4 commit that
-# has not been seen. The presence of a label on a commit
+# Importing a label that references a P4 cummit that
+# has not been seen. The presence of a label on a cummit
 # we haven't seen should not cause git-p4 to fail. It should
 # merely skip that label, and still import other labels.
 test_expect_success 'importing labels with missing revisions' '

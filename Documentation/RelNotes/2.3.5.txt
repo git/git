@@ -17,7 +17,7 @@ Fixes since v2.3.4
    working tree and repository could have resulted in some directories
    and files left without getting cleaned up.
 
- * "git fetch" that fetches a commit using the allow-tip-sha1-in-want
+ * "git fetch" that fetches a cummit using the allow-tip-sha1-in-want
    extension could have failed to fetch all the requested refs.
 
  * The split-index mode introduced at v2.3.0-rc0~41 was broken in the

@@ -4,7 +4,7 @@ test_description="git merge
 
 Testing a custom strategy.
 
-*   (HEAD, main) Merge commit 'c3'
+*   (HEAD, main) Merge cummit 'c3'
 |\
 | * (tag: c3) c3
 * | (tag: c1) c1
@@ -28,14 +28,14 @@ test_expect_success 'set up custom strategy' '
 '
 
 test_expect_success 'setup' '
-	test_commit c0 c0.c &&
-	test_commit c1 c1.c &&
+	test_cummit c0 c0.c &&
+	test_cummit c1 c1.c &&
 	git reset --keep c0 &&
 	echo c1c1 >c1.c &&
 	git add c1.c &&
-	test_commit c2 c2.c &&
+	test_cummit c2 c2.c &&
 	git reset --keep c0 &&
-	test_commit c3 c3.c
+	test_cummit c3 c3.c
 '
 
 test_expect_success 'merge c2 with a custom strategy' '

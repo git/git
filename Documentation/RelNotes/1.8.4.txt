@@ -26,7 +26,7 @@ can set it to "simple" today without waiting for Git 2.0.
 When "git add -u" (and "git add -A") is run inside a subdirectory and
 does not specify which paths to add on the command line, it
 will operate on the entire tree in Git 2.0 for consistency
-with "git commit -a" and other commands.  There will be no
+with "git cummit -a" and other commands.  There will be no
 mechanism to make plain "git add -u" behave like "git add -u .".
 Current users of "git add -u" (without a pathspec) should start
 training their fingers to explicitly say "git add -u ."
@@ -158,7 +158,7 @@ UI, Workflows & Features
    did not work very well with "git rebase -i --autosquash".
 
  * "git log" learned the "--author-date-order" option, with which the
-   output is topologically sorted and commits in parallel histories
+   output is topologically sorted and cummits in parallel histories
    are shown intermixed together based on the author timestamp.
 
  * Various subcommands of "git submodule" refused to run from anywhere
@@ -172,7 +172,7 @@ UI, Workflows & Features
  * "git rm" gives a single message followed by list of paths to report
    multiple paths that cannot be removed.
 
- * "git rebase" can be told with ":/look for this string" syntax commits
+ * "git rebase" can be told with ":/look for this string" syntax cummits
    to replay the changes onto and where the work to be replayed begins.
 
  * Many tutorials teach users to set "color.ui" to "auto" as the first
@@ -202,7 +202,7 @@ UI, Workflows & Features
    more like "check-attr" over bidi-pipes.
 
  * "git describe" learned "--first-parent" option to limit its closest
-   tagged commit search to the first-parent chain.
+   tagged cummit search to the first-parent chain.
 
  * "git merge foo" that might have meant "git merge origin/foo" is
    diagnosed with a more informative error message.
@@ -342,9 +342,9 @@ details).
    descriptor) correctly.
    (merge a77f106 tr/fd-gotcha-fixes later to maint).
 
- * Logic to auto-detect character encodings in the commit log message
+ * Logic to auto-detect character encodings in the cummit log message
    did not reject overlong and invalid UTF-8 characters.
-   (merge 81050ac bc/commit-invalid-utf8 later to maint).
+   (merge 81050ac bc/cummit-invalid-utf8 later to maint).
 
  * Pass port number as a separate argument when "send-email" initializes
    Net::SMTP, instead of as a part of the hostname, i.e. host:port.
@@ -400,7 +400,7 @@ details).
    quoting.
 
  * Call to discard_cache/discard_index (used when we use different
-   contents of the index in-core, in many operations like commit,
+   contents of the index in-core, in many operations like cummit,
    apply, and merge) used to leak memory that held the array of index
    entries, which has been plugged.
    (merge a0fc4db rs/discard-index-discard-array later to maint).
@@ -411,7 +411,7 @@ details).
 
  * The wildmatch engine did not honor WM_CASEFOLD option correctly.
 
- * "git log -c --follow $path" segfaulted upon hitting the commit that
+ * "git log -c --follow $path" segfaulted upon hitting the cummit that
    renamed the $path being followed.
 
  * When a reflog notation is used for implicit "current branch", we
@@ -446,7 +446,7 @@ details).
  * Stop installing the git-remote-testpy script that is only used for
    testing.
 
- * "git commit --allow-empty-message -m ''" should not start an
+ * "git cummit --allow-empty-message -m ''" should not start an
    editor.
 
  * "git merge @{-1}~22" was rewritten to "git merge frotz@{1}~22"
@@ -477,7 +477,7 @@ details).
    checks to lose data at the remote side.
 
  * "git fetch" into a shallow repository from a repository that does
-   not know about the shallow boundary commits (e.g. a different fork
+   not know about the shallow boundary cummits (e.g. a different fork
    from the repository the current shallow repository was cloned from)
    did not work correctly.
 

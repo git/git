@@ -2,7 +2,7 @@
 #include "parse-options.h"
 #include "cache.h"
 #include "config.h"
-#include "commit.h"
+#include "cummit.h"
 #include "color.h"
 #include "utf8.h"
 

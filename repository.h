@@ -29,10 +29,10 @@ enum fetch_negotiation_setting {
 struct repo_settings {
 	int initialized;
 
-	int core_commit_graph;
-	int commit_graph_read_changed_paths;
-	int gc_write_commit_graph;
-	int fetch_write_commit_graph;
+	int core_cummit_graph;
+	int cummit_graph_read_changed_paths;
+	int gc_write_cummit_graph;
+	int fetch_write_cummit_graph;
 	int command_requires_full_index;
 	int sparse_index;
 
@@ -152,8 +152,8 @@ struct repository {
 	/* A unique-id for tracing purposes. */
 	int trace2_repo_id;
 
-	/* True if commit-graph has been disabled within this process. */
-	int commit_graph_disabled;
+	/* True if cummit-graph has been disabled within this process. */
+	int cummit_graph_disabled;
 
 	/* Configurations related to promisor remotes. */
 	char *repository_format_partial_clone;
@@ -221,7 +221,7 @@ int repo_read_index_preload(struct repository *,
 int repo_read_index_unmerged(struct repository *);
 /*
  * Opportunistically update the index but do not complain if we can't.
- * The lockfile is always committed or rolled back.
+ * The lockfile is always cummitted or rolled back.
  */
 void repo_update_index_if_able(struct repository *, struct lock_file *);
 

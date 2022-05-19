@@ -3,13 +3,13 @@
 == What's an Object Walk?
 
 The object walk is a key concept in Git - this is the process that underpins
-operations like object transfer and fsck. Beginning from a given commit, the
-list of objects is found by walking parent relationships between commits (commit
-X based on commit W) and containment relationships between objects (tree Y is
-contained within commit X, and blob Z is located within tree Y, giving our
-working tree for commit X something like `y/z.txt`).
+operations like object transfer and fsck. Beginning from a given cummit, the
+list of objects is found by walking parent relationships between cummits (cummit
+X based on cummit W) and containment relationships between objects (tree Y is
+contained within cummit X, and blob Z is located within tree Y, giving our
+working tree for cummit X something like `y/z.txt`).
 
-A related concept is the revision walk, which is focused on commit objects and
+A related concept is the revision walk, which is focused on cummit objects and
 their parent relationships and does not delve into other object types. The
 revision walk is used for operations like `git log`.
 
@@ -130,7 +130,7 @@ used to track the allocated size of the list.
 Per entry, we find:
 
 `item` is the object provided upon which to base the object walk. Items in Git
-can be blobs, trees, commits, or tags. (See `Documentation/gittutorial-2.txt`.)
+can be blobs, trees, cummits, or tags. (See `Documentation/gittutorial-2.txt`.)
 
 `name` is the object ID (OID) of the object - a hex string you may be familiar
 with from using Git to organize your source in the past. Check the tutorial
@@ -154,14 +154,14 @@ by `revision.c` - not configuration options. Most of the configurable flags in
 `struct rev_info` have a mirror in `Documentation/rev-list-options.txt`. It's a
 good idea to take some time and read through that document.
 
-== Basic Commit Walk
+== Basic cummit Walk
 
 First, let's see if we can replicate the output of `git log --oneline`. We'll
 refer back to the implementation frequently to discover norms when performing
 an object walk of our own.
 
-To do so, we'll first find all the commits, in order, which preceded the current
-commit. We'll extract the name and subject of the commit from each.
+To do so, we'll first find all the cummits, in order, which preceded the current
+cummit. We'll extract the name and subject of the cummit from each.
 
 Ideally, we will also be able to find out which ones are currently at the tip of
 various branches.
@@ -273,7 +273,7 @@ static void final_rev_info_setup(struct rev_info *rev)
 	 * We want to mimic the appearance of `git log --oneline`, so let's
 	 * force oneline format.
 	 */
-	get_commit_format("oneline", rev);
+	get_cummit_format("oneline", rev);
 
 	/* Start our object walk at HEAD. */
 	add_head_to_pending(rev);
@@ -289,7 +289,7 @@ something like this:
 
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
-	opt.revarg_opt = REVARG_COMMITTISH;
+	opt.revarg_opt = REVARG_cummitTISH;
 	setup_revisions(argc, argv, rev, &opt);
 ----
 Using a `setup_revision_opt` gives you finer control over your walk's starting
@@ -322,7 +322,7 @@ with the call to `prepare_revision_walk()`, which can return an error without
 dying on its own:
 
 ----
-static void walken_commit_walk(struct rev_info *rev)
+static void walken_cummit_walk(struct rev_info *rev)
 {
 	if (prepare_revision_walk(rev))
 		die(_("revision walk setup failed"));
@@ -338,19 +338,19 @@ Finally! We are ready to begin the walk itself. Now we can see that `rev_info`
 can also be used as an iterator; we move to the next item in the walk by using
 `get_revision()` repeatedly. Add the listed variable declarations at the top and
 the walk loop below the `prepare_revision_walk()` call within your
-`walken_commit_walk()`:
+`walken_cummit_walk()`:
 
 ----
-static void walken_commit_walk(struct rev_info *rev)
+static void walken_cummit_walk(struct rev_info *rev)
 {
-	struct commit *commit;
+	struct cummit *cummit;
 	struct strbuf prettybuf = STRBUF_INIT;
 
 	...
 
-	while ((commit = get_revision(rev))) {
+	while ((cummit = get_revision(rev))) {
 		strbuf_reset(&prettybuf);
-		pp_commit_easy(CMIT_FMT_ONELINE, commit, &prettybuf);
+		pp_cummit_easy(CMIT_FMT_ONELINE, cummit, &prettybuf);
 		puts(prettybuf.buf);
 	}
 	strbuf_release(&prettybuf);
@@ -367,16 +367,16 @@ $ make
 $ ./bin-wrappers/git walken
 ----
 
-You should see all of the subject lines of all the commits in
-your tree's history, in order, ending with the initial commit, "Initial revision
+You should see all of the subject lines of all the cummits in
+your tree's history, in order, ending with the initial cummit, "Initial revision
 of "git", the information manager from hell". Congratulations! You've written
 your first revision walk. You can play with printing some additional fields
-from each commit if you're curious; have a look at the functions available in
-`commit.h`.
+from each cummit if you're curious; have a look at the functions available in
+`cummit.h`.
 
 === Adding a Filter
 
-Next, let's try to filter the commits we see based on their author. This is
+Next, let's try to filter the cummits we see based on their author. This is
 equivalent to running `git log --author=<pattern>`. We can add a filter by
 modifying `rev_info.grep_filter`, which is a `struct grep_opt`.
 
@@ -391,7 +391,7 @@ static int git_walken_config(const char *var, const char *value, void *cb)
 ----
 
 Next, we can modify the `grep_filter`. This is done with convenience functions
-found in `grep.h`. For fun, we're filtering to only commits from folks using a
+found in `grep.h`. For fun, we're filtering to only cummits from folks using a
 `gmail.com` email address - a not-very-precise guess at who may be working on
 Git as a hobby. Since we're checking the author, which is a specific line in the
 header, we'll use the `append_header_grep_pattern()` helper. We can use
@@ -427,16 +427,16 @@ wanted to, but `append_header_grep_pattern()` adds the `enum grep_context` and
 
 === Changing the Order
 
-There are a few ways that we can change the order of the commits during a
+There are a few ways that we can change the order of the cummits during a
 revision walk. Firstly, we can use the `enum rev_sort_order` to choose from some
 typical orderings.
 
 `topo_order` is the same as `git log --topo-order`: we avoid showing a parent
-before all of its children have been shown, and we avoid mixing commits which
+before all of its children have been shown, and we avoid mixing cummits which
 are in different lines of history. (`git help log`'s section on `--topo-order`
 has a very nice diagram to illustrate this.)
 
-Let's see what happens when we run with `REV_SORT_BY_COMMIT_DATE` as opposed to
+Let's see what happens when we run with `REV_SORT_BY_cummit_DATE` as opposed to
 `REV_SORT_BY_AUTHOR_DATE`. Add the following:
 
 ----
@@ -446,7 +446,7 @@ static void final_rev_info_setup(int argc, const char **argv,
 	...
 
 	rev->topo_order = 1;
-	rev->sort_order = REV_SORT_BY_COMMIT_DATE;
+	rev->sort_order = REV_SORT_BY_cummit_DATE;
 
 	...
 }
@@ -457,7 +457,7 @@ author date.
 
 ----
 $ make
-$ ./bin-wrappers/git walken > commit-date.txt
+$ ./bin-wrappers/git walken > cummit-date.txt
 ----
 
 Then, let's sort by author date and run it again.
@@ -484,13 +484,13 @@ Finally, compare the two. This is a little less helpful without object names or
 dates, but hopefully we get the idea.
 
 ----
-$ diff -u commit-date.txt author-date.txt
+$ diff -u cummit-date.txt author-date.txt
 ----
 
-This display indicates that commits can be reordered after they're written, for
+This display indicates that cummits can be reordered after they're written, for
 example with `git rebase`.
 
-Let's try one more reordering of commits. `rev_info` exposes a `reverse` flag.
+Let's try one more reordering of cummits. `rev_info` exposes a `reverse` flag.
 Set that flag somewhere inside of `final_rev_info_setup()`:
 
 ----
@@ -506,12 +506,12 @@ static void final_rev_info_setup(int argc, const char **argv, const char *prefix
 ----
 
 Run your walk again and note the difference in order. (If you remove the grep
-pattern, you should see the last commit this call gives you as your current
+pattern, you should see the last cummit this call gives you as your current
 HEAD.)
 
 == Basic Object Walk
 
-So far we've been walking only commits. But Git has more types of objects than
+So far we've been walking only cummits. But Git has more types of objects than
 that! Let's see if we can walk _all_ objects, and find out some information
 about each one.
 
@@ -519,22 +519,22 @@ We can base our work on an example. `git pack-objects` prepares all kinds of
 objects for packing into a bitmap or packfile. The work we are interested in
 resides in `builtins/pack-objects.c:get_object_list()`; examination of that
 function shows that the all-object walk is being performed by
-`traverse_commit_list()` or `traverse_commit_list_filtered()`. Those two
+`traverse_cummit_list()` or `traverse_cummit_list_filtered()`. Those two
 functions reside in `list-objects.c`; examining the source shows that, despite
 the name, these functions traverse all kinds of objects. Let's have a look at
-the arguments to `traverse_commit_list()`.
+the arguments to `traverse_cummit_list()`.
 
 - `struct rev_info *revs`: This is the `rev_info` used for the walk. If
   its `filter` member is not `NULL`, then `filter` contains information for
   how to filter the object list.
-- `show_commit_fn show_commit`: A callback which will be used to handle each
-  individual commit object.
+- `show_cummit_fn show_cummit`: A callback which will be used to handle each
+  individual cummit object.
 - `show_object_fn show_object`: A callback which will be used to handle each
-  non-commit object (so each blob, tree, or tag).
-- `void *show_data`: A context buffer which is passed in turn to `show_commit`
+  non-cummit object (so each blob, tree, or tag).
+- `void *show_data`: A context buffer which is passed in turn to `show_cummit`
   and `show_object`.
 
-In addition, `traverse_commit_list_filtered()` has an additional paramter:
+In addition, `traverse_cummit_list_filtered()` has an additional paramter:
 
 - `struct oidset *omitted`: A linked-list of object IDs which the provided
   filter caused to be omitted.
@@ -547,19 +547,19 @@ of object we find. At file scope in `builtin/walken.c` add the following
 tracking variables:
 
 ----
-static int commit_count;
+static int cummit_count;
 static int tag_count;
 static int blob_count;
 static int tree_count;
 ----
 
-Commits are handled by a different callback than other objects; let's do that
+cummits are handled by a different callback than other objects; let's do that
 one first:
 
 ----
-static void walken_show_commit(struct commit *cmt, void *buf)
+static void walken_show_cummit(struct cummit *cmt, void *buf)
 {
-	commit_count++;
+	cummit_count++;
 }
 ----
 
@@ -567,11 +567,11 @@ The `cmt` argument is fairly self-explanatory. But it's worth mentioning that
 the `buf` argument is actually the context buffer that we can provide to the
 traversal calls - `show_data`, which we mentioned a moment ago.
 
-Since we have the `struct commit` object, we can look at all the same parts that
-we looked at in our earlier commit-only walk. For the sake of this tutorial,
-though, we'll just increment the commit counter and move on.
+Since we have the `struct cummit` object, we can look at all the same parts that
+we looked at in our earlier cummit-only walk. For the sake of this tutorial,
+though, we'll just increment the cummit counter and move on.
 
-The callback for non-commits is a little different, as we'll need to check
+The callback for non-cummits is a little different, as we'll need to check
 which kind of object we're dealing with:
 
 ----
@@ -587,8 +587,8 @@ static void walken_show_object(struct object *obj, const char *str, void *buf)
 	case OBJ_TAG:
 		tag_count++;
 		break;
-	case OBJ_COMMIT:
-		BUG("unexpected commit object in walken_show_object\n");
+	case OBJ_cummit:
+		BUG("unexpected cummit object in walken_show_object\n");
 	default:
 		BUG("unexpected object type %s in walken_show_object\n",
 			type_name(obj->type));
@@ -597,13 +597,13 @@ static void walken_show_object(struct object *obj, const char *str, void *buf)
 ----
 
 Again, `obj` is fairly self-explanatory, and we can guess that `buf` is the same
-context pointer that `walken_show_commit()` receives: the `show_data` argument
-to `traverse_commit_list()` and `traverse_commit_list_filtered()`. Finally,
+context pointer that `walken_show_cummit()` receives: the `show_data` argument
+to `traverse_cummit_list()` and `traverse_cummit_list_filtered()`. Finally,
 `str` contains the name of the object, which ends up being something like
 `foo.txt` (blob), `bar/baz` (tree), or `v1.2.3` (tag).
 
-To help assure us that we aren't double-counting commits, we'll include some
-complaining if a commit object is routed through our non-commit callback; we'll
+To help assure us that we aren't double-counting cummits, we'll include some
+complaining if a cummit object is routed through our non-cummit callback; we'll
 also complain if we see an invalid object type. Since those two cases should be
 unreachable, and would only change in the event of a semantic change to the Git
 codebase, we complain by using `BUG()` - which is a signal to a developer that
@@ -611,15 +611,15 @@ the change they made caused unintended consequences, and the rest of the
 codebase needs to be updated to understand that change. `BUG()` is not intended
 to be seen by the public, so it is not localized.
 
-Our main object walk implementation is substantially different from our commit
+Our main object walk implementation is substantially different from our cummit
 walk implementation, so let's make a new function to perform the object walk. We
 can perform setup which is applicable to all objects here, too, to keep separate
-from setup which is applicable to commit-only walks.
+from setup which is applicable to cummit-only walks.
 
 We'll start by enabling all types of objects in the `struct rev_info`.  We'll
-also turn on `tree_blobs_in_commit_order`, which means that we will walk a
-commit's tree and everything it points to immediately after we find each commit,
-as opposed to waiting for the end and walking through all trees after the commit
+also turn on `tree_blobs_in_cummit_order`, which means that we will walk a
+cummit's tree and everything it points to immediately after we find each cummit,
+as opposed to waiting for the end and walking through all trees after the cummit
 history has been discovered. With the appropriate settings configured, we are
 ready to call `prepare_revision_walk()`.
 
@@ -629,12 +629,12 @@ static void walken_object_walk(struct rev_info *rev)
 	rev->tree_objects = 1;
 	rev->blob_objects = 1;
 	rev->tag_objects = 1;
-	rev->tree_blobs_in_commit_order = 1;
+	rev->tree_blobs_in_cummit_order = 1;
 
 	if (prepare_revision_walk(rev))
 		die(_("revision walk setup failed"));
 
-	commit_count = 0;
+	cummit_count = 0;
 	tag_count = 0;
 	blob_count = 0;
 	tree_count = 0;
@@ -649,9 +649,9 @@ We'll also need to include the `list-objects.h` header.
 
 ...
 
-	traverse_commit_list(rev, walken_show_commit, walken_show_object, NULL);
+	traverse_cummit_list(rev, walken_show_cummit, walken_show_object, NULL);
 
-	printf("commits %d\nblobs %d\ntags %d\ntrees %d\n", commit_count,
+	printf("cummits %d\nblobs %d\ntags %d\ntrees %d\n", cummit_count,
 		blob_count, tag_count, tree_count);
 }
 ----
@@ -665,7 +665,7 @@ it with `_()`.
 Finally, we'll ask `cmd_walken()` to use the object walk instead. Discussing
 command line options is out of scope for this tutorial, so we'll just hardcode
 a branch we can change at compile time. Where you call `final_rev_info_setup()`
-and `walken_commit_walk()`, instead branch like so:
+and `walken_cummit_walk()`, instead branch like so:
 
 ----
 	if (1) {
@@ -673,7 +673,7 @@ and `walken_commit_walk()`, instead branch like so:
 		walken_object_walk(&rev);
 	} else {
 		final_rev_info_setup(argc, argv, prefix, &rev);
-		walken_commit_walk(&rev);
+		walken_cummit_walk(&rev);
 	}
 ----
 
@@ -684,17 +684,17 @@ want, you can certainly use the filters we added before by moving
 `add_head_to_pending()`.
 
 Now we can try to run our command! It should take noticeably longer than the
-commit walk, but an examination of the output will give you an idea why. Your
+cummit walk, but an examination of the output will give you an idea why. Your
 output should look similar to this example, but with different counts:
 
 ----
-Object walk completed. Found 55733 commits, 100274 blobs, 0 tags, and 104210 trees.
+Object walk completed. Found 55733 cummits, 100274 blobs, 0 tags, and 104210 trees.
 ----
 
-This makes sense. We have more trees than commits because the Git project has
-lots of subdirectories which can change, plus at least one tree per commit. We
-have no tags because we started on a commit (`HEAD`) and while tags can point to
-commits, commits can't point to tags.
+This makes sense. We have more trees than cummits because the Git project has
+lots of subdirectories which can change, plus at least one tree per cummit. We
+have no tags because we started on a cummit (`HEAD`) and while tags can point to
+cummits, cummits can't point to tags.
 
 NOTE: You will have different counts when you run this yourself! The number of
 objects grows along with the Git project.
@@ -706,7 +706,7 @@ There are a handful of filters that we can apply to the object walk laid out in
 operations such as creating packfiles or performing a partial clone. They are
 defined in `list-objects-filter-options.h`. For the purposes of this tutorial we
 will use the "tree:1" filter, which causes the walk to omit all trees and blobs
-which are not directly referenced by commits reachable from the commit in
+which are not directly referenced by cummits reachable from the cummit in
 `pending` when the walk begins. (`pending` is the list of objects which need to
 be traversed during a walk; you can imagine a breadth-first tree traversal to
 help understand. In our case, that means we omit trees and blobs not directly
@@ -716,7 +716,7 @@ referenced by `HEAD` or `HEAD`'s history, because we begin the walk with only
 For now, we are not going to track the omitted objects, so we'll replace those
 parameters with `NULL`. For the sake of simplicity, we'll add a simple
 build-time branch to use our filter or not. Preface the line calling
-`traverse_commit_list()` with the following, which will remind us which kind of
+`traverse_cummit_list()` with the following, which will remind us which kind of
 walk we've just performed:
 
 ----
@@ -729,7 +729,7 @@ walk we've just performed:
 		CALLOC_ARRAY(rev->filter, 1);
 		parse_list_objects_filter(rev->filter, "tree:1");
 	}
-	traverse_commit_list(rev, walken_show_commit,
+	traverse_cummit_list(rev, walken_show_cummit,
 			     walken_show_object, NULL);
 ----
 
@@ -739,15 +739,15 @@ Even though we aren't taking user input right now, we can still build one with
 a hardcoded string using `parse_list_objects_filter()`.
 
 With the filter spec "tree:1", we are expecting to see _only_ the root tree for
-each commit; therefore, the tree object count should be less than or equal to
-the number of commits. (For an example of why that's true: `git commit --revert`
+each cummit; therefore, the tree object count should be less than or equal to
+the number of cummits. (For an example of why that's true: `git cummit --revert`
 points to the same tree object as its grandparent.)
 
 === Counting Omitted Objects
 
 We also have the capability to enumerate all objects which were omitted by a
 filter, like with `git log --filter=<spec> --filter-print-omitted`. Asking
-`traverse_commit_list_filtered()` to populate the `omitted` list means that our
+`traverse_cummit_list_filtered()` to populate the `omitted` list means that our
 object walk does not perform any better than an unfiltered object walk; all
 reachable objects are walked in order to populate the list.
 
@@ -766,14 +766,14 @@ static void walken_object_walk(
 	...
 ----
 
-Modify the call to `traverse_commit_list_filtered()` to include your `omitted`
+Modify the call to `traverse_cummit_list_filtered()` to include your `omitted`
 object:
 
 ----
 	...
 
-		traverse_commit_list_filtered(rev,
-			walken_show_commit, walken_show_object, NULL, &omitted);
+		traverse_cummit_list_filtered(rev,
+			walken_show_cummit, walken_show_object, NULL, &omitted);
 
 	...
 ----
@@ -788,8 +788,8 @@ Count all the objects within and modify the print statement:
 	while ((oid = oidset_iter_next(&oit)))
 		omitted_count++;
 
-	printf("commits %d\nblobs %d\ntags %d\ntrees %d\nomitted %d\n",
-		commit_count, blob_count, tag_count, tree_count, omitted_count);
+	printf("cummits %d\nblobs %d\ntags %d\ntrees %d\nomitted %d\n",
+		cummit_count, blob_count, tag_count, tree_count, omitted_count);
 ----
 
 By running your walk with and without the filter, you should find that the total
@@ -800,15 +800,15 @@ to yourself the runtime impact of tracking all omitted objects.
 === Changing the Order
 
 Finally, let's demonstrate that you can also reorder walks of all objects, not
-just walks of commits. First, we'll make our handlers chattier - modify
-`walken_show_commit()` and `walken_show_object()` to print the object as they
+just walks of cummits. First, we'll make our handlers chattier - modify
+`walken_show_cummit()` and `walken_show_object()` to print the object as they
 go:
 
 ----
-static void walken_show_commit(struct commit *cmt, void *buf)
+static void walken_show_cummit(struct cummit *cmt, void *buf)
 {
-	trace_printf("commit: %s\n", oid_to_hex(&cmt->object.oid));
-	commit_count++;
+	trace_printf("cummit: %s\n", oid_to_hex(&cmt->object.oid));
+	cummit_count++;
 }
 
 static void walken_show_object(struct object *obj, const char *str, void *buf)
@@ -832,12 +832,12 @@ With only that change, run again (but save yourself some scrollback):
 $ GIT_TRACE=1 ./bin-wrappers/git walken | head -n 10
 ----
 
-Take a look at the top commit with `git show` and the object ID you printed; it
+Take a look at the top cummit with `git show` and the object ID you printed; it
 should be the same as the output of `git show HEAD`.
 
 Next, let's change a setting on our `struct rev_info` within
 `walken_object_walk()`. Find where you're changing the other settings on `rev`,
-such as `rev->tree_objects` and `rev->tree_blobs_in_commit_order`, and add the
+such as `rev->tree_objects` and `rev->tree_blobs_in_cummit_order`, and add the
 `reverse` setting at the bottom:
 
 ----
@@ -846,7 +846,7 @@ such as `rev->tree_objects` and `rev->tree_blobs_in_commit_order`, and add the
 	rev->tree_objects = 1;
 	rev->blob_objects = 1;
 	rev->tag_objects = 1;
-	rev->tree_blobs_in_commit_order = 1;
+	rev->tree_blobs_in_cummit_order = 1;
 	rev->reverse = 1;
 
 	...
@@ -860,20 +860,20 @@ $ make
 $ GIT_TRACE=1 ./bin-wrappers git walken | tail -n 10
 ----
 
-The last commit object given should have the same OID as the one we saw at the
+The last cummit object given should have the same OID as the one we saw at the
 top before, and running `git show <oid>` with that OID should give you again
 the same results as `git show HEAD`. Furthermore, if you run and examine the
 first ten lines again (with `head` instead of `tail` like we did before applying
-the `reverse` setting), you should see that now the first commit printed is the
-initial commit, `e83c5163`.
+the `reverse` setting), you should see that now the first cummit printed is the
+initial cummit, `e83c5163`.
 
 == Wrapping Up
 
 Let's review. In this tutorial, we:
 
-- Built a commit walk from the ground up
-- Enabled a grep filter for that commit walk
-- Changed the sort order of that filtered commit walk
-- Built an object walk (tags, commits, trees, and blobs) from the ground up
+- Built a cummit walk from the ground up
+- Enabled a grep filter for that cummit walk
+- Changed the sort order of that filtered cummit walk
+- Built an object walk (tags, cummits, trees, and blobs) from the ground up
 - Learned how to add a filter-spec to an object walk
 - Changed the display order of the filtered object walk

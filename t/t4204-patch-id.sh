@@ -12,16 +12,16 @@ test_expect_success 'setup' '
 	test_write_lines $as >foo &&
 	test_write_lines $as >bar &&
 	git add foo bar &&
-	git commit -a -m initial &&
+	git cummit -a -m initial &&
 	test_write_lines $as b >foo &&
 	test_write_lines $as b >bar &&
-	git commit -a -m first &&
+	git cummit -a -m first &&
 	git checkout -b same main &&
-	git commit --amend -m same-msg &&
+	git cummit --amend -m same-msg &&
 	git checkout -b notsame main &&
 	echo c >foo &&
 	echo c >bar &&
-	git commit --amend -a -m notsame-msg &&
+	git cummit --amend -a -m notsame-msg &&
 	test_write_lines bar foo >bar-then-foo &&
 	test_write_lines foo bar >foo-then-bar
 '

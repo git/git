@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "skipping.h"
-#include "../commit.h"
+#include "../cummit.h"
 #include "../fetch-negotiator.h"
 #include "../prio-queue.h"
 #include "../refs.h"
@@ -32,10 +32,10 @@ static int marked;
  * An entry in the priority queue.
  */
 struct entry {
-	struct commit *commit;
+	struct cummit *cummit;
 
 	/*
-	 * Used only if commit is not COMMON.
+	 * Used only if cummit is not COMMON.
 	 */
 	uint16_t original_ttl;
 	uint16_t ttl;
@@ -45,7 +45,7 @@ struct data {
 	struct prio_queue rev_list;
 
 	/*
-	 * The number of non-COMMON commits in rev_list.
+	 * The number of non-COMMON cummits in rev_list.
 	 */
 	int non_common_revs;
 };
@@ -54,16 +54,16 @@ static int compare(const void *a_, const void *b_, void *unused)
 {
 	const struct entry *a = a_;
 	const struct entry *b = b_;
-	return compare_commits_by_commit_date(a->commit, b->commit, NULL);
+	return compare_cummits_by_cummit_date(a->cummit, b->cummit, NULL);
 }
 
-static struct entry *rev_list_push(struct data *data, struct commit *commit, int mark)
+static struct entry *rev_list_push(struct data *data, struct cummit *cummit, int mark)
 {
 	struct entry *entry;
-	commit->object.flags |= mark | SEEN;
+	cummit->object.flags |= mark | SEEN;
 
 	CALLOC_ARRAY(entry, 1);
-	entry->commit = commit;
+	entry->cummit = cummit;
 	prio_queue_put(&data->rev_list, entry);
 
 	if (!(mark & COMMON))
@@ -76,18 +76,18 @@ static int clear_marks(const char *refname, const struct object_id *oid,
 {
 	struct object *o = deref_tag(the_repository, parse_object(the_repository, oid), refname, 0);
 
-	if (o && o->type == OBJ_COMMIT)
-		clear_commit_marks((struct commit *)o,
+	if (o && o->type == OBJ_cummit)
+		clear_cummit_marks((struct cummit *)o,
 				   COMMON | ADVERTISED | SEEN | POPPED);
 	return 0;
 }
 
 /*
- * Mark this SEEN commit and all its SEEN ancestors as COMMON.
+ * Mark this SEEN cummit and all its SEEN ancestors as COMMON.
  */
-static void mark_common(struct data *data, struct commit *c)
+static void mark_common(struct data *data, struct cummit *c)
 {
-	struct commit_list *p;
+	struct cummit_list *p;
 
 	if (c->object.flags & COMMON)
 		return;
@@ -111,7 +111,7 @@ static void mark_common(struct data *data, struct commit *c)
  * (because the entry for this commit had already been popped).
  */
 static int push_parent(struct data *data, struct entry *entry,
-		       struct commit *to_push)
+		       struct cummit *to_push)
 {
 	struct entry *parent_entry;
 
@@ -129,7 +129,7 @@ static int push_parent(struct data *data, struct entry *entry,
 		 */
 		for (i = 0; i < data->rev_list.nr; i++) {
 			parent_entry = data->rev_list.array[i].data;
-			if (parent_entry->commit == to_push)
+			if (parent_entry->cummit == to_push)
 				goto parent_found;
 		}
 		BUG("missing parent in priority queue");
@@ -139,7 +139,7 @@ parent_found:
 		parent_entry = rev_list_push(data, to_push, 0);
 	}
 
-	if (entry->commit->object.flags & (COMMON | ADVERTISED)) {
+	if (entry->cummit->object.flags & (COMMON | ADVERTISED)) {
 		mark_common(data, to_push);
 	} else {
 		uint16_t new_original_ttl = entry->ttl
@@ -157,37 +157,37 @@ parent_found:
 
 static const struct object_id *get_rev(struct data *data)
 {
-	struct commit *to_send = NULL;
+	struct cummit *to_send = NULL;
 
 	while (to_send == NULL) {
 		struct entry *entry;
-		struct commit *commit;
-		struct commit_list *p;
+		struct cummit *cummit;
+		struct cummit_list *p;
 		int parent_pushed = 0;
 
 		if (data->rev_list.nr == 0 || data->non_common_revs == 0)
 			return NULL;
 
 		entry = prio_queue_get(&data->rev_list);
-		commit = entry->commit;
-		commit->object.flags |= POPPED;
-		if (!(commit->object.flags & COMMON))
+		cummit = entry->cummit;
+		cummit->object.flags |= POPPED;
+		if (!(cummit->object.flags & COMMON))
 			data->non_common_revs--;
 
-		if (!(commit->object.flags & COMMON) && !entry->ttl)
-			to_send = commit;
+		if (!(cummit->object.flags & COMMON) && !entry->ttl)
+			to_send = cummit;
 
-		parse_commit(commit);
-		for (p = commit->parents; p; p = p->next)
+		parse_cummit(cummit);
+		for (p = cummit->parents; p; p = p->next)
 			parent_pushed |= push_parent(data, entry, p->item);
 
-		if (!(commit->object.flags & COMMON) && !parent_pushed)
+		if (!(cummit->object.flags & COMMON) && !parent_pushed)
 			/*
 			 * This commit has no parents, or all of its parents
 			 * have already been popped (due to clock skew), so send
 			 * it anyway.
 			 */
-			to_send = commit;
+			to_send = cummit;
 
 		free(entry);
 	}
@@ -195,14 +195,14 @@ static const struct object_id *get_rev(struct data *data)
 	return &to_send->object.oid;
 }
 
-static void known_common(struct fetch_negotiator *n, struct commit *c)
+static void known_common(struct fetch_negotiator *n, struct cummit *c)
 {
 	if (c->object.flags & SEEN)
 		return;
 	rev_list_push(n->data, c, ADVERTISED);
 }
 
-static void add_tip(struct fetch_negotiator *n, struct commit *c)
+static void add_tip(struct fetch_negotiator *n, struct cummit *c)
 {
 	n->known_common = NULL;
 	if (c->object.flags & SEEN)
@@ -217,11 +217,11 @@ static const struct object_id *next(struct fetch_negotiator *n)
 	return get_rev(n->data);
 }
 
-static int ack(struct fetch_negotiator *n, struct commit *c)
+static int ack(struct fetch_negotiator *n, struct cummit *c)
 {
 	int known_to_be_common = !!(c->object.flags & COMMON);
 	if (!(c->object.flags & SEEN))
-		die("received ack for commit %s not sent as 'have'\n",
+		die("received ack for cummit %s not sent as 'have'\n",
 		    oid_to_hex(&c->object.oid));
 	mark_common(n->data, c);
 	return known_to_be_common;

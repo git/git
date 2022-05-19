@@ -19,12 +19,12 @@ test_expect_success 'initialize repo' '
 		cd wc &&
 		echo world >>trunk/readme &&
 		poke trunk/readme &&
-		svn_cmd commit -m "another commit" &&
+		svn_cmd cummit -m "another cummit" &&
 		svn_cmd up &&
 		svn_cmd mv trunk thunk &&
 		echo goodbye >>thunk/readme &&
 		poke thunk/readme &&
-		svn_cmd commit -m "bye now"
+		svn_cmd cummit -m "bye now"
 	)
 	'
 
@@ -93,7 +93,7 @@ test_expect_success 'follow higher-level parent' '
 		cd blob &&
 		echo hi > hi &&
 		svn add hi &&
-		svn commit -m "hihi"
+		svn cummit -m "hihi"
 	) &&
 	svn mkdir -m "new glob at top level" "$svnrepo"/glob &&
 	svn mv -m "move blob down a level" "$svnrepo"/blob "$svnrepo"/glob/blob &&
@@ -138,7 +138,7 @@ test_expect_success 'follow-parent avoids deleting relevant info' '
 		done &&
 		echo z >>native/t/c.t &&
 		poke native/t/c.t &&
-		svn commit -m "reorg test"
+		svn cummit -m "reorg test"
 	) &&
 	git svn init --minimize-url -i r9270-t \
 	  "$svnrepo"/r9270/trunk/subversion/bindings/swig/perl/native/t &&
@@ -206,7 +206,7 @@ test_expect_success "follow-parent is atomic" '
 test_expect_success "track multi-parent paths" '
 	svn_cmd cp -m "resurrect /glob" "$svnrepo"/r9270 "$svnrepo"/glob &&
 	git svn multi-fetch &&
-	git cat-file commit refs/remotes/glob >actual &&
+	git cat-file cummit refs/remotes/glob >actual &&
 	grep "^parent " actual >actual2 &&
 	test_line_count = 2 actual2
 	'

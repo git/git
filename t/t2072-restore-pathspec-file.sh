@@ -7,7 +7,7 @@ test_description='restore --pathspec-from-file'
 test_tick
 
 test_expect_success setup '
-	test_commit file0 &&
+	test_cummit file0 &&
 
 	mkdir dir1 &&
 	echo 1 >dir1/file &&
@@ -16,7 +16,7 @@ test_expect_success setup '
 	echo 1 >fileC.t &&
 	echo 1 >fileD.t &&
 	git add dir1 fileA.t fileB.t fileC.t fileD.t &&
-	git commit -m "files 1" &&
+	git cummit -m "files 1" &&
 
 	echo 2 >dir1/file &&
 	echo 2 >fileA.t &&
@@ -24,7 +24,7 @@ test_expect_success setup '
 	echo 2 >fileC.t &&
 	echo 2 >fileD.t &&
 	git add dir1 fileA.t fileB.t fileC.t fileD.t &&
-	git commit -m "files 2" &&
+	git cummit -m "files 2" &&
 
 	git tag checkpoint
 '

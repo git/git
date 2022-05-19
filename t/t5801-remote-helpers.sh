@@ -30,7 +30,7 @@ test_expect_success 'setup repository' '
 	(cd server &&
 	 echo content >file &&
 	 git add file &&
-	 git commit -m one)
+	 git cummit -m one)
 '
 
 test_expect_success 'cloning from local repo' '
@@ -38,10 +38,10 @@ test_expect_success 'cloning from local repo' '
 	test_cmp server/file local/file
 '
 
-test_expect_success 'create new commit on remote' '
+test_expect_success 'create new cummit on remote' '
 	(cd server &&
 	 echo content >>file &&
-	 git commit -a -m two)
+	 git cummit -a -m two)
 '
 
 test_expect_success 'pulling from local repo' '
@@ -52,7 +52,7 @@ test_expect_success 'pulling from local repo' '
 test_expect_success 'pushing to local repo' '
 	(cd local &&
 	echo content >>file &&
-	git commit -a -m three &&
+	git cummit -a -m three &&
 	git push) &&
 	compare_refs local HEAD server HEAD
 '
@@ -62,7 +62,7 @@ test_expect_success 'fetch new branch' '
 	 git reset --hard &&
 	 git checkout -b new &&
 	 echo content >>file &&
-	 git commit -a -m five
+	 git cummit -a -m five
 	) &&
 	(cd local &&
 	 git fetch origin new
@@ -82,7 +82,7 @@ test_expect_success 'push when remote has extra refs' '
 	(cd local &&
 	 git reset --hard origin/main &&
 	 echo content >>file &&
-	 git commit -a -m six &&
+	 git cummit -a -m six &&
 	 git push
 	) &&
 	compare_refs local main server main
@@ -92,7 +92,7 @@ test_expect_success 'push new branch by name' '
 	(cd local &&
 	 git checkout -b new-name  &&
 	 echo content >>file &&
-	 git commit -a -m seven &&
+	 git cummit -a -m seven &&
 	 git push origin new-name
 	) &&
 	compare_refs local HEAD server refs/heads/new-name
@@ -125,10 +125,10 @@ test_expect_success 'forced push' '
 	(cd local &&
 	git checkout -b force-test &&
 	echo content >> file &&
-	git commit -a -m eight &&
+	git cummit -a -m eight &&
 	git push origin force-test &&
 	echo content >> file &&
-	git commit -a --amend -m eight-modified &&
+	git cummit -a --amend -m eight-modified &&
 	git push --force origin force-test
 	) &&
 	compare_refs local refs/heads/force-test server refs/heads/force-test
@@ -153,7 +153,7 @@ test_expect_success 'pushing without refspecs' '
 	test_when_finished "(cd local2 && git reset --hard origin)" &&
 	(cd local2 &&
 	echo content >>file &&
-	git commit -a -m ten &&
+	git cummit -a -m ten &&
 	GIT_REMOTE_TESTGIT_NOREFSPEC=1 &&
 	export GIT_REMOTE_TESTGIT_NOREFSPEC &&
 	test_must_fail git push 2>../error) &&
@@ -170,7 +170,7 @@ test_expect_failure 'pushing without marks' '
 	test_when_finished "(cd local2 && git reset --hard origin)" &&
 	(cd local2 &&
 	echo content >>file &&
-	git commit -a -m twelve &&
+	git cummit -a -m twelve &&
 	GIT_REMOTE_TESTGIT_NO_MARKS=1 git push) &&
 	compare_refs local2 HEAD server HEAD
 '
@@ -214,7 +214,7 @@ test_expect_success 'push update refs' '
 	(cd local &&
 	git checkout -b update main &&
 	echo update >>file &&
-	git commit -a -m update &&
+	git cummit -a -m update &&
 	git push origin update &&
 	git rev-parse --verify remotes/origin/update >expect &&
 	git rev-parse --verify testgit/origin/heads/update >actual &&
@@ -225,7 +225,7 @@ test_expect_success 'push update refs' '
 test_expect_success 'push update refs disabled by no-private-update' '
 	(cd local &&
 	echo more-update >>file &&
-	git commit -a -m more-update &&
+	git cummit -a -m more-update &&
 	git rev-parse --verify testgit/origin/heads/update >expect &&
 	GIT_REMOTE_TESTGIT_NO_PRIVATE_UPDATE=t git push origin update &&
 	git rev-parse --verify testgit/origin/heads/update >actual &&
@@ -237,7 +237,7 @@ test_expect_success 'push update refs failure' '
 	(cd local &&
 	git checkout update &&
 	echo "update fail" >>file &&
-	git commit -a -m "update fail" &&
+	git cummit -a -m "update fail" &&
 	git rev-parse --verify testgit/origin/heads/update >expect &&
 	test_expect_code 1 env GIT_REMOTE_TESTGIT_FAILURE="non-fast forward" \
 		git push origin update &&
@@ -249,7 +249,7 @@ test_expect_success 'push update refs failure' '
 clean_mark () {
 	cut -f 2 -d ' ' "$1" |
 	git cat-file --batch-check |
-	grep commit |
+	grep cummit |
 	sort >$(basename "$1")
 }
 
@@ -265,7 +265,7 @@ test_expect_success 'proper failure checks for pushing' '
 	(cd local &&
 	git checkout -b crash main &&
 	echo crash >>file &&
-	git commit -a -m crash &&
+	git cummit -a -m crash &&
 	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 git push --all &&
 	clean_mark ".git/testgit/origin/git.marks" &&
 	clean_mark ".git/testgit/origin/testgit.marks" &&
@@ -277,11 +277,11 @@ test_expect_success 'push messages' '
 	(cd local &&
 	git checkout -b new_branch main &&
 	echo new >>file &&
-	git commit -a -m new &&
+	git cummit -a -m new &&
 	git push origin new_branch &&
 	git fetch origin &&
 	echo new >>file &&
-	git commit -a -m new &&
+	git cummit -a -m new &&
 	git push origin new_branch 2> msg &&
 	! grep "\[new branch\]" msg
 	)
@@ -291,7 +291,7 @@ test_expect_success 'fetch HEAD' '
 	(cd server &&
 	git checkout main &&
 	echo more >>file &&
-	git commit -a -m more
+	git cummit -a -m more
 	) &&
 	(cd local &&
 	git fetch origin HEAD
@@ -303,7 +303,7 @@ test_expect_success 'fetch url' '
 	(cd server &&
 	git checkout main &&
 	echo more >>file &&
-	git commit -a -m more
+	git cummit -a -m more
 	) &&
 	(cd local &&
 	git fetch "testgit::${PWD}/../server"

@@ -8,21 +8,21 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_tick
 
 test_expect_success setup '
-	test_commit file0 &&
+	test_cummit file0 &&
 
 	echo 1 >fileA.t &&
 	echo 1 >fileB.t &&
 	echo 1 >fileC.t &&
 	echo 1 >fileD.t &&
 	git add fileA.t fileB.t fileC.t fileD.t &&
-	git commit -m "files 1" &&
+	git cummit -m "files 1" &&
 
 	echo 2 >fileA.t &&
 	echo 2 >fileB.t &&
 	echo 2 >fileC.t &&
 	echo 2 >fileD.t &&
 	git add fileA.t fileB.t fileC.t fileD.t &&
-	git commit -m "files 2" &&
+	git cummit -m "files 2" &&
 
 	git tag checkpoint
 '

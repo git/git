@@ -38,7 +38,7 @@ Fixes since v1.6.6.1
 
  * "git imap-send" did not honor imap.preformattedHTML as documented.
 
- * "git log" family incorrectly showed the commit notes unconditionally by
+ * "git log" family incorrectly showed the cummit notes unconditionally by
    mistake, which was especially irritating when running "git log --oneline".
 
  * "git status" shouldn't require an write access to the repository.

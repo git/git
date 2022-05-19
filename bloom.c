@@ -4,10 +4,10 @@
 #include "diffcore.h"
 #include "revision.h"
 #include "hashmap.h"
-#include "commit-graph.h"
-#include "commit.h"
+#include "cummit-graph.h"
+#include "cummit.h"
 
-define_commit_slab(bloom_filter_slab, struct bloom_filter);
+define_cummit_slab(bloom_filter_slab, struct bloom_filter);
 
 static struct bloom_filter_slab bloom_filters;
 
@@ -28,21 +28,21 @@ static inline unsigned char get_bitmask(uint32_t pos)
 	return ((unsigned char)1) << (pos & (BITS_PER_WORD - 1));
 }
 
-static int load_bloom_filter_from_graph(struct commit_graph *g,
+static int load_bloom_filter_from_graph(struct cummit_graph *g,
 					struct bloom_filter *filter,
-					struct commit *c)
+					struct cummit *c)
 {
 	uint32_t lex_pos, start_index, end_index;
-	uint32_t graph_pos = commit_graph_position(c);
+	uint32_t graph_pos = cummit_graph_position(c);
 
-	while (graph_pos < g->num_commits_in_base)
+	while (graph_pos < g->num_cummits_in_base)
 		g = g->base_graph;
 
-	/* The commit graph commit 'c' lives in doesn't carry Bloom filters. */
+	/* The cummit graph cummit 'c' lives in doesn't carry Bloom filters. */
 	if (!g->chunk_bloom_indexes)
 		return 0;
 
-	lex_pos = graph_pos - g->num_commits_in_base;
+	lex_pos = graph_pos - g->num_cummits_in_base;
 
 	end_index = get_be32(g->chunk_bloom_indexes + 4 * lex_pos);
 
@@ -185,7 +185,7 @@ static void init_truncated_large_filter(struct bloom_filter *filter)
 }
 
 struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
-						 struct commit *c,
+						 struct cummit *c,
 						 int compute_if_not_present,
 						 const struct bloom_filter_settings *settings,
 						 enum bloom_filter_computed *computed)
@@ -203,9 +203,9 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 	filter = bloom_filter_slab_at(&bloom_filters, c);
 
 	if (!filter->data) {
-		load_commit_graph_info(r, c);
-		if (commit_graph_position(c) != COMMIT_NOT_FROM_GRAPH)
-			load_bloom_filter_from_graph(r->objects->commit_graph, filter, c);
+		load_cummit_graph_info(r, c);
+		if (cummit_graph_position(c) != cummit_NOT_FROM_GRAPH)
+			load_bloom_filter_from_graph(r->objects->cummit_graph, filter, c);
 	}
 
 	if (filter->data && filter->len)
@@ -219,8 +219,8 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 	diffopt.max_changes = settings->max_changed_paths;
 	diff_setup_done(&diffopt);
 
-	/* ensure commit is parsed so we have parent information */
-	repo_parse_commit(r, c);
+	/* ensure cummit is parsed so we have parent information */
+	repo_parse_cummit(r, c);
 
 	if (c->parents)
 		diff_tree_oid(&c->parents->item->object.oid, &c->object.oid, "", &diffopt);

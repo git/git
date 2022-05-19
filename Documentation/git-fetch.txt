@@ -113,7 +113,7 @@ on remotes that have themselves deleted those branches.
 If left to accumulate, these stale references might make performance
 worse on big and busy repos that have a lot of branch churn, and
 e.g. make the output of commands like `git branch -a --contains
-<commit>` needlessly verbose, as well as impacting anything else
+<cummit>` needlessly verbose, as well as impacting anything else
 that'll work with the complete set of known references.
 
 These remote-tracking references can be deleted as a one-off with
@@ -287,7 +287,7 @@ include::transfer-data-leaks.txt[]
 
 BUGS
 ----
-Using --recurse-submodules can only fetch new commits in submodules that are
+Using --recurse-submodules can only fetch new cummits in submodules that are
 present locally e.g. in `$GIT_DIR/modules/`. If the upstream adds a new
 submodule, that submodule cannot be fetched until it is cloned e.g. by `git
 submodule update`. This is expected to be fixed in a future Git version.

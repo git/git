@@ -59,13 +59,13 @@ int option_fetch_parse_recurse_submodules(const struct option *opt,
 int parse_update_recurse_submodules_arg(const char *opt, const char *arg);
 int parse_push_recurse_submodules_arg(const char *opt, const char *arg);
 void repo_read_gitmodules(struct repository *repo, int skip_if_read);
-void gitmodules_config_oid(const struct object_id *commit_oid);
+void gitmodules_config_oid(const struct object_id *cummit_oid);
 
 /**
  * Same as submodule_from_path but lookup by name.
  */
 const struct submodule *submodule_from_name(struct repository *r,
-					    const struct object_id *commit_or_tree,
+					    const struct object_id *cummit_or_tree,
 					    const char *name);
 
 /**
@@ -73,7 +73,7 @@ const struct submodule *submodule_from_name(struct repository *r,
  * is bound at the path in the named tree.
  */
 const struct submodule *submodule_from_path(struct repository *r,
-					    const struct object_id *commit_or_tree,
+					    const struct object_id *cummit_or_tree,
 					    const char *path);
 
 /**

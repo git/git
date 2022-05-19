@@ -18,7 +18,7 @@ Fixes since v1.7.7.1
    core.ignorecase was set.
 
  * "git bisect" did not notice when it failed to update the working tree
-   to the next commit to be tested.
+   to the next cummit to be tested.
 
  * "git config --bool --get-regexp" failed to separate the variable name
    and its value "true" when the variable is defined without "= true".

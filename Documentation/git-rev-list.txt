@@ -3,13 +3,13 @@ git-rev-list(1)
 
 NAME
 ----
-git-rev-list - Lists commit objects in reverse chronological order
+git-rev-list - Lists cummit objects in reverse chronological order
 
 
 SYNOPSIS
 --------
 [verse]
-'git rev-list' [<options>] <commit>... [[--] <path>...]
+'git rev-list' [<options>] <cummit>... [[--] <path>...]
 
 DESCRIPTION
 -----------
@@ -18,7 +18,7 @@ DESCRIPTION
 include::rev-list-description.txt[]
 
 'rev-list' is a very essential Git command, since it
-provides the ability to build and traverse commit ancestry graphs. For
+provides the ability to build and traverse cummit ancestry graphs. For
 this reason, it has a lot of different options that enables it to be
 used by commands as different as 'git bisect' and
 'git repack'.
@@ -34,27 +34,27 @@ include::pretty-formats.txt[]
 EXAMPLES
 --------
 
-* Print the list of commits reachable from the current branch.
+* Print the list of cummits reachable from the current branch.
 +
 ----------
 git rev-list HEAD
 ----------
 
-* Print the list of commits on this branch, but not present in the
+* Print the list of cummits on this branch, but not present in the
   upstream branch.
 +
 ----------
 git rev-list @{upstream}..HEAD
 ----------
 
-* Format commits with their author and commit message (see also the
+* Format cummits with their author and cummit message (see also the
   porcelain linkgit:git-log[1]).
 +
 ----------
 git rev-list --format=medium HEAD
 ----------
 
-* Format commits along with their diffs (see also the porcelain
+* Format cummits along with their diffs (see also the porcelain
   linkgit:git-log[1], which can do this in a single process).
 +
 ----------
@@ -62,14 +62,14 @@ git rev-list HEAD |
 git diff-tree --stdin --format=medium -p
 ----------
 
-* Print the list of commits on the current branch that touched any
+* Print the list of cummits on the current branch that touched any
   file in the `Documentation` directory.
 +
 ----------
 git rev-list HEAD -- Documentation/
 ----------
 
-* Print the list of commits authored by you in the past year, on
+* Print the list of cummits authored by you in the past year, on
   any branch, tag, or other ref.
 +
 ----------
@@ -77,7 +77,7 @@ git rev-list --author=you@example.com --since=1.year.ago --all
 ----------
 
 * Print the list of objects reachable from the current branch (i.e., all
-  commits and the blobs and trees they contain).
+  cummits and the blobs and trees they contain).
 +
 ----------
 git rev-list --objects HEAD
@@ -102,7 +102,7 @@ git count-objects -v
 
 * Report the disk size of each branch, not including objects used by the
   current branch. This can find outliers that are contributing to a
-  bloated repository size (e.g., because somebody accidentally committed
+  bloated repository size (e.g., because somebody accidentally cummitted
   large build artifacts).
 +
 ----------

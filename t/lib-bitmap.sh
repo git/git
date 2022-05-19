@@ -11,7 +11,7 @@ midx=$objdir/pack/multi-pack-index
 #   - regular output is in traversal order, whereas bitmap is split by type,
 #     with non-packed objects at the end
 #
-#   - regular output has a space and the pathname appended to non-commit
+#   - regular output has a space and the pathname appended to non-cummit
 #     objects; bitmap output omits this
 #
 # This function normalizes and compares the two. The second file should
@@ -31,12 +31,12 @@ test_bitmap_traversal () {
 	rm -f "$1.normalized" "$2.normalized"
 }
 
-# To ensure the logic for "maximal commits" is exercised, make
+# To ensure the logic for "maximal cummits" is exercised, make
 # the repository a bit more complicated.
 #
 #    other                         second
 #      *                             *
-# (99 commits)                  (99 commits)
+# (99 cummits)                  (99 cummits)
 #      *                             *
 #      |\                           /|
 #      | * octo-other  octo-second * |
@@ -55,9 +55,9 @@ test_bitmap_traversal () {
 #                                    * (base)
 #
 # We only push bits down the first-parent history, which
-# makes some of these commits unimportant!
+# makes some of these cummits unimportant!
 #
-# The important part for the maximal commit algorithm is how
+# The important part for the maximal cummit algorithm is how
 # the bitmasks are extended. Assuming starting bit positions
 # for second (bit 0) and other (bit 1), the bitmasks at the
 # end should be:
@@ -68,16 +68,16 @@ test_bitmap_traversal () {
 #
 # This complicated history was important for a previous
 # version of the walk that guarantees never walking a
-# commit multiple times. That goal might be important
+# cummit multiple times. That goal might be important
 # again, so preserve this complicated case. For now, this
 # test will guarantee that the bitmaps are computed
 # correctly, even with the repeat calculations.
 setup_bitmap_history() {
 	test_expect_success 'setup repo with moderate-sized history' '
-		test_commit_bulk --id=file 10 &&
+		test_cummit_bulk --id=file 10 &&
 		git branch -M second &&
 		git checkout -b other HEAD~5 &&
-		test_commit_bulk --id=side 10 &&
+		test_cummit_bulk --id=side 10 &&
 
 		# add complicated history setup, including merges and
 		# ambiguous merge-bases
@@ -109,9 +109,9 @@ setup_bitmap_history() {
 
 		# add padding to make these merges less interesting
 		# and avoid having them selected for bitmaps
-		test_commit_bulk --id=file 100 &&
+		test_cummit_bulk --id=file 100 &&
 		git checkout other &&
-		test_commit_bulk --id=side 100 &&
+		test_cummit_bulk --id=side 100 &&
 		git checkout second &&
 
 		bitmaptip=$(git rev-parse second) &&
@@ -121,19 +121,19 @@ setup_bitmap_history() {
 }
 
 rev_list_tests_head () {
-	test_expect_success "counting commits via bitmap ($state, $branch)" '
+	test_expect_success "counting cummits via bitmap ($state, $branch)" '
 		git rev-list --count $branch >expect &&
 		git rev-list --use-bitmap-index --count $branch >actual &&
 		test_cmp expect actual
 	'
 
-	test_expect_success "counting partial commits via bitmap ($state, $branch)" '
+	test_expect_success "counting partial cummits via bitmap ($state, $branch)" '
 		git rev-list --count $branch~5..$branch >expect &&
 		git rev-list --use-bitmap-index --count $branch~5..$branch >actual &&
 		test_cmp expect actual
 	'
 
-	test_expect_success "counting commits with limit ($state, $branch)" '
+	test_expect_success "counting cummits with limit ($state, $branch)" '
 		git rev-list --count -n 1 $branch >expect &&
 		git rev-list --use-bitmap-index --count -n 1 $branch >actual &&
 		test_cmp expect actual
@@ -145,7 +145,7 @@ rev_list_tests_head () {
 		test_cmp expect actual
 	'
 
-	test_expect_success "counting commits with limiting ($state, $branch)" '
+	test_expect_success "counting cummits with limiting ($state, $branch)" '
 		git rev-list --count $branch -- 1.t >expect &&
 		git rev-list --use-bitmap-index --count $branch -- 1.t >actual &&
 		test_cmp expect actual
@@ -157,7 +157,7 @@ rev_list_tests_head () {
 		test_cmp expect actual
 	'
 
-	test_expect_success "enumerate commits ($state, $branch)" '
+	test_expect_success "enumerate cummits ($state, $branch)" '
 		git rev-list --use-bitmap-index $branch >actual &&
 		git rev-list $branch >expect &&
 		test_bitmap_traversal --no-confirm-bitmaps expect actual
@@ -169,7 +169,7 @@ rev_list_tests_head () {
 		test_bitmap_traversal expect actual
 	'
 
-	test_expect_success "bitmap --objects handles non-commit objects ($state, $branch)" '
+	test_expect_success "bitmap --objects handles non-cummit objects ($state, $branch)" '
 		git rev-list --objects --use-bitmap-index $branch tagged-blob >actual &&
 		grep $blob actual
 	'
@@ -215,8 +215,8 @@ basic_bitmap_tests () {
 		)
 	'
 
-	test_expect_success 'setup further non-bitmapped commits' '
-		test_commit_bulk --id=further 10
+	test_expect_success 'setup further non-bitmapped cummits' '
+		test_cummit_bulk --id=further 10
 	'
 
 	rev_list_tests 'partial bitmap'
@@ -244,7 +244,7 @@ basic_bitmap_tests () {
 		grep "pack-reused $count" stderr &&
 
 		# now the same but with one non-reused object
-		git commit --allow-empty -m "an extra commit object" &&
+		git cummit --allow-empty -m "an extra cummit object" &&
 		GIT_PROGRESS_DELAY=0 \
 			git pack-objects --all --stdout --progress \
 			</dev/null >/dev/null 2>stderr &&
@@ -274,12 +274,12 @@ midx_pack_source () {
 }
 
 test_rev_exists () {
-	commit="$1"
+	cummit="$1"
 	kind="$2"
 
 	test_expect_success "reverse index exists ($kind)" '
 		GIT_TRACE2_EVENT=$(pwd)/event.trace \
-			git rev-list --test-bitmap "$commit" &&
+			git rev-list --test-bitmap "$cummit" &&
 
 		if test "rev" = "$kind"
 		then
@@ -308,14 +308,14 @@ midx_bitmap_core () {
 	test_expect_success 'create new additional packs' '
 		for i in $(test_seq 1 16)
 		do
-			test_commit "$i" &&
+			test_cummit "$i" &&
 			git repack -d || return 1
 		done &&
 
 		git checkout -b other2 HEAD~8 &&
 		for i in $(test_seq 1 8)
 		do
-			test_commit "side-$i" &&
+			test_cummit "side-$i" &&
 			git repack -d || return 1
 		done &&
 		git checkout second
@@ -338,7 +338,7 @@ midx_bitmap_core () {
 	test_expect_success '--no-bitmap is respected when bitmaps exist' '
 		git multi-pack-index write --bitmap &&
 
-		test_commit respect--no-bitmap &&
+		test_cummit respect--no-bitmap &&
 		git repack -d &&
 
 		test_path_is_file $midx &&
@@ -359,7 +359,7 @@ midx_bitmap_core () {
 		test_seq 1 130 >b &&
 
 		git add a b &&
-		git commit -m "initial commit" &&
+		git cummit -m "initial cummit" &&
 
 		a=$(git rev-parse HEAD:a) &&
 		b=$(git rev-parse HEAD:b) &&
@@ -408,8 +408,8 @@ midx_bitmap_core () {
 		(
 			cd repo &&
 
-			test_commit A &&
-			test_commit B &&
+			test_cummit A &&
+			test_cummit B &&
 
 			git rev-list --objects --no-object-names HEAD^ >A.objects &&
 			git rev-list --objects --no-object-names HEAD^.. >B.objects &&
@@ -437,9 +437,9 @@ midx_bitmap_partial_tests () {
 	rev_kind="${1:-midx}"
 
 	test_expect_success 'setup partial bitmaps' '
-		test_commit packed &&
+		test_cummit packed &&
 		git repack &&
-		test_commit loose &&
+		test_cummit loose &&
 		git multi-pack-index write --bitmap 2>err &&
 		test_path_is_file $midx &&
 		test_path_is_file $midx-$(midx_checksum $objdir).bitmap

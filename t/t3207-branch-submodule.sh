@@ -32,18 +32,18 @@ test_expect_success 'setup superproject and submodule' '
 	(
 		cd test_dirs &&
 		git init super &&
-		test_commit -C super foo &&
+		test_cummit -C super foo &&
 		git init sub-sub-upstream &&
-		test_commit -C sub-sub-upstream foo &&
+		test_cummit -C sub-sub-upstream foo &&
 		git init sub-upstream &&
 		# Submodule in a submodule
 		git -C sub-upstream submodule add "${pwd}/test_dirs/sub-sub-upstream" sub-sub &&
-		git -C sub-upstream commit -m "add submodule" &&
+		git -C sub-upstream cummit -m "add submodule" &&
 		# Regular submodule
 		git -C super submodule add "${pwd}/test_dirs/sub-upstream" sub &&
 		# Submodule in a subdirectory
 		git -C super submodule add "${pwd}/test_dirs/sub-sub-upstream" second/sub &&
-		git -C super commit -m "add submodule" &&
+		git -C super cummit -m "add submodule" &&
 		git -C super config submodule.propagateBranches true &&
 		git -C super/sub submodule update --init
 	) &&
@@ -109,21 +109,21 @@ test_expect_success 'should ignore submodule.recurse when not creating branches'
 '
 
 # Test branch creation behavior
-test_expect_success 'should create branches based off commit id in superproject' '
+test_expect_success 'should create branches based off cummit id in superproject' '
 	test_when_finished "reset_test" &&
 	(
 		cd super &&
 		git branch --recurse-submodules branch-a &&
 		git checkout --recurse-submodules branch-a &&
 		git -C sub rev-parse HEAD >expected &&
-		# Move the tip of sub:branch-a so that it no longer matches the commit in super:branch-a
+		# Move the tip of sub:branch-a so that it no longer matches the cummit in super:branch-a
 		git -C sub checkout branch-a &&
-		test_commit -C sub bar &&
+		test_cummit -C sub bar &&
 		# Create a new branch-b branch with start-point=branch-a
 		git branch --recurse-submodules branch-b branch-a &&
 		git rev-parse branch-b &&
 		git -C sub rev-parse branch-b >actual &&
-		# Assert that the commit id of sub:second-branch matches super:branch-a and not sub:branch-a
+		# Assert that the cummit id of sub:second-branch matches super:branch-a and not sub:branch-a
 		test_cmp expected actual
 	)
 '
@@ -144,8 +144,8 @@ test_expect_success 'should create branches if branch exists and --force is give
 	(
 		cd super &&
 		git -C sub rev-parse HEAD >expected &&
-		test_commit -C sub baz &&
-		# branch-a in sub now points to a newer commit.
+		test_cummit -C sub baz &&
+		# branch-a in sub now points to a newer cummit.
 		git -C sub branch branch-a HEAD &&
 		git -C sub rev-parse branch-a >actual-old-branch-a &&
 		git branch --recurse-submodules --force branch-a &&
@@ -166,8 +166,8 @@ test_expect_success 'should create branch when submodule is not in HEAD:.gitmodu
 		git checkout -b branch-b &&
 		git submodule add ../sub-upstream sub2 &&
 		git -C sub2 submodule update --init &&
-		# branch-b now has a committed submodule not in branch-a
-		git commit -m "add second submodule" &&
+		# branch-b now has a cummitted submodule not in branch-a
+		git cummit -m "add second submodule" &&
 		git checkout branch-a &&
 		git branch --recurse-submodules branch-c branch-b &&
 		git checkout --recurse-submodules branch-c &&
@@ -233,8 +233,8 @@ test_expect_success 'setup tests with remotes' '
 			git branch branch-a &&
 			git checkout -b branch-b &&
 			git submodule add ../sub-upstream sub2 &&
-			# branch-b now has a committed submodule not in branch-a
-			git commit -m "add second submodule"
+			# branch-b now has a cummitted submodule not in branch-a
+			git cummit -m "add second submodule"
 		) &&
 		git clone --branch main --recurse-submodules super super-clone &&
 		git -C super-clone config submodule.propagateBranches true

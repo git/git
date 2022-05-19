@@ -8,7 +8,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'create base tree' '
 	echo content >file &&
 	git add file &&
-	git commit -m base &&
+	git cummit -m base &&
 	blob=$(git rev-parse HEAD:file) &&
 	tree=$(git rev-parse HEAD^{tree})
 '

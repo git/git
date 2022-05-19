@@ -237,7 +237,7 @@ the client already is up to date.
 Otherwise, it enters the negotiation phase, where the client and
 server determine what the minimal packfile necessary for transport is,
 by telling the server what objects it wants, its shallow objects
-(if any), and the maximum commit depth it wants (if any).  The client
+(if any), and the maximum cummit depth it wants (if any).  The client
 will also send a list of the capabilities it wants to be in effect,
 out of what the server said it could do with the first 'want' line.
 
@@ -272,16 +272,16 @@ obj-id in a 'want' command which did not appear in the response
 obtained through ref discovery.
 
 The client MUST write all obj-ids which it only has shallow copies
-of (meaning that it does not have the parents of a commit) as
+of (meaning that it does not have the parents of a cummit) as
 'shallow' lines so that the server is aware of the limitations of
 the client's history.
 
 The client now sends the maximum commit history depth it wants for
-this transaction, which is the number of commits it wants from the
+this transaction, which is the number of cummits it wants from the
 tip of the history, if any, as a 'deepen' line.  A depth of 0 is the
 same as not making a depth request. The client does not want to receive
-any commits beyond this depth, nor does it want objects needed only to
-complete those commits. Commits whose parents are not received as a
+any cummits beyond this depth, nor does it want objects needed only to
+complete those cummits. cummits whose parents are not received as a
 result are defined as shallow and marked as such in the server. This
 information is sent back to the client in the next step.
 
@@ -297,7 +297,7 @@ transferred, clients MUST send a flush-pkt, to tell the server side
 that it is done sending the list.
 
 Otherwise, if the client sent a positive depth request, the server
-will determine which commits will and will not be shallow and
+will determine which cummits will and will not be shallow and
 send this information to the client. If the client did not request
 a positive depth, this step is skipped.
 
@@ -312,12 +312,12 @@ a positive depth, this step is skipped.
 ----
 
 If the client has requested a positive depth, the server will compute
-the set of commits which are no deeper than the desired depth. The set
-of commits start at the client's wants.
+the set of cummits which are no deeper than the desired depth. The set
+of cummits start at the client's wants.
 
 The server writes 'shallow' lines for each
-commit whose parents will not be sent as a result. The server writes
-an 'unshallow' line for each commit which the client has indicated is
+cummit whose parents will not be sent as a result. The server writes
+an 'unshallow' line for each cummit which the client has indicated is
 shallow, but is no longer shallow at the currently requested depth
 (that is, its parents will now be sent). The server MUST NOT mark
 as unshallow anything which the client has not indicated was shallow.
@@ -346,9 +346,9 @@ chosen by the client.
 In multi_ack mode:
 
   * the server will respond with 'ACK obj-id continue' for any common
-    commits.
+    cummits.
 
-  * once the server has found an acceptable common base commit and is
+  * once the server has found an acceptable common base cummit and is
     ready to make a packfile, it will blindly ACK all 'have' obj-ids
     back to the client.
 
@@ -359,7 +359,7 @@ In multi_ack_detailed mode:
 
   * the server will differentiate the ACKs where it is signaling
     that it is ready to send data with 'ACK obj-id ready' lines, and
-    signals the identified common commits with 'ACK obj-id common' lines.
+    signals the identified common cummits with 'ACK obj-id common' lines.
 
 Without either multi_ack or multi_ack_detailed:
 
@@ -389,7 +389,7 @@ ancestor is found before we give up entirely.
 
 Once the 'done' line is read from the client, the server will either
 send a final 'ACK obj-id' or it will send a 'NAK'. 'obj-id' is the object
-name of the last commit determined to be common. The server only sends
+name of the last cummit determined to be common. The server only sends
 ACK after 'done' if there is at least one common base and multi_ack or
 multi_ack_detailed is enabled. The server always sends NAK after 'done'
 if there is no common base found.

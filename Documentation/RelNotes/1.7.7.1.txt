@@ -12,7 +12,7 @@ Fixes since v1.7.7
  * After incorrectly written third-party tools store a tag object in
    HEAD, git diagnosed it as a repository corruption and refused to
    proceed in order to avoid spreading the damage. We now gracefully
-   recover from such a situation by pretending as if the commit that
+   recover from such a situation by pretending as if the cummit that
    is pointed at by the tag were in HEAD.
 
  * "git apply --whitespace=error" did not bother to report the exact

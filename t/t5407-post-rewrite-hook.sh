@@ -10,13 +10,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit A foo A &&
-	test_commit B foo B &&
-	test_commit C foo C &&
-	test_commit D foo D &&
+	test_cummit A foo A &&
+	test_cummit B foo B &&
+	test_cummit C foo C &&
+	test_cummit D foo D &&
 	git checkout A^0 &&
-	test_commit E bar E &&
-	test_commit F foo F &&
+	test_cummit E bar E &&
+	test_cummit F foo F &&
 	git checkout main &&
 
 	test_hook --setup post-rewrite <<-EOF
@@ -34,20 +34,20 @@ verify_hook_input () {
 	test_cmp expected.data "$TRASH_DIRECTORY"/post-rewrite.data
 }
 
-test_expect_success 'git commit --amend' '
+test_expect_success 'git cummit --amend' '
 	clear_hook_input &&
 	echo "D new message" > newmsg &&
 	oldsha=$(git rev-parse HEAD^0) &&
-	git commit -Fnewmsg --amend &&
+	git cummit -Fnewmsg --amend &&
 	echo amend > expected.args &&
 	echo $oldsha $(git rev-parse HEAD^0) > expected.data &&
 	verify_hook_input
 '
 
-test_expect_success 'git commit --amend --no-post-rewrite' '
+test_expect_success 'git cummit --amend --no-post-rewrite' '
 	clear_hook_input &&
 	echo "D new message again" > newmsg &&
-	git commit --no-post-rewrite -Fnewmsg --amend &&
+	git cummit --no-post-rewrite -Fnewmsg --amend &&
 	test ! -f post-rewrite.args &&
 	test ! -f post-rewrite.data
 '

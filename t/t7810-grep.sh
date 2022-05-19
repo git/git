@@ -89,7 +89,7 @@ test_expect_success setup '
 	fi &&
 	git add . &&
 	test_tick &&
-	git commit -m initial
+	git cummit -m initial
 '
 
 test_expect_success 'grep should not segfault with a bad input' '
@@ -725,9 +725,9 @@ test_expect_success 'grep -C1 hunk mark between files' '
 '
 
 test_expect_success 'log grep setup' '
-	test_commit --append --author "With * Asterisk <xyzzy@frotz.com>" second file a &&
-	test_commit --append third file a &&
-	test_commit --append --author "Night Fall <nitfol@frobozz.com>" fourth file a
+	test_cummit --append --author "With * Asterisk <xyzzy@frotz.com>" second file a &&
+	test_cummit --append third file a &&
+	test_cummit --append --author "Night Fall <nitfol@frobozz.com>" fourth file a
 '
 
 test_expect_success 'log grep (1)' '
@@ -776,13 +776,13 @@ test_expect_success 'log grep (6)' '
 '
 
 test_expect_success 'log grep (7)' '
-	git log -g --grep-reflog="commit: third" --pretty=tformat:%s >actual &&
+	git log -g --grep-reflog="cummit: third" --pretty=tformat:%s >actual &&
 	echo third >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'log grep (8)' '
-	git log -g --grep-reflog="commit: third" --grep-reflog="commit: second" --pretty=tformat:%s >actual &&
+	git log -g --grep-reflog="cummit: third" --grep-reflog="cummit: second" --pretty=tformat:%s >actual &&
 	{
 		echo third && echo second
 	} >expect &&
@@ -790,18 +790,18 @@ test_expect_success 'log grep (8)' '
 '
 
 test_expect_success 'log grep (9)' '
-	git log -g --grep-reflog="commit: third" --author="Thor" --pretty=tformat:%s >actual &&
+	git log -g --grep-reflog="cummit: third" --author="Thor" --pretty=tformat:%s >actual &&
 	echo third >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'log grep (9)' '
-	git log -g --grep-reflog="commit: third" --author="non-existent" --pretty=tformat:%s >actual &&
+	git log -g --grep-reflog="cummit: third" --author="non-existent" --pretty=tformat:%s >actual &&
 	test_must_be_empty actual
 '
 
 test_expect_success 'log --grep-reflog can only be used under -g' '
-	test_must_fail git log --grep-reflog="commit: third"
+	test_must_fail git log --grep-reflog="cummit: third"
 '
 
 test_expect_success 'log with multiple --grep uses union' '
@@ -891,8 +891,8 @@ test_expect_success 'log --author does not search in timestamp' '
 	test_must_be_empty actual
 '
 
-test_expect_success 'log --committer does not search in timestamp' '
-	git log --committer="$GIT_COMMITTER_DATE" >actual &&
+test_expect_success 'log --cummitter does not search in timestamp' '
+	git log --cummitter="$GIT_cummitTER_DATE" >actual &&
 	test_must_be_empty actual
 '
 
@@ -1186,7 +1186,7 @@ test_expect_success 'grep --no-index descends into repos, but not .git' '
 			cd repo &&
 			echo magic >file &&
 			git add file &&
-			git commit -m foo &&
+			git cummit -m foo &&
 			echo magic >.git/file
 		) &&
 

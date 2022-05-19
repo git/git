@@ -11,13 +11,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success setup '
 	test_tick &&
-	test_commit both.txt both.txt initial &&
+	test_cummit both.txt both.txt initial &&
 	git branch topic &&
-	test_commit modified_in_main both.txt in_main &&
-	test_commit added_in_main each.txt in_main &&
+	test_cummit modified_in_main both.txt in_main &&
+	test_cummit added_in_main each.txt in_main &&
 	git checkout topic &&
-	test_commit modified_in_topic both.txt in_topic &&
-	test_commit added_in_topic each.txt in_topic
+	test_cummit modified_in_topic both.txt in_topic &&
+	test_cummit added_in_topic each.txt in_topic
 '
 
 test_expect_success 'git merge main' '
@@ -55,11 +55,11 @@ test_expect_success 'force checkout a conflict file creates stage zero entry' '
 		cd co-force &&
 		echo a >a &&
 		git add a &&
-		git commit -ama &&
+		git cummit -ama &&
 		A_OBJ=$(git rev-parse :a) &&
 		git branch topic &&
 		echo b >a &&
-		git commit -amb &&
+		git cummit -amb &&
 		B_OBJ=$(git rev-parse :a) &&
 		git checkout topic &&
 		echo c >a &&

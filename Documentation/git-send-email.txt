@@ -83,7 +83,7 @@ See the CONFIGURATION section for `sendemail.multiEdit`.
 	the value of the `sendemail.from` configuration option is used.  If
 	neither the command-line option nor `sendemail.from` are set, then the
 	user will be prompted for the value.  The default for the prompt will be
-	the value of GIT_AUTHOR_IDENT, or GIT_COMMITTER_IDENT if that is not
+	the value of GIT_AUTHOR_IDENT, or GIT_cummitTER_IDENT if that is not
 	set, as returned by "git var -l".
 
 --reply-to=<address>::
@@ -352,7 +352,7 @@ Automating
 - 'cc' will avoid including anyone mentioned in Cc lines in the patch header
   except for self (use 'self' for that).
 - 'bodycc' will avoid including anyone mentioned in Cc lines in the
-  patch body (commit message) except for self (use 'self' for that).
+  patch body (cummit message) except for self (use 'self' for that).
 - 'sob' will avoid including anyone mentioned in the Signed-off-by trailers except
   for self (use 'self' for that).
 - 'misc-by' will avoid including anyone mentioned in Acked-by,
@@ -515,7 +515,7 @@ If you do not have multi-factor authentication set up on your Gmail account,
 you will need to allow less secure app access. Visit
 https://myaccount.google.com/lesssecureapps to enable it.
 
-Once your commits are ready to be sent to the mailing list, run the
+Once your cummits are ready to be sent to the mailing list, run the
 following commands:
 
 	$ git format-patch --cover-letter -M origin/master -o outgoing/

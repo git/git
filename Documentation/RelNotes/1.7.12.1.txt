@@ -13,12 +13,12 @@ Fixes since v1.7.12
    this problem.
 
  * "git cherry-pick A C B" used to replay changes in A and then B and
-   then C if these three commits had committer timestamps in that
+   then C if these three cummits had cummitter timestamps in that
    order, which is not what the user who said "A C B" naturally
    expects.
 
- * "git commit --amend" let the user edit the log message and then
-   died when the human-readable committer name was given
+ * "git cummit --amend" let the user edit the log message and then
+   died when the human-readable cummitter name was given
    insufficiently by getpwent(3).
 
  * Some capabilities were asked by fetch-pack even when upload-pack
@@ -60,7 +60,7 @@ Fixes since v1.7.12
    wasn't.
 
  * "git show --format='%ci'" did not give timestamp correctly for
-   commits created without human readable name on "committer" line.
+   cummits created without human readable name on "cummitter" line.
 
  * "git send-email" did not unquote encoded words that appear on the
    header correctly, and lost "_" from strings.

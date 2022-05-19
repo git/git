@@ -23,10 +23,10 @@ correctly along tags and branches.  Here is its history:
   5.  Then created branch B_FROM_INITIALS_BUT_ONE on everyone except
       /sub1/subsubB/default.
 
-  6.  Then committed modifications to two files: sub3/default, and
+  6.  Then cummitted modifications to two files: sub3/default, and
       sub1/subsubA/default.
 
-  7.  Then committed a modification to all 7 files.
+  7.  Then cummitted a modification to all 7 files.
 
   8.  Then backdated sub3/default to revision 1.2, and
       sub2/subsubA/default to revision 1.1, and tagged with T_MIXED.
@@ -37,26 +37,26 @@ correctly along tags and branches.  Here is its history:
       sub2/branch_B_MIXED_only.  (That's why the RCS file is in
       sub2/Attic/ -- it never existed on trunk.)
 
-  11. In one commit, modified default, sub1/default, and
+  11. In one cummit, modified default, sub1/default, and
       sub2/subsubA/default, on branch B_MIXED.
 
-  12. Did "cvs up -A" on sub2/default, then in one commit, made a
+  12. Did "cvs up -A" on sub2/default, then in one cummit, made a
       change to sub2/default and sub2/branch_B_MIXED_only.  So this
-      commit should be spread between the branch and the trunk.
+      cummit should be spread between the branch and the trunk.
 
   13. Do "cvs up -A" to get everyone back to trunk, then make a new
       branch B_SPLIT on everyone except sub1/subsubB/default,v.
 
   14. Switch to branch B_SPLIT (see sub1/subsubB/default disappear)
-      and commit a change that affects everyone except sub3/default.
+      and cummit a change that affects everyone except sub3/default.
 
   15. An hour or so later, "cvs up -A" to get sub1/subsubB/default
-      back, then commit a change on that file, on trunk.  (It's
-      important that this change happened after the previous commits
+      back, then cummit a change on that file, on trunk.  (It's
+      important that this change happened after the previous cummits
       on B_SPLIT.)
 
   16. Branch sub1/subsubB/default to B_SPLIT, then "cvs up -r B_SPLIT"
       to switch the whole working copy to the branch.
 
-  17. Commit a change on B_SPLIT, to sub1/subsubB/default and
+  17. cummit a change on B_SPLIT, to sub1/subsubB/default and
       sub3/default.

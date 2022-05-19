@@ -131,7 +131,7 @@ static void test_log_buffer_size(void)
 					   .email = "hanwen@google.com",
 					   .tz_offset = 100,
 					   .time = 0x5e430672,
-					   .message = "commit: 9\n",
+					   .message = "cummit: 9\n",
 				   } } };
 	struct reftable_writer *w =
 		reftable_new_writer(&strbuf_add_void, &buf, &opts);

@@ -50,8 +50,8 @@ Fixes since v1.8.1
  * The "log --graph" codepath fell into infinite loop in some
    corner cases.
 
- * "git merge" started calling prepare-commit-msg hook like "git
-   commit" does some time ago, but forgot to pay attention to the exit
+ * "git merge" started calling prepare-cummit-msg hook like "git
+   cummit" does some time ago, but forgot to pay attention to the exit
    status of the hook.
 
  * "git pack-refs" that ran in parallel to another process that
@@ -72,7 +72,7 @@ Fixes since v1.8.1
    activities first, used to sort repositories with absolutely
    nothing in it early, which was not very useful.
 
- * When autoconf is used, any build on a different commit always ran
+ * When autoconf is used, any build on a different cummit always ran
    "config.status --recheck" even when unnecessary.
 
  * Some scripted programs written in Python did not get updated when

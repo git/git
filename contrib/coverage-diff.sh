@@ -89,18 +89,18 @@ done
 
 cat coverage-data.txt
 
-echo "Commits introducing uncovered code:"
+echo "cummits introducing uncovered code:"
 
-commit_list=$(cat coverage-data.txt |
+cummit_list=$(cat coverage-data.txt |
 	grep -E '^[0-9a-f]{7,} ' |
 	awk '{print $1;}' |
 	sort |
 	uniq)
 
 (
-	for commit in $commit_list
+	for cummit in $cummit_list
 	do
-		git log --no-decorate --pretty=format:'%an      %h: %s' -1 $commit
+		git log --no-decorate --pretty=format:'%an      %h: %s' -1 $cummit
 		echo
 	done
 ) | sort

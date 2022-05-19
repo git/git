@@ -9,21 +9,21 @@ test_expect_success "git-push ($PROTOCOL/porcelain)" '
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/main        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/next        Z
+	> remote: pre-receive< <cummit-A> <cummit-B> refs/heads/main        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/heads/next        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/main        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/next        Z
+	> remote: post-receive< <cummit-A> <cummit-B> refs/heads/main        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/heads/next        Z
 	> To <URL/of/upstream.git>
-	>  	<COMMIT-B>:refs/heads/main	<COMMIT-A>..<COMMIT-B>
+	>  	<cummit-B>:refs/heads/main	<cummit-A>..<cummit-B>
 	> *	HEAD:refs/heads/next	[new branch]
 	> Done
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<COMMIT-B> refs/heads/main
-	<COMMIT-A> refs/heads/next
+	<cummit-B> refs/heads/main
+	<cummit-A> refs/heads/next
 	EOF
 '
 
@@ -43,13 +43,13 @@ test_expect_success "git-push --atomic ($PROTOCOL/porcelain)" '
 	format_and_save_expect <<-EOF &&
 	> To <URL/of/upstream.git>
 	> !	refs/heads/main:refs/heads/main	[rejected] (non-fast-forward)
-	> !	<COMMIT-B>:refs/heads/next	[rejected] (atomic push failed)
+	> !	<cummit-B>:refs/heads/next	[rejected] (atomic push failed)
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<COMMIT-B> refs/heads/main
-	<COMMIT-A> refs/heads/next
+	<cummit-B> refs/heads/main
+	<cummit-A> refs/heads/next
 	EOF
 '
 
@@ -67,19 +67,19 @@ test_expect_success "non-fast-forward git-push ($PROTOCOL/porcelain)" '
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/next        Z
+	> remote: pre-receive< <cummit-A> <cummit-B> refs/heads/next        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/next        Z
+	> remote: post-receive< <cummit-A> <cummit-B> refs/heads/next        Z
 	> To <URL/of/upstream.git>
-	>  	<COMMIT-B>:refs/heads/next	<COMMIT-A>..<COMMIT-B>
+	>  	<cummit-B>:refs/heads/next	<cummit-A>..<cummit-B>
 	> !	refs/heads/main:refs/heads/main	[rejected] (non-fast-forward)
 	> Done
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<COMMIT-B> refs/heads/main
-	<COMMIT-B> refs/heads/next
+	<cummit-B> refs/heads/main
+	<cummit-B> refs/heads/next
 	EOF
 '
 
@@ -97,19 +97,19 @@ test_expect_success "git-push -f ($PROTOCOL/porcelain)" '
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <COMMIT-B> <COMMIT-A> refs/heads/main        Z
-	> remote: pre-receive< <COMMIT-B> <ZERO-OID> refs/heads/next        Z
+	> remote: pre-receive< <cummit-B> <cummit-A> refs/heads/main        Z
+	> remote: pre-receive< <cummit-B> <ZERO-OID> refs/heads/next        Z
 	> remote: pre-receive< <ZERO-OID> <TAG-v123> refs/tags/v123        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/review/main/topic        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/a/b/c        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/review/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/heads/a/b/c        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <COMMIT-B> <COMMIT-A> refs/heads/main        Z
-	> remote: post-receive< <COMMIT-B> <ZERO-OID> refs/heads/next        Z
+	> remote: post-receive< <cummit-B> <cummit-A> refs/heads/main        Z
+	> remote: post-receive< <cummit-B> <ZERO-OID> refs/heads/next        Z
 	> remote: post-receive< <ZERO-OID> <TAG-v123> refs/tags/v123        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/review/main/topic        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/a/b/c        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/review/main/topic        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/heads/a/b/c        Z
 	> To <URL/of/upstream.git>
-	> +	refs/heads/main:refs/heads/main	<COMMIT-B>...<COMMIT-A> (forced update)
+	> +	refs/heads/main:refs/heads/main	<cummit-B>...<cummit-A> (forced update)
 	> -	:refs/heads/next	[deleted]
 	> *	refs/tags/v123:refs/tags/v123	[new tag]
 	> *	refs/heads/main:refs/review/main/topic	[new reference]
@@ -119,9 +119,9 @@ test_expect_success "git-push -f ($PROTOCOL/porcelain)" '
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<COMMIT-A> refs/heads/a/b/c
-	<COMMIT-A> refs/heads/main
-	<COMMIT-A> refs/review/main/topic
+	<cummit-A> refs/heads/a/b/c
+	<cummit-A> refs/heads/main
+	<cummit-A> refs/review/main/topic
 	<TAG-v123> refs/tags/v123
 	EOF
 '

@@ -9,7 +9,7 @@
 #include "ewah/ewok.h"
 #include "lockfile.h"
 #include "color.h"
-#include "commit.h"
+#include "cummit.h"
 #include "blob.h"
 #include "tag.h"
 #include "diff.h"
@@ -25,10 +25,10 @@
 #define DIFF_NO_INDEX_IMPLICIT 2
 
 static const char builtin_diff_usage[] =
-"git diff [<options>] [<commit>] [--] [<path>...]\n"
-"   or: git diff [<options>] --cached [--merge-base] [<commit>] [--] [<path>...]\n"
-"   or: git diff [<options>] [--merge-base] <commit> [<commit>...] <commit> [--] [<path>...]\n"
-"   or: git diff [<options>] <commit>...<commit> [--] [<path>...]\n"
+"git diff [<options>] [<cummit>] [--] [<path>...]\n"
+"   or: git diff [<options>] --cached [--merge-base] [<cummit>] [--] [<path>...]\n"
+"   or: git diff [<options>] [--merge-base] <cummit> [<cummit>...] <cummit> [--] [<path>...]\n"
+"   or: git diff [<options>] <cummit>...<cummit> [--] [<path>...]\n"
 "   or: git diff [<options>] <blob> <blob>\n"
 "   or: git diff [<options>] --no-index [--] <path> <path>\n"
 COMMON_DIFF_OPTIONS_HELP;
@@ -535,8 +535,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		obj = deref_tag(the_repository, obj, NULL, 0);
 		if (!obj)
 			die(_("invalid object '%s' given."), name);
-		if (obj->type == OBJ_COMMIT)
-			obj = &get_commit_tree(((struct commit *)obj))->object;
+		if (obj->type == OBJ_cummit)
+			obj = &get_cummit_tree(((struct cummit *)obj))->object;
 
 		if (obj->type == OBJ_TREE) {
 			if (sdiff.skip && bitmap_get(sdiff.skip, i))

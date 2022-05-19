@@ -25,7 +25,7 @@ Fixes since v1.5.6.2
 * The section that describes attributes related to git-archive were placed
   in a wrong place in the gitattributes(5) manual page.
 
-* "git am" was not helpful to the users when it detected that the committer
+* "git am" was not helpful to the users when it detected that the cummitter
   information is not set up properly yet.
 
 * "git clone" had a leftover debugging fprintf().
@@ -46,7 +46,7 @@ Fixes since v1.5.6.2
   tracking ref is missing, we used to report error (i.e. failure to
   remove something that does not exist).
 
-* "git mailinfo" (hence "git am") did not handle commit log messages in a
+* "git mailinfo" (hence "git am") did not handle cummit log messages in a
   MIME multipart mail correctly.
 
 Contains other various documentation fixes.

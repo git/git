@@ -3,28 +3,28 @@
 
 #include "notes.h"
 
-struct commit_list;
+struct cummit_list;
 struct object_id;
 struct repository;
 
 /*
- * Create new notes commit from the given notes tree
+ * Create new notes cummit from the given notes tree
  *
- * Properties of the created commit:
+ * Properties of the created cummit:
  * - tree: the result of converting t to a tree object with write_notes_tree().
- * - parents: the given parents OR (if NULL) the commit referenced by t->ref.
- * - author/committer: the default determined by commit_tree().
- * - commit message: msg
+ * - parents: the given parents OR (if NULL) the cummit referenced by t->ref.
+ * - author/cummitter: the default determined by cummit_tree().
+ * - cummit message: msg
  *
- * The resulting commit SHA1 is stored in result_sha1.
+ * The resulting cummit SHA1 is stored in result_sha1.
  */
-void create_notes_commit(struct repository *r,
+void create_notes_cummit(struct repository *r,
 			 struct notes_tree *t,
-			 struct commit_list *parents,
+			 struct cummit_list *parents,
 			 const char *msg, size_t msg_len,
 			 struct object_id *result_oid);
 
-void commit_notes(struct repository *r, struct notes_tree *t, const char *msg);
+void cummit_notes(struct repository *r, struct notes_tree *t, const char *msg);
 
 enum notes_merge_strategy {
 		NOTES_MERGE_RESOLVE_MANUAL = 0,

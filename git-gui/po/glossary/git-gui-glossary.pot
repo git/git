@@ -26,7 +26,7 @@ msgstr ""
 msgid "amend"
 msgstr ""
 
-#. "a commit that succeeds the current one in git's graph of commits (not necessarily directly)"
+#. "a cummit that succeeds the current one in git's graph of cummits (not necessarily directly)"
 msgid "ancestor"
 msgstr ""
 
@@ -34,7 +34,7 @@ msgstr ""
 msgid "annotate"
 msgstr ""
 
-#. "The person who initially created (authored) a commit"
+#. "The person who initially created (authored) a cummit"
 msgid "author"
 msgstr ""
 
@@ -74,12 +74,12 @@ msgstr ""
 msgid "checkout [verb]"
 msgstr ""
 
-#. "to select and apply a single commit to the current HEAD without merging"
+#. "to select and apply a single cummit to the current HEAD without merging"
 msgid "cherry-pick"
 msgstr ""
 
-#. "a commit that directly succeeds the current one in git's graph of commits"
-msgid "child commit"
+#. "a cummit that directly succeeds the current one in git's graph of cummits"
+msgid "child cummit"
 msgstr ""
 
 #. "clean the state of the git repository, often after manually stopped operation"
@@ -91,22 +91,22 @@ msgid "clone [verb]"
 msgstr ""
 
 #. "A single point in the git history."
-msgid "commit [noun]"
+msgid "cummit [noun]"
 msgstr ""
 
 #. "The action of storing a new snapshot of the project's state in the git history."
-msgid "commit [verb]"
+msgid "cummit [verb]"
 msgstr ""
 
-#. "a message that gets attached with any commit"
-msgid "commit message"
+#. "a message that gets attached with any cummit"
+msgid "cummit message"
 msgstr ""
 
-#.   "The person who committed a commit (to the current branch), which might be different than the author."
-msgid "committer"
+#.   "The person who cummitted a cummit (to the current branch), which might be different than the author."
+msgid "cummitter"
 msgstr ""
 
-#. "a commit that precedes the current one in git's graph of commits (not necessarily directly)"
+#. "a cummit that precedes the current one in git's graph of cummits (not necessarily directly)"
 msgid "descendant"
 msgstr ""
 
@@ -166,8 +166,8 @@ msgstr ""
 msgid "initial checkout"
 msgstr ""
 
-#. "The very first commit in a repository"
-msgid "initial commit"
+#. "The very first cummit in a repository"
+msgid "initial cummit"
 msgstr ""
 
 #. "a branch that resides in the local git repository"
@@ -182,7 +182,7 @@ msgstr ""
 msgid "master branch"
 msgstr ""
 
-#. "A successful merge results in the creation of a new commit representing the result of the merge."
+#. "A successful merge results in the creation of a new cummit representing the result of the merge."
 msgid "merge [noun]"
 msgstr ""
 
@@ -199,7 +199,7 @@ msgid "origin"
 msgstr ""
 
 #.       ""
-msgid "orphan commit"
+msgid "orphan cummit"
 msgstr ""
 
 #.  ""
@@ -218,8 +218,8 @@ msgstr ""
 msgid "packed object"
 msgstr ""
 
-#. "a commit that directly precedes the current one in git's graph of commits"
-msgid "parent commit"
+#. "a cummit that directly precedes the current one in git's graph of cummits"
+msgid "parent cummit"
 msgstr ""
 
 msgid "patch" ""
@@ -241,11 +241,11 @@ msgstr ""
 msgid "push"
 msgstr ""
 
-#. "The process of rebasing one set of commits on top of another branch's head"
+#. "The process of rebasing one set of cummits on top of another branch's head"
 msgid "rebase [noun]"
 msgstr ""
 
-#. "Re-apply one set of commits on top of another branch's head. Contrary to merge."
+#. "Re-apply one set of cummits on top of another branch's head. Contrary to merge."
 msgid "rebase [verb]"
 msgstr ""
 
@@ -316,19 +316,19 @@ msgstr ""
 msgid "stage [noun], index"
 msgstr ""
 
-#. "add some content of files and directories to the staging area in preparation for a commit"
+#. "add some content of files and directories to the staging area in preparation for a cummit"
 msgid "stage [verb]"
 msgstr ""
 
-#. "The place where changes from files are marked to be included for the next commit. In some areas of git this is called 'index'."
+#. "The place where changes from files are marked to be included for the next cummit. In some areas of git this is called 'index'."
 msgid "staging area"
 msgstr ""
 
-#. "The place (stack) where changes can be temporarily saved without committing"
+#. "The place (stack) where changes can be temporarily saved without cummitting"
 msgid "stash [noun]"
 msgstr ""
 
-#. "temporarily save changes in a stack without committing"
+#. "temporarily save changes in a stack without cummitting"
 msgid "stash [verb]"
 msgstr ""
 
@@ -340,11 +340,11 @@ msgstr ""
 msgid "submodule"
 msgstr ""
 
-#. "A ref pointing to some commit object. In other words: A label on a specific commit."
+#. "A ref pointing to some cummit object. In other words: A label on a specific cummit."
 msgid "tag [noun]"
 msgstr ""
 
-#. "The process of creating a tag at a specific commit object"
+#. "The process of creating a tag at a specific cummit object"
 msgid "tag [verb]"
 msgstr ""
 
@@ -372,7 +372,7 @@ msgstr ""
 msgid "undo"
 msgstr ""
 
-#. "Remove content of files from the staging area again so that it will not be part of the next commit"
+#. "Remove content of files from the staging area again so that it will not be part of the next cummit"
 msgid "unstage"
 msgstr ""
 

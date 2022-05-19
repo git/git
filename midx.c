@@ -951,7 +951,7 @@ static int add_ref_to_pending(const char *refname,
 	}
 
 	object = parse_object_or_die(oid, refname);
-	if (object->type != OBJ_COMMIT)
+	if (object->type != OBJ_cummit)
 		return 0;
 
 	add_pending_object(revs, object, "");
@@ -960,9 +960,9 @@ static int add_ref_to_pending(const char *refname,
 	return 0;
 }
 
-struct bitmap_commit_cb {
-	struct commit **commits;
-	size_t commits_nr, commits_alloc;
+struct bitmap_cummit_cb {
+	struct cummit **cummits;
+	size_t cummits_nr, cummits_alloc;
 
 	struct write_midx_context *ctx;
 };
@@ -974,17 +974,17 @@ static const struct object_id *bitmap_oid_access(size_t index,
 	return &entries[index].oid;
 }
 
-static void bitmap_show_commit(struct commit *commit, void *_data)
+static void bitmap_show_cummit(struct cummit *cummit, void *_data)
 {
-	struct bitmap_commit_cb *data = _data;
-	int pos = oid_pos(&commit->object.oid, data->ctx->entries,
+	struct bitmap_cummit_cb *data = _data;
+	int pos = oid_pos(&cummit->object.oid, data->ctx->entries,
 			  data->ctx->entries_nr,
 			  bitmap_oid_access);
 	if (pos < 0)
 		return;
 
-	ALLOC_GROW(data->commits, data->commits_nr + 1, data->commits_alloc);
-	data->commits[data->commits_nr++] = commit;
+	ALLOC_GROW(data->cummits, data->cummits_nr + 1, data->cummits_alloc);
+	data->cummits[data->cummits_nr++] = cummit;
 }
 
 static int read_refs_snapshot(const char *refs_snapshot,
@@ -1022,12 +1022,12 @@ static int read_refs_snapshot(const char *refs_snapshot,
 	return 0;
 }
 
-static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr_p,
+static struct cummit **find_cummits_for_midx_bitmap(uint32_t *indexed_cummits_nr_p,
 						    const char *refs_snapshot,
 						    struct write_midx_context *ctx)
 {
 	struct rev_info revs;
-	struct bitmap_commit_cb cb = {0};
+	struct bitmap_cummit_cb cb = {0};
 
 	cb.ctx = ctx;
 
@@ -1041,8 +1041,8 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 
 	/*
 	 * Skipping promisor objects here is intentional, since it only excludes
-	 * them from the list of reachable commits that we want to select from
-	 * when computing the selection of MIDX'd commits to receive bitmaps.
+	 * them from the list of reachable cummits that we want to select from
+	 * when computing the selection of MIDX'd cummits to receive bitmaps.
 	 *
 	 * Reachability bitmaps do require that their objects be closed under
 	 * reachability, but fetching any objects missing from promisors at this
@@ -1057,11 +1057,11 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
 
-	traverse_commit_list(&revs, bitmap_show_commit, NULL, &cb);
-	if (indexed_commits_nr_p)
-		*indexed_commits_nr_p = cb.commits_nr;
+	traverse_cummit_list(&revs, bitmap_show_cummit, NULL, &cb);
+	if (indexed_cummits_nr_p)
+		*indexed_cummits_nr_p = cb.cummits_nr;
 
-	return cb.commits;
+	return cb.cummits;
 }
 
 static int write_midx_bitmap(char *midx_name, unsigned char *midx_hash,
@@ -1071,8 +1071,8 @@ static int write_midx_bitmap(char *midx_name, unsigned char *midx_hash,
 {
 	struct packing_data pdata;
 	struct pack_idx_entry **index;
-	struct commit **commits = NULL;
-	uint32_t i, commits_nr;
+	struct cummit **cummits = NULL;
+	uint32_t i, cummits_nr;
 	uint16_t options = 0;
 	char *bitmap_name = xstrfmt("%s-%s.bitmap", midx_name, hash_to_hex(midx_hash));
 	int ret;
@@ -1085,7 +1085,7 @@ static int write_midx_bitmap(char *midx_name, unsigned char *midx_hash,
 
 	prepare_midx_packing_data(&pdata, ctx);
 
-	commits = find_commits_for_midx_bitmap(&commits_nr, refs_snapshot, ctx);
+	cummits = find_cummits_for_midx_bitmap(&cummits_nr, refs_snapshot, ctx);
 
 	/*
 	 * Build the MIDX-order index based on pdata.objects (which is already
@@ -1115,7 +1115,7 @@ static int write_midx_bitmap(char *midx_name, unsigned char *midx_hash,
 	for (i = 0; i < pdata.nr_objects; i++)
 		index[ctx->pack_order[i]] = &pdata.objects[i].idx;
 
-	bitmap_writer_select_commits(commits, commits_nr, -1);
+	bitmap_writer_select_cummits(cummits, cummits_nr, -1);
 	ret = bitmap_writer_build(&pdata);
 	if (ret < 0)
 		goto cleanup;
@@ -1466,7 +1466,7 @@ static int write_midx_internal(const char *object_dir,
 	if (ctx.m)
 		close_object_store(the_repository->objects);
 
-	if (commit_lock_file(&lk) < 0)
+	if (cummit_lock_file(&lk) < 0)
 		die_errno(_("could not write multi-pack-index"));
 
 	clear_midx_files_ext(object_dir, ".bitmap", midx_hash);

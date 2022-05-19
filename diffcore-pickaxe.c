@@ -7,7 +7,7 @@
 #include "diffcore.h"
 #include "xdiff-interface.h"
 #include "kwset.h"
-#include "commit.h"
+#include "cummit.h"
 #include "quote.h"
 
 typedef int (*pickaxe_fn)(mmfile_t *one, mmfile_t *two,

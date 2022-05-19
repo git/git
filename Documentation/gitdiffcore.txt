@@ -307,7 +307,7 @@ to implement the `--skip-to` and the `--rotate-to` options.  It is
 an error when the specified pathname is not in the set of filepairs,
 but it is not useful to error out when used with "git log" family of
 commands, because it is unreasonable to expect that a given path
-would be modified by each and every commit shown by the "git log"
+would be modified by each and every cummit shown by the "git log"
 command.  For this reason, when used with "git log", the filepair
 that sorts the same as, or the first one that sorts after, the given
 pathname is where the output starts.

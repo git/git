@@ -26,7 +26,7 @@ test_expect_success POSIXPERM,SANITY 'mktemp to unwritable directory prints file
 '
 
 test_expect_success 'git_mkstemps_mode does not fail if fd 0 is not open' '
-	git commit --allow-empty -m message <&-
+	git cummit --allow-empty -m message <&-
 '
 
 test_expect_success 'check for a bug in the regex routines' '

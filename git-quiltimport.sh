@@ -76,8 +76,8 @@ tmp_patch="$tmp_dir/patch"
 tmp_info="$tmp_dir/info"
 
 
-# Find the initial commit
-commit=$(git rev-parse HEAD)
+# Find the initial cummit
+cummit=$(git rev-parse HEAD)
 
 mkdir $tmp_dir || exit 2
 while read patch_name level garbage <&3
@@ -148,8 +148,8 @@ do
 	if [ -z "$dry_run" ] ; then
 		git apply --index -C1 ${level:+"$level"} "$tmp_patch" &&
 		tree=$(git write-tree) &&
-		commit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | git commit-tree $tree -p $commit) &&
-		git update-ref -m "quiltimport: $patch_name" HEAD $commit || exit 4
+		cummit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | git cummit-tree $tree -p $cummit) &&
+		git update-ref -m "quiltimport: $patch_name" HEAD $cummit || exit 4
 	fi
 done 3<"$QUILT_SERIES"
 rm -rf $tmp_dir || exit 5

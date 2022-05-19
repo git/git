@@ -15,7 +15,7 @@ Fixes since v1.5.5.1
  * "git rev-parse --symbolic-full-name ^master^2" printed solitary "^",
    but it should print nothing.
 
- * "git commit" did not detect when it failed to write tree objects.
+ * "git cummit" did not detect when it failed to write tree objects.
 
  * "git fetch" sometimes transferred too many objects unnecessarily.
 

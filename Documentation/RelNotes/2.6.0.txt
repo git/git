@@ -19,8 +19,8 @@ UI, Workflows & Features
  * "git fast-import" learned to respond to the get-mark command via
    its cat-blob-fd interface.
 
- * "git rebase -i" learned "drop commit-object-name subject" command
-   as another way to skip replaying of a commit.
+ * "git rebase -i" learned "drop cummit-object-name subject" command
+   as another way to skip replaying of a cummit.
 
  * A new configuration variable can enable "--follow" automatically
    when "git log" is run with one pathspec argument.
@@ -76,8 +76,8 @@ UI, Workflows & Features
    setting notes.mergeStrategy configuration variable.
 
  * "git log --cc" did not show any patch, even though most of the time
-   the user meant "git log --cc -p -m" to see patch output for commits
-   with a single parent, and combined diff for merge commits.  The
+   the user meant "git log --cc -p -m" to see patch output for cummits
+   with a single parent, and combined diff for merge cummits.  The
    command is taught to DWIM "--cc" (without "--raw" and other forms
    of output specification) to "--cc -p -m".
 
@@ -102,7 +102,7 @@ Performance, Internal Implementation, Development Support etc.
  * Computation of untracked status indicator by bash prompt
    script (in contrib/) has been optimized.
 
- * Memory use reduction when commit-slab facility is used to annotate
+ * Memory use reduction when cummit-slab facility is used to annotate
    sparsely (which is not recommended in the first place).
 
  * Clean up refs API and make "git clone" less intimate with the
@@ -117,7 +117,7 @@ Performance, Internal Implementation, Development Support etc.
    and 2G as an option parameter's value from pack-objects to
    parse-options API, to make it available to other codepaths.
 
- * "git verify-tag" and "git verify-commit" have been taught to share
+ * "git verify-tag" and "git verify-cummit" have been taught to share
    more code, and then learned to optionally show the verification
    message from the underlying GPG implementation.
 
@@ -130,7 +130,7 @@ Performance, Internal Implementation, Development Support etc.
  * The code to perform multi-tree merges has been taught to repopulate
    the cache-tree upon a successful merge into the index, so that
    subsequent "diff-index --cached" (hence "status") and "write-tree"
-   (hence "commit") will go faster.
+   (hence "cummit") will go faster.
 
    The same logic in "git checkout" may now be removed, but that is a
    separate issue.
@@ -203,11 +203,11 @@ notes for details).
    which instead would have defined a "--pair=key <value>" option.
    (merge 2d893df ib/scripted-parse-opt-better-hint-string later to maint).
 
- * Often a fast-import stream builds a new commit on top of the
-   previous commit it built, and it often unconditionally emits a
+ * Often a fast-import stream builds a new cummit on top of the
+   previous cummit it built, and it often unconditionally emits a
    "from" command to specify the first parent, which can be omitted in
    such a case.  This caused fast-import to forget the tree of the
-   previous commit and then re-read it from scratch, which was
+   previous cummit and then re-read it from scratch, which was
    inefficient.  Optimize for this common case.
    (merge 0df3245 mh/fast-import-optimize-current-from later to maint).
 
@@ -285,12 +285,12 @@ notes for details).
    has a colon as the end of existing trailer.
 
  * The "interpret-trailers" helper mistook a multi-paragraph title of
-   a commit log message with a colon in it as the end of the trailer
+   a cummit log message with a colon in it as the end of the trailer
    block.
    (merge 5c99995 cc/trailers-corner-case-fix later to maint).
 
  * "git describe" without argument defaulted to describe the HEAD
-   commit, but "git describe --contains" didn't.  Arguably, in a
+   cummit, but "git describe --contains" didn't.  Arguably, in a
    repository used for active development, such defaulting would not
    be very useful as the tip of branch is typically not tagged, but it
    is better to be consistent.
@@ -312,11 +312,11 @@ notes for details).
    when one is given.
    (merge 2aea7a5 jk/rev-list-has-no-notes later to maint).
 
- * When re-priming the cache-tree opportunistically while committing
+ * When re-priming the cache-tree opportunistically while cummitting
    the in-core index as-is, we mistakenly invalidated the in-core
    index too aggressively, causing the experimental split-index code
    to unnecessarily rewrite the on-disk index file(s).
-   (merge 475a344 dt/commit-preserve-base-index-upon-opportunistic-cache-tree-update later to maint).
+   (merge 475a344 dt/cummit-preserve-base-index-upon-opportunistic-cache-tree-update later to maint).
 
  * "git archive" did not use zip64 extension when creating an archive
    with more than 64k entries, which nobody should need, right ;-)?

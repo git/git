@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "repository.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "blob.h"
 #include "http.h"
@@ -14,7 +14,7 @@
 #include "strvec.h"
 #include "packfile.h"
 #include "object-store.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 
 #ifdef EXPAT_NEEDS_XMLPARSE_H
 #include <xmlparse.h>
@@ -1315,7 +1315,7 @@ static struct object_list **process_tree(struct tree *tree,
 					 p);
 			break;
 		default:
-			/* Subproject commit - not in this repository */
+			/* Subproject cummit - not in this repository */
 			break;
 		}
 
@@ -1326,15 +1326,15 @@ static struct object_list **process_tree(struct tree *tree,
 static int get_delta(struct rev_info *revs, struct remote_lock *lock)
 {
 	int i;
-	struct commit *commit;
+	struct cummit *cummit;
 	struct object_list **p = &objects;
 	int count = 0;
 
-	while ((commit = get_revision(revs)) != NULL) {
-		p = process_tree(get_commit_tree(commit), p);
-		commit->object.flags |= LOCAL;
-		if (!(commit->object.flags & UNINTERESTING))
-			count += add_send_request(&commit->object, lock);
+	while ((cummit = get_revision(revs)) != NULL) {
+		p = process_tree(get_cummit_tree(cummit), p);
+		cummit->object.flags |= LOCAL;
+		if (!(cummit->object.flags & UNINTERESTING))
+			count += add_send_request(&cummit->object, lock);
 	}
 
 	for (i = 0; i < revs->pending.nr; i++) {
@@ -1566,8 +1566,8 @@ static void fetch_symref(const char *path, char **symref, struct object_id *oid)
 
 static int verify_merge_base(struct object_id *head_oid, struct ref *remote)
 {
-	struct commit *head = lookup_commit_or_die(head_oid, "HEAD");
-	struct commit *branch = lookup_commit_or_die(&remote->old_oid,
+	struct cummit *head = lookup_cummit_or_die(head_oid, "HEAD");
+	struct cummit *branch = lookup_cummit_or_die(&remote->old_oid,
 						     remote->name);
 
 	return in_merge_bases(branch, head);
@@ -1825,7 +1825,7 @@ int cmd_main(int argc, const char **argv)
 
 	new_refs = 0;
 	for (ref = remote_refs; ref; ref = ref->next) {
-		struct strvec commit_argv = STRVEC_INIT;
+		struct strvec cummit_argv = STRVEC_INIT;
 
 		if (!ref->peer_ref)
 			continue;
@@ -1862,7 +1862,7 @@ int cmd_main(int argc, const char **argv)
 				 * we know that the remote ref is not
 				 * an ancestor of what we are trying to
 				 * push.  Either way this can be losing
-				 * commits at the remote end and likely
+				 * cummits at the remote end and likely
 				 * we were not up to date to begin with.
 				 */
 				error("remote '%s' is not an ancestor of\n"
@@ -1903,14 +1903,14 @@ int cmd_main(int argc, const char **argv)
 		}
 
 		/* Set up revision info for this refspec */
-		strvec_push(&commit_argv, ""); /* ignored */
-		strvec_push(&commit_argv, "--objects");
-		strvec_push(&commit_argv, oid_to_hex(&ref->new_oid));
+		strvec_push(&cummit_argv, ""); /* ignored */
+		strvec_push(&cummit_argv, "--objects");
+		strvec_push(&cummit_argv, oid_to_hex(&ref->new_oid));
 		if (!push_all && !is_null_oid(&ref->old_oid))
-			strvec_pushf(&commit_argv, "^%s",
+			strvec_pushf(&cummit_argv, "^%s",
 				     oid_to_hex(&ref->old_oid));
 		repo_init_revisions(the_repository, &revs, setup_git_directory());
-		setup_revisions(commit_argv.nr, commit_argv.v, &revs, NULL);
+		setup_revisions(cummit_argv.nr, cummit_argv.v, &revs, NULL);
 		revs.edge_hint = 0; /* just in case */
 
 		/* Generate a list of objects that need to be pushed */
@@ -1940,7 +1940,7 @@ int cmd_main(int argc, const char **argv)
 			printf("%s %s\n", !rc ? "ok" : "error", ref->name);
 		unlock_remote(ref_lock);
 		check_locks();
-		strvec_clear(&commit_argv);
+		strvec_clear(&cummit_argv);
 	}
 
 	/* Update remote server info if appropriate */

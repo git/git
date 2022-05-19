@@ -55,10 +55,10 @@ To use it, just drop git-jump in your PATH, and then invoke it like
 this:
 
 --------------------------------------------------
-# jump to changes not yet staged for commit
+# jump to changes not yet staged for cummit
 git jump diff
 
-# jump to changes that are staged for commit; you can give
+# jump to changes that are staged for cummit; you can give
 # arbitrary diff options
 git jump diff --cached
 

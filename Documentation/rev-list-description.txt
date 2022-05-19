@@ -1,12 +1,12 @@
-List commits that are reachable by following the `parent` links from the
-given commit(s), but exclude commits that are reachable from the one(s)
+List cummits that are reachable by following the `parent` links from the
+given cummit(s), but exclude cummits that are reachable from the one(s)
 given with a '{caret}' in front of them.  The output is given in reverse
 chronological order by default.
 
-You can think of this as a set operation. Commits reachable from any of
-the commits given on the command line form a set, and then commits reachable
+You can think of this as a set operation. cummits reachable from any of
+the cummits given on the command line form a set, and then cummits reachable
 from any of the ones given with '{caret}' in front are subtracted from that
-set.  The remaining commits are what comes out in the command's output.
+set.  The remaining cummits are what comes out in the command's output.
 Various other options and paths parameters can be used to further limit the
 result.
 
@@ -23,11 +23,11 @@ $ git log foo bar ^baz
 -----------------------------------------------------------------------
 endif::git-log[]
 
-means "list all the commits which are reachable from 'foo' or 'bar', but
+means "list all the cummits which are reachable from 'foo' or 'bar', but
 not from 'baz'".
 
-A special notation "'<commit1>'..'<commit2>'" can be used as a
-short-hand for "^'<commit1>' '<commit2>'". For example, either of
+A special notation "'<cummit1>'..'<cummit2>'" can be used as a
+short-hand for "^'<cummit1>' '<cummit2>'". For example, either of
 the following may be used interchangeably:
 
 ifdef::git-rev-list[]
@@ -43,8 +43,8 @@ $ git log HEAD ^origin
 -----------------------------------------------------------------------
 endif::git-log[]
 
-Another special notation is "'<commit1>'...'<commit2>'" which is useful
-for merges.  The resulting set of commits is the symmetric difference
+Another special notation is "'<cummit1>'...'<cummit2>'" which is useful
+for merges.  The resulting set of cummits is the symmetric difference
 between the two operands.  The following two commands are equivalent:
 
 ifdef::git-rev-list[]

@@ -24,7 +24,7 @@ test_expect_success "$test_description" '
 	before=$(git hash-object f) &&
 	before=$(git rev-parse --short $before) &&
 	git add f &&
-	git commit -q -m. f &&
+	git cummit -q -m. f &&
 	printf "\ny\n" > f &&
 	after=$(git hash-object f) &&
 	after=$(git rev-parse --short $after) &&

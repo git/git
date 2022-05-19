@@ -19,24 +19,24 @@ test_expect_success 'submodule config cache setup' '
 		git init &&
 		echo a >file &&
 		git add file &&
-		git commit -ma
+		git cummit -ma
 	) &&
 	mkdir super &&
 	(
 		cd super &&
 		git init &&
 		git submodule add ../submodule &&
-		git commit -m "add submodule"
+		git cummit -m "add submodule"
 	)
 '
 
 test_expect_success 'test submodule set-url' '
-	# add a commit and move the submodule (change the url)
+	# add a cummit and move the submodule (change the url)
 	(
 		cd submodule &&
 		echo b >>file &&
 		git add file &&
-		git commit -mb
+		git cummit -mb
 	) &&
 	mv submodule newsubmodule &&
 

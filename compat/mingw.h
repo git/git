@@ -133,7 +133,7 @@ static inline pid_t fork(void)
 static inline unsigned int alarm(unsigned int seconds)
 { return 0; }
 static inline int fsync(int fd)
-{ return _commit(fd); }
+{ return _cummit(fd); }
 static inline void sync(void)
 {}
 static inline uid_t getuid(void)

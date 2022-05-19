@@ -61,12 +61,12 @@ msgid "Reading"
 msgstr "Lecture en cours"
 
 #: gitk:496 gitk:4544
-msgid "Reading commits..."
-msgstr "Lecture des commits..."
+msgid "Reading cummits..."
+msgstr "Lecture des cummits..."
 
 #: gitk:499 gitk:1637 gitk:4547
-msgid "No commits selected"
-msgstr "Aucun commit sélectionné"
+msgid "No cummits selected"
+msgstr "Aucun cummit sélectionné"
 
 #: gitk:1445 gitk:4064 gitk:12469
 msgid "Command line"
@@ -77,8 +77,8 @@ msgid "Can't parse git log output:"
 msgstr "Impossible de lire la sortie de git log :"
 
 #: gitk:1740
-msgid "No commit information available"
-msgstr "Aucune information disponible sur le commit"
+msgid "No cummit information available"
+msgstr "Aucune information disponible sur le cummit"
 
 #: gitk:1903 gitk:1932 gitk:4334 gitk:9702 gitk:11274 gitk:11554
 msgid "OK"
@@ -170,8 +170,8 @@ msgid "Find"
 msgstr "Recherche"
 
 #: gitk:2309
-msgid "commit"
-msgstr "commit"
+msgid "cummit"
+msgstr "cummit"
 
 #: gitk:2313 gitk:2315 gitk:4706 gitk:4729 gitk:4753 gitk:6774 gitk:6846
 #: gitk:6931
@@ -220,7 +220,7 @@ msgid "Author"
 msgstr "Auteur"
 
 #: gitk:2333 gitk:4890 gitk:6805 gitk:7345
-msgid "Committer"
+msgid "cummitter"
 msgstr "Validateur"
 
 #: gitk:2367
@@ -276,28 +276,28 @@ msgid "Create tag"
 msgstr "Créer étiquette"
 
 #: gitk:2639
-msgid "Copy commit summary"
-msgstr "Copié le résumé du commit"
+msgid "Copy cummit summary"
+msgstr "Copié le résumé du cummit"
 
 #: gitk:2640 gitk:9404
-msgid "Write commit to file"
-msgstr "Écrire le commit dans un fichier"
+msgid "Write cummit to file"
+msgstr "Écrire le cummit dans un fichier"
 
 #: gitk:2641 gitk:9461
 msgid "Create new branch"
 msgstr "Créer une nouvelle branche"
 
 #: gitk:2642
-msgid "Cherry-pick this commit"
-msgstr "Cueillir (cherry-pick) ce commit"
+msgid "Cherry-pick this cummit"
+msgstr "Cueillir (cherry-pick) ce cummit"
 
 #: gitk:2643
 msgid "Reset HEAD branch to here"
 msgstr "Réinitialiser la branche HEAD vers cet état"
 
 #: gitk:2644
-msgid "Mark this commit"
-msgstr "Marquer ce commit"
+msgid "Mark this cummit"
+msgstr "Marquer ce cummit"
 
 #: gitk:2645
 msgid "Return to mark"
@@ -308,20 +308,20 @@ msgid "Find descendant of this and mark"
 msgstr "Chercher le descendant de ceci et le marquer"
 
 #: gitk:2647
-msgid "Compare with marked commit"
-msgstr "Comparer avec le commit marqué"
+msgid "Compare with marked cummit"
+msgstr "Comparer avec le cummit marqué"
 
 #: gitk:2648 gitk:2659
-msgid "Diff this -> marked commit"
+msgid "Diff this -> marked cummit"
 msgstr "Diff ceci -> sélection"
 
 #: gitk:2649 gitk:2660
-msgid "Diff marked commit -> this"
+msgid "Diff marked cummit -> this"
 msgstr "Diff entre sélection -> ceci"
 
 #: gitk:2650
-msgid "Revert this commit"
-msgstr "Défaire ce commit"
+msgid "Revert this cummit"
+msgstr "Défaire ce cummit"
 
 #: gitk:2666
 msgid "Check out this branch"
@@ -348,8 +348,8 @@ msgid "External diff"
 msgstr "Diff externe"
 
 #: gitk:2678
-msgid "Blame parent commit"
-msgstr "Blâmer le commit parent"
+msgid "Blame parent cummit"
+msgstr "Blâmer le cummit parent"
 
 #: gitk:2679
 msgid "Copy path"
@@ -370,14 +370,14 @@ msgstr "À propos de gitk"
 #: gitk:3033
 msgid ""
 "\n"
-"Gitk - a commit viewer for git\n"
+"Gitk - a cummit viewer for git\n"
 "\n"
 "Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
 "Use and redistribute under the terms of the GNU General Public License"
 msgstr ""
 "\n"
-"Gitk - visualisateur de commit pour git\n"
+"Gitk - visualisateur de cummit pour git\n"
 "\n"
 "Copyright \\u00a9 2005-2016 Paul Mackerras\n"
 "\n"
@@ -406,20 +406,20 @@ msgid "<%s-W>\t\tClose window"
 msgstr "<%s-W>\t\tFermer la fenêtre"
 
 #: gitk:3069
-msgid "<Home>\t\tMove to first commit"
-msgstr "<Début>\t\tAller au premier commit"
+msgid "<Home>\t\tMove to first cummit"
+msgstr "<Début>\t\tAller au premier cummit"
 
 #: gitk:3070
-msgid "<End>\t\tMove to last commit"
-msgstr "<Fin>\t\tAller au dernier commit"
+msgid "<End>\t\tMove to last cummit"
+msgstr "<Fin>\t\tAller au dernier cummit"
 
 #: gitk:3071
-msgid "<Up>, p, k\tMove up one commit"
-msgstr "<Haut>, p, k\t Aller au commit précédent"
+msgid "<Up>, p, k\tMove up one cummit"
+msgstr "<Haut>, p, k\t Aller au cummit précédent"
 
 #: gitk:3072
-msgid "<Down>, n, j\tMove down one commit"
-msgstr "<Bas>, n, j\t Aller au commit suivant"
+msgid "<Down>, n, j\tMove down one cummit"
+msgstr "<Bas>, n, j\t Aller au cummit suivant"
 
 #: gitk:3073
 msgid "<Left>, z, h\tGo back in history list"
@@ -431,56 +431,56 @@ msgstr "<Droite>, x, l\tAvancer dans l'historique"
 
 #: gitk:3075
 #, tcl-format
-msgid "<%s-n>\tGo to n-th parent of current commit in history list"
-msgstr "<%s-n>\tAller sur le n-ième parent du commit dans l'historique"
+msgid "<%s-n>\tGo to n-th parent of current cummit in history list"
+msgstr "<%s-n>\tAller sur le n-ième parent du cummit dans l'historique"
 
 #: gitk:3076
-msgid "<PageUp>\tMove up one page in commit list"
-msgstr "<PageUp>\tMonter d'une page dans la liste des commits"
+msgid "<PageUp>\tMove up one page in cummit list"
+msgstr "<PageUp>\tMonter d'une page dans la liste des cummits"
 
 #: gitk:3077
-msgid "<PageDown>\tMove down one page in commit list"
-msgstr "<PageDown>\tDescendre d'une page dans la liste des commits"
+msgid "<PageDown>\tMove down one page in cummit list"
+msgstr "<PageDown>\tDescendre d'une page dans la liste des cummits"
 
 #: gitk:3078
 #, tcl-format
-msgid "<%s-Home>\tScroll to top of commit list"
-msgstr "<%s-Début>\tAller en haut de la liste des commits"
+msgid "<%s-Home>\tScroll to top of cummit list"
+msgstr "<%s-Début>\tAller en haut de la liste des cummits"
 
 #: gitk:3079
 #, tcl-format
-msgid "<%s-End>\tScroll to bottom of commit list"
-msgstr "<%s-End>\tAller en bas de la liste des commits"
+msgid "<%s-End>\tScroll to bottom of cummit list"
+msgstr "<%s-End>\tAller en bas de la liste des cummits"
 
 #: gitk:3080
 #, tcl-format
-msgid "<%s-Up>\tScroll commit list up one line"
-msgstr "<%s-Up>\tMonter d'une ligne dans la liste des commits"
+msgid "<%s-Up>\tScroll cummit list up one line"
+msgstr "<%s-Up>\tMonter d'une ligne dans la liste des cummits"
 
 #: gitk:3081
 #, tcl-format
-msgid "<%s-Down>\tScroll commit list down one line"
-msgstr "<%s-Down>\tDescendre d'une ligne dans la liste des commits"
+msgid "<%s-Down>\tScroll cummit list down one line"
+msgstr "<%s-Down>\tDescendre d'une ligne dans la liste des cummits"
 
 #: gitk:3082
 #, tcl-format
-msgid "<%s-PageUp>\tScroll commit list up one page"
-msgstr "<%s-PageUp>\tMonter d'une page dans la liste des commits"
+msgid "<%s-PageUp>\tScroll cummit list up one page"
+msgstr "<%s-PageUp>\tMonter d'une page dans la liste des cummits"
 
 #: gitk:3083
 #, tcl-format
-msgid "<%s-PageDown>\tScroll commit list down one page"
-msgstr "<%s-PageDown>\tDescendre d'une page dans la liste des commits"
+msgid "<%s-PageDown>\tScroll cummit list down one page"
+msgstr "<%s-PageDown>\tDescendre d'une page dans la liste des cummits"
 
 #: gitk:3084
-msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgid "<Shift-Up>\tFind backwards (upwards, later cummits)"
 msgstr ""
-"<Shift-Up>\tRecherche en arrière (vers l'avant, commits les plus anciens)"
+"<Shift-Up>\tRecherche en arrière (vers l'avant, cummits les plus anciens)"
 
 #: gitk:3085
-msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgid "<Shift-Down>\tFind forwards (downwards, earlier cummits)"
 msgstr ""
-"<Shift-Down>\tRecherche en avant (vers l'arrière, commit les plus récents)"
+"<Shift-Down>\tRecherche en avant (vers l'arrière, cummit les plus récents)"
 
 #: gitk:3086
 msgid "<Delete>, b\tScroll diff view up one page"
@@ -517,8 +517,8 @@ msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\t\tAller au résultat de recherche suivant"
 
 #: gitk:3094
-msgid "g\t\tGo to commit"
-msgstr "g\t\tAller au commit"
+msgid "g\t\tGo to cummit"
+msgstr "g\t\tAller au cummit"
 
 #: gitk:3095
 msgid "/\t\tFocus the search box"
@@ -581,8 +581,8 @@ msgid "command failed:"
 msgstr "échec de la commande :"
 
 #: gitk:3803
-msgid "No such commit"
-msgstr "Commit inexistant"
+msgid "No such cummit"
+msgstr "cummit inexistant"
 
 #: gitk:3817
 msgid "git gui blame: command failed:"
@@ -614,8 +614,8 @@ msgstr "Erreur à l'exécution de git blame : %s"
 
 #: gitk:3944
 #, tcl-format
-msgid "That line comes from commit %s,  which is not in this view"
-msgstr "Cette ligne est issue du commit %s, qui n'est pas dans cette vue"
+msgid "That line comes from cummit %s,  which is not in this view"
+msgstr "Cette ligne est issue du cummit %s, qui n'est pas dans cette vue"
 
 #: gitk:3958
 msgid "External diff viewer failed:"
@@ -662,28 +662,28 @@ msgid "All remote-tracking branches"
 msgstr "Toutes les branches de suivi à distance"
 
 #: gitk:4100
-msgid "Commit Info (regular expressions):"
-msgstr "Info sur les commits (expressions régulières) :"
+msgid "cummit Info (regular expressions):"
+msgstr "Info sur les cummits (expressions régulières) :"
 
 #: gitk:4101
 msgid "Author:"
 msgstr "Auteur :"
 
 #: gitk:4102
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "Validateur :"
 
 #: gitk:4103
-msgid "Commit Message:"
-msgstr "Message de commit :"
+msgid "cummit Message:"
+msgstr "Message de cummit :"
 
 #: gitk:4104
-msgid "Matches all Commit Info criteria"
-msgstr "Correspond à tous les critères d'Info sur les commits"
+msgid "Matches all cummit Info criteria"
+msgstr "Correspond à tous les critères d'Info sur les cummits"
 
 #: gitk:4105
-msgid "Matches no Commit Info criteria"
-msgstr "Ne correspond à aucun des critères d'Info sur les commits"
+msgid "Matches no cummit Info criteria"
+msgstr "Ne correspond à aucun des critères d'Info sur les cummits"
 
 #: gitk:4106
 msgid "Changes to Files:"
@@ -703,10 +703,10 @@ msgstr "Recherche de la chaîne :"
 
 #: gitk:4110
 msgid ""
-"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"cummit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 msgstr ""
-"Dates des commits (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, "
+"Dates des cummits (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, "
 "2009 15:27:38\") :"
 
 #: gitk:4111
@@ -758,8 +758,8 @@ msgid "Enter files and directories to include, one per line:"
 msgstr "Saisir les fichiers et répertoires à inclure, un par ligne :"
 
 #: gitk:4123
-msgid "Command to generate more commits to include:"
-msgstr "Commande pour générer plus de commits à inclure :"
+msgid "Command to generate more cummits to include:"
+msgstr "Commande pour générer plus de cummits à inclure :"
 
 #: gitk:4247
 msgid "Gitk: edit view"
@@ -778,8 +778,8 @@ msgid "Apply (F5)"
 msgstr "Appliquer (F5)"
 
 #: gitk:4373
-msgid "Error in commit selection arguments:"
-msgstr "Erreur dans les arguments de sélection des commits :"
+msgid "Error in cummit selection arguments:"
+msgstr "Erreur dans les arguments de sélection des cummits :"
 
 #: gitk:4428 gitk:4481 gitk:4943 gitk:4957 gitk:6227 gitk:12410 gitk:12411
 msgid "None"
@@ -802,11 +802,11 @@ msgid "Not ancestor"
 msgstr "Pas un ancêtre"
 
 #: gitk:5343
-msgid "Local changes checked in to index but not committed"
+msgid "Local changes checked in to index but not cummitted"
 msgstr "Modifications locales enregistrées dans l'index mais non validées"
 
 #: gitk:5379
-msgid "Local uncommitted changes, not checked in to index"
+msgid "Local uncummitted changes, not checked in to index"
 msgstr "Modifications locales non enregistrées dans l'index et non validées"
 
 #: gitk:7153
@@ -888,8 +888,8 @@ msgid "Detached head: can't reset"
 msgstr "Head détaché : impossible de réinitialiser"
 
 #: gitk:9024 gitk:9030
-msgid "Skipping merge commit "
-msgstr "Éviter le commit de la fusion "
+msgid "Skipping merge cummit "
+msgstr "Éviter le cummit de la fusion "
 
 #: gitk:9039 gitk:9044
 msgid "Error getting patch ID for "
@@ -900,8 +900,8 @@ msgid " - stopping\n"
 msgstr " - arrêt en cours\n"
 
 #: gitk:9050 gitk:9053 gitk:9061 gitk:9075 gitk:9084
-msgid "Commit "
-msgstr "Commit "
+msgid "cummit "
+msgstr "cummit "
 
 #: gitk:9054
 msgid ""
@@ -921,9 +921,9 @@ msgstr ""
 
 #: gitk:9064
 msgid ""
-"Diff of commits:\n"
+"Diff of cummits:\n"
 "\n"
-msgstr "Diff des commits :\n\n"
+msgstr "Diff des cummits :\n\n"
 
 #: gitk:9076 gitk:9085
 #, tcl-format
@@ -932,13 +932,13 @@ msgstr " a %s enfants - arrêt en cours\n"
 
 #: gitk:9104
 #, tcl-format
-msgid "Error writing commit to file: %s"
-msgstr "Erreur à l'écriture du commit dans le fichier : %s"
+msgid "Error writing cummit to file: %s"
+msgstr "Erreur à l'écriture du cummit dans le fichier : %s"
 
 #: gitk:9110
 #, tcl-format
-msgid "Error diffing commits: %s"
-msgstr "Erreur à la différence des commits : %s"
+msgid "Error diffing cummits: %s"
+msgstr "Erreur à la différence des cummits : %s"
 
 #: gitk:9156
 msgid "Top"
@@ -1022,8 +1022,8 @@ msgid "Write"
 msgstr "Écrire"
 
 #: gitk:9441
-msgid "Error writing commit:"
-msgstr "Erreur à l'ecriture du commit :"
+msgid "Error writing cummit:"
+msgstr "Erreur à l'ecriture du cummit :"
 
 #: gitk:9468
 msgid "Name:"
@@ -1040,9 +1040,9 @@ msgstr "La branche '%s' existe déjà. Écraser?"
 
 #: gitk:9563
 #, tcl-format
-msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgid "cummit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
-"Le Commit %s est déjà inclus dans la branche %s -- le ré-appliquer malgré "
+"Le cummit %s est déjà inclus dans la branche %s -- le ré-appliquer malgré "
 "tout?"
 
 #: gitk:9568
@@ -1053,10 +1053,10 @@ msgstr "Picorer (Cherry-picking)"
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
-"Please commit, reset or stash your changes and try again."
+"Please cummit, reset or stash your changes and try again."
 msgstr ""
 "Le picorage (cherry-pick) a échouée à cause de modifications locales du fichier '%s'.\n"
-"Veuillez commiter, réinitialiser ou stasher vos changements et essayer de nouveau."
+"Veuillez cummiter, réinitialiser ou stasher vos changements et essayer de nouveau."
 
 #: gitk:9583
 msgid ""
@@ -1067,24 +1067,24 @@ msgstr ""
 "Souhaitez-vous exécuter git citool pour le résoudre ?"
 
 #: gitk:9599 gitk:9657
-msgid "No changes committed"
+msgid "No changes cummitted"
 msgstr "Aucune modification validée"
 
 #: gitk:9626
 #, tcl-format
-msgid "Commit %s is not included in branch %s -- really revert it?"
-msgstr "Le Commit %s n'est pas inclus dans la branche %s -- le défaire malgré tout?"
+msgid "cummit %s is not included in branch %s -- really revert it?"
+msgstr "Le cummit %s n'est pas inclus dans la branche %s -- le défaire malgré tout?"
 
 #: gitk:9631
 msgid "Reverting"
-msgstr "Commit défait"
+msgstr "cummit défait"
 
 #: gitk:9639
 #, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
-"commit, reset or stash  your changes and try again."
-msgstr "Échec en tentant de défaire le commit à cause de modifications locales des fichiers : %s. Veuillez valider, réinitialiser ou remiser vos modifications et essayer de nouveau."
+"cummit, reset or stash  your changes and try again."
+msgstr "Échec en tentant de défaire le cummit à cause de modifications locales des fichiers : %s. Veuillez valider, réinitialiser ou remiser vos modifications et essayer de nouveau."
 
 #: gitk:9643
 msgid ""
@@ -1141,10 +1141,10 @@ msgstr "Impossible de supprimer la branche extraite"
 #: gitk:9835
 #, tcl-format
 msgid ""
-"The commits on branch %s aren't on any other branch.\n"
+"The cummits on branch %s aren't on any other branch.\n"
 "Really delete branch %s?"
 msgstr ""
-"Les commits de la branche %s ne sont dans aucune autre branche.\n"
+"Les cummits de la branche %s ne sont dans aucune autre branche.\n"
 "Voulez-vous vraiment supprimer cette branche %s ?"
 
 #: gitk:9866
@@ -1158,10 +1158,10 @@ msgstr "Filtrer"
 
 #: gitk:10179
 msgid ""
-"Error reading commit topology information; branch and preceding/following "
+"Error reading cummit topology information; branch and preceding/following "
 "tag information will be incomplete."
 msgstr ""
-"Erreur à la lecture des informations sur la topologie des commits, les "
+"Erreur à la lecture des informations sur la topologie des cummits, les "
 "informations sur les branches et les tags précédents/suivants seront "
 "incomplètes."
 
@@ -1186,8 +1186,8 @@ msgid "I"
 msgstr "I"
 
 #: gitk:11381
-msgid "Commit list display options"
-msgstr "Options d'affichage de la liste des commits"
+msgid "cummit list display options"
+msgstr "Options d'affichage de la liste des cummits"
 
 #: gitk:11384
 msgid "Maximum graph width (lines)"

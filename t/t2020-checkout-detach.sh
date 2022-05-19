@@ -20,7 +20,7 @@ check_orphan_warning() {
 	test_i18ngrep ! "$PREV_HEAD_DESC" "$1"
 }
 check_no_orphan_warning() {
-	test_i18ngrep ! "you are leaving .* commit.*behind" "$1" &&
+	test_i18ngrep ! "you are leaving .* cummit.*behind" "$1" &&
 	test_i18ngrep "$PREV_HEAD_DESC" "$1"
 }
 
@@ -30,10 +30,10 @@ reset () {
 }
 
 test_expect_success 'setup' '
-	test_commit one &&
-	test_commit two &&
-	test_commit three && git tag -d three &&
-	test_commit four && git tag -d four &&
+	test_cummit one &&
+	test_cummit two &&
+	test_cummit three && git tag -d three &&
+	test_cummit four && git tag -d four &&
 	git branch branch &&
 	git tag tag
 '
@@ -80,7 +80,7 @@ test_expect_success 'checkout --detach without branch name' '
 	check_detached
 '
 
-test_expect_success 'checkout --detach errors out for non-commit' '
+test_expect_success 'checkout --detach errors out for non-cummit' '
 	reset &&
 	test_must_fail git checkout --detach one^{tree} &&
 	check_not_detached
@@ -107,29 +107,29 @@ test_expect_success 'checkout --detach moves HEAD' '
 	git diff --exit-code two
 '
 
-test_expect_success 'checkout warns on orphan commits' '
+test_expect_success 'checkout warns on orphan cummits' '
 	reset &&
 	git checkout --detach two &&
 	echo content >orphan &&
 	git add orphan &&
-	git commit -a -m orphan1 &&
+	git cummit -a -m orphan1 &&
 	echo new content >orphan &&
-	git commit -a -m orphan2 &&
+	git cummit -a -m orphan2 &&
 	orphan2=$(git rev-parse HEAD) &&
 	git checkout main 2>stderr
 '
 
-test_expect_success 'checkout warns on orphan commits: output' '
-	check_orphan_warning stderr "2 commits"
+test_expect_success 'checkout warns on orphan cummits: output' '
+	check_orphan_warning stderr "2 cummits"
 '
 
-test_expect_success 'checkout warns orphaning 1 of 2 commits' '
+test_expect_success 'checkout warns orphaning 1 of 2 cummits' '
 	git checkout "$orphan2" &&
 	git checkout HEAD^ 2>stderr
 '
 
-test_expect_success 'checkout warns orphaning 1 of 2 commits: output' '
-	check_orphan_warning stderr "1 commit"
+test_expect_success 'checkout warns orphaning 1 of 2 cummits: output' '
+	check_orphan_warning stderr "1 cummit"
 '
 
 test_expect_success 'checkout does not warn leaving ref tip' '
@@ -142,18 +142,18 @@ test_expect_success 'checkout does not warn leaving ref tip' '
 	check_no_orphan_warning stderr
 '
 
-test_expect_success 'checkout does not warn leaving reachable commit' '
+test_expect_success 'checkout does not warn leaving reachable cummit' '
 	reset &&
 	git checkout --detach HEAD^ &&
 	git checkout main 2>stderr
 '
 
-test_expect_success 'checkout does not warn leaving reachable commit' '
+test_expect_success 'checkout does not warn leaving reachable cummit' '
 	check_no_orphan_warning stderr
 '
 
 cat >expect <<'EOF'
-Your branch is behind 'main' by 1 commit, and can be fast-forwarded.
+Your branch is behind 'main' by 1 cummit, and can be fast-forwarded.
   (use "git pull" to update your local branch)
 EOF
 test_expect_success 'tracking count is accurate after orphan check' '
@@ -192,19 +192,19 @@ test_expect_success 'no advice given for explicit detached head state' '
 # Detached HEAD tests for GIT_PRINT_SHA1_ELLIPSIS (new format)
 test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not asked to' "
 
-	commit=$(git rev-parse --short=12 main^) &&
-	commit2=$(git rev-parse --short=12 main~2) &&
-	commit3=$(git rev-parse --short=12 main~3) &&
+	cummit=$(git rev-parse --short=12 main^) &&
+	cummit2=$(git rev-parse --short=12 main~2) &&
+	cummit3=$(git rev-parse --short=12 main~3) &&
 
 	# The first detach operation is more chatty than the following ones.
 	cat >1st_detach <<-EOF &&
 	Note: switching to 'HEAD^'.
 
 	You are in 'detached HEAD' state. You can look around, make experimental
-	changes and commit them, and you can discard any commits you make in this
+	changes and cummit them, and you can discard any cummits you make in this
 	state without impacting any branches by switching back to a branch.
 
-	If you want to create a new branch to retain commits you create, you may
+	If you want to create a new branch to retain cummits you create, you may
 	do so (now or later) by using -c with the switch command. Example:
 
 	  git switch -c <new-branch-name>
@@ -215,18 +215,18 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 
 	Turn off this advice by setting config variable advice.detachedHead to false
 
-	HEAD is now at \$commit three
+	HEAD is now at \$cummit three
 	EOF
 
 	# The remaining ones just show info about previous and current HEADs.
 	cat >2nd_detach <<-EOF &&
-	Previous HEAD position was \$commit three
-	HEAD is now at \$commit2 two
+	Previous HEAD position was \$cummit three
+	HEAD is now at \$cummit2 two
 	EOF
 
 	cat >3rd_detach <<-EOF &&
-	Previous HEAD position was \$commit2 two
-	HEAD is now at \$commit3 one
+	Previous HEAD position was \$cummit2 two
+	HEAD is now at \$cummit3 one
 	EOF
 
 	reset &&
@@ -249,7 +249,7 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 
 	sane_unset GIT_PRINT_SHA1_ELLIPSIS &&
 
-	# We only have four commits, but we can re-use them
+	# We only have four cummits, but we can re-use them
 	reset &&
 	check_not_detached &&
 
@@ -274,19 +274,19 @@ test_expect_success 'describe_detached_head prints no SHA-1 ellipsis when not as
 # Detached HEAD tests for GIT_PRINT_SHA1_ELLIPSIS (old format)
 test_expect_success 'describe_detached_head does print SHA-1 ellipsis when asked to' "
 
-	commit=$(git rev-parse --short=12 main^) &&
-	commit2=$(git rev-parse --short=12 main~2) &&
-	commit3=$(git rev-parse --short=12 main~3) &&
+	cummit=$(git rev-parse --short=12 main^) &&
+	cummit2=$(git rev-parse --short=12 main~2) &&
+	cummit3=$(git rev-parse --short=12 main~3) &&
 
 	# The first detach operation is more chatty than the following ones.
 	cat >1st_detach <<-EOF &&
 	Note: switching to 'HEAD^'.
 
 	You are in 'detached HEAD' state. You can look around, make experimental
-	changes and commit them, and you can discard any commits you make in this
+	changes and cummit them, and you can discard any cummits you make in this
 	state without impacting any branches by switching back to a branch.
 
-	If you want to create a new branch to retain commits you create, you may
+	If you want to create a new branch to retain cummits you create, you may
 	do so (now or later) by using -c with the switch command. Example:
 
 	  git switch -c <new-branch-name>
@@ -297,18 +297,18 @@ test_expect_success 'describe_detached_head does print SHA-1 ellipsis when asked
 
 	Turn off this advice by setting config variable advice.detachedHead to false
 
-	HEAD is now at \$commit... three
+	HEAD is now at \$cummit... three
 	EOF
 
 	# The remaining ones just show info about previous and current HEADs.
 	cat >2nd_detach <<-EOF &&
-	Previous HEAD position was \$commit... three
-	HEAD is now at \$commit2... two
+	Previous HEAD position was \$cummit... three
+	HEAD is now at \$cummit2... two
 	EOF
 
 	cat >3rd_detach <<-EOF &&
-	Previous HEAD position was \$commit2... two
-	HEAD is now at \$commit3... one
+	Previous HEAD position was \$cummit2... two
+	HEAD is now at \$cummit3... one
 	EOF
 
 	reset &&

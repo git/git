@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git name-rev' [--tags] [--refs=<pattern>]
-	       ( --all | --stdin | <commit-ish>... )
+	       ( --all | --stdin | <cummit-ish>... )
 
 DESCRIPTION
 -----------
@@ -22,7 +22,7 @@ OPTIONS
 -------
 
 --tags::
-	Do not use branch names, but only tags to name the commits
+	Do not use branch names, but only tags to name the cummits
 
 --refs=<pattern>::
 	Only use refs whose names match a given shell pattern.  The pattern
@@ -40,7 +40,7 @@ OPTIONS
 	list of exclude patterns.
 
 --all::
-	List all commits reachable from all refs
+	List all cummits reachable from all refs
 
 --annotate-stdin::
 	Transform stdin by substituting all the 40-character SHA-1
@@ -85,14 +85,14 @@ while its tree object is 70d105cc79e63b81cfdcb08a15297c23e60b07ad
 	instead of printing `undefined`.
 
 --always::
-	Show uniquely abbreviated commit object as fallback.
+	Show uniquely abbreviated cummit object as fallback.
 
 EXAMPLES
 --------
 
-Given a commit, find out where it is relative to the local refs. Say somebody
-wrote you about that fantastic commit 33db5f4d9027a10e477ccf054b2c1ab94f74c85a.
-Of course, you look into the commit, but that only tells you what happened, but
+Given a cummit, find out where it is relative to the local refs. Say somebody
+wrote you about that fantastic cummit 33db5f4d9027a10e477ccf054b2c1ab94f74c85a.
+Of course, you look into the cummit, but that only tells you what happened, but
 not the context.
 
 Enter 'git name-rev':

@@ -8,11 +8,11 @@ test_description='test worktree writing operations when skip-worktree is used'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit init &&
+	test_cummit init &&
 	echo modified >> init.t &&
 	touch added &&
 	git add init.t added &&
-	git commit -m "modified and added" &&
+	git cummit -m "modified and added" &&
 	git tag top
 '
 
@@ -116,7 +116,7 @@ test_expect_success 'git-clean, dirty case' '
 '
 
 test_expect_success '--ignore-skip-worktree-entries leaves worktree alone' '
-	test_commit keep-me &&
+	test_cummit keep-me &&
 	git update-index --skip-worktree keep-me.t &&
 	rm keep-me.t &&
 
@@ -141,7 +141,7 @@ test_expect_success 'stash restore in sparse checkout' '
 		echo removeme >removeme &&
 		echo modified >modified &&
 		git add . &&
-		git commit -m Initial &&
+		git cummit -m Initial &&
 
 		echo AA >>subdir/A &&
 		echo addme >addme &&

@@ -6,7 +6,7 @@ Overall operation
 
 . Connects to the remote side and invokes git-receive-pack.
 
-. Learns what refs the remote has and what commit they point at.
+. Learns what refs the remote has and what cummit they point at.
   Matches them to the refspecs we are pushing.
 
 . Checks if there are non-fast-forwards.  Unlike fetch-pack,

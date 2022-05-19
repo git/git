@@ -3,7 +3,7 @@
 
 /*
  * A priority queue implementation, primarily for keeping track of
- * commits in the 'date-order' so that we process them from new to old
+ * cummits in the 'date-order' so that we process them from new to old
  * as they are discovered, but can be used to hold any pointer to
  * struct.  The caller is responsible for supplying a function to
  * compare two "things".

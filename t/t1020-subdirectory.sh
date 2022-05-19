@@ -155,7 +155,7 @@ test_expect_success 'GIT_PREFIX for built-ins' '
 '
 
 test_expect_success 'no file/rev ambiguity check inside .git' '
-	git commit -a -m 1 &&
+	git cummit -a -m 1 &&
 	(
 		cd .git &&
 		git show -s HEAD

@@ -17,7 +17,7 @@ test_expect_success setup '
 	test_write_lines 1 2 3 4 5 6 7 8 9 a >ten_lines &&
 	git add one two tres mouse nine_lines ten_lines &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Initial git commit -m Initial &&
+	GIT_AUTHOR_NAME=Initial git cummit -m Initial &&
 
 	cat one >uno &&
 	mv two dos &&
@@ -25,17 +25,17 @@ test_expect_success setup '
 	echo DEF >>mouse &&
 	git add uno dos tres mouse &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Second git commit -a -m Second &&
+	GIT_AUTHOR_NAME=Second git cummit -a -m Second &&
 
 	echo GHIJK >>mouse &&
 	git add mouse &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Third git commit -m Third &&
+	GIT_AUTHOR_NAME=Third git cummit -m Third &&
 
 	cat mouse >cow &&
 	git add cow &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Fourth git commit -m Fourth &&
+	GIT_AUTHOR_NAME=Fourth git cummit -m Fourth &&
 
 	cat >cow <<-\EOF &&
 	ABC
@@ -45,7 +45,7 @@ test_expect_success setup '
 	EOF
 	git add cow &&
 	test_tick &&
-	GIT_AUTHOR_NAME=Fifth git commit -m Fifth
+	GIT_AUTHOR_NAME=Fifth git cummit -m Fifth
 '
 
 test_expect_success 'straight copy without -C' '
@@ -163,7 +163,7 @@ test_expect_success 'blame during cherry-pick with file rename conflict' '
 	echo MOUSE >> mouse &&
 	git mv mouse rodent &&
 	git add rodent &&
-	GIT_AUTHOR_NAME=Rodent git commit -m "rodent" &&
+	GIT_AUTHOR_NAME=Rodent git cummit -m "rodent" &&
 	git checkout --detach main &&
 	(git cherry-pick HEAD@{1} || test $? -eq 1) &&
 	git show HEAD@{1}:rodent > rodent &&
@@ -183,26 +183,26 @@ test_expect_success 'blame path that used to be a directory' '
 	echo B B B B B >path/elif &&
 	git add path &&
 	test_tick &&
-	git commit -m "path was a directory" &&
+	git cummit -m "path was a directory" &&
 	rm -fr path &&
 	echo A A A A A >path &&
 	git add path &&
 	test_tick &&
-	git commit -m "path is a regular file" &&
+	git cummit -m "path is a regular file" &&
 	git blame HEAD^.. -- path
 '
 
-test_expect_success 'blame to a commit with no author name' '
+test_expect_success 'blame to a cummit with no author name' '
   TREE=$(git rev-parse HEAD:) &&
-  cat >badcommit <<EOF &&
+  cat >badcummit <<EOF &&
 tree $TREE
 author <noname> 1234567890 +0000
-committer David Reiss <dreiss@facebook.com> 1234567890 +0000
+cummitter David Reiss <dreiss@facebook.com> 1234567890 +0000
 
 some message
 EOF
-  COMMIT=$(git hash-object -t commit -w badcommit) &&
-  git --no-pager blame $COMMIT -- uno >/dev/null
+  cummit=$(git hash-object -t cummit -w badcummit) &&
+  git --no-pager blame $cummit -- uno >/dev/null
 '
 
 test_expect_success 'blame -L with invalid start' '
@@ -239,7 +239,7 @@ test_expect_success 'setup file with CRLF newlines' '
 	git config core.autocrlf false &&
 	printf "testcase\n" >crlffile &&
 	git add crlffile &&
-	git commit -m testcase &&
+	git cummit -m testcase &&
 	printf "testcase\r\n" >crlffile
 '
 
@@ -261,7 +261,7 @@ test_expect_success 'blame file with CRLF core.autocrlf=true' '
 	printf "testcase\r\n" >crlfinrepo &&
 	>.gitattributes &&
 	git add crlfinrepo &&
-	git commit -m "add crlfinrepo" &&
+	git cummit -m "add crlfinrepo" &&
 	git config core.autocrlf true &&
 	mv crlfinrepo tmp &&
 	git checkout crlfinrepo &&
@@ -276,7 +276,7 @@ test_expect_success 'setup coalesce tests' '
 	DEF
 	EOF
 	git add giraffe &&
-	git commit -m "original file" &&
+	git cummit -m "original file" &&
 	orig=$(git rev-parse HEAD) &&
 
 	cat >giraffe <<-\EOF &&
@@ -285,7 +285,7 @@ test_expect_success 'setup coalesce tests' '
 	DEF
 	EOF
 	git add giraffe &&
-	git commit -m "interior SPLIT line" &&
+	git cummit -m "interior SPLIT line" &&
 	split=$(git rev-parse HEAD) &&
 
 	cat >giraffe <<-\EOF &&
@@ -293,7 +293,7 @@ test_expect_success 'setup coalesce tests' '
 	DEF
 	EOF
 	git add giraffe &&
-	git commit -m "same contents as original" &&
+	git cummit -m "same contents as original" &&
 	final=$(git rev-parse HEAD)
 '
 

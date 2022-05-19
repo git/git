@@ -47,12 +47,12 @@ test_expect_success 'setup repo for checkout with various types of changes' '
 		git checkout -b B2 &&
 		echo B2 >file &&
 		git add file &&
-		git commit -m file &&
+		git cummit -m file &&
 
 		git checkout -b B1 &&
 		echo B1 >file &&
 		git add file &&
-		git commit -m file
+		git cummit -m file
 	) &&
 
 	git init various &&
@@ -77,7 +77,7 @@ test_expect_success 'setup repo for checkout with various types of changes' '
 		echo l/l >l/l &&
 
 		git add . &&
-		git commit -m B1 &&
+		git cummit -m B1 &&
 
 		git checkout -b B2 &&
 		git rm -rf :^.gitmodules :^k &&
@@ -98,7 +98,7 @@ test_expect_success 'setup repo for checkout with various types of changes' '
 		echo m/m >m/m &&
 
 		git add . &&
-		git commit -m B2 &&
+		git cummit -m B2 &&
 
 		git checkout --recurse-submodules B1
 	)
@@ -172,10 +172,10 @@ test_expect_success 'submodules can use parallel checkout' '
 	(
 		cd super &&
 		git init sub &&
-		test_commit -C sub A &&
-		test_commit -C sub B &&
+		test_cummit -C sub A &&
+		test_cummit -C sub B &&
 		git submodule add ./sub &&
-		git commit -m sub &&
+		git cummit -m sub &&
 		rm sub/* &&
 		test_checkout_workers 2 git checkout --recurse-submodules .
 	)
@@ -187,8 +187,8 @@ test_expect_success 'parallel checkout respects --[no]-force' '
 	(
 		cd dirty &&
 		mkdir D &&
-		test_commit D/F &&
-		test_commit F &&
+		test_cummit D/F &&
+		test_cummit F &&
 
 		rm -rf D &&
 		echo changed >D &&
@@ -213,9 +213,9 @@ test_expect_success SYMLINKS 'parallel checkout checks for symlinks in leading d
 	(
 		cd symlinks &&
 		mkdir D untracked &&
-		# Commit 2 files to have enough work for 2 parallel workers
-		test_commit D/A &&
-		test_commit D/B &&
+		# cummit 2 files to have enough work for 2 parallel workers
+		test_cummit D/A &&
+		test_cummit D/B &&
 		rm -rf D &&
 		ln -s untracked D &&
 

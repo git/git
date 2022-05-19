@@ -30,7 +30,7 @@ Updates since v1.7.8
    drives them.
 
  * "git rev-parse FETCH_HEAD" after "git fetch" without specifying
-   what to fetch from the command line will now show the commit that
+   what to fetch from the command line will now show the cummit that
    would be merged if the command were "git pull".
 
  * "git add" learned to stream large files directly into a packfile
@@ -42,18 +42,18 @@ Updates since v1.7.8
  * "git checkout" and "git merge" learned "--no-overwrite-ignore" option
    to tell Git that untracked and ignored files are not expendable.
 
- * "git commit --amend" learned "--no-edit" option to say that the
+ * "git cummit --amend" learned "--no-edit" option to say that the
    user is amending the tree being recorded, without updating the
-   commit log message.
+   cummit log message.
 
- * "git commit" and "git reset" re-learned the optimization to prime
+ * "git cummit" and "git reset" re-learned the optimization to prime
    the cache-tree information in the index, which makes it faster to
    write a tree object out after the index entries are updated.
 
- * "git commit" detects and rejects an attempt to stuff NUL byte in
-   the commit log message.
+ * "git cummit" detects and rejects an attempt to stuff NUL byte in
+   the cummit log message.
 
- * "git commit" learned "-S" to GPG-sign the commit; this can be shown
+ * "git cummit" learned "-S" to GPG-sign the cummit; this can be shown
    with the "--show-signature" option to "git log".
 
  * fsck and prune are relatively lengthy operations that still go
@@ -69,12 +69,12 @@ Updates since v1.7.8
 
  * "git pull" can be used to fetch and merge an annotated/signed tag,
    instead of the tip of a topic branch. The GPG signature from the
-   signed tag is recorded in the resulting merge commit for later
+   signed tag is recorded in the resulting merge cummit for later
    auditing.
 
  * "git log" learned "--show-signature" option to show the signed tag
-   that was merged that is embedded in the merge commit. It also can
-   show the signature made on the commit with "git commit -S".
+   that was merged that is embedded in the merge cummit. It also can
+   show the signature made on the cummit with "git cummit -S".
 
  * "git branch --edit-description" can be used to add descriptive text
    to explain what a topic branch is about.

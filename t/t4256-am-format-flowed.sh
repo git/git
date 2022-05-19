@@ -7,7 +7,7 @@ test_description='test format=flowed support of git am'
 test_expect_success 'setup' '
 	cp "$TEST_DIRECTORY/t4256/1/mailinfo.c.orig" mailinfo.c &&
 	git add mailinfo.c &&
-	git commit -m initial
+	git cummit -m initial
 '
 
 test_expect_success 'am with format=flowed' '

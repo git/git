@@ -8,19 +8,19 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
-	test_commit one &&
-	test_commit two &&
+	test_cummit one &&
+	test_cummit two &&
 	main_sha1=$(git rev-parse refs/heads/main)
 '
 
 test_expect_success 'fast-import: fail on invalid branch name ".badbranchname"' '
 	test_when_finished "rm -f .git/objects/pack_* .git/objects/index_*" &&
 	cat >input <<-INPUT_END &&
-		commit .badbranchname
-		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-		data <<COMMIT
+		cummit .badbranchname
+		cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+		data <<cummit
 		corrupt
-		COMMIT
+		cummit
 
 		from refs/heads/main
 
@@ -31,11 +31,11 @@ test_expect_success 'fast-import: fail on invalid branch name ".badbranchname"' 
 test_expect_success 'fast-import: fail on invalid branch name "bad[branch]name"' '
 	test_when_finished "rm -f .git/objects/pack_* .git/objects/index_*" &&
 	cat >input <<-INPUT_END &&
-		commit bad[branch]name
-		committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-		data <<COMMIT
+		cummit bad[branch]name
+		cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+		data <<cummit
 		corrupt
-		COMMIT
+		cummit
 
 		from refs/heads/main
 
@@ -135,11 +135,11 @@ test_expect_failure 'push --mirror can delete badly named ref' '
 
 	(
 		cd src &&
-		test_commit one
+		test_cummit one
 	) &&
 	(
 		cd dest &&
-		test_commit two &&
+		test_cummit two &&
 		git checkout --detach &&
 		test-tool ref-store main update-ref msg "refs/heads/broken...ref" $main_sha1 $ZERO_OID REF_SKIP_REFNAME_VERIFICATION
 	) &&

@@ -81,7 +81,7 @@ test_expect_success SYMLINKS 'ls-files --others with symlinked submodule' '
 		cd sub &&
 		>a &&
 		git add a &&
-		git commit -m sub &&
+		git cummit -m sub &&
 		git pack-refs --all
 	) &&
 	(

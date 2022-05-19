@@ -80,8 +80,8 @@ diff.ignoreSubmodules::
 	affects only 'git diff' Porcelain, and not lower level 'diff'
 	commands such as 'git diff-files'. 'git checkout'
 	and 'git switch' also honor
-	this setting when reporting uncommitted changes. Setting it to
-	'all' disables the submodule summary normally shown by 'git commit'
+	this setting when reporting uncummitted changes. Setting it to
+	'all' disables the submodule summary normally shown by 'git cummit'
 	and 'git status' when `status.submoduleSummary` is set unless it is
 	overridden by using the --ignore-submodules command-line option.
 	The 'git submodule' commands are not affected by this setting.
@@ -138,9 +138,9 @@ diff.suppressBlankEmpty::
 
 diff.submodule::
 	Specify the format in which differences in submodules are
-	shown.  The "short" format just shows the names of the commits
+	shown.  The "short" format just shows the names of the cummits
 	at the beginning and end of the range. The "log" format lists
-	the commits in the range like linkgit:git-submodule[1] `summary`
+	the cummits in the range like linkgit:git-submodule[1] `summary`
 	does. The "diff" format shows an inline diff of the changed
 	contents of the submodule. Defaults to "short".
 

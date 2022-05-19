@@ -8,8 +8,8 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'setup well-formed objects' '
 	blob="$(printf "foo" | git hash-object -w --stdin)" &&
 	tree="$(printf "100644 blob $blob\tfoo" | git mktree)" &&
-	commit="$(git commit-tree $tree -m "first commit")" &&
-	git cat-file commit $commit >good-commit
+	cummit="$(git cummit-tree $tree -m "first cummit")" &&
+	git cat-file cummit $cummit >good-cummit
 '
 
 test_expect_success 'setup unexpected non-blob entry' '
@@ -45,55 +45,55 @@ test_expect_success 'traverse unexpected non-tree entry (seen)' '
 	test_i18ngrep "is not a tree" output
 '
 
-test_expect_success 'setup unexpected non-commit parent' '
-	sed "/^author/ { h; s/.*/parent $blob/; G; }" <good-commit \
-		>broken-commit &&
-	broken_commit="$(git hash-object -w --literally -t commit \
-		broken-commit)"
+test_expect_success 'setup unexpected non-cummit parent' '
+	sed "/^author/ { h; s/.*/parent $blob/; G; }" <good-cummit \
+		>broken-cummit &&
+	broken_cummit="$(git hash-object -w --literally -t cummit \
+		broken-cummit)"
 '
 
-test_expect_success 'traverse unexpected non-commit parent (lone)' '
-	test_must_fail git rev-list --objects $broken_commit >output 2>&1 &&
-	test_i18ngrep "not a commit" output
+test_expect_success 'traverse unexpected non-cummit parent (lone)' '
+	test_must_fail git rev-list --objects $broken_cummit >output 2>&1 &&
+	test_i18ngrep "not a cummit" output
 '
 
-test_expect_success 'traverse unexpected non-commit parent (seen)' '
-	test_must_fail git rev-list --objects $blob $broken_commit \
+test_expect_success 'traverse unexpected non-cummit parent (seen)' '
+	test_must_fail git rev-list --objects $blob $broken_cummit \
 		>output 2>&1 &&
-	test_i18ngrep "not a commit" output
+	test_i18ngrep "not a cummit" output
 '
 
 test_expect_success 'setup unexpected non-tree root' '
-	sed -e "s/$tree/$blob/" <good-commit >broken-commit &&
-	broken_commit="$(git hash-object -w --literally -t commit \
-		broken-commit)"
+	sed -e "s/$tree/$blob/" <good-cummit >broken-cummit &&
+	broken_cummit="$(git hash-object -w --literally -t cummit \
+		broken-cummit)"
 '
 
 test_expect_success 'traverse unexpected non-tree root (lone)' '
-	test_must_fail git rev-list --objects $broken_commit
+	test_must_fail git rev-list --objects $broken_cummit
 '
 
 test_expect_success 'traverse unexpected non-tree root (seen)' '
-	test_must_fail git rev-list --objects $blob $broken_commit \
+	test_must_fail git rev-list --objects $blob $broken_cummit \
 		>output 2>&1 &&
 	test_i18ngrep "not a tree" output
 '
 
-test_expect_success 'setup unexpected non-commit tag' '
-	git tag -a -m "tagged commit" tag $commit &&
+test_expect_success 'setup unexpected non-cummit tag' '
+	git tag -a -m "tagged cummit" tag $cummit &&
 	git cat-file tag tag >good-tag &&
 	test_when_finished "git tag -d tag" &&
-	sed -e "s/$commit/$blob/" <good-tag >broken-tag &&
+	sed -e "s/$cummit/$blob/" <good-tag >broken-tag &&
 	tag=$(git hash-object -w --literally -t tag broken-tag)
 '
 
-test_expect_success 'traverse unexpected non-commit tag (lone)' '
+test_expect_success 'traverse unexpected non-cummit tag (lone)' '
 	test_must_fail git rev-list --objects $tag
 '
 
-test_expect_success 'traverse unexpected non-commit tag (seen)' '
+test_expect_success 'traverse unexpected non-cummit tag (seen)' '
 	test_must_fail git rev-list --objects $blob $tag >output 2>&1 &&
-	test_i18ngrep "not a commit" output
+	test_i18ngrep "not a cummit" output
 '
 
 test_expect_success 'setup unexpected non-tree tag' '
@@ -117,7 +117,7 @@ test_expect_success 'setup unexpected non-blob tag' '
 	git tag -a -m "tagged blob" tag $blob &&
 	git cat-file tag tag >good-tag &&
 	test_when_finished "git tag -d tag" &&
-	sed -e "s/$blob/$commit/" <good-tag >broken-tag &&
+	sed -e "s/$blob/$cummit/" <good-tag >broken-tag &&
 	tag=$(git hash-object -w --literally -t tag broken-tag)
 '
 
@@ -126,7 +126,7 @@ test_expect_success !SANITIZE_LEAK 'TODO (should fail!): traverse unexpected non
 '
 
 test_expect_success 'traverse unexpected non-blob tag (seen)' '
-	test_must_fail git rev-list --objects $commit $tag >output 2>&1 &&
+	test_must_fail git rev-list --objects $cummit $tag >output 2>&1 &&
 	test_i18ngrep "not a blob" output
 '
 

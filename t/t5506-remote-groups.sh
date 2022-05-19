@@ -14,7 +14,7 @@ update_repo() {
 	(cd $1 &&
 	echo content >>file &&
 	git add file &&
-	git commit -F ../mark)
+	git cummit -F ../mark)
 }
 
 update_repos() {

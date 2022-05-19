@@ -13,10 +13,10 @@ test_expect_success 'setup' '
 	touch dir1/file1.txt &&
 	echo testing >dir1/file2.txt &&
 	git add . &&
-	git commit -m "initial"
+	git cummit -m "initial"
 '
 
-test_expect_success 'test status, add, commit, others trigger hook without flags set' '
+test_expect_success 'test status, add, cummit, others trigger hook without flags set' '
 	test_hook post-index-change <<-\EOF &&
 		if test "$1" -eq 1; then
 			echo "Invalid combination of flags passed to hook; updated_workdir is set." >testfailure
@@ -47,7 +47,7 @@ test_expect_success 'test status, add, commit, others trigger hook without flags
 	git add . &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure &&
-	git commit -m "second" &&
+	git cummit -m "second" &&
 	test_path_is_file testsuccess && rm -f testsuccess &&
 	test_path_is_missing testfailure &&
 	git checkout -- dir1/file1.txt &&

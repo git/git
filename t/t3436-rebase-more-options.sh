@@ -19,19 +19,19 @@ test_expect_success 'setup' '
 	git checkout -b topic &&
 	test_write_lines "line 1" "	line 2" "line 3" >file &&
 	git add file &&
-	git commit -m "add file" &&
+	git cummit -m "add file" &&
 
 	test_write_lines "line 1" "new line 2" "line 3" >file &&
-	git commit -am "update file" &&
+	git cummit -am "update file" &&
 	git tag side &&
-	test_commit commit1 foo foo1 &&
-	test_commit commit2 foo foo2 &&
-	test_commit commit3 foo foo3 &&
+	test_cummit cummit1 foo foo1 &&
+	test_cummit cummit2 foo foo2 &&
+	test_cummit cummit3 foo foo3 &&
 
 	git checkout --orphan main &&
 	rm foo &&
 	test_write_lines "line 1" "        line 2" "line 3" >file &&
-	git commit -am "add file" &&
+	git cummit -am "add file" &&
 	git tag main &&
 
 	mkdir test-bin &&
@@ -65,30 +65,30 @@ test_expect_success '--ignore-whitespace is remembered when continuing' '
 '
 
 test_ctime_is_atime () {
-	git log $1 --format="$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> %ai" >authortime &&
-	git log $1 --format="%cn <%ce> %ci" >committertime &&
-	test_cmp authortime committertime
+	git log $1 --format="$GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> %ai" >authortime &&
+	git log $1 --format="%cn <%ce> %ci" >cummittertime &&
+	test_cmp authortime cummittertime
 }
 
-test_expect_success '--committer-date-is-author-date works with apply backend' '
-	GIT_AUTHOR_DATE="@1234 +0300" git commit --amend --reset-author &&
-	git rebase --apply --committer-date-is-author-date HEAD^ &&
+test_expect_success '--cummitter-date-is-author-date works with apply backend' '
+	GIT_AUTHOR_DATE="@1234 +0300" git cummit --amend --reset-author &&
+	git rebase --apply --cummitter-date-is-author-date HEAD^ &&
 	test_ctime_is_atime -1
 '
 
-test_expect_success '--committer-date-is-author-date works with merge backend' '
-	GIT_AUTHOR_DATE="@1234 +0300" git commit --amend --reset-author &&
-	git rebase -m --committer-date-is-author-date HEAD^ &&
+test_expect_success '--cummitter-date-is-author-date works with merge backend' '
+	GIT_AUTHOR_DATE="@1234 +0300" git cummit --amend --reset-author &&
+	git rebase -m --cummitter-date-is-author-date HEAD^ &&
 	test_ctime_is_atime -1
 '
 
-test_expect_success '--committer-date-is-author-date works when rewording' '
-	GIT_AUTHOR_DATE="@1234 +0300" git commit --amend --reset-author &&
+test_expect_success '--cummitter-date-is-author-date works when rewording' '
+	GIT_AUTHOR_DATE="@1234 +0300" git cummit --amend --reset-author &&
 	(
 		set_fake_editor &&
-		FAKE_COMMIT_MESSAGE=edited \
+		FAKE_cummit_MESSAGE=edited \
 			FAKE_LINES="reword 1" \
-			git rebase -i --committer-date-is-author-date HEAD^
+			git rebase -i --cummitter-date-is-author-date HEAD^
 	) &&
 	test_write_lines edited "" >expect &&
 	git log --format="%B" -1 >actual &&
@@ -96,25 +96,25 @@ test_expect_success '--committer-date-is-author-date works when rewording' '
 	test_ctime_is_atime -1
 '
 
-test_expect_success '--committer-date-is-author-date works with rebase -r' '
+test_expect_success '--cummitter-date-is-author-date works with rebase -r' '
 	git checkout side &&
-	GIT_AUTHOR_DATE="@1234 +0300" git merge --no-ff commit3 &&
-	git rebase -r --root --committer-date-is-author-date &&
+	GIT_AUTHOR_DATE="@1234 +0300" git merge --no-ff cummit3 &&
+	git rebase -r --root --cummitter-date-is-author-date &&
 	test_ctime_is_atime
 '
 
-test_expect_success '--committer-date-is-author-date works when forking merge' '
+test_expect_success '--cummitter-date-is-author-date works when forking merge' '
 	git checkout side &&
-	GIT_AUTHOR_DATE="@1234 +0300" git merge --no-ff commit3 &&
+	GIT_AUTHOR_DATE="@1234 +0300" git merge --no-ff cummit3 &&
 	PATH="./test-bin:$PATH" git rebase -r --root --strategy=test \
-					--committer-date-is-author-date &&
+					--cummitter-date-is-author-date &&
 	test_ctime_is_atime
 '
 
-test_expect_success '--committer-date-is-author-date works when committing conflict resolution' '
-	git checkout commit2 &&
-	GIT_AUTHOR_DATE="@1980 +0000" git commit --amend --only --reset-author &&
-	test_must_fail git rebase -m --committer-date-is-author-date \
+test_expect_success '--cummitter-date-is-author-date works when cummitting conflict resolution' '
+	git checkout cummit2 &&
+	GIT_AUTHOR_DATE="@1980 +0000" git cummit --amend --only --reset-author &&
+	test_must_fail git rebase -m --cummitter-date-is-author-date \
 		--onto HEAD^^ HEAD^ &&
 	echo resolved > foo &&
 	git add foo &&
@@ -123,7 +123,7 @@ test_expect_success '--committer-date-is-author-date works when committing confl
 '
 
 # Checking for +0000 in the author date is sufficient since the
-# default timezone is UTC but the timezone used while committing is
+# default timezone is UTC but the timezone used while cummitting is
 # +0530. The inverted logic in the grep is necessary to check all the
 # author dates in the file.
 test_atime_is_ignored () {
@@ -132,20 +132,20 @@ test_atime_is_ignored () {
 }
 
 test_expect_success '--reset-author-date works with apply backend' '
-	git commit --amend --date="$GIT_AUTHOR_DATE" &&
+	git cummit --amend --date="$GIT_AUTHOR_DATE" &&
 	git rebase --apply --reset-author-date HEAD^ &&
 	test_atime_is_ignored -1
 '
 
 test_expect_success '--reset-author-date works with merge backend' '
-	git commit --amend --date="$GIT_AUTHOR_DATE" &&
+	git cummit --amend --date="$GIT_AUTHOR_DATE" &&
 	git rebase --reset-author-date -m HEAD^ &&
 	test_atime_is_ignored -1
 '
 
 test_expect_success '--reset-author-date works after conflict resolution' '
 	test_must_fail git rebase --reset-author-date -m \
-		--onto commit2^^ commit2^ commit2 &&
+		--onto cummit2^^ cummit2^ cummit2 &&
 	echo resolved >foo &&
 	git add foo &&
 	git rebase --continue &&
@@ -154,14 +154,14 @@ test_expect_success '--reset-author-date works after conflict resolution' '
 
 test_expect_success '--reset-author-date works with rebase -r' '
 	git checkout side &&
-	git merge --no-ff commit3 &&
+	git merge --no-ff cummit3 &&
 	git rebase -r --root --reset-author-date &&
 	test_atime_is_ignored
 '
 
-test_expect_success '--reset-author-date with --committer-date-is-author-date works' '
-	test_must_fail git rebase -m --committer-date-is-author-date \
-		--reset-author-date --onto commit2^^ commit2^ commit3 &&
+test_expect_success '--reset-author-date with --cummitter-date-is-author-date works' '
+	test_must_fail git rebase -m --cummitter-date-is-author-date \
+		--reset-author-date --onto cummit2^^ cummit2^ cummit3 &&
 	git checkout --theirs foo &&
 	git add foo &&
 	git rebase --continue &&
@@ -169,13 +169,13 @@ test_expect_success '--reset-author-date with --committer-date-is-author-date wo
 	test_atime_is_ignored -2
 '
 
-test_expect_success 'reset-author-date with --committer-date-is-author-date works when rewording' '
-	GIT_AUTHOR_DATE="@1234 +0300" git commit --amend --reset-author &&
+test_expect_success 'reset-author-date with --cummitter-date-is-author-date works when rewording' '
+	GIT_AUTHOR_DATE="@1234 +0300" git cummit --amend --reset-author &&
 	(
 		set_fake_editor &&
-		FAKE_COMMIT_MESSAGE=edited \
+		FAKE_cummit_MESSAGE=edited \
 			FAKE_LINES="reword 1" \
-			git rebase -i --committer-date-is-author-date \
+			git rebase -i --cummitter-date-is-author-date \
 				--reset-author-date HEAD^
 	) &&
 	test_write_lines edited "" >expect &&
@@ -184,19 +184,19 @@ test_expect_success 'reset-author-date with --committer-date-is-author-date work
 	test_atime_is_ignored -1
 '
 
-test_expect_success '--reset-author-date --committer-date-is-author-date works when forking merge' '
-	GIT_SEQUENCE_EDITOR="echo \"merge -C $(git rev-parse HEAD) commit3\">" \
+test_expect_success '--reset-author-date --cummitter-date-is-author-date works when forking merge' '
+	GIT_SEQUENCE_EDITOR="echo \"merge -C $(git rev-parse HEAD) cummit3\">" \
 		PATH="./test-bin:$PATH" git rebase -i --strategy=test \
 				--reset-author-date \
-				--committer-date-is-author-date side side &&
+				--cummitter-date-is-author-date side side &&
 	test_ctime_is_atime -1 &&
 	test_atime_is_ignored -1
  '
 
 test_expect_success '--ignore-date is an alias for --reset-author-date' '
-	git commit --amend --date="$GIT_AUTHOR_DATE" &&
+	git cummit --amend --date="$GIT_AUTHOR_DATE" &&
 	git rebase --apply --ignore-date HEAD^ &&
-	git commit --allow-empty -m empty --date="$GIT_AUTHOR_DATE" &&
+	git cummit --allow-empty -m empty --date="$GIT_AUTHOR_DATE" &&
 	git rebase -m --ignore-date HEAD^ &&
 	test_atime_is_ignored -2
 '

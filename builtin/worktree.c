@@ -16,7 +16,7 @@
 #include "quote.h"
 
 static const char * const worktree_usage[] = {
-	N_("git worktree add [<options>] <path> [<commit-ish>]"),
+	N_("git worktree add [<options>] <path> [<cummit-ish>]"),
 	N_("git worktree list [<options>]"),
 	N_("git worktree lock [<options>] <path>"),
 	N_("git worktree move <worktree> <new-path>"),
@@ -316,7 +316,7 @@ static int add_worktree(const char *path, const char *refname,
 	unsigned int counter = 0;
 	int len, ret;
 	struct strbuf symref = STRBUF_INIT;
-	struct commit *commit = NULL;
+	struct cummit *cummit = NULL;
 	int is_branch = 0;
 	struct strbuf sb_name = STRBUF_INIT;
 	struct worktree **worktrees;
@@ -326,15 +326,15 @@ static int add_worktree(const char *path, const char *refname,
 	free_worktrees(worktrees);
 	worktrees = NULL;
 
-	/* is 'refname' a branch or commit? */
+	/* is 'refname' a branch or cummit? */
 	if (!opts->detach && !strbuf_check_branch_ref(&symref, refname) &&
 	    ref_exists(symref.buf)) {
 		is_branch = 1;
 		if (!opts->force)
 			die_if_checked_out(symref.buf, 0);
 	}
-	commit = lookup_commit_reference_by_name(refname);
-	if (!commit)
+	cummit = lookup_cummit_reference_by_name(refname);
+	if (!cummit)
 		die(_("invalid reference: %s"), refname);
 
 	name = worktree_basename(path, &len);
@@ -425,7 +425,7 @@ static int add_worktree(const char *path, const char *refname,
 
 	if (!is_branch)
 		strvec_pushl(&cp.args, "update-ref", "HEAD",
-			     oid_to_hex(&commit->object.oid), NULL);
+			     oid_to_hex(&cummit->object.oid), NULL);
 	else {
 		strvec_pushl(&cp.args, "symbolic-ref", "HEAD",
 			     symref.buf, NULL);
@@ -463,7 +463,7 @@ done:
 		strvec_pushl(&opt.env, "GIT_DIR", "GIT_WORK_TREE", NULL);
 		strvec_pushl(&opt.args,
 			     oid_to_hex(null_oid()),
-			     oid_to_hex(&commit->object.oid),
+			     oid_to_hex(&cummit->object.oid),
 			     "1",
 			     NULL);
 		opt.dir = path;
@@ -487,13 +487,13 @@ static void print_preparing_worktree_line(int detach,
 					  int force_new_branch)
 {
 	if (force_new_branch) {
-		struct commit *commit = lookup_commit_reference_by_name(new_branch);
-		if (!commit)
+		struct cummit *cummit = lookup_cummit_reference_by_name(new_branch);
+		if (!cummit)
 			fprintf_ln(stderr, _("Preparing worktree (new branch '%s')"), new_branch);
 		else
 			fprintf_ln(stderr, _("Preparing worktree (resetting branch '%s'; was at %s)"),
 				  new_branch,
-				  find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
+				  find_unique_abbrev(&cummit->object.oid, DEFAULT_ABBREV));
 	} else if (new_branch) {
 		fprintf_ln(stderr, _("Preparing worktree (new branch '%s')"), new_branch);
 	} else {
@@ -503,11 +503,11 @@ static void print_preparing_worktree_line(int detach,
 			fprintf_ln(stderr, _("Preparing worktree (checking out '%s')"),
 				  branch);
 		else {
-			struct commit *commit = lookup_commit_reference_by_name(branch);
-			if (!commit)
+			struct cummit *cummit = lookup_cummit_reference_by_name(branch);
+			if (!cummit)
 				die(_("invalid reference: %s"), branch);
 			fprintf_ln(stderr, _("Preparing worktree (detached HEAD %s)"),
-				  find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
+				  find_unique_abbrev(&cummit->object.oid, DEFAULT_ABBREV));
 		}
 		strbuf_release(&s);
 	}
@@ -557,7 +557,7 @@ static int add(int ac, const char **av, const char *prefix)
 			   N_("create a new branch")),
 		OPT_STRING('B', NULL, &new_branch_force, N_("branch"),
 			   N_("create or reset a branch")),
-		OPT_BOOL('d', "detach", &opts.detach, N_("detach HEAD at named commit")),
+		OPT_BOOL('d', "detach", &opts.detach, N_("detach HEAD at named cummit")),
 		OPT_BOOL(0, "checkout", &opts.checkout, N_("populate the new working tree")),
 		OPT_BOOL(0, "lock", &keep_locked, N_("keep the new working tree locked")),
 		OPT_STRING(0, "reason", &lock_reason, N_("string"),
@@ -612,11 +612,11 @@ static int add(int ac, const char **av, const char *prefix)
 
 	if (ac == 2 && !new_branch && !opts.detach) {
 		struct object_id oid;
-		struct commit *commit;
+		struct cummit *cummit;
 		const char *remote;
 
-		commit = lookup_commit_reference_by_name(branch);
-		if (!commit) {
+		cummit = lookup_cummit_reference_by_name(branch);
+		if (!cummit) {
 			remote = unique_tracking_name(branch, &oid, NULL);
 			if (remote) {
 				new_branch = branch;

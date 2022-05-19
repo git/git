@@ -4,13 +4,13 @@ test_description='git branch display tests'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
-test_expect_success 'make commits' '
+test_expect_success 'make cummits' '
 	echo content >file &&
 	git add file &&
-	git commit -m one &&
+	git cummit -m one &&
 	git branch -M main &&
 	echo content >>file &&
-	git commit -a -m two
+	git cummit -a -m two
 '
 
 test_expect_success 'make branches' '
@@ -303,7 +303,7 @@ test_expect_success 'sort branches, ignore case' '
 	(
 		git init -b main sort-icase &&
 		cd sort-icase &&
-		test_commit initial &&
+		test_cummit initial &&
 		git branch branch-one &&
 		git branch BRANCH-two &&
 		git branch --list | awk "{print \$NF}" >actual &&

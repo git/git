@@ -20,7 +20,7 @@ test_expect_success 'submodule on detached working tree' '
 	test_create_repo bundle1 &&
 	(
 		cd bundle1 &&
-		test_commit "shoot" &&
+		test_cummit "shoot" &&
 		git rev-parse --verify HEAD >../expect
 	) &&
 	mkdir home &&
@@ -31,7 +31,7 @@ test_expect_success 'submodule on detached working tree' '
 		export GIT_WORK_TREE GIT_DIR &&
 		git clone --bare ../remote .dotfiles &&
 		git submodule add ../bundle1 .vim/bundle/sogood &&
-		test_commit "sogood" &&
+		test_cummit "sogood" &&
 		(
 			unset GIT_WORK_TREE GIT_DIR &&
 			cd .vim/bundle/sogood &&
@@ -69,7 +69,7 @@ test_expect_success 'submodule on detached working pointed by core.worktree' '
 		git config core.worktree .. &&
 		git checkout main &&
 		git submodule add ../bundle1 .vim/bundle/dupe &&
-		test_commit "dupe" &&
+		test_cummit "dupe" &&
 		git push origin main
 	) &&
 	(

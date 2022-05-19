@@ -2,7 +2,7 @@
 #include "walker.h"
 #include "repository.h"
 #include "object-store.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tree.h"
 #include "tree-walk.h"
 #include "tag.h"
@@ -10,7 +10,7 @@
 #include "refs.h"
 #include "progress.h"
 
-static struct object_id current_commit_oid;
+static struct object_id current_cummit_oid;
 
 void walker_say(struct walker *walker, const char *fmt, ...)
 {
@@ -27,9 +27,9 @@ static void report_missing(const struct object *obj)
 	fprintf(stderr, "Cannot obtain needed %s %s\n",
 		obj->type ? type_name(obj->type): "object",
 		oid_to_hex(&obj->oid));
-	if (!is_null_oid(&current_commit_oid))
-		fprintf(stderr, "while processing commit %s.\n",
-			oid_to_hex(&current_commit_oid));
+	if (!is_null_oid(&current_cummit_oid))
+		fprintf(stderr, "while processing cummit %s.\n",
+			oid_to_hex(&current_cummit_oid));
 }
 
 static int process(struct walker *walker, struct object *obj);
@@ -46,7 +46,7 @@ static int process_tree(struct walker *walker, struct tree *tree)
 	while (tree_entry(&desc, &entry)) {
 		struct object *obj = NULL;
 
-		/* submodule commits are not stored in the superproject */
+		/* submodule cummits are not stored in the superproject */
 		if (S_ISGITLINK(entry.mode))
 			continue;
 		if (S_ISDIR(entry.mode)) {
@@ -73,30 +73,30 @@ static int process_tree(struct walker *walker, struct tree *tree)
 #define SEEN		(1U << 1)
 #define TO_SCAN		(1U << 2)
 
-static struct commit_list *complete = NULL;
+static struct cummit_list *complete = NULL;
 
-static int process_commit(struct walker *walker, struct commit *commit)
+static int process_cummit(struct walker *walker, struct cummit *cummit)
 {
-	struct commit_list *parents;
+	struct cummit_list *parents;
 
-	if (parse_commit(commit))
+	if (parse_cummit(cummit))
 		return -1;
 
-	while (complete && complete->item->date >= commit->date) {
-		pop_most_recent_commit(&complete, COMPLETE);
+	while (complete && complete->item->date >= cummit->date) {
+		pop_most_recent_cummit(&complete, COMPLETE);
 	}
 
-	if (commit->object.flags & COMPLETE)
+	if (cummit->object.flags & COMPLETE)
 		return 0;
 
-	oidcpy(&current_commit_oid, &commit->object.oid);
+	oidcpy(&current_cummit_oid, &cummit->object.oid);
 
-	walker_say(walker, "walk %s\n", oid_to_hex(&commit->object.oid));
+	walker_say(walker, "walk %s\n", oid_to_hex(&cummit->object.oid));
 
-	if (process(walker, &get_commit_tree(commit)->object))
+	if (process(walker, &get_cummit_tree(cummit)->object))
 		return -1;
 
-	for (parents = commit->parents; parents; parents = parents->next) {
+	for (parents = cummit->parents; parents; parents = parents->next) {
 		if (process(walker, &parents->item->object))
 			return -1;
 	}
@@ -116,8 +116,8 @@ static struct object_list **process_queue_end = &process_queue;
 
 static int process_object(struct walker *walker, struct object *obj)
 {
-	if (obj->type == OBJ_COMMIT) {
-		if (process_commit(walker, (struct commit *)obj))
+	if (obj->type == OBJ_cummit) {
+		if (process_cummit(walker, (struct cummit *)obj))
 			return -1;
 		return 0;
 	}
@@ -218,12 +218,12 @@ static int interpret_target(struct walker *walker, char *target, struct object_i
 static int mark_complete(const char *path, const struct object_id *oid,
 			 int flag, void *cb_data)
 {
-	struct commit *commit = lookup_commit_reference_gently(the_repository,
+	struct cummit *cummit = lookup_cummit_reference_gently(the_repository,
 							       oid, 1);
 
-	if (commit) {
-		commit->object.flags |= COMPLETE;
-		commit_list_insert(commit, &complete);
+	if (cummit) {
+		cummit->object.flags |= COMPLETE;
+		cummit_list_insert(cummit, &complete);
 	}
 	return 0;
 }
@@ -276,7 +276,7 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 	char *msg = NULL;
 	int i, ret = -1;
 
-	save_commit_buffer = 0;
+	save_cummit_buffer = 0;
 
 	ALLOC_ARRAY(oids, targets);
 
@@ -290,7 +290,7 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 
 	if (!walker->get_recover) {
 		for_each_ref(mark_complete, NULL);
-		commit_list_sort_by_date(&complete);
+		cummit_list_sort_by_date(&complete);
 	}
 
 	for (i = 0; i < targets; i++) {
@@ -326,7 +326,7 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 			goto done;
 		}
 	}
-	if (ref_transaction_commit(transaction, &err)) {
+	if (ref_transaction_cummit(transaction, &err)) {
 		error("%s", err.buf);
 		goto done;
 	}

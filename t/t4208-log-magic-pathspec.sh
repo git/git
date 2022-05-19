@@ -8,9 +8,9 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit initial &&
+	test_cummit initial &&
 	test_tick &&
-	git commit --allow-empty -m empty &&
+	git cummit --allow-empty -m empty &&
 	mkdir sub
 '
 
@@ -28,15 +28,15 @@ test_expect_success '"git log :/a -- " should not be ambiguous' '
 	git log :/a --
 '
 
-test_expect_success '"git log :/detached -- " should find a commit only in HEAD' '
+test_expect_success '"git log :/detached -- " should find a cummit only in HEAD' '
 	test_when_finished "git checkout main" &&
 	git checkout --detach &&
-	test_commit --no-tag detached &&
-	test_commit --no-tag something-else &&
+	test_cummit --no-tag detached &&
+	test_cummit --no-tag something-else &&
 	git log :/detached --
 '
 
-test_expect_success '"git log :/detached -- " should not find an orphaned commit' '
+test_expect_success '"git log :/detached -- " should not find an orphaned cummit' '
 	test_must_fail git log :/detached --
 '
 
@@ -44,7 +44,7 @@ test_expect_success '"git log :/detached -- " should find HEAD only of own workt
 	git worktree add other-tree HEAD &&
 	git -C other-tree checkout --detach &&
 	test_tick &&
-	git -C other-tree commit --allow-empty -m other-detached &&
+	git -C other-tree cummit --allow-empty -m other-detached &&
 	git -C other-tree log :/other-detached -- &&
 	test_must_fail git log :/other-detached --
 '
@@ -111,12 +111,12 @@ test_expect_success 'command line pathspec parsing for "git log"' '
 	git reset --hard &&
 	>a &&
 	git add a &&
-	git commit -m "add an empty a" --allow-empty &&
+	git cummit -m "add an empty a" --allow-empty &&
 	echo 1 >a &&
-	git commit -a -m "update a to 1" &&
+	git cummit -a -m "update a to 1" &&
 	git checkout HEAD^ &&
 	echo 2 >a &&
-	git commit -a -m "update a to 2" &&
+	git cummit -a -m "update a to 2" &&
 	test_must_fail git merge main &&
 	git add a &&
 	git log --merge -- a
@@ -125,17 +125,17 @@ test_expect_success 'command line pathspec parsing for "git log"' '
 test_expect_success 'tree_entry_interesting does not match past submodule boundaries' '
 	test_when_finished "rm -rf repo submodule" &&
 	git init submodule &&
-	test_commit -C submodule initial &&
+	test_cummit -C submodule initial &&
 	git init repo &&
 	>"repo/[bracket]" &&
 	git -C repo add "[bracket]" &&
 	test_tick &&
-	git -C repo commit -m bracket &&
+	git -C repo cummit -m bracket &&
 	git -C repo rev-list HEAD -- "[bracket]" >expect &&
 
 	git -C repo submodule add ../submodule &&
 	test_tick &&
-	git -C repo commit -m submodule &&
+	git -C repo cummit -m submodule &&
 
 	git -C repo rev-list HEAD -- "[bracket]" >actual &&
 	test_cmp expect actual

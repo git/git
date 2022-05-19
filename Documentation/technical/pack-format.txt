@@ -46,7 +46,7 @@ Similarly, in SHA-256 repositories, these values are computed using SHA-256.
 
 Valid object types are:
 
-- OBJ_COMMIT (1)
+- OBJ_cummit (1)
 - OBJ_TREE (2)
 - OBJ_BLOB (3)
 - OBJ_TAG (4)
@@ -69,7 +69,7 @@ which is also used in this document.
 
 === Deltified representation
 
-Conceptually there are only four object types: commit, tree, tag and
+Conceptually there are only four object types: cummit, tree, tag and
 blob. However to save space, an object could be stored as a "delta" of
 another "base" object. These representations are assigned new types
 ofs-delta and ref-delta, which is only valid in a pack file.

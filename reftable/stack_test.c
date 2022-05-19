@@ -274,7 +274,7 @@ static void test_reftable_stack_transaction_api(void)
 	err = reftable_addition_add(add, &write_test_ref, &ref);
 	EXPECT_ERR(err);
 
-	err = reftable_addition_commit(add);
+	err = reftable_addition_cummit(add);
 	EXPECT_ERR(err);
 
 	reftable_addition_destroy(add);

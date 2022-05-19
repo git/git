@@ -3,8 +3,8 @@
 
 #include "strbuf.h"
 
-struct commit;
-struct commit_list;
+struct cummit;
+struct cummit_list;
 struct object_id;
 struct repository;
 struct tree;
@@ -86,8 +86,8 @@ int merge_trees(struct merge_options *opt,
  *
  * NOTE: empirically, about a decade ago it was determined that with more
  *       than two merge bases, optimal behavior was found when the
- *       merge_bases were passed in the order of oldest commit to newest
- *       commit.  Also, merge_bases will be consumed (emptied) so make a
+ *       merge_bases were passed in the order of oldest cummit to newest
+ *       cummit.  Also, merge_bases will be consumed (emptied) so make a
  *       copy if you need it.
  *
  * Outputs:
@@ -98,14 +98,14 @@ int merge_trees(struct merge_options *opt,
  *   - The working tree is updated with results of the merge
  */
 int merge_recursive(struct merge_options *opt,
-		    struct commit *h1,
-		    struct commit *h2,
-		    struct commit_list *merge_bases,
-		    struct commit **result);
+		    struct cummit *h1,
+		    struct cummit *h2,
+		    struct cummit_list *merge_bases,
+		    struct cummit **result);
 
 /*
- * merge_recursive_generic can operate on trees instead of commits, by
- * wrapping the trees into virtual commits, and calling merge_recursive().
+ * merge_recursive_generic can operate on trees instead of cummits, by
+ * wrapping the trees into virtual cummits, and calling merge_recursive().
  * It also writes out the in-memory index to disk if the merge is successful.
  *
  * Outputs:
@@ -120,6 +120,6 @@ int merge_recursive_generic(struct merge_options *opt,
 			    const struct object_id *merge,
 			    int num_merge_bases,
 			    const struct object_id **merge_bases,
-			    struct commit **result);
+			    struct cummit **result);
 
 #endif

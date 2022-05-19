@@ -9,20 +9,20 @@ tag () {
 	error "tag: \"$_tag\" does not exist"
 }
 
-# Generate a commit using the text specified to make it unique and the tree
+# Generate a cummit using the text specified to make it unique and the tree
 # named by the tag specified.
-unique_commit () {
+unique_cummit () {
 	_text=$1
 	_tree=$2
 	shift 2
-	echo "$_text" | git commit-tree $(tag "$_tree") "$@"
+	echo "$_text" | git cummit-tree $(tag "$_tree") "$@"
 }
 
 # Save the output of a command into the tag specified. Prepend
 # a substitution script for the tag onto the front of sed.script
 save_tag () {
 	_tag=$1
-	test -n "$_tag" || error "usage: save_tag tag commit-args ..."
+	test -n "$_tag" || error "usage: save_tag tag cummit-args ..."
 	shift 1
 
 	git update-ref "refs/tags/$_tag" $("$@")
@@ -57,10 +57,10 @@ as_author () {
 	fi
 }
 
-commit_date () {
-	_commit=$1
-	git cat-file commit $_commit |
-	sed -n "s/^committer .*> \([0-9]*\) .*/\1/p"
+cummit_date () {
+	_cummit=$1
+	git cat-file cummit $_cummit |
+	sed -n "s/^cummitter .*> \([0-9]*\) .*/\1/p"
 }
 
 # Assign the value of fake date to a variable, but
@@ -74,17 +74,17 @@ assign_fake_date () {
 	esac
 }
 
-on_committer_date () {
-	assign_fake_date GIT_COMMITTER_DATE "$1"
-	export GIT_COMMITTER_DATE
+on_cummitter_date () {
+	assign_fake_date GIT_cummitTER_DATE "$1"
+	export GIT_cummitTER_DATE
 	shift 1
 	"$@"
 }
 
 on_dates () {
-	assign_fake_date GIT_COMMITTER_DATE "$1"
+	assign_fake_date GIT_cummitTER_DATE "$1"
 	assign_fake_date GIT_AUTHOR_DATE "$2"
-	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
+	export GIT_cummitTER_DATE GIT_AUTHOR_DATE
 	shift 2
 	"$@"
 }

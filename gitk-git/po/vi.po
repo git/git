@@ -60,11 +60,11 @@ msgid "Reading"
 msgstr "Đang đọc"
 
 #: gitk:496 gitk:4525
-msgid "Reading commits..."
+msgid "Reading cummits..."
 msgstr "Đang đọc các lần chuyển giao…"
 
 #: gitk:499 gitk:1637 gitk:4528
-msgid "No commits selected"
+msgid "No cummits selected"
 msgstr "Chưa chọn các lần chuyển giao"
 
 #: gitk:1445 gitk:4045 gitk:12432
@@ -76,7 +76,7 @@ msgid "Can't parse git log output:"
 msgstr "Không thể phân tích kết xuất từ lệnh git log:"
 
 #: gitk:1740
-msgid "No commit information available"
+msgid "No cummit information available"
 msgstr "Không có thông tin về lần chuyển giao nào"
 
 #: gitk:1903 gitk:1932 gitk:4315 gitk:9669 gitk:11241 gitk:11521
@@ -169,7 +169,7 @@ msgid "Find"
 msgstr "Tìm"
 
 #: gitk:2295
-msgid "commit"
+msgid "cummit"
 msgstr "lần chuyển giao"
 
 #: gitk:2299 gitk:2301 gitk:4687 gitk:4710 gitk:4734 gitk:6755 gitk:6827
@@ -219,7 +219,7 @@ msgid "Author"
 msgstr "Tác giả"
 
 #: gitk:2319 gitk:4871 gitk:6786 gitk:7326
-msgid "Committer"
+msgid "cummitter"
 msgstr "Người chuyển giao"
 
 #: gitk:2350
@@ -275,7 +275,7 @@ msgid "Create tag"
 msgstr "Tạo thẻ"
 
 #: gitk:2621 gitk:9371
-msgid "Write commit to file"
+msgid "Write cummit to file"
 msgstr "Ghi lần chuyển giao ra tập tin"
 
 #: gitk:2622 gitk:9428
@@ -283,7 +283,7 @@ msgid "Create new branch"
 msgstr "Tạo nhánh mới"
 
 #: gitk:2623
-msgid "Cherry-pick this commit"
+msgid "Cherry-pick this cummit"
 msgstr "Cherry-pick lần chuyển giao này"
 
 #: gitk:2624
@@ -291,7 +291,7 @@ msgid "Reset HEAD branch to here"
 msgstr "Đặt lại HEAD của nhánh vào đây"
 
 #: gitk:2625
-msgid "Mark this commit"
+msgid "Mark this cummit"
 msgstr "Đánh dấu lần chuyển giao này"
 
 #: gitk:2626
@@ -303,19 +303,19 @@ msgid "Find descendant of this and mark"
 msgstr "Tìm con cháu của cái này và cái đã đánh dấu"
 
 #: gitk:2628
-msgid "Compare with marked commit"
+msgid "Compare with marked cummit"
 msgstr "So sánh với lần chuyển giao đã đánh dấu"
 
 #: gitk:2629 gitk:2640
-msgid "Diff this -> marked commit"
+msgid "Diff this -> marked cummit"
 msgstr "So sánh cái này -> lần chuyển giao đã đánh dấu"
 
 #: gitk:2630 gitk:2641
-msgid "Diff marked commit -> this"
+msgid "Diff marked cummit -> this"
 msgstr "So sánh lần chuyển giao đã đánh dấu -> cái này"
 
 #: gitk:2631
-msgid "Revert this commit"
+msgid "Revert this cummit"
 msgstr "Hoàn lại lần chuyển giao này"
 
 #: gitk:2647
@@ -343,7 +343,7 @@ msgid "External diff"
 msgstr "diff từ bên ngoài"
 
 #: gitk:2659
-msgid "Blame parent commit"
+msgid "Blame parent cummit"
 msgstr "Xem công trạng lần chuyển giao cha mẹ"
 
 #: gitk:2660
@@ -361,7 +361,7 @@ msgstr "Chạy lệnh git gui blame cho dòng này"
 #: gitk:3014
 msgid ""
 "\n"
-"Gitk - a commit viewer for git\n"
+"Gitk - a cummit viewer for git\n"
 "\n"
 "Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
@@ -397,19 +397,19 @@ msgid "<%s-W>\t\tClose window"
 msgstr "<%s-W>\t\tĐóng cửa sổ"
 
 #: gitk:3050
-msgid "<Home>\t\tMove to first commit"
+msgid "<Home>\t\tMove to first cummit"
 msgstr "<Home>\t\tChuyển đến lần chuyển giao đầu tiên"
 
 #: gitk:3051
-msgid "<End>\t\tMove to last commit"
+msgid "<End>\t\tMove to last cummit"
 msgstr "<End>\t\tChuyển đến lần chuyển giao cuối"
 
 #: gitk:3052
-msgid "<Up>, p, k\tMove up one commit"
+msgid "<Up>, p, k\tMove up one cummit"
 msgstr "<Up>, p, k\tDi chuyển lên một lần chuyển giao"
 
 #: gitk:3053
-msgid "<Down>, n, j\tMove down one commit"
+msgid "<Down>, n, j\tMove down one cummit"
 msgstr "<Down>, n, j\tDi chuyển xuống một lần chuyển giao"
 
 #: gitk:3054
@@ -422,54 +422,54 @@ msgstr "<Right>, x, l\tDi chuyển tiếp trong danh sách lịch sử"
 
 #: gitk:3056
 #, tcl-format
-msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgid "<%s-n>\tGo to n-th parent of current cummit in history list"
 msgstr ""
 "<%s-n>\tĐến cha thứ n của lần chuyển giao hiện tại trong danh sách lịch sử"
 
 #: gitk:3057
-msgid "<PageUp>\tMove up one page in commit list"
+msgid "<PageUp>\tMove up one page in cummit list"
 msgstr "<PageUp>\tDi chuyển lên một trang trong danh sách lần chuyển giao"
 
 #: gitk:3058
-msgid "<PageDown>\tMove down one page in commit list"
+msgid "<PageDown>\tMove down one page in cummit list"
 msgstr "<PageDown>\tDi chuyển xuống một trang trong danh sách lần chuyển giao"
 
 #: gitk:3059
 #, tcl-format
-msgid "<%s-Home>\tScroll to top of commit list"
+msgid "<%s-Home>\tScroll to top of cummit list"
 msgstr "<%s-Home>\tCuộn lên trên cùng của danh sách lần chuyển giao"
 
 #: gitk:3060
 #, tcl-format
-msgid "<%s-End>\tScroll to bottom of commit list"
+msgid "<%s-End>\tScroll to bottom of cummit list"
 msgstr "<%s-End>\tCuộn xuống dưới cùng của danh sách lần chuyển giao"
 
 #: gitk:3061
 #, tcl-format
-msgid "<%s-Up>\tScroll commit list up one line"
+msgid "<%s-Up>\tScroll cummit list up one line"
 msgstr "<%s-Up>\tCuộn danh sách lần chuyển giao lên một dòng"
 
 #: gitk:3062
 #, tcl-format
-msgid "<%s-Down>\tScroll commit list down one line"
+msgid "<%s-Down>\tScroll cummit list down one line"
 msgstr "<%s-Down>\tCuộn danh sách lần chuyển giao xuống một dòng"
 
 #: gitk:3063
 #, tcl-format
-msgid "<%s-PageUp>\tScroll commit list up one page"
+msgid "<%s-PageUp>\tScroll cummit list up one page"
 msgstr "<%s-PageUp>\tCuộn danh sách lần chuyển giao lên một trang"
 
 #: gitk:3064
 #, tcl-format
-msgid "<%s-PageDown>\tScroll commit list down one page"
+msgid "<%s-PageDown>\tScroll cummit list down one page"
 msgstr "<%s-PageDown>\tCuộn danh sách lần chuyển giao xuống một trang"
 
 #: gitk:3065
-msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgid "<Shift-Up>\tFind backwards (upwards, later cummits)"
 msgstr "<Shift-Up>\tTìm về phía sau (hướng lên trên, lần chuyển giao sau này)"
 
 #: gitk:3066
-msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgid "<Shift-Down>\tFind forwards (downwards, earlier cummits)"
 msgstr ""
 "<Shift-Down>\tTìm về phía trước (hướng xuống dưới, lần chuyển giao trước đây)"
 
@@ -508,7 +508,7 @@ msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\t\tDi chuyển đến chỗ gặp kế tiếp"
 
 #: gitk:3075
-msgid "g\t\tGo to commit"
+msgid "g\t\tGo to cummit"
 msgstr "g\t\tChuyển đến lần chuyển giao"
 
 #: gitk:3076
@@ -572,7 +572,7 @@ msgid "command failed:"
 msgstr "lệnh gặp lỗi:"
 
 #: gitk:3784
-msgid "No such commit"
+msgid "No such cummit"
 msgstr "Không có lần chuyển giao như vậy"
 
 #: gitk:3798
@@ -606,7 +606,7 @@ msgstr "Gặp lỗi khi chạy git blame: %s"
 
 #: gitk:3925
 #, tcl-format
-msgid "That line comes from commit %s,  which is not in this view"
+msgid "That line comes from cummit %s,  which is not in this view"
 msgstr "Dòng đến từ lần chuyển giao %s, cái mà không trong trình bày này"
 
 #: gitk:3939
@@ -646,7 +646,7 @@ msgid "All remote-tracking branches"
 msgstr "Mọi nhánh remote-tracking"
 
 #: gitk:4081
-msgid "Commit Info (regular expressions):"
+msgid "cummit Info (regular expressions):"
 msgstr "Thông tin chuyển giao (biểu thức chính quy):"
 
 #: gitk:4082
@@ -654,19 +654,19 @@ msgid "Author:"
 msgstr "Tác giả:"
 
 #: gitk:4083
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "Người chuyển giao:"
 
 #: gitk:4084
-msgid "Commit Message:"
+msgid "cummit Message:"
 msgstr "Chú thích của lần chuyển giao:"
 
 #: gitk:4085
-msgid "Matches all Commit Info criteria"
+msgid "Matches all cummit Info criteria"
 msgstr "Khớp mọi điều kiện Thông tin Chuyển giao"
 
 #: gitk:4086
-msgid "Matches no Commit Info criteria"
+msgid "Matches no cummit Info criteria"
 msgstr "Khớp không điều kiện Thông tin Chuyển giao"
 
 #: gitk:4087
@@ -687,7 +687,7 @@ msgstr "Chuỗi tìm kiếm:"
 
 #: gitk:4091
 msgid ""
-"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"cummit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 msgstr ""
 "Ngày chuyển giao (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
@@ -742,7 +742,7 @@ msgid "Enter files and directories to include, one per line:"
 msgstr "Nhập vào các tập tin và thư mục bao gồm, mỗi dòng một cái:"
 
 #: gitk:4104
-msgid "Command to generate more commits to include:"
+msgid "Command to generate more cummits to include:"
 msgstr "Lệnh tạo ra nhiều lần chuyển giao hơn bao gồm:"
 
 #: gitk:4228
@@ -762,7 +762,7 @@ msgid "Apply (F5)"
 msgstr "Áp dụng (F5)"
 
 #: gitk:4354
-msgid "Error in commit selection arguments:"
+msgid "Error in cummit selection arguments:"
 msgstr "Lỗi trong các đối số chọn chuyển giao:"
 
 #: gitk:4409 gitk:4462 gitk:4924 gitk:4938 gitk:6208 gitk:12373 gitk:12374
@@ -786,12 +786,12 @@ msgid "Not ancestor"
 msgstr "Không có chung tổ tiên"
 
 #: gitk:5324
-msgid "Local changes checked in to index but not committed"
+msgid "Local changes checked in to index but not cummitted"
 msgstr ""
 "Có thay đổi nội bộ đã được đưa vào bảng mục lục, nhưng chưa được chuyển giao"
 
 #: gitk:5360
-msgid "Local uncommitted changes, not checked in to index"
+msgid "Local uncummitted changes, not checked in to index"
 msgstr "Có thay đổi nội bộ, nhưng chưa được đưa vào bảng mục lục"
 
 #: gitk:7134
@@ -874,7 +874,7 @@ msgid "Detached head: can't reset"
 msgstr "Head đã bị tách rời: không thể đặt lại"
 
 #: gitk:9005 gitk:9011
-msgid "Skipping merge commit "
+msgid "Skipping merge cummit "
 msgstr "Bỏ qua lần chuyển giao hòa trộn "
 
 #: gitk:9020 gitk:9025
@@ -886,8 +886,8 @@ msgid " - stopping\n"
 msgstr " - dừng\n"
 
 #: gitk:9031 gitk:9034 gitk:9042 gitk:9056 gitk:9065
-msgid "Commit "
-msgstr "Commit "
+msgid "cummit "
+msgstr "cummit "
 
 #: gitk:9035
 msgid ""
@@ -907,10 +907,10 @@ msgstr ""
 
 #: gitk:9045
 msgid ""
-"Diff of commits:\n"
+"Diff of cummits:\n"
 "\n"
 msgstr ""
-"Khác biệt của lần chuyển giao (commit):\n"
+"Khác biệt của lần chuyển giao (cummit):\n"
 "\n"
 
 #: gitk:9057 gitk:9066
@@ -920,12 +920,12 @@ msgstr " có %s con - dừng\n"
 
 #: gitk:9085
 #, tcl-format
-msgid "Error writing commit to file: %s"
+msgid "Error writing cummit to file: %s"
 msgstr "Gặp lỗi trong quá trình ghi lần chuyển giao vào tập tin: %s"
 
 #: gitk:9091
 #, tcl-format
-msgid "Error diffing commits: %s"
+msgid "Error diffing cummits: %s"
 msgstr "Gặp lỗi khi so sánh sự khác biệt giữa các lần chuyển giao: %s"
 
 #: gitk:9137
@@ -1010,7 +1010,7 @@ msgid "Write"
 msgstr "Ghi"
 
 #: gitk:9408
-msgid "Error writing commit:"
+msgid "Error writing cummit:"
 msgstr "Gặp lỗi trong quá trình ghi chuyển giao:"
 
 #: gitk:9435
@@ -1028,7 +1028,7 @@ msgstr "Nhánh “%s” đã có từ trước rồi. Ghi đè?"
 
 #: gitk:9530
 #, tcl-format
-msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgid "cummit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
 "Lần chuyển giao %s đã sẵn được bao gồm trong nhánh %s -- bạn có thực sự muốn "
 "áp dụng lại nó không?"
@@ -1041,7 +1041,7 @@ msgstr "Đang cherry-pick"
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
-"Please commit, reset or stash your changes and try again."
+"Please cummit, reset or stash your changes and try again."
 msgstr ""
 "Cherry-pick gặp lỗi bởi vì các thay đổi nội bộ tập tin “%s”.\n"
 "Xin hãy chuyển giao, reset hay stash các thay đổi của bạn sau đó thử lại."
@@ -1055,12 +1055,12 @@ msgstr ""
 "Bạn có muốn chạy lệnh “git citool” để giải quyết vấn đề này không?"
 
 #: gitk:9566 gitk:9624
-msgid "No changes committed"
+msgid "No changes cummitted"
 msgstr "Không có thay đổi nào cần chuyển giao"
 
 #: gitk:9593
 #, tcl-format
-msgid "Commit %s is not included in branch %s -- really revert it?"
+msgid "cummit %s is not included in branch %s -- really revert it?"
 msgstr ""
 "Lần chuyển giao %s không được bao gồm trong nhánh %s -- bạn có thực sự muốn "
 "“revert” nó không?"
@@ -1073,10 +1073,10 @@ msgstr "Đang hoàn tác"
 #, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
-"commit, reset or stash  your changes and try again."
+"cummit, reset or stash  your changes and try again."
 msgstr ""
 "Revert gặp lỗi bởi vì tập tin sau đã được thay đổi nội bộ:%s\n"
-"Xin hãy chạy lệnh “commit”, “reset” hoặc “stash” rồi thử lại."
+"Xin hãy chạy lệnh “cummit”, “reset” hoặc “stash” rồi thử lại."
 
 #: gitk:9610
 msgid ""
@@ -1131,7 +1131,7 @@ msgstr "Không thể xóa nhánh hiện tại đang được lấy ra"
 #: gitk:9802
 #, tcl-format
 msgid ""
-"The commits on branch %s aren't on any other branch.\n"
+"The cummits on branch %s aren't on any other branch.\n"
 "Really delete branch %s?"
 msgstr ""
 "Các lần chuyển giao trên nhánh %s không ở trên nhánh khác.\n"
@@ -1148,7 +1148,7 @@ msgstr "Bộ lọc"
 
 #: gitk:10146
 msgid ""
-"Error reading commit topology information; branch and preceding/following "
+"Error reading cummit topology information; branch and preceding/following "
 "tag information will be incomplete."
 msgstr ""
 "Gặp lỗi khi đọc thông tin hình học lần chuyển giao; thông tin nhánh và thẻ "
@@ -1175,7 +1175,7 @@ msgid "I"
 msgstr "I"
 
 #: gitk:11348
-msgid "Commit list display options"
+msgid "cummit list display options"
 msgstr "Các tùy chọn về hiển thị danh sách lần chuyển giao"
 
 #: gitk:11351

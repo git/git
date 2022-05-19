@@ -35,7 +35,7 @@ test_expect_success setup '
 
 	git add file control_file inert_file &&
 	test_tick &&
-	git commit -m "Initial" &&
+	git cummit -m "Initial" &&
 	git tag initial &&
 	git branch side &&
 
@@ -43,20 +43,20 @@ test_expect_success setup '
 	echo first line >file &&
 	git add .gitattributes file &&
 	test_tick &&
-	git commit -m "normalize file" &&
+	git cummit -m "normalize file" &&
 
 	echo same line | append_cr >>file &&
 	echo same line >>control_file &&
 	git add file control_file &&
 	test_tick &&
-	git commit -m "add line from a" &&
+	git cummit -m "add line from a" &&
 	git tag a &&
 
 	git rm .gitattributes &&
 	rm file &&
 	git checkout file &&
 	test_tick &&
-	git commit -m "remove .gitattributes" &&
+	git cummit -m "remove .gitattributes" &&
 	git tag c &&
 
 	git checkout side &&
@@ -64,7 +64,7 @@ test_expect_success setup '
 	echo same line >>control_file &&
 	git add file control_file &&
 	test_tick &&
-	git commit -m "add line from b" &&
+	git cummit -m "add line from b" &&
 	git tag b &&
 
 	git checkout main
@@ -197,7 +197,7 @@ test_expect_success 'Test delete/normalize conflict' '
 	rm -f .gitattributes &&
 	git reset --hard initial &&
 	git rm file &&
-	git commit -m "remove file" &&
+	git cummit -m "remove file" &&
 	git checkout main &&
 	git reset --hard a^ &&
 	git merge side &&
@@ -210,18 +210,18 @@ test_expect_success 'rename/delete vs. renormalization' '
 		cd subrepo &&
 		echo foo >oldfile &&
 		git add oldfile &&
-		git commit -m original &&
+		git cummit -m original &&
 
 		git branch rename &&
 		git branch nuke &&
 
 		git checkout rename &&
 		git mv oldfile newfile &&
-		git commit -m renamed &&
+		git cummit -m renamed &&
 
 		git checkout nuke &&
 		git rm oldfile &&
-		git commit -m deleted &&
+		git cummit -m deleted &&
 
 		git checkout rename^0 &&
 		test_must_fail git -c merge.renormalize=true merge nuke >out &&

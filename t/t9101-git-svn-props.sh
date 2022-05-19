@@ -53,18 +53,18 @@ cd ..
 
 rm -rf import
 test_expect_success 'checkout working copy from svn' 'svn co "$svnrepo" test_wc'
-test_expect_success 'setup some commits to svn' '
+test_expect_success 'setup some cummits to svn' '
 	(
 		cd test_wc &&
 		echo Greetings >> kw.c &&
 		poke kw.c &&
-		svn_cmd commit -m "Not yet an Id" &&
+		svn_cmd cummit -m "Not yet an Id" &&
 		echo Hello world >> kw.c &&
 		poke kw.c &&
-		svn_cmd commit -m "Modified file, but still not yet an Id" &&
+		svn_cmd cummit -m "Modified file, but still not yet an Id" &&
 		svn_cmd propset svn:keywords Id kw.c &&
 		poke kw.c &&
-		svn_cmd commit -m "Propset Id"
+		svn_cmd cummit -m "Propset Id"
 	)
 '
 
@@ -75,7 +75,7 @@ name='test svn:keywords ignoring'
 test_expect_success "$name" \
 	'git checkout -b mybranch remotes/git-svn &&
 	echo Hi again >> kw.c &&
-	git commit -a -m "test keywords ignoring" &&
+	git cummit -a -m "test keywords ignoring" &&
 	git svn set-tree remotes/git-svn..mybranch &&
 	git pull . remotes/git-svn'
 
@@ -89,7 +89,7 @@ test_expect_success "propset CR on crlf files" '
 		svn_cmd propset svn:eol-style CR empty &&
 		svn_cmd propset svn:eol-style CR crlf &&
 		svn_cmd propset svn:eol-style CR ne_crlf &&
-		svn_cmd commit -m "propset CR on crlf files"
+		svn_cmd cummit -m "propset CR on crlf files"
 	 )
 '
 
@@ -114,7 +114,7 @@ cd test_wc
 	 svn_cmd propset svn:eol-style CRLF ne_cr &&
 	 svn_cmd propset svn:keywords Id cr &&
 	 svn_cmd propset svn:keywords Id ne_cr &&
-	 svn_cmd commit -m "propset CRLF on cr files"'
+	 svn_cmd cummit -m "propset CRLF on cr files"'
 cd ..
 test_expect_success 'fetch and pull latest from svn' \
 	'git svn fetch && git pull . remotes/git-svn'
@@ -150,7 +150,7 @@ test_expect_success 'test show-ignore' "
 		svn_cmd propset -R svn:ignore '
 no-such-file*
 ' . &&
-		svn_cmd commit -m 'propset svn:ignore'
+		svn_cmd cummit -m 'propset svn:ignore'
 	) &&
 	git svn show-ignore > show-ignore.got &&
 	cmp show-ignore.expect show-ignore.got
@@ -200,7 +200,7 @@ test_expect_success 'test propget' '
 	test_propget svn:ignore . prop.expect &&
 	cd deeply &&
 	test_propget svn:ignore . ../prop.expect &&
-	test_propget svn:entry:committed-rev nested/directory/.keep \
+	test_propget svn:entry:cummitted-rev nested/directory/.keep \
 		../prop2.expect &&
 	test_propget svn:ignore .. ../prop.expect &&
 	test_propget svn:ignore nested/ ../prop.expect &&
@@ -210,16 +210,16 @@ test_expect_success 'test propget' '
 
 cat >prop.expect <<\EOF
 Properties on '.':
-  svn:entry:committed-date
-  svn:entry:committed-rev
+  svn:entry:cummitted-date
+  svn:entry:cummitted-rev
   svn:entry:last-author
   svn:entry:uuid
   svn:ignore
 EOF
 cat >prop2.expect <<\EOF
 Properties on 'nested/directory/.keep':
-  svn:entry:committed-date
-  svn:entry:committed-rev
+  svn:entry:cummitted-date
+  svn:entry:cummitted-rev
   svn:entry:last-author
   svn:entry:uuid
 EOF

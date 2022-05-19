@@ -15,7 +15,7 @@ maintenance.strategy::
 * `none`: This default setting implies no task are run at any schedule.
 * `incremental`: This setting optimizes for performing small maintenance
   activities that do not delete any data. This does not schedule the `gc`
-  task, but runs the `prefetch` and `commit-graph` tasks hourly, the
+  task, but runs the `prefetch` and `cummit-graph` tasks hourly, the
   `loose-objects` and `incremental-repack` tasks daily, and the `pack-refs`
   task weekly.
 
@@ -31,14 +31,14 @@ maintenance.<task>.schedule::
 	during a `git maintenance run --schedule=<frequency>` command. The
 	value must be one of "hourly", "daily", or "weekly".
 
-maintenance.commit-graph.auto::
-	This integer config option controls how often the `commit-graph` task
+maintenance.cummit-graph.auto::
+	This integer config option controls how often the `cummit-graph` task
 	should be run as part of `git maintenance run --auto`. If zero, then
-	the `commit-graph` task will not run with the `--auto` option. A
+	the `cummit-graph` task will not run with the `--auto` option. A
 	negative value will force the task to run every time. Otherwise, a
 	positive value implies the command should run when the number of
-	reachable commits that are not in the commit-graph file is at least
-	the value of `maintenance.commit-graph.auto`. The default value is
+	reachable cummits that are not in the cummit-graph file is at least
+	the value of `maintenance.cummit-graph.auto`. The default value is
 	100.
 
 maintenance.loose-objects.auto::

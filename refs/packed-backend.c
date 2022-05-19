@@ -1020,7 +1020,7 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 
 	/*
 	 * There is a stat-validity problem might cause `update-ref -d`
-	 * lost the newly commit of a ref, because a new `packed-refs`
+	 * lost the newly cummit of a ref, because a new `packed-refs`
 	 * file might has the same on-disk file attributes such as
 	 * timestamp, file size and inode value, but has a changed
 	 * ref value.
@@ -1312,7 +1312,7 @@ int is_packed_transaction_needed(struct ref_store *ref_store,
 	 *    setting a new value. In this case, we could verify the
 	 *    old value here and skip the update if it agrees. If it
 	 *    disagrees, we could either let the update go through
-	 *    (the actual commit would re-detect and report the
+	 *    (the actual cummit would re-detect and report the
 	 *    problem), or come up with a way of reporting such an
 	 *    error to *our* caller.
 	 *
@@ -1512,11 +1512,11 @@ cleanup:
 	return ret;
 }
 
-static int packed_initial_transaction_commit(struct ref_store *ref_store,
+static int packed_initial_transaction_cummit(struct ref_store *ref_store,
 					    struct ref_transaction *transaction,
 					    struct strbuf *err)
 {
-	return ref_transaction_commit(transaction, err);
+	return ref_transaction_cummit(transaction, err);
 }
 
 static int packed_delete_refs(struct ref_store *ref_store, const char *msg,
@@ -1553,7 +1553,7 @@ static int packed_delete_refs(struct ref_store *ref_store, const char *msg,
 		}
 	}
 
-	ret = ref_transaction_commit(transaction, &err);
+	ret = ref_transaction_cummit(transaction, &err);
 
 	if (ret) {
 		if (refnames->nr == 1)
@@ -1591,7 +1591,7 @@ struct ref_storage_be refs_be_packed = {
 	.transaction_prepare = packed_transaction_prepare,
 	.transaction_finish = packed_transaction_finish,
 	.transaction_abort = packed_transaction_abort,
-	.initial_transaction_commit = packed_initial_transaction_commit,
+	.initial_transaction_cummit = packed_initial_transaction_cummit,
 
 	.pack_refs = packed_pack_refs,
 	.create_symref = NULL,

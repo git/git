@@ -4,11 +4,11 @@
 #include "object-store.h"
 #include "blob.h"
 #include "tree.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "alloc.h"
 #include "packfile.h"
-#include "commit-graph.h"
+#include "cummit-graph.h"
 
 unsigned int get_max_object_index(void)
 {
@@ -22,7 +22,7 @@ struct object *get_indexed_object(unsigned int idx)
 
 static const char *object_type_strings[] = {
 	NULL,		/* OBJ_NONE = 0 */
-	"commit",	/* OBJ_COMMIT = 1 */
+	"cummit",		/* OBJ_cummit = 1 */
 	"tree",		/* OBJ_TREE = 2 */
 	"blob",		/* OBJ_BLOB = 3 */
 	"tag",		/* OBJ_TAG = 4 */
@@ -162,8 +162,8 @@ void *object_as_type(struct object *obj, enum object_type type, int quiet)
 	if (obj->type == type)
 		return obj;
 	else if (obj->type == OBJ_NONE) {
-		if (type == OBJ_COMMIT)
-			init_commit_node((struct commit *) obj);
+		if (type == OBJ_cummit)
+			init_cummit_node((struct cummit *) obj);
 		else
 			obj->type = type;
 		return obj;
@@ -190,8 +190,8 @@ struct object *lookup_object_by_type(struct repository *r,
 			    enum object_type type)
 {
 	switch (type) {
-	case OBJ_COMMIT:
-		return (struct object *)lookup_commit(r, oid);
+	case OBJ_cummit:
+		return (struct object *)lookup_cummit(r, oid);
 	case OBJ_TREE:
 		return (struct object *)lookup_tree(r, oid);
 	case OBJ_TAG:
@@ -228,16 +228,16 @@ struct object *parse_object_buffer(struct repository *r, const struct object_id 
 				*eaten_p = 1;
 			}
 		}
-	} else if (type == OBJ_COMMIT) {
-		struct commit *commit = lookup_commit(r, oid);
-		if (commit) {
-			if (parse_commit_buffer(r, commit, buffer, size, 1))
+	} else if (type == OBJ_cummit) {
+		struct cummit *cummit = lookup_cummit(r, oid);
+		if (cummit) {
+			if (parse_cummit_buffer(r, cummit, buffer, size, 1))
 				return NULL;
-			if (!get_cached_commit_buffer(r, commit, NULL)) {
-				set_commit_buffer(r, commit, buffer, size);
+			if (!get_cached_cummit_buffer(r, cummit, NULL)) {
+				set_cummit_buffer(r, cummit, buffer, size);
 				*eaten_p = 1;
 			}
-			obj = &commit->object;
+			obj = &cummit->object;
 		}
 	} else if (type == OBJ_TAG) {
 		struct tag *tag = lookup_tag(r, oid);
@@ -471,13 +471,13 @@ void clear_object_flags(unsigned flags)
 	}
 }
 
-void repo_clear_commit_marks(struct repository *r, unsigned int flags)
+void repo_clear_cummit_marks(struct repository *r, unsigned int flags)
 {
 	int i;
 
 	for (i = 0; i < r->parsed_objects->obj_hash_size; i++) {
 		struct object *obj = r->parsed_objects->obj_hash[i];
-		if (obj && obj->type == OBJ_COMMIT)
+		if (obj && obj->type == OBJ_cummit)
 			obj->flags &= ~flags;
 	}
 }
@@ -489,14 +489,14 @@ struct parsed_object_pool *parsed_object_pool_new(void)
 
 	o->blob_state = allocate_alloc_state();
 	o->tree_state = allocate_alloc_state();
-	o->commit_state = allocate_alloc_state();
+	o->cummit_state = allocate_alloc_state();
 	o->tag_state = allocate_alloc_state();
 	o->object_state = allocate_alloc_state();
 
 	o->is_shallow = -1;
 	CALLOC_ARRAY(o->shallow_stat, 1);
 
-	o->buffer_slab = allocate_commit_buffer_slab();
+	o->buffer_slab = allocate_cummit_buffer_slab();
 
 	return o;
 }
@@ -540,9 +540,9 @@ void raw_object_store_clear(struct raw_object_store *o)
 	FREE_AND_NULL(o->replace_map);
 	pthread_mutex_destroy(&o->replace_mutex);
 
-	free_commit_graph(o->commit_graph);
-	o->commit_graph = NULL;
-	o->commit_graph_attempted = 0;
+	free_cummit_graph(o->cummit_graph);
+	o->cummit_graph = NULL;
+	o->cummit_graph_attempted = 0;
 
 	free_object_directories(o);
 	o->odb_tail = NULL;
@@ -574,8 +574,8 @@ void parsed_object_pool_clear(struct parsed_object_pool *o)
 
 		if (obj->type == OBJ_TREE)
 			free_tree_buffer((struct tree*)obj);
-		else if (obj->type == OBJ_COMMIT)
-			release_commit_memory(o, (struct commit*)obj);
+		else if (obj->type == OBJ_cummit)
+			release_cummit_memory(o, (struct cummit*)obj);
 		else if (obj->type == OBJ_TAG)
 			release_tag_memory((struct tag*)obj);
 	}
@@ -583,18 +583,18 @@ void parsed_object_pool_clear(struct parsed_object_pool *o)
 	FREE_AND_NULL(o->obj_hash);
 	o->obj_hash_size = 0;
 
-	free_commit_buffer_slab(o->buffer_slab);
+	free_cummit_buffer_slab(o->buffer_slab);
 	o->buffer_slab = NULL;
 
 	clear_alloc_state(o->blob_state);
 	clear_alloc_state(o->tree_state);
-	clear_alloc_state(o->commit_state);
+	clear_alloc_state(o->cummit_state);
 	clear_alloc_state(o->tag_state);
 	clear_alloc_state(o->object_state);
 	stat_validity_clear(o->shallow_stat);
 	FREE_AND_NULL(o->blob_state);
 	FREE_AND_NULL(o->tree_state);
-	FREE_AND_NULL(o->commit_state);
+	FREE_AND_NULL(o->cummit_state);
 	FREE_AND_NULL(o->tag_state);
 	FREE_AND_NULL(o->object_state);
 	FREE_AND_NULL(o->shallow_stat);

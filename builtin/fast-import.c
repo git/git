@@ -6,7 +6,7 @@
 #include "object.h"
 #include "blob.h"
 #include "tree.h"
-#include "commit.h"
+#include "cummit.h"
 #include "delta.h"
 #include "pack.h"
 #include "refs.h"
@@ -17,7 +17,7 @@
 #include "packfile.h"
 #include "object-store.h"
 #include "mem-pool.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 #include "khash.h"
 #include "date.h"
 
@@ -118,7 +118,7 @@ struct branch {
 	struct branch *active_next_branch;
 	const char *name;
 	struct tree_entry branch_tree;
-	uintmax_t last_commit;
+	uintmax_t last_cummit;
 	uintmax_t num_notes;
 	unsigned active : 1;
 	unsigned delete : 1;
@@ -300,12 +300,12 @@ static void write_branch_report(FILE *rpt, struct branch *b)
 		fputs(" dirty", rpt);
 	fputc('\n', rpt);
 
-	fprintf(rpt, "  tip commit  : %s\n", oid_to_hex(&b->oid));
+	fprintf(rpt, "  tip cummit  : %s\n", oid_to_hex(&b->oid));
 	fprintf(rpt, "  old tree    : %s\n",
 		oid_to_hex(&b->branch_tree.versions[0].oid));
 	fprintf(rpt, "  cur tree    : %s\n",
 		oid_to_hex(&b->branch_tree.versions[1].oid));
-	fprintf(rpt, "  commit clock: %" PRIuMAX "\n", b->last_commit);
+	fprintf(rpt, "  cummit clock: %" PRIuMAX "\n", b->last_cummit);
 
 	fputs("  last pack   : ", rpt);
 	if (b->pack_id < MAX_PACK_ID)
@@ -364,7 +364,7 @@ static void write_crash_report(const char *err)
 	fputs("  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n", rpt);
 	for (b = active_branches, lu = 0; b; b = b->active_next_branch)
 		fprintf(rpt, "  %2lu) %6" PRIuMAX" %s\n",
-			++lu, b->last_commit, b->name);
+			++lu, b->last_cummit, b->name);
 
 	fputc('\n', rpt);
 	fputs("Inactive Branches\n", rpt);
@@ -1616,14 +1616,14 @@ static int update_branch(struct branch *b)
 	if (read_ref(b->name, &old_oid))
 		oidclr(&old_oid);
 	if (!force_update && !is_null_oid(&old_oid)) {
-		struct commit *old_cmit, *new_cmit;
+		struct cummit *old_cmit, *new_cmit;
 
-		old_cmit = lookup_commit_reference_gently(the_repository,
+		old_cmit = lookup_cummit_reference_gently(the_repository,
 							  &old_oid, 0);
-		new_cmit = lookup_commit_reference_gently(the_repository,
+		new_cmit = lookup_cummit_reference_gently(the_repository,
 							  &b->oid, 0);
 		if (!old_cmit || !new_cmit)
-			return error("Branch %s is missing commits.", b->name);
+			return error("Branch %s is missing cummits.", b->name);
 
 		if (!in_merge_bases(old_cmit, new_cmit)) {
 			warning("Not updating %s"
@@ -1637,7 +1637,7 @@ static int update_branch(struct branch *b)
 	if (!transaction ||
 	    ref_transaction_update(transaction, b->name, &b->oid, &old_oid,
 				   0, msg, &err) ||
-	    ref_transaction_commit(transaction, &err)) {
+	    ref_transaction_cummit(transaction, &err)) {
 		ref_transaction_free(transaction);
 		error("%s", err.buf);
 		strbuf_release(&err);
@@ -1682,7 +1682,7 @@ static void dump_tags(void)
 			goto cleanup;
 		}
 	}
-	if (ref_transaction_commit(transaction, &err))
+	if (ref_transaction_cummit(transaction, &err))
 		failure |= error("%s", err.buf);
 
  cleanup:
@@ -1721,7 +1721,7 @@ static void dump_marks(void)
 	}
 
 	for_each_mark(marks, 0, dump_marks_fn, f);
-	if (commit_lock_file(&mark_lock)) {
+	if (cummit_lock_file(&mark_lock)) {
 		failure |= error_errno("Unable to write file %s",
 				       export_marks_file);
 		return;
@@ -2025,13 +2025,13 @@ static void unload_one_branch(void)
 {
 	while (cur_active_branches
 		&& cur_active_branches >= max_active_branches) {
-		uintmax_t min_commit = ULONG_MAX;
+		uintmax_t min_cummit = ULONG_MAX;
 		struct branch *e, *l = NULL, *p = NULL;
 
 		for (e = active_branches; e; e = e->active_next_branch) {
-			if (e->last_commit < min_commit) {
+			if (e->last_cummit < min_cummit) {
 				p = l;
-				min_commit = e->last_commit;
+				min_cummit = e->last_cummit;
 			}
 			l = e;
 		}
@@ -2318,8 +2318,8 @@ static void file_change_m(const char *p, struct branch *b)
 			die("Git links cannot be specified 'inline': %s",
 				command_buf.buf);
 		else if (oe) {
-			if (oe->type != OBJ_COMMIT)
-				die("Not a commit (actually a %s): %s",
+			if (oe->type != OBJ_cummit)
+				die("Not a cummit (actually a %s): %s",
 					type_name(oe->type), command_buf.buf);
 		}
 		/*
@@ -2437,7 +2437,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 	static struct strbuf uq = STRBUF_INIT;
 	struct object_entry *oe;
 	struct branch *s;
-	struct object_id oid, commit_oid;
+	struct object_id oid, cummit_oid;
 	char path[GIT_MAX_RAWSZ * 3];
 	uint16_t inline_data = 0;
 	unsigned char new_fanout;
@@ -2474,26 +2474,26 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 			die("Missing space after SHA1: %s", command_buf.buf);
 	}
 
-	/* <commit-ish> */
+	/* <cummit-ish> */
 	s = lookup_branch(p);
 	if (s) {
 		if (is_null_oid(&s->oid))
 			die("Can't add a note on empty branch.");
-		oidcpy(&commit_oid, &s->oid);
+		oidcpy(&cummit_oid, &s->oid);
 	} else if (*p == ':') {
-		uintmax_t commit_mark = parse_mark_ref_eol(p);
-		struct object_entry *commit_oe = find_mark(marks, commit_mark);
-		if (commit_oe->type != OBJ_COMMIT)
-			die("Mark :%" PRIuMAX " not a commit", commit_mark);
-		oidcpy(&commit_oid, &commit_oe->idx.oid);
-	} else if (!get_oid(p, &commit_oid)) {
+		uintmax_t cummit_mark = parse_mark_ref_eol(p);
+		struct object_entry *cummit_oe = find_mark(marks, cummit_mark);
+		if (cummit_oe->type != OBJ_cummit)
+			die("Mark :%" PRIuMAX " not a cummit", cummit_mark);
+		oidcpy(&cummit_oid, &cummit_oe->idx.oid);
+	} else if (!get_oid(p, &cummit_oid)) {
 		unsigned long size;
 		char *buf = read_object_with_reference(the_repository,
-						       &commit_oid,
-						       OBJ_COMMIT, &size,
-						       &commit_oid);
+						       &cummit_oid,
+						       OBJ_cummit, &size,
+						       &cummit_oid);
 		if (!buf || size < the_hash_algo->hexsz + 6)
-			die("Not a valid commit: %s", p);
+			die("Not a valid cummit: %s", p);
 		free(buf);
 	} else
 		die("Invalid ref name or SHA1 expression: %s", p);
@@ -2519,7 +2519,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 			    type_name(type), command_buf.buf);
 	}
 
-	construct_path_with_fanout(oid_to_hex(&commit_oid), *old_fanout, path);
+	construct_path_with_fanout(oid_to_hex(&cummit_oid), *old_fanout, path);
 	if (tree_content_remove(&b->branch_tree, path, NULL, 0))
 		b->num_notes--;
 
@@ -2528,7 +2528,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 
 	b->num_notes++;
 	new_fanout = convert_num_notes_to_fanout(b->num_notes);
-	construct_path_with_fanout(oid_to_hex(&commit_oid), new_fanout, path);
+	construct_path_with_fanout(oid_to_hex(&cummit_oid), new_fanout, path);
 	tree_content_set(&b->branch_tree, path, &oid, S_IFREG | 0644, NULL);
 }
 
@@ -2541,13 +2541,13 @@ static void file_change_deleteall(struct branch *b)
 	b->num_notes = 0;
 }
 
-static void parse_from_commit(struct branch *b, char *buf, unsigned long size)
+static void parse_from_cummit(struct branch *b, char *buf, unsigned long size)
 {
 	if (!buf || size < the_hash_algo->hexsz + 6)
-		die("Not a valid commit: %s", oid_to_hex(&b->oid));
+		die("Not a valid cummit: %s", oid_to_hex(&b->oid));
 	if (memcmp("tree ", buf, 5)
 		|| get_oid_hex(buf + 5, &b->branch_tree.versions[1].oid))
-		die("The commit %s is corrupt", oid_to_hex(&b->oid));
+		die("The cummit %s is corrupt", oid_to_hex(&b->oid));
 	oidcpy(&b->branch_tree.versions[0].oid,
 	       &b->branch_tree.versions[1].oid);
 }
@@ -2562,9 +2562,9 @@ static void parse_from_existing(struct branch *b)
 		char *buf;
 
 		buf = read_object_with_reference(the_repository,
-						 &b->oid, OBJ_COMMIT, &size,
+						 &b->oid, OBJ_cummit, &size,
 						 &b->oid);
-		parse_from_commit(b, buf, size);
+		parse_from_cummit(b, buf, size);
 		free(buf);
 	}
 }
@@ -2587,14 +2587,14 @@ static int parse_objectish(struct branch *b, const char *objectish)
 	} else if (*objectish == ':') {
 		uintmax_t idnum = parse_mark_ref_eol(objectish);
 		struct object_entry *oe = find_mark(marks, idnum);
-		if (oe->type != OBJ_COMMIT)
-			die("Mark :%" PRIuMAX " not a commit", idnum);
+		if (oe->type != OBJ_cummit)
+			die("Mark :%" PRIuMAX " not a cummit", idnum);
 		if (!oideq(&b->oid, &oe->idx.oid)) {
 			oidcpy(&b->oid, &oe->idx.oid);
 			if (oe->pack_id != MAX_PACK_ID) {
 				unsigned long size;
 				char *buf = gfi_unpack_entry(oe, &size);
-				parse_from_commit(b, buf, size);
+				parse_from_cummit(b, buf, size);
 				free(buf);
 			} else
 				parse_from_existing(b);
@@ -2651,17 +2651,17 @@ static struct hash_list *parse_merge(unsigned int *count)
 		else if (*from == ':') {
 			uintmax_t idnum = parse_mark_ref_eol(from);
 			struct object_entry *oe = find_mark(marks, idnum);
-			if (oe->type != OBJ_COMMIT)
-				die("Mark :%" PRIuMAX " not a commit", idnum);
+			if (oe->type != OBJ_cummit)
+				die("Mark :%" PRIuMAX " not a cummit", idnum);
 			oidcpy(&n->oid, &oe->idx.oid);
 		} else if (!get_oid(from, &n->oid)) {
 			unsigned long size;
 			char *buf = read_object_with_reference(the_repository,
 							       &n->oid,
-							       OBJ_COMMIT,
+							       OBJ_cummit,
 							       &size, &n->oid);
 			if (!buf || size < the_hash_algo->hexsz + 6)
-				die("Not a valid commit: %s", from);
+				die("Not a valid cummit: %s", from);
 			free(buf);
 		} else
 			die("Invalid ref name or SHA1 expression: %s", from);
@@ -2676,12 +2676,12 @@ static struct hash_list *parse_merge(unsigned int *count)
 	return list;
 }
 
-static void parse_new_commit(const char *arg)
+static void parse_new_cummit(const char *arg)
 {
 	static struct strbuf msg = STRBUF_INIT;
 	struct branch *b;
 	char *author = NULL;
-	char *committer = NULL;
+	char *cummitter = NULL;
 	char *encoding = NULL;
 	struct hash_list *merge_list = NULL;
 	unsigned int merge_count;
@@ -2699,12 +2699,12 @@ static void parse_new_commit(const char *arg)
 		author = parse_ident(v);
 		read_next_command();
 	}
-	if (skip_prefix(command_buf.buf, "committer ", &v)) {
-		committer = parse_ident(v);
+	if (skip_prefix(command_buf.buf, "cummitter ", &v)) {
+		cummitter = parse_ident(v);
 		read_next_command();
 	}
-	if (!committer)
-		die("Expected committer but didn't get one");
+	if (!cummitter)
+		die("Expected cummitter but didn't get one");
 	if (skip_prefix(command_buf.buf, "encoding ", &v)) {
 		encoding = xstrdup(v);
 		read_next_command();
@@ -2752,7 +2752,7 @@ static void parse_new_commit(const char *arg)
 	if (new_fanout != prev_fanout)
 		b->num_notes = change_note_fanout(&b->branch_tree, new_fanout);
 
-	/* build the tree and the commit */
+	/* build the tree and the cummit */
 	store_tree(&b->branch_tree);
 	oidcpy(&b->branch_tree.versions[0].oid,
 	       &b->branch_tree.versions[1].oid);
@@ -2772,8 +2772,8 @@ static void parse_new_commit(const char *arg)
 	}
 	strbuf_addf(&new_data,
 		"author %s\n"
-		"committer %s\n",
-		author ? author : committer, committer);
+		"cummitter %s\n",
+		author ? author : cummitter, cummitter);
 	if (encoding)
 		strbuf_addf(&new_data,
 			"encoding %s\n",
@@ -2781,12 +2781,12 @@ static void parse_new_commit(const char *arg)
 	strbuf_addch(&new_data, '\n');
 	strbuf_addbuf(&new_data, &msg);
 	free(author);
-	free(committer);
+	free(cummitter);
 	free(encoding);
 
-	if (!store_object(OBJ_COMMIT, &new_data, NULL, &b->oid, next_mark))
+	if (!store_object(OBJ_cummit, &new_data, NULL, &b->oid, next_mark))
 		b->pack_id = pack_id;
-	b->last_commit = object_count_by_type[OBJ_COMMIT];
+	b->last_cummit = object_count_by_type[OBJ_cummit];
 }
 
 static void parse_new_tag(const char *arg)
@@ -2820,7 +2820,7 @@ static void parse_new_tag(const char *arg)
 		if (is_null_oid(&s->oid))
 			die("Can't tag an empty branch.");
 		oidcpy(&oid, &s->oid);
-		type = OBJ_COMMIT;
+		type = OBJ_cummit;
 	} else if (*from == ':') {
 		struct object_entry *oe;
 		from_mark = parse_mark_ref_eol(from);
@@ -3033,7 +3033,7 @@ static struct object_entry *dereference(struct object_entry *oe,
 	switch (oe->type) {
 	case OBJ_TREE:	/* easy case. */
 		return oe;
-	case OBJ_COMMIT:
+	case OBJ_cummit:
 	case OBJ_TAG:
 		break;
 	default:
@@ -3056,10 +3056,10 @@ static struct object_entry *dereference(struct object_entry *oe,
 		    get_oid_hex(buf + strlen("object "), oid))
 			die("Invalid SHA1 in tag: %s", command_buf.buf);
 		break;
-	case OBJ_COMMIT:
+	case OBJ_cummit:
 		if (size < hexsz + strlen("tree ") ||
 		    get_oid_hex(buf + strlen("tree "), oid))
-			die("Invalid SHA1 in commit: %s", command_buf.buf);
+			die("Invalid SHA1 in cummit: %s", command_buf.buf);
 	}
 
 	free(buf);
@@ -3131,7 +3131,7 @@ static void print_ls(int mode, const unsigned char *hash, const char *path)
 
 	/* See show_tree(). */
 	const char *type =
-		S_ISGITLINK(mode) ? commit_type :
+		S_ISGITLINK(mode) ? cummit_type :
 		S_ISDIR(mode) ? tree_type :
 		blob_type;
 
@@ -3160,7 +3160,7 @@ static void parse_ls(const char *p, struct branch *b)
 	/* ls SP (<tree-ish> SP)? <path> */
 	if (*p == '"') {
 		if (!b)
-			die("Not in a commit: %s", command_buf.buf);
+			die("Not in a cummit: %s", command_buf.buf);
 		root = &b->branch_tree;
 	} else {
 		struct object_entry *e = parse_treeish_dataref(&p);
@@ -3564,8 +3564,8 @@ int cmd_fast_import(int argc, const char **argv, const char *prefix)
 		const char *v;
 		if (!strcmp("blob", command_buf.buf))
 			parse_new_blob();
-		else if (skip_prefix(command_buf.buf, "commit ", &v))
-			parse_new_commit(v);
+		else if (skip_prefix(command_buf.buf, "cummit ", &v))
+			parse_new_cummit(v);
 		else if (skip_prefix(command_buf.buf, "tag ", &v))
 			parse_new_tag(v);
 		else if (skip_prefix(command_buf.buf, "reset ", &v))
@@ -3627,7 +3627,7 @@ int cmd_fast_import(int argc, const char **argv, const char *prefix)
 		fprintf(stderr, "Total objects:   %10" PRIuMAX " (%10" PRIuMAX " duplicates                  )\n", total_count, duplicate_count);
 		fprintf(stderr, "      blobs  :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_BLOB], duplicate_count_by_type[OBJ_BLOB], delta_count_by_type[OBJ_BLOB], delta_count_attempts_by_type[OBJ_BLOB]);
 		fprintf(stderr, "      trees  :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_TREE], duplicate_count_by_type[OBJ_TREE], delta_count_by_type[OBJ_TREE], delta_count_attempts_by_type[OBJ_TREE]);
-		fprintf(stderr, "      commits:   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_COMMIT], duplicate_count_by_type[OBJ_COMMIT], delta_count_by_type[OBJ_COMMIT], delta_count_attempts_by_type[OBJ_COMMIT]);
+		fprintf(stderr, "      cummits:   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_cummit], duplicate_count_by_type[OBJ_cummit], delta_count_by_type[OBJ_cummit], delta_count_attempts_by_type[OBJ_cummit]);
 		fprintf(stderr, "      tags   :   %10" PRIuMAX " (%10" PRIuMAX " duplicates %10" PRIuMAX " deltas of %10" PRIuMAX" attempts)\n", object_count_by_type[OBJ_TAG], duplicate_count_by_type[OBJ_TAG], delta_count_by_type[OBJ_TAG], delta_count_attempts_by_type[OBJ_TAG]);
 		fprintf(stderr, "Total branches:  %10lu (%10lu loads     )\n", branch_count, branch_load_count);
 		fprintf(stderr, "      marks:     %10" PRIuMAX " (%10" PRIuMAX " unique    )\n", (((uintmax_t)1) << marks->shift) * 1024, marks_set_count);

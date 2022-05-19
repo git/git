@@ -15,7 +15,7 @@ initialized previously but the checkout has since been removed.
 test_encoding="ISO8859-1"
 
 # String "added" in German (translated with Google Translate), encoded in UTF-8,
-# used in sample commit log messages in add_file() function below.
+# used in sample cummit log messages in add_file() function below.
 added=$(printf "hinzugef\303\274gt")
 
 add_file () {
@@ -27,18 +27,18 @@ add_file () {
 			echo "$name" >"$name" &&
 			git add "$name" &&
 			test_tick &&
-			# "git commit -m" would break MinGW, as Windows refuse to pass
+			# "git cummit -m" would break MinGW, as Windows refuse to pass
 			# $test_encoding encoded parameter to git.
 			echo "Add $name ($added $name)" | iconv -f utf-8 -t $test_encoding |
-			git -c "i18n.commitEncoding=$test_encoding" commit -F -
+			git -c "i18n.cummitEncoding=$test_encoding" cummit -F -
 		done >/dev/null &&
 		git rev-parse --short --verify HEAD
 	)
 }
 
-commit_file () {
+cummit_file () {
 	test_tick &&
-	git commit "$@" -m "Commit $*" >/dev/null
+	git cummit "$@" -m "cummit $*" >/dev/null
 }
 
 test_expect_success 'setup - submodules' '
@@ -50,8 +50,8 @@ test_expect_success 'setup - submodules' '
 
 test_expect_success 'setup - git submodule add' '
 	git submodule add ./sm2 sm1 &&
-	commit_file sm1 .gitmodules &&
-	git diff-tree -p --no-commit-id --submodule=log HEAD -- sm1 >actual &&
+	cummit_file sm1 .gitmodules &&
+	git diff-tree -p --no-cummit-id --submodule=log HEAD -- sm1 >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm1 0000000...$smhead1 (new submodule)
 	EOF
@@ -60,18 +60,18 @@ test_expect_success 'setup - git submodule add' '
 
 test_expect_success 'submodule directory removed' '
 	rm -rf sm1 &&
-	git diff-tree -p --no-commit-id --submodule=log HEAD -- sm1 >actual &&
+	git diff-tree -p --no-cummit-id --submodule=log HEAD -- sm1 >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm1 0000000...$smhead1 (new submodule)
 	EOF
 	test_cmp expected actual
 '
 
-test_expect_success 'setup - submodule multiple commits' '
+test_expect_success 'setup - submodule multiple cummits' '
 	git submodule update --checkout sm1 &&
 	smhead2=$(add_file sm1 foo3 foo4) &&
-	commit_file sm1 &&
-	git diff-tree -p --no-commit-id --submodule=log HEAD >actual &&
+	cummit_file sm1 &&
+	git diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm1 $smhead1..$smhead2:
 	  > Add foo4 ($added foo4)
@@ -80,9 +80,9 @@ test_expect_success 'setup - submodule multiple commits' '
 	test_cmp expected actual
 '
 
-test_expect_success 'submodule removed multiple commits' '
+test_expect_success 'submodule removed multiple cummits' '
 	rm -rf sm1 &&
-	git diff-tree -p --no-commit-id --submodule=log HEAD >actual &&
+	git diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm1 $smhead1..$smhead2:
 	  > Add foo4 ($added foo4)
@@ -93,9 +93,9 @@ test_expect_success 'submodule removed multiple commits' '
 
 test_expect_success 'submodule not initialized in new clone' '
 	git clone . sm3 &&
-	git -C sm3 diff-tree -p --no-commit-id --submodule=log HEAD >actual &&
+	git -C sm3 diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
-	Submodule sm1 $smhead1...$smhead2 (commits not present)
+	Submodule sm1 $smhead1...$smhead2 (cummits not present)
 	EOF
 	test_cmp expected actual
 '
@@ -103,8 +103,8 @@ test_expect_success 'submodule not initialized in new clone' '
 test_expect_success 'setup submodule moved' '
 	git submodule update --checkout sm1 &&
 	git mv sm1 sm4 &&
-	commit_file sm4 &&
-	git diff-tree -p --no-commit-id --submodule=log HEAD >actual &&
+	cummit_file sm4 &&
+	git diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm4 0000000...$smhead2 (new submodule)
 	EOF
@@ -113,9 +113,9 @@ test_expect_success 'setup submodule moved' '
 
 test_expect_success 'submodule moved then removed' '
 	smhead3=$(add_file sm4 foo6 foo7) &&
-	commit_file sm4 &&
+	cummit_file sm4 &&
 	rm -rf sm4 &&
-	git diff-tree -p --no-commit-id --submodule=log HEAD >actual &&
+	git diff-tree -p --no-cummit-id --submodule=log HEAD >actual &&
 	cat >expected <<-EOF &&
 	Submodule sm4 $smhead2..$smhead3:
 	  > Add foo7 ($added foo7)

@@ -11,8 +11,8 @@ SYNOPSIS
 'git branch' [--color[=<when>] | --no-color] [--show-current]
 	[-v [--abbrev=<n> | --no-abbrev]]
 	[--column[=<options>] | --no-column] [--sort=<key>]
-	[--merged [<commit>]] [--no-merged [<commit>]]
-	[--contains [<commit>]] [--no-contains [<commit>]]
+	[--merged [<cummit>]] [--no-merged [<cummit>]]
+	[--contains [<cummit>]] [--no-contains [<cummit>]]
 	[--points-at <object>] [--format=<format>]
 	[(-r | --remotes) | (-a | --all)]
 	[--list] [<pattern>...]
@@ -44,12 +44,12 @@ Note that when providing a
 `<pattern>`, you must use `--list`; otherwise the command may be interpreted
 as branch creation.
 
-With `--contains`, shows only the branches that contain the named commit
-(in other words, the branches whose tip commits are descendants of the
-named commit), `--no-contains` inverts it. With `--merged`, only branches
-merged into the named commit (i.e. the branches whose tip commits are
-reachable from the named commit) will be listed.  With `--no-merged` only
-branches not merged into the named commit will be listed.  If the <commit>
+With `--contains`, shows only the branches that contain the named cummit
+(in other words, the branches whose tip cummits are descendants of the
+named cummit), `--no-contains` inverts it. With `--merged`, only branches
+merged into the named cummit (i.e. the branches whose tip cummits are
+reachable from the named cummit) will be listed.  With `--no-merged` only
+branches not merged into the named cummit will be listed.  If the <cummit>
 argument is missing it defaults to `HEAD` (i.e. the tip of the current
 branch).
 
@@ -120,7 +120,7 @@ OPTIONS
 	already. Without `-f`, 'git branch' refuses to change an existing branch.
 	In combination with `-d` (or `--delete`), allow deleting the
 	branch irrespective of its merged status, or whether it even
-	points to a valid commit. In combination with
+	points to a valid cummit. In combination with
 	`-m` (or `--move`), allow renaming the branch even if the new
 	branch name already exists, the same applies for `-c` (or `--copy`).
 
@@ -184,7 +184,7 @@ This option is only applicable in non-verbose mode.
 -vv::
 --verbose::
 	When in list mode,
-	show sha1 and commit subject line for each head, along with
+	show sha1 and cummit subject line for each head, along with
 	relationship to upstream branch (if any). If given twice, print
 	the path of the linked worktree (if any) and the name of the upstream
 	branch, as well (see also `git remote show <remote>`).  Note that the
@@ -197,7 +197,7 @@ This option is only applicable in non-verbose mode.
 	non-error messages.
 
 --abbrev=<n>::
-	In the verbose listing that show the commit object name,
+	In the verbose listing that show the cummit object name,
 	show the shortest prefix that is at least '<n>' hexdigits
 	long that uniquely refers the object.
 	The default value is 7 and can be overridden by the `core.abbrev`
@@ -246,10 +246,10 @@ how the `branch.<name>.remote` and `branch.<name>.merge` options are used.
 When used in branch creation, a new branch <branchname> will be created
 in the superproject and all of the submodules in the superproject's
 <start-point>. In submodules, the branch will point to the submodule
-commit in the superproject's <start-point> but the branch's tracking
+cummit in the superproject's <start-point> but the branch's tracking
 information will be set up based on the submodule's branches and remotes
 e.g. `git branch --recurse-submodules topic origin/main` will create the
-submodule branch "topic" that points to the submodule commit in the
+submodule branch "topic" that points to the submodule cummit in the
 superproject's "origin/main", but tracks the submodule's "origin/main".
 
 --set-upstream::
@@ -272,21 +272,21 @@ superproject's "origin/main", but tracks the submodule's "origin/main".
 	`request-pull`, and `merge` (if enabled)). Multi-line explanations
 	may be used.
 
---contains [<commit>]::
-	Only list branches which contain the specified commit (HEAD
+--contains [<cummit>]::
+	Only list branches which contain the specified cummit (HEAD
 	if not specified). Implies `--list`.
 
---no-contains [<commit>]::
-	Only list branches which don't contain the specified commit
+--no-contains [<cummit>]::
+	Only list branches which don't contain the specified cummit
 	(HEAD if not specified). Implies `--list`.
 
---merged [<commit>]::
+--merged [<cummit>]::
 	Only list branches whose tips are reachable from the
-	specified commit (HEAD if not specified). Implies `--list`.
+	specified cummit (HEAD if not specified). Implies `--list`.
 
---no-merged [<commit>]::
+--no-merged [<cummit>]::
 	Only list branches whose tips are not reachable from the
-	specified commit (HEAD if not specified). Implies `--list`.
+	specified cummit (HEAD if not specified). Implies `--list`.
 
 <branchname>::
 	The name of the branch to create or delete.
@@ -295,8 +295,8 @@ superproject's "origin/main", but tracks the submodule's "origin/main".
 	may restrict the characters allowed in a branch name.
 
 <start-point>::
-	The new branch head will point to this commit.  It may be
-	given as a branch name, a commit-id, or a tag.  If this
+	The new branch head will point to this cummit.  It may be
+	given as a branch name, a cummit-id, or a tag.  If this
 	option is omitted, the current HEAD will be used instead.
 
 <oldbranch>::
@@ -360,7 +360,7 @@ $ git branch -D test                                    <2>
     'fetch' or 'pull' will create them again unless you configure them not to.
     See linkgit:git-fetch[1].
 <2> Delete the "test" branch even if the "master" branch (or whichever branch
-    is currently checked out) does not have all commits from the test branch.
+    is currently checked out) does not have all cummits from the test branch.
 
 Listing branches from a specific remote::
 +
@@ -385,12 +385,12 @@ do the same thing with a single command.
 The options `--contains`, `--no-contains`, `--merged` and `--no-merged`
 serve four related but different purposes:
 
-- `--contains <commit>` is used to find all branches which will need
-  special attention if <commit> were to be rebased or amended, since those
-  branches contain the specified <commit>.
+- `--contains <cummit>` is used to find all branches which will need
+  special attention if <cummit> were to be rebased or amended, since those
+  branches contain the specified <cummit>.
 
-- `--no-contains <commit>` is the inverse of that, i.e. branches that don't
-  contain the specified <commit>.
+- `--no-contains <cummit>` is the inverse of that, i.e. branches that don't
+  contain the specified <cummit>.
 
 - `--merged` is used to find all branches which can be safely deleted,
   since those branches are fully contained by HEAD.

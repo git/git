@@ -323,11 +323,11 @@ proc do_unstage_selection {} {
 
 	if {[array size selected_paths] > 0} {
 		unstage_helper \
-			[mc "Unstaging selected files from commit"] \
+			[mc "Unstaging selected files from cummit"] \
 			[array names selected_paths]
 	} elseif {$current_diff_path ne {}} {
 		unstage_helper \
-			[mc "Unstaging %s from commit" [short_path $current_diff_path]] \
+			[mc "Unstaging %s from cummit" [short_path $current_diff_path]] \
 			[list $current_diff_path]
 	}
 }
@@ -366,7 +366,7 @@ proc add_helper {txt paths} {
 		update_index \
 			$txt \
 			$path_list \
-			[concat $after {ui_status [mc "Ready to commit."];}]
+			[concat $after {ui_status [mc "Ready to cummit."];}]
 	}
 }
 
@@ -734,20 +734,20 @@ proc do_revert_selection {} {
 	}
 }
 
-proc do_select_commit_type {} {
-	global commit_type commit_type_is_amend
+proc do_select_cummit_type {} {
+	global cummit_type cummit_type_is_amend
 
-	if {$commit_type_is_amend == 0
-		&& [string match amend* $commit_type]} {
-		create_new_commit
-	} elseif {$commit_type_is_amend == 1
-		&& ![string match amend* $commit_type]} {
-		load_last_commit
+	if {$cummit_type_is_amend == 0
+		&& [string match amend* $cummit_type]} {
+		create_new_cummit
+	} elseif {$cummit_type_is_amend == 1
+		&& ![string match amend* $cummit_type]} {
+		load_last_cummit
 
 		# The amend request was rejected...
 		#
-		if {![string match amend* $commit_type]} {
-			set commit_type_is_amend 0
+		if {![string match amend* $cummit_type]} {
+			set cummit_type_is_amend 0
 		}
 	}
 }

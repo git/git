@@ -46,8 +46,8 @@ warning.
 +
 When asking to 'abort' (which is the default), this program will die
 when encountering such a tag.  With 'drop' it will omit such tags from
-the output.  With 'rewrite', if the tagged object is a commit, it will
-rewrite the tag to tag an ancestor commit (via parent rewriting; see
+the output.  With 'rewrite', if the tagged object is a cummit, it will
+rewrite the tag to tag an ancestor cummit (via parent rewriting; see
 linkgit:git-rev-list[1])
 
 -M::
@@ -77,7 +77,7 @@ produced incorrect results if you gave these options.
 	must use the same format as produced by --export-marks.
 
 --mark-tags::
-	In addition to labelling blobs and commits with mark ids, also
+	In addition to labelling blobs and cummits with mark ids, also
 	label tags.  This is useful in conjunction with
 	`--export-marks` and `--import-marks`, and is also useful (and
 	necessary) for exporting of nested tags.  It does not hurt
@@ -85,7 +85,7 @@ produced incorrect results if you gave these options.
 	frontends are not prepared to accept tags with mark
 	identifiers.
 +
-Any commits (or tags) that have already been marked will not be
+Any cummits (or tags) that have already been marked will not be
 exported again.  If the backend uses a similar --import-marks file,
 this allows for incremental bidirectional exporting of the repository
 by keeping the marks the same across runs.
@@ -110,9 +110,9 @@ by keeping the marks the same across runs.
 
 --full-tree::
 	This option will cause fast-export to issue a "deleteall"
-	directive for each commit followed by a full list of all files
-	in the commit (as opposed to just listing the files which are
-	different from the commit's first parent).
+	directive for each cummit followed by a full list of all files
+	in the cummit (as opposed to just listing the files which are
+	different from the cummit's first parent).
 
 --anonymize::
 	Anonymize the contents of the repository while still retaining
@@ -126,27 +126,27 @@ by keeping the marks the same across runs.
 
 --reference-excluded-parents::
 	By default, running a command such as `git fast-export
-	master~5..master` will not include the commit master{tilde}5
+	master~5..master` will not include the cummit master{tilde}5
 	and will make master{tilde}4 no longer have master{tilde}5 as
 	a parent (though both the old master{tilde}4 and new
 	master{tilde}4 will have all the same files).  Use
 	--reference-excluded-parents to instead have the stream
-	refer to commits in the excluded range of history by their
+	refer to cummits in the excluded range of history by their
 	sha1sum.  Note that the resulting stream can only be used by a
 	repository which already contains the necessary parent
-	commits.
+	cummits.
 
 --show-original-ids::
-	Add an extra directive to the output for commits and blobs,
+	Add an extra directive to the output for cummits and blobs,
 	`original-oid <SHA1SUM>`.  While such directives will likely be
 	ignored by importers such as git-fast-import, it may be useful
-	for intermediary filters (e.g. for rewriting commit messages
-	which refer to older commits, or for stripping blobs by id).
+	for intermediary filters (e.g. for rewriting cummit messages
+	which refer to older cummits, or for stripping blobs by id).
 
 --reencode=(yes|no|abort)::
-	Specify how to handle `encoding` header in commit objects.  When
+	Specify how to handle `encoding` header in cummit objects.  When
 	asking to 'abort' (which is the default), this program will die
-	when encountering such a commit object.  With 'yes', the commit
+	when encountering such a cummit object.  With 'yes', the cummit
 	message will be re-encoded into UTF-8.  With 'no', the original
 	encoding will be preserved.
 
@@ -159,7 +159,7 @@ by keeping the marks the same across runs.
 	'git rev-list', that specifies the specific objects and references
 	to export.  For example, `master~10..master` causes the
 	current master reference to be exported along with all objects
-	added since its 10th ancestor commit and (unless the
+	added since its 10th ancestor cummit and (unless the
 	--reference-excluded-parents option is specified) all files
 	common to master{tilde}9 and master{tilde}10.
 
@@ -171,7 +171,7 @@ $ git fast-export --all | (cd /empty/repository && git fast-import)
 -------------------------------------------------------------------
 
 This will export the whole repository and import it into the existing
-empty repository.  Except for reencoding commits that are not in
+empty repository.  Except for reencoding cummits that are not in
 UTF-8, it would be a one-to-one mirror.
 
 -----------------------------------------------------
@@ -181,9 +181,9 @@ $ git fast-export master~5..master |
 -----------------------------------------------------
 
 This makes a new branch called 'other' from 'master~5..master'
-(i.e. if 'master' has linear history, it will take the last 5 commits).
+(i.e. if 'master' has linear history, it will take the last 5 cummits).
 
-Note that this assumes that none of the blobs and commit messages
+Note that this assumes that none of the blobs and cummit messages
 referenced by that revision range contains the string
 'refs/heads/master'.
 
@@ -199,12 +199,12 @@ persist in the anonymized repository, and the latter can be shared with
 git developers to help solve the bug.
 
 With this option, git will replace all refnames, paths, blob contents,
-commit and tag messages, names, and email addresses in the output with
+cummit and tag messages, names, and email addresses in the output with
 anonymized data.  Two instances of the same string will be replaced
-equivalently (e.g., two commits with the same author will have the same
+equivalently (e.g., two cummits with the same author will have the same
 anonymized author in the output, but bear no resemblance to the original
-author string). The relationship between commits, branches, and tags is
-retained, as well as the commit timestamps (but the commit messages and
+author string). The relationship between cummits, branches, and tags is
+retained, as well as the cummit timestamps (but the cummit messages and
 refnames bear no resemblance to the originals). The relative makeup of
 the tree is retained (e.g., if you have a root tree with 10 files and 3
 trees, so will the output), but their names and the contents of the
@@ -243,7 +243,7 @@ collapse "User 0", "User 1", etc into "User X"). This produces a much
 smaller output, and it is usually easy to quickly confirm that there is
 no private data in the stream.
 
-Reproducing some bugs may require referencing particular commits or
+Reproducing some bugs may require referencing particular cummits or
 paths, which becomes challenging after refnames and paths have been
 anonymized. You can ask for a particular token to be left as-is or
 mapped to a new value. For example, if you have a bug which reproduces
@@ -273,7 +273,7 @@ LIMITATIONS
 
 Since 'git fast-import' cannot tag trees, you will not be
 able to export the linux.git repository completely, as it contains
-a tag referencing a tree instead of a commit.
+a tag referencing a tree instead of a cummit.
 
 SEE ALSO
 --------

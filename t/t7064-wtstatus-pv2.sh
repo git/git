@@ -19,7 +19,7 @@ test_expect_success setup '
 	echo b >dir1/file_b
 '
 
-test_expect_success 'before initial commit, nothing added, only untracked' '
+test_expect_success 'before initial cummit, nothing added, only untracked' '
 	cat >expect <<-EOF &&
 	# branch.oid (initial)
 	# branch.head initial-branch
@@ -35,7 +35,7 @@ test_expect_success 'before initial commit, nothing added, only untracked' '
 	test_cmp expect actual
 '
 
-test_expect_success 'before initial commit, things added' '
+test_expect_success 'before initial cummit, things added' '
 	git add file_x file_y file_z dir1 &&
 	OID_A=$(git hash-object -t blob -- dir1/file_a) &&
 	OID_B=$(git hash-object -t blob -- dir1/file_b) &&
@@ -59,7 +59,7 @@ test_expect_success 'before initial commit, things added' '
 	test_cmp expect actual
 '
 
-test_expect_success 'before initial commit, things added (-z)' '
+test_expect_success 'before initial cummit, things added (-z)' '
 	lf_to_nul >expect <<-EOF &&
 	# branch.oid (initial)
 	# branch.head initial-branch
@@ -76,8 +76,8 @@ test_expect_success 'before initial commit, things added (-z)' '
 	test_cmp expect actual
 '
 
-test_expect_success 'make first commit, comfirm HEAD oid and branch' '
-	git commit -m initial &&
+test_expect_success 'make first cummit, comfirm HEAD oid and branch' '
+	git cummit -m initial &&
 	H0=$(git rev-parse HEAD) &&
 	cat >expect <<-EOF &&
 	# branch.oid $H0
@@ -90,7 +90,7 @@ test_expect_success 'make first commit, comfirm HEAD oid and branch' '
 	test_cmp expect actual
 '
 
-test_expect_success 'after first commit, create unstaged changes' '
+test_expect_success 'after first cummit, create unstaged changes' '
 	echo x >>file_x &&
 	OID_X1=$(git hash-object -t blob -- file_x) &&
 	rm file_z &&
@@ -109,7 +109,7 @@ test_expect_success 'after first commit, create unstaged changes' '
 	test_cmp expect actual
 '
 
-test_expect_success 'after first commit, stash existing changes' '
+test_expect_success 'after first cummit, stash existing changes' '
 	cat >expect <<-EOF &&
 	# branch.oid $H0
 	# branch.head initial-branch
@@ -124,7 +124,7 @@ test_expect_success 'after first commit, stash existing changes' '
 	test_cmp expect actual
 '
 
-test_expect_success 'after first commit but omit untracked files and branch' '
+test_expect_success 'after first cummit but omit untracked files and branch' '
 	cat >expect <<-EOF &&
 	1 .M N... 100644 100644 100644 $OID_X $OID_X file_x
 	1 .D N... 100644 100644 000000 $OID_Z $OID_Z file_z
@@ -134,7 +134,7 @@ test_expect_success 'after first commit but omit untracked files and branch' '
 	test_cmp expect actual
 '
 
-test_expect_success 'after first commit, stage existing changes' '
+test_expect_success 'after first cummit, stage existing changes' '
 	git add file_x &&
 	git rm file_z &&
 	H0=$(git rev-parse HEAD) &&
@@ -188,8 +188,8 @@ test_expect_success 'rename causes 2 path lines (-z)' '
 	test_cmp expect actual
 '
 
-test_expect_success 'make second commit, confirm clean and new HEAD oid' '
-	git commit -m second &&
+test_expect_success 'make second cummit, confirm clean and new HEAD oid' '
+	git cummit -m second &&
 	H1=$(git rev-parse HEAD) &&
 
 	cat >expect <<-EOF &&
@@ -234,14 +234,14 @@ test_expect_success 'ignored files are printed with --ignored' '
 	test_cmp expect actual
 '
 
-test_expect_success 'create and commit permanent ignore file' '
+test_expect_success 'create and cummit permanent ignore file' '
 	cat >.gitignore <<-EOF &&
 	actual*
 	expect*
 	EOF
 
 	git add .gitignore &&
-	git commit -m ignore_trash &&
+	git cummit -m ignore_trash &&
 	H1=$(git rev-parse HEAD) &&
 
 	cat >expect <<-EOF &&
@@ -277,14 +277,14 @@ test_expect_success 'verify AA (add-add) conflict' '
 	echo "Branch AA_A" >conflict.txt &&
 	OID_AA_A=$(git hash-object -t blob -- conflict.txt) &&
 	git add conflict.txt &&
-	git commit -m "branch aa_a" &&
+	git cummit -m "branch aa_a" &&
 
 	git branch AA_B initial-branch &&
 	git checkout AA_B &&
 	echo "Branch AA_B" >conflict.txt &&
 	OID_AA_B=$(git hash-object -t blob -- conflict.txt) &&
 	git add conflict.txt &&
-	git commit -m "branch aa_b" &&
+	git cummit -m "branch aa_b" &&
 
 	git branch AA_M AA_B &&
 	git checkout AA_M &&
@@ -310,21 +310,21 @@ test_expect_success 'verify UU (edit-edit) conflict' '
 	echo "Ancestor" >conflict.txt &&
 	OID_UU_ANC=$(git hash-object -t blob -- conflict.txt) &&
 	git add conflict.txt &&
-	git commit -m "UU_ANC" &&
+	git cummit -m "UU_ANC" &&
 
 	git branch UU_A UU_ANC &&
 	git checkout UU_A &&
 	echo "Branch UU_A" >conflict.txt &&
 	OID_UU_A=$(git hash-object -t blob -- conflict.txt) &&
 	git add conflict.txt &&
-	git commit -m "branch uu_a" &&
+	git cummit -m "branch uu_a" &&
 
 	git branch UU_B UU_ANC &&
 	git checkout UU_B &&
 	echo "Branch UU_B" >conflict.txt &&
 	OID_UU_B=$(git hash-object -t blob -- conflict.txt) &&
 	git add conflict.txt &&
-	git commit -m "branch uu_b" &&
+	git cummit -m "branch uu_b" &&
 
 	git branch UU_M UU_B &&
 	git checkout UU_M &&
@@ -364,7 +364,7 @@ test_expect_success 'verify upstream fields in branch header' '
 		## Test ahead/behind.
 		echo xyz >file_xyz &&
 		git add file_xyz &&
-		git commit -m xyz &&
+		git cummit -m xyz &&
 
 		HUF=$(git rev-parse HEAD) &&
 
@@ -383,7 +383,7 @@ test_expect_success 'verify upstream fields in branch header' '
 		test_must_be_empty actual &&
 
 		## Test upstream-gone case. Fake this by pointing
-		## origin/initial-branch at a non-existing commit.
+		## origin/initial-branch at a non-existing cummit.
 		git update-ref -d refs/remotes/origin/initial-branch &&
 
 		HUF=$(git rev-parse HEAD) &&
@@ -433,7 +433,7 @@ test_expect_success 'verify --[no-]ahead-behind with V2 format' '
 		## Test non-equal ahead/behind.
 		echo xyz >file_xyz &&
 		git add file_xyz &&
-		git commit -m xyz &&
+		git cummit -m xyz &&
 
 		HUF=$(git rev-parse HEAD) &&
 
@@ -599,13 +599,13 @@ test_expect_success 'staged and untracked changes in added submodule (AM S.MU)' 
 	)
 '
 
-test_expect_success 'commit within the submodule appears as new commit in super (AM SC..)' '
+test_expect_success 'cummit within the submodule appears as new cummit in super (AM SC..)' '
 	(	cd super_repo &&
 		(	cd sub1 &&
-			## Make a new commit in the submodule.
+			## Make a new cummit in the submodule.
 			git add file_in_sub &&
 			rm -f another_file_in_sub &&
-			git commit -m "new commit"
+			git cummit -m "new cummit"
 		) &&
 
 		HMOD=$(git hash-object -t blob -- .gitmodules) &&
@@ -626,12 +626,12 @@ test_expect_success 'commit within the submodule appears as new commit in super 
 	)
 '
 
-test_expect_success 'stage submodule in super and commit' '
+test_expect_success 'stage submodule in super and cummit' '
 	(	cd super_repo &&
-		## Stage the new submodule commit in the super.
+		## Stage the new submodule cummit in the super.
 		git add sub1 &&
-		## Commit the super so that the sub no longer appears as added.
-		git commit -m "super commit" &&
+		## cummit the super so that the sub no longer appears as added.
+		git cummit -m "super cummit" &&
 
 		HSUP=$(git rev-parse HEAD) &&
 

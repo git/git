@@ -7,11 +7,11 @@ Fixes since v2.5
  * Running an aliased command from a subdirectory when the .git thing
    in the working tree is a gitfile pointing elsewhere did not work.
 
- * Often a fast-import stream builds a new commit on top of the
-   previous commit it built, and it often unconditionally emits a
+ * Often a fast-import stream builds a new cummit on top of the
+   previous cummit it built, and it often unconditionally emits a
    "from" command to specify the first parent, which can be omitted in
    such a case.  This caused fast-import to forget the tree of the
-   previous commit and then re-read it from scratch, which was
+   previous cummit and then re-read it from scratch, which was
    inefficient.  Optimize for this common case.
 
  * The "rev-parse --parseopt" mode parsed the option specification

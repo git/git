@@ -53,7 +53,7 @@ test_push_pull () {
 4 content added on git after clone
 5
 " >Foo.mw &&
-			git commit -am "conflicting change on foo" &&
+			git cummit -am "conflicting change on foo" &&
 			git pull &&
 			git push
 		)
@@ -69,7 +69,7 @@ test_push_pull () {
 			touch Foo.mw &&
 			echo "hello world" >>Foo.mw &&
 			git add Foo.mw &&
-			git commit -m "Foo" &&
+			git cummit -m "Foo" &&
 			git push
 		) &&
 		wiki_getallpage ref_page_4 &&
@@ -84,7 +84,7 @@ test_push_pull () {
 		(
 			cd mw_dir_5 &&
 			echo "new line added in the file Foo.mw" >>Foo.mw &&
-			git commit -am "edit file Foo.mw" &&
+			git cummit -am "edit file Foo.mw" &&
 			git push
 		) &&
 
@@ -100,7 +100,7 @@ test_push_pull () {
 		(
 			cd mw_dir_6 &&
 			git rm Foo.mw &&
-			git commit -am "page Foo.mw deleted" &&
+			git cummit -am "page Foo.mw deleted" &&
 			git push
 		) &&
 
@@ -121,10 +121,10 @@ test_push_pull () {
 2 git
 4" >Foo.mw &&
 			git add Foo.mw &&
-			git commit -m "conflict created" &&
+			git cummit -m "conflict created" &&
 			test_must_fail git pull &&
 			"$PERL_PATH" -pi -e "s/[<=>].*//g" Foo.mw &&
-			git commit -am "merge conflict solved" &&
+			git cummit -am "merge conflict solved" &&
 			git push
 		)
 	'

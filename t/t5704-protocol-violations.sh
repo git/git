@@ -35,7 +35,7 @@ test_expect_success 'extra delim packet in v2 fetch args' '
 '
 
 test_expect_success 'bogus symref in v0 capabilities' '
-	test_commit foo &&
+	test_cummit foo &&
 	oid=$(git rev-parse HEAD) &&
 	dst=refs/heads/foo &&
 	{

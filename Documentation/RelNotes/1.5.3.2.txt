@@ -15,7 +15,7 @@ Fixes since v1.5.3.1
  * git-send-email re-issued the same message-id about 10% of the
    time if you fired off 30 messages within a single second.
 
- * git-stash was not terminating the log message of commits it
+ * git-stash was not terminating the log message of cummits it
    internally creates with LF.
 
  * git-apply failed to check the size of the patch hunk when its
@@ -24,8 +24,8 @@ Fixes since v1.5.3.1
    (therefore the patch should not have applied), leading to a
    segfault.
 
- * "git rm foo && git commit foo" complained that 'foo' needs to
-   be added first, instead of committing the removal, which was a
+ * "git rm foo && git cummit foo" complained that 'foo' needs to
+   be added first, instead of cummitting the removal, which was a
    nonsense.
 
  * git grep -c said "/dev/null: 0".

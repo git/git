@@ -8,18 +8,18 @@ test_description='ignore revisions when blaming'
 # A added line 1 and B added line 2.  X makes changes to those lines.  Sanity
 # check that X is blamed for both lines.
 test_expect_success setup '
-	test_commit A file line1 &&
+	test_cummit A file line1 &&
 
 	echo line2 >>file &&
 	git add file &&
 	test_tick &&
-	git commit -m B &&
+	git cummit -m B &&
 	git tag B &&
 
 	test_write_lines line-one line-two >file &&
 	git add file &&
 	test_tick &&
-	git commit -m X &&
+	git cummit -m X &&
 	git tag X &&
 	git tag -a -m "X (annotated)" XT &&
 
@@ -48,7 +48,7 @@ test_expect_success 'validate --ignore-revs-file' '
 for I in X XT
 do
 	# Ignore X (or XT), make sure A is blamed for line 1 and B for line 2.
-	# Giving X (i.e. commit) and XT (i.e. annotated tag to commit) should
+	# Giving X (i.e. cummit) and XT (i.e. annotated tag to cummit) should
 	# produce the same result.
 	test_expect_success "ignore_rev_changing_lines ($I)" '
 		git blame --line-porcelain --ignore-rev $I file >blame_raw &&
@@ -64,7 +64,7 @@ do
 done
 
 # For ignored revs that have added 'unblamable' lines, attribute those to the
-# ignored commit.
+# ignored cummit.
 # 	A--B--X--Y
 # Where Y changes lines 1 and 2, and adds lines 3 and 4.  The added lines ought
 # to have nothing in common with "line-one" or "line-two", to keep any
@@ -73,7 +73,7 @@ test_expect_success ignore_rev_adding_unblamable_lines '
 	test_write_lines line-one-change line-two-changed y3 y4 >file &&
 	git add file &&
 	test_tick &&
-	git commit -m Y &&
+	git cummit -m Y &&
 	git tag Y &&
 
 	git rev-parse Y >expect &&
@@ -157,7 +157,7 @@ test_expect_success mark_unblamable_lines '
 	test_cmp expect actual
 '
 
-# Commit Z will touch the first two lines.  Y touched all four.
+# cummit Z will touch the first two lines.  Y touched all four.
 # 	A--B--X--Y--Z
 # The blame output when ignoring Z should be:
 # ?Y ... 1)
@@ -171,7 +171,7 @@ test_expect_success mark_ignored_lines '
 	test_write_lines line-one-Z line-two-Z y3 y4 >file &&
 	git add file &&
 	test_tick &&
-	git commit -m Z &&
+	git cummit -m Z &&
 	git tag Z &&
 
 	git blame --ignore-rev Z file >blame_raw &&
@@ -190,7 +190,7 @@ test_expect_success mark_ignored_lines '
 	! test_cmp expect actual
 '
 
-# For ignored revs that added 'unblamable' lines and more recent commits changed
+# For ignored revs that added 'unblamable' lines and more recent cummits changed
 # the blamable lines, mark the unblamable lines with a
 # '*'
 # 	A--B--X--Y--Z
@@ -214,8 +214,8 @@ test_expect_success mark_unblamable_lines_intermediate '
 # check for negative or zero values for when a blame entry is completely outside
 # the window of the parent's version of a file.
 #
-# This happens when one commit adds several lines (commit B below).  A later
-# commit (C) changes one line in the middle of B's change.  Commit C gets blamed
+# This happens when one cummit adds several lines (cummit B below).  A later
+# cummit (C) changes one line in the middle of B's change.  cummit C gets blamed
 # for its change, and that breaks up B's change into multiple blame entries.
 # When processing B, one of the blame_entries is outside A's window (which was
 # zero - it had no lines added on its side of the diff).
@@ -228,19 +228,19 @@ test_expect_success ignored_chunk_negative_parent_size '
 	test_write_lines L1 L2 L7 L8 L9 >file &&
 	git add file &&
 	test_tick &&
-	git commit -m A &&
+	git cummit -m A &&
 	git tag A &&
 
 	test_write_lines L1 L2 L3 L4 L5 L6 L7 L8 L9 >file &&
 	git add file &&
 	test_tick &&
-	git commit -m B &&
+	git cummit -m B &&
 	git tag B &&
 
 	test_write_lines L1 L2 L3 L4 xxx L6 L7 L8 L9 >file &&
 	git add file &&
 	test_tick &&
-	git commit -m C &&
+	git cummit -m C &&
 	git tag C &&
 
 	git blame file --ignore-rev B >blame_raw
@@ -260,20 +260,20 @@ test_expect_success ignore_merge '
 	test_write_lines L1 L2 L3 L4 L5 L6 L7 L8 L9 >file &&
 	git add file &&
 	test_tick &&
-	git commit -m A &&
+	git cummit -m A &&
 	git tag A &&
 
 	test_write_lines BB L2 L3 L4 L5 L6 L7 L8 L9 >file &&
 	git add file &&
 	test_tick &&
-	git commit -m B &&
+	git cummit -m B &&
 	git tag B &&
 
 	git reset --hard A &&
 	test_write_lines L1 L2 L3 L4 L5 L6 L7 L8 CC >file &&
 	git add file &&
 	test_tick &&
-	git commit -m C &&
+	git cummit -m C &&
 	git tag C &&
 
 	test_merge M B &&

@@ -84,7 +84,7 @@ Git::I18N - Perl interface to Git's Gettext localizations
 
 	printf __("The following error occurred: %s\n"), $error;
 
-	printf __n("committed %d file\n", "committed %d files\n", $files), $files;
+	printf __n("cummitted %d file\n", "cummitted %d files\n", $files), $files;
 
 
 =head1 DESCRIPTION

@@ -47,7 +47,7 @@ check_snapshot () {
 }
 
 test_expect_success setup '
-	test_commit first foo &&
+	test_cummit first foo &&
 	git branch xx/test &&
 	FULL_ID=$(git rev-parse --verify HEAD) &&
 	SHORT_ID=$(git rev-parse --verify --short=7 HEAD)
@@ -122,7 +122,7 @@ test_expect_success 'forks: setup' '
 	git init --bare foo.git &&
 	echo file > file &&
 	git --git-dir=foo.git --work-tree=. add file &&
-	git --git-dir=foo.git --work-tree=. commit -m "Initial commit" &&
+	git --git-dir=foo.git --work-tree=. cummit -m "Initial cummit" &&
 	echo "foo" > foo.git/description &&
 	git clone --bare foo.git foo.bar.git &&
 	echo "foo.bar" > foo.bar.git/description &&

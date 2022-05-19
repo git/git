@@ -59,11 +59,11 @@ msgid "Reading"
 msgstr "Чтение"
 
 #: gitk:496 gitk:4549
-msgid "Reading commits..."
+msgid "Reading cummits..."
 msgstr "Чтение коммитов..."
 
 #: gitk:499 gitk:1641 gitk:4552
-msgid "No commits selected"
+msgid "No cummits selected"
 msgstr "Ничего не выбрано"
 
 #: gitk:1449 gitk:4069 gitk:12583
@@ -75,7 +75,7 @@ msgid "Can't parse git log output:"
 msgstr "Ошибка обработки вывода команды git log:"
 
 #: gitk:1744
-msgid "No commit information available"
+msgid "No cummit information available"
 msgstr "Нет информации о коммите"
 
 #: gitk:1907 gitk:1936 gitk:4339 gitk:9789 gitk:11388 gitk:11668
@@ -168,7 +168,7 @@ msgid "Find"
 msgstr "Поиск"
 
 #: gitk:2313
-msgid "commit"
+msgid "cummit"
 msgstr "коммит"
 
 #: gitk:2317 gitk:2319 gitk:4711 gitk:4734 gitk:4758 gitk:6779 gitk:6851
@@ -218,7 +218,7 @@ msgid "Author"
 msgstr "Автор"
 
 #: gitk:2337 gitk:4895 gitk:6810 gitk:7350
-msgid "Committer"
+msgid "cummitter"
 msgstr "Коммитер"
 
 #: gitk:2371
@@ -274,11 +274,11 @@ msgid "Create tag"
 msgstr "Создать метку"
 
 #: gitk:2643
-msgid "Copy commit summary"
+msgid "Copy cummit summary"
 msgstr "Копировать информацию о коммите"
 
 #: gitk:2644 gitk:9414
-msgid "Write commit to file"
+msgid "Write cummit to file"
 msgstr "Сохранить коммит в файл"
 
 #: gitk:2645
@@ -286,7 +286,7 @@ msgid "Create new branch"
 msgstr "Создать ветку"
 
 #: gitk:2646
-msgid "Cherry-pick this commit"
+msgid "Cherry-pick this cummit"
 msgstr "Копировать этот коммит в текущую ветку"
 
 #: gitk:2647
@@ -294,7 +294,7 @@ msgid "Reset HEAD branch to here"
 msgstr "Установить HEAD на этот коммит"
 
 #: gitk:2648
-msgid "Mark this commit"
+msgid "Mark this cummit"
 msgstr "Пометить этот коммит"
 
 #: gitk:2649
@@ -306,19 +306,19 @@ msgid "Find descendant of this and mark"
 msgstr "Найти и пометить потомка этого коммита"
 
 #: gitk:2651
-msgid "Compare with marked commit"
+msgid "Compare with marked cummit"
 msgstr "Сравнить с помеченным коммитом"
 
 #: gitk:2652 gitk:2663
-msgid "Diff this -> marked commit"
+msgid "Diff this -> marked cummit"
 msgstr "Сравнить выделенное с помеченным коммитом"
 
 #: gitk:2653 gitk:2664
-msgid "Diff marked commit -> this"
+msgid "Diff marked cummit -> this"
 msgstr "Сравнить помеченный с этим коммитом"
 
 #: gitk:2654
-msgid "Revert this commit"
+msgid "Revert this cummit"
 msgstr "Обратить изменения этого коммита"
 
 #: gitk:2670
@@ -350,7 +350,7 @@ msgid "External diff"
 msgstr "Программа сравнения"
 
 #: gitk:2683
-msgid "Blame parent commit"
+msgid "Blame parent cummit"
 msgstr "Авторы изменений родительского коммита"
 
 #: gitk:2684
@@ -372,7 +372,7 @@ msgstr "О gitk"
 #: gitk:3038
 msgid ""
 "\n"
-"Gitk - a commit viewer for git\n"
+"Gitk - a cummit viewer for git\n"
 "\n"
 "Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
@@ -402,19 +402,19 @@ msgid "<%s-W>\t\tClose window"
 msgstr "<%s-W>\t\tЗакрыть окно"
 
 #: gitk:3074
-msgid "<Home>\t\tMove to first commit"
+msgid "<Home>\t\tMove to first cummit"
 msgstr "<Home>\t\tПерейти к первому коммиту"
 
 #: gitk:3075
-msgid "<End>\t\tMove to last commit"
+msgid "<End>\t\tMove to last cummit"
 msgstr "<End>\t\tПерейти к последнему коммиту"
 
 #: gitk:3076
-msgid "<Up>, p, k\tMove up one commit"
+msgid "<Up>, p, k\tMove up one cummit"
 msgstr "<Up>, p, k\tПерейти на один коммит вверх"
 
 #: gitk:3077
-msgid "<Down>, n, j\tMove down one commit"
+msgid "<Down>, n, j\tMove down one cummit"
 msgstr "<Down>, n, j\tПерейти на один коммит вниз"
 
 #: gitk:3078
@@ -427,53 +427,53 @@ msgstr "<Right>, x, l\tПоказать следующий посещённый 
 
 #: gitk:3080
 #, tcl-format
-msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgid "<%s-n>\tGo to n-th parent of current cummit in history list"
 msgstr "<%s-n>\tПерейти на n родителя от текущего коммита"
 
 #: gitk:3081
-msgid "<PageUp>\tMove up one page in commit list"
+msgid "<PageUp>\tMove up one page in cummit list"
 msgstr "<PageUp>\tПерейти на страницу выше в списке коммитов"
 
 #: gitk:3082
-msgid "<PageDown>\tMove down one page in commit list"
+msgid "<PageDown>\tMove down one page in cummit list"
 msgstr "<PageDown>\tПерейти на страницу ниже в списке коммитов"
 
 #: gitk:3083
 #, tcl-format
-msgid "<%s-Home>\tScroll to top of commit list"
+msgid "<%s-Home>\tScroll to top of cummit list"
 msgstr "<%s-Home>\tПерейти на начало списка коммитов"
 
 #: gitk:3084
 #, tcl-format
-msgid "<%s-End>\tScroll to bottom of commit list"
+msgid "<%s-End>\tScroll to bottom of cummit list"
 msgstr "<%s-End>\tПерейти на конец списка коммитов"
 
 #: gitk:3085
 #, tcl-format
-msgid "<%s-Up>\tScroll commit list up one line"
+msgid "<%s-Up>\tScroll cummit list up one line"
 msgstr "<%s-Up>\tПровернуть список коммитов вверх"
 
 #: gitk:3086
 #, tcl-format
-msgid "<%s-Down>\tScroll commit list down one line"
+msgid "<%s-Down>\tScroll cummit list down one line"
 msgstr "<%s-Down>\tПровернуть список коммитов вниз"
 
 #: gitk:3087
 #, tcl-format
-msgid "<%s-PageUp>\tScroll commit list up one page"
+msgid "<%s-PageUp>\tScroll cummit list up one page"
 msgstr "<%s-PageUp>\tПровернуть список коммитов на страницу вверх"
 
 #: gitk:3088
 #, tcl-format
-msgid "<%s-PageDown>\tScroll commit list down one page"
+msgid "<%s-PageDown>\tScroll cummit list down one page"
 msgstr "<%s-PageDown>\tПровернуть список коммитов на страницу вниз"
 
 #: gitk:3089
-msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgid "<Shift-Up>\tFind backwards (upwards, later cummits)"
 msgstr "<Shift-Up>\tПоиск в обратном порядке (вверх, среди новых коммитов)"
 
 #: gitk:3090
-msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgid "<Shift-Down>\tFind forwards (downwards, earlier cummits)"
 msgstr "<Shift-Down>\tПоиск (вниз, среди старых коммитов)"
 
 #: gitk:3091
@@ -511,7 +511,7 @@ msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\tПерейти к следующему найденному коммиту"
 
 #: gitk:3099
-msgid "g\t\tGo to commit"
+msgid "g\t\tGo to cummit"
 msgstr "g\t\tПерейти на коммит"
 
 #: gitk:3100
@@ -575,7 +575,7 @@ msgid "command failed:"
 msgstr "ошибка выполнения команды:"
 
 #: gitk:3808
-msgid "No such commit"
+msgid "No such cummit"
 msgstr "Коммит не найден"
 
 #: gitk:3822
@@ -608,7 +608,7 @@ msgstr "Ошибка выполнения git blame: %s"
 
 #: gitk:3949
 #, tcl-format
-msgid "That line comes from commit %s,  which is not in this view"
+msgid "That line comes from cummit %s,  which is not in this view"
 msgstr "Эта строка принадлежит коммиту %s, который не показан в этом представлении"
 
 #: gitk:3963
@@ -656,7 +656,7 @@ msgid "All remote-tracking branches"
 msgstr "Все внешние отслеживаемые ветки"
 
 #: gitk:4105
-msgid "Commit Info (regular expressions):"
+msgid "cummit Info (regular expressions):"
 msgstr "Информация о коммите (регулярные выражения):"
 
 #: gitk:4106
@@ -664,19 +664,19 @@ msgid "Author:"
 msgstr "Автор:"
 
 #: gitk:4107
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "Коммитер:"
 
 #: gitk:4108
-msgid "Commit Message:"
+msgid "cummit Message:"
 msgstr "Сообщение коммита:"
 
 #: gitk:4109
-msgid "Matches all Commit Info criteria"
+msgid "Matches all cummit Info criteria"
 msgstr "Совпадает со всеми условиями информации о коммите"
 
 #: gitk:4110
-msgid "Matches no Commit Info criteria"
+msgid "Matches no cummit Info criteria"
 msgstr "Не совпадает с условиями информации о коммите"
 
 #: gitk:4111
@@ -697,7 +697,7 @@ msgstr "Строка для поиска:"
 
 #: gitk:4115
 msgid ""
-"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"cummit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 msgstr "Даты коммита («2 недели назад», «2009-03-17 15:27:38», «17 марта 2009 15:27:38»):"
 
@@ -750,7 +750,7 @@ msgid "Enter files and directories to include, one per line:"
 msgstr "Файлы и каталоги для ограничения истории, по одному на строку:"
 
 #: gitk:4128
-msgid "Command to generate more commits to include:"
+msgid "Command to generate more cummits to include:"
 msgstr "Дополнительная команда для списка коммитов:"
 
 #: gitk:4252
@@ -770,7 +770,7 @@ msgid "Apply (F5)"
 msgstr "Применить (F5)"
 
 #: gitk:4378
-msgid "Error in commit selection arguments:"
+msgid "Error in cummit selection arguments:"
 msgstr "Ошибка в параметрах выбора коммитов:"
 
 #: gitk:4433 gitk:4486 gitk:4948 gitk:4962 gitk:6232 gitk:12524 gitk:12525
@@ -794,11 +794,11 @@ msgid "Not ancestor"
 msgstr "Не предок"
 
 #: gitk:5348
-msgid "Local changes checked in to index but not committed"
+msgid "Local changes checked in to index but not cummitted"
 msgstr "Проиндексированные изменения"
 
 #: gitk:5384
-msgid "Local uncommitted changes, not checked in to index"
+msgid "Local uncummitted changes, not checked in to index"
 msgstr "Непроиндексированные изменения"
 
 #: gitk:7158
@@ -880,7 +880,7 @@ msgid "Detached head: can't reset"
 msgstr "Коммит не принадлежит ни одной ветке, сбросить невозможно"
 
 #: gitk:9034 gitk:9040
-msgid "Skipping merge commit "
+msgid "Skipping merge cummit "
 msgstr "Пропускаю коммит-слияние"
 
 #: gitk:9049 gitk:9054
@@ -892,7 +892,7 @@ msgid " - stopping\n"
 msgstr " — останов\n"
 
 #: gitk:9060 gitk:9063 gitk:9071 gitk:9085 gitk:9094
-msgid "Commit "
+msgid "cummit "
 msgstr "Коммит"
 
 #: gitk:9064
@@ -909,7 +909,7 @@ msgstr " отличается от\n       "
 
 #: gitk:9074
 msgid ""
-"Diff of commits:\n"
+"Diff of cummits:\n"
 "\n"
 msgstr "Различия коммитов:\n\n"
 
@@ -920,12 +920,12 @@ msgstr " является %s потомком — останов\n"
 
 #: gitk:9114
 #, tcl-format
-msgid "Error writing commit to file: %s"
+msgid "Error writing cummit to file: %s"
 msgstr "Произошла ошибка при записи коммита в файл: %s"
 
 #: gitk:9120
 #, tcl-format
-msgid "Error diffing commits: %s"
+msgid "Error diffing cummits: %s"
 msgstr "Произошла ошибка при выводе различий коммитов: %s"
 
 #: gitk:9166
@@ -1010,7 +1010,7 @@ msgid "Write"
 msgstr "Запись"
 
 #: gitk:9451
-msgid "Error writing commit:"
+msgid "Error writing cummit:"
 msgstr "Произошла ошибка при записи коммита:"
 
 #: gitk:9473
@@ -1045,7 +1045,7 @@ msgstr "Укажите имя для новой ветки"
 
 #: gitk:9650
 #, tcl-format
-msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgid "cummit %s is already included in branch %s -- really re-apply it?"
 msgstr "Коммит %s уже включён в ветку %s. Продолжить операцию?"
 
 #: gitk:9655
@@ -1056,7 +1056,7 @@ msgstr "Копирование коммита"
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
-"Please commit, reset or stash your changes and try again."
+"Please cummit, reset or stash your changes and try again."
 msgstr "Копирование коммита невозможно из-за изменений в файле «%s».\nЗакоммитьте, сбросьте или спрячьте изменения и повторите операцию."
 
 #: gitk:9670
@@ -1066,12 +1066,12 @@ msgid ""
 msgstr "Копирование изменений невозможно из-за незавершённой операции слияния.\nЗапустить git citool для завершения этой операции?"
 
 #: gitk:9686 gitk:9744
-msgid "No changes committed"
+msgid "No changes cummitted"
 msgstr "Изменения не закоммичены"
 
 #: gitk:9713
 #, tcl-format
-msgid "Commit %s is not included in branch %s -- really revert it?"
+msgid "cummit %s is not included in branch %s -- really revert it?"
 msgstr "Коммит %s не включён в ветку %s. Продолжить операцию?"
 
 #: gitk:9718
@@ -1082,7 +1082,7 @@ msgstr "Обращение изменений"
 #, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
-"commit, reset or stash  your changes and try again."
+"cummit, reset or stash  your changes and try again."
 msgstr "Возврат изменений коммита не удался из-за локальных изменений в указанных файлах: %s\nЗакоммитьте, сбросьте или спрячьте изменения и повторите операцию."
 
 #: gitk:9730
@@ -1138,7 +1138,7 @@ msgstr "Активная ветка не может быть удалена"
 #: gitk:9949
 #, tcl-format
 msgid ""
-"The commits on branch %s aren't on any other branch.\n"
+"The cummits on branch %s aren't on any other branch.\n"
 "Really delete branch %s?"
 msgstr "Коммиты из ветки %s не принадлежат больше никакой другой ветке.\nДействительно удалить ветку %s?"
 
@@ -1153,7 +1153,7 @@ msgstr "Фильтровать"
 
 #: gitk:10293
 msgid ""
-"Error reading commit topology information; branch and preceding/following "
+"Error reading cummit topology information; branch and preceding/following "
 "tag information will be incomplete."
 msgstr "Ошибка чтения истории проекта; информация о ветках и коммитах вокруг меток (до/после) может быть неполной."
 
@@ -1178,7 +1178,7 @@ msgid "I"
 msgstr "К"
 
 #: gitk:11495
-msgid "Commit list display options"
+msgid "cummit list display options"
 msgstr "Параметры показа списка коммитов"
 
 #: gitk:11498

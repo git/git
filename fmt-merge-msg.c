@@ -8,7 +8,7 @@
 #include "string-list.h"
 #include "branch.h"
 #include "fmt-merge-msg.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 #include "gpg-interface.h"
 
 static int use_branch_desc;
@@ -71,7 +71,7 @@ struct merge_parents {
 	int alloc, nr;
 	struct merge_parent {
 		struct object_id given;
-		struct object_id commit;
+		struct object_id cummit;
 		unsigned char used;
 	} *item;
 };
@@ -82,13 +82,13 @@ struct merge_parents {
  */
 static struct merge_parent *find_merge_parent(struct merge_parents *table,
 					      struct object_id *given,
-					      struct object_id *commit)
+					      struct object_id *cummit)
 {
 	int i;
 	for (i = 0; i < table->nr; i++) {
 		if (given && !oideq(&table->item[i].given, given))
 			continue;
-		if (commit && !oideq(&table->item[i].commit, commit))
+		if (cummit && !oideq(&table->item[i].cummit, cummit))
 			continue;
 		return &table->item[i];
 	}
@@ -97,13 +97,13 @@ static struct merge_parent *find_merge_parent(struct merge_parents *table,
 
 static void add_merge_parent(struct merge_parents *table,
 			     struct object_id *given,
-			     struct object_id *commit)
+			     struct object_id *cummit)
 {
-	if (table->nr && find_merge_parent(table, given, commit))
+	if (table->nr && find_merge_parent(table, given, cummit))
 		return;
 	ALLOC_GROW(table->item, table->nr + 1, table->alloc);
 	oidcpy(&table->item[table->nr].given, given);
-	oidcpy(&table->item[table->nr].commit, commit);
+	oidcpy(&table->item[table->nr].cummit, cummit);
 	table->item[table->nr].used = 0;
 	table->nr++;
 }
@@ -244,7 +244,7 @@ static void record_person_from_buf(int which, struct string_list *people,
 	struct string_list_item *elem;
 	const char *field;
 
-	field = (which == 'a') ? "\nauthor " : "\ncommitter ";
+	field = (which == 'a') ? "\nauthor " : "\ncummitter ";
 	name = strstr(buffer, field);
 	if (!name)
 		return;
@@ -269,11 +269,11 @@ static void record_person_from_buf(int which, struct string_list *people,
 
 
 static void record_person(int which, struct string_list *people,
-			  struct commit *commit)
+			  struct cummit *cummit)
 {
-	const char *buffer = get_commit_buffer(commit, NULL);
+	const char *buffer = get_cummit_buffer(cummit, NULL);
 	record_person_from_buf(which, people, buffer);
-	unuse_commit_buffer(commit, buffer);
+	unuse_cummit_buffer(cummit, buffer);
 }
 
 static int cmp_string_list_util_as_integral(const void *a_, const void *b_)
@@ -310,7 +310,7 @@ static void credit_people(struct strbuf *out,
 		me = git_author_info(IDENT_NO_DATE);
 	} else {
 		label = "Via";
-		me = git_committer_info(IDENT_NO_DATE);
+		me = git_cummitter_info(IDENT_NO_DATE);
 	}
 
 	if (!them->nr ||
@@ -325,30 +325,30 @@ static void credit_people(struct strbuf *out,
 
 static void add_people_info(struct strbuf *out,
 			    struct string_list *authors,
-			    struct string_list *committers)
+			    struct string_list *cummitters)
 {
 	QSORT(authors->items, authors->nr,
 	      cmp_string_list_util_as_integral);
-	QSORT(committers->items, committers->nr,
+	QSORT(cummitters->items, cummitters->nr,
 	      cmp_string_list_util_as_integral);
 
 	credit_people(out, authors, 'a');
-	credit_people(out, committers, 'c');
+	credit_people(out, cummitters, 'c');
 }
 
 static void shortlog(const char *name,
 		     struct origin_data *origin_data,
-		     struct commit *head,
+		     struct cummit *head,
 		     struct rev_info *rev,
 		     struct fmt_merge_msg_opts *opts,
 		     struct strbuf *out)
 {
 	int i, count = 0;
-	struct commit *commit;
+	struct cummit *cummit;
 	struct object *branch;
 	struct string_list subjects = STRING_LIST_INIT_DUP;
 	struct string_list authors = STRING_LIST_INIT_DUP;
-	struct string_list committers = STRING_LIST_INIT_DUP;
+	struct string_list cummitters = STRING_LIST_INIT_DUP;
 	int flags = UNINTERESTING | TREESAME | SEEN | SHOWN | ADDED;
 	struct strbuf sb = STRBUF_INIT;
 	const struct object_id *oid = &origin_data->oid;
@@ -357,7 +357,7 @@ static void shortlog(const char *name,
 	branch = deref_tag(the_repository, parse_object(the_repository, oid),
 			   oid_to_hex(oid),
 			   the_hash_algo->hexsz);
-	if (!branch || branch->type != OBJ_COMMIT)
+	if (!branch || branch->type != OBJ_cummit)
 		return;
 
 	setup_revisions(0, NULL, rev, NULL);
@@ -366,39 +366,39 @@ static void shortlog(const char *name,
 	head->object.flags |= UNINTERESTING;
 	if (prepare_revision_walk(rev))
 		die("revision walk setup failed");
-	while ((commit = get_revision(rev)) != NULL) {
+	while ((cummit = get_revision(rev)) != NULL) {
 		struct pretty_print_context ctx = {0};
 
-		if (commit->parents && commit->parents->next) {
-			/* do not list a merge but count committer */
+		if (cummit->parents && cummit->parents->next) {
+			/* do not list a merge but count cummitter */
 			if (opts->credit_people)
-				record_person('c', &committers, commit);
+				record_person('c', &cummitters, cummit);
 			continue;
 		}
 		if (!count && opts->credit_people)
-			/* the 'tip' committer */
-			record_person('c', &committers, commit);
+			/* the 'tip' cummitter */
+			record_person('c', &cummitters, cummit);
 		if (opts->credit_people)
-			record_person('a', &authors, commit);
+			record_person('a', &authors, cummit);
 		count++;
 		if (subjects.nr > limit)
 			continue;
 
-		format_commit_message(commit, "%s", &sb, &ctx);
+		format_cummit_message(cummit, "%s", &sb, &ctx);
 		strbuf_ltrim(&sb);
 
 		if (!sb.len)
 			string_list_append(&subjects,
-					   oid_to_hex(&commit->object.oid));
+					   oid_to_hex(&cummit->object.oid));
 		else
 			string_list_append_nodup(&subjects,
 						 strbuf_detach(&sb, NULL));
 	}
 
 	if (opts->credit_people)
-		add_people_info(out, &authors, &committers);
+		add_people_info(out, &authors, &cummitters);
 	if (count > limit)
-		strbuf_addf(out, "\n* %s: (%d commits)\n", name, count);
+		strbuf_addf(out, "\n* %s: (%d cummits)\n", name, count);
 	else
 		strbuf_addf(out, "\n* %s:\n", name);
 
@@ -411,14 +411,14 @@ static void shortlog(const char *name,
 		else
 			strbuf_addf(out, "  %s\n", subjects.items[i].string);
 
-	clear_commit_marks((struct commit *)branch, flags);
-	clear_commit_marks(head, flags);
-	free_commit_list(rev->commits);
-	rev->commits = NULL;
+	clear_cummit_marks((struct cummit *)branch, flags);
+	clear_cummit_marks(head, flags);
+	free_cummit_list(rev->cummits);
+	rev->cummits = NULL;
 	rev->pending.nr = 0;
 
 	string_list_clear(&authors, 0);
-	string_list_clear(&committers, 0);
+	string_list_clear(&cummitters, 0);
 	string_list_clear(&subjects, 0);
 }
 
@@ -481,7 +481,7 @@ static void fmt_merge_msg_title(struct strbuf *out,
 		}
 		if (src_data->generic.nr) {
 			strbuf_addstr(out, subsep);
-			print_joined("commit ", "commits ", &src_data->generic,
+			print_joined("cummit ", "cummits ", &src_data->generic,
 					out);
 		}
 		if (strcmp(".", srcs.items[i].string))
@@ -578,8 +578,8 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 static void find_merge_parents(struct merge_parents *result,
 			       struct strbuf *in, struct object_id *head)
 {
-	struct commit_list *parents;
-	struct commit *head_commit;
+	struct cummit_list *parents;
+	struct cummit *head_cummit;
 	int pos = 0, i, j;
 
 	parents = NULL;
@@ -589,7 +589,7 @@ static void find_merge_parents(struct merge_parents *result,
 		char *newline = strchr(p, '\n');
 		const char *q;
 		struct object_id oid;
-		struct commit *parent;
+		struct cummit *parent;
 		struct object *obj;
 
 		len = newline ? newline - p : strlen(p);
@@ -605,21 +605,21 @@ static void find_merge_parents(struct merge_parents *result,
 		 * util field yet.
 		 */
 		obj = parse_object(the_repository, &oid);
-		parent = (struct commit *)peel_to_type(NULL, 0, obj, OBJ_COMMIT);
+		parent = (struct cummit *)peel_to_type(NULL, 0, obj, OBJ_cummit);
 		if (!parent)
 			continue;
-		commit_list_insert(parent, &parents);
+		cummit_list_insert(parent, &parents);
 		add_merge_parent(result, &obj->oid, &parent->object.oid);
 	}
-	head_commit = lookup_commit(the_repository, head);
-	if (head_commit)
-		commit_list_insert(head_commit, &parents);
+	head_cummit = lookup_cummit(the_repository, head);
+	if (head_cummit)
+		cummit_list_insert(head_cummit, &parents);
 	reduce_heads_replace(&parents);
 
 	while (parents) {
-		struct commit *cmit = pop_commit(&parents);
+		struct cummit *cmit = pop_cummit(&parents);
 		for (i = 0; i < result->nr; i++)
-			if (oideq(&result->item[i].commit, &cmit->object.oid))
+			if (oideq(&result->item[i].cummit, &cmit->object.oid))
 				result->item[i].used = 1;
 	}
 
@@ -650,7 +650,7 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 
 	memset(&merge_parents, 0, sizeof(merge_parents));
 
-	/* learn the commit that we merge into and the current branch name */
+	/* learn the cummit that we merge into and the current branch name */
 	current_branch = current_branch_to_free =
 		resolve_refdup("HEAD", RESOLVE_REF_READING, &head_oid, NULL);
 	if (!current_branch)
@@ -684,12 +684,12 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		fmt_merge_msg_sigs(out);
 
 	if (opts->shortlog_len) {
-		struct commit *head;
+		struct cummit *head;
 		struct rev_info rev;
 
-		head = lookup_commit_or_die(&head_oid, "HEAD");
+		head = lookup_cummit_or_die(&head_oid, "HEAD");
 		repo_init_revisions(the_repository, &rev, NULL);
-		rev.commit_format = CMIT_FMT_ONELINE;
+		rev.cummit_format = CMIT_FMT_ONELINE;
 		diff_merges_suppress(&rev);
 		rev.limited = 1;
 

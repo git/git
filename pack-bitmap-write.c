@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "object-store.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "diff.h"
 #include "revision.h"
@@ -11,20 +11,20 @@
 #include "pack-bitmap.h"
 #include "hash-lookup.h"
 #include "pack-objects.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 #include "prio-queue.h"
 
-struct bitmapped_commit {
-	struct commit *commit;
+struct bitmapped_cummit {
+	struct cummit *cummit;
 	struct ewah_bitmap *bitmap;
 	struct ewah_bitmap *write_as;
 	int flags;
 	int xor_offset;
-	uint32_t commit_pos;
+	uint32_t cummit_pos;
 };
 
 struct bitmap_writer {
-	struct ewah_bitmap *commits;
+	struct ewah_bitmap *cummits;
 	struct ewah_bitmap *trees;
 	struct ewah_bitmap *blobs;
 	struct ewah_bitmap *tags;
@@ -32,7 +32,7 @@ struct bitmap_writer {
 	kh_oid_map_t *bitmaps;
 	struct packing_data *to_pack;
 
-	struct bitmapped_commit *selected;
+	struct bitmapped_cummit *selected;
 	unsigned int selected_nr, selected_alloc;
 
 	struct progress *progress;
@@ -56,7 +56,7 @@ void bitmap_writer_build_type_index(struct packing_data *to_pack,
 {
 	uint32_t i;
 
-	writer.commits = ewah_new();
+	writer.cummits = ewah_new();
 	writer.trees = ewah_new();
 	writer.blobs = ewah_new();
 	writer.tags = ewah_new();
@@ -69,7 +69,7 @@ void bitmap_writer_build_type_index(struct packing_data *to_pack,
 		oe_set_in_pack_pos(to_pack, entry, i);
 
 		switch (oe_type(entry)) {
-		case OBJ_COMMIT:
+		case OBJ_cummit:
 		case OBJ_TREE:
 		case OBJ_BLOB:
 		case OBJ_TAG:
@@ -83,8 +83,8 @@ void bitmap_writer_build_type_index(struct packing_data *to_pack,
 		}
 
 		switch (real_type) {
-		case OBJ_COMMIT:
-			ewah_set(writer.commits, i);
+		case OBJ_cummit:
+			ewah_set(writer.cummits, i);
 			break;
 
 		case OBJ_TREE:
@@ -111,14 +111,14 @@ void bitmap_writer_build_type_index(struct packing_data *to_pack,
  * Compute the actual bitmaps
  */
 
-static inline void push_bitmapped_commit(struct commit *commit)
+static inline void push_bitmapped_cummit(struct cummit *cummit)
 {
 	if (writer.selected_nr >= writer.selected_alloc) {
 		writer.selected_alloc = (writer.selected_alloc + 32) * 2;
 		REALLOC_ARRAY(writer.selected, writer.selected_alloc);
 	}
 
-	writer.selected[writer.selected_nr].commit = commit;
+	writer.selected[writer.selected_nr].cummit = cummit;
 	writer.selected[writer.selected_nr].bitmap = NULL;
 	writer.selected[writer.selected_nr].flags = 0;
 
@@ -149,7 +149,7 @@ static void compute_xor_offsets(void)
 	int i, next = 0;
 
 	while (next < writer.selected_nr) {
-		struct bitmapped_commit *stored = &writer.selected[next];
+		struct bitmapped_cummit *stored = &writer.selected[next];
 
 		int best_offset = 0;
 		struct ewah_bitmap *best_bitmap = stored->bitmap;
@@ -182,21 +182,21 @@ static void compute_xor_offsets(void)
 	}
 }
 
-struct bb_commit {
-	struct commit_list *reverse_edges;
-	struct bitmap *commit_mask;
+struct bb_cummit {
+	struct cummit_list *reverse_edges;
+	struct bitmap *cummit_mask;
 	struct bitmap *bitmap;
 	unsigned selected:1,
 		 maximal:1;
 	unsigned idx; /* within selected array */
 };
 
-define_commit_slab(bb_data, struct bb_commit);
+define_cummit_slab(bb_data, struct bb_cummit);
 
 struct bitmap_builder {
 	struct bb_data data;
-	struct commit **commits;
-	size_t commits_nr, commits_alloc;
+	struct cummit **cummits;
+	size_t cummits_nr, cummits_alloc;
 };
 
 static void bitmap_builder_init(struct bitmap_builder *bb,
@@ -204,9 +204,9 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 				struct bitmap_index *old_bitmap)
 {
 	struct rev_info revs;
-	struct commit *commit;
-	struct commit_list *reusable = NULL;
-	struct commit_list *r;
+	struct cummit *cummit;
+	struct cummit_list *reusable = NULL;
+	struct cummit_list *r;
 	unsigned int i, num_maximal = 0;
 
 	memset(bb, 0, sizeof(*bb));
@@ -218,15 +218,15 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 	revs.first_parent_only = 1;
 
 	for (i = 0; i < writer->selected_nr; i++) {
-		struct commit *c = writer->selected[i].commit;
-		struct bb_commit *ent = bb_data_at(&bb->data, c);
+		struct cummit *c = writer->selected[i].cummit;
+		struct bb_cummit *ent = bb_data_at(&bb->data, c);
 
 		ent->selected = 1;
 		ent->maximal = 1;
 		ent->idx = i;
 
-		ent->commit_mask = bitmap_new();
-		bitmap_set(ent->commit_mask, i);
+		ent->cummit_mask = bitmap_new();
+		bitmap_set(ent->cummit_mask, i);
 
 		add_pending_object(&revs, &c->object, "");
 	}
@@ -234,106 +234,106 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 
-	while ((commit = get_revision(&revs))) {
-		struct commit_list *p = commit->parents;
-		struct bb_commit *c_ent;
+	while ((cummit = get_revision(&revs))) {
+		struct cummit_list *p = cummit->parents;
+		struct bb_cummit *c_ent;
 
-		parse_commit_or_die(commit);
+		parse_cummit_or_die(cummit);
 
-		c_ent = bb_data_at(&bb->data, commit);
+		c_ent = bb_data_at(&bb->data, cummit);
 
 		/*
-		 * If there is no commit_mask, there is no reason to iterate
-		 * over this commit; it is not selected (if it were, it would
-		 * not have a blank commit mask) and all its children have
-		 * existing bitmaps (see the comment starting with "This commit
+		 * If there is no cummit_mask, there is no reason to iterate
+		 * over this cummit; it is not selected (if it were, it would
+		 * not have a blank cummit mask) and all its children have
+		 * existing bitmaps (see the comment starting with "This cummit
 		 * has an existing bitmap" below), so it does not contribute
 		 * anything to the final bitmap file or its descendants.
 		 */
-		if (!c_ent->commit_mask)
+		if (!c_ent->cummit_mask)
 			continue;
 
-		if (old_bitmap && bitmap_for_commit(old_bitmap, commit)) {
+		if (old_bitmap && bitmap_for_cummit(old_bitmap, cummit)) {
 			/*
 			 * This commit has an existing bitmap, so we can
 			 * get its bits immediately without an object
 			 * walk. That is, it is reusable as-is and there is no
 			 * need to continue walking beyond it.
 			 *
-			 * Mark it as such and add it to bb->commits separately
-			 * to avoid allocating a position in the commit mask.
+			 * Mark it as such and add it to bb->cummits separately
+			 * to avoid allocating a position in the cummit mask.
 			 */
-			commit_list_insert(commit, &reusable);
+			cummit_list_insert(cummit, &reusable);
 			goto next;
 		}
 
 		if (c_ent->maximal) {
 			num_maximal++;
-			ALLOC_GROW(bb->commits, bb->commits_nr + 1, bb->commits_alloc);
-			bb->commits[bb->commits_nr++] = commit;
+			ALLOC_GROW(bb->cummits, bb->cummits_nr + 1, bb->cummits_alloc);
+			bb->cummits[bb->cummits_nr++] = cummit;
 		}
 
 		if (p) {
-			struct bb_commit *p_ent = bb_data_at(&bb->data, p->item);
+			struct bb_cummit *p_ent = bb_data_at(&bb->data, p->item);
 			int c_not_p, p_not_c;
 
-			if (!p_ent->commit_mask) {
-				p_ent->commit_mask = bitmap_new();
+			if (!p_ent->cummit_mask) {
+				p_ent->cummit_mask = bitmap_new();
 				c_not_p = 1;
 				p_not_c = 0;
 			} else {
-				c_not_p = bitmap_is_subset(c_ent->commit_mask, p_ent->commit_mask);
-				p_not_c = bitmap_is_subset(p_ent->commit_mask, c_ent->commit_mask);
+				c_not_p = bitmap_is_subset(c_ent->cummit_mask, p_ent->cummit_mask);
+				p_not_c = bitmap_is_subset(p_ent->cummit_mask, c_ent->cummit_mask);
 			}
 
 			if (!c_not_p)
 				continue;
 
-			bitmap_or(p_ent->commit_mask, c_ent->commit_mask);
+			bitmap_or(p_ent->cummit_mask, c_ent->cummit_mask);
 
 			if (p_not_c)
 				p_ent->maximal = 1;
 			else {
 				p_ent->maximal = 0;
-				free_commit_list(p_ent->reverse_edges);
+				free_cummit_list(p_ent->reverse_edges);
 				p_ent->reverse_edges = NULL;
 			}
 
 			if (c_ent->maximal) {
-				commit_list_insert(commit, &p_ent->reverse_edges);
+				cummit_list_insert(cummit, &p_ent->reverse_edges);
 			} else {
-				struct commit_list *cc = c_ent->reverse_edges;
+				struct cummit_list *cc = c_ent->reverse_edges;
 
 				for (; cc; cc = cc->next) {
-					if (!commit_list_contains(cc->item, p_ent->reverse_edges))
-						commit_list_insert(cc->item, &p_ent->reverse_edges);
+					if (!cummit_list_contains(cc->item, p_ent->reverse_edges))
+						cummit_list_insert(cc->item, &p_ent->reverse_edges);
 				}
 			}
 		}
 
 next:
-		bitmap_free(c_ent->commit_mask);
-		c_ent->commit_mask = NULL;
+		bitmap_free(c_ent->cummit_mask);
+		c_ent->cummit_mask = NULL;
 	}
 
 	for (r = reusable; r; r = r->next) {
-		ALLOC_GROW(bb->commits, bb->commits_nr + 1, bb->commits_alloc);
-		bb->commits[bb->commits_nr++] = r->item;
+		ALLOC_GROW(bb->cummits, bb->cummits_nr + 1, bb->cummits_alloc);
+		bb->cummits[bb->cummits_nr++] = r->item;
 	}
 
 	trace2_data_intmax("pack-bitmap-write", the_repository,
-			   "num_selected_commits", writer->selected_nr);
+			   "num_selected_cummits", writer->selected_nr);
 	trace2_data_intmax("pack-bitmap-write", the_repository,
-			   "num_maximal_commits", num_maximal);
+			   "num_maximal_cummits", num_maximal);
 
-	free_commit_list(reusable);
+	free_cummit_list(reusable);
 }
 
 static void bitmap_builder_clear(struct bitmap_builder *bb)
 {
 	clear_bb_data(&bb->data);
-	free(bb->commits);
-	bb->commits_nr = bb->commits_alloc = 0;
+	free(bb->cummits);
+	bb->cummits_nr = bb->cummits_alloc = 0;
 }
 
 static int fill_bitmap_tree(struct bitmap *bitmap,
@@ -383,8 +383,8 @@ static int fill_bitmap_tree(struct bitmap *bitmap,
 	return 0;
 }
 
-static int fill_bitmap_commit(struct bb_commit *ent,
-			      struct commit *commit,
+static int fill_bitmap_cummit(struct bb_cummit *ent,
+			      struct cummit *cummit,
 			      struct prio_queue *queue,
 			      struct prio_queue *tree_queue,
 			      struct bitmap_index *old_bitmap,
@@ -395,32 +395,32 @@ static int fill_bitmap_commit(struct bb_commit *ent,
 	if (!ent->bitmap)
 		ent->bitmap = bitmap_new();
 
-	prio_queue_put(queue, commit);
+	prio_queue_put(queue, cummit);
 
 	while (queue->nr) {
-		struct commit_list *p;
-		struct commit *c = prio_queue_get(queue);
+		struct cummit_list *p;
+		struct cummit *c = prio_queue_get(queue);
 
 		if (old_bitmap && mapping) {
-			struct ewah_bitmap *old = bitmap_for_commit(old_bitmap, c);
+			struct ewah_bitmap *old = bitmap_for_cummit(old_bitmap, c);
 			/*
 			 * If this commit has an old bitmap, then translate that
 			 * bitmap and add its bits to this one. No need to walk
-			 * parents or the tree for this commit.
+			 * parents or the tree for this cummit.
 			 */
 			if (old && !rebuild_bitmap(mapping, old, ent->bitmap))
 				continue;
 		}
 
 		/*
-		 * Mark ourselves and queue our tree. The commit
+		 * Mark ourselves and queue our tree. The cummit
 		 * walk ensures we cover all parents.
 		 */
 		pos = find_object_pos(&c->object.oid, &found);
 		if (!found)
 			return -1;
 		bitmap_set(ent->bitmap, pos);
-		prio_queue_put(tree_queue, get_commit_tree(c));
+		prio_queue_put(tree_queue, get_cummit_tree(c));
 
 		for (p = c->parents; p; p = p->next) {
 			pos = find_object_pos(&p->item->object.oid, &found);
@@ -441,18 +441,18 @@ static int fill_bitmap_commit(struct bb_commit *ent,
 	return 0;
 }
 
-static void store_selected(struct bb_commit *ent, struct commit *commit)
+static void store_selected(struct bb_cummit *ent, struct cummit *cummit)
 {
-	struct bitmapped_commit *stored = &writer.selected[ent->idx];
+	struct bitmapped_cummit *stored = &writer.selected[ent->idx];
 	khiter_t hash_pos;
 	int hash_ret;
 
 	stored->bitmap = bitmap_to_ewah(ent->bitmap);
 
-	hash_pos = kh_put_oid_map(writer.bitmaps, commit->object.oid, &hash_ret);
+	hash_pos = kh_put_oid_map(writer.bitmaps, cummit->object.oid, &hash_ret);
 	if (hash_ret == 0)
 		die("Duplicate entry when writing index: %s",
-		    oid_to_hex(&commit->object.oid));
+		    oid_to_hex(&cummit->object.oid));
 	kh_value(writer.bitmaps, hash_pos) = stored;
 }
 
@@ -461,7 +461,7 @@ int bitmap_writer_build(struct packing_data *to_pack)
 	struct bitmap_builder bb;
 	size_t i;
 	int nr_stored = 0; /* for progress */
-	struct prio_queue queue = { compare_commits_by_gen_then_commit_date };
+	struct prio_queue queue = { compare_cummits_by_gen_then_cummit_date };
 	struct prio_queue tree_queue = { NULL };
 	struct bitmap_index *old_bitmap;
 	uint32_t *mapping;
@@ -482,26 +482,26 @@ int bitmap_writer_build(struct packing_data *to_pack)
 		mapping = NULL;
 
 	bitmap_builder_init(&bb, &writer, old_bitmap);
-	for (i = bb.commits_nr; i > 0; i--) {
-		struct commit *commit = bb.commits[i-1];
-		struct bb_commit *ent = bb_data_at(&bb.data, commit);
-		struct commit *child;
+	for (i = bb.cummits_nr; i > 0; i--) {
+		struct cummit *cummit = bb.cummits[i-1];
+		struct bb_cummit *ent = bb_data_at(&bb.data, cummit);
+		struct cummit *child;
 		int reused = 0;
 
-		if (fill_bitmap_commit(ent, commit, &queue, &tree_queue,
+		if (fill_bitmap_cummit(ent, cummit, &queue, &tree_queue,
 				       old_bitmap, mapping) < 0) {
 			closed = 0;
 			break;
 		}
 
 		if (ent->selected) {
-			store_selected(ent, commit);
+			store_selected(ent, cummit);
 			nr_stored++;
 			display_progress(writer.progress, nr_stored);
 		}
 
-		while ((child = pop_commit(&ent->reverse_edges))) {
-			struct bb_commit *child_ent =
+		while ((child = pop_cummit(&ent->reverse_edges))) {
+			struct bb_cummit *child_ent =
 				bb_data_at(&bb.data, child);
 
 			if (child_ent->bitmap)
@@ -534,12 +534,12 @@ int bitmap_writer_build(struct packing_data *to_pack)
 }
 
 /**
- * Select the commits that will be bitmapped
+ * Select the cummits that will be bitmapped
  */
-static inline unsigned int next_commit_index(unsigned int idx)
+static inline unsigned int next_cummit_index(unsigned int idx)
 {
-	static const unsigned int MIN_COMMITS = 100;
-	static const unsigned int MAX_COMMITS = 5000;
+	static const unsigned int MIN_cummitS = 100;
+	static const unsigned int MAX_cummitS = 5000;
 
 	static const unsigned int MUST_REGION = 100;
 	static const unsigned int MIN_REGION = 20000;
@@ -551,45 +551,45 @@ static inline unsigned int next_commit_index(unsigned int idx)
 
 	if (idx <= MIN_REGION) {
 		offset = idx - MUST_REGION;
-		return (offset < MIN_COMMITS) ? offset : MIN_COMMITS;
+		return (offset < MIN_cummitS) ? offset : MIN_cummitS;
 	}
 
 	offset = idx - MIN_REGION;
-	next = (offset < MAX_COMMITS) ? offset : MAX_COMMITS;
+	next = (offset < MAX_cummitS) ? offset : MAX_cummitS;
 
-	return (next > MIN_COMMITS) ? next : MIN_COMMITS;
+	return (next > MIN_cummitS) ? next : MIN_cummitS;
 }
 
 static int date_compare(const void *_a, const void *_b)
 {
-	struct commit *a = *(struct commit **)_a;
-	struct commit *b = *(struct commit **)_b;
+	struct cummit *a = *(struct cummit **)_a;
+	struct cummit *b = *(struct cummit **)_b;
 	return (long)b->date - (long)a->date;
 }
 
-void bitmap_writer_select_commits(struct commit **indexed_commits,
-				  unsigned int indexed_commits_nr,
+void bitmap_writer_select_cummits(struct cummit **indexed_cummits,
+				  unsigned int indexed_cummits_nr,
 				  int max_bitmaps)
 {
 	unsigned int i = 0, j, next;
 
-	QSORT(indexed_commits, indexed_commits_nr, date_compare);
+	QSORT(indexed_cummits, indexed_cummits_nr, date_compare);
 
-	if (indexed_commits_nr < 100) {
-		for (i = 0; i < indexed_commits_nr; ++i)
-			push_bitmapped_commit(indexed_commits[i]);
+	if (indexed_cummits_nr < 100) {
+		for (i = 0; i < indexed_cummits_nr; ++i)
+			push_bitmapped_cummit(indexed_cummits[i]);
 		return;
 	}
 
 	if (writer.show_progress)
-		writer.progress = start_progress("Selecting bitmap commits", 0);
+		writer.progress = start_progress("Selecting bitmap cummits", 0);
 
 	for (;;) {
-		struct commit *chosen = NULL;
+		struct cummit *chosen = NULL;
 
-		next = next_commit_index(i);
+		next = next_cummit_index(i);
 
-		if (i + next >= indexed_commits_nr)
+		if (i + next >= indexed_cummits_nr)
 			break;
 
 		if (max_bitmaps > 0 && writer.selected_nr >= max_bitmaps) {
@@ -598,12 +598,12 @@ void bitmap_writer_select_commits(struct commit **indexed_commits,
 		}
 
 		if (next == 0) {
-			chosen = indexed_commits[i];
+			chosen = indexed_cummits[i];
 		} else {
-			chosen = indexed_commits[i + next];
+			chosen = indexed_cummits[i + next];
 
 			for (j = 0; j <= next; ++j) {
-				struct commit *cm = indexed_commits[i + j];
+				struct cummit *cm = indexed_cummits[i + j];
 
 				if ((cm->object.flags & NEEDS_BITMAP) != 0) {
 					chosen = cm;
@@ -615,7 +615,7 @@ void bitmap_writer_select_commits(struct commit **indexed_commits,
 			}
 		}
 
-		push_bitmapped_commit(chosen);
+		push_bitmapped_cummit(chosen);
 
 		i += next + 1;
 		display_progress(writer.progress, i);
@@ -647,22 +647,22 @@ static const struct object_id *oid_access(size_t pos, const void *table)
 	return &index[pos]->oid;
 }
 
-static void write_selected_commits_v1(struct hashfile *f,
+static void write_selected_cummits_v1(struct hashfile *f,
 				      struct pack_idx_entry **index,
 				      uint32_t index_nr)
 {
 	int i;
 
 	for (i = 0; i < writer.selected_nr; ++i) {
-		struct bitmapped_commit *stored = &writer.selected[i];
+		struct bitmapped_cummit *stored = &writer.selected[i];
 
-		int commit_pos =
-			oid_pos(&stored->commit->object.oid, index, index_nr, oid_access);
+		int cummit_pos =
+			oid_pos(&stored->cummit->object.oid, index, index_nr, oid_access);
 
-		if (commit_pos < 0)
-			BUG("trying to write commit not in index");
+		if (cummit_pos < 0)
+			BUG("trying to write cummit not in index");
 
-		hashwrite_be32(f, commit_pos);
+		hashwrite_be32(f, cummit_pos);
 		hashwrite_u8(f, stored->xor_offset);
 		hashwrite_u8(f, stored->flags);
 
@@ -710,11 +710,11 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 	hashcpy(header.checksum, writer.pack_checksum);
 
 	hashwrite(f, &header, sizeof(header) - GIT_MAX_RAWSZ + the_hash_algo->rawsz);
-	dump_bitmap(f, writer.commits);
+	dump_bitmap(f, writer.cummits);
 	dump_bitmap(f, writer.trees);
 	dump_bitmap(f, writer.blobs);
 	dump_bitmap(f, writer.tags);
-	write_selected_commits_v1(f, index, index_nr);
+	write_selected_cummits_v1(f, index, index_nr);
 
 	if (options & BITMAP_OPT_HASH_CACHE)
 		write_hash_cache(f, index, index_nr);

@@ -4,8 +4,8 @@ Git 2.25.1 Release Notes
 Fixes since v2.25
 -----------------
 
- * "git commit" gives output similar to "git status" when there is
-   nothing to commit, but without honoring the advise.statusHints
+ * "git cummit" gives output similar to "git status" when there is
+   nothing to cummit, but without honoring the advise.statusHints
    configuration variable, which has been corrected.
 
  * has_object_file() said "no" given an object registered to the

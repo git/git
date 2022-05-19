@@ -17,20 +17,20 @@ test_expect_success 'setup' '
 	git config core.symlinks false &&
 	>file &&
 	git add file &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git branch b-symlink &&
 	git branch b-file &&
 	l=$(printf file | git hash-object -t blob -w --stdin) &&
 	echo "120000 $l	symlink" | git update-index --index-info &&
-	git commit -m main &&
+	git cummit -m main &&
 	git checkout b-symlink &&
 	l=$(printf file-different | git hash-object -t blob -w --stdin) &&
 	echo "120000 $l	symlink" | git update-index --index-info &&
-	git commit -m b-symlink &&
+	git cummit -m b-symlink &&
 	git checkout b-file &&
 	echo plain-file >symlink &&
 	git add symlink &&
-	git commit -m b-file
+	git cummit -m b-file
 '
 
 test_expect_success 'merge main into b-symlink, which has a different symbolic link' '

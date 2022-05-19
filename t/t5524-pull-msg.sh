@@ -7,22 +7,22 @@ test_description='git pull message generation'
 dollar='$Dollar'
 
 test_expect_success setup '
-	test_commit initial afile original &&
+	test_cummit initial afile original &&
 	git clone . cloned &&
 	(
 		cd cloned &&
 		echo added >bfile &&
 		git add bfile &&
 		test_tick &&
-		git commit -m "add bfile"
+		git cummit -m "add bfile"
 	) &&
 	test_tick && test_tick &&
 	echo "second" >afile &&
 	git add afile &&
-	git commit -m "second commit" &&
+	git cummit -m "second cummit" &&
 	echo "original $dollar" >afile &&
 	git add afile &&
-	git commit -m "do not clobber $dollar signs"
+	git cummit -m "do not clobber $dollar signs"
 '
 
 test_expect_success pull '
@@ -45,7 +45,7 @@ test_expect_success '--log=1 limits shortlog length' '
 	git log -3 &&
 	git cat-file commit HEAD >result &&
 	grep Dollar result &&
-	! grep "second commit" result
+	! grep "second cummit" result
 )
 '
 

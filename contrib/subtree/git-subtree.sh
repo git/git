@@ -26,10 +26,10 @@ then
 fi
 
 OPTS_SPEC="\
-git subtree add   --prefix=<prefix> <commit>
+git subtree add   --prefix=<prefix> <cummit>
 git subtree add   --prefix=<prefix> <repository> <ref>
-git subtree merge --prefix=<prefix> <commit>
-git subtree split --prefix=<prefix> [<commit>]
+git subtree merge --prefix=<prefix> <cummit>
+git subtree split --prefix=<prefix> [<cummit>]
 git subtree pull  --prefix=<prefix> <repository> <ref>
 git subtree push  --prefix=<prefix> <repository> <refspec>
 --
@@ -38,14 +38,14 @@ q             quiet
 d             show debug messages
 P,prefix=     the name of the subdir to split out
  options for 'split' (also: 'push')
-annotate=     add a prefix to commit message of new commits
+annotate=     add a prefix to cummit message of new cummits
 b,branch=     create a new branch from the split subtree
-ignore-joins  ignore prior --rejoin commits
+ignore-joins  ignore prior --rejoin cummits
 onto=         try connecting new tree to an existing one
 rejoin        merge the new branch back into HEAD
  options for 'add' and 'merge' (also: 'pull', 'split --rejoin', and 'push --rejoin')
-squash        merge subtree changes as a single commit
-m,message=    use the given message as the commit message for the merge commit
+squash        merge subtree changes as a single cummit
+m,message=    use the given message as the cummit message for the merge cummit
 "
 
 indent=0
@@ -305,7 +305,7 @@ check_parents () {
 		if ! test -r "$cachedir/notree/$miss"
 		then
 			debug "incorrect order: $miss"
-			process_split_commit "$miss" ""
+			process_split_cummit "$miss" ""
 		fi
 	done
 }
@@ -343,7 +343,7 @@ rev_exists () {
 
 # Usage: try_remove_previous REV
 #
-# If a commit doesn't have a parent, this might not work.  But we only want
+# If a cummit doesn't have a parent, this might not work.  But we only want
 # to remove the parent from the rev-list, and since it doesn't exist, it won't
 # be there anyway, so do nothing in that case.
 try_remove_previous () {
@@ -378,15 +378,15 @@ find_latest_squash () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			sub="$(git rev-parse "$b^{commit}")" ||
-			die "could not rev-parse split hash $b from commit $sq"
+			sub="$(git rev-parse "$b^{cummit}")" ||
+			die "could not rev-parse split hash $b from cummit $sq"
 			;;
 		END)
 			if test -n "$sub"
 			then
 				if test -n "$main"
 				then
-					# a rejoin commit?
+					# a rejoin cummit?
 					# Pretend its sub was a squash.
 					sq=$(git rev-parse --verify "$sq^2") ||
 						die
@@ -416,7 +416,7 @@ find_existing_splits () {
 	local grep_format="^git-subtree-dir: $dir/*\$"
 	if test -n "$arg_split_ignore_joins"
 	then
-		grep_format="^Add '$dir/' from commit '"
+		grep_format="^Add '$dir/' from cummit '"
 	fi
 	git log --grep="$grep_format" \
 		--no-show-signature --pretty=format:'START %H%n%s%n%n%b%nEND%n' "$rev" |
@@ -430,14 +430,14 @@ find_existing_splits () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			sub="$(git rev-parse "$b^{commit}")" ||
-			die "could not rev-parse split hash $b from commit $sq"
+			sub="$(git rev-parse "$b^{cummit}")" ||
+			die "could not rev-parse split hash $b from cummit $sq"
 			;;
 		END)
 			debug "Main is: '$main'"
 			if test -z "$main" -a -n "$sub"
 			then
-				# squash commits refer to a subtree
+				# squash cummits refer to a subtree
 				debug "  Squash: $sq from $sub"
 				cache_set "$sq" "$sub"
 			fi
@@ -456,32 +456,32 @@ find_existing_splits () {
 	done || exit $?
 }
 
-# Usage: copy_commit REV TREE FLAGS_STR
-copy_commit () {
+# Usage: copy_cummit REV TREE FLAGS_STR
+copy_cummit () {
 	assert test $# = 3
 	# We're going to set some environment vars here, so
 	# do it in a subshell to get rid of them safely later
-	debug copy_commit "{$1}" "{$2}" "{$3}"
+	debug copy_cummit "{$1}" "{$2}" "{$3}"
 	git log -1 --no-show-signature --pretty=format:'%an%n%ae%n%aD%n%cn%n%ce%n%cD%n%B' "$1" |
 	(
 		read GIT_AUTHOR_NAME
 		read GIT_AUTHOR_EMAIL
 		read GIT_AUTHOR_DATE
-		read GIT_COMMITTER_NAME
-		read GIT_COMMITTER_EMAIL
-		read GIT_COMMITTER_DATE
+		read GIT_cummitTER_NAME
+		read GIT_cummitTER_EMAIL
+		read GIT_cummitTER_DATE
 		export  GIT_AUTHOR_NAME \
 			GIT_AUTHOR_EMAIL \
 			GIT_AUTHOR_DATE \
-			GIT_COMMITTER_NAME \
-			GIT_COMMITTER_EMAIL \
-			GIT_COMMITTER_DATE
+			GIT_cummitTER_NAME \
+			GIT_cummitTER_EMAIL \
+			GIT_cummitTER_DATE
 		(
 			printf "%s" "$arg_split_annotate"
 			cat
 		) |
-		git commit-tree "$2" $3  # reads the rest of stdin
-	) || die "Can't copy commit $1"
+		git cummit-tree "$2" $3  # reads the rest of stdin
+	) || die "Can't copy cummit $1"
 }
 
 # Usage: add_msg DIR LATEST_OLD LATEST_NEW
@@ -492,19 +492,19 @@ add_msg () {
 	latest_new="$3"
 	if test -n "$arg_addmerge_message"
 	then
-		commit_message="$arg_addmerge_message"
+		cummit_message="$arg_addmerge_message"
 	else
-		commit_message="Add '$dir/' from commit '$latest_new'"
+		cummit_message="Add '$dir/' from cummit '$latest_new'"
 	fi
 	if test -n "$arg_split_rejoin"
 	then
 		# If this is from a --rejoin, then rejoin_msg has
 		# already inserted the `git-subtree-xxx:` tags
-		echo "$commit_message"
+		echo "$cummit_message"
 		return
 	fi
 	cat <<-EOF
-		$commit_message
+		$cummit_message
 
 		git-subtree-dir: $dir
 		git-subtree-mainline: $latest_old
@@ -519,7 +519,7 @@ add_squashed_msg () {
 	then
 		echo "$arg_addmerge_message"
 	else
-		echo "Merge commit '$1' as '$2'"
+		echo "Merge cummit '$1' as '$2'"
 	fi
 }
 
@@ -531,12 +531,12 @@ rejoin_msg () {
 	latest_new="$3"
 	if test -n "$arg_addmerge_message"
 	then
-		commit_message="$arg_addmerge_message"
+		cummit_message="$arg_addmerge_message"
 	else
-		commit_message="Split '$dir/' into commit '$latest_new'"
+		cummit_message="Split '$dir/' into cummit '$latest_new'"
 	fi
 	cat <<-EOF
-		$commit_message
+		$cummit_message
 
 		git-subtree-dir: $dir
 		git-subtree-mainline: $latest_old
@@ -544,7 +544,7 @@ rejoin_msg () {
 	EOF
 }
 
-# Usage: squash_msg DIR OLD_SUBTREE_COMMIT NEW_SUBTREE_COMMIT
+# Usage: squash_msg DIR OLD_SUBTREE_cummit NEW_SUBTREE_cummit
 squash_msg () {
 	assert test $# = 3
 	dir="$1"
@@ -560,7 +560,7 @@ squash_msg () {
 		git log --no-show-signature --pretty=tformat:'%h %s' "$oldsub..$newsub"
 		git log --no-show-signature --pretty=tformat:'REVERT: %h %s' "$newsub..$oldsub"
 	else
-		echo "Squashed '$dir/' content from commit $newsub_short"
+		echo "Squashed '$dir/' content from cummit $newsub_short"
 	fi
 
 	echo
@@ -568,24 +568,24 @@ squash_msg () {
 	echo "git-subtree-split: $newsub"
 }
 
-# Usage: toptree_for_commit COMMIT
-toptree_for_commit () {
+# Usage: toptree_for_cummit cummit
+toptree_for_cummit () {
 	assert test $# = 1
-	commit="$1"
-	git rev-parse --verify "$commit^{tree}" || exit $?
+	cummit="$1"
+	git rev-parse --verify "$cummit^{tree}" || exit $?
 }
 
-# Usage: subtree_for_commit COMMIT DIR
-subtree_for_commit () {
+# Usage: subtree_for_cummit cummit DIR
+subtree_for_cummit () {
 	assert test $# = 2
-	commit="$1"
+	cummit="$1"
 	dir="$2"
-	git ls-tree "$commit" -- "$dir" |
+	git ls-tree "$cummit" -- "$dir" |
 	while read mode type tree name
 	do
 		assert test "$name" = "$dir"
-		assert test "$type" = "tree" -o "$type" = "commit"
-		test "$type" = "commit" && continue  # ignore submodules
+		assert test "$type" = "tree" -o "$type" = "cummit"
+		test "$type" = "cummit" && continue  # ignore submodules
 		echo $tree
 		break
 	done || exit $?
@@ -600,7 +600,7 @@ tree_changed () {
 	then
 		return 0   # weird parents, consider it changed
 	else
-		ptree=$(toptree_for_commit $1) || exit $?
+		ptree=$(toptree_for_cummit $1) || exit $?
 		if test "$ptree" != "$tree"
 		then
 			return 0   # changed
@@ -610,20 +610,20 @@ tree_changed () {
 	fi
 }
 
-# Usage: new_squash_commit OLD_SQUASHED_COMMIT OLD_NONSQUASHED_COMMIT NEW_NONSQUASHED_COMMIT
-new_squash_commit () {
+# Usage: new_squash_cummit OLD_SQUASHED_cummit OLD_NONSQUASHED_cummit NEW_NONSQUASHED_cummit
+new_squash_cummit () {
 	assert test $# = 3
 	old="$1"
 	oldsub="$2"
 	newsub="$3"
-	tree=$(toptree_for_commit $newsub) || exit $?
+	tree=$(toptree_for_cummit $newsub) || exit $?
 	if test -n "$old"
 	then
 		squash_msg "$dir" "$oldsub" "$newsub" |
-		git commit-tree "$tree" -p "$old" || exit $?
+		git cummit-tree "$tree" -p "$old" || exit $?
 	else
 		squash_msg "$dir" "" "$newsub" |
-		git commit-tree "$tree" || exit $?
+		git cummit-tree "$tree" || exit $?
 	fi
 }
 
@@ -639,10 +639,10 @@ copy_or_skip () {
 	nonidentical=
 	p=
 	gotparents=
-	copycommit=
+	copycummit=
 	for parent in $newparents
 	do
-		ptree=$(toptree_for_commit $parent) || exit $?
+		ptree=$(toptree_for_cummit $parent) || exit $?
 		test -z "$ptree" && continue
 		if test "$ptree" = "$tree"
 		then
@@ -654,12 +654,12 @@ copy_or_skip () {
 				mergebase=$(git merge-base $identical $parent)
 				if test "$identical" = "$mergebase"
 				then
-					# current identical commit is an ancestor of parent
+					# current identical cummit is an ancestor of parent
 					identical="$parent"
 				elif test "$parent" != "$mergebase"
 				then
-					# no common history; commit must be copied
-					copycommit=1
+					# no common history; cummit must be copied
+					copycummit=1
 				fi
 			else
 				# first identical parent detected
@@ -693,14 +693,14 @@ copy_or_skip () {
 		if test "$extras" -ne 0
 		then
 			# we need to preserve history along the other branch
-			copycommit=1
+			copycummit=1
 		fi
 	fi
-	if test -n "$identical" && test -z "$copycommit"
+	if test -n "$identical" && test -z "$copycummit"
 	then
 		echo $identical
 	else
-		copy_commit "$rev" "$tree" "$p" || exit $?
+		copy_cummit "$rev" "$tree" "$p" || exit $?
 	fi
 }
 
@@ -724,8 +724,8 @@ ensure_valid_ref_format () {
 		die "'$1' does not look like a ref"
 }
 
-# Usage: process_split_commit REV PARENTS
-process_split_commit () {
+# Usage: process_split_cummit REV PARENTS
+process_split_cummit () {
 	assert test $# = 2
 	local rev="$1"
 	local parents="$2"
@@ -734,7 +734,7 @@ process_split_commit () {
 	then
 		revcount=$(($revcount + 1))
 	else
-		# processing commit without normal parent information;
+		# processing cummit without normal parent information;
 		# fetch from repo
 		parents=$(git rev-parse "$rev^@")
 		extracount=$(($extracount + 1))
@@ -742,7 +742,7 @@ process_split_commit () {
 
 	progress "$revcount/$revmax ($createcount) [$extracount]"
 
-	debug "Processing commit: $rev"
+	debug "Processing cummit: $rev"
 	local indent=$(($indent + 1))
 	exists=$(cache_get "$rev") || exit $?
 	if test -n "$exists"
@@ -756,11 +756,11 @@ process_split_commit () {
 	newparents=$(cache_get $parents) || exit $?
 	debug "newparents: $newparents"
 
-	tree=$(subtree_for_commit "$rev" "$dir") || exit $?
+	tree=$(subtree_for_cummit "$rev" "$dir") || exit $?
 	debug "tree is: $tree"
 
 	# ugly.  is there no better way to tell if this is a subtree
-	# vs. a mainline commit?  Does it matter?
+	# vs. a mainline cummit?  Does it matter?
 	if test -z "$tree"
 	then
 		set_notree "$rev"
@@ -786,10 +786,10 @@ cmd_add () {
 
 	if test $# -eq 1
 	then
-		git rev-parse -q --verify "$1^{commit}" >/dev/null ||
-			die "'$1' does not refer to a commit"
+		git rev-parse -q --verify "$1^{cummit}" >/dev/null ||
+			die "'$1' does not refer to a cummit"
 
-		cmd_add_commit "$@"
+		cmd_add_cummit "$@"
 
 	elif test $# -eq 2
 	then
@@ -803,7 +803,7 @@ cmd_add () {
 		cmd_add_repository "$@"
 	else
 		say >&2 "error: parameters were '$*'"
-		die "Provide either a commit or a repository and commit."
+		die "Provide either a cummit or a repository and cummit."
 	fi
 }
 
@@ -814,15 +814,15 @@ cmd_add_repository () {
 	repository=$1
 	refspec=$2
 	git fetch "$@" || exit $?
-	cmd_add_commit FETCH_HEAD
+	cmd_add_cummit FETCH_HEAD
 }
 
-# Usage: cmd_add_commit REV
-cmd_add_commit () {
+# Usage: cmd_add_cummit REV
+cmd_add_cummit () {
 	# The rev has already been validated by cmd_add(), we just
 	# need to normalize it.
 	assert test $# = 1
-	rev=$(git rev-parse --verify "$1^{commit}") || exit $?
+	rev=$(git rev-parse --verify "$1^{cummit}") || exit $?
 
 	debug "Adding $dir as '$rev'..."
 	if test -z "$arg_split_rejoin"
@@ -844,15 +844,15 @@ cmd_add_commit () {
 
 	if test -n "$arg_addmerge_squash"
 	then
-		rev=$(new_squash_commit "" "" "$rev") || exit $?
-		commit=$(add_squashed_msg "$rev" "$dir" |
-			git commit-tree "$tree" $headp -p "$rev") || exit $?
+		rev=$(new_squash_cummit "" "" "$rev") || exit $?
+		cummit=$(add_squashed_msg "$rev" "$dir" |
+			git cummit-tree "$tree" $headp -p "$rev") || exit $?
 	else
-		revp=$(peel_committish "$rev") || exit $?
-		commit=$(add_msg "$dir" $headrev "$rev" |
-			git commit-tree "$tree" $headp -p "$revp") || exit $?
+		revp=$(peel_cummittish "$rev") || exit $?
+		cummit=$(add_msg "$dir" $headrev "$rev" |
+			git cummit-tree "$tree" $headp -p "$revp") || exit $?
 	fi
-	git reset "$commit" || exit $?
+	git reset "$cummit" || exit $?
 
 	say >&2 "Added dir '$dir'"
 }
@@ -864,8 +864,8 @@ cmd_split () {
 		rev=$(git rev-parse HEAD)
 	elif test $# -eq 1
 	then
-		rev=$(git rev-parse -q --verify "$1^{commit}") ||
-			die "'$1' does not refer to a commit"
+		rev=$(git rev-parse -q --verify "$1^{cummit}") ||
+			die "'$1' does not refer to a cummit"
 	else
 		die "You must provide exactly one revision.  Got: '$*'"
 	fi
@@ -904,7 +904,7 @@ cmd_split () {
 	eval "$grl" |
 	while read rev parents
 	do
-		process_split_commit "$rev" "$parents"
+		process_split_cummit "$rev" "$parents"
 	done || exit $?
 
 	latest_new=$(cache_get latest_new) || exit $?
@@ -931,7 +931,7 @@ cmd_split () {
 		then
 			if ! git merge-base --is-ancestor "$arg_split_branch" "$latest_new"
 			then
-				die "Branch '$arg_split_branch' is not an ancestor of commit '$latest_new'."
+				die "Branch '$arg_split_branch' is not an ancestor of cummit '$latest_new'."
 			fi
 			action='Updated'
 		else
@@ -949,8 +949,8 @@ cmd_split () {
 cmd_merge () {
 	test $# -eq 1 ||
 		die "You must provide exactly one revision.  Got: '$*'"
-	rev=$(git rev-parse -q --verify "$1^{commit}") ||
-		die "'$1' does not refer to a commit"
+	rev=$(git rev-parse -q --verify "$1^{cummit}") ||
+		die "'$1' does not refer to a cummit"
 	ensure_clean
 
 	if test -n "$arg_addmerge_squash"
@@ -965,11 +965,11 @@ cmd_merge () {
 		sub=$2
 		if test "$sub" = "$rev"
 		then
-			say >&2 "Subtree is already at commit $rev."
+			say >&2 "Subtree is already at cummit $rev."
 			exit 0
 		fi
-		new=$(new_squash_commit "$old" "$sub" "$rev") || exit $?
-		debug "New squash commit: $new"
+		new=$(new_squash_cummit "$old" "$sub" "$rev") || exit $?
+		debug "New squash cummit: $new"
 		rev="$new"
 	fi
 
@@ -1012,8 +1012,8 @@ cmd_push () {
 			localrevname_presplit=${refspec%%:*}
 		fi
 		ensure_valid_ref_format "$remoteref"
-		localrev_presplit=$(git rev-parse -q --verify "$localrevname_presplit^{commit}") ||
-			die "'$localrevname_presplit' does not refer to a commit"
+		localrev_presplit=$(git rev-parse -q --verify "$localrevname_presplit^{cummit}") ||
+			die "'$localrevname_presplit' does not refer to a cummit"
 
 		echo "git push using: " "$repository" "$refspec"
 		localrev=$(cmd_split "$localrev_presplit") || die

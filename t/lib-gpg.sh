@@ -24,7 +24,7 @@ test_lazy_prereq GPG '
 	*)
 		# Available key info:
 		# * Type DSA and Elgamal, size 2048 bits, no expiration date,
-		#   name and email: C O Mitter <committer@example.com>
+		#   name and email: C O Mitter <cummitter@example.com>
 		# * Type RSA, size 2048 bits, no expiration date,
 		#   name and email: Eris Discordia <discord@example.net>
 		# No password given, to enable non-interactive operation.
@@ -46,7 +46,7 @@ test_lazy_prereq GPG '
 		gpg --homedir "${GNUPGHOME}" --import-ownertrust \
 			"$TEST_DIRECTORY"/lib-gpg/ownertrust &&
 		gpg --homedir "${GNUPGHOME}" </dev/null >/dev/null \
-			--sign -u committer@example.com
+			--sign -u cummitter@example.com
 		;;
 	esac
 '
@@ -67,7 +67,7 @@ test_lazy_prereq GPGSM '
 	# To export into a .p12 we can later import:
 	#	gpgsm --homedir /tmp/gpghome/ \
 	#		-o t/lib-gpg/gpgsm_cert.p12 \
-	#		--export-secret-key-p12 "committer@example.com"
+	#		--export-secret-key-p12 "cummitter@example.com"
 	echo | gpgsm --homedir "${GNUPGHOME}" \
 		--passphrase-fd 0 --pinentry-mode loopback \
 		--import "$TEST_DIRECTORY"/lib-gpg/gpgsm_cert.p12 &&
@@ -78,7 +78,7 @@ test_lazy_prereq GPGSM '
 	(gpgconf --reload all || : ) &&
 
 	echo hello | gpgsm --homedir "${GNUPGHOME}" >/dev/null \
-	       -u committer@example.com -o /dev/null --sign -
+	       -u cummitter@example.com -o /dev/null --sign -
 '
 
 test_lazy_prereq RFC1991 '

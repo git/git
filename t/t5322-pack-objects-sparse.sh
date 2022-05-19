@@ -7,7 +7,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup repo' '
-	test_commit initial &&
+	test_cummit initial &&
 	for i in $(test_seq 1 3)
 	do
 		mkdir f$i &&
@@ -18,12 +18,12 @@ test_expect_success 'setup repo' '
 		done
 	done &&
 	git add . &&
-	git commit -m "Initialized trees" &&
+	git cummit -m "Initialized trees" &&
 	for i in $(test_seq 1 3)
 	do
 		git checkout -b topic$i main &&
 		echo change-$i >f$i/f$i/data.txt &&
-		git commit -a -m "Changed f$i/f$i/data.txt" || return 1
+		git cummit -a -m "Changed f$i/f$i/data.txt" || return 1
 	done &&
 	cat >packinput.txt <<-EOF &&
 	topic1
@@ -52,10 +52,10 @@ test_expect_success 'sparse pack-objects' '
 	test_cmp expect_objects.txt sparse_objects.txt
 '
 
-test_expect_success 'duplicate a folder from f3 and commit to topic1' '
+test_expect_success 'duplicate a folder from f3 and cummit to topic1' '
 	git checkout topic1 &&
 	echo change-3 >f3/f3/data.txt &&
-	git commit -a -m "Changed f3/f3/data.txt" &&
+	git cummit -a -m "Changed f3/f3/data.txt" &&
 	git rev-parse			\
 		topic1~1		\
 		topic1~1^{tree}		\
@@ -89,7 +89,7 @@ test_expect_success 'duplicate a folder from f1 into f3' '
 	mkdir f3/f4 &&
 	cp -r f1/f1/* f3/f4 &&
 	git add f3/f4 &&
-	git commit -m "Copied f1/f1 to f3/f4" &&
+	git cummit -m "Copied f1/f1 to f3/f4" &&
 	cat >packinput.txt <<-EOF &&
 	topic1
 	^topic1~1

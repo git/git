@@ -16,10 +16,10 @@ test_oidmap () {
 
 test_expect_success 'setup' '
 
-	test_commit one &&
-	test_commit two &&
-	test_commit three &&
-	test_commit four
+	test_cummit one &&
+	test_cummit two &&
+	test_cummit three &&
+	test_cummit four
 
 '
 

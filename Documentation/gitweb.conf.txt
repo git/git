@@ -430,7 +430,7 @@ $default_projects_order::
 	are "none" (unsorted), "project" (projects are by project name,
 	i.e. path to repository relative to `$projectroot`), "descr"
 	(project description), "owner", and "age" (by date of most current
-	commit).
+	cummit).
 +
 Default value is "project".  Unknown value means unsorted.
 
@@ -528,7 +528,7 @@ Set `$maxload` to undefined value (`undef`) to turn this feature off.
 The default value is 300.
 
 $omit_age_column::
-	If true, omit the column with date of the most current commit on the
+	If true, omit the column with date of the most current cummit on the
 	projects list page. It can save a bit of I/O and a fork per repository.
 
 $omit_owner::
@@ -665,7 +665,7 @@ in the comments.
 
 blame::
 	Enable the "blame" and "blame_incremental" blob views, showing for
-	each line the last commit that modified it; see linkgit:git-blame[1].
+	each line the last cummit that modified it; see linkgit:git-blame[1].
 	This can be very CPU-intensive and is therefore disabled by default.
 +
 This feature can be configured on a per-repository basis via
@@ -673,7 +673,7 @@ repository's `gitweb.blame` configuration variable (boolean).
 
 snapshot::
 	Enable and configure the "snapshot" action, which allows user to
-	download a compressed archive of any tree or commit, as produced
+	download a compressed archive of any tree or cummit, as produced
 	by linkgit:git-archive[1] and possibly additionally compressed.
 	This can potentially generate high traffic if you have large project.
 +
@@ -697,7 +697,7 @@ This feature can be configured on a per-repository basis via
 repository's `gitweb.grep` configuration variable (boolean).
 
 pickaxe::
-	Enable the so called pickaxe search, which will list the commits
+	Enable the so called pickaxe search, which will list the cummits
 	that introduced or removed a given string in a file.  This can be
 	practical and quite faster alternative to "blame" action, but it is
 	still potentially CPU-intensive.  Enabled by default.
@@ -719,7 +719,7 @@ This feature can be configured on a per-repository basis via
 repository's `gitweb.showSizes` configuration variable (boolean).
 
 patches::
-	Enable and configure "patches" view, which displays list of commits in email
+	Enable and configure "patches" view, which displays list of cummits in email
 	(plain text) output format; see also linkgit:git-format-patch[1].
 	The value is the maximum number of patches in a patchset generated
 	in "patches" view.  Set the 'default' field to a list containing single
@@ -732,8 +732,8 @@ repository's `gitweb.patches` configuration variable (integer).
 
 avatar::
 	Avatar support.  When this feature is enabled, views such as
-	"shortlog" or "commit" will display an avatar associated with
-	the email of each committer and author.
+	"shortlog" or "cummit" will display an avatar associated with
+	the email of each cummitter and author.
 +
 Currently available providers are *"gravatar"* and *"picon"*.
 Only one provider at a time can be selected ('default' is one element list).
@@ -746,14 +746,14 @@ repository's `gitweb.avatar` configuration variable.
 +
 See also `%avatar_size` with pixel sizes for icons and avatars
 ("default" is used for one-line like "log" and "shortlog", "double"
-is used for two-line like "commit", "commitdiff" or "tag").  If the
+is used for two-line like "cummit", "cummitdiff" or "tag").  If the
 default font sizes or lineheights are changed (e.g. via adding extra
 CSS stylesheet in `@stylesheets`), it may be appropriate to change
 these values.
 
 email-privacy::
 	Redact e-mail addresses from the generated HTML, etc. content.
-	This obscures e-mail addresses retrieved from the author/committer
+	This obscures e-mail addresses retrieved from the author/cummitter
 	and comment sections of the Git log.
 	It is meant to hinder web crawlers that harvest and abuse addresses.
 	Such crawlers may not respect robots.txt.
@@ -785,9 +785,9 @@ repository's `gitweb.remote_heads` configuration variable (boolean).
 The remaining features cannot be overridden on a per project basis.
 
 search::
-	Enable text search, which will list the commits which match author,
-	committer or commit text to a given string; see the description of
-	`--author`, `--committer` and `--grep` options in linkgit:git-log[1]
+	Enable text search, which will list the cummits which match author,
+	cummitter or cummit text to a given string; see the description of
+	`--author`, `--cummitter` and `--grep` options in linkgit:git-log[1]
 	manpage.  Enabled by default.
 +
 Project specific override is not supported.
@@ -826,7 +826,7 @@ Git hosting site set it to the following to enable graphical log
 +
 ----------------------------------------------------------------------
 $feature{'actions'}{'default'} =
-	[ ('graphiclog', '/git-browser/by-commit.html?r=%n', 'summary')];
+	[ ('graphiclog', '/git-browser/by-cummit.html?r=%n', 'summary')];
 ----------------------------------------------------------------------
 +
 This adds a link titled "graphiclog" after the "summary" link, leading to
@@ -845,7 +845,7 @@ Project specific override is not supported.
 javascript-timezone::
 	Enable and configure the ability to change a common time zone for dates
 	in gitweb output via JavaScript.  Dates in gitweb output include
-	authordate and committerdate in "commit", "commitdiff" and "log"
+	authordate and cummitterdate in "cummit", "cummitdiff" and "log"
 	views, and taggerdate in "tag" view.  Enabled by default.
 +
 The value is a list of three values: a default time zone (for if the client

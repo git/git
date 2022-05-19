@@ -1,5 +1,5 @@
 #include "cache.h"
-#include "commit.h"
+#include "cummit.h"
 #include "config.h"
 #include "run-command.h"
 #include "strbuf.h"
@@ -597,8 +597,8 @@ static int parse_payload_metadata(struct signature_check *sigc)
 	const char *signer_header;
 
 	switch (sigc->payload_type) {
-	case SIGNATURE_PAYLOAD_COMMIT:
-		signer_header = "committer";
+	case SIGNATURE_PAYLOAD_cummit:
+		signer_header = "cummitter";
 		break;
 	case SIGNATURE_PAYLOAD_TAG:
 		signer_header = "tagger";
@@ -902,7 +902,7 @@ const char *get_signing_key(void)
 		return use_format->get_default_key();
 	}
 
-	return git_committer_info(IDENT_STRICT | IDENT_NO_DATE);
+	return git_cummitter_info(IDENT_STRICT | IDENT_NO_DATE);
 }
 
 int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *signing_key)

@@ -13,7 +13,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success setup '
 	echo >file original &&
 	git add file &&
-	git commit -a -m original
+	git cummit -a -m original
 '
 
 test_expect_success "clone and setup child repos" '
@@ -21,10 +21,10 @@ test_expect_success "clone and setup child repos" '
 	(
 		cd one &&
 		echo >file updated by one &&
-		git commit -a -m "updated by one" &&
+		git cummit -a -m "updated by one" &&
 		git switch -c alternate &&
 		echo >file updated again by one &&
-		git commit -a -m "updated by one again" &&
+		git cummit -a -m "updated by one again" &&
 		git switch main
 	) &&
 	git clone . two &&
@@ -40,7 +40,7 @@ test_expect_success "clone and setup child repos" '
 
 test_expect_success "fetch one" '
 	echo >file updated by origin &&
-	git commit -a -m "updated by origin" &&
+	git cummit -a -m "updated by origin" &&
 	(
 		cd two &&
 		test_must_fail git rev-parse --verify refs/remotes/one/alternate &&
@@ -55,7 +55,7 @@ test_expect_success "fetch one" '
 
 test_expect_success "fetch with negative refspec on commandline" '
 	echo >file updated by origin again &&
-	git commit -a -m "updated by origin again" &&
+	git cummit -a -m "updated by origin again" &&
 	(
 		cd three &&
 		alternate_in_one=$(cd ../one && git rev-parse refs/heads/alternate) &&
@@ -68,7 +68,7 @@ test_expect_success "fetch with negative refspec on commandline" '
 
 test_expect_success "fetch with negative sha1 refspec fails" '
 	echo >file updated by origin yet again &&
-	git commit -a -m "updated by origin yet again" &&
+	git cummit -a -m "updated by origin yet again" &&
 	(
 		cd three &&
 		main_in_one=$(cd ../one && git rev-parse refs/heads/main) &&
@@ -78,7 +78,7 @@ test_expect_success "fetch with negative sha1 refspec fails" '
 
 test_expect_success "fetch with negative pattern refspec" '
 	echo >file updated by origin once more &&
-	git commit -a -m "updated by origin once more" &&
+	git cummit -a -m "updated by origin once more" &&
 	(
 		cd three &&
 		alternate_in_one=$(cd ../one && git rev-parse refs/heads/alternate) &&
@@ -91,7 +91,7 @@ test_expect_success "fetch with negative pattern refspec" '
 
 test_expect_success "fetch with negative pattern refspec does not expand prefix" '
 	echo >file updated by origin another time &&
-	git commit -a -m "updated by origin another time" &&
+	git cummit -a -m "updated by origin another time" &&
 	(
 		cd three &&
 		alternate_in_one=$(cd ../one && git rev-parse refs/heads/alternate) &&
@@ -199,7 +199,7 @@ test_expect_success "push with matching : and negative refspec" '
 	# Repositories two and one have branches other than "master"
 	# but they have no overlap---"master" is the only one that
 	# is shared between them.  And the master branch at two is
-	# behind the master branch at one by one commit.
+	# behind the master branch at one by one cummit.
 	git -C two config --add remote.one.push : &&
 
 	# A matching push tries to update master, fails due to non-ff
@@ -271,7 +271,7 @@ test_expect_success '--prefetch correctly modifies refspecs' '
 
 test_expect_success '--prefetch succeeds when refspec becomes empty' '
 	git checkout bogus/fetched &&
-	test_commit extra &&
+	test_cummit extra &&
 
 	git -C one config --unset-all remote.origin.fetch &&
 	git -C one config --unset branch.main.remote &&

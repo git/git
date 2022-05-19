@@ -15,8 +15,8 @@ windows layout distributed in the following way:
 ------------------------------------------
 ....
 `LOCAL`, `BASE` and `REMOTE` are read-only buffers showing the contents of the
-conflicting file in specific commits ("commit you are merging into", "common
-ancestor commit" and "commit you are merging from" respectively)
+conflicting file in specific cummits ("cummit you are merging into", "common
+ancestor cummit" and "cummit you are merging from" respectively)
 
 `MERGED` is a writable buffer where you have to resolve the conflicts (using the
 other read-only buffers as a reference). Once you are done, save and exit Vim as

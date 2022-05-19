@@ -39,7 +39,7 @@ Fixes since v1.7.11.6
    for POST.
 
  * "git show --format='%ci'" did not give timestamp correctly for
-   commits created without human readable name on "committer" line.
+   cummits created without human readable name on "cummitter" line.
    (merge e27ddb6 jc/maint-ident-missing-human-name later to maint).
 
  * "git show --quiet" ought to be a synonym for "git show -s", but

@@ -1,5 +1,5 @@
 #include "cache.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "diff.h"
 #include "revision.h"
@@ -18,7 +18,7 @@
 
 /*
  * An entry on the bitmap index, representing the bitmap for a given
- * commit.
+ * cummit.
  */
 struct stored_bitmap {
 	struct object_id oid;
@@ -65,15 +65,15 @@ struct bitmap_index {
 	 * type. This provides type information when yielding the objects from
 	 * the packfile during a walk, which allows for better delta bases.
 	 */
-	struct ewah_bitmap *commits;
+	struct ewah_bitmap *cummits;
 	struct ewah_bitmap *trees;
 	struct ewah_bitmap *blobs;
 	struct ewah_bitmap *tags;
 
-	/* Map from object ID -> `stored_bitmap` for all the bitmapped commits */
+	/* Map from object ID -> `stored_bitmap` for all the bitmapped cummits */
 	kh_oid_map_t *bitmaps;
 
-	/* Number of bitmapped commits */
+	/* Number of bitmapped cummits */
 	uint32_t entry_count;
 
 	/* If not NULL, this is a name-hash cache pointing into map. */
@@ -213,7 +213,7 @@ static struct stored_bitmap *store_bitmap(struct bitmap_index *index,
 
 	/* a 0 return code means the insertion succeeded with no changes,
 	 * because the SHA1 already existed on the map. this is bad, there
-	 * shouldn't be duplicated commits in the index */
+	 * shouldn't be duplicated cummits in the index */
 	if (ret == 0) {
 		error("Duplicate entry in bitmap index: %s", oid_to_hex(oid));
 		return NULL;
@@ -255,19 +255,19 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 		int xor_offset, flags;
 		struct ewah_bitmap *bitmap = NULL;
 		struct stored_bitmap *xor_bitmap = NULL;
-		uint32_t commit_idx_pos;
+		uint32_t cummit_idx_pos;
 		struct object_id oid;
 
 		if (index->map_size - index->map_pos < 6)
 			return error("corrupt ewah bitmap: truncated header for entry %d", i);
 
-		commit_idx_pos = read_be32(index->map, &index->map_pos);
+		cummit_idx_pos = read_be32(index->map, &index->map_pos);
 		xor_offset = read_u8(index->map, &index->map_pos);
 		flags = read_u8(index->map, &index->map_pos);
 
-		if (nth_bitmap_object_oid(index, &oid, commit_idx_pos) < 0)
-			return error("corrupt ewah bitmap: commit index %u out of range",
-				     (unsigned)commit_idx_pos);
+		if (nth_bitmap_object_oid(index, &oid, cummit_idx_pos) < 0)
+			return error("corrupt ewah bitmap: cummit index %u out of range",
+				     (unsigned)cummit_idx_pos);
 
 		bitmap = read_bitmap_1(index);
 		if (!bitmap)
@@ -450,7 +450,7 @@ static int load_bitmap(struct bitmap_index *bitmap_git)
 	if (load_reverse_index(bitmap_git))
 		goto failed;
 
-	if (!(bitmap_git->commits = read_bitmap_1(bitmap_git)) ||
+	if (!(bitmap_git->cummits = read_bitmap_1(bitmap_git)) ||
 		!(bitmap_git->trees = read_bitmap_1(bitmap_git)) ||
 		!(bitmap_git->blobs = read_bitmap_1(bitmap_git)) ||
 		!(bitmap_git->tags = read_bitmap_1(bitmap_git)))
@@ -543,11 +543,11 @@ struct include_data {
 	struct bitmap *seen;
 };
 
-struct ewah_bitmap *bitmap_for_commit(struct bitmap_index *bitmap_git,
-				      struct commit *commit)
+struct ewah_bitmap *bitmap_for_cummit(struct bitmap_index *bitmap_git,
+				      struct cummit *cummit)
 {
 	khiter_t hash_pos = kh_get_oid_map(bitmap_git->bitmaps,
-					   commit->object.oid);
+					   cummit->object.oid);
 	if (hash_pos >= kh_end(bitmap_git->bitmaps))
 		return NULL;
 	return lookup_stored_bitmap(kh_value(bitmap_git->bitmaps, hash_pos));
@@ -651,13 +651,13 @@ static void show_object(struct object *object, const char *name, void *data_)
 	bitmap_set(data->base, bitmap_pos);
 }
 
-static void show_commit(struct commit *commit, void *data)
+static void show_cummit(struct cummit *cummit, void *data)
 {
 }
 
 static int add_to_include_set(struct bitmap_index *bitmap_git,
 			      struct include_data *data,
-			      struct commit *commit,
+			      struct cummit *cummit,
 			      int bitmap_pos)
 {
 	struct ewah_bitmap *partial;
@@ -668,7 +668,7 @@ static int add_to_include_set(struct bitmap_index *bitmap_git,
 	if (bitmap_get(data->base, bitmap_pos))
 		return 0;
 
-	partial = bitmap_for_commit(bitmap_git, commit);
+	partial = bitmap_for_cummit(bitmap_git, cummit);
 	if (partial) {
 		bitmap_or_ewah(data->base, partial);
 		return 0;
@@ -678,19 +678,19 @@ static int add_to_include_set(struct bitmap_index *bitmap_git,
 	return 1;
 }
 
-static int should_include(struct commit *commit, void *_data)
+static int should_include(struct cummit *cummit, void *_data)
 {
 	struct include_data *data = _data;
 	int bitmap_pos;
 
-	bitmap_pos = bitmap_position(data->bitmap_git, &commit->object.oid);
+	bitmap_pos = bitmap_position(data->bitmap_git, &cummit->object.oid);
 	if (bitmap_pos < 0)
 		bitmap_pos = ext_index_add_object(data->bitmap_git,
-						  (struct object *)commit,
+						  (struct object *)cummit,
 						  NULL);
 
-	if (!add_to_include_set(data->bitmap_git, data, commit, bitmap_pos)) {
-		struct commit_list *parent = commit->parents;
+	if (!add_to_include_set(data->bitmap_git, data, cummit, bitmap_pos)) {
+		struct cummit_list *parent = cummit->parents;
 
 		while (parent) {
 			parent->item->object.flags |= SEEN;
@@ -719,11 +719,11 @@ static int should_include_obj(struct object *obj, void *_data)
 	return 1;
 }
 
-static int add_commit_to_bitmap(struct bitmap_index *bitmap_git,
+static int add_cummit_to_bitmap(struct bitmap_index *bitmap_git,
 				struct bitmap **base,
-				struct commit *commit)
+				struct cummit *cummit)
 {
-	struct ewah_bitmap *or_with = bitmap_for_commit(bitmap_git, commit);
+	struct ewah_bitmap *or_with = bitmap_for_cummit(bitmap_git, cummit);
 
 	if (!or_with)
 		return 0;
@@ -758,8 +758,8 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		struct object *object = roots->item;
 		roots = roots->next;
 
-		if (object->type == OBJ_COMMIT &&
-		    add_commit_to_bitmap(bitmap_git, &base, (struct commit *)object)) {
+		if (object->type == OBJ_cummit &&
+		    add_cummit_to_bitmap(bitmap_git, &base, (struct cummit *)object)) {
 			object->flags |= SEEN;
 			continue;
 		}
@@ -822,8 +822,8 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		show_data.bitmap_git = bitmap_git;
 		show_data.base = base;
 
-		traverse_commit_list(revs,
-				     show_commit, show_object,
+		traverse_cummit_list(revs,
+				     show_cummit, show_object,
 				     &show_data);
 
 		revs->include_check = NULL;
@@ -863,8 +863,8 @@ static void init_type_iterator(struct ewah_iterator *it,
 			       enum object_type type)
 {
 	switch (type) {
-	case OBJ_COMMIT:
-		ewah_iterator_init(it, bitmap_git->commits);
+	case OBJ_cummit:
+		ewah_iterator_init(it, bitmap_git->cummits);
 		break;
 
 	case OBJ_TREE:
@@ -1145,13 +1145,13 @@ static void filter_bitmap_object_type(struct bitmap_index *bitmap_git,
 				      struct bitmap *to_filter,
 				      enum object_type object_type)
 {
-	if (object_type < OBJ_COMMIT || object_type > OBJ_TAG)
+	if (object_type < OBJ_cummit || object_type > OBJ_TAG)
 		BUG("filter_bitmap_object_type given invalid object");
 
 	if (object_type != OBJ_TAG)
 		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_TAG);
-	if (object_type != OBJ_COMMIT)
-		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_COMMIT);
+	if (object_type != OBJ_cummit)
+		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_cummit);
 	if (object_type != OBJ_TREE)
 		filter_bitmap_exclude_type(bitmap_git, tip_objects, to_filter, OBJ_TREE);
 	if (object_type != OBJ_BLOB)
@@ -1232,7 +1232,7 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 
 	/*
 	 * We can't do pathspec limiting with bitmaps, because we don't know
-	 * which commits are associated with which object changes (let alone
+	 * which cummits are associated with which object changes (let alone
 	 * even which objects are associated with which paths).
 	 */
 	if (revs->prune)
@@ -1529,13 +1529,13 @@ int bitmap_walk_contains(struct bitmap_index *bitmap_git,
 	return idx >= 0 && bitmap_get(bitmap, idx);
 }
 
-void traverse_bitmap_commit_list(struct bitmap_index *bitmap_git,
+void traverse_bitmap_cummit_list(struct bitmap_index *bitmap_git,
 				 struct rev_info *revs,
 				 show_reachable_fn show_reachable)
 {
 	assert(bitmap_git->result);
 
-	show_objects_for_type(bitmap_git, OBJ_COMMIT, show_reachable);
+	show_objects_for_type(bitmap_git, OBJ_cummit, show_reachable);
 	if (revs->tree_objects)
 		show_objects_for_type(bitmap_git, OBJ_TREE, show_reachable);
 	if (revs->blob_objects)
@@ -1572,14 +1572,14 @@ static uint32_t count_object_type(struct bitmap_index *bitmap_git,
 	return count;
 }
 
-void count_bitmap_commit_list(struct bitmap_index *bitmap_git,
-			      uint32_t *commits, uint32_t *trees,
+void count_bitmap_cummit_list(struct bitmap_index *bitmap_git,
+			      uint32_t *cummits, uint32_t *trees,
 			      uint32_t *blobs, uint32_t *tags)
 {
 	assert(bitmap_git->result);
 
-	if (commits)
-		*commits = count_object_type(bitmap_git, OBJ_COMMIT);
+	if (cummits)
+		*cummits = count_object_type(bitmap_git, OBJ_cummit);
 
 	if (trees)
 		*trees = count_object_type(bitmap_git, OBJ_TREE);
@@ -1594,7 +1594,7 @@ void count_bitmap_commit_list(struct bitmap_index *bitmap_git,
 struct bitmap_test_data {
 	struct bitmap_index *bitmap_git;
 	struct bitmap *base;
-	struct bitmap *commits;
+	struct bitmap *cummits;
 	struct bitmap *trees;
 	struct bitmap *blobs;
 	struct bitmap *tags;
@@ -1608,8 +1608,8 @@ static void test_bitmap_type(struct bitmap_test_data *tdata,
 	enum object_type bitmap_type = OBJ_NONE;
 	int bitmaps_nr = 0;
 
-	if (bitmap_get(tdata->commits, pos)) {
-		bitmap_type = OBJ_COMMIT;
+	if (bitmap_get(tdata->cummits, pos)) {
+		bitmap_type = OBJ_cummit;
 		bitmaps_nr++;
 	}
 	if (bitmap_get(tdata->trees, pos)) {
@@ -1655,16 +1655,16 @@ static void test_show_object(struct object *object, const char *name,
 	display_progress(tdata->prg, ++tdata->seen);
 }
 
-static void test_show_commit(struct commit *commit, void *data)
+static void test_show_cummit(struct cummit *cummit, void *data)
 {
 	struct bitmap_test_data *tdata = data;
 	int bitmap_pos;
 
 	bitmap_pos = bitmap_position(tdata->bitmap_git,
-				     &commit->object.oid);
+				     &cummit->object.oid);
 	if (bitmap_pos < 0)
-		die("Object not in bitmap: %s\n", oid_to_hex(&commit->object.oid));
-	test_bitmap_type(tdata, &commit->object, bitmap_pos);
+		die("Object not in bitmap: %s\n", oid_to_hex(&cummit->object.oid));
+	test_bitmap_type(tdata, &cummit->object, bitmap_pos);
 
 	bitmap_set(tdata->base, bitmap_pos);
 	display_progress(tdata->prg, ++tdata->seen);
@@ -1683,13 +1683,13 @@ void test_bitmap_walk(struct rev_info *revs)
 		die("failed to load bitmap indexes");
 
 	if (revs->pending.nr != 1)
-		die("you must specify exactly one commit to test");
+		die("you must specify exactly one cummit to test");
 
 	fprintf(stderr, "Bitmap v%d test (%d entries loaded)\n",
 		bitmap_git->version, bitmap_git->entry_count);
 
 	root = revs->pending.objects[0].item;
-	bm = bitmap_for_commit(bitmap_git, (struct commit *)root);
+	bm = bitmap_for_cummit(bitmap_git, (struct cummit *)root);
 
 	if (bm) {
 		fprintf(stderr, "Found bitmap for %s. %d bits / %08x checksum\n",
@@ -1699,7 +1699,7 @@ void test_bitmap_walk(struct rev_info *revs)
 	}
 
 	if (result == NULL)
-		die("Commit %s doesn't have an indexed bitmap", oid_to_hex(&root->oid));
+		die("cummit %s doesn't have an indexed bitmap", oid_to_hex(&root->oid));
 
 	revs->tag_objects = 1;
 	revs->tree_objects = 1;
@@ -1712,14 +1712,14 @@ void test_bitmap_walk(struct rev_info *revs)
 
 	tdata.bitmap_git = bitmap_git;
 	tdata.base = bitmap_new();
-	tdata.commits = ewah_to_bitmap(bitmap_git->commits);
+	tdata.cummits = ewah_to_bitmap(bitmap_git->cummits);
 	tdata.trees = ewah_to_bitmap(bitmap_git->trees);
 	tdata.blobs = ewah_to_bitmap(bitmap_git->blobs);
 	tdata.tags = ewah_to_bitmap(bitmap_git->tags);
 	tdata.prg = start_progress("Verifying bitmap entries", result_popcnt);
 	tdata.seen = 0;
 
-	traverse_commit_list(revs, &test_show_commit, &test_show_object, &tdata);
+	traverse_cummit_list(revs, &test_show_cummit, &test_show_object, &tdata);
 
 	stop_progress(&tdata.prg);
 
@@ -1730,14 +1730,14 @@ void test_bitmap_walk(struct rev_info *revs)
 
 	bitmap_free(result);
 	bitmap_free(tdata.base);
-	bitmap_free(tdata.commits);
+	bitmap_free(tdata.cummits);
 	bitmap_free(tdata.trees);
 	bitmap_free(tdata.blobs);
 	bitmap_free(tdata.tags);
 	free_bitmap_index(bitmap_git);
 }
 
-int test_bitmap_commits(struct repository *r)
+int test_bitmap_cummits(struct repository *r)
 {
 	struct bitmap_index *bitmap_git = prepare_bitmap_git(r);
 	struct object_id oid;
@@ -1857,7 +1857,7 @@ void free_bitmap_index(struct bitmap_index *b)
 
 	if (b->map)
 		munmap(b->map, b->map_size);
-	ewah_pool_free(b->commits);
+	ewah_pool_free(b->cummits);
 	ewah_pool_free(b->trees);
 	ewah_pool_free(b->blobs);
 	ewah_pool_free(b->tags);
@@ -1983,7 +1983,7 @@ off_t get_disk_usage_from_bitmap(struct bitmap_index *bitmap_git,
 {
 	off_t total = 0;
 
-	total += get_disk_usage_for_type(bitmap_git, OBJ_COMMIT);
+	total += get_disk_usage_for_type(bitmap_git, OBJ_cummit);
 	if (revs->tree_objects)
 		total += get_disk_usage_for_type(bitmap_git, OBJ_TREE);
 	if (revs->blob_objects)

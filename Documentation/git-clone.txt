@@ -79,9 +79,9 @@ source repository, similar to running `cp -r src dst` while modifying
 *NOTE*: this is a possibly dangerous operation; do *not* use
 it unless you understand what it does. If you clone your
 repository using this option and then delete branches (or use any
-other Git command that makes any existing commit unreferenced) in the
+other Git command that makes any existing cummit unreferenced) in the
 source repository, some objects may become unreferenced (or dangling).
-These objects may be removed by normal Git operations (such as `git commit`)
+These objects may be removed by normal Git operations (such as `git cummit`)
 which automatically call `git maintenance run --auto`. (See
 linkgit:git-maintenance[1].) If these objects are removed and were referenced
 by the cloned repository, then the cloned repository will become corrupt.
@@ -207,7 +207,7 @@ objects from the source repository into a pack in the cloned repository.
 	to by the cloned repository's HEAD, point to `<name>` branch
 	instead. In a non-bare repository, this is the branch that will
 	be checked out.
-	`--branch` can also take tags and detaches the HEAD at that commit
+	`--branch` can also take tags and detaches the HEAD at that cummit
 	in the resulting repository.
 
 -u <upload-pack>::
@@ -239,7 +239,7 @@ corresponding `--mirror` and `--no-tags` options instead.
 
 --depth <depth>::
 	Create a 'shallow' clone with a history truncated to the
-	specified number of commits. Implies `--single-branch` unless
+	specified number of cummits. Implies `--single-branch` unless
 	`--no-single-branch` is given to fetch the histories near the
 	tips of all branches. If you want to clone submodules shallowly,
 	also pass `--shallow-submodules`.
@@ -248,7 +248,7 @@ corresponding `--mirror` and `--no-tags` options instead.
 	Create a shallow clone with a history after the specified time.
 
 --shallow-exclude=<revision>::
-	Create a shallow clone with a history, excluding commits
+	Create a shallow clone with a history, excluding cummits
 	reachable from a specified remote branch or tag.  This option
 	can be specified multiple times.
 

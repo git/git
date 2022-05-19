@@ -8,21 +8,21 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success setup '
-	test_commit a a a &&
+	test_cummit a a a &&
 	git branch to-rebase &&
 
-	test_commit --annotate b a b &&
-	test_commit --annotate c a c &&
+	test_cummit --annotate b a b &&
+	test_cummit --annotate c a c &&
 
 	git checkout to-rebase &&
-	test_commit "merge should fail on this" a d d &&
-	test_commit --annotate "merge should fail on this, too" a e pre-rebase
+	test_cummit "merge should fail on this" a d d &&
+	test_cummit --annotate "merge should fail on this, too" a e pre-rebase
 '
 
 # Check that HEAD is equal to "pre-rebase" and the current branch is
 # "to-rebase"
 check_head() {
-	test_cmp_rev HEAD pre-rebase^{commit} &&
+	test_cmp_rev HEAD pre-rebase^{cummit} &&
 	test "$(git symbolic-ref HEAD)" = refs/heads/to-rebase
 }
 
@@ -71,9 +71,9 @@ testrebase() {
 		test_when_finished "git symbolic-ref HEAD refs/heads/to-rebase" &&
 		git reset --hard a -- &&
 		test_must_fail git rebase$type --onto b c pre-rebase &&
-		test_cmp_rev HEAD b^{commit} &&
+		test_cmp_rev HEAD b^{cummit} &&
 		git rebase --abort &&
-		test_cmp_rev HEAD pre-rebase^{commit} &&
+		test_cmp_rev HEAD pre-rebase^{cummit} &&
 		! git symbolic-ref HEAD
 	'
 

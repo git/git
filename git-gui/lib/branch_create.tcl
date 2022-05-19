@@ -169,7 +169,7 @@ method _create {} {
 
 	if {$spec ne {} && $opt_fetch} {
 		set new {}
-	} elseif {[catch {set new [$w_rev commit_or_die]}]} {
+	} elseif {[catch {set new [$w_rev cummit_or_die]}]} {
 		return
 	}
 

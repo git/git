@@ -15,12 +15,12 @@ doc-diff (-c|--clean)
 j=n			parallel argument to pass to make
 f			force rebuild; do not rely on cached results
 c,clean			cleanup temporary working files
-from-asciidoc		use asciidoc with the 'from'-commit
-from-asciidoctor	use asciidoctor with the 'from'-commit
-asciidoc		use asciidoc with both commits
-to-asciidoc		use asciidoc with the 'to'-commit
-to-asciidoctor		use asciidoctor with the 'to'-commit
-asciidoctor		use asciidoctor with both commits
+from-asciidoc		use asciidoc with the 'from'-cummit
+from-asciidoctor	use asciidoctor with the 'from'-cummit
+asciidoc		use asciidoc with both cummits
+to-asciidoc		use asciidoc with the 'to'-cummit
+to-asciidoctor		use asciidoctor with the 'to'-cummit
+asciidoctor		use asciidoctor with both cummits
 cut-footer		cut away footer
 "
 SUBDIRECTORY_OK=1
@@ -136,7 +136,7 @@ generate_render_makefile () {
 	done
 }
 
-# render_tree <committish_oid> <directory_name> <makemanflags>
+# render_tree <cummittish_oid> <directory_name> <makemanflags>
 render_tree () {
 	# Skip install-man entirely if we already have an installed directory.
 	# We can't rely on make here, since "install-man" unconditionally

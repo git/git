@@ -32,7 +32,7 @@ test_expect_success 'setup' '
 		EOT
 		git add mnemonic.txt &&
 		test_tick &&
-		git commit -m "\"Thirty days\", a reminder of month lengths" &&
+		git cummit -m "\"Thirty days\", a reminder of month lengths" &&
 		git tag -m "version 1" -a initial &&
 		git push --tags origin main
 	) &&
@@ -50,7 +50,7 @@ test_expect_success 'setup' '
 		EOT
 		git add mnemonic.txt &&
 		test_tick &&
-		git commit -m "More detail" &&
+		git cummit -m "More detail" &&
 		git tag -m "version 2" -a full &&
 		git checkout -b simplify HEAD^ &&
 		mv mnemonic.txt mnemonic.standard &&
@@ -59,7 +59,7 @@ test_expect_success 'setup' '
 		All the rest I can’t remember.
 		EOT
 		git add -N mnemonic.standard mnemonic.clarified &&
-		git commit -a -m "Adapt to use modern, simpler English
+		git cummit -a -m "Adapt to use modern, simpler English
 
 But keep the old version, too, in case some people prefer it." &&
 		git checkout main
@@ -136,7 +136,7 @@ test_expect_success 'pull request when forgot to push' '
 		test_must_fail git request-pull initial "$downstream_url" \
 			2>../err
 	) &&
-	grep "No match for commit .*" err &&
+	grep "No match for cummit .*" err &&
 	grep "Are you sure you pushed" err
 
 '
@@ -195,7 +195,7 @@ test_expect_success 'pull request format' '
 	rm -fr downstream.git &&
 	git init --bare downstream.git &&
 	cat <<-\EOT >expect &&
-	The following changes since commit OBJECT_NAME:
+	The following changes since cummit OBJECT_NAME:
 
 	  SUBJECT (DATE)
 
@@ -266,7 +266,7 @@ test_expect_success 'request-pull quotes regex metacharacters properly' '
 		test_must_fail git request-pull initial "$downstream_url" tags/v2.0 \
 			2>../err
 	) &&
-	grep "No match for commit .*" err &&
+	grep "No match for cummit .*" err &&
 	grep "Are you sure you pushed" err
 
 '

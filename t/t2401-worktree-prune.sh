@@ -8,7 +8,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success initialize '
-	git commit --allow-empty -m init
+	git cummit --allow-empty -m init
 '
 
 test_expect_success 'worktree prune on normal repo' '
@@ -110,7 +110,7 @@ test_expect_success 'prune duplicate (linked/linked)' '
 test_expect_success 'prune duplicate (main/linked)' '
 	test_when_finished rm -fr repo wt &&
 	test_create_repo repo &&
-	test_commit -C repo x &&
+	test_cummit -C repo x &&
 	git -C repo worktree add --detach ../wt &&
 	rm -fr wt &&
 	mv repo wt &&

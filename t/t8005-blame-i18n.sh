@@ -11,17 +11,17 @@ test_expect_success 'setup the repository' '
 	# Create the file
 	echo "UTF-8 LINE" > file &&
 	git add file &&
-	git commit --author "$UTF8_NAME <utf8@localhost>" -m "$UTF8_MSG" &&
+	git cummit --author "$UTF8_NAME <utf8@localhost>" -m "$UTF8_MSG" &&
 
 	echo "EUC-JAPAN LINE" >> file &&
 	git add file &&
-	git config i18n.commitencoding eucJP &&
-	git commit --author "$EUC_JAPAN_NAME <euc-japan@localhost>" -m "$EUC_JAPAN_MSG" &&
+	git config i18n.cummitencoding eucJP &&
+	git cummit --author "$EUC_JAPAN_NAME <euc-japan@localhost>" -m "$EUC_JAPAN_MSG" &&
 
 	echo "SJIS LINE" >> file &&
 	git add file &&
-	git config i18n.commitencoding SJIS &&
-	git commit --author "$SJIS_NAME <sjis@localhost>" -m "$SJIS_MSG"
+	git config i18n.cummitencoding SJIS &&
+	git cummit --author "$SJIS_NAME <sjis@localhost>" -m "$SJIS_MSG"
 '
 
 cat >expected <<EOF
@@ -38,7 +38,7 @@ filter_author_summary () {
 }
 
 test_expect_success !MINGW \
-	'blame respects i18n.commitencoding' '
+	'blame respects i18n.cummitencoding' '
 	git blame --incremental file >output &&
 	filter_author_summary output >actual &&
 	test_cmp expected actual

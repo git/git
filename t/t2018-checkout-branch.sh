@@ -76,10 +76,10 @@ setup_dirty_mergeable () {
 }
 
 test_expect_success 'setup' '
-	test_commit initial file1 &&
+	test_cummit initial file1 &&
 	HEAD1=$(git rev-parse --verify HEAD) &&
 
-	test_commit change1 file1 &&
+	test_cummit change1 file1 &&
 	HEAD2=$(git rev-parse --verify HEAD) &&
 
 	git branch -m branch1
@@ -223,7 +223,7 @@ test_expect_success 'checkout -f -B to an existing branch with mergeable changes
 '
 
 test_expect_success 'checkout -b <describe>' '
-	git tag -f -m "First commit" initial initial &&
+	git tag -f -m "First cummit" initial initial &&
 	git checkout -f change1 &&
 	name=$(git describe) &&
 	git checkout -b $name &&
@@ -244,7 +244,7 @@ test_expect_success 'checkout -B to the current branch works' '
 
 test_expect_success 'checkout -b after clone --no-checkout does a checkout of HEAD' '
 	git init src &&
-	test_commit -C src a &&
+	test_cummit -C src a &&
 	rev="$(git -C src rev-parse HEAD)" &&
 	git clone --no-checkout src dest &&
 	git -C dest checkout "$rev" -b branch &&
@@ -259,7 +259,7 @@ test_expect_success 'checkout -b to a new branch preserves mergeable changes des
 		git config core.sparseCheckout false &&
 		rm .git/info/sparse-checkout" &&
 
-	test_commit file2 &&
+	test_cummit file2 &&
 
 	echo stuff >>file1 &&
 	echo file2 >.git/info/sparse-checkout &&
@@ -275,7 +275,7 @@ test_expect_success 'checkout -b to a new branch preserves mergeable changes des
 
 test_expect_success 'checkout -b rejects an invalid start point' '
 	test_must_fail git checkout -b branch4 file1 2>err &&
-	test_i18ngrep "is not a commit" err
+	test_i18ngrep "is not a cummit" err
 '
 
 test_expect_success 'checkout -b rejects an extra path argument' '

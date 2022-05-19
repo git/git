@@ -12,11 +12,11 @@ test_description='for-each-ref test'
 # Mon Jul 3 23:18:43 2006 +0000
 datestamp=1151968723
 setdate_and_increment () {
-    GIT_COMMITTER_DATE="$datestamp +0200"
+    GIT_cummitTER_DATE="$datestamp +0200"
     datestamp=$(expr "$datestamp" + 1)
     GIT_AUTHOR_DATE="$datestamp +0200"
     datestamp=$(expr "$datestamp" + 1)
-    export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
+    export GIT_cummitTER_DATE GIT_AUTHOR_DATE
 }
 
 test_expect_success setup '
@@ -27,7 +27,7 @@ test_expect_success setup '
 	setdate_and_increment &&
 	echo "Using $datestamp" > one &&
 	git add one &&
-	git commit -m "Initial" &&
+	git cummit -m "Initial" &&
 	git branch -M main &&
 	setdate_and_increment &&
 	git tag -a -m "Tagging at $datestamp" testtag &&
@@ -56,7 +56,7 @@ test_atom() {
 	# Automatically test "contents:size" atom after testing "contents"
 	if test "$2" = "contents"
 	then
-		# for commit leg, $3 is changed there
+		# for cummit leg, $3 is changed there
 		expect=$(printf '%s' "$3" | wc -c)
 		test_expect_${4:-success} $PREREQ "basic atom: $1 contents:size" '
 			type=$(git cat-file -t "$ref") &&
@@ -68,7 +68,7 @@ test_atom() {
 				rm -f out ;;
 			tree | blob)
 				expect="" ;;
-			commit)
+			cummit)
 				: "use the calculated expect" ;;
 			*)
 				BUG "unknown object type" ;;
@@ -115,7 +115,7 @@ test_atom head push:rstrip=1 refs/remotes/myfork
 test_atom head push:rstrip=-1 refs
 test_atom head push:strip=1 remotes/myfork/main
 test_atom head push:strip=-1 main
-test_atom head objecttype commit
+test_atom head objecttype cummit
 test_atom head objectsize $((131 + hexlen))
 test_atom head objectsize:disk $disklen
 test_atom head deltabase $ZERO_OID
@@ -134,7 +134,7 @@ test_atom head parent:short=10 ''
 test_atom head numparent 0
 test_atom head object ''
 test_atom head type ''
-test_atom head raw "$(git cat-file commit refs/heads/main)
+test_atom head raw "$(git cat-file cummit refs/heads/main)
 "
 test_atom head '*objectname' ''
 test_atom head '*objecttype' ''
@@ -144,12 +144,12 @@ test_atom head authoremail '<author@example.com>'
 test_atom head authoremail:trim 'author@example.com'
 test_atom head authoremail:localpart 'author'
 test_atom head authordate 'Tue Jul 4 01:18:44 2006 +0200'
-test_atom head committer 'C O Mitter <committer@example.com> 1151968723 +0200'
-test_atom head committername 'C O Mitter'
-test_atom head committeremail '<committer@example.com>'
-test_atom head committeremail:trim 'committer@example.com'
-test_atom head committeremail:localpart 'committer'
-test_atom head committerdate 'Tue Jul 4 01:18:43 2006 +0200'
+test_atom head cummitter 'C O Mitter <cummitter@example.com> 1151968723 +0200'
+test_atom head cummittername 'C O Mitter'
+test_atom head cummitteremail '<cummitter@example.com>'
+test_atom head cummitteremail:trim 'cummitter@example.com'
+test_atom head cummitteremail:localpart 'cummitter'
+test_atom head cummitterdate 'Tue Jul 4 01:18:43 2006 +0200'
 test_atom head tag ''
 test_atom head tagger ''
 test_atom head taggername ''
@@ -157,7 +157,7 @@ test_atom head taggeremail ''
 test_atom head taggeremail:trim ''
 test_atom head taggeremail:localpart ''
 test_atom head taggerdate ''
-test_atom head creator 'C O Mitter <committer@example.com> 1151968723 +0200'
+test_atom head creator 'C O Mitter <cummitter@example.com> 1151968723 +0200'
 test_atom head creatordate 'Tue Jul 4 01:18:43 2006 +0200'
 test_atom head subject 'Initial'
 test_atom head subject:sanitize 'Initial'
@@ -193,29 +193,29 @@ test_atom tag parent:short=1 ''
 test_atom tag parent:short=10 ''
 test_atom tag numparent ''
 test_atom tag object $(git rev-parse refs/tags/testtag^0)
-test_atom tag type 'commit'
+test_atom tag type 'cummit'
 test_atom tag '*objectname' $(git rev-parse refs/tags/testtag^{})
-test_atom tag '*objecttype' 'commit'
+test_atom tag '*objecttype' 'cummit'
 test_atom tag author ''
 test_atom tag authorname ''
 test_atom tag authoremail ''
 test_atom tag authoremail:trim ''
 test_atom tag authoremail:localpart ''
 test_atom tag authordate ''
-test_atom tag committer ''
-test_atom tag committername ''
-test_atom tag committeremail ''
-test_atom tag committeremail:trim ''
-test_atom tag committeremail:localpart ''
-test_atom tag committerdate ''
+test_atom tag cummitter ''
+test_atom tag cummittername ''
+test_atom tag cummitteremail ''
+test_atom tag cummitteremail:trim ''
+test_atom tag cummitteremail:localpart ''
+test_atom tag cummitterdate ''
 test_atom tag tag 'testtag'
-test_atom tag tagger 'C O Mitter <committer@example.com> 1151968725 +0200'
+test_atom tag tagger 'C O Mitter <cummitter@example.com> 1151968725 +0200'
 test_atom tag taggername 'C O Mitter'
-test_atom tag taggeremail '<committer@example.com>'
-test_atom tag taggeremail:trim 'committer@example.com'
-test_atom tag taggeremail:localpart 'committer'
+test_atom tag taggeremail '<cummitter@example.com>'
+test_atom tag taggeremail:trim 'cummitter@example.com'
+test_atom tag taggeremail:localpart 'cummitter'
 test_atom tag taggerdate 'Tue Jul 4 01:18:45 2006 +0200'
-test_atom tag creator 'C O Mitter <committer@example.com> 1151968725 +0200'
+test_atom tag creator 'C O Mitter <cummitter@example.com> 1151968725 +0200'
 test_atom tag creatordate 'Tue Jul 4 01:18:45 2006 +0200'
 test_atom tag subject 'Tagging at 1151968727'
 test_atom tag subject:sanitize 'Tagging-at-1151968727'
@@ -228,7 +228,7 @@ test_atom tag contents 'Tagging at 1151968727
 test_atom tag HEAD ' '
 
 test_expect_success 'basic atom: refs/tags/testtag *raw' '
-	git cat-file commit refs/tags/testtag^{} >expected &&
+	git cat-file cummit refs/tags/testtag^{} >expected &&
 	git for-each-ref --format="%(*raw)" refs/tags/testtag >actual &&
 	sanitize_pgp <expected >expected.clean &&
 	echo >>expected.clean &&
@@ -268,16 +268,16 @@ test_expect_success 'arguments to %(objectname:short=) must be positive integers
 
 test_date () {
 	f=$1 &&
-	committer_date=$2 &&
+	cummitter_date=$2 &&
 	author_date=$3 &&
 	tagger_date=$4 &&
 	cat >expected <<-EOF &&
-	'refs/heads/main' '$committer_date' '$author_date'
+	'refs/heads/main' '$cummitter_date' '$author_date'
 	'refs/tags/testtag' '$tagger_date'
 	EOF
 	(
 		git for-each-ref --shell \
-			--format="%(refname) %(committerdate${f:+:$f}) %(authordate${f:+:$f})" \
+			--format="%(refname) %(cummitterdate${f:+:$f}) %(authordate${f:+:$f})" \
 			refs/heads &&
 		git for-each-ref --shell \
 			--format="%(refname) %(taggerdate${f:+:$f})" \
@@ -310,14 +310,14 @@ test_expect_success 'Check format "default-local" date fields output' '
 # doesn't exit in error
 test_expect_success 'Check format "relative" date fields output' '
 	f=relative &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
+	(git for-each-ref --shell --format="%(refname) %(cummitterdate:$f) %(authordate:$f)" refs/heads &&
 	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual
 '
 
 # We just check that this is the same as "relative" for now.
 test_expect_success 'Check format "relative-local" date fields output' '
 	test_date relative-local \
-		"$(git for-each-ref --format="%(committerdate:relative)" refs/heads)" \
+		"$(git for-each-ref --format="%(cummitterdate:relative)" refs/heads)" \
 		"$(git for-each-ref --format="%(authordate:relative)" refs/heads)" \
 		"$(git for-each-ref --format="%(taggerdate:relative)" refs/tags)"
 '
@@ -487,7 +487,7 @@ for i in "--perl --shell" "-s --python" "--python --tcl" "--tcl --perl"; do
 done
 
 test_expect_success 'setup for upstream:track[short]' '
-	test_commit two
+	test_cummit two
 '
 
 test_atom head upstream:track '[ahead 1]'
@@ -496,7 +496,7 @@ test_atom head upstream:track,nobracket 'ahead 1'
 test_atom head upstream:nobracket,track 'ahead 1'
 
 test_expect_success 'setup for push:track[short]' '
-	test_commit third &&
+	test_cummit third &&
 	git update-ref refs/remotes/myfork/main main &&
 	git reset main~1
 '
@@ -571,7 +571,7 @@ test_expect_success 'Check ambiguous head and tag refs (strict)' '
 	git checkout -b newtag &&
 	echo "Using $datestamp" > one &&
 	git add one &&
-	git commit -m "Branch" &&
+	git cummit -m "Branch" &&
 	setdate_and_increment &&
 	git tag -m "Tagging at $datestamp" main &&
 	git for-each-ref --format "%(refname:short)" refs/heads/main refs/tags/main >actual &&
@@ -609,7 +609,7 @@ test_expect_success 'create tag without tagger' '
 		git hash-object --stdin -w -t tag)
 '
 
-test_atom refs/tags/taggerless type 'commit'
+test_atom refs/tags/taggerless type 'cummit'
 test_atom refs/tags/taggerless tag 'taggerless'
 test_atom refs/tags/taggerless tagger ''
 test_atom refs/tags/taggerless taggername ''
@@ -617,12 +617,12 @@ test_atom refs/tags/taggerless taggeremail ''
 test_atom refs/tags/taggerless taggeremail:trim ''
 test_atom refs/tags/taggerless taggeremail:localpart ''
 test_atom refs/tags/taggerless taggerdate ''
-test_atom refs/tags/taggerless committer ''
-test_atom refs/tags/taggerless committername ''
-test_atom refs/tags/taggerless committeremail ''
-test_atom refs/tags/taggerless committeremail:trim ''
-test_atom refs/tags/taggerless committeremail:localpart ''
-test_atom refs/tags/taggerless committerdate ''
+test_atom refs/tags/taggerless cummitter ''
+test_atom refs/tags/taggerless cummittername ''
+test_atom refs/tags/taggerless cummitteremail ''
+test_atom refs/tags/taggerless cummitteremail:trim ''
+test_atom refs/tags/taggerless cummitteremail:localpart ''
+test_atom refs/tags/taggerless cummitterdate ''
 test_atom refs/tags/taggerless subject 'Broken tag'
 
 test_expect_success 'an unusual tag with an incomplete line' '
@@ -971,8 +971,8 @@ test_expect_success 'set up multiple-sort tags' '
 		do
 			for ref in ref1 ref2
 			do
-				GIT_COMMITTER_DATE="@$when +0000" \
-				GIT_COMMITTER_EMAIL="$email@example.com" \
+				GIT_cummitTER_DATE="@$when +0000" \
+				GIT_cummitTER_EMAIL="$email@example.com" \
 				git tag -m "tag $ref-$when-$email" \
 				multi-$ref-$when-$email || return 1
 			done
@@ -1063,8 +1063,8 @@ unfold () {
 test_expect_success 'set up trailers for next test' '
 	echo "Some contents" > two &&
 	git add two &&
-	git commit -F - <<-EOF
-	trailers: this commit message has trailers
+	git cummit -F - <<-EOF
+	trailers: this cummit message has trailers
 
 	Some message contents
 
@@ -1243,11 +1243,11 @@ test_expect_success 'basic atom: rest must fail' '
 '
 
 test_expect_success 'trailer parsing not fooled by --- line' '
-	git commit --allow-empty -F - <<-\EOF &&
+	git cummit --allow-empty -F - <<-\EOF &&
 	this is the subject
 
 	This is the body. The message has a "---" line which would confuse a
-	message+patch parser. But here we know we have only a commit message,
+	message+patch parser. But here we know we have only a cummit message,
 	so we get it right.
 
 	trailer: wrong
@@ -1317,7 +1317,7 @@ test_expect_success ':remotename and :remoteref' '
 	git init remote-tests &&
 	(
 		cd remote-tests &&
-		test_commit initial &&
+		test_cummit initial &&
 		git branch -M main &&
 		git remote add from fifth.coffee:blub &&
 		git config branch.main.remote from &&
@@ -1363,7 +1363,7 @@ test_expect_success 'for-each-ref --ignore-case works on multiple sort keys' '
 	do
 		for subject in a A b B
 		do
-			GIT_COMMITTER_EMAIL="$email@example.com" \
+			GIT_cummitTER_EMAIL="$email@example.com" \
 			git tag -m "tag $subject" icase-$(printf %02d $nr) &&
 			nr=$((nr+1))||
 			return 1
@@ -1399,7 +1399,7 @@ test_expect_success 'for-each-ref --ignore-case works on multiple sort keys' '
 test_expect_success 'for-each-ref reports broken tags' '
 	git tag -m "good tag" broken-tag-good HEAD &&
 	git cat-file tag broken-tag-good >good &&
-	sed s/commit/blob/ <good >bad &&
+	sed s/cummit/blob/ <good >bad &&
 	bad=$(git hash-object -w -t tag bad) &&
 	git update-ref refs/tags/broken-tag-bad $bad &&
 	test_must_fail git for-each-ref --format="%(*objectname)" \

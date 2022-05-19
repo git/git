@@ -1,12 +1,12 @@
 PRETTY FORMATS
 --------------
 
-If the commit is a merge, and if the pretty-format
+If the cummit is a merge, and if the pretty-format
 is not 'oneline', 'email' or 'raw', an additional line is
 inserted before the 'Author:' line.  This line begins with
-"Merge: " and the hashes of ancestral commits are printed,
-separated by spaces.  Note that the listed commits may not
-necessarily be the list of the *direct* parent commits if you
+"Merge: " and the hashes of ancestral cummits are printed,
+separated by spaces.  Note that the listed cummits may not
+necessarily be the list of the *direct* parent cummits if you
 have limited your view of history: for example, if you are
 only interested in changes related to a certain directory or
 file.
@@ -26,48 +26,48 @@ This is designed to be as compact as possible.
 
 * 'short'
 
-	  commit <hash>
+	  cummit <hash>
 	  Author: <author>
 
 	      <title-line>
 
 * 'medium'
 
-	  commit <hash>
+	  cummit <hash>
 	  Author: <author>
 	  Date:   <author-date>
 
 	      <title-line>
 
-	      <full-commit-message>
+	      <full-cummit-message>
 
 * 'full'
 
-	  commit <hash>
+	  cummit <hash>
 	  Author: <author>
-	  Commit: <committer>
+	  cummit: <cummitter>
 
 	      <title-line>
 
-	      <full-commit-message>
+	      <full-cummit-message>
 
 * 'fuller'
 
-	  commit <hash>
+	  cummit <hash>
 	  Author:     <author>
 	  AuthorDate: <author-date>
-	  Commit:     <committer>
-	  CommitDate: <committer-date>
+	  cummit:     <cummitter>
+	  cummitDate: <cummitter-date>
 
 	       <title-line>
 
-	       <full-commit-message>
+	       <full-cummit-message>
 
 * 'reference'
 
 	  <abbrev-hash> (<title-line>, <short-author-date>)
 +
-This format is used to refer to another commit in a commit message and
+This format is used to refer to another cummit in a cummit message and
 is the same as `--pretty='format:%C(auto)%h (%s, %ad)'`.  By default,
 the date is formatted with `--date=short` unless another `--date` option
 is explicitly specified.  As with any `format:` with format
@@ -81,23 +81,23 @@ placeholders, its output is not affected by other options like
 	  Date: <author-date>
 	  Subject: [PATCH] <title-line>
 
-	  <full-commit-message>
+	  <full-cummit-message>
 
 * 'mboxrd'
 +
-Like 'email', but lines in the commit message starting with "From "
+Like 'email', but lines in the cummit message starting with "From "
 (preceded by zero or more ">") are quoted with ">" so they aren't
-confused as starting a new commit.
+confused as starting a new cummit.
 
 * 'raw'
 +
-The 'raw' format shows the entire commit exactly as
-stored in the commit object.  Notably, the hashes are
+The 'raw' format shows the entire cummit exactly as
+stored in the cummit object.  Notably, the hashes are
 displayed in full, regardless of whether --abbrev or
 --no-abbrev are used, and 'parents' information show the
-true parent commits, without taking grafts or history
+true parent cummits, without taking grafts or history
 simplification into account. Note that this format affects the way
-commits are displayed, but not the way the diff is shown e.g. with
+cummits are displayed, but not the way the diff is shown e.g. with
 `git log --raw`. To get full object names in a raw diff format,
 use `--no-abbrev`.
 
@@ -167,7 +167,7 @@ The placeholders are:
 			  respectively, but padding both sides
 			  (i.e. the text is centered)
 
-- Placeholders that expand to information extracted from the commit:
+- Placeholders that expand to information extracted from the cummit:
 '%H':: commit hash
 '%h':: abbreviated commit hash
 '%T':: tree hash
@@ -192,29 +192,29 @@ The placeholders are:
 '%as':: author date, short format (`YYYY-MM-DD`)
 '%ah':: author date, human style (like the `--date=human` option of
 	linkgit:git-rev-list[1])
-'%cn':: committer name
-'%cN':: committer name (respecting .mailmap, see
+'%cn':: cummitter name
+'%cN':: cummitter name (respecting .mailmap, see
 	linkgit:git-shortlog[1] or linkgit:git-blame[1])
-'%ce':: committer email
-'%cE':: committer email (respecting .mailmap, see
+'%ce':: cummitter email
+'%cE':: cummitter email (respecting .mailmap, see
 	linkgit:git-shortlog[1] or linkgit:git-blame[1])
-'%cl':: committer email local-part (the part before the '@' sign)
-'%cL':: committer local-part (see '%cl') respecting .mailmap, see
+'%cl':: cummitter email local-part (the part before the '@' sign)
+'%cL':: cummitter local-part (see '%cl') respecting .mailmap, see
 	linkgit:git-shortlog[1] or linkgit:git-blame[1])
-'%cd':: committer date (format respects --date= option)
-'%cD':: committer date, RFC2822 style
-'%cr':: committer date, relative
-'%ct':: committer date, UNIX timestamp
-'%ci':: committer date, ISO 8601-like format
-'%cI':: committer date, strict ISO 8601 format
-'%cs':: committer date, short format (`YYYY-MM-DD`)
-'%ch':: committer date, human style (like the `--date=human` option of
+'%cd':: cummitter date (format respects --date= option)
+'%cD':: cummitter date, RFC2822 style
+'%cr':: cummitter date, relative
+'%ct':: cummitter date, UNIX timestamp
+'%ci':: cummitter date, ISO 8601-like format
+'%cI':: cummitter date, strict ISO 8601 format
+'%cs':: cummitter date, short format (`YYYY-MM-DD`)
+'%ch':: cummitter date, human style (like the `--date=human` option of
 	linkgit:git-rev-list[1])
 '%d':: ref names, like the --decorate option of linkgit:git-log[1]
 '%D':: ref names without the " (", ")" wrapping.
 '%(describe[:options])':: human-readable name, like
 			  linkgit:git-describe[1]; empty string for
-			  undescribable commits.  The `describe` string
+			  undescribable cummits.  The `describe` string
 			  may be followed by a colon and zero or more
 			  comma-separated options.  Descriptions can be
 			  inconsistent when tags are added or removed at
@@ -231,7 +231,7 @@ The placeholders are:
 ** 'exclude=<pattern>': Do not consider tags matching the given
    `glob(7)` pattern, excluding the "refs/tags/" prefix.
 
-'%S':: ref name given on the command line by which the commit was reached
+'%S':: ref name given on the command line by which the cummit was reached
        (like `git log --source`), only works with `git log`
 '%e':: encoding
 '%s':: subject
@@ -239,9 +239,9 @@ The placeholders are:
 '%b':: body
 '%B':: raw body (unwrapped subject and body)
 ifndef::git-rev-list[]
-'%N':: commit notes
+'%N':: cummit notes
 endif::git-rev-list[]
-'%GG':: raw verification message from GPG for a signed commit
+'%GG':: raw verification message from GPG for a signed cummit
 '%G?':: show "G" for a good (valid) signature,
 	"B" for a bad signature,
 	"U" for a good signature with unknown validity,
@@ -250,12 +250,12 @@ endif::git-rev-list[]
 	"R" for a good signature made by a revoked key,
 	"E" if the signature cannot be checked (e.g. missing key)
 	and "N" for no signature
-'%GS':: show the name of the signer for a signed commit
-'%GK':: show the key used to sign a signed commit
-'%GF':: show the fingerprint of the key used to sign a signed commit
+'%GS':: show the name of the signer for a signed cummit
+'%GK':: show the key used to sign a signed cummit
+'%GF':: show the fingerprint of the key used to sign a signed cummit
 '%GP':: show the fingerprint of the primary key whose subkey was used
-	to sign a signed commit
-'%GT':: show the trust level for the key used to sign a signed commit
+	to sign a signed cummit
+'%GT':: show the trust level for the key used to sign a signed cummit
 '%gD':: reflog selector, e.g., `refs/stash@{1}` or `refs/stash@{2
 	minutes ago}`; the format follows the rules described for the
 	`-g` option. The portion before the `@` is the refname as

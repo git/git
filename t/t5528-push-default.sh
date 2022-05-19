@@ -11,7 +11,7 @@ test_expect_success 'setup bare remotes' '
 	git remote add parent1 repo1 &&
 	git init --bare repo2 &&
 	git remote add parent2 repo2 &&
-	test_commit one &&
+	test_cummit one &&
 	git push parent1 HEAD &&
 	git push parent2 HEAD
 '
@@ -19,7 +19,7 @@ test_expect_success 'setup bare remotes' '
 # $1 = local revision
 # $2 = remote revision (tested to be equal to the local one)
 # $3 = [optional] repo to check for actual output (repo1 by default)
-check_pushed_commit () {
+check_pushed_cummit () {
 	git log -1 --format='%h %s' "$1" >expect &&
 	git --git-dir="${3:-repo1}" log -1 --format='%h %s' "$2" >actual &&
 	test_cmp expect actual
@@ -57,7 +57,7 @@ test_pushdefault_workflow () {
 		test_config branch.main.remote parent1 &&
 		test_config branch.main.merge refs/heads/foo &&
 		test_config remote.pushdefault $pushdefault &&
-		test_commit commit-for-$2${4+-triangular} &&
+		test_cummit cummit-for-$2${4+-triangular} &&
 		test_push_$1 $2 $3 ${4+repo2}
 	"
 }
@@ -66,14 +66,14 @@ test_expect_success '"upstream" pushes to configured upstream' '
 	git checkout main &&
 	test_config branch.main.remote parent1 &&
 	test_config branch.main.merge refs/heads/foo &&
-	test_commit two &&
+	test_cummit two &&
 	test_push_success upstream foo
 '
 
 test_expect_success '"upstream" does not push on unconfigured remote' '
 	git checkout main &&
 	test_unconfig branch.main.remote &&
-	test_commit three &&
+	test_cummit three &&
 	test_push_failure upstream
 '
 
@@ -81,7 +81,7 @@ test_expect_success '"upstream" does not push on unconfigured branch' '
 	git checkout main &&
 	test_config branch.main.remote parent1 &&
 	test_unconfig branch.main.merge &&
-	test_commit four &&
+	test_cummit four &&
 	test_push_failure upstream
 '
 
@@ -90,7 +90,7 @@ test_expect_success '"upstream" does not push when remotes do not match' '
 	test_config branch.main.remote parent1 &&
 	test_config branch.main.merge refs/heads/foo &&
 	test_config push.default upstream &&
-	test_commit five &&
+	test_cummit five &&
 	test_must_fail git push parent2
 '
 
@@ -134,9 +134,9 @@ test_expect_success 'push to existing branch, upstream configured with same name
 	test_config branch.main.remote repo1 &&
 	test_config branch.main.merge refs/heads/main &&
 	git checkout main &&
-	test_commit six &&
+	test_cummit six &&
 	test_push_success upstream main &&
-	test_commit seven &&
+	test_cummit seven &&
 	test_push_success simple main
 '
 
@@ -144,9 +144,9 @@ test_expect_success 'push to existing branch, upstream configured with different
 	test_config branch.main.remote repo1 &&
 	test_config branch.main.merge refs/heads/other-name &&
 	git checkout main &&
-	test_commit eight &&
+	test_cummit eight &&
 	test_push_success upstream other-name &&
-	test_commit nine &&
+	test_cummit nine &&
 	test_push_failure simple &&
 	git --git-dir=repo1 log -1 --format="%h %s" "other-name" >expect-other-name &&
 	test_push_success current main &&
@@ -199,7 +199,7 @@ test_expect_success 'default behavior allows "simple" push' '
 	test_config branch.main.remote parent1 &&
 	test_config branch.main.merge refs/heads/main &&
 	test_config remote.pushdefault parent1 &&
-	test_commit default-main-main &&
+	test_cummit default-main-main &&
 	test_push_success "" main
 '
 
@@ -207,7 +207,7 @@ test_expect_success 'default behavior rejects non-simple push' '
 	test_config branch.main.remote parent1 &&
 	test_config branch.main.merge refs/heads/foo &&
 	test_config remote.pushdefault parent1 &&
-	test_commit default-main-foo &&
+	test_cummit default-main-foo &&
 	test_push_failure ""
 '
 
@@ -215,7 +215,7 @@ test_expect_success 'default triangular behavior acts like "current"' '
 	test_config branch.main.remote parent1 &&
 	test_config branch.main.merge refs/heads/foo &&
 	test_config remote.pushdefault parent2 &&
-	test_commit default-triangular &&
+	test_cummit default-triangular &&
 	test_push_success "" main repo2
 '
 

@@ -49,11 +49,11 @@ msgid "clone [verb]"
 msgstr "clonar"
 
 #. "A single point in the git history."
-msgid "commit [noun]"
+msgid "cummit [noun]"
 msgstr "revisão"
 
 #. "The action of storing a new snapshot of the project's state in the git history."
-msgid "commit [verb]"
+msgid "cummit [verb]"
 msgstr "salvar revisão"
 
 #. ""
@@ -80,7 +80,7 @@ msgstr "trecho"
 msgid "index (in git-gui: staging area)"
 msgstr "índice"
 
-#. "A successful merge results in the creation of a new commit representing the result of the merge."
+#. "A successful merge results in the creation of a new cummit representing the result of the merge."
 msgid "merge [noun]"
 msgstr "mesclagem"
 
@@ -140,7 +140,7 @@ msgstr "???"
 msgid "status"
 msgstr "status"
 
-#. "A ref pointing to a tag or commit object"
+#. "A ref pointing to a tag or cummit object"
 msgid "tag [noun]"
 msgstr "etiqueta"
 

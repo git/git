@@ -3,7 +3,7 @@ git-citool(1)
 
 NAME
 ----
-git-citool - Graphical alternative to git-commit
+git-citool - Graphical alternative to git-cummit
 
 SYNOPSIS
 --------
@@ -13,9 +13,9 @@ SYNOPSIS
 DESCRIPTION
 -----------
 A Tcl/Tk based graphical interface to review modified files, stage
-them into the index, enter a commit message and record the new
-commit onto the current branch.  This interface is an alternative
-to the less interactive 'git commit' program.
+them into the index, enter a cummit message and record the new
+cummit onto the current branch.  This interface is an alternative
+to the less interactive 'git cummit' program.
 
 'git citool' is actually a standard alias for `git gui citool`.
 See linkgit:git-gui[1] for more details.

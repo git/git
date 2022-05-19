@@ -83,11 +83,11 @@ users will fare this time.
    The only thing 1.7.0 release will do is to change the default when
    you haven't configured that variable.
 
- * "git status" will not be "git commit --dry-run".  This change does not
+ * "git status" will not be "git cummit --dry-run".  This change does not
    affect you if you run the command without pathspec.
 
    Nobody sane found the current behaviour of "git status Makefile" useful
-   nor meaningful, and it confused users.  "git commit --dry-run" has been
+   nor meaningful, and it confused users.  "git cummit --dry-run" has been
    provided as a way to get the current behaviour of this command since
    1.6.5.
 
@@ -120,7 +120,7 @@ Updates since v1.6.5
  * various git-svn updates.
 
  * "git fetch" over http learned a new mode that is different from the
-   traditional "dumb commit walker".
+   traditional "dumb cummit walker".
 
 (portability)
 
@@ -140,20 +140,20 @@ Updates since v1.6.5
 
  * "git subcmd -h" now shows short usage help for many more subcommands.
 
- * "git bisect reset" can reset to an arbitrary commit.
+ * "git bisect reset" can reset to an arbitrary cummit.
 
  * "git checkout frotz" when there is no local branch "frotz" but there
    is only one remote tracking branch "frotz" is taken as a request to
    start the named branch at the corresponding remote tracking branch.
 
- * "git commit -c/-C/--amend" can be told with a new "--reset-author" option
-   to ignore authorship information in the commit it is taking the message
+ * "git cummit -c/-C/--amend" can be told with a new "--reset-author" option
+   to ignore authorship information in the cummit it is taking the message
    from.
 
  * "git describe" can be told to add "-dirty" suffix with "--dirty" option.
 
  * "git diff" learned --submodule option to show a list of one-line logs
-   instead of differences between the commit object names.
+   instead of differences between the cummit object names.
 
  * "git diff" learned to honor diff.color.func configuration to paint
    function name hint printed on the hunk header "@@ -j,k +l,m @@" line
@@ -185,7 +185,7 @@ Updates since v1.6.5
    . to wrap text with the "%w()" specifier.
    . to show reflog information with "%g[sdD]" specifier.
 
- * "git notes" command to annotate existing commits.
+ * "git notes" command to annotate existing cummits.
 
  * "git merge" (and "git pull") learned --ff-only option to make it fail
    if the merge does not result in a fast-forward.
@@ -214,7 +214,7 @@ Updates since v1.6.5
  * "gitweb" can optionally render its "blame" output incrementally (this
    requires JavaScript on the client side).
 
- * Author names shown in gitweb output are links to search commits by the
+ * Author names shown in gitweb output are links to search cummits by the
    author.
 
 Fixes since v1.6.5

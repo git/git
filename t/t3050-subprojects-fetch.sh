@@ -11,12 +11,12 @@ test_expect_success setup '
 		git init &&
 		>subfile &&
 		git add subfile &&
-		git commit -m "subproject commit #1"
+		git cummit -m "subproject cummit #1"
 	) &&
 	>mainfile &&
 	git add sub mainfile &&
 	test_tick &&
-	git commit -m "superproject commit #1"
+	git cummit -m "superproject cummit #1"
 '
 
 test_expect_success clone '
@@ -36,7 +36,7 @@ test_expect_success advance '
 	git add sub/subfile mainfile &&
 	mv sub/.git-disabled sub/.git &&
 	test_tick &&
-	git commit -m "superproject commit #2"
+	git cummit -m "superproject cummit #2"
 '
 
 test_expect_success fetch '

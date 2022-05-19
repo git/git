@@ -1,13 +1,13 @@
 #include "cache.h"
 #include "config.h"
-#include "commit.h"
+#include "cummit.h"
 #include "refs.h"
 #include "notes-utils.h"
 #include "repository.h"
 
-void create_notes_commit(struct repository *r,
+void create_notes_cummit(struct repository *r,
 			 struct notes_tree *t,
-			 struct commit_list *parents,
+			 struct cummit_list *parents,
 			 const char *msg, size_t msg_len,
 			 struct object_id *result_oid)
 {
@@ -19,41 +19,41 @@ void create_notes_commit(struct repository *r,
 		die("Failed to write notes tree to database");
 
 	if (!parents) {
-		/* Deduce parent commit from t->ref */
+		/* Deduce parent cummit from t->ref */
 		struct object_id parent_oid;
 		if (!read_ref(t->ref, &parent_oid)) {
-			struct commit *parent = lookup_commit(r, &parent_oid);
-			if (parse_commit(parent))
-				die("Failed to find/parse commit %s", t->ref);
-			commit_list_insert(parent, &parents);
+			struct cummit *parent = lookup_cummit(r, &parent_oid);
+			if (parse_cummit(parent))
+				die("Failed to find/parse cummit %s", t->ref);
+			cummit_list_insert(parent, &parents);
 		}
-		/* else: t->ref points to nothing, assume root/orphan commit */
+		/* else: t->ref points to nothing, assume root/orphan cummit */
 	}
 
-	if (commit_tree(msg, msg_len, &tree_oid, parents, result_oid, NULL,
+	if (cummit_tree(msg, msg_len, &tree_oid, parents, result_oid, NULL,
 			NULL))
-		die("Failed to commit notes tree to database");
+		die("Failed to cummit notes tree to database");
 }
 
-void commit_notes(struct repository *r, struct notes_tree *t, const char *msg)
+void cummit_notes(struct repository *r, struct notes_tree *t, const char *msg)
 {
 	struct strbuf buf = STRBUF_INIT;
-	struct object_id commit_oid;
+	struct object_id cummit_oid;
 
 	if (!t)
 		t = &default_notes_tree;
 	if (!t->initialized || !t->update_ref || !*t->update_ref)
-		die(_("Cannot commit uninitialized/unreferenced notes tree"));
+		die(_("Cannot cummit uninitialized/unreferenced notes tree"));
 	if (!t->dirty)
-		return; /* don't have to commit an unchanged tree */
+		return; /* don't have to cummit an unchanged tree */
 
-	/* Prepare commit message and reflog message */
+	/* Prepare cummit message and reflog message */
 	strbuf_addstr(&buf, msg);
 	strbuf_complete_line(&buf);
 
-	create_notes_commit(r, t, NULL, buf.buf, buf.len, &commit_oid);
+	create_notes_cummit(r, t, NULL, buf.buf, buf.len, &cummit_oid);
 	strbuf_insertstr(&buf, 0, "notes: ");
-	update_ref(buf.buf, t->update_ref, &commit_oid, NULL, 0,
+	update_ref(buf.buf, t->update_ref, &cummit_oid, NULL, 0,
 		   UPDATE_REFS_DIE_ON_ERR);
 
 	strbuf_release(&buf);
@@ -178,7 +178,7 @@ void finish_copy_notes_for_rewrite(struct repository *r,
 {
 	int i;
 	for (i = 0; c->trees[i]; i++) {
-		commit_notes(r, c->trees[i], msg);
+		cummit_notes(r, c->trees[i], msg);
 		free_notes(c->trees[i]);
 	}
 	free(c->trees);

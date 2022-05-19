@@ -15,7 +15,7 @@ SYNOPSIS
 'git notes' edit [--allow-empty] [<object>]
 'git notes' show [<object>]
 'git notes' merge [-v | -q] [-s <strategy> ] <notes-ref>
-'git notes' merge --commit [-v | -q]
+'git notes' merge --cummit [-v | -q]
 'git notes' merge --abort [-v | -q]
 'git notes' remove [--ignore-missing] [--stdin] [<object>...]
 'git notes' prune [-n] [-v]
@@ -27,17 +27,17 @@ DESCRIPTION
 Adds, removes, or reads notes attached to objects, without touching
 the objects themselves.
 
-By default, notes are saved to and read from `refs/notes/commits`, but
+By default, notes are saved to and read from `refs/notes/cummits`, but
 this default can be overridden.  See the OPTIONS, CONFIGURATION, and
 ENVIRONMENT sections below.  If this ref does not exist, it will be
 quietly created when it is first needed to store a note.
 
-A typical use of notes is to supplement a commit message without
-changing the commit itself. Notes can be shown by 'git log' along with
-the original commit message. To distinguish these notes from the
-message stored in the commit object, the notes are indented like the
+A typical use of notes is to supplement a cummit message without
+changing the cummit itself. Notes can be shown by 'git log' along with
+the original cummit message. To distinguish these notes from the
+message stored in the cummit object, the notes are indented like the
 message, after an unindented line saying "Notes (<refname>):" (or
-"Notes:" for `refs/notes/commits`).
+"Notes:" for `refs/notes/cummits`).
 
 Notes can also be added to patches prepared with `git format-patch` by
 using the `--notes` option. Such notes are added as a patch commentary
@@ -47,7 +47,7 @@ To change which notes are shown by 'git log', see the
 "notes.displayRef" configuration in linkgit:git-log[1].
 
 See the "notes.rewrite.<command>" configuration for a way to carry
-notes across commands that rewrite commits.
+notes across commands that rewrite cummits.
 
 
 SUBCOMMANDS
@@ -106,7 +106,7 @@ the "manual" resolver is used. This resolver checks out the
 conflicting notes in a special worktree (`.git/NOTES_MERGE_WORKTREE`),
 and instructs the user to manually resolve the conflicts there.
 When done, the user can either finalize the merge with
-'git notes merge --commit', or abort the merge with
+'git notes merge --cummit', or abort the merge with
 'git notes merge --abort'.
 
 remove::
@@ -189,14 +189,14 @@ OPTIONS
 	See the "NOTES MERGE STRATEGIES" section below for more
 	information on each notes merge strategy.
 
---commit::
+--cummit::
 	Finalize an in-progress 'git notes merge'. Use this option
 	when you have resolved the conflicts that 'git notes merge'
 	stored in .git/NOTES_MERGE_WORKTREE. This amends the partial
-	merge commit created by 'git notes merge' (stored in
+	merge cummit created by 'git notes merge' (stored in
 	.git/NOTES_MERGE_PARTIAL) by adding the notes in
 	.git/NOTES_MERGE_WORKTREE. The notes ref stored in the
-	.git/NOTES_MERGE_REF symref is updated to the resulting commit.
+	.git/NOTES_MERGE_REF symref is updated to the resulting cummit.
 
 --abort::
 	Abort/reset an in-progress 'git notes merge', i.e. a notes merge
@@ -217,8 +217,8 @@ OPTIONS
 DISCUSSION
 ----------
 
-Commit notes are blobs containing extra information about an object
-(usually information to supplement a commit's message).  These blobs
+cummit notes are blobs containing extra information about an object
+(usually information to supplement a cummit's message).  These blobs
 are taken from notes refs.  A notes ref is usually a branch which
 contains "files" whose paths are the object names for the objects
 they describe, with some directory separators included for performance
@@ -227,11 +227,11 @@ reasons footnote:[Permitted pathnames have the form
 names of two hexadecimal digits each followed by a filename with the
 rest of the object ID.].
 
-Every notes change creates a new commit at the specified notes ref.
+Every notes change creates a new cummit at the specified notes ref.
 You can therefore inspect the history of the notes by invoking, e.g.,
-`git log -p notes/commits`.  Currently the commit message only records
-which operation triggered the update, and the commit authorship is
-determined according to the usual rules (see linkgit:git-commit[1]).
+`git log -p notes/cummits`.  Currently the cummit message only records
+which operation triggered the update, and the cummit authorship is
+determined according to the usual rules (see linkgit:git-cummit[1]).
 These details may change in the future.
 
 It is also permitted for a notes ref to point directly to a tree
@@ -247,7 +247,7 @@ conflicting notes in a special work tree for resolving notes conflicts
 (`.git/NOTES_MERGE_WORKTREE`), and instructs the user to resolve the
 conflicts in that work tree.
 When done, the user can either finalize the merge with
-'git notes merge --commit', or abort the merge with
+'git notes merge --cummit', or abort the merge with
 'git notes merge --abort'.
 
 Users may select an automated merge strategy from among the following using
@@ -278,7 +278,7 @@ EXAMPLES
 --------
 
 You can use notes to add annotations with information that was not
-available at the time a commit was written.
+available at the time a cummit was written.
 
 ------------
 $ git notes add -m 'Tested-by: Johannes Sixt <j6t@kdbg.org>' 72a144e2
@@ -312,7 +312,7 @@ CONFIGURATION
 
 core.notesRef::
 	Notes ref to read and manipulate instead of
-	`refs/notes/commits`.  Must be an unabbreviated ref name.
+	`refs/notes/cummits`.  Must be an unabbreviated ref name.
 	This setting can be overridden through the environment and
 	command line.
 
@@ -333,16 +333,16 @@ notes.<name>.mergeStrategy::
 notes.displayRef::
 	Which ref (or refs, if a glob or specified more than once), in
 	addition to the default set by `core.notesRef` or
-	`GIT_NOTES_REF`, to read notes from when showing commit
+	`GIT_NOTES_REF`, to read notes from when showing cummit
 	messages with the 'git log' family of commands.
 	This setting can be overridden on the command line or by the
 	`GIT_NOTES_DISPLAY_REF` environment variable.
 	See linkgit:git-log[1].
 
 notes.rewrite.<command>::
-	When rewriting commits with <command> (currently `amend` or
+	When rewriting cummits with <command> (currently `amend` or
 	`rebase`), if this variable is `false`, git will not copy
-	notes from the original to the rewritten commit.  Defaults to
+	notes from the original to the rewritten cummit.  Defaults to
 	`true`.  See also "`notes.rewriteRef`" below.
 +
 This setting can be overridden by the `GIT_NOTES_REWRITE_REF`
@@ -350,7 +350,7 @@ environment variable.
 
 notes.rewriteMode::
 	When copying notes during a rewrite, what to do if the target
-	commit already has a note.  Must be one of `overwrite`,
+	cummit already has a note.  Must be one of `overwrite`,
 	`concatenate`, `cat_sort_uniq`, or `ignore`.  Defaults to
 	`concatenate`.
 +
@@ -373,13 +373,13 @@ ENVIRONMENT
 -----------
 
 `GIT_NOTES_REF`::
-	Which ref to manipulate notes from, instead of `refs/notes/commits`.
+	Which ref to manipulate notes from, instead of `refs/notes/cummits`.
 	This overrides the `core.notesRef` setting.
 
 `GIT_NOTES_DISPLAY_REF`::
 	Colon-delimited list of refs or globs indicating which refs,
 	in addition to the default from `core.notesRef` or
-	`GIT_NOTES_REF`, to read notes from when showing commit
+	`GIT_NOTES_REF`, to read notes from when showing cummit
 	messages.
 	This overrides the `notes.displayRef` setting.
 +
@@ -388,13 +388,13 @@ does not match any refs is silently ignored.
 
 `GIT_NOTES_REWRITE_MODE`::
 	When copying notes during a rewrite, what to do if the target
-	commit already has a note.
+	cummit already has a note.
 	Must be one of `overwrite`, `concatenate`, `cat_sort_uniq`, or `ignore`.
 	This overrides the `core.rewriteMode` setting.
 
 `GIT_NOTES_REWRITE_REF`::
-	When rewriting commits, which notes to copy from the original
-	to the rewritten commit.  Must be a colon-delimited list of
+	When rewriting cummits, which notes to copy from the original
+	to the rewritten cummit.  Must be a colon-delimited list of
 	refs or globs.
 +
 If not set in the environment, the list of notes to copy depends

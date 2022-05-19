@@ -75,13 +75,13 @@ test_expect_success 'setup: messages' '
 	cat >msg-without-scissors-line <<-\EOF &&
 	Test that git-am --scissors cuts at the scissors line
 
-	This line should be included in the commit message.
+	This line should be included in the cummit message.
 	EOF
 
 	printf "Subject: " >subject-prefix &&
 
 	cat - subject-prefix msg-without-scissors-line >msg-with-scissors-line <<-\EOF
-	This line should not be included in the commit message with --scissors enabled.
+	This line should not be included in the cummit message with --scissors enabled.
 
 	 - - >8 - - remove everything above this line - - >8 - -
 
@@ -92,13 +92,13 @@ test_expect_success setup '
 	echo hello >file &&
 	git add file &&
 	test_tick &&
-	git commit -m first &&
+	git cummit -m first &&
 	git tag first &&
 
 	echo world >>file &&
 	git add file &&
 	test_tick &&
-	git commit -F msg &&
+	git cummit -F msg &&
 	git tag second &&
 
 	git format-patch --stdout first >patch1 &&
@@ -130,12 +130,12 @@ test_expect_success setup '
 		echo &&
 		sed -e "1,2d" msg &&
 		echo "---" &&
-		git diff-tree --no-commit-id --stat -p second
+		git diff-tree --no-cummit-id --stat -p second
 	} >patch1-stgit.eml &&
 	mkdir stgit-series &&
 	cp patch1-stgit.eml stgit-series/patch &&
 	{
-		echo "# This series applies on GIT commit $(git rev-parse first)" &&
+		echo "# This series applies on GIT cummit $(git rev-parse first)" &&
 		echo "patch"
 	} >stgit-series/series &&
 	{
@@ -147,19 +147,19 @@ test_expect_success setup '
 		echo "# Parent  $ZERO_OID" &&
 		cat msg &&
 		echo &&
-		git diff-tree --no-commit-id -p second
+		git diff-tree --no-cummit-id -p second
 	} >patch1-hg.eml &&
 
 
 	echo file >file &&
 	git add file &&
-	git commit -F msg-without-scissors-line &&
+	git cummit -F msg-without-scissors-line &&
 	git tag expected-for-scissors &&
 	git reset --hard HEAD^ &&
 
 	echo file >file &&
 	git add file &&
-	git commit -F msg-with-scissors-line &&
+	git cummit -F msg-with-scissors-line &&
 	git tag expected-for-no-scissors &&
 	git format-patch --stdout expected-for-no-scissors^ >patch-with-scissors-line.eml &&
 	git reset --hard HEAD^ &&
@@ -167,7 +167,7 @@ test_expect_success setup '
 	sed -n -e "3,\$p" msg >file &&
 	git add file &&
 	test_tick &&
-	git commit -m third &&
+	git cummit -m third &&
 
 	git format-patch --stdout first >patch2 &&
 
@@ -175,32 +175,32 @@ test_expect_success setup '
 	sed -n -e "11,\$p" msg >file &&
 	head -n 9 msg >>file &&
 	test_tick &&
-	git commit -a -m "moved stuff" &&
+	git cummit -a -m "moved stuff" &&
 
 	echo goodbye >another &&
 	git add another &&
 	test_tick &&
-	git commit -m "added another file" &&
+	git cummit -m "added another file" &&
 
 	git format-patch --stdout main >lorem-move.patch &&
 	git format-patch --no-prefix --stdout main >lorem-zero.patch &&
 
 	git checkout -b rename &&
 	git mv file renamed &&
-	git commit -m "renamed a file" &&
+	git cummit -m "renamed a file" &&
 
 	git format-patch -M --stdout lorem >rename.patch &&
 
 	git reset --soft lorem^ &&
-	git commit -m "renamed a file and added another" &&
+	git cummit -m "renamed a file and added another" &&
 
 	git format-patch -M --stdout lorem^ >rename-add.patch &&
 
-	git checkout -b empty-commit &&
-	git commit -m "empty commit" --allow-empty &&
+	git checkout -b empty-cummit &&
+	git cummit -m "empty cummit" --allow-empty &&
 
 	: >empty.patch &&
-	git format-patch --always --stdout empty-commit^ >empty-commit.patch &&
+	git format-patch --always --stdout empty-cummit^ >empty-cummit.patch &&
 
 	# reset time
 	sane_unset test_tick &&
@@ -429,21 +429,21 @@ test_expect_success 'am --no-scissors overrides mailinfo.scissors' '
 	test_cmp_rev expected-for-no-scissors HEAD
 '
 
-test_expect_success 'setup: new author and committer' '
+test_expect_success 'setup: new author and cummitter' '
 	GIT_AUTHOR_NAME="Another Thor" &&
 	GIT_AUTHOR_EMAIL="a.thor@example.com" &&
-	GIT_COMMITTER_NAME="Co M Miter" &&
-	GIT_COMMITTER_EMAIL="c.miter@example.com" &&
-	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL
+	GIT_cummitTER_NAME="Co M Miter" &&
+	GIT_cummitTER_EMAIL="c.miter@example.com" &&
+	export GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_cummitTER_NAME GIT_cummitTER_EMAIL
 '
 
 compare () {
-	a=$(git cat-file commit "$2" | grep "^$1 ") &&
-	b=$(git cat-file commit "$3" | grep "^$1 ") &&
+	a=$(git cat-file cummit "$2" | grep "^$1 ") &&
+	b=$(git cat-file cummit "$3" | grep "^$1 ") &&
 	test "$a" = "$b"
 }
 
-test_expect_success 'am changes committer and keeps author' '
+test_expect_success 'am changes cummitter and keeps author' '
 	test_tick &&
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
@@ -455,7 +455,7 @@ test_expect_success 'am changes committer and keeps author' '
 	git diff --exit-code main^..HEAD^ &&
 	compare author main HEAD &&
 	compare author main^ HEAD^ &&
-	test "$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" = \
+	test "$GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>" = \
 	     "$(git log -1 --pretty=format:"%cn <%ce>" HEAD)"
 '
 
@@ -466,10 +466,10 @@ test_expect_success 'am --signoff adds Signed-off-by: line' '
 	git am --signoff <patch2 &&
 	{
 		printf "third\n\nSigned-off-by: %s <%s>\n\n" \
-			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL" &&
+			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL" &&
 		cat msg &&
 		printf "Signed-off-by: %s <%s>\n\n" \
-			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL"
+			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL"
 	} >expected-log &&
 	git log --pretty=%B -2 HEAD >actual &&
 	test_cmp expected-log actual
@@ -494,15 +494,15 @@ test_expect_success 'am --signoff adds Signed-off-by: if another author is prese
 	EMAIL="a.n.other@example.com" &&
 	{
 		printf "third\n\nSigned-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\n" \
-			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL" \
+			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL" \
 			"$NAME" "$EMAIL" &&
 		cat msg &&
 		printf "Signed-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\n" \
-			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL" \
+			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL" \
 			"$NAME" "$EMAIL"
 	} >expected-log &&
 	git reset --hard first &&
-	GIT_COMMITTER_NAME="$NAME" GIT_COMMITTER_EMAIL="$EMAIL" \
+	GIT_cummitTER_NAME="$NAME" GIT_cummitTER_EMAIL="$EMAIL" \
 		git am --signoff <patch3 &&
 	git log --pretty=%B -2 HEAD >actual &&
 	test_cmp expected-log actual
@@ -514,15 +514,15 @@ test_expect_success 'am --signoff duplicates Signed-off-by: if it is not the las
 	{
 		printf "third\n\nSigned-off-by: %s <%s>\n\
 Signed-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\n" \
-			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL" \
+			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL" \
 			"$NAME" "$EMAIL" \
-			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL" &&
+			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL" &&
 		cat msg &&
 		printf "Signed-off-by: %s <%s>\nSigned-off-by: %s <%s>\n\
 Signed-off-by: %s <%s>\n\n" \
-			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL" \
+			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL" \
 			"$NAME" "$EMAIL" \
-			"$GIT_COMMITTER_NAME" "$GIT_COMMITTER_EMAIL"
+			"$GIT_cummitTER_NAME" "$GIT_cummitTER_EMAIL"
 	} >expected-log &&
 	git format-patch --stdout first >patch3 &&
 	git reset --hard first &&
@@ -569,7 +569,7 @@ test_expect_success 'setup am -3' '
 	head -n 9 msg >>file &&
 	git add file &&
 	test_tick &&
-	git commit -m "copied stuff"
+	git cummit -m "copied stuff"
 '
 
 test_expect_success 'am -3 falls back to 3-way merge' '
@@ -816,19 +816,19 @@ test_expect_success 'am works from file (absolute path given) in subdirectory' '
 	git diff --exit-code second
 '
 
-test_expect_success 'am --committer-date-is-author-date' '
+test_expect_success 'am --cummitter-date-is-author-date' '
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout first &&
 	test_tick &&
-	git am --committer-date-is-author-date patch1 &&
+	git am --cummitter-date-is-author-date patch1 &&
 	git cat-file commit HEAD | sed -e "/^\$/q" >head1 &&
 	sed -ne "/^author /s/.*> //p" head1 >at &&
-	sed -ne "/^committer /s/.*> //p" head1 >ct &&
+	sed -ne "/^cummitter /s/.*> //p" head1 >ct &&
 	test_cmp at ct
 '
 
-test_expect_success 'am without --committer-date-is-author-date' '
+test_expect_success 'am without --cummitter-date-is-author-date' '
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout first &&
@@ -836,7 +836,7 @@ test_expect_success 'am without --committer-date-is-author-date' '
 	git am patch1 &&
 	git cat-file commit HEAD | sed -e "/^\$/q" >head1 &&
 	sed -ne "/^author /s/.*> //p" head1 >at &&
-	sed -ne "/^committer /s/.*> //p" head1 >ct &&
+	sed -ne "/^cummitter /s/.*> //p" head1 >ct &&
 	! test_cmp at ct
 '
 
@@ -942,14 +942,14 @@ test_expect_success 'am -3 works with rerere' '
 	git reset --hard &&
 
 	# make patches one->two and two->three...
-	test_commit one file &&
-	test_commit two file &&
-	test_commit three file &&
+	test_cummit one file &&
+	test_cummit two file &&
+	test_cummit three file &&
 	git format-patch -2 --stdout >seq.patch &&
 
 	# and create a situation that conflicts...
 	git reset --hard one &&
-	test_commit other file &&
+	test_cummit other file &&
 
 	# enable rerere...
 	test_config rerere.enabled true &&
@@ -964,7 +964,7 @@ test_expect_success 'am -3 works with rerere' '
 	git am --resolved &&
 
 	# now apply again, and confirm that rerere engaged (we still
-	# expect failure from am because rerere does not auto-commit
+	# expect failure from am because rerere does not auto-cummit
 	# for us).
 	git reset --hard other &&
 	test_must_fail git am -3 seq.patch &&
@@ -981,11 +981,11 @@ test_expect_success 'am -s unexpected trailer block' '
 	cat >msg <<-EOF &&
 	subject here
 
-	Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
+	Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>
 	[jc: tweaked log message]
 	Signed-off-by: J C H <j@c.h>
 	EOF
-	git commit -F msg &&
+	git cummit -F msg &&
 	git cat-file commit HEAD | sed -e "1,/^$/d" >original &&
 	git format-patch --stdout -1 >patch &&
 
@@ -993,7 +993,7 @@ test_expect_success 'am -s unexpected trailer block' '
 	git am -s patch &&
 	(
 		cat original &&
-		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+		echo "Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>"
 	) >expect &&
 	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
 	test_cmp expect actual &&
@@ -1005,7 +1005,7 @@ test_expect_success 'am -s unexpected trailer block' '
 	message proper and Signed-off-by: line added.
 	EOF
 	git reset HEAD^ &&
-	git commit -F msg file &&
+	git cummit -F msg file &&
 	git cat-file commit HEAD | sed -e "1,/^$/d" >original &&
 	git format-patch --stdout -1 >patch &&
 
@@ -1015,7 +1015,7 @@ test_expect_success 'am -s unexpected trailer block' '
 	(
 		cat original &&
 		echo &&
-		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+		echo "Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>"
 	) >expect &&
 	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
 	test_cmp expect actual
@@ -1032,7 +1032,7 @@ test_expect_success 'am --patch-format=mboxrd handles mboxrd' '
 	From could trip up a loose mbox parser
 	>From extra escape for reversibility
 	INPUT_END
-	git commit -F msg &&
+	git cummit -F msg &&
 	git format-patch --pretty=mboxrd --stdout -1 >mboxrd1 &&
 	grep "^>From could trip up a loose mbox parser" mboxrd1 &&
 	git checkout -f first &&
@@ -1047,7 +1047,7 @@ test_expect_success 'am works with multi-line in-body headers' '
 	rm -fr .git/rebase-apply &&
 	git checkout -f first &&
 	echo one >> file &&
-	git commit -am "$LONG
+	git cummit -am "$LONG
 
     Body test" --author="$LONG <long@example.com>" &&
 	git format-patch --stdout -1 >patch &&
@@ -1082,31 +1082,31 @@ test_expect_success 'am and .gitattibutes' '
 	test_create_repo attributes &&
 	(
 		cd attributes &&
-		test_commit init &&
+		test_cummit init &&
 		git config filter.test.clean "sed -e '\''s/smudged/clean/g'\''" &&
 		git config filter.test.smudge "sed -e '\''s/clean/smudged/g'\''" &&
 
-		test_commit second &&
+		test_cummit second &&
 		git checkout -b test HEAD^ &&
 
 		echo "*.txt filter=test conflict-marker-size=10" >.gitattributes &&
 		git add .gitattributes &&
-		test_commit third &&
+		test_cummit third &&
 
 		echo "This text is smudged." >a.txt &&
 		git add a.txt &&
-		test_commit fourth &&
+		test_cummit fourth &&
 
 		git checkout -b removal HEAD^ &&
 		git rm .gitattributes &&
 		git add -u &&
-		test_commit fifth &&
+		test_cummit fifth &&
 		git cherry-pick test &&
 
 		git checkout -b conflict third &&
 		echo "This text is different." >a.txt &&
 		git add a.txt &&
-		test_commit sixth &&
+		test_cummit sixth &&
 
 		git checkout test &&
 		git format-patch --stdout main..HEAD >patches &&
@@ -1133,7 +1133,7 @@ test_expect_success 'am and .gitattibutes' '
 test_expect_success 'apply binary blob in partial clone' '
 	printf "\\000" >binary &&
 	git add binary &&
-	git commit -m "binary blob" &&
+	git cummit -m "binary blob" &&
 	git format-patch --stdout -m HEAD^ >patch &&
 
 	test_create_repo server &&
@@ -1155,94 +1155,94 @@ test_expect_success 'an empty input file is error regardless of --empty option' 
 
 test_expect_success 'invalid when passing the --empty option alone' '
 	test_when_finished "git am --abort || :" &&
-	git checkout empty-commit^ &&
-	test_must_fail git am --empty empty-commit.patch 2>err &&
-	echo "error: invalid value for '\''--empty'\'': '\''empty-commit.patch'\''" >expected &&
+	git checkout empty-cummit^ &&
+	test_must_fail git am --empty empty-cummit.patch 2>err &&
+	echo "error: invalid value for '\''--empty'\'': '\''empty-cummit.patch'\''" >expected &&
 	test_cmp expected err
 '
 
 test_expect_success 'a message without a patch is an error (default)' '
 	test_when_finished "git am --abort || :" &&
-	test_must_fail git am empty-commit.patch >err &&
+	test_must_fail git am empty-cummit.patch >err &&
 	grep "Patch is empty" err
 '
 
 test_expect_success 'a message without a patch is an error where an explicit "--empty=stop" is given' '
 	test_when_finished "git am --abort || :" &&
-	test_must_fail git am --empty=stop empty-commit.patch >err &&
+	test_must_fail git am --empty=stop empty-cummit.patch >err &&
 	grep "Patch is empty." err
 '
 
 test_expect_success 'a message without a patch will be skipped when "--empty=drop" is given' '
-	git am --empty=drop empty-commit.patch >output &&
-	git rev-parse empty-commit^ >expected &&
+	git am --empty=drop empty-cummit.patch >output &&
+	git rev-parse empty-cummit^ >expected &&
 	git rev-parse HEAD >actual &&
 	test_cmp expected actual &&
-	grep "Skipping: empty commit" output
+	grep "Skipping: empty cummit" output
 '
 
-test_expect_success 'record as an empty commit when meeting e-mail message that lacks a patch' '
-	git am --empty=keep empty-commit.patch >output &&
+test_expect_success 'record as an empty cummit when meeting e-mail message that lacks a patch' '
+	git am --empty=keep empty-cummit.patch >output &&
 	test_path_is_missing .git/rebase-apply &&
-	git show empty-commit --format="%B" >expected &&
+	git show empty-cummit --format="%B" >expected &&
 	git show HEAD --format="%B" >actual &&
 	grep -f actual expected &&
-	grep "Creating an empty commit: empty commit" output
+	grep "Creating an empty cummit: empty cummit" output
 '
 
 test_expect_success 'skip an empty patch in the middle of an am session' '
-	git checkout empty-commit^ &&
-	test_must_fail git am empty-commit.patch >err &&
+	git checkout empty-cummit^ &&
+	test_must_fail git am empty-cummit.patch >err &&
 	grep "Patch is empty." err &&
-	grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
+	grep "To record the empty patch as an empty cummit, run \"git am --allow-empty\"." err &&
 	git am --skip &&
 	test_path_is_missing .git/rebase-apply &&
-	git rev-parse empty-commit^ >expected &&
+	git rev-parse empty-cummit^ >expected &&
 	git rev-parse HEAD >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'record an empty patch as an empty commit in the middle of an am session' '
-	git checkout empty-commit^ &&
-	test_must_fail git am empty-commit.patch >err &&
+test_expect_success 'record an empty patch as an empty cummit in the middle of an am session' '
+	git checkout empty-cummit^ &&
+	test_must_fail git am empty-cummit.patch >err &&
 	grep "Patch is empty." err &&
-	grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
+	grep "To record the empty patch as an empty cummit, run \"git am --allow-empty\"." err &&
 	git am --allow-empty >output &&
-	grep "No changes - recorded it as an empty commit." output &&
+	grep "No changes - recorded it as an empty cummit." output &&
 	test_path_is_missing .git/rebase-apply &&
-	git show empty-commit --format="%B" >expected &&
+	git show empty-cummit --format="%B" >expected &&
 	git show HEAD --format="%B" >actual &&
 	grep -f actual expected
 '
 
-test_expect_success 'create an non-empty commit when the index IS changed though "--allow-empty" is given' '
-	git checkout empty-commit^ &&
-	test_must_fail git am empty-commit.patch >err &&
+test_expect_success 'create an non-empty cummit when the index IS changed though "--allow-empty" is given' '
+	git checkout empty-cummit^ &&
+	test_must_fail git am empty-cummit.patch >err &&
 	: >empty-file &&
 	git add empty-file &&
 	git am --allow-empty &&
-	git show empty-commit --format="%B" >expected &&
+	git show empty-cummit --format="%B" >expected &&
 	git show HEAD --format="%B" >actual &&
 	grep -f actual expected &&
 	git diff HEAD^..HEAD --name-only
 '
 
-test_expect_success 'cannot create empty commits when there is a clean index due to merge conflicts' '
+test_expect_success 'cannot create empty cummits when there is a clean index due to merge conflicts' '
 	test_when_finished "git am --abort || :" &&
 	git rev-parse HEAD >expected &&
 	test_must_fail git am seq.patch &&
 	test_must_fail git am --allow-empty >err &&
-	! grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
+	! grep "To record the empty patch as an empty cummit, run \"git am --allow-empty\"." err &&
 	git rev-parse HEAD >actual &&
 	test_cmp actual expected
 '
 
-test_expect_success 'cannot create empty commits when there is unmerged index due to merge conflicts' '
+test_expect_success 'cannot create empty cummits when there is unmerged index due to merge conflicts' '
 	test_when_finished "git am --abort || :" &&
 	git rev-parse HEAD >expected &&
 	test_must_fail git am -3 seq.patch &&
 	test_must_fail git am --allow-empty >err &&
-	! grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
+	! grep "To record the empty patch as an empty cummit, run \"git am --allow-empty\"." err &&
 	git rev-parse HEAD >actual &&
 	test_cmp actual expected
 '

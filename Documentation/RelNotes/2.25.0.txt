@@ -29,7 +29,7 @@ UI, Workflows & Features
    placeholder that is similar to e/E that fills in the e-mail
    address, but only the local part on the left side of '@'.
 
- * Documentation pages for "git shortlog" now list commit limiting
+ * Documentation pages for "git shortlog" now list cummit limiting
    options explicitly.
 
  * The patterns to detect function boundary for Elixir language has
@@ -43,7 +43,7 @@ UI, Workflows & Features
    way to begin a "function" in Python.
 
  * "git range-diff" learned to take the "--notes=<ref>" and the
-   "--no-notes" options to control the commit notes included in the
+   "--no-notes" options to control the cummit notes included in the
    log message that gets compared.
 
  * "git rev-parse --show-toplevel" run outside of any working tree did
@@ -56,7 +56,7 @@ UI, Workflows & Features
  * "git submodule" learned a subcommand "set-url".
 
  * "git log" family learned "--pretty=reference" that gives the name
-   of a commit in the format that is often used to refer to it in log
+   of a cummit in the format that is often used to refer to it in log
    messages.
 
  * The interaction between "git clone --recurse-submodules" and
@@ -96,7 +96,7 @@ Performance, Internal Implementation, Development Support etc.
    bundle verify" learned "--quiet" and "git bundle create" learned
    options to control the progress output.
 
- * Handling of commit objects that use non UTF-8 encoding during
+ * Handling of cummit objects that use non UTF-8 encoding during
    "rebase -i" has been improved.
 
  * The beginning of rewriting "git add -i" in C.
@@ -179,7 +179,7 @@ Fixes since v2.24
    when run in a secondary worktree.
    (merge 76a53d640f js/git-path-head-dot-lock-fix later to maint).
 
- * "git merge --no-commit" needs "--no-ff" if you do not want to move
+ * "git merge --no-cummit" needs "--no-ff" if you do not want to move
    HEAD, which has been corrected in the manual page for "git bisect".
    (merge 8dd327b246 ma/bisect-doc-sample-update later to maint).
 
@@ -202,7 +202,7 @@ Fixes since v2.24
 
  * Fetching from multiple remotes into the same repository in parallel
    had a bad interaction with the recent change to (optionally) update
-   the commit-graph after a fetch job finishes, as these parallel
+   the cummit-graph after a fetch job finishes, as these parallel
    fetches compete with each other.  Which has been corrected.
 
  * Recent update to "git stash pop" made the command empty the index
@@ -235,8 +235,8 @@ Fixes since v2.24
    (merge bae60ba7e9 sg/unpack-progress-throughput later to maint).
 
  * The sequencer machinery compared the HEAD and the state it is
-   attempting to commit to decide if the result would be a no-op
-   commit, even when amending a commit, which was incorrect, and
+   attempting to cummit to decide if the result would be a no-op
+   cummit, even when amending a cummit, which was incorrect, and
    has been corrected.
 
  * The code to parse GPG output used to assume incorrectly that the
@@ -250,7 +250,7 @@ Fixes since v2.24
    (merge 8d483c8408 mg/doc-submodule-status-cached later to maint).
 
  * "git reset --patch $object" without any pathspec should allow a
-   tree object to be given, but incorrectly required a committish,
+   tree object to be given, but incorrectly required a cummittish,
    which has been corrected.
 
  * "git submodule status" that is run from a subdirectory of the
@@ -267,8 +267,8 @@ Fixes since v2.24
    (merge 176441bfb5 sg/osx-force-gcc-9 later to maint).
 
  * While running "revert" or "cherry-pick --edit" for multiple
-   commits, a recent regression incorrectly detected "nothing to
-   commit, working tree clean", instead of replaying the commits,
+   cummits, a recent regression incorrectly detected "nothing to
+   cummit, working tree clean", instead of replaying the cummits,
    which has been corrected.
    (merge befd4f6a81 sg/assume-no-todo-update-in-cherry-pick later to maint).
 
@@ -276,7 +276,7 @@ Fixes since v2.24
    child process and is kept open in the child can interfere with the
    operation in the parent process on Windows.
 
- * One kind of progress messages were always given during commit-graph
+ * One kind of progress messages were always given during cummit-graph
    generation, instead of following the "if it takes more than two
    seconds, show progress" pattern, which has been corrected.
 
@@ -320,14 +320,14 @@ Fixes since v2.24
    filesystem cannot check out) from entering the index.
    (merge 224c7d70fa js/mingw-loosen-overstrict-tree-entry-checks later to maint).
 
- * The code to write split commit-graph file(s) upon fetching computed
+ * The code to write split cummit-graph file(s) upon fetching computed
    bogus value for the parameter used in splitting the resulting
    files, which has been corrected.
-   (merge 63020f175f ds/commit-graph-set-size-mult later to maint).
+   (merge 63020f175f ds/cummit-graph-set-size-mult later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 80736d7c5e jc/am-show-current-patch-docfix later to maint).
-   (merge 8b656572ca sg/commit-graph-usage-fix later to maint).
+   (merge 8b656572ca sg/cummit-graph-usage-fix later to maint).
    (merge 6c02042139 mr/clone-dir-exists-to-path-exists later to maint).
    (merge 44ae131e38 sg/blame-indent-heuristics-is-now-the-default later to maint).
    (merge 0115e5d929 dl/doc-diff-no-index-implies-exit-code later to maint).
@@ -350,11 +350,11 @@ Fixes since v2.24
    (merge 0e40a73a4c po/bundle-doc-clonable later to maint).
    (merge e714b898c6 as/t7812-missing-redirects-fix later to maint).
    (merge 528d9e6d01 jk/perf-wo-git-dot-pm later to maint).
-   (merge fc42f20e24 sg/test-squelch-noise-in-commit-bulk later to maint).
+   (merge fc42f20e24 sg/test-squelch-noise-in-cummit-bulk later to maint).
    (merge c64368e3a2 bc/t9001-zsh-in-posix-emulation-mode later to maint).
    (merge 11de8dd7ef dr/branch-usage-casefix later to maint).
    (merge e05e8cf074 rs/archive-zip-code-cleanup later to maint).
-   (merge 147ee35558 rs/commit-export-env-simplify later to maint).
+   (merge 147ee35558 rs/cummit-export-env-simplify later to maint).
    (merge 4507ecc771 rs/patch-id-use-oid-to-hex later to maint).
    (merge 51a0a4ed95 mr/bisect-use-after-free later to maint).
    (merge cc2bd5c45d pb/submodule-doc-xref later to maint).

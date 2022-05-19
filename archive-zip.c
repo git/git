@@ -630,7 +630,7 @@ static int write_zip_archive(const struct archiver *ar,
 
 	err = write_archive_entries(args, write_zip_entry);
 	if (!err)
-		write_zip_trailer(args->commit_oid);
+		write_zip_trailer(args->cummit_oid);
 
 	strbuf_release(&zip_dir);
 

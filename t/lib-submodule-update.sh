@@ -5,8 +5,8 @@
 # - Removed submodule (add_sub1 => remove_sub1)
 # - Updated submodule (add_sub1 => modify_sub1)
 # - Updated submodule recursively (add_nested_sub => modify_sub1_recursively)
-# - Submodule updated to invalid commit (add_sub1 => invalid_sub1)
-# - Submodule updated from invalid commit (invalid_sub1 => valid_sub1)
+# - Submodule updated to invalid cummit (add_sub1 => invalid_sub1)
+# - Submodule updated from invalid cummit (invalid_sub1 => valid_sub1)
 # - Submodule replaced by tracked files in directory (add_sub1 =>
 #   replace_sub1_with_directory)
 # - Directory containing tracked files replaced by submodule
@@ -46,7 +46,7 @@ create_lib_submodule_repo () {
 		echo "x" >file1 &&
 		echo "y" >file2 &&
 		git add .gitignore file1 file2 &&
-		git commit -m "Base inside first submodule" &&
+		git cummit -m "Base inside first submodule" &&
 		git branch "no_submodule"
 	) &&
 	git init submodule_update_sub2 &&
@@ -57,7 +57,7 @@ create_lib_submodule_repo () {
 		echo "x" >file1 &&
 		echo "y" >file2 &&
 		git add .gitignore file1 file2 &&
-		git commit -m "nested submodule base" &&
+		git cummit -m "nested submodule base" &&
 		git branch "no_submodule"
 	) &&
 	git init submodule_update_repo &&
@@ -69,7 +69,7 @@ create_lib_submodule_repo () {
 		echo "x" >file1 &&
 		echo "y" >file2 &&
 		git add .gitignore file1 file2 &&
-		git commit -m "Base" &&
+		git cummit -m "Base" &&
 		git branch "no_submodule" &&
 
 		git checkout -b "add_sub1" &&
@@ -78,7 +78,7 @@ create_lib_submodule_repo () {
 		git config -f .gitmodules submodule.sub1.ignore all &&
 		git config submodule.sub1.ignore all &&
 		git add .gitmodules &&
-		git commit -m "Add sub1" &&
+		git cummit -m "Add sub1" &&
 
 		git checkout -b remove_sub1 add_sub1 &&
 		git revert HEAD &&
@@ -92,28 +92,28 @@ create_lib_submodule_repo () {
 			echo "z" >file2 &&
 			echo "x" >file3 &&
 			git add file2 file3 &&
-			git commit -m "modified file2 and added file3" &&
+			git cummit -m "modified file2 and added file3" &&
 			git push origin modifications
 		) &&
 		git add sub1 &&
-		git commit -m "Modify sub1" &&
+		git cummit -m "Modify sub1" &&
 
 		git checkout -b add_nested_sub modify_sub1 &&
 		git -C sub1 checkout -b "add_nested_sub" &&
 		git -C sub1 submodule add --branch no_submodule ../submodule_update_sub2 sub2 &&
-		git -C sub1 commit -a -m "add a nested submodule" &&
+		git -C sub1 cummit -a -m "add a nested submodule" &&
 		git add sub1 &&
-		git commit -a -m "update submodule, that updates a nested submodule" &&
+		git cummit -a -m "update submodule, that updates a nested submodule" &&
 		git checkout -b modify_sub1_recursively &&
 		git -C sub1 checkout -b modify_sub1_recursively &&
 		git -C sub1/sub2 checkout -b modify_sub1_recursively &&
 		echo change >sub1/sub2/file3 &&
 		git -C sub1/sub2 add file3 &&
-		git -C sub1/sub2 commit -m "make a change in nested sub" &&
+		git -C sub1/sub2 cummit -m "make a change in nested sub" &&
 		git -C sub1 add sub2 &&
-		git -C sub1 commit -m "update nested sub" &&
+		git -C sub1 cummit -m "update nested sub" &&
 		git add sub1 &&
-		git commit -m "update sub1, that updates nested sub" &&
+		git cummit -m "update sub1, that updates nested sub" &&
 		git -C sub1 push origin modify_sub1_recursively &&
 		git -C sub1/sub2 push origin modify_sub1_recursively &&
 		git -C sub1 submodule deinit -f --all &&
@@ -125,7 +125,7 @@ create_lib_submodule_repo () {
 		rm sub1/.git* &&
 		git config -f .gitmodules --remove-section "submodule.sub1" &&
 		git add .gitmodules sub1/* &&
-		git commit -m "Replace sub1 with directory" &&
+		git cummit -m "Replace sub1 with directory" &&
 
 		git checkout -b replace_directory_with_sub1 &&
 		git revert HEAD &&
@@ -134,14 +134,14 @@ create_lib_submodule_repo () {
 		git rm sub1 &&
 		echo "content" >sub1 &&
 		git add sub1 &&
-		git commit -m "Replace sub1 with file" &&
+		git cummit -m "Replace sub1 with file" &&
 
 		git checkout -b replace_file_with_sub1 &&
 		git revert HEAD &&
 
 		git checkout -b invalid_sub1 add_sub1 &&
 		git update-index --cacheinfo 160000 $(test_oid numeric) sub1 &&
-		git commit -m "Invalid sub1 commit" &&
+		git cummit -m "Invalid sub1 cummit" &&
 		git checkout -b valid_sub1 &&
 		git revert HEAD &&
 
@@ -203,8 +203,8 @@ prolog () {
 }
 
 # Helper function to bring work tree back into the state given by the
-# commit. This includes trying to populate sub1 accordingly if it exists and
-# should be updated to an existing commit.
+# cummit. This includes trying to populate sub1 accordingly if it exists and
+# should be updated to an existing cummit.
 reset_work_tree_to () {
 	rm -rf submodule_update &&
 	git clone submodule_update_repo submodule_update &&
@@ -216,7 +216,7 @@ reset_work_tree_to () {
 		test_must_be_empty actual &&
 		hash=$(git rev-parse --revs-only HEAD:sub1) &&
 		if test -n "$hash" &&
-		   test $(cd "../submodule_update_sub1" && git rev-parse --verify "$hash^{commit}")
+		   test $(cd "../submodule_update_sub1" && git rev-parse --verify "$hash^{cummit}")
 		then
 			git submodule update --init --recursive "sub1"
 		fi
@@ -244,9 +244,9 @@ reset_work_tree_to_interested () {
 	git -C submodule_update/.git/modules/sub1 config submodule.sub2.url "bogus"
 }
 
-# Test that the superproject contains the content according to commit "$1"
+# Test that the superproject contains the content according to cummit "$1"
 # (the work tree must match the index for everything but submodules but the
-# index must exactly match the given commit including any submodule SHA-1s).
+# index must exactly match the given cummit including any submodule SHA-1s).
 test_superproject_content () {
 	git diff-index --cached "$1" >actual &&
 	test_must_be_empty actual &&
@@ -255,7 +255,7 @@ test_superproject_content () {
 }
 
 # Test that the given submodule at path "$1" contains the content according
-# to the submodule commit recorded in the superproject's commit "$2"
+# to the submodule cummit recorded in the superproject's cummit "$2"
 test_submodule_content () {
 	if test x"$1" = "x-C"
 	then
@@ -268,17 +268,17 @@ test_submodule_content () {
 		return 1
 	fi &&
 	submodule="$1" &&
-	commit="$2" &&
+	cummit="$2" &&
 	test -d "$submodule"/ &&
 	if ! test -f "$submodule"/.git && ! test -d "$submodule"/.git
 	then
 		echo "Submodule $submodule is not populated"
 		return 1
 	fi &&
-	sha1=$(git rev-parse --verify "$commit:$submodule") &&
+	sha1=$(git rev-parse --verify "$cummit:$submodule") &&
 	if test -z "$sha1"
 	then
-		echo "Couldn't retrieve SHA-1 of $submodule for $commit"
+		echo "Couldn't retrieve SHA-1 of $submodule for $cummit"
 		return 1
 	fi &&
 	(
@@ -316,7 +316,7 @@ test_submodule_content () {
 test_submodule_switch_common () {
 	command="$1"
 	######################### Appearing submodule #########################
-	# Switching to a commit letting a submodule appear creates empty dir ...
+	# Switching to a cummit letting a submodule appear creates empty dir ...
 	test_expect_success "$command: added submodule creates empty directory" '
 		prolog &&
 		reset_work_tree_to no_submodule &&
@@ -497,10 +497,10 @@ test_submodule_switch_common () {
 
 	########################## Modified submodule #########################
 	# Updating a submodule sha1 doesn't update the submodule's work tree
-	if test "$KNOWN_FAILURE_CHERRY_PICK_SEES_EMPTY_COMMIT" = 1
+	if test "$KNOWN_FAILURE_CHERRY_PICK_SEES_EMPTY_cummit" = 1
 	then
 		# When cherry picking a SHA-1 update for an ignored submodule
-		# the commit incorrectly fails with "The previous cherry-pick
+		# the cummit incorrectly fails with "The previous cherry-pick
 		# is now empty, possibly due to conflict resolution."
 		RESULT="failure"
 	else
@@ -521,7 +521,7 @@ test_submodule_switch_common () {
 	'
 	# Updating a submodule to an invalid sha1 doesn't update the
 	# submodule's work tree, subsequent update will fail
-	test_expect_$RESULT "$command: modified submodule does not update submodule work tree to invalid commit" '
+	test_expect_$RESULT "$command: modified submodule does not update submodule work tree to invalid cummit" '
 		prolog &&
 		reset_work_tree_to add_sub1 &&
 		(
@@ -536,7 +536,7 @@ test_submodule_switch_common () {
 	'
 	# Updating a submodule from an invalid sha1 doesn't update the
 	# submodule's work tree, subsequent update will succeed
-	test_expect_$RESULT "$command: modified submodule does not update submodule work tree from invalid commit" '
+	test_expect_$RESULT "$command: modified submodule does not update submodule work tree from invalid cummit" '
 		prolog &&
 		reset_work_tree_to invalid_sub1 &&
 		(
@@ -554,7 +554,7 @@ test_submodule_switch_common () {
 # Declares and invokes several tests that, in various situations, checks that
 # the provided transition function:
 #  - succeeds in updating the worktree and index of a superproject to a target
-#    commit, or fails atomically (depending on the test situation)
+#    cummit, or fails atomically (depending on the test situation)
 #  - if succeeds, the contents of submodule directories are unchanged
 #  - if succeeds, once "git submodule update" is invoked, the contents of
 #    submodule directories are updated
@@ -644,7 +644,7 @@ test_submodule_forced_switch () {
 }
 
 # Test that submodule contents are correctly updated when switching
-# between commits that change a submodule.
+# between cummits that change a submodule.
 # Test that the following transitions are correctly handled:
 # (These tests are also above in the case where we expect no change
 #  in the submodule)
@@ -668,7 +668,7 @@ test_submodule_recursing_with_args_common () {
 	command="$1 --recurse-submodules"
 
 	######################### Appearing submodule #########################
-	# Switching to a commit letting a submodule appear checks it out ...
+	# Switching to a cummit letting a submodule appear checks it out ...
 	test_expect_success "$command: added submodule is checked out" '
 		prolog &&
 		reset_work_tree_to_interested no_submodule &&
@@ -718,7 +718,7 @@ test_submodule_recursing_with_args_common () {
 			test_submodule_content sub1 origin/replace_directory_with_sub1
 		)
 	'
-	# Switching to a commit with nested submodules recursively checks them out
+	# Switching to a cummit with nested submodules recursively checks them out
 	test_expect_success "$command: nested submodules are checked out" '
 		prolog &&
 		reset_work_tree_to_interested no_submodule &&
@@ -794,7 +794,7 @@ test_submodule_recursing_with_args_common () {
 		)
 	'
 
-	# Switching to a commit without nested submodules removes their worktrees
+	# Switching to a cummit without nested submodules removes their worktrees
 	test_expect_success "$command: worktrees of nested submodules are removed" '
 		prolog &&
 		reset_work_tree_to_interested add_nested_sub &&
@@ -824,7 +824,7 @@ test_submodule_recursing_with_args_common () {
 	'
 	# Updating a submodule to an invalid sha1 doesn't update the
 	# superproject nor the submodule's work tree.
-	test_expect_success "$command: updating to a missing submodule commit fails" '
+	test_expect_success "$command: updating to a missing submodule cummit fails" '
 		prolog &&
 		reset_work_tree_to_interested add_sub1 &&
 		(
@@ -858,7 +858,7 @@ test_submodule_recursing_with_args_common () {
 # Declares and invokes several tests that, in various situations, checks that
 # the provided Git command, when invoked with --recurse-submodules:
 #  - succeeds in updating the worktree and index of a superproject to a target
-#    commit, or fails atomically (depending on the test situation)
+#    cummit, or fails atomically (depending on the test situation)
 #  - if succeeds, the contents of submodule directories are updated
 #
 # Specify the Git command so that "git $GIT_COMMAND --recurse-submodules"
@@ -886,7 +886,7 @@ test_submodule_switch_recursing_with_args () {
 	then
 		RESULTOI=failure
 	fi
-	# Switching to a commit letting a submodule appear cannot override an
+	# Switching to a cummit letting a submodule appear cannot override an
 	# untracked file.
 	test_expect_success "$command: added submodule doesn't remove untracked file with same name" '
 		prolog &&
@@ -998,7 +998,7 @@ test_submodule_forced_switch_recursing_with_args () {
 	then
 		RESULT=failure
 	fi
-	# Switching to a commit letting a submodule appear does not care about
+	# Switching to a cummit letting a submodule appear does not care about
 	# an untracked file.
 	test_expect_success "$command: added submodule does remove untracked unignored file with same name when forced" '
 		prolog &&
@@ -1053,7 +1053,7 @@ test_submodule_forced_switch_recursing_with_args () {
 	'
 
 	# Updating a submodule from an invalid sha1 updates
-	test_expect_success "$command: modified submodule does update submodule work tree from invalid commit" '
+	test_expect_success "$command: modified submodule does update submodule work tree from invalid cummit" '
 		prolog &&
 		reset_work_tree_to_interested invalid_sub1 &&
 		(

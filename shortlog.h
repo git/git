@@ -3,7 +3,7 @@
 
 #include "string-list.h"
 
-struct commit;
+struct cummit;
 
 struct shortlog {
 	struct string_list list;
@@ -18,7 +18,7 @@ struct shortlog {
 
 	enum {
 		SHORTLOG_GROUP_AUTHOR = (1 << 0),
-		SHORTLOG_GROUP_COMMITTER = (1 << 1),
+		SHORTLOG_GROUP_cummitTER = (1 << 1),
 		SHORTLOG_GROUP_TRAILER = (1 << 2),
 	} groups;
 	struct string_list trailers;
@@ -30,7 +30,7 @@ struct shortlog {
 
 void shortlog_init(struct shortlog *log);
 
-void shortlog_add_commit(struct shortlog *log, struct commit *commit);
+void shortlog_add_cummit(struct shortlog *log, struct cummit *cummit);
 
 void shortlog_output(struct shortlog *log);
 

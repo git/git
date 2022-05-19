@@ -21,8 +21,8 @@ rename to Documentation/git-ssh-pull.txt
  
  SYNOPSIS
  --------
--'git-rpull' [-c] [-t] [-a] [-d] [-v] [--recover] commit-id url
-+'git-ssh-pull' [-c] [-t] [-a] [-d] [-v] [--recover] commit-id url
+-'git-rpull' [-c] [-t] [-a] [-d] [-v] [--recover] cummit-id url
++'git-ssh-pull' [-c] [-t] [-a] [-d] [-v] [--recover] cummit-id url
  
  DESCRIPTION
  -----------
@@ -97,7 +97,7 @@ diff --git a/Makefile b/Makefile
 -	git-http-pull git-rpush git-rpull git-rev-list git-mktag \
 +	git-http-pull git-ssh-push git-ssh-pull git-rev-list git-mktag \
  	git-diff-helper git-tar-tree git-local-pull git-write-blob \
- 	git-get-tar-commit-id git-mkdelta git-apply git-stripspace
+ 	git-get-tar-cummit-id git-mkdelta git-apply git-stripspace
  
 @@ -105,8 +105,8 @@ git-diff-cache: diff-cache.c
  git-convert-cache: convert-cache.c
@@ -120,11 +120,11 @@ rename to ssh-pull.c
  		arg++;
  	}
  	if (argc < arg + 2) {
--		usage("git-rpull [-c] [-t] [-a] [-v] [-d] [--recover] commit-id url");
-+		usage("git-ssh-pull [-c] [-t] [-a] [-v] [-d] [--recover] commit-id url");
+-		usage("git-rpull [-c] [-t] [-a] [-v] [-d] [--recover] cummit-id url");
++		usage("git-ssh-pull [-c] [-t] [-a] [-v] [-d] [--recover] cummit-id url");
  		return 1;
  	}
- 	commit_id = argv[arg];
+ 	cummit_id = argv[arg];
  	url = argv[arg + 1];
  
 -	if (setup_connection(&fd_in, &fd_out, "git-rpush", url, arg, argv + 1))
@@ -181,11 +181,11 @@ rename to ssh-push.c
                  arg++;
          }
          if (argc < arg + 2) {
--		usage("git-rpush [-c] [-t] [-a] commit-id url");
-+		usage("git-ssh-push [-c] [-t] [-a] commit-id url");
+-		usage("git-rpush [-c] [-t] [-a] cummit-id url");
++		usage("git-ssh-push [-c] [-t] [-a] cummit-id url");
                  return 1;
          }
- 	commit_id = argv[arg];
+ 	cummit_id = argv[arg];
  	url = argv[arg + 1];
 -	if (setup_connection(&fd_in, &fd_out, "git-rpull", url, arg, argv + 1))
 +	if (setup_connection(&fd_in, &fd_out, "git-ssh-pull", url, arg, argv + 1))

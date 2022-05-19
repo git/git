@@ -32,19 +32,19 @@ $ git init
 Initialized empty Git repository in .git/
 $ echo 'hello world' > file.txt
 $ git add .
-$ git commit -a -m "initial commit"
-[master (root-commit) 54196cc] initial commit
+$ git cummit -a -m "initial cummit"
+[master (root-cummit) 54196cc] initial cummit
  1 file changed, 1 insertion(+)
  create mode 100644 file.txt
 $ echo 'hello world!' >file.txt
-$ git commit -a -m "add emphasis"
+$ git cummit -a -m "add emphasis"
 [master c4d59f3] add emphasis
  1 file changed, 1 insertion(+), 1 deletion(-)
 ------------------------------------------------
 
-What are the 7 digits of hex that Git responded to the commit with?
+What are the 7 digits of hex that Git responded to the cummit with?
 
-We saw in part one of the tutorial that commits have names like this.
+We saw in part one of the tutorial that cummits have names like this.
 It turns out that every object in the Git history is stored under
 a 40-digit hex name.  That name is the SHA-1 hash of the object's
 contents; among other things, this ensures that Git will never store
@@ -55,10 +55,10 @@ here are simply the abbreviation of such 40 character long strings.
 Abbreviations can be used everywhere where the 40 character strings
 can be used, so long as they are unambiguous.
 
-It is expected that the content of the commit object you created while
+It is expected that the content of the cummit object you created while
 following the example above generates a different SHA-1 hash than
-the one shown above because the commit object records the time when
-it was created and the name of the person performing the commit.
+the one shown above because the cummit object records the time when
+it was created and the name of the person performing the cummit.
 
 We can ask Git about this particular object with the `cat-file`
 command. Don't copy the 40 hex digits from this example but use those
@@ -67,13 +67,13 @@ characters to save yourself typing all 40 hex digits:
 
 ------------------------------------------------
 $ git cat-file -t 54196cc2
-commit
-$ git cat-file commit 54196cc2
+cummit
+$ git cat-file cummit 54196cc2
 tree 92b8b694ffb1675e5975148e1121810081dbdffe
 author J. Bruce Fields <bfields@puzzle.fieldses.org> 1143414668 -0500
-committer J. Bruce Fields <bfields@puzzle.fieldses.org> 1143414668 -0500
+cummitter J. Bruce Fields <bfields@puzzle.fieldses.org> 1143414668 -0500
 
-initial commit
+initial cummit
 ------------------------------------------------
 
 A tree can refer to one or more "blob" objects, each corresponding to
@@ -104,7 +104,7 @@ hello world
 
 Note that this is the old file data; so the object that Git named in
 its response to the initial tree was a tree with a snapshot of the
-directory state that was recorded by the first commit.
+directory state that was recorded by the first cummit.
 
 All of these objects are stored under their SHA-1 names inside the Git
 directory:
@@ -130,9 +130,9 @@ $ find .git/objects/
 
 and the contents of these files is just the compressed data plus a
 header identifying their length and their type.  The type is either a
-blob, a tree, a commit, or a tag.
+blob, a tree, a cummit, or a tag.
 
-The simplest commit to find is the HEAD commit, which we can find
+The simplest cummit to find is the HEAD cummit, which we can find
 from .git/HEAD:
 
 ------------------------------------------------
@@ -142,19 +142,19 @@ ref: refs/heads/master
 
 As you can see, this tells us which branch we're currently on, and it
 tells us this by naming a file under the .git directory, which itself
-contains a SHA-1 name referring to a commit object, which we can
+contains a SHA-1 name referring to a cummit object, which we can
 examine with cat-file:
 
 ------------------------------------------------
 $ cat .git/refs/heads/master
 c4d59f390b9cfd4318117afde11d601c1085f241
 $ git cat-file -t c4d59f39
-commit
-$ git cat-file commit c4d59f39
+cummit
+$ git cat-file cummit c4d59f39
 tree d0492b368b66bdabf2ac1fd8c92b39d3db916e59
 parent 54196cc2703dc165cbd373a65a4dcf22d50ae7f7
 author J. Bruce Fields <bfields@puzzle.fieldses.org> 1143418702 -0500
-committer J. Bruce Fields <bfields@puzzle.fieldses.org> 1143418702 -0500
+cummitter J. Bruce Fields <bfields@puzzle.fieldses.org> 1143418702 -0500
 
 add emphasis
 ------------------------------------------------
@@ -168,47 +168,47 @@ $ git cat-file blob a0423896
 hello world!
 ------------------------------------------------
 
-and the "parent" object refers to the previous commit:
+and the "parent" object refers to the previous cummit:
 
 ------------------------------------------------
-$ git cat-file commit 54196cc2
+$ git cat-file cummit 54196cc2
 tree 92b8b694ffb1675e5975148e1121810081dbdffe
 author J. Bruce Fields <bfields@puzzle.fieldses.org> 1143414668 -0500
-committer J. Bruce Fields <bfields@puzzle.fieldses.org> 1143414668 -0500
+cummitter J. Bruce Fields <bfields@puzzle.fieldses.org> 1143414668 -0500
 
-initial commit
+initial cummit
 ------------------------------------------------
 
-The tree object is the tree we examined first, and this commit is
+The tree object is the tree we examined first, and this cummit is
 unusual in that it lacks any parent.
 
-Most commits have only one parent, but it is also common for a commit
-to have multiple parents.   In that case the commit represents a
+Most cummits have only one parent, but it is also common for a cummit
+to have multiple parents.   In that case the cummit represents a
 merge, with the parent references pointing to the heads of the merged
 branches.
 
-Besides blobs, trees, and commits, the only remaining type of object
+Besides blobs, trees, and cummits, the only remaining type of object
 is a "tag", which we won't discuss here; refer to linkgit:git-tag[1]
 for details.
 
 So now we know how Git uses the object database to represent a
 project's history:
 
-  * "commit" objects refer to "tree" objects representing the
+  * "cummit" objects refer to "tree" objects representing the
     snapshot of a directory tree at a particular point in the
-    history, and refer to "parent" commits to show how they're
+    history, and refer to "parent" cummits to show how they're
     connected into the project history.
   * "tree" objects represent the state of a single directory,
     associating directory names to "blob" objects containing file
     data and "tree" objects containing subdirectory information.
   * "blob" objects contain file data without any other structure.
-  * References to commit objects at the head of each branch are
+  * References to cummit objects at the head of each branch are
     stored in files under .git/refs/heads/.
   * The name of the current branch is stored in .git/HEAD.
 
 Note, by the way, that lots of commands take a tree as an argument.
 But as we can see above, a tree can be referred to in many different
-ways--by the SHA-1 name for that tree, by the name of a commit that
+ways--by the SHA-1 name for that tree, by the name of a cummit that
 refers to the tree, by the name of a branch whose head refers to that
 tree, etc.--and most such commands can accept any of these names.
 
@@ -218,13 +218,13 @@ designate such an argument.
 The index file
 --------------
 
-The primary tool we've been using to create commits is `git-commit
--a`, which creates a commit including every change you've made to
-your working tree.  But what if you want to commit changes only to
+The primary tool we've been using to create cummits is `git-cummit
+-a`, which creates a cummit including every change you've made to
+your working tree.  But what if you want to cummit changes only to
 certain files?  Or only certain changes to certain files?
 
-If we look at the way commits are created under the cover, we'll see
-that there are more flexible ways creating commits.
+If we look at the way cummits are created under the cover, we'll see
+that there are more flexible ways creating cummits.
 
 Continuing with our test-project, let's modify file.txt again:
 
@@ -232,7 +232,7 @@ Continuing with our test-project, let's modify file.txt again:
 $ echo "hello world, again" >>file.txt
 ------------------------------------------------
 
-but this time instead of immediately making the commit, let's take an
+but this time instead of immediately making the cummit, let's take an
 intermediate step, and ask for diffs along the way to keep track of
 what's happening:
 
@@ -247,7 +247,7 @@ $ git add file.txt
 $ git diff
 ------------------------------------------------
 
-The last diff is empty, but no new commits have been made, and the
+The last diff is empty, but no new cummits have been made, and the
 head still doesn't contain the new line:
 
 ------------------------------------------------
@@ -294,8 +294,8 @@ index 513feba..ba3da7b 100644
 ------------------------------------------------
 
 With the right arguments, 'git diff' can also show us the difference
-between the working directory and the last commit, or between the
-index and the last commit:
+between the working directory and the last cummit, or between the
+index and the last cummit:
 
 ------------------------------------------------
 $ git diff HEAD
@@ -317,13 +317,13 @@ index a042389..513feba 100644
 +hello world, again
 ------------------------------------------------
 
-At any time, we can create a new commit using 'git commit' (without
-the "-a" option), and verify that the state committed only includes the
+At any time, we can create a new cummit using 'git cummit' (without
+the "-a" option), and verify that the state cummitted only includes the
 changes stored in the index file, not the additional change that is
 still only in our working tree:
 
 ------------------------------------------------
-$ git commit -m "repeat"
+$ git cummit -m "repeat"
 $ git diff HEAD
 diff --git a/file.txt b/file.txt
 index 513feba..ba3da7b 100644
@@ -335,8 +335,8 @@ index 513feba..ba3da7b 100644
 +again?
 ------------------------------------------------
 
-So by default 'git commit' uses the index to create the commit, not
-the working tree; the "-a" option to commit tells it to first update
+So by default 'git cummit' uses the index to create the cummit, not
+the working tree; the "-a" option to cummit tells it to first update
 the index with all changes in the working tree.
 
 Finally, it's worth looking at the effect of 'git add' on the index
@@ -369,13 +369,13 @@ situation:
 ------------------------------------------------
 $ git status
 On branch master
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 
 	new file:   closing.txt
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 
 	modified:   file.txt
@@ -383,17 +383,17 @@ Changes not staged for commit:
 ------------------------------------------------
 
 Since the current state of closing.txt is cached in the index file,
-it is listed as "Changes to be committed".  Since file.txt has
+it is listed as "Changes to be cummitted".  Since file.txt has
 changes in the working directory that aren't reflected in the index,
 it is marked "changed but not updated".  At this point, running "git
-commit" would create a commit that added closing.txt (with its new
+cummit" would create a cummit that added closing.txt (with its new
 contents), but that didn't modify file.txt.
 
 Also, note that a bare `git diff` shows the changes to file.txt, but
 not the addition of closing.txt, because the version of closing.txt
 in the index file is identical to the one in the working directory.
 
-In addition to being the staging area for new commits, the index file
+In addition to being the staging area for new cummits, the index file
 is also populated from the object database when checking out a
 branch, and is used to hold the trees involved in a merge operation.
 See linkgit:gitcore-tutorial[7] and the relevant man
@@ -419,7 +419,7 @@ link:howto-index.html[howtos].
 
 For Git developers, linkgit:gitcore-tutorial[7] goes
 into detail on the lower-level Git mechanisms involved in, for
-example, creating a new commit.
+example, creating a new cummit.
 
 SEE ALSO
 --------

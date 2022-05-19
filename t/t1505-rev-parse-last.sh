@@ -9,21 +9,21 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 
-make_commit () {
+make_cummit () {
 	echo "$1" > "$1" &&
 	git add "$1" &&
-	git commit -m "$1"
+	git cummit -m "$1"
 }
 
 
 test_expect_success 'setup' '
 
-	make_commit 1 &&
+	make_cummit 1 &&
 	git branch side &&
-	make_commit 2 &&
-	make_commit 3 &&
+	make_cummit 2 &&
+	make_cummit 3 &&
 	git checkout side &&
-	make_commit 4 &&
+	make_cummit 4 &&
 	git merge main &&
 	git checkout main
 

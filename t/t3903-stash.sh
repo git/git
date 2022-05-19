@@ -47,7 +47,7 @@ setup_stash() {
 	echo unrelated >other-file &&
 	git add other-file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	echo 2 >file &&
 	git add file &&
 	echo 3 >file &&
@@ -103,7 +103,7 @@ test_expect_success 'apply stashed changes' '
 	echo 5 >other-file &&
 	git add other-file &&
 	test_tick &&
-	git commit -m other-file &&
+	git cummit -m other-file &&
 	git stash apply &&
 	test 3 = $(cat file) &&
 	test 1 = $(git show :file) &&
@@ -115,7 +115,7 @@ test_expect_success 'apply stashed changes (including index)' '
 	echo 6 >other-file &&
 	git add other-file &&
 	test_tick &&
-	git commit -m other-file &&
+	git cummit -m other-file &&
 	git stash apply --index &&
 	test 3 = $(cat file) &&
 	test 2 = $(git show :file) &&
@@ -274,13 +274,13 @@ EOF
 
 test_expect_success 'stash branch' '
 	echo foo >file &&
-	git commit file -m first &&
+	git cummit file -m first &&
 	echo bar >file &&
 	echo bar2 >file2 &&
 	git add file2 &&
 	git stash &&
 	echo baz >file &&
-	git commit file -m second &&
+	git cummit file -m second &&
 	git stash branch stashbranch &&
 	test refs/heads/stashbranch = $(git symbolic-ref HEAD) &&
 	test $(git rev-parse HEAD) = $(git rev-parse main^) &&
@@ -289,7 +289,7 @@ test_expect_success 'stash branch' '
 	git diff >output &&
 	diff_cmp expect1 output &&
 	git add file &&
-	git commit -m alternate\ second &&
+	git cummit -m alternate\ second &&
 	git diff main..stashbranch >output &&
 	diff_cmp output expect2 &&
 	test 0 = $(git stash list | wc -l)
@@ -303,7 +303,7 @@ test_expect_success 'apply -q is quiet' '
 '
 
 test_expect_success 'apply --index -q is quiet' '
-	# Added file, deleted file, modified file all staged for commit
+	# Added file, deleted file, modified file all staged for cummit
 	echo foo >new-file &&
 	echo test >file &&
 	git add new-file file &&
@@ -496,12 +496,12 @@ test_expect_success SYMLINKS 'stash file to symlink (full stage)' '
 	test "$(test_readlink file)" = file2
 '
 
-# This test creates a commit with a symlink used for the following tests
+# This test creates a cummit with a symlink used for the following tests
 
 test_expect_success 'stash symlink to file' '
 	git reset --hard &&
 	test_ln_s_add file filelink &&
-	git commit -m "Add symlink" &&
+	git cummit -m "Add symlink" &&
 	rm filelink &&
 	cp file filelink &&
 	git stash save "symlink to file"
@@ -560,7 +560,7 @@ test_expect_failure 'stash directory to file' '
 	mkdir dir &&
 	echo foo >dir/file &&
 	git add dir/file &&
-	git commit -m "Add file in dir" &&
+	git cummit -m "Add file in dir" &&
 	rm -fr dir &&
 	echo bar >dir &&
 	git stash save "directory to file" &&
@@ -862,7 +862,7 @@ test_expect_success 'branch: do not drop the stash if the branch exists' '
 	git stash clear &&
 	echo foo >file &&
 	git add file &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	echo bar >file &&
 	git stash &&
 	test_must_fail git stash branch main stash@{0} &&
@@ -874,7 +874,7 @@ test_expect_success 'branch: should not drop the stash if the apply fails' '
 	git reset HEAD~1 --hard &&
 	echo foo >file &&
 	git add file &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	echo bar >file &&
 	git stash &&
 	echo baz >file &&
@@ -888,7 +888,7 @@ test_expect_success 'apply: show same status as git status (relative to ./)' '
 	echo 1 >subdir/subfile1 &&
 	echo 2 >subdir/subfile2 &&
 	git add subdir/subfile1 &&
-	git commit -m subdir &&
+	git cummit -m subdir &&
 	(
 		cd subdir &&
 		echo x >subfile1 &&
@@ -926,7 +926,7 @@ test_expect_success 'stash where working directory contains "HEAD" file' '
 	diff_cmp expect output
 '
 
-test_expect_success 'store called with invalid commit' '
+test_expect_success 'store called with invalid cummit' '
 	test_must_fail git stash store foo
 '
 
@@ -1212,7 +1212,7 @@ test_expect_success 'stash with file including $IFS character' '
 test_expect_success 'stash with pathspec matching multiple paths' '
        echo original >file &&
        echo original >other-file &&
-       git commit -m "two" file other-file &&
+       git cummit -m "two" file other-file &&
        echo modified >file &&
        echo modified >other-file &&
        git stash push -- "*file" &&
@@ -1228,7 +1228,7 @@ test_expect_success 'stash with pathspec matching multiple paths' '
 test_expect_success 'stash push -p with pathspec shows no changes only once' '
 	>foo &&
 	git add foo &&
-	git commit -m "tmp" &&
+	git cummit -m "tmp" &&
 	git stash push -p foo >actual &&
 	echo "No local changes to save" >expect &&
 	git reset --hard HEAD~ &&
@@ -1238,7 +1238,7 @@ test_expect_success 'stash push -p with pathspec shows no changes only once' '
 test_expect_success 'push <pathspec>: show no changes when there are none' '
 	>foo &&
 	git add foo &&
-	git commit -m "tmp" &&
+	git cummit -m "tmp" &&
 	git stash push foo >actual &&
 	echo "No local changes to save" >expect &&
 	git reset --hard HEAD~ &&
@@ -1263,7 +1263,7 @@ test_expect_success 'push: -q is quiet with no changes' '
 	test_must_be_empty output
 '
 
-test_expect_success 'push: -q is quiet even if there is no initial commit' '
+test_expect_success 'push: -q is quiet even if there is no initial cummit' '
 	git init foo_dir &&
 	test_when_finished rm -rf foo_dir &&
 	(
@@ -1302,7 +1302,7 @@ test_expect_success 'stash -k -- <pathspec> leaves unstaged files intact' '
 	>foo &&
 	>bar &&
 	git add foo bar &&
-	git commit -m "test" &&
+	git cummit -m "test" &&
 	echo "foo" >foo &&
 	echo "bar" >bar &&
 	git stash -k -- foo &&
@@ -1363,11 +1363,11 @@ test_expect_success 'stash works when user.name and user.email are not set' '
 	(
 		sane_unset GIT_AUTHOR_NAME &&
 		sane_unset GIT_AUTHOR_EMAIL &&
-		sane_unset GIT_COMMITTER_NAME &&
-		sane_unset GIT_COMMITTER_EMAIL &&
+		sane_unset GIT_cummitTER_NAME &&
+		sane_unset GIT_cummitTER_EMAIL &&
 		test_unconfig user.email &&
 		test_unconfig user.name &&
-		test_must_fail git commit -m "should fail" &&
+		test_must_fail git cummit -m "should fail" &&
 		echo "git stash <git@stash>" >expect &&
 		>2 &&
 		git stash &&
@@ -1377,7 +1377,7 @@ test_expect_success 'stash works when user.name and user.email are not set' '
 '
 
 test_expect_success 'stash --keep-index with file deleted in index does not resurrect it on disk' '
-	test_commit to-remove to-remove &&
+	test_cummit to-remove to-remove &&
 	git rm to-remove &&
 	git stash --keep-index &&
 	test_path_is_missing to-remove
@@ -1386,7 +1386,7 @@ test_expect_success 'stash --keep-index with file deleted in index does not resu
 test_expect_success 'stash apply should succeed with unmodified file' '
 	echo base >file &&
 	git add file &&
-	git commit -m base &&
+	git cummit -m base &&
 
 	# now stash a modification
 	echo modified >file &&
@@ -1400,7 +1400,7 @@ test_expect_success 'stash apply should succeed with unmodified file' '
 '
 
 test_expect_success 'stash handles skip-worktree entries nicely' '
-	test_commit A &&
+	test_cummit A &&
 	echo changed >A.t &&
 	git add A.t &&
 	git update-index --skip-worktree A.t &&
@@ -1414,11 +1414,11 @@ test_expect_success 'git stash succeeds despite directory/file change' '
 	test_create_repo directory_file_switch_v1 &&
 	(
 		cd directory_file_switch_v1 &&
-		test_commit init &&
+		test_cummit init &&
 
 		test_write_lines this file has some words >filler &&
 		git add filler &&
-		git commit -m filler &&
+		git cummit -m filler &&
 
 		git rm filler &&
 		mkdir filler &&
@@ -1431,11 +1431,11 @@ test_expect_success 'git stash can pop file -> directory saved changes' '
 	test_create_repo directory_file_switch_v2 &&
 	(
 		cd directory_file_switch_v2 &&
-		test_commit init &&
+		test_cummit init &&
 
 		test_write_lines this file has some words >filler &&
 		git add filler &&
-		git commit -m filler &&
+		git cummit -m filler &&
 
 		git rm filler &&
 		mkdir filler &&
@@ -1451,13 +1451,13 @@ test_expect_success 'git stash can pop directory -> file saved changes' '
 	test_create_repo directory_file_switch_v3 &&
 	(
 		cd directory_file_switch_v3 &&
-		test_commit init &&
+		test_cummit init &&
 
 		mkdir filler &&
 		test_write_lines some words >filler/file1 &&
 		test_write_lines and stuff >filler/file2 &&
 		git add filler &&
-		git commit -m filler &&
+		git cummit -m filler &&
 
 		git rm -rf filler &&
 		echo contents >filler &&
@@ -1476,7 +1476,7 @@ test_expect_success 'restore untracked files even when we hit conflicts' '
 		echo hi >a &&
 		echo there >b &&
 		git add . &&
-		git commit -m first &&
+		git cummit -m first &&
 		echo hello >a &&
 		echo something >c &&
 
@@ -1484,7 +1484,7 @@ test_expect_success 'restore untracked files even when we hit conflicts' '
 
 		echo conflict >a &&
 		git add a &&
-		git commit -m second &&
+		git cummit -m second &&
 
 		test_must_fail git stash pop &&
 

@@ -14,10 +14,10 @@ DESCRIPTION
 -----------
 A Tcl/Tk based graphical user interface to Git.  'git gui' focuses
 on allowing users to make changes to their repository by making
-new commits, amending existing ones, creating branches, performing
+new cummits, amending existing ones, creating branches, performing
 local merges, and fetching/pushing to remote repositories.
 
-Unlike 'gitk', 'git gui' focuses on commit generation
+Unlike 'gitk', 'git gui' focuses on cummit generation
 and single file annotation and does not show project history.
 It does however supply menu actions to start a 'gitk' session from
 within 'git gui'.
@@ -35,13 +35,13 @@ blame::
 
 browser::
 	Start a tree browser showing all files in the specified
-	commit.  Files selected through the
+	cummit.  Files selected through the
 	browser are opened in the blame viewer.
 
 citool::
-	Start 'git gui' and arrange to make exactly one commit before
+	Start 'git gui' and arrange to make exactly one cummit before
 	exiting and returning to the shell.  The interface is limited
-	to only commit actions, slightly reducing the application's
+	to only cummit actions, slightly reducing the application's
 	startup time and simplifying the menubar.
 
 version::
@@ -55,9 +55,9 @@ Examples
 	Show the contents of the file 'Makefile' in the current
 	working directory, and provide annotations for both the
 	original author of each line, and who moved the line to its
-	current location.  The uncommitted file is annotated, and
-	uncommitted changes (if any) are explicitly attributed to
-	'Not Yet Committed'.
+	current location.  The uncummitted file is annotated, and
+	uncummitted changes (if any) are explicitly attributed to
+	'Not Yet cummitted'.
 
 `git gui blame v0.99.8 Makefile`::
 
@@ -73,18 +73,18 @@ Examples
 
 `git gui citool`::
 
-	Make one commit and return to the shell when it is complete.
+	Make one cummit and return to the shell when it is complete.
 	This command returns a non-zero exit code if the window was
-	closed in any way other than by making a commit.
+	closed in any way other than by making a cummit.
 
 `git gui citool --amend`::
 
-	Automatically enter the 'Amend Last Commit' mode of
+	Automatically enter the 'Amend Last cummit' mode of
 	the interface.
 
-`git gui citool --nocommit`::
+`git gui citool --nocummit`::
 
-	Behave as normal citool, but instead of making a commit
+	Behave as normal citool, but instead of making a cummit
 	simply terminate with a zero exit code. It still checks
 	that the index does not contain any unmerged entries, so
 	you can use it as a GUI version of linkgit:git-mergetool[1]

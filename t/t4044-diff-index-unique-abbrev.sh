@@ -34,11 +34,11 @@ test_expect_success 'setup' '
 
 	echo "$(test_oid val1)" > foo &&
 	git add foo &&
-	git commit -m "initial" &&
+	git cummit -m "initial" &&
 	git cat-file -p HEAD: > actual &&
 	test_cmp expect_initial actual &&
 	echo "$(test_oid val2)" > foo &&
-	git commit -a -m "update" &&
+	git cummit -a -m "update" &&
 	git cat-file -p HEAD: > actual &&
 	test_cmp expect_update actual
 '

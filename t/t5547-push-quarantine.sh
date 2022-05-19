@@ -14,17 +14,17 @@ test_expect_success 'create picky dest repo' '
 '
 
 test_expect_success 'accepted objects work' '
-	test_commit ok &&
+	test_cummit ok &&
 	git push dest.git HEAD &&
-	commit=$(git rev-parse HEAD) &&
-	git --git-dir=dest.git cat-file commit $commit
+	cummit=$(git rev-parse HEAD) &&
+	git --git-dir=dest.git cat-file cummit $cummit
 '
 
 test_expect_success 'rejected objects are not installed' '
-	test_commit reject &&
-	commit=$(git rev-parse HEAD) &&
+	test_cummit reject &&
+	cummit=$(git rev-parse HEAD) &&
 	test_must_fail git push dest.git reject &&
-	test_must_fail git --git-dir=dest.git cat-file commit $commit
+	test_must_fail git --git-dir=dest.git cat-file cummit $cummit
 '
 
 test_expect_success 'rejected objects are removed' '
@@ -41,7 +41,7 @@ test_expect_success 'push to repo path with path separator (colon)' '
 
 	test-tool genrandom foo 4096 >file.bin &&
 	git add file.bin &&
-	git commit -m bin &&
+	git cummit -m bin &&
 
 	if test_have_prereq MINGW
 	then
@@ -52,7 +52,7 @@ test_expect_success 'push to repo path with path separator (colon)' '
 	git clone --bare . "xxx${pathsep}yyy.git" &&
 
 	echo change >>file.bin &&
-	git commit -am change &&
+	git cummit -am change &&
 	# Note that we have to use the full path here, or it gets confused
 	# with the ssh host:path syntax.
 	git push "$(pwd)/xxx${pathsep}yyy.git" HEAD

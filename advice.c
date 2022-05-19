@@ -41,7 +41,7 @@ static struct {
 	[ADVICE_AM_WORK_DIR] 				= { "amWorkDir", 1 },
 	[ADVICE_AMBIGUOUS_FETCH_REFSPEC]		= { "ambiguousFetchRefspec", 1 },
 	[ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME] 	= { "checkoutAmbiguousRemoteBranchName", 1 },
-	[ADVICE_COMMIT_BEFORE_MERGE]			= { "commitBeforeMerge", 1 },
+	[ADVICE_cummit_BEFORE_MERGE]			= { "cummitBeforeMerge", 1 },
 	[ADVICE_DETACHED_HEAD]				= { "detachedHead", 1 },
 	[ADVICE_SUGGEST_DETACHING_HEAD]			= { "suggestDetachingHead", 1 },
 	[ADVICE_FETCH_SHOW_FORCED_UPDATES]		= { "fetchShowForcedUpdates", 1 },
@@ -179,8 +179,8 @@ int error_resolve_conflict(const char *me)
 {
 	if (!strcmp(me, "cherry-pick"))
 		error(_("Cherry-picking is not possible because you have unmerged files."));
-	else if (!strcmp(me, "commit"))
-		error(_("Committing is not possible because you have unmerged files."));
+	else if (!strcmp(me, "cummit"))
+		error(_("cummitting is not possible because you have unmerged files."));
 	else if (!strcmp(me, "merge"))
 		error(_("Merging is not possible because you have unmerged files."));
 	else if (!strcmp(me, "pull"))
@@ -193,11 +193,11 @@ int error_resolve_conflict(const char *me)
 
 	if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
 		/*
-		 * Message used both when 'git commit' fails and when
+		 * Message used both when 'git cummit' fails and when
 		 * other commands doing a merge do.
 		 */
 		advise(_("Fix them up in the work tree, and then use 'git add/rm <file>'\n"
-			 "as appropriate to mark resolution and make a commit."));
+			 "as appropriate to mark resolution and make a cummit."));
 	return -1;
 }
 
@@ -211,7 +211,7 @@ void NORETURN die_conclude_merge(void)
 {
 	error(_("You have not concluded your merge (MERGE_HEAD exists)."));
 	if (advice_enabled(ADVICE_RESOLVE_CONFLICT))
-		advise(_("Please, commit your changes before merging."));
+		advise(_("Please, cummit your changes before merging."));
 	die(_("Exiting because of unfinished merge."));
 }
 
@@ -245,10 +245,10 @@ void detach_advice(const char *new_name)
 	_("Note: switching to '%s'.\n"
 	"\n"
 	"You are in 'detached HEAD' state. You can look around, make experimental\n"
-	"changes and commit them, and you can discard any commits you make in this\n"
+	"changes and cummit them, and you can discard any cummits you make in this\n"
 	"state without impacting any branches by switching back to a branch.\n"
 	"\n"
-	"If you want to create a new branch to retain commits you create, you may\n"
+	"If you want to create a new branch to retain cummits you create, you may\n"
 	"do so (now or later) by using -c with the switch command. Example:\n"
 	"\n"
 	"  git switch -c <new-branch-name>\n"

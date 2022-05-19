@@ -12,7 +12,7 @@ test_expect_success 'setup repository' '
 	git config push.default matching &&
 	echo content >file &&
 	git add file &&
-	git commit -m one
+	git cummit -m one
 '
 
 test_expect_success 'create http-accessible bare repository' '
@@ -100,7 +100,7 @@ test_expect_success 'clone http repository' '
 
 test_expect_success 'fetch changes via http' '
 	echo content >>file &&
-	git commit -a -m two &&
+	git cummit -a -m two &&
 	git push public &&
 	(cd clone && git pull) &&
 	test_cmp file clone/file
@@ -240,7 +240,7 @@ test_expect_success 'invalid Content-Type rejected' '
 '
 
 test_expect_success 'create namespaced refs' '
-	test_commit namespaced &&
+	test_cummit namespaced &&
 	git push public HEAD:refs/namespaces/ns/refs/heads/main &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
 		symbolic-ref refs/namespaces/ns/HEAD refs/namespaces/ns/refs/heads/main
@@ -287,7 +287,7 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 
 test_expect_success 'transfer.hiderefs works over smart-http' '
 	test_commit hidden &&
-	test_commit visible &&
+	test_cummit visible &&
 	git push public HEAD^:refs/heads/a HEAD:refs/heads/b &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
 		config transfer.hiderefs refs/heads/a &&
@@ -303,20 +303,20 @@ create_tags () {
 	do
 		# don't use here-doc, because it requires a process
 		# per loop iteration
-		echo "commit refs/heads/too-many-refs-$1" &&
+		echo "cummit refs/heads/too-many-refs-$1" &&
 		echo "mark :$i" &&
-		echo "committer git <git@example.com> $i +0000" &&
+		echo "cummitter git <git@example.com> $i +0000" &&
 		echo "data 0" &&
 		echo "M 644 inline bla.txt" &&
 		echo "data 4" &&
 		echo "bla" &&
-		# make every commit dangling by always
-		# rewinding the branch after each commit
+		# make every cummit dangling by always
+		# rewinding the branch after each cummit
 		echo "reset refs/heads/too-many-refs-$1" &&
 		echo "from :$1"
 	done | git fast-import --export-marks=marks &&
 
-	# now assign tags to all the dangling commits we created above
+	# now assign tags to all the dangling cummits we created above
 	tag=$(perl -e "print \"bla\" x 30") &&
 	sed -e "s|^:\([^ ]*\) \(.*\)$|\2 refs/tags/$tag-\1|" <marks >>packed-refs
 }
@@ -361,7 +361,7 @@ test_expect_success 'test allowreachablesha1inwant with unreachable' '
 	#create unreachable sha
 	echo content >file2 &&
 	git add file2 &&
-	git commit -m two &&
+	git cummit -m two &&
 	git push public HEAD:refs/heads/doomed &&
 	git push public :refs/heads/doomed &&
 
@@ -383,7 +383,7 @@ test_expect_success 'test allowanysha1inwant with unreachable' '
 	#create unreachable sha
 	echo content >file2 &&
 	git add file2 &&
-	git commit -m two &&
+	git cummit -m two &&
 	git push public HEAD:refs/heads/doomed &&
 	git push public :refs/heads/doomed &&
 
@@ -439,12 +439,12 @@ test_expect_success 'using fetch command in remote-curl updates refs' '
 	rm -rf "$SERVER" client &&
 
 	git init "$SERVER" &&
-	test_commit -C "$SERVER" foo &&
+	test_cummit -C "$SERVER" foo &&
 	git -C "$SERVER" update-ref refs/heads/anotherbranch foo &&
 
 	git clone $HTTPD_URL/smart/twobranch client &&
 
-	test_commit -C "$SERVER" bar &&
+	test_cummit -C "$SERVER" bar &&
 	git -C client -c protocol.version=0 fetch &&
 
 	git -C "$SERVER" rev-parse main >expect &&
@@ -457,11 +457,11 @@ test_expect_success 'fetch by SHA-1 without tag following' '
 	rm -rf "$SERVER" client &&
 
 	git init "$SERVER" &&
-	test_commit -C "$SERVER" foo &&
+	test_cummit -C "$SERVER" foo &&
 
 	git clone $HTTPD_URL/smart/server client &&
 
-	test_commit -C "$SERVER" bar &&
+	test_cummit -C "$SERVER" bar &&
 	git -C "$SERVER" rev-parse bar >bar_hash &&
 	git -C client -c protocol.version=0 fetch \
 		--no-tags origin $(cat bar_hash)

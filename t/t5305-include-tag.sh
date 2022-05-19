@@ -12,18 +12,18 @@ test_expect_success setup '
 	echo c >d &&
 	git update-index --add d &&
 	tree=$(git write-tree) &&
-	commit=$(git commit-tree $tree </dev/null) &&
-	echo "object $commit" >sig &&
-	echo "type commit" >>sig &&
+	cummit=$(git cummit-tree $tree </dev/null) &&
+	echo "object $cummit" >sig &&
+	echo "type cummit" >>sig &&
 	echo "tag mytag" >>sig &&
-	echo "tagger $(git var GIT_COMMITTER_IDENT)" >>sig &&
+	echo "tagger $(git var GIT_cummitTER_IDENT)" >>sig &&
 	echo >>sig &&
 	echo "our test tag" >>sig &&
 	tag=$(git mktag <sig) &&
 	rm d sig &&
 	git update-ref refs/tags/mytag $tag && {
 		echo $tree &&
-		echo $commit &&
+		echo $cummit &&
 		git ls-tree $tree | sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"
 	} >obj-list
 '
@@ -40,10 +40,10 @@ test_expect_success 'unpack objects' '
 	git -C clone.git unpack-objects <test-no-include-${packname}.pack
 '
 
-test_expect_success 'check unpacked result (have commit, no tag)' '
-	git rev-list --objects $commit >list.expect &&
+test_expect_success 'check unpacked result (have cummit, no tag)' '
+	git rev-list --objects $cummit >list.expect &&
 	test_must_fail git -C clone.git cat-file -e $tag &&
-	git -C clone.git rev-list --objects $commit >list.actual &&
+	git -C clone.git rev-list --objects $cummit >list.actual &&
 	test_cmp list.expect list.actual
 '
 
@@ -60,16 +60,16 @@ test_expect_success 'unpack objects' '
 	git -C clone.git unpack-objects <test-include-${packname}.pack
 '
 
-test_expect_success 'check unpacked result (have commit, have tag)' '
+test_expect_success 'check unpacked result (have cummit, have tag)' '
 	git rev-list --objects mytag >list.expect &&
 	git -C clone.git rev-list --objects $tag >list.actual &&
 	test_cmp list.expect list.actual
 '
 
 # A tag of a tag, where the "inner" tag is not otherwise
-# reachable, and a full peel points to a commit reachable from HEAD.
+# reachable, and a full peel points to a cummit reachable from HEAD.
 test_expect_success 'create hidden inner tag' '
-	test_commit commit &&
+	test_cummit cummit &&
 	git tag -m inner inner HEAD &&
 	git tag -m outer outer inner &&
 	git tag -d inner

@@ -11,14 +11,14 @@ test_expect_success setup '
 	git add sample &&
 
 	test_tick &&
-	git commit -m Initial &&
+	git cummit -m Initial &&
 
 	append_cr <"$TEST_DIRECTORY"/t0022-crlf-rename.sh >elpmas &&
 	git add elpmas &&
 	rm -f sample &&
 
 	test_tick &&
-	git commit -a -m Second
+	git cummit -a -m Second
 
 '
 

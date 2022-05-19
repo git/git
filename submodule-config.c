@@ -390,12 +390,12 @@ int parse_push_recurse_submodules_arg(const char *opt, const char *arg)
 static void warn_multiple_config(const struct object_id *treeish_name,
 				 const char *name, const char *option)
 {
-	const char *commit_string = "WORKTREE";
+	const char *cummit_string = "WORKTREE";
 	if (treeish_name)
-		commit_string = oid_to_hex(treeish_name);
+		cummit_string = oid_to_hex(treeish_name);
 	warning("%s:.gitmodules, multiple configurations found for "
 			"'submodule.%s.%s'. Skipping second one!",
-			commit_string, name, option);
+			cummit_string, name, option);
 }
 
 static void warn_command_line_option(const char *var, const char *value)
@@ -521,7 +521,7 @@ static int parse_config(const char *var, const char *value, void *data)
 	return ret;
 }
 
-static int gitmodule_oid_from_commit(const struct object_id *treeish_name,
+static int gitmodule_oid_from_cummit(const struct object_id *treeish_name,
 				     struct object_id *gitmodules_oid,
 				     struct strbuf *rev)
 {
@@ -572,7 +572,7 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 		return entry->config;
 	}
 
-	if (!gitmodule_oid_from_commit(treeish_name, &oid, &rev))
+	if (!gitmodule_oid_from_cummit(treeish_name, &oid, &rev))
 		goto out;
 
 	switch (lookup_type) {
@@ -695,14 +695,14 @@ void repo_read_gitmodules(struct repository *repo, int skip_if_read)
 	repo->submodule_cache->gitmodules_read = 1;
 }
 
-void gitmodules_config_oid(const struct object_id *commit_oid)
+void gitmodules_config_oid(const struct object_id *cummit_oid)
 {
 	struct strbuf rev = STRBUF_INIT;
 	struct object_id oid;
 
 	submodule_cache_check_init(the_repository);
 
-	if (gitmodule_oid_from_commit(commit_oid, &oid, &rev)) {
+	if (gitmodule_oid_from_cummit(cummit_oid, &oid, &rev)) {
 		git_config_from_blob_oid(gitmodules_cb, rev.buf,
 					 the_repository, &oid, the_repository);
 	}

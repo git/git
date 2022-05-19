@@ -127,7 +127,7 @@ matching msgid lines.  A few tips:
    #, tcl-format
    msgid ""
    "One or more of the merge tests failed because you have not fetched the "
-   "necessary commits.  Try fetching from %s first."
+   "necessary cummits.  Try fetching from %s first."
    msgstr ""
    "HERE YOU WILL WRITE YOUR TRANSLATION OF THE ABOVE LONG "
    "MESSAGE IN YOUR LANGUAGE."
@@ -144,14 +144,14 @@ There is a trick to test your translation without first installing:
 	$ make
 	$ LANG=af ./git-gui.sh
 
-When you are satisfied with your translation, commit your changes then submit
+When you are satisfied with your translation, cummit your changes then submit
 your patch series to the maintainer and the Git mailing list:
 
 	$ edit po/af.po
 	... be sure to update Last-Translator: and
 	... PO-Revision-Date: lines.
 	$ git add po/af.po
-	$ git commit -s -m 'git-gui: added Afrikaans translation.'
+	$ git cummit -s -m 'git-gui: added Afrikaans translation.'
 	$ git send-email --to 'git@vger.kernel.org' \
 	   --cc 'Pat Thoyts <patthoyts@users.sourceforge.net>' \
 	   --subject 'git-gui: Afrikaans translation' \
@@ -172,7 +172,7 @@ In any case, make sure you are up to date before starting your work:
 
 In the former case, you will edit po/af.po (again, replace "af" with
 your language code), and after testing and updating the Last-Translator:
-and PO-Revision-Date: lines, "add/commit/push" as in the previous
+and PO-Revision-Date: lines, "add/cummit/push" as in the previous
 section.
 
 By comparing "POT-Creation-Date:" line in po/git-gui.pot file and
@@ -233,7 +233,7 @@ version X:
 
 The coordinator could recover from such a mistake by first applying the
 patch to X, replace the translated file in Z, and then running msgmerge
-again based on the updated POT file and commit the result.  The sequence
+again based on the updated POT file and cummit the result.  The sequence
 would look like this:
 
     $ git checkout X
@@ -241,7 +241,7 @@ would look like this:
     $ git checkout master
     $ git checkout HEAD@{1} po/xx.po
     $ msgmerge -U po/xx.po po/git-gui.pot
-    $ git commit -c HEAD@{1} po/xx.po
+    $ git cummit -c HEAD@{1} po/xx.po
 
 State in the message that the translated messages are based on a slightly
 older version, and msgmerge was run to incorporate changes to message

@@ -798,7 +798,7 @@ int refs_delete_ref(struct ref_store *refs, const char *msg,
 	if (!transaction ||
 	    ref_transaction_delete(transaction, refname, old_oid,
 				   flags, msg, &err) ||
-	    ref_transaction_commit(transaction, &err)) {
+	    ref_transaction_cummit(transaction, &err)) {
 		error("%s", err.buf);
 		ref_transaction_free(transaction);
 		strbuf_release(&err);
@@ -1154,7 +1154,7 @@ int refs_update_ref(struct ref_store *refs, const char *msg,
 	if (!t ||
 	    ref_transaction_update(t, refname, new_oid, old_oid, flags, msg,
 				   &err) ||
-	    ref_transaction_commit(t, &err)) {
+	    ref_transaction_cummit(t, &err)) {
 		ret = 1;
 		ref_transaction_free(t);
 	}
@@ -2181,7 +2181,7 @@ int ref_transaction_abort(struct ref_transaction *transaction,
 	return ret;
 }
 
-int ref_transaction_commit(struct ref_transaction *transaction,
+int ref_transaction_cummit(struct ref_transaction *transaction,
 			   struct strbuf *err)
 {
 	struct ref_store *refs = transaction->ref_store;
@@ -2198,7 +2198,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 		/* Fall through to finish. */
 		break;
 	case REF_TRANSACTION_CLOSED:
-		BUG("commit called on a closed reference transaction");
+		BUG("cummit called on a closed reference transaction");
 		break;
 	default:
 		BUG("unexpected reference transaction state");
@@ -2207,7 +2207,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 
 	ret = refs->be->transaction_finish(refs, transaction, err);
 	if (!ret)
-		run_transaction_hook(transaction, "committed");
+		run_transaction_hook(transaction, "cummitted");
 	return ret;
 }
 
@@ -2411,12 +2411,12 @@ int reflog_expire(const char *refname,
 				  cleanup_fn, policy_cb_data);
 }
 
-int initial_ref_transaction_commit(struct ref_transaction *transaction,
+int initial_ref_transaction_cummit(struct ref_transaction *transaction,
 				   struct strbuf *err)
 {
 	struct ref_store *refs = transaction->ref_store;
 
-	return refs->be->initial_transaction_commit(refs, transaction, err);
+	return refs->be->initial_transaction_cummit(refs, transaction, err);
 }
 
 void ref_transaction_for_each_queued_update(struct ref_transaction *transaction,

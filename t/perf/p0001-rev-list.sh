@@ -21,7 +21,7 @@ test_perf 'rev-list --parents' '
 test_expect_success 'create dummy file' '
 	echo unlikely-to-already-be-there >dummy &&
 	git add dummy &&
-	git commit -m dummy
+	git cummit -m dummy
 '
 
 test_perf 'rev-list -- dummy' '
@@ -32,17 +32,17 @@ test_perf 'rev-list --parents -- dummy' '
 	git rev-list --parents HEAD -- dummy
 '
 
-test_expect_success 'create new unreferenced commit' '
-	commit=$(git commit-tree HEAD^{tree} -p HEAD) &&
-	test_export commit
+test_expect_success 'create new unreferenced cummit' '
+	cummit=$(git cummit-tree HEAD^{tree} -p HEAD) &&
+	test_export cummit
 '
 
-test_perf 'rev-list $commit --not --all' '
-	git rev-list $commit --not --all >/dev/null
+test_perf 'rev-list $cummit --not --all' '
+	git rev-list $cummit --not --all >/dev/null
 '
 
-test_perf 'rev-list --objects $commit --not --all' '
-	git rev-list --objects $commit --not --all >/dev/null
+test_perf 'rev-list --objects $cummit --not --all' '
+	git rev-list --objects $cummit --not --all >/dev/null
 '
 
 test_done

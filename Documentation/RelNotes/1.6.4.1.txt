@@ -40,7 +40,7 @@ Fixes since v1.6.4
  * "git verify-pack -v" erroneously reported number of objects with too
    deep delta depths as "chain length 0" objects.
 
- * Long names of authors and committers outside US-ASCII were sometimes
+ * Long names of authors and cummitters outside US-ASCII were sometimes
    incorrectly shown in "gitweb".
 
 Other minor documentation updates are included.

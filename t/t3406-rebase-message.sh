@@ -8,15 +8,15 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit O fileO &&
-	test_commit X fileX &&
-	test_commit A fileA &&
-	test_commit B fileB &&
-	test_commit Y fileY &&
+	test_cummit O fileO &&
+	test_cummit X fileX &&
+	test_cummit A fileA &&
+	test_cummit B fileB &&
+	test_cummit Y fileY &&
 
 	git checkout -b topic O &&
 	git cherry-pick A B &&
-	test_commit Z fileZ &&
+	test_cummit Z fileZ &&
 	git tag start
 '
 
@@ -81,9 +81,9 @@ test_expect_success 'error out early upon -C<n> or --whitespace=<bad>' '
 
 test_expect_success 'GIT_REFLOG_ACTION' '
 	git checkout start &&
-	test_commit reflog-onto &&
+	test_cummit reflog-onto &&
 	git checkout -b reflog-topic start &&
-	test_commit reflog-to-rebase &&
+	test_cummit reflog-to-rebase &&
 
 	git rebase reflog-onto &&
 	git log -g --format=%gs -3 >actual &&
@@ -130,7 +130,7 @@ test_expect_success 'rebase --apply reflog' '
 
 test_expect_success 'rebase -i onto unrelated history' '
 	git init unrelated &&
-	test_commit -C unrelated 1 &&
+	test_cummit -C unrelated 1 &&
 	git -C unrelated remote add -f origin "$PWD" &&
 	git -C unrelated branch --set-upstream-to=origin/main &&
 	git -C unrelated -c core.editor=true rebase -i -v --stat >actual &&

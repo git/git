@@ -6,7 +6,7 @@ based on the learnings from the VFS for Git project, most of the techniques
 developed by the Scalar project have been integrated into core Git already:
 
 * partial clone,
-* commit graphs,
+* cummit graphs,
 * multi-pack index,
 * sparse checkout (cone mode),
 * scheduled background maintenance,

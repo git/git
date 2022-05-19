@@ -16,7 +16,7 @@ test_expect_success 'setup test repository' '
 		cd a &&
 		> foo &&
 		svn_cmd add foo &&
-		svn_cmd commit -m "add foo"
+		svn_cmd cummit -m "add foo"
 	) &&
 	maybe_start_httpd
 '

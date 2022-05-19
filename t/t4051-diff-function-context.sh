@@ -6,12 +6,12 @@ test_description='diff function context'
 
 dir="$TEST_DIRECTORY/t4051"
 
-commit_and_tag () {
+cummit_and_tag () {
 	tag=$1 &&
 	shift &&
 	git add "$@" &&
 	test_tick &&
-	git commit -m "$tag" &&
+	git cummit -m "$tag" &&
 	git tag "$tag"
 }
 
@@ -46,41 +46,41 @@ check_diff () {
 test_expect_success 'setup' '
 	cat "$dir/includes.c" "$dir/dummy.c" "$dir/dummy.c" "$dir/hello.c" \
 		"$dir/dummy.c" "$dir/dummy.c" >file.c &&
-	commit_and_tag initial file.c &&
+	cummit_and_tag initial file.c &&
 
 	grep -v "delete me from hello" <file.c >file.c.new &&
 	mv file.c.new file.c &&
-	commit_and_tag changed_hello file.c &&
+	cummit_and_tag changed_hello file.c &&
 
 	grep -v "delete me from includes" <file.c >file.c.new &&
 	mv file.c.new file.c &&
-	commit_and_tag changed_includes file.c &&
+	cummit_and_tag changed_includes file.c &&
 
 	cat "$dir/appended1.c" >>file.c &&
-	commit_and_tag appended file.c &&
+	cummit_and_tag appended file.c &&
 
 	cat "$dir/appended2.c" >>file.c &&
-	commit_and_tag extended file.c &&
+	cummit_and_tag extended file.c &&
 
 	grep -v "Begin of second part" <file.c >file.c.new &&
 	mv file.c.new file.c &&
-	commit_and_tag long_common_tail file.c &&
+	cummit_and_tag long_common_tail file.c &&
 
 	git checkout initial &&
 	cat "$dir/hello.c" "$dir/dummy.c" >file.c &&
-	commit_and_tag hello_dummy file.c &&
+	cummit_and_tag hello_dummy file.c &&
 
 	# overlap function context of 1st change and -u context of 2nd change
 	grep -v "delete me from hello" <"$dir/hello.c" >file.c &&
 	sed "2a\\
 	     extra line" <"$dir/dummy.c" >>file.c &&
-	commit_and_tag changed_hello_dummy file.c &&
+	cummit_and_tag changed_hello_dummy file.c &&
 
 	git checkout initial &&
 	grep -v "delete me from hello" <file.c >file.c.new &&
 	mv file.c.new file.c &&
 	cat "$dir/appended1.c" >>file.c &&
-	commit_and_tag changed_hello_appended file.c
+	cummit_and_tag changed_hello_appended file.c
 '
 
 check_diff changed_hello 'changed function'

@@ -5,12 +5,12 @@ test_description='rev-list combining bitmaps and filters'
 . "$TEST_DIRECTORY"/lib-bitmap.sh
 
 test_expect_success 'set up bitmapped repo' '
-	# one commit will have bitmaps, the other will not
-	test_commit one &&
-	test_commit much-larger-blob-one &&
+	# one cummit will have bitmaps, the other will not
+	test_cummit one &&
+	test_cummit much-larger-blob-one &&
 	git repack -adb &&
-	test_commit two &&
-	test_commit much-larger-blob-two &&
+	test_cummit two &&
+	test_cummit much-larger-blob-two &&
 	git tag tag
 '
 
@@ -82,9 +82,9 @@ test_expect_success 'object:type filter' '
 		     --objects --filter=object:type=tag tag >actual &&
 	test_cmp expect actual &&
 
-	git rev-list --objects --filter=object:type=commit tag >expect &&
+	git rev-list --objects --filter=object:type=cummit tag >expect &&
 	git rev-list --use-bitmap-index \
-		     --objects --filter=object:type=commit tag >actual &&
+		     --objects --filter=object:type=cummit tag >actual &&
 	test_bitmap_traversal expect actual &&
 
 	git rev-list --objects --filter=object:type=tree tag >expect &&
@@ -104,9 +104,9 @@ test_expect_success 'object:type filter with --filter-provided-objects' '
 		     --objects --filter-provided-objects --filter=object:type=tag tag >actual &&
 	test_cmp expect actual &&
 
-	git rev-list --objects --filter-provided-objects --filter=object:type=commit tag >expect &&
+	git rev-list --objects --filter-provided-objects --filter=object:type=cummit tag >expect &&
 	git rev-list --use-bitmap-index \
-		     --objects --filter-provided-objects --filter=object:type=commit tag >actual &&
+		     --objects --filter-provided-objects --filter=object:type=cummit tag >actual &&
 	test_bitmap_traversal expect actual &&
 
 	git rev-list --objects --filter-provided-objects --filter=object:type=tree tag >expect &&

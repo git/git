@@ -168,8 +168,8 @@ struct raw_object_store {
 	unsigned replace_map_initialized : 1;
 	pthread_mutex_t replace_mutex; /* protect object replace functions */
 
-	struct commit_graph *commit_graph;
-	unsigned commit_graph_attempted : 1; /* if loading has been attempted */
+	struct cummit_graph *cummit_graph;
+	unsigned cummit_graph_attempted : 1; /* if loading has been attempted */
 
 	/*
 	 * private data

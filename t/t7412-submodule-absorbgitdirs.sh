@@ -10,10 +10,10 @@ directory into the superproject.
 
 test_expect_success 'setup a real submodule' '
 	git init sub1 &&
-	test_commit -C sub1 first &&
+	test_cummit -C sub1 first &&
 	git submodule add ./sub1 &&
 	test_tick &&
-	git commit -m superproject
+	git cummit -m superproject
 '
 
 test_expect_success 'absorb the git dir' '
@@ -44,12 +44,12 @@ test_expect_success 'absorbing does not fail for deinitialized submodules' '
 
 test_expect_success 'setup nested submodule' '
 	git init sub1/nested &&
-	test_commit -C sub1/nested first_nested &&
+	test_cummit -C sub1/nested first_nested &&
 	git -C sub1 submodule add ./nested &&
 	test_tick &&
-	git -C sub1 commit -m "add nested" &&
+	git -C sub1 cummit -m "add nested" &&
 	git add sub1 &&
-	git commit -m "sub1 to include nested submodule"
+	git cummit -m "sub1 to include nested submodule"
 '
 
 test_expect_success 'absorb the git dir in a nested submodule' '
@@ -98,9 +98,9 @@ test_expect_success 'absorb the git dir in a nested submodule' '
 
 test_expect_success 'setup a gitlink with missing .gitmodules entry' '
 	git init sub2 &&
-	test_commit -C sub2 first &&
+	test_cummit -C sub2 first &&
 	git add sub2 &&
-	git commit -m superproject
+	git cummit -m superproject
 '
 
 test_expect_success 'absorbing the git dir fails for incomplete submodules' '
@@ -118,10 +118,10 @@ test_expect_success 'absorbing the git dir fails for incomplete submodules' '
 test_expect_success 'setup a submodule with multiple worktrees' '
 	# first create another unembedded git dir in a new submodule
 	git init sub3 &&
-	test_commit -C sub3 first &&
+	test_cummit -C sub3 first &&
 	git submodule add ./sub3 &&
 	test_tick &&
-	git commit -m "add another submodule" &&
+	git cummit -m "add another submodule" &&
 	git -C sub3 worktree add ../sub3_second_work_tree
 '
 

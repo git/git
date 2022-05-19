@@ -223,9 +223,9 @@ require_clean_work_tree () {
 		if test $err = 0
 		then
 			action=$1
-			eval_gettextln "Cannot \$action: Your index contains uncommitted changes." >&2
+			eval_gettextln "Cannot \$action: Your index contains uncummitted changes." >&2
 		else
-		    gettextln "Additionally, your index contains uncommitted changes." >&2
+		    gettextln "Additionally, your index contains uncummitted changes." >&2
 		fi
 		err=1
 	fi
@@ -237,15 +237,15 @@ require_clean_work_tree () {
 	fi
 }
 
-# Generate a sed script to parse identities from a commit.
+# Generate a sed script to parse identities from a cummit.
 #
-# Reads the commit from stdin, which should be in raw format (e.g., from
+# Reads the cummit from stdin, which should be in raw format (e.g., from
 # cat-file or "--pretty=raw").
 #
 # The first argument specifies the ident line to parse (e.g., "author"), and
 # the second specifies the environment variable to put it in (e.g., "AUTHOR"
 # for "GIT_AUTHOR_*"). Multiple pairs can be given to parse author and
-# committer.
+# cummitter.
 pick_ident_script () {
 	while test $# -gt 0
 	do
@@ -273,16 +273,16 @@ pick_ident_script () {
 
 # Create a pick-script as above and feed it to sed. Stdout is suitable for
 # feeding to eval.
-parse_ident_from_commit () {
+parse_ident_from_cummit () {
 	LANG=C LC_ALL=C sed -ne "$(pick_ident_script "$@")"
 }
 
-# Parse the author from a commit given as an argument. Stdout is suitable for
+# Parse the author from a cummit given as an argument. Stdout is suitable for
 # feeding to eval to set the usual GIT_* ident variables.
-get_author_ident_from_commit () {
-	encoding=$(git config i18n.commitencoding || echo UTF-8)
+get_author_ident_from_cummit () {
+	encoding=$(git config i18n.cummitencoding || echo UTF-8)
 	git show -s --pretty=raw --encoding="$encoding" "$1" -- |
-	parse_ident_from_commit author AUTHOR
+	parse_ident_from_cummit author AUTHOR
 }
 
 # Clear repo-local GIT_* environment variables. Useful when switching to
@@ -361,7 +361,7 @@ then
 	git_dir_init
 fi
 
-peel_committish () {
+peel_cummittish () {
 	case "$1" in
 	:/*)
 		peeltmp=$(git rev-parse --verify "$1") &&

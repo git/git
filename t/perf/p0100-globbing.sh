@@ -23,7 +23,7 @@ test_expect_success 'setup' '
 		done &&
 		echo b >>refglob.$i || return 1
 	done &&
-	test_commit test $(cat refname).t "" $(cat refname).t
+	test_cummit test $(cat refname).t "" $(cat refname).t
 '
 
 for i in $test_globs_small

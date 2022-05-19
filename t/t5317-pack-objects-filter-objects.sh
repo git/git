@@ -18,7 +18,7 @@ test_expect_success 'setup r1' '
 	do
 		echo "This is file: $n" > r1/file.$n &&
 		git -C r1 add file.$n &&
-		git -C r1 commit -m "$n" || return 1
+		git -C r1 cummit -m "$n" || return 1
 	done
 '
 
@@ -51,14 +51,14 @@ test_expect_success 'verify blob:none packfile has no blobs' '
 	! grep blob verify_result
 '
 
-test_expect_success 'verify normal and blob:none packfiles have same commits/trees' '
+test_expect_success 'verify normal and blob:none packfiles have same cummits/trees' '
 	git -C r1 verify-pack -v ../all.pack >verify_result &&
-	grep -E "commit|tree" verify_result |
+	grep -E "cummit|tree" verify_result |
 	awk -f print_1.awk |
 	sort >expected &&
 
 	git -C r1 verify-pack -v ../filter.pack >verify_result &&
-	grep -E "commit|tree" verify_result |
+	grep -E "cummit|tree" verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -69,7 +69,7 @@ test_expect_success 'get an error for missing tree object' '
 	git init r5 &&
 	echo foo >r5/foo &&
 	git -C r5 add foo &&
-	git -C r5 commit -m "foo" &&
+	git -C r5 cummit -m "foo" &&
 	git -C r5 rev-parse HEAD^{tree} >tree &&
 	del=$(sed "s|..|&/|" tree) &&
 	rm r5/.git/objects/$del &&
@@ -83,25 +83,25 @@ test_expect_success 'setup for tests of tree:0' '
 	mkdir r1/subtree &&
 	echo "This is a file in a subtree" >r1/subtree/file &&
 	git -C r1 add subtree/file &&
-	git -C r1 commit -m subtree
+	git -C r1 cummit -m subtree
 '
 
 test_expect_success 'verify tree:0 packfile has no blobs or trees' '
-	git -C r1 pack-objects --revs --stdout --filter=tree:0 >commitsonly.pack <<-EOF &&
+	git -C r1 pack-objects --revs --stdout --filter=tree:0 >cummitsonly.pack <<-EOF &&
 	HEAD
 	EOF
-	git -C r1 index-pack ../commitsonly.pack &&
-	git -C r1 verify-pack -v ../commitsonly.pack >objs &&
+	git -C r1 index-pack ../cummitsonly.pack &&
+	git -C r1 verify-pack -v ../cummitsonly.pack >objs &&
 	! grep -E "tree|blob" objs
 '
 
 test_expect_success 'grab tree directly when using tree:0' '
 	# We should get the tree specified directly but not its blobs or subtrees.
-	git -C r1 pack-objects --revs --stdout --filter=tree:0 >commitsonly.pack <<-EOF &&
+	git -C r1 pack-objects --revs --stdout --filter=tree:0 >cummitsonly.pack <<-EOF &&
 	HEAD:
 	EOF
-	git -C r1 index-pack ../commitsonly.pack &&
-	git -C r1 verify-pack -v ../commitsonly.pack >objs &&
+	git -C r1 index-pack ../cummitsonly.pack &&
+	git -C r1 verify-pack -v ../cummitsonly.pack >objs &&
 	awk "/tree|blob/{print \$1}" objs >trees_and_blobs &&
 	git -C r1 rev-parse HEAD: >expected &&
 	test_cmp expected trees_and_blobs
@@ -118,7 +118,7 @@ test_expect_success 'setup r2' '
 	do
 		printf "%"$n"s" X > r2/large.$n &&
 		git -C r2 add large.$n &&
-		git -C r2 commit -m "$n" || return 1
+		git -C r2 cummit -m "$n" || return 1
 	done
 '
 
@@ -250,14 +250,14 @@ test_expect_success 'verify blob:limit=1m' '
 	test_cmp expected observed
 '
 
-test_expect_success 'verify normal and blob:limit packfiles have same commits/trees' '
+test_expect_success 'verify normal and blob:limit packfiles have same cummits/trees' '
 	git -C r2 verify-pack -v ../all.pack >verify_result &&
-	grep -E "commit|tree" verify_result |
+	grep -E "cummit|tree" verify_result |
 	awk -f print_1.awk |
 	sort >expected &&
 
 	git -C r2 verify-pack -v ../filter.pack >verify_result &&
-	grep -E "commit|tree" verify_result |
+	grep -E "cummit|tree" verify_result |
 	awk -f print_1.awk |
 	sort >observed &&
 
@@ -283,7 +283,7 @@ test_expect_success 'setup r3' '
 		echo "This is file: dir1/$n" > r3/dir1/$n &&
 		git -C r3 add dir1/$n || return 1
 	done &&
-	git -C r3 commit -m "sparse" &&
+	git -C r3 cummit -m "sparse" &&
 	echo dir1/ >pattern1 &&
 	echo sparse1 >pattern2
 '
@@ -338,7 +338,7 @@ test_expect_success 'setup r4' '
 	done &&
 	echo dir1/ >r4/pattern &&
 	git -C r4 add pattern &&
-	git -C r4 commit -m "pattern"
+	git -C r4 cummit -m "pattern"
 '
 
 test_expect_success 'verify blob count in normal packfile' '

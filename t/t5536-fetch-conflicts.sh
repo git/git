@@ -19,10 +19,10 @@ setup_repository () {
 }
 
 test_expect_success 'setup' '
-	git commit --allow-empty -m "Initial" &&
+	git cummit --allow-empty -m "Initial" &&
 	git branch branch1 &&
 	git tag tag1 &&
-	git commit --allow-empty -m "First" &&
+	git cummit --allow-empty -m "First" &&
 	git branch branch2 &&
 	git tag tag2
 '

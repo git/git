@@ -14,7 +14,7 @@ users still may want to be aware of the changes:
    just like other branches; e.g.,
 
      $ git log --decorate -1 master
-     commit bdb0f6788fa5e3cacc4315e9ff318a27b2676ff4 (HEAD, master)
+     cummit bdb0f6788fa5e3cacc4315e9ff318a27b2676ff4 (HEAD, master)
      ...
 
    This release changes the output slightly when HEAD refers to a
@@ -22,17 +22,17 @@ users still may want to be aware of the changes:
    shown as:
 
      $ git log --decorate -1 master
-     commit bdb0f6788fa5e3cacc4315e9ff318a27b2676ff4 (HEAD -> master)
+     cummit bdb0f6788fa5e3cacc4315e9ff318a27b2676ff4 (HEAD -> master)
      ...
 
  * The phrasing "git branch" uses to describe a detached HEAD has been
    updated to agree with the phrasing used by "git status":
 
-    - When HEAD is at the same commit as when it was originally
-      detached, they now both show "detached at <commit object name>".
+    - When HEAD is at the same cummit as when it was originally
+      detached, they now both show "detached at <cummit object name>".
 
     - When HEAD has moved since it was originally detached, they now
-      both show "detached from <commit object name>".
+      both show "detached from <cummit object name>".
 
    Previously, "git branch" always used "from".
 
@@ -64,7 +64,7 @@ UI, Workflows & Features
  * The "sync" subcommand of "git p4" now allows users to exclude
    subdirectories like its "clone" subcommand does.
 
- * "git log --invert-grep --grep=WIP" will show only commits that do
+ * "git log --invert-grep --grep=WIP" will show only cummits that do
    not have the string "WIP" in their messages.
 
  * "git push" has been taught an "--atomic" option that makes a push
@@ -88,12 +88,12 @@ UI, Workflows & Features
 
  * "git status" now allows the "-v" option to be given twice, in which
    case it also shows the differences in the working tree that are not
-   staged to be committed.
+   staged to be cummitted.
 
  * "git cherry-pick" used to clean up the log message even when it is
-   merely replaying an existing commit. It now replays the message
+   merely replaying an existing cummit. It now replays the message
    verbatim unless you are editing the message of the resulting
-   commit.
+   cummit.
 
  * "git archive" can now be told to set the 'text' attribute in the
    resulting zip archive.
@@ -104,7 +104,7 @@ UI, Workflows & Features
    This is a potentially backward-incompatible change; see above for
    more information.
 
- * When HEAD was detached when at commit xyz and hasn't been moved
+ * When HEAD was detached when at cummit xyz and hasn't been moved
    since it was detached, "git status" would report "detached at xyz"
    whereas "git branch" would report "detached from xyz". Now the
    output of "git branch" agrees with that of "git status".
@@ -211,7 +211,7 @@ notes for details).
 
  * "git blame HEAD -- missing" failed to correctly say "HEAD" when it
    tried to say "No such path 'missing' in HEAD".
-   (merge a46442f jk/blame-commit-label later to maint).
+   (merge a46442f jk/blame-cummit-label later to maint).
 
  * "git rerere" (invoked internally from many mergy operations) did
    not correctly signal errors when it attempted to update the working
@@ -249,10 +249,10 @@ notes for details).
    side.
    (merge 8b9c2dd jk/dumb-http-idx-fetch-fix later to maint).
 
- * The error message from "git commit", when a non-existing author
+ * The error message from "git cummit", when a non-existing author
    name was given as value to the "--author=" parameter, has been
    reworded to avoid misunderstanding.
-   (merge 1044b1f mg/commit-author-no-match-malformed-message later to maint).
+   (merge 1044b1f mg/cummit-author-no-match-malformed-message later to maint).
 
  * "git log --help" used to show rev-list options that are irrelevant
    to the "log" command.
@@ -348,7 +348,7 @@ notes for details).
 
  * "git blame" could die trying to free an uninitialized piece of
    memory.
-   (merge e600592 es/blame-commit-info-fix later to maint).
+   (merge e600592 es/blame-cummit-info-fix later to maint).
 
  * "git fast-import" used to crash when it could not close and
    finalize the resulting packfile cleanly.
@@ -409,7 +409,7 @@ notes for details).
    "git grep -h" was phrased poorly.
    (merge 77fdb8a nd/grep-exclude-standard-help-fix later to maint).
 
- * "git rebase -i" recently started to include the number of commits
+ * "git rebase -i" recently started to include the number of cummits
    in the todo list, but that output included extraneous whitespace on
    a platform that prepends leading whitespaces to its "wc -l" output.
    (merge 2185d3b es/rebase-i-count-todo later to maint).
@@ -423,7 +423,7 @@ notes for details).
    (merge 4d6be03 jk/diffcore-rename-duplicate later to maint).
 
  * Certain builds of GPG triggered false breakages in a test.
-   (merge 3f88c1b mg/verify-commit later to maint).
+   (merge 3f88c1b mg/verify-cummit later to maint).
 
  * "git imap-send" learned to optionally talk with an IMAP server via
    libcURL. Because there is no other option when Git is built with
@@ -458,7 +458,7 @@ notes for details).
    that writes an invalid index with duplicated index entries, etc.
    (merge 03f15a7 tg/fix-check-order-with-split-index later to maint).
 
- * "git fetch", when fetching a commit using the
+ * "git fetch", when fetching a cummit using the
    allow-tip-sha1-in-want extension, could have failed to fetch all of
    the requested refs.
    (merge 32d0462 jk/fetch-pack later to maint).

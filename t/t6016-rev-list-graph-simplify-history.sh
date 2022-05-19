@@ -19,38 +19,38 @@ check_graph () {
 }
 
 test_expect_success 'set up rev-list --graph test' '
-	# 3 commits on branch A
-	test_commit A1 foo.txt &&
-	test_commit A2 bar.txt &&
-	test_commit A3 bar.txt &&
+	# 3 cummits on branch A
+	test_cummit A1 foo.txt &&
+	test_cummit A2 bar.txt &&
+	test_cummit A3 bar.txt &&
 	git branch -m main A &&
 
-	# 2 commits on branch B, started from A1
+	# 2 cummits on branch B, started from A1
 	git checkout -b B A1 &&
-	test_commit B1 foo.txt &&
-	test_commit B2 abc.txt &&
+	test_cummit B1 foo.txt &&
+	test_cummit B2 abc.txt &&
 
-	# 2 commits on branch C, started from A2
+	# 2 cummits on branch C, started from A2
 	git checkout -b C A2 &&
-	test_commit C1 xyz.txt &&
-	test_commit C2 xyz.txt &&
+	test_cummit C1 xyz.txt &&
+	test_cummit C2 xyz.txt &&
 
 	# Octopus merge B and C into branch A
 	git checkout A &&
 	git merge B C -m A4 &&
 	git tag A4 &&
 
-	test_commit A5 bar.txt &&
+	test_cummit A5 bar.txt &&
 
-	# More commits on C, then merge C into A
+	# More cummits on C, then merge C into A
 	git checkout C &&
-	test_commit C3 foo.txt &&
-	test_commit C4 bar.txt &&
+	test_cummit C3 foo.txt &&
+	test_cummit C4 bar.txt &&
 	git checkout A &&
 	git merge -s ours C -m A6 &&
 	git tag A6 &&
 
-	test_commit A7 bar.txt
+	test_cummit A7 bar.txt
 '
 
 test_expect_success '--graph --all' '
@@ -216,7 +216,7 @@ test_expect_success '--graph ^C3' '
 	EOF
 '
 
-# I don't think the ordering of the boundary commits is really
+# I don't think the ordering of the boundary cummits is really
 # that important, but this test depends on it.  If the ordering ever changes
 # in the code, we'll need to update this test.
 test_expect_success '--graph --boundary ^C3' '

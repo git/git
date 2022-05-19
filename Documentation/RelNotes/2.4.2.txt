@@ -16,7 +16,7 @@ Fixes since v2.4.1
 
  * The completion for "log --decorate=" parameter value was incorrect.
 
- * "filter-branch" corrupted commit log message that ends with an
+ * "filter-branch" corrupted cummit log message that ends with an
    incomplete line on platforms with some "sed" implementations that
    munge such a line.  Work it around by avoiding to use "sed".
 

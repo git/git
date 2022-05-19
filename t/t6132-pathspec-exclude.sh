@@ -11,7 +11,7 @@ test_expect_success 'setup' '
 		fi &&
 		: >$p &&
 		git add $p &&
-		git commit -m $p || return 1
+		git cummit -m $p || return 1
 	done &&
 	git log --oneline --format=%s >actual &&
 	cat <<EOF >expect &&
@@ -201,7 +201,7 @@ test_expect_success 't_e_i() exclude case #8' '
 		echo file >file1 &&
 		echo file >file2 &&
 		git add file1 file2 &&
-		git commit -m twofiles &&
+		git cummit -m twofiles &&
 		git grep -l file HEAD :^file2 >actual &&
 		echo HEAD:file1 >expected &&
 		test_cmp expected actual &&

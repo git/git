@@ -8,25 +8,25 @@
 #include "tag.h"
 #include "blame.h"
 #include "alloc.h"
-#include "commit-slab.h"
+#include "cummit-slab.h"
 #include "bloom.h"
-#include "commit-graph.h"
+#include "cummit-graph.h"
 
-define_commit_slab(blame_suspects, struct blame_origin *);
+define_cummit_slab(blame_suspects, struct blame_origin *);
 static struct blame_suspects blame_suspects;
 
-struct blame_origin *get_blame_suspects(struct commit *commit)
+struct blame_origin *get_blame_suspects(struct cummit *cummit)
 {
 	struct blame_origin **result;
 
-	result = blame_suspects_peek(&blame_suspects, commit);
+	result = blame_suspects_peek(&blame_suspects, cummit);
 
 	return result ? *result : NULL;
 }
 
-static void set_blame_suspects(struct commit *commit, struct blame_origin *origin)
+static void set_blame_suspects(struct cummit *cummit, struct blame_origin *origin)
 {
-	*blame_suspects_at(&blame_suspects, commit) = origin;
+	*blame_suspects_at(&blame_suspects, cummit) = origin;
 }
 
 void blame_origin_decref(struct blame_origin *o)
@@ -36,13 +36,13 @@ void blame_origin_decref(struct blame_origin *o)
 		if (o->previous)
 			blame_origin_decref(o->previous);
 		free(o->file.ptr);
-		/* Should be present exactly once in commit chain */
-		for (p = get_blame_suspects(o->commit); p; l = p, p = p->next) {
+		/* Should be present exactly once in cummit chain */
+		for (p = get_blame_suspects(o->cummit); p; l = p, p = p->next) {
 			if (p == o) {
 				if (l)
 					l->next = p->next;
 				else
-					set_blame_suspects(o->commit, p->next);
+					set_blame_suspects(o->cummit, p->next);
 				free(o);
 				return;
 			}
@@ -52,58 +52,58 @@ void blame_origin_decref(struct blame_origin *o)
 }
 
 /*
- * Given a commit and a path in it, create a new origin structure.
+ * Given a cummit and a path in it, create a new origin structure.
  * The callers that add blame to the scoreboard should use
  * get_origin() to obtain shared, refcounted copy instead of calling
  * this function directly.
  */
-static struct blame_origin *make_origin(struct commit *commit, const char *path)
+static struct blame_origin *make_origin(struct cummit *cummit, const char *path)
 {
 	struct blame_origin *o;
 	FLEX_ALLOC_STR(o, path, path);
-	o->commit = commit;
+	o->cummit = cummit;
 	o->refcnt = 1;
-	o->next = get_blame_suspects(commit);
-	set_blame_suspects(commit, o);
+	o->next = get_blame_suspects(cummit);
+	set_blame_suspects(cummit, o);
 	return o;
 }
 
 /*
  * Locate an existing origin or create a new one.
- * This moves the origin to front position in the commit util list.
+ * This moves the origin to front position in the cummit util list.
  */
-static struct blame_origin *get_origin(struct commit *commit, const char *path)
+static struct blame_origin *get_origin(struct cummit *cummit, const char *path)
 {
 	struct blame_origin *o, *l;
 
-	for (o = get_blame_suspects(commit), l = NULL; o; l = o, o = o->next) {
+	for (o = get_blame_suspects(cummit), l = NULL; o; l = o, o = o->next) {
 		if (!strcmp(o->path, path)) {
 			/* bump to front */
 			if (l) {
 				l->next = o->next;
-				o->next = get_blame_suspects(commit);
-				set_blame_suspects(commit, o);
+				o->next = get_blame_suspects(cummit);
+				set_blame_suspects(cummit, o);
 			}
 			return blame_origin_incref(o);
 		}
 	}
-	return make_origin(commit, path);
+	return make_origin(cummit, path);
 }
 
 
 
 static void verify_working_tree_path(struct repository *r,
-				     struct commit *work_tree, const char *path)
+				     struct cummit *work_tree, const char *path)
 {
-	struct commit_list *parents;
+	struct cummit_list *parents;
 	int pos;
 
 	for (parents = work_tree->parents; parents; parents = parents->next) {
-		const struct object_id *commit_oid = &parents->item->object.oid;
+		const struct object_id *cummit_oid = &parents->item->object.oid;
 		struct object_id blob_oid;
 		unsigned short mode;
 
-		if (!get_tree_entry(r, commit_oid, path, &blob_oid, &mode) &&
+		if (!get_tree_entry(r, cummit_oid, path, &blob_oid, &mode) &&
 		    oid_object_info(r, &blob_oid, NULL) == OBJ_BLOB)
 			return;
 	}
@@ -118,20 +118,20 @@ static void verify_working_tree_path(struct repository *r,
 		die("no such path '%s' in HEAD", path);
 }
 
-static struct commit_list **append_parent(struct repository *r,
-					  struct commit_list **tail,
+static struct cummit_list **append_parent(struct repository *r,
+					  struct cummit_list **tail,
 					  const struct object_id *oid)
 {
-	struct commit *parent;
+	struct cummit *parent;
 
-	parent = lookup_commit_reference(r, oid);
+	parent = lookup_cummit_reference(r, oid);
 	if (!parent)
-		die("no such commit %s", oid_to_hex(oid));
-	return &commit_list_insert(parent, tail)->next;
+		die("no such cummit %s", oid_to_hex(oid));
+	return &cummit_list_insert(parent, tail)->next;
 }
 
 static void append_merge_parents(struct repository *r,
-				 struct commit_list **tail)
+				 struct cummit_list **tail)
 {
 	int merge_head;
 	struct strbuf line = STRBUF_INIT;
@@ -157,30 +157,30 @@ static void append_merge_parents(struct repository *r,
 
 /*
  * This isn't as simple as passing sb->buf and sb->len, because we
- * want to transfer ownership of the buffer to the commit (so we
+ * want to transfer ownership of the buffer to the cummit (so we
  * must use detach).
  */
-static void set_commit_buffer_from_strbuf(struct repository *r,
-					  struct commit *c,
+static void set_cummit_buffer_from_strbuf(struct repository *r,
+					  struct cummit *c,
 					  struct strbuf *sb)
 {
 	size_t len;
 	void *buf = strbuf_detach(sb, &len);
-	set_commit_buffer(r, c, buf, len);
+	set_cummit_buffer(r, c, buf, len);
 }
 
 /*
- * Prepare a dummy commit that represents the work tree (or staged) item.
+ * Prepare a dummy cummit that represents the work tree (or staged) item.
  * Note that annotating work tree item never works in the reverse.
  */
-static struct commit *fake_working_tree_commit(struct repository *r,
+static struct cummit *fake_working_tree_cummit(struct repository *r,
 					       struct diff_options *opt,
 					       const char *path,
 					       const char *contents_from)
 {
-	struct commit *commit;
+	struct cummit *cummit;
 	struct blame_origin *origin;
-	struct commit_list **parent_tail, *parent;
+	struct cummit_list **parent_tail, *parent;
 	struct object_id head_oid;
 	struct strbuf buf = STRBUF_INIT;
 	const char *ident;
@@ -192,34 +192,34 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 
 	repo_read_index(r);
 	time(&now);
-	commit = alloc_commit_node(r);
-	commit->object.parsed = 1;
-	commit->date = now;
-	parent_tail = &commit->parents;
+	cummit = alloc_cummit_node(r);
+	cummit->object.parsed = 1;
+	cummit->date = now;
+	parent_tail = &cummit->parents;
 
 	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
 		die("no such ref: HEAD");
 
 	parent_tail = append_parent(r, parent_tail, &head_oid);
 	append_merge_parents(r, parent_tail);
-	verify_working_tree_path(r, commit, path);
+	verify_working_tree_path(r, cummit, path);
 
-	origin = make_origin(commit, path);
+	origin = make_origin(cummit, path);
 
-	ident = fmt_ident("Not Committed Yet", "not.committed.yet",
+	ident = fmt_ident("Not cummitted Yet", "not.cummitted.yet",
 			WANT_BLANK_IDENT, NULL, 0);
 	strbuf_addstr(&msg, "tree 0000000000000000000000000000000000000000\n");
-	for (parent = commit->parents; parent; parent = parent->next)
+	for (parent = cummit->parents; parent; parent = parent->next)
 		strbuf_addf(&msg, "parent %s\n",
 			    oid_to_hex(&parent->item->object.oid));
 	strbuf_addf(&msg,
 		    "author %s\n"
-		    "committer %s\n\n"
+		    "cummitter %s\n\n"
 		    "Version of %s from %s\n",
 		    ident, ident, path,
 		    (!contents_from ? path :
 		     (!strcmp(contents_from, "-") ? "standard input" : contents_from)));
-	set_commit_buffer_from_strbuf(r, commit, &msg);
+	set_cummit_buffer_from_strbuf(r, cummit, &msg);
 
 	if (!contents_from || strcmp("-", contents_from)) {
 		struct stat st;
@@ -295,7 +295,7 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 
 	cache_tree_invalidate_path(r->index, path);
 
-	return commit;
+	return cummit;
 }
 
 
@@ -1142,11 +1142,11 @@ void blame_sort_final(struct blame_scoreboard *sb)
 				  compare_blame_final);
 }
 
-static int compare_commits_by_reverse_commit_date(const void *a,
+static int compare_cummits_by_reverse_cummit_date(const void *a,
 						  const void *b,
 						  void *c)
 {
-	return -compare_commits_by_commit_date(a, b, c);
+	return -compare_cummits_by_cummit_date(a, b, c);
 }
 
 /*
@@ -1163,7 +1163,7 @@ static void sanity_check_refcnt(struct blame_scoreboard *sb)
 		if (ent->suspect->refcnt <= 0) {
 			fprintf(stderr, "%s in %s has negative refcnt %d\n",
 				ent->suspect->path,
-				oid_to_hex(&ent->suspect->commit->object.oid),
+				oid_to_hex(&ent->suspect->cummit->object.oid),
 				ent->suspect->refcnt);
 			baa = 1;
 		}
@@ -1174,7 +1174,7 @@ static void sanity_check_refcnt(struct blame_scoreboard *sb)
 
 /*
  * If two blame entries that are next to each other came from
- * contiguous lines in the same origin (i.e. <commit, path> pair),
+ * contiguous lines in the same origin (i.e. <cummit, path> pair),
  * merge them together.
  */
 void blame_coalesce(struct blame_scoreboard *sb)
@@ -1202,8 +1202,8 @@ void blame_coalesce(struct blame_scoreboard *sb)
 
 /*
  * Merge the given sorted list of blames into a preexisting origin.
- * If there were no previous blames to that commit, it is entered into
- * the commit priority queue of the score board.
+ * If there were no previous blames to that cummit, it is entered into
+ * the cummit priority queue of the score board.
  */
 
 static void queue_blames(struct blame_scoreboard *sb, struct blame_origin *porigin,
@@ -1213,14 +1213,14 @@ static void queue_blames(struct blame_scoreboard *sb, struct blame_origin *porig
 		porigin->suspects = blame_merge(porigin->suspects, sorted);
 	else {
 		struct blame_origin *o;
-		for (o = get_blame_suspects(porigin->commit); o; o = o->next) {
+		for (o = get_blame_suspects(porigin->cummit); o; o = o->next) {
 			if (o->suspects) {
 				porigin->suspects = sorted;
 				return;
 			}
 		}
 		porigin->suspects = sorted;
-		prio_queue_put(&sb->commits, porigin->commit);
+		prio_queue_put(&sb->cummits, porigin->cummit);
 	}
 }
 
@@ -1238,7 +1238,7 @@ static int fill_blob_sha1_and_mode(struct repository *r,
 {
 	if (!is_null_oid(&origin->blob_oid))
 		return 0;
-	if (get_tree_entry(r, &origin->commit->object.oid, origin->path, &origin->blob_oid, &origin->mode))
+	if (get_tree_entry(r, &origin->cummit->object.oid, origin->path, &origin->blob_oid, &origin->mode))
 		goto error_out;
 	if (oid_object_info(r, &origin->blob_oid, NULL) != OBJ_BLOB)
 		goto error_out;
@@ -1273,10 +1273,10 @@ static int maybe_changed_path(struct repository *r,
 	if (!bd)
 		return 1;
 
-	if (commit_graph_generation(origin->commit) == GENERATION_NUMBER_INFINITY)
+	if (cummit_graph_generation(origin->cummit) == GENERATION_NUMBER_INFINITY)
 		return 1;
 
-	filter = get_bloom_filter(r, origin->commit);
+	filter = get_bloom_filter(r, origin->cummit);
 
 	if (!filter)
 		return 1;
@@ -1314,7 +1314,7 @@ static void add_bloom_key(struct blame_bloom_data *bd,
  * parent and return an origin structure to represent it.
  */
 static struct blame_origin *find_origin(struct repository *r,
-					struct commit *parent,
+					struct cummit *parent,
 					struct blame_origin *origin,
 					struct blame_bloom_data *bd)
 {
@@ -1348,18 +1348,18 @@ static struct blame_origin *find_origin(struct repository *r,
 		       PATHSPEC_LITERAL_PATH, "", paths);
 	diff_setup_done(&diff_opts);
 
-	if (is_null_oid(&origin->commit->object.oid))
-		do_diff_cache(get_commit_tree_oid(parent), &diff_opts);
+	if (is_null_oid(&origin->cummit->object.oid))
+		do_diff_cache(get_cummit_tree_oid(parent), &diff_opts);
 	else {
 		int compute_diff = 1;
-		if (origin->commit->parents &&
+		if (origin->cummit->parents &&
 		    oideq(&parent->object.oid,
-			  &origin->commit->parents->item->object.oid))
+			  &origin->cummit->parents->item->object.oid))
 			compute_diff = maybe_changed_path(r, origin, bd);
 
 		if (compute_diff)
-			diff_tree_oid(get_commit_tree_oid(parent),
-				      get_commit_tree_oid(origin->commit),
+			diff_tree_oid(get_cummit_tree_oid(parent),
+				      get_cummit_tree_oid(origin->cummit),
 				      "", &diff_opts);
 	}
 	diffcore_std(&diff_opts);
@@ -1411,7 +1411,7 @@ static struct blame_origin *find_origin(struct repository *r,
  * parent and return an origin structure to represent it.
  */
 static struct blame_origin *find_rename(struct repository *r,
-					struct commit *parent,
+					struct cummit *parent,
 					struct blame_origin *origin,
 					struct blame_bloom_data *bd)
 {
@@ -1426,11 +1426,11 @@ static struct blame_origin *find_rename(struct repository *r,
 	diff_opts.single_follow = origin->path;
 	diff_setup_done(&diff_opts);
 
-	if (is_null_oid(&origin->commit->object.oid))
-		do_diff_cache(get_commit_tree_oid(parent), &diff_opts);
+	if (is_null_oid(&origin->cummit->object.oid))
+		do_diff_cache(get_cummit_tree_oid(parent), &diff_opts);
 	else
-		diff_tree_oid(get_commit_tree_oid(parent),
-			      get_commit_tree_oid(origin->commit),
+		diff_tree_oid(get_cummit_tree_oid(parent),
+			      get_cummit_tree_oid(origin->cummit),
 			      "", &diff_opts);
 	diffcore_std(&diff_opts);
 
@@ -1893,7 +1893,7 @@ static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
 		 * guess_line_blames() can pick *any* line in the parent.  The
 		 * slight drawback is that we end up sorting all blame entries
 		 * passed to the parent, including those that are unrelated to
-		 * changes made by the ignored commit.
+		 * changes made by the ignored cummit.
 		 */
 		**dstq = reverse_blame(ignoredp, **dstq);
 		*dstq = &ignoredp->next;
@@ -1957,8 +1957,8 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 
 	if (diff_hunks(&file_p, &file_o, blame_chunk_cb, &d, sb->xdl_opts))
 		die("unable to generate diff (%s -> %s)",
-		    oid_to_hex(&parent->commit->object.oid),
-		    oid_to_hex(&target->commit->object.oid));
+		    oid_to_hex(&parent->cummit->object.oid),
+		    oid_to_hex(&target->cummit->object.oid));
 	/* The rest are the same as the parent */
 	blame_chunk(&d.dstq, &d.srcq, INT_MAX, d.offset, INT_MAX, 0,
 		    parent, target, 0);
@@ -2112,7 +2112,7 @@ static void find_copy_in_blob(struct blame_scoreboard *sb,
 	memset(split, 0, sizeof(struct blame_entry [3]));
 	if (diff_hunks(file_p, &file_o, handle_split_cb, &d, sb->xdl_opts))
 		die("unable to generate diff (%s)",
-		    oid_to_hex(&parent->commit->object.oid));
+		    oid_to_hex(&parent->cummit->object.oid));
 	/* remainder, if any, all match the preimage */
 	handle_split(sb, ent, d.tlno, d.plno, ent->num_lines, parent, split);
 }
@@ -2223,14 +2223,14 @@ static struct blame_list *setup_blame_list(struct blame_entry *unblamed,
 
 /*
  * For lines target is suspected for, see if we can find code movement
- * across file boundary from the parent commit.  porigin is the path
+ * across file boundary from the parent cummit.  porigin is the path
  * in the parent we already tried.
  */
 static void find_copy_in_parent(struct blame_scoreboard *sb,
 				struct blame_entry ***blamed,
 				struct blame_entry **toosmall,
 				struct blame_origin *target,
-				struct commit *parent,
+				struct cummit *parent,
 				struct blame_origin *porigin,
 				int opt)
 {
@@ -2262,11 +2262,11 @@ static void find_copy_in_parent(struct blame_scoreboard *sb,
 		&& (!porigin || strcmp(target->path, porigin->path))))
 		diff_opts.flags.find_copies_harder = 1;
 
-	if (is_null_oid(&target->commit->object.oid))
-		do_diff_cache(get_commit_tree_oid(parent), &diff_opts);
+	if (is_null_oid(&target->cummit->object.oid))
+		do_diff_cache(get_cummit_tree_oid(parent), &diff_opts);
 	else
-		diff_tree_oid(get_commit_tree_oid(parent),
-			      get_commit_tree_oid(target->commit),
+		diff_tree_oid(get_cummit_tree_oid(parent),
+			      get_cummit_tree_oid(target->cummit),
 			      "", &diff_opts);
 
 	if (!diff_opts.flags.find_copies_harder)
@@ -2353,29 +2353,29 @@ static void pass_whole_blame(struct blame_scoreboard *sb,
 }
 
 /*
- * We pass blame from the current commit to its parents.  We keep saying
+ * We pass blame from the current cummit to its parents.  We keep saying
  * "parent" (and "porigin"), but what we mean is to find scapegoat to
  * exonerate ourselves.
  */
-static struct commit_list *first_scapegoat(struct rev_info *revs, struct commit *commit,
+static struct cummit_list *first_scapegoat(struct rev_info *revs, struct cummit *cummit,
 					int reverse)
 {
 	if (!reverse) {
 		if (revs->first_parent_only &&
-		    commit->parents &&
-		    commit->parents->next) {
-			free_commit_list(commit->parents->next);
-			commit->parents->next = NULL;
+		    cummit->parents &&
+		    cummit->parents->next) {
+			free_cummit_list(cummit->parents->next);
+			cummit->parents->next = NULL;
 		}
-		return commit->parents;
+		return cummit->parents;
 	}
-	return lookup_decoration(&revs->children, &commit->object);
+	return lookup_decoration(&revs->children, &cummit->object);
 }
 
-static int num_scapegoats(struct rev_info *revs, struct commit *commit, int reverse)
+static int num_scapegoats(struct rev_info *revs, struct cummit *cummit, int reverse)
 {
-	struct commit_list *l = first_scapegoat(revs, commit, reverse);
-	return commit_list_count(l);
+	struct cummit_list *l = first_scapegoat(revs, cummit, reverse);
+	return cummit_list_count(l);
 }
 
 /* Distribute collected unsorted blames to the respected sorted lists
@@ -2403,7 +2403,7 @@ static void distribute_blame(struct blame_scoreboard *sb, struct blame_entry *bl
 #define MAXSG 16
 
 typedef struct blame_origin *(*blame_find_alg)(struct repository *,
-					       struct commit *,
+					       struct cummit *,
 					       struct blame_origin *,
 					       struct blame_bloom_data *);
 
@@ -2411,14 +2411,14 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 {
 	struct rev_info *revs = sb->revs;
 	int i, pass, num_sg;
-	struct commit *commit = origin->commit;
-	struct commit_list *sg;
+	struct cummit *cummit = origin->cummit;
+	struct cummit_list *sg;
 	struct blame_origin *sg_buf[MAXSG];
 	struct blame_origin *porigin, **sg_origin = sg_buf;
 	struct blame_entry *toosmall = NULL;
 	struct blame_entry *blames, **blametail = &blames;
 
-	num_sg = num_scapegoats(revs, commit, sb->reverse);
+	num_sg = num_scapegoats(revs, cummit, sb->reverse);
 	if (!num_sg)
 		goto finish;
 	else if (num_sg < ARRAY_SIZE(sg_buf))
@@ -2433,15 +2433,15 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	for (pass = 0; pass < 2 - sb->no_whole_file_rename; pass++) {
 		blame_find_alg find = pass ? find_rename : find_origin;
 
-		for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
+		for (i = 0, sg = first_scapegoat(revs, cummit, sb->reverse);
 		     i < num_sg && sg;
 		     sg = sg->next, i++) {
-			struct commit *p = sg->item;
+			struct cummit *p = sg->item;
 			int j, same;
 
 			if (sg_origin[i])
 				continue;
-			if (parse_commit(p))
+			if (parse_cummit(p))
 				continue;
 			porigin = find(sb->repo, p, origin, sb->bloom_data);
 			if (!porigin)
@@ -2464,8 +2464,8 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 		}
 	}
 
-	sb->num_commits++;
-	for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
+	sb->num_cummits++;
+	for (i = 0, sg = first_scapegoat(revs, cummit, sb->reverse);
 	     i < num_sg && sg;
 	     sg = sg->next, i++) {
 		struct blame_origin *porigin = sg_origin[i];
@@ -2481,10 +2481,10 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	}
 
 	/*
-	 * Pass remaining suspects for ignored commits to their parents.
+	 * Pass remaining suspects for ignored cummits to their parents.
 	 */
-	if (oidset_contains(&sb->ignore_list, &commit->object.oid)) {
-		for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
+	if (oidset_contains(&sb->ignore_list, &cummit->object.oid)) {
+		for (i = 0, sg = first_scapegoat(revs, cummit, sb->reverse);
 		     i < num_sg && sg;
 		     sg = sg->next, i++) {
 			struct blame_origin *porigin = sg_origin[i];
@@ -2495,7 +2495,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 			/*
 			 * Preemptively drop porigin so we can refresh the
 			 * fingerprints if we use the parent again, which can
-			 * occur if you ignore back-to-back commits.
+			 * occur if you ignore back-to-back cummits.
 			 */
 			drop_origin_blob(porigin);
 			if (!origin->suspects)
@@ -2509,7 +2509,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 	if (opt & PICKAXE_BLAME_MOVE) {
 		filter_small(sb, &toosmall, &origin->suspects, sb->move_score);
 		if (origin->suspects) {
-			for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
+			for (i = 0, sg = first_scapegoat(revs, cummit, sb->reverse);
 			     i < num_sg && sg;
 			     sg = sg->next, i++) {
 				struct blame_origin *porigin = sg_origin[i];
@@ -2536,7 +2536,7 @@ static void pass_blame(struct blame_scoreboard *sb, struct blame_origin *origin,
 		if (!origin->suspects)
 			goto finish;
 
-		for (i = 0, sg = first_scapegoat(revs, commit, sb->reverse);
+		for (i = 0, sg = first_scapegoat(revs, cummit, sb->reverse);
 		     i < num_sg && sg;
 		     sg = sg->next, i++) {
 			struct blame_origin *porigin = sg_origin[i];
@@ -2582,41 +2582,41 @@ finish:
 void assign_blame(struct blame_scoreboard *sb, int opt)
 {
 	struct rev_info *revs = sb->revs;
-	struct commit *commit = prio_queue_get(&sb->commits);
+	struct cummit *cummit = prio_queue_get(&sb->cummits);
 
-	while (commit) {
+	while (cummit) {
 		struct blame_entry *ent;
-		struct blame_origin *suspect = get_blame_suspects(commit);
+		struct blame_origin *suspect = get_blame_suspects(cummit);
 
 		/* find one suspect to break down */
 		while (suspect && !suspect->suspects)
 			suspect = suspect->next;
 
 		if (!suspect) {
-			commit = prio_queue_get(&sb->commits);
+			cummit = prio_queue_get(&sb->cummits);
 			continue;
 		}
 
-		assert(commit == suspect->commit);
+		assert(cummit == suspect->cummit);
 
 		/*
 		 * We will use this suspect later in the loop,
 		 * so hold onto it in the meantime.
 		 */
 		blame_origin_incref(suspect);
-		parse_commit(commit);
+		parse_cummit(cummit);
 		if (sb->reverse ||
-		    (!(commit->object.flags & UNINTERESTING) &&
-		     !(revs->max_age != -1 && commit->date < revs->max_age)))
+		    (!(cummit->object.flags & UNINTERESTING) &&
+		     !(revs->max_age != -1 && cummit->date < revs->max_age)))
 			pass_blame(sb, suspect, opt);
 		else {
-			commit->object.flags |= UNINTERESTING;
-			if (commit->object.parsed)
-				mark_parents_uninteresting(sb->revs, commit);
+			cummit->object.flags |= UNINTERESTING;
+			if (cummit->object.parsed)
+				mark_parents_uninteresting(sb->revs, cummit);
 		}
-		/* treat root commit as boundary */
-		if (!commit->parents && !sb->show_root)
-			commit->object.flags |= UNINTERESTING;
+		/* treat root cummit as boundary */
+		if (!cummit->parents && !sb->show_root)
+			cummit->object.flags |= UNINTERESTING;
 
 		/* Take responsibility for the remaining entries */
 		ent = suspect->suspects;
@@ -2654,11 +2654,11 @@ static int prepare_lines(struct blame_scoreboard *sb)
 	return sb->num_lines;
 }
 
-static struct commit *find_single_final(struct rev_info *revs,
+static struct cummit *find_single_final(struct rev_info *revs,
 					const char **name_p)
 {
 	int i;
-	struct commit *found = NULL;
+	struct cummit *found = NULL;
 	const char *name = NULL;
 
 	for (i = 0; i < revs->pending.nr; i++) {
@@ -2666,12 +2666,12 @@ static struct commit *find_single_final(struct rev_info *revs,
 		if (obj->flags & UNINTERESTING)
 			continue;
 		obj = deref_tag(revs->repo, obj, NULL, 0);
-		if (!obj || obj->type != OBJ_COMMIT)
-			die("Non commit %s?", revs->pending.objects[i].name);
+		if (!obj || obj->type != OBJ_cummit)
+			die("Non cummit %s?", revs->pending.objects[i].name);
 		if (found)
-			die("More than one commit to dig from %s and %s?",
+			die("More than one cummit to dig from %s and %s?",
 			    revs->pending.objects[i].name, name);
-		found = (struct commit *)obj;
+		found = (struct cummit *)obj;
 		name = revs->pending.objects[i].name;
 	}
 	if (name_p)
@@ -2679,7 +2679,7 @@ static struct commit *find_single_final(struct rev_info *revs,
 	return found;
 }
 
-static struct commit *dwim_reverse_initial(struct rev_info *revs,
+static struct cummit *dwim_reverse_initial(struct rev_info *revs,
 					   const char **name_p)
 {
 	/*
@@ -2688,44 +2688,44 @@ static struct commit *dwim_reverse_initial(struct rev_info *revs,
 	 * when it makes sense.
 	 */
 	struct object *obj;
-	struct commit *head_commit;
+	struct cummit *head_cummit;
 	struct object_id head_oid;
 
 	if (revs->pending.nr != 1)
 		return NULL;
 
-	/* Is that sole rev a committish? */
+	/* Is that sole rev a cummittish? */
 	obj = revs->pending.objects[0].item;
 	obj = deref_tag(revs->repo, obj, NULL, 0);
-	if (!obj || obj->type != OBJ_COMMIT)
+	if (!obj || obj->type != OBJ_cummit)
 		return NULL;
 
 	/* Do we have HEAD? */
 	if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING, &head_oid, NULL))
 		return NULL;
-	head_commit = lookup_commit_reference_gently(revs->repo,
+	head_cummit = lookup_cummit_reference_gently(revs->repo,
 						     &head_oid, 1);
-	if (!head_commit)
+	if (!head_cummit)
 		return NULL;
 
 	/* Turn "ONE" into "ONE..HEAD" then */
 	obj->flags |= UNINTERESTING;
-	add_pending_object(revs, &head_commit->object, "HEAD");
+	add_pending_object(revs, &head_cummit->object, "HEAD");
 
 	if (name_p)
 		*name_p = revs->pending.objects[0].name;
-	return (struct commit *)obj;
+	return (struct cummit *)obj;
 }
 
-static struct commit *find_single_initial(struct rev_info *revs,
+static struct cummit *find_single_initial(struct rev_info *revs,
 					  const char **name_p)
 {
 	int i;
-	struct commit *found = NULL;
+	struct cummit *found = NULL;
 	const char *name = NULL;
 
 	/*
-	 * There must be one and only one negative commit, and it must be
+	 * There must be one and only one negative cummit, and it must be
 	 * the boundary.
 	 */
 	for (i = 0; i < revs->pending.nr; i++) {
@@ -2733,19 +2733,19 @@ static struct commit *find_single_initial(struct rev_info *revs,
 		if (!(obj->flags & UNINTERESTING))
 			continue;
 		obj = deref_tag(revs->repo, obj, NULL, 0);
-		if (!obj || obj->type != OBJ_COMMIT)
-			die("Non commit %s?", revs->pending.objects[i].name);
+		if (!obj || obj->type != OBJ_cummit)
+			die("Non cummit %s?", revs->pending.objects[i].name);
 		if (found)
-			die("More than one commit to dig up from, %s and %s?",
+			die("More than one cummit to dig up from, %s and %s?",
 			    revs->pending.objects[i].name, name);
-		found = (struct commit *) obj;
+		found = (struct cummit *) obj;
 		name = revs->pending.objects[i].name;
 	}
 
 	if (!name)
 		found = dwim_reverse_initial(revs, &name);
 	if (!name)
-		die("No commit to dig up from?");
+		die("No cummit to dig up from?");
 
 	if (name_p)
 		*name_p = xstrdup(name);
@@ -2762,9 +2762,9 @@ void init_scoreboard(struct blame_scoreboard *sb)
 void setup_scoreboard(struct blame_scoreboard *sb,
 		      struct blame_origin **orig)
 {
-	const char *final_commit_name = NULL;
+	const char *final_cummit_name = NULL;
 	struct blame_origin *o;
-	struct commit *final_commit = NULL;
+	struct cummit *final_cummit = NULL;
 	enum object_type type;
 
 	init_blame_suspects(&blame_suspects);
@@ -2776,15 +2776,15 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		BUG("repo is NULL");
 
 	if (!sb->reverse) {
-		sb->final = find_single_final(sb->revs, &final_commit_name);
-		sb->commits.compare = compare_commits_by_commit_date;
+		sb->final = find_single_final(sb->revs, &final_cummit_name);
+		sb->cummits.compare = compare_cummits_by_cummit_date;
 	} else {
-		sb->final = find_single_initial(sb->revs, &final_commit_name);
-		sb->commits.compare = compare_commits_by_reverse_commit_date;
+		sb->final = find_single_initial(sb->revs, &final_cummit_name);
+		sb->cummits.compare = compare_cummits_by_reverse_cummit_date;
 	}
 
 	if (sb->final && sb->contents_from)
-		die(_("cannot use --contents with final commit object name"));
+		die(_("cannot use --contents with final cummit object name"));
 
 	if (sb->reverse && sb->revs->first_parent_only)
 		sb->revs->children.name = NULL;
@@ -2796,33 +2796,33 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		 * or "--contents".
 		 */
 		setup_work_tree();
-		sb->final = fake_working_tree_commit(sb->repo,
+		sb->final = fake_working_tree_cummit(sb->repo,
 						     &sb->revs->diffopt,
 						     sb->path, sb->contents_from);
 		add_pending_object(sb->revs, &(sb->final->object), ":");
 	}
 
 	if (sb->reverse && sb->revs->first_parent_only) {
-		final_commit = find_single_final(sb->revs, NULL);
-		if (!final_commit)
-			die(_("--reverse and --first-parent together require specified latest commit"));
+		final_cummit = find_single_final(sb->revs, NULL);
+		if (!final_cummit)
+			die(_("--reverse and --first-parent together require specified latest cummit"));
 	}
 
 	/*
 	 * If we have bottom, this will mark the ancestors of the
-	 * bottom commits we would reach while traversing as
+	 * bottom cummits we would reach while traversing as
 	 * uninteresting.
 	 */
 	if (prepare_revision_walk(sb->revs))
 		die(_("revision walk setup failed"));
 
 	if (sb->reverse && sb->revs->first_parent_only) {
-		struct commit *c = final_commit;
+		struct cummit *c = final_cummit;
 
 		sb->revs->children.name = "children";
 		while (c->parents &&
 		       !oideq(&c->object.oid, &sb->final->object.oid)) {
-			struct commit_list *l = xcalloc(1, sizeof(*l));
+			struct cummit_list *l = xcalloc(1, sizeof(*l));
 
 			l->item = c;
 			if (add_decoration(&sb->revs->children,
@@ -2843,7 +2843,7 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 	else {
 		o = get_origin(sb->final, sb->path);
 		if (fill_blob_sha1_and_mode(sb->repo, o))
-			die(_("no such path %s in %s"), sb->path, final_commit_name);
+			die(_("no such path %s in %s"), sb->path, final_cummit_name);
 
 		if (sb->revs->diffopt.flags.allow_textconv &&
 		    textconv_object(sb->repo, sb->path, o->mode, &o->blob_oid, 1, (char **) &sb->final_buf,
@@ -2864,7 +2864,7 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 	if (orig)
 		*orig = o;
 
-	free((char *)final_commit_name);
+	free((char *)final_cummit_name);
 }
 
 
@@ -2888,7 +2888,7 @@ void setup_blame_bloom_data(struct blame_scoreboard *sb)
 	struct blame_bloom_data *bd;
 	struct bloom_filter_settings *bs;
 
-	if (!sb->repo->objects->commit_graph)
+	if (!sb->repo->objects->cummit_graph)
 		return;
 
 	bs = get_bloom_filter_settings(sb->repo);

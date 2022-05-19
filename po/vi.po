@@ -765,7 +765,7 @@ msgstr ""
 "hòa trộn."
 
 #: advice.c:183
-msgid "Committing is not possible because you have unmerged files."
+msgid "cummitting is not possible because you have unmerged files."
 msgstr ""
 "Không thể thực hiện chuyển giao được bởi vì bạn có những tập tin chưa được "
 "hòa trộn."
@@ -796,7 +796,7 @@ msgstr ""
 #: advice.c:199
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
-"as appropriate to mark resolution and make a commit."
+"as appropriate to mark resolution and make a cummit."
 msgstr ""
 "Sửa chúng trong cây làm việc, và sau đó dùng lệnh “git add/rm <tập-tin>”\n"
 "dành riêng cho việc đánh dấu cần giải quyết và tạo lần chuyển giao."
@@ -810,7 +810,7 @@ msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "Bạn chưa kết thúc việc hòa trộn (MERGE_HEAD vẫn tồn tại)."
 
 #: advice.c:214
-msgid "Please, commit your changes before merging."
+msgid "Please, cummit your changes before merging."
 msgstr "Vui lòng chuyển giao các thay đổi trước khi hòa trộn."
 
 #: advice.c:215
@@ -849,10 +849,10 @@ msgid ""
 "Note: switching to '%s'.\n"
 "\n"
 "You are in 'detached HEAD' state. You can look around, make experimental\n"
-"changes and commit them, and you can discard any commits you make in this\n"
+"changes and cummit them, and you can discard any cummits you make in this\n"
 "state without impacting any branches by switching back to a branch.\n"
 "\n"
-"If you want to create a new branch to retain commits you create, you may\n"
+"If you want to create a new branch to retain cummits you create, you may\n"
 "do so (now or later) by using -c with the switch command. Example:\n"
 "\n"
 "  git switch -c <new-branch-name>\n"
@@ -910,8 +910,8 @@ msgstr "không nhận ra tùy chọn bỏ qua khoảng trắng “%s”"
 #: builtin/add.c:515 builtin/add.c:527 builtin/branch.c:755
 #: builtin/checkout.c:472 builtin/checkout.c:475 builtin/checkout.c:1663
 #: builtin/checkout.c:1773 builtin/checkout.c:1776 builtin/clone.c:921
-#: builtin/commit.c:359 builtin/commit.c:362 builtin/commit.c:1200
-#: builtin/commit.c:1256 builtin/commit.c:1273 builtin/describe.c:593
+#: builtin/cummit.c:359 builtin/cummit.c:362 builtin/cummit.c:1200
+#: builtin/cummit.c:1256 builtin/cummit.c:1273 builtin/describe.c:593
 #: builtin/diff-tree.c:155 builtin/difftool.c:733 builtin/fast-export.c:1245
 #: builtin/fetch.c:2141 builtin/fetch.c:2162 builtin/fetch.c:2167
 #: builtin/help.c:602 builtin/index-pack.c:1858 builtin/init-db.c:560
@@ -1648,7 +1648,7 @@ msgid "prepend prefix to each pathname in the archive"
 msgstr "nối thêm tiền tố vào từng đường dẫn tập tin trong kho lưu"
 
 #: archive.c:554 archive.c:557 builtin/blame.c:881 builtin/blame.c:885
-#: builtin/blame.c:886 builtin/commit-tree.c:115 builtin/config.c:135
+#: builtin/blame.c:886 builtin/cummit-tree.c:115 builtin/config.c:135
 #: builtin/fast-export.c:1181 builtin/fast-export.c:1183
 #: builtin/fast-export.c:1187 builtin/grep.c:936 builtin/hash-object.c:104
 #: builtin/ls-files.c:654 builtin/ls-files.c:657 builtin/notes.c:410
@@ -1704,7 +1704,7 @@ msgstr "Gặp tùy chọn không cần --remote"
 
 #: archive.c:580 fetch-pack.c:300 revision.c:2914 builtin/add.c:530
 #: builtin/add.c:562 builtin/checkout.c:1782 builtin/clone.c:1099
-#: builtin/clone.c:1102 builtin/commit.c:371 builtin/fast-export.c:1230
+#: builtin/clone.c:1102 builtin/cummit.c:371 builtin/fast-export.c:1230
 #: builtin/index-pack.c:1854 builtin/log.c:2140 builtin/reset.c:442
 #: builtin/reset.c:500 builtin/rm.c:281 builtin/stash.c:1708
 #: builtin/worktree.c:580 builtin/worktree.c:781 http-fetch.c:144
@@ -1757,8 +1757,8 @@ msgstr "Chúng tôi không bisect thêm nữa!\n"
 
 #: bisect.c:765
 #, c-format
-msgid "Not a valid commit name %s"
-msgstr "Không phải tên đối tượng commit %s hợp lệ"
+msgid "Not a valid cummit name %s"
+msgstr "Không phải tên đối tượng cummit %s hợp lệ"
 
 #: bisect.c:790
 #, c-format
@@ -1782,7 +1782,7 @@ msgstr ""
 #, c-format
 msgid ""
 "The merge base %s is %s.\n"
-"This means the first '%s' commit is between %s and [%s].\n"
+"This means the first '%s' cummit is between %s and [%s].\n"
 msgstr ""
 "Hòa trộn trên %s là %s.\n"
 "Điều đó có nghĩa là lần chuyển giao “%s” đầu tiên là giữa %s và [%s].\n"
@@ -1802,7 +1802,7 @@ msgstr ""
 #, c-format
 msgid ""
 "the merge base between %s and [%s] must be skipped.\n"
-"So we cannot be sure the first %s commit is between %s and %s.\n"
+"So we cannot be sure the first %s cummit is between %s and %s.\n"
 "We continue anyway."
 msgstr ""
 "hòa trộn trên cơ sở giữa %s và [%s] phải bị bỏ qua.\n"
@@ -1842,7 +1842,7 @@ msgstr "%s là cả %s và %s\n"
 #: bisect.c:1065
 #, c-format
 msgid ""
-"No testable commit found.\n"
+"No testable cummit found.\n"
 "Maybe you started with bad path arguments?\n"
 msgstr ""
 "Không tìm thấy lần chuyển giao kiểm tra được nào.\n"
@@ -1868,16 +1868,16 @@ msgid "--contents and --reverse do not blend well."
 msgstr "tùy chọn --contents và --reverse không được trộn vào nhau."
 
 #: blame.c:2787
-msgid "cannot use --contents with final commit object name"
+msgid "cannot use --contents with final cummit object name"
 msgstr "không thể dùng --contents với tên đối tượng chuyển giao cuối cùng"
 
 #: blame.c:2808
-msgid "--reverse and --first-parent together require specified latest commit"
+msgid "--reverse and --first-parent together require specified latest cummit"
 msgstr ""
 "cùng sử dụng --reverse và --first-parent cần chỉ định lần chuyển giao cuối"
 
 #: blame.c:2817 bundle.c:231 midx.c:1058 ref-filter.c:2371 remote.c:2157
-#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/commit.c:1118
+#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/cummit.c:1118
 #: builtin/log.c:437 builtin/log.c:1055 builtin/log.c:1663 builtin/log.c:2096
 #: builtin/log.c:2387 builtin/merge.c:431 builtin/pack-objects.c:3381
 #: builtin/pack-objects.c:3781 builtin/pack-objects.c:3796
@@ -2113,13 +2113,13 @@ msgid "unrecognized header: %s%s (%d)"
 msgstr "phần đầu không được thừa nhận: %s%s (%d)"
 
 #: bundle.c:145 rerere.c:464 rerere.c:675 sequencer.c:2616 sequencer.c:3402
-#: builtin/commit.c:865
+#: builtin/cummit.c:865
 #, c-format
 msgid "could not open '%s'"
 msgstr "không thể mở “%s”"
 
 #: bundle.c:203
-msgid "Repository lacks these prerequisite commits:"
+msgid "Repository lacks these prerequisite cummits:"
 msgstr "Kho chứa thiếu những lần chuyển giao tiên quyết này:"
 
 #: bundle.c:206
@@ -2211,291 +2211,291 @@ msgstr "mảnh cuối cùng có id không bằng không %<PRIx32>"
 msgid "invalid color value: %.*s"
 msgstr "giá trị màu không hợp lệ: %.*s"
 
-#: commit-graph.c:204 midx.c:52
+#: cummit-graph.c:204 midx.c:52
 msgid "invalid hash version"
 msgstr "phiên bản băm không hợp lệ"
 
-#: commit-graph.c:262
-msgid "commit-graph file is too small"
+#: cummit-graph.c:262
+msgid "cummit-graph file is too small"
 msgstr "tập tin đồ-thị-các-lần-chuyển-giao quá nhỏ"
 
-#: commit-graph.c:355
+#: cummit-graph.c:355
 #, c-format
-msgid "commit-graph signature %X does not match signature %X"
+msgid "cummit-graph signature %X does not match signature %X"
 msgstr "chữ ký đồ-thị-các-lần-chuyển-giao %X không khớp chữ ký %X"
 
-#: commit-graph.c:362
+#: cummit-graph.c:362
 #, c-format
-msgid "commit-graph version %X does not match version %X"
+msgid "cummit-graph version %X does not match version %X"
 msgstr "phiên bản đồ-thị-các-lần-chuyển-giao %X không khớp phiên bản %X"
 
-#: commit-graph.c:369
+#: cummit-graph.c:369
 #, c-format
-msgid "commit-graph hash version %X does not match version %X"
+msgid "cummit-graph hash version %X does not match version %X"
 msgstr "phiên bản đồ-thị-các-lần-chuyển-giao %X không khớp phiên bản %X"
 
-#: commit-graph.c:386
+#: cummit-graph.c:386
 #, c-format
-msgid "commit-graph file is too small to hold %u chunks"
+msgid "cummit-graph file is too small to hold %u chunks"
 msgstr "tập tin đồ-thị-các-lần-chuyển-giao quá nhỏ để giữ %u mảnh dữ liệu"
 
-#: commit-graph.c:485
-msgid "commit-graph has no base graphs chunk"
+#: cummit-graph.c:485
+msgid "cummit-graph has no base graphs chunk"
 msgstr "đồ-thị-các-lần-chuyển-giao có không có mảnh các đồ họa cơ sở"
 
-#: commit-graph.c:495
-msgid "commit-graph chain does not match"
+#: cummit-graph.c:495
+msgid "cummit-graph chain does not match"
 msgstr "móc xích đồ-thị-các-lần-chuyển-giao không khớp"
 
-#: commit-graph.c:543
+#: cummit-graph.c:543
 #, c-format
-msgid "invalid commit-graph chain: line '%s' not a hash"
+msgid "invalid cummit-graph chain: line '%s' not a hash"
 msgstr ""
 "móc xích đồ-thị-các-lần-chuyển-giao không hợp lệ: dòng “%s” không phải là "
 "một mã băm"
 
-#: commit-graph.c:567
-msgid "unable to find all commit-graph files"
+#: cummit-graph.c:567
+msgid "unable to find all cummit-graph files"
 msgstr "không thể tìm thấy tất cả các tập tin đồ-thị-các-lần-chuyển-giao"
 
-#: commit-graph.c:752 commit-graph.c:789
-msgid "invalid commit position. commit-graph is likely corrupt"
+#: cummit-graph.c:752 cummit-graph.c:789
+msgid "invalid cummit position. cummit-graph is likely corrupt"
 msgstr ""
 "vị trí lần chuyển giao không hợp lệ. đồ-thị-các-lần-chuyển-giao có vẻ như đã "
 "bị hỏng"
 
-#: commit-graph.c:773
+#: cummit-graph.c:773
 #, c-format
-msgid "could not find commit %s"
+msgid "could not find cummit %s"
 msgstr "không thể tìm thấy lần chuyển giao %s"
 
-#: commit-graph.c:806
-msgid "commit-graph requires overflow generation data but has none"
-msgstr "commit-graph yêu cầu dữ liệu tạo tràn nhưng không có"
+#: cummit-graph.c:806
+msgid "cummit-graph requires overflow generation data but has none"
+msgstr "cummit-graph yêu cầu dữ liệu tạo tràn nhưng không có"
 
-#: commit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
+#: cummit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
 #: builtin/clone.c:705
 #, c-format
-msgid "unable to parse commit %s"
+msgid "unable to parse cummit %s"
 msgstr "không thể phân tích lần chuyển giao “%s”"
 
-#: commit-graph.c:1373 builtin/pack-objects.c:3078
+#: cummit-graph.c:1373 builtin/pack-objects.c:3078
 #, c-format
 msgid "unable to get type of object %s"
 msgstr "không thể lấy kiểu của đối tượng “%s”"
 
-#: commit-graph.c:1404
-msgid "Loading known commits in commit graph"
+#: cummit-graph.c:1404
+msgid "Loading known cummits in cummit graph"
 msgstr "Đang tải các lần chuyển giao chưa biết trong đồ thị lần chuyển giao"
 
-#: commit-graph.c:1421
-msgid "Expanding reachable commits in commit graph"
+#: cummit-graph.c:1421
+msgid "Expanding reachable cummits in cummit graph"
 msgstr ""
 "Mở rộng các lần chuyển giao có thể tiếp cận được trong trong đồ thị lần "
 "chuyển giao"
 
-#: commit-graph.c:1441
-msgid "Clearing commit marks in commit graph"
+#: cummit-graph.c:1441
+msgid "Clearing cummit marks in cummit graph"
 msgstr "Đang dọn dẹp các đánh dấu lần chuyển giao trong đồ thị lần chuyển giao"
 
-#: commit-graph.c:1460
-msgid "Computing commit graph topological levels"
+#: cummit-graph.c:1460
+msgid "Computing cummit graph topological levels"
 msgstr "Đang tính mức hình học tô-pô tạo đồ thị các lần chuyển giao"
 
-#: commit-graph.c:1513
-msgid "Computing commit graph generation numbers"
+#: cummit-graph.c:1513
+msgid "Computing cummit graph generation numbers"
 msgstr "Đang tính toán số tạo đồ thị các lần chuyển giao"
 
-#: commit-graph.c:1598
-msgid "Computing commit changed paths Bloom filters"
+#: cummit-graph.c:1598
+msgid "Computing cummit changed paths Bloom filters"
 msgstr "Đang tính toán chuyển giao các bộ lọc Bloom đường dẫn bị thay đổi"
 
-#: commit-graph.c:1675
-msgid "Collecting referenced commits"
+#: cummit-graph.c:1675
+msgid "Collecting referenced cummits"
 msgstr "Đang sưu tập các lần chuyển giao được tham chiếu"
 
-#: commit-graph.c:1701
+#: cummit-graph.c:1701
 #, c-format
-msgid "Finding commits for commit graph in %<PRIuMAX> pack"
-msgid_plural "Finding commits for commit graph in %<PRIuMAX> packs"
+msgid "Finding cummits for cummit graph in %<PRIuMAX> pack"
+msgid_plural "Finding cummits for cummit graph in %<PRIuMAX> packs"
 msgstr[0] ""
 "Đang tìm các lần chuyển giao cho đồ thị lần chuyển giao trong %<PRIuMAX> gói"
 
-#: commit-graph.c:1714
+#: cummit-graph.c:1714
 #, c-format
 msgid "error adding pack %s"
 msgstr "gặp lỗi thêm gói %s"
 
-#: commit-graph.c:1718
+#: cummit-graph.c:1718
 #, c-format
 msgid "error opening index for %s"
 msgstr "gặp lỗi khi mở mục lục cho “%s”"
 
-#: commit-graph.c:1756
-msgid "Finding commits for commit graph among packed objects"
+#: cummit-graph.c:1756
+msgid "Finding cummits for cummit graph among packed objects"
 msgstr ""
 "Đang tìm các lần chuyển giao cho đồ thị lần chuyển giao trong số các đối "
 "tượng đã đóng gói"
 
-#: commit-graph.c:1774
-msgid "Finding extra edges in commit graph"
+#: cummit-graph.c:1774
+msgid "Finding extra edges in cummit graph"
 msgstr "Đang tìm các cạnh mở tộng trong đồ thị lần chuyển giao"
 
-#: commit-graph.c:1823
+#: cummit-graph.c:1823
 msgid "failed to write correct number of base graph ids"
 msgstr "gặp lỗi khi ghi số đúng của mã đồ họa cơ sở"
 
-#: commit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
+#: cummit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
 #, c-format
 msgid "unable to create leading directories of %s"
 msgstr "không thể tạo các thư mục dẫn đầu của “%s”"
 
-#: commit-graph.c:1868
+#: cummit-graph.c:1868
 msgid "unable to create temporary graph layer"
 msgstr "không thể tạo lớp sơ đồ tạm thời"
 
-#: commit-graph.c:1873
+#: cummit-graph.c:1873
 #, c-format
 msgid "unable to adjust shared permissions for '%s'"
 msgstr "không thể chỉnh sửa quyền chia sẻ thành “%s”"
 
-#: commit-graph.c:1930
+#: cummit-graph.c:1930
 #, c-format
-msgid "Writing out commit graph in %d pass"
-msgid_plural "Writing out commit graph in %d passes"
+msgid "Writing out cummit graph in %d pass"
+msgid_plural "Writing out cummit graph in %d passes"
 msgstr[0] "Đang ghi ra đồ thị các lần chuyển giao trong lần %d"
 
-#: commit-graph.c:1967
-msgid "unable to open commit-graph chain file"
+#: cummit-graph.c:1967
+msgid "unable to open cummit-graph chain file"
 msgstr "không thể mở tập tin mắt xích đồ thị chuyển giao"
 
-#: commit-graph.c:1983
-msgid "failed to rename base commit-graph file"
+#: cummit-graph.c:1983
+msgid "failed to rename base cummit-graph file"
 msgstr "gặp lỗi khi đổi tên tập tin đồ-thị-các-lần-chuyển-giao"
 
-#: commit-graph.c:2004
-msgid "failed to rename temporary commit-graph file"
+#: cummit-graph.c:2004
+msgid "failed to rename temporary cummit-graph file"
 msgstr "gặp lỗi khi đổi tên tập tin đồ-thị-các-lần-chuyển-giao tạm thời"
 
-#: commit-graph.c:2137
-msgid "Scanning merged commits"
+#: cummit-graph.c:2137
+msgid "Scanning merged cummits"
 msgstr "Đang quét các lần chuyển giao đã hòa trộn"
 
-#: commit-graph.c:2181
-msgid "Merging commit-graph"
+#: cummit-graph.c:2181
+msgid "Merging cummit-graph"
 msgstr "Đang hòa trộn đồ-thị-các-lần-chuyển-giao"
 
-#: commit-graph.c:2289
-msgid "attempting to write a commit-graph, but 'core.commitGraph' is disabled"
+#: cummit-graph.c:2289
+msgid "attempting to write a cummit-graph, but 'core.cummitGraph' is disabled"
 msgstr ""
-"cố gắng để ghi một đồ thị các lần chuyển giao, nhưng “core.commitGraph” bị "
+"cố gắng để ghi một đồ thị các lần chuyển giao, nhưng “core.cummitGraph” bị "
 "vô hiệu hóa"
 
-#: commit-graph.c:2396
-msgid "too many commits to write graph"
+#: cummit-graph.c:2396
+msgid "too many cummits to write graph"
 msgstr "có quá nhiều lần chuyển giao để ghi đồ thị"
 
-#: commit-graph.c:2494
-msgid "the commit-graph file has incorrect checksum and is likely corrupt"
+#: cummit-graph.c:2494
+msgid "the cummit-graph file has incorrect checksum and is likely corrupt"
 msgstr ""
 "tập tin đồ-thị-các-lần-chuyển-giao có tổng kiểm không đúng và có vẻ như là "
 "đã hỏng"
 
-#: commit-graph.c:2504
+#: cummit-graph.c:2504
 #, c-format
-msgid "commit-graph has incorrect OID order: %s then %s"
+msgid "cummit-graph has incorrect OID order: %s then %s"
 msgstr "đồ-thị-các-lần-chuyển-giao có thứ tự OID không đúng: %s sau %s"
 
-#: commit-graph.c:2514 commit-graph.c:2529
+#: cummit-graph.c:2514 cummit-graph.c:2529
 #, c-format
-msgid "commit-graph has incorrect fanout value: fanout[%d] = %u != %u"
+msgid "cummit-graph has incorrect fanout value: fanout[%d] = %u != %u"
 msgstr ""
 "đồ-thị-các-lần-chuyển-giao có giá trị fanout không đúng: fanout[%d] = %u != "
 "%u"
 
-#: commit-graph.c:2521
+#: cummit-graph.c:2521
 #, c-format
-msgid "failed to parse commit %s from commit-graph"
+msgid "failed to parse cummit %s from cummit-graph"
 msgstr "gặp lỗi khi phân tích lần chuyển giao từ %s đồ-thị-các-lần-chuyển-giao"
 
-#: commit-graph.c:2539
-msgid "Verifying commits in commit graph"
+#: cummit-graph.c:2539
+msgid "Verifying cummits in cummit graph"
 msgstr "Đang thẩm tra các lần chuyển giao trong đồ thị lần chuyển giao"
 
-#: commit-graph.c:2554
+#: cummit-graph.c:2554
 #, c-format
-msgid "failed to parse commit %s from object database for commit-graph"
+msgid "failed to parse cummit %s from object database for cummit-graph"
 msgstr ""
 "gặp lỗi khi phân tích lần chuyển giao %s từ cơ sở dữ liệu đối tượng cho đồ "
 "thị lần chuyển giao"
 
-#: commit-graph.c:2561
+#: cummit-graph.c:2561
 #, c-format
-msgid "root tree OID for commit %s in commit-graph is %s != %s"
+msgid "root tree OID for cummit %s in cummit-graph is %s != %s"
 msgstr ""
 "OID cây gốc cho lần chuyển giao %s trong đồ-thị-các-lần-chuyển-giao là %s != "
 "%s"
 
-#: commit-graph.c:2571
+#: cummit-graph.c:2571
 #, c-format
-msgid "commit-graph parent list for commit %s is too long"
+msgid "cummit-graph parent list for cummit %s is too long"
 msgstr ""
 "danh sách cha mẹ đồ-thị-các-lần-chuyển-giao cho lần chuyển giao %s là quá dài"
 
-#: commit-graph.c:2580
+#: cummit-graph.c:2580
 #, c-format
-msgid "commit-graph parent for %s is %s != %s"
+msgid "cummit-graph parent for %s is %s != %s"
 msgstr "cha mẹ đồ-thị-các-lần-chuyển-giao cho %s là %s != %s"
 
-#: commit-graph.c:2594
+#: cummit-graph.c:2594
 #, c-format
-msgid "commit-graph parent list for commit %s terminates early"
+msgid "cummit-graph parent list for cummit %s terminates early"
 msgstr ""
 "danh sách cha mẹ đồ-thị-các-lần-chuyển-giao cho lần chuyển giao %s bị chấm "
 "dứt quá sớm"
 
-#: commit-graph.c:2599
+#: cummit-graph.c:2599
 #, c-format
 msgid ""
-"commit-graph has generation number zero for commit %s, but non-zero elsewhere"
+"cummit-graph has generation number zero for cummit %s, but non-zero elsewhere"
 msgstr ""
 "đồ-thị-các-lần-chuyển-giao có con số không lần tạo cho lần chuyển giao %s, "
 "nhưng không phải số không ở chỗ khác"
 
-#: commit-graph.c:2603
+#: cummit-graph.c:2603
 #, c-format
 msgid ""
-"commit-graph has non-zero generation number for commit %s, but zero elsewhere"
+"cummit-graph has non-zero generation number for cummit %s, but zero elsewhere"
 msgstr ""
 "đồ-thị-các-lần-chuyển-giao có con số không phải không lần tạo cho lần chuyển "
 "giao %s, nhưng số không ở chỗ khác"
 
-#: commit-graph.c:2620
+#: cummit-graph.c:2620
 #, c-format
-msgid "commit-graph generation for commit %s is %<PRIuMAX> < %<PRIuMAX>"
+msgid "cummit-graph generation for cummit %s is %<PRIuMAX> < %<PRIuMAX>"
 msgstr ""
 "tạo đồ-thị-các-lần-chuyển-giao cho lần chuyển giao %s là %<PRIuMAX> < "
 "%<PRIuMAX>"
 
-#: commit-graph.c:2626
+#: cummit-graph.c:2626
 #, c-format
-msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
+msgid "cummit date for cummit %s in cummit-graph is %<PRIuMAX> != %<PRIuMAX>"
 msgstr ""
 "ngày chuyển giao cho lần chuyển giao %s trong đồ-thị-các-lần-chuyển-giao là "
 "%<PRIuMAX> != %<PRIuMAX>"
 
-#: commit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
+#: cummit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
 #: builtin/am.c:450 builtin/am.c:1449 builtin/am.c:2124 builtin/replace.c:456
 #, c-format
 msgid "could not parse %s"
 msgstr "không thể phân tích cú pháp %s"
 
-#: commit.c:56
+#: cummit.c:56
 #, c-format
-msgid "%s %s is not a commit!"
+msgid "%s %s is not a cummit!"
 msgstr "%s %s không phải là một lần chuyển giao!"
 
-#: commit.c:197
+#: cummit.c:197
 msgid ""
 "Support for <GIT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
@@ -2515,36 +2515,36 @@ msgstr ""
 "Tắt lời nhắn này bằng cách chạy\n"
 "\"git config advice.graftFileDeprecated false\""
 
-#: commit.c:1252
+#: cummit.c:1252
 #, c-format
-msgid "Commit %s has an untrusted GPG signature, allegedly by %s."
+msgid "cummit %s has an untrusted GPG signature, allegedly by %s."
 msgstr ""
 "Lần chuyển giao %s có một chữ ký GPG không đáng tin, được cho là bởi %s."
 
-#: commit.c:1256
+#: cummit.c:1256
 #, c-format
-msgid "Commit %s has a bad GPG signature allegedly by %s."
+msgid "cummit %s has a bad GPG signature allegedly by %s."
 msgstr "Lần chuyển giao %s có một chữ ký GPG sai, được cho là bởi %s."
 
-#: commit.c:1259
+#: cummit.c:1259
 #, c-format
-msgid "Commit %s does not have a GPG signature."
+msgid "cummit %s does not have a GPG signature."
 msgstr "Lần chuyển giao %s không có chữ ký GPG."
 
-#: commit.c:1262
+#: cummit.c:1262
 #, c-format
-msgid "Commit %s has a good GPG signature by %s\n"
+msgid "cummit %s has a good GPG signature by %s\n"
 msgstr "Lần chuyển giao %s có một chữ ký GPG tốt bởi %s\n"
 
-#: commit.c:1516
+#: cummit.c:1516
 msgid ""
-"Warning: commit message did not conform to UTF-8.\n"
+"Warning: cummit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
-"variable i18n.commitencoding to the encoding your project uses.\n"
+"variable i18n.cummitencoding to the encoding your project uses.\n"
 msgstr ""
 "Cảnh báo: ghi chú cho lần chuyển giao không hợp chuẩn UTF-8.\n"
 "Bạn có lẽ muốn tu bổ nó sau khi sửa lời chú thích, hoặc là đặt biến\n"
-"cấu hình i18n.commitencoding thành bảng mã mà dự án của bạn muốn dùng.\n"
+"cấu hình i18n.cummitencoding thành bảng mã mà dự án của bạn muốn dùng.\n"
 
 #: compat/obstack.c:406 compat/obstack.c:408
 msgid "memory exhausted"
@@ -3376,7 +3376,7 @@ msgid "--merge-base does not work with ranges"
 msgstr "--merge-base không hoạt động với phạm vi"
 
 #: diff-lib.c:563
-msgid "--merge-base only works with commits"
+msgid "--merge-base only works with cummits"
 msgstr "--merge-base chỉ hoạt động với các lần chuyển giao"
 
 #: diff-lib.c:580
@@ -4200,7 +4200,7 @@ msgstr "nhận %s %d - %s"
 
 #: fetch-pack.c:470
 #, c-format
-msgid "invalid commit %s"
+msgid "invalid cummit %s"
 msgstr "lần chuyển giao %s không hợp lệ"
 
 #: fetch-pack.c:501
@@ -4286,7 +4286,7 @@ msgid "Server does not support this repository's object format"
 msgstr "Máy chủ không hỗ trợ định dạng đối tượng của kho này"
 
 #: fetch-pack.c:1142
-msgid "no common commits"
+msgid "no common cummits"
 msgstr "không có lần chuyển giao chung nào"
 
 #: fetch-pack.c:1151 fetch-pack.c:1506 builtin/clone.c:1166
@@ -4713,7 +4713,7 @@ msgid "Author identity unknown\n"
 msgstr "Chưa biết định danh tác giả\n"
 
 #: ident.c:357
-msgid "Committer identity unknown\n"
+msgid "cummitter identity unknown\n"
 msgstr "Chưa biết định danh người chuyển giao\n"
 
 #: ident.c:363
@@ -4770,7 +4770,7 @@ msgstr "không cho phép tên định danh là rỗng (cho <%s>)"
 msgid "name consists only of disallowed characters: %s"
 msgstr "tên chỉ được phép bao gồm các ký tự sau: %s"
 
-#: ident.c:455 builtin/commit.c:649
+#: ident.c:455 builtin/cummit.c:649
 #, c-format
 msgid "invalid date format: %s"
 msgstr "ngày tháng không hợp lệ: %s"
@@ -4832,7 +4832,7 @@ msgstr "mục “%s” trong cây %s có nút blob, nhưng không phải là m�
 
 #: list-objects.c:415
 #, c-format
-msgid "unable to load root tree for commit %s"
+msgid "unable to load root tree for cummit %s"
 msgstr "không thể tải cây gốc cho lần chuyển giao “%s”"
 
 #: lockfile.c:152
@@ -4841,7 +4841,7 @@ msgid ""
 "Unable to create '%s.lock': %s.\n"
 "\n"
 "Another git process seems to be running in this repository, e.g.\n"
-"an editor opened by 'git commit'. Please make sure all processes\n"
+"an editor opened by 'git cummit'. Please make sure all processes\n"
 "are terminated then try again. If it still fails, a git process\n"
 "may have crashed in this repository earlier:\n"
 "remove the file manually to continue."
@@ -4849,7 +4849,7 @@ msgstr ""
 "Không thể tạo “%s.lock”: %s.\n"
 "\n"
 "Tiến trình git khác có lẽ đang chạy ở kho này, ví dụ\n"
-"một trình soạn thảo được mở bởi “git commit”. Vui lòng chắc chắn\n"
+"một trình soạn thảo được mở bởi “git cummit”. Vui lòng chắc chắn\n"
 "rằng mọi tiến trình đã chấm dứt và sau đó thử lại. Nếu vẫn lỗi,\n"
 "một tiến trình git có lẽ đã đổ vỡ khi thực hiện ở kho này trước đó:\n"
 "gõ bỏ tập tin một cách thủ công để tiếp tục."
@@ -4884,12 +4884,12 @@ msgstr "Gặp lỗi khi hòa trộn mô-đun-con “%s” (không lấy ra đư�
 
 #: merge-ort.c:1639 merge-recursive.c:1221
 #, c-format
-msgid "Failed to merge submodule %s (commits not present)"
+msgid "Failed to merge submodule %s (cummits not present)"
 msgstr "Gặp lỗi khi hòa trộn mô-đun-con “%s” (lần chuyển giao không hiện diện)"
 
 #: merge-ort.c:1648 merge-recursive.c:1228
 #, c-format
-msgid "Failed to merge submodule %s (commits don't follow merge-base)"
+msgid "Failed to merge submodule %s (cummits don't follow merge-base)"
 msgstr ""
 "Gặp lỗi khi hòa trộn mô-đun-con “%s” (lần chuyển giao không theo sau nền-hòa-"
 "trộn)"
@@ -5145,8 +5145,8 @@ msgid "Already up to date."
 msgstr "Đã cập nhật rồi."
 
 #: merge-recursive.c:353
-msgid "(bad commit)\n"
-msgstr "(commit sai)\n"
+msgid "(bad cummit)\n"
+msgstr "(cummit sai)\n"
 
 #: merge-recursive.c:381
 #, c-format
@@ -5206,7 +5206,7 @@ msgstr "không hiểu phải làm gì với %06o %s “%s”"
 
 #: merge-recursive.c:1236 merge-recursive.c:1249
 #, c-format
-msgid "Fast-forwarding submodule %s to the following commit:"
+msgid "Fast-forwarding submodule %s to the following cummit:"
 msgstr "Chuyển-tiếp-nhanh mô-đun-con “%s” đến lần chuyển giao sau đây:"
 
 #: merge-recursive.c:1239 merge-recursive.c:1252
@@ -5216,7 +5216,7 @@ msgstr "Chuyển-tiếp-nhanh mô-đun-con “%s”"
 
 #: merge-recursive.c:1276
 #, c-format
-msgid "Failed to merge submodule %s (merge following commits not found)"
+msgid "Failed to merge submodule %s (merge following cummits not found)"
 msgstr ""
 "Gặp lỗi khi hòa trộn mô-đun-con “%s” (không tìm thấy các lần chuyển giao "
 "theo sau hòa trộn)"
@@ -5419,7 +5419,7 @@ msgid_plural "found %u common ancestors:"
 msgstr[0] "tìm thấy %u tổ tiên chung:"
 
 #: merge-recursive.c:3651
-msgid "merge returned no commit"
+msgid "merge returned no cummit"
 msgstr "hòa trộn không trả về lần chuyển giao nào"
 
 #: merge-recursive.c:3823
@@ -5678,11 +5678,11 @@ msgstr "không thể gia nhập tuyến lazy_name: %s"
 #, c-format
 msgid ""
 "You have not concluded your previous notes merge (%s exists).\n"
-"Please, use 'git notes merge --commit' or 'git notes merge --abort' to "
-"commit/abort the previous merge before you start a new notes merge."
+"Please, use 'git notes merge --cummit' or 'git notes merge --abort' to "
+"cummit/abort the previous merge before you start a new notes merge."
 msgstr ""
 "Bạn đã chưa hoàn tất hòa trộn ghi chú trước đây (%s vẫn còn).\n"
-"Vui lòng dùng “git notes merge --commit” hay “git notes merge --abort” để "
+"Vui lòng dùng “git notes merge --cummit” hay “git notes merge --abort” để "
 "chuyển giao hay bãi bỏ lần hòa trộn trước đây và bắt đầu một hòa trộn ghi "
 "chú mới."
 
@@ -5692,7 +5692,7 @@ msgid "You have not concluded your notes merge (%s exists)."
 msgstr "Bạn chưa kết thúc việc hòa trộn ghi chú (%s vẫn tồn tại)."
 
 #: notes-utils.c:46
-msgid "Cannot commit uninitialized/unreferenced notes tree"
+msgid "Cannot cummit uninitialized/unreferenced notes tree"
 msgstr ""
 "Không thể chuyển giao cây ghi chú chưa được khởi tạo hoặc không được tham "
 "chiếu"
@@ -5906,7 +5906,7 @@ msgid "cannot read object for %s"
 msgstr "không thể đọc đối tượng cho %s"
 
 #: object-file.c:2151
-msgid "corrupt commit"
+msgid "corrupt cummit"
 msgstr "lần chuyển giao sai hỏng"
 
 #: object-file.c:2159
@@ -5982,14 +5982,14 @@ msgstr "không thể giải gói nội dung của “%s”"
 msgid "%s [bad object]"
 msgstr "%s [đối tượng sai.]"
 
-#. TRANSLATORS: This is a line of ambiguous commit
+#. TRANSLATORS: This is a line of ambiguous cummit
 #. object output. E.g.:
 #. *
-#. "deadbeef commit 2021-01-01 - Some Commit Message"
+#. "deadbeef cummit 2021-01-01 - Some cummit Message"
 #.
 #: object-name.c:407
 #, c-format
-msgid "%s commit %s - %s"
+msgid "%s cummit %s - %s"
 msgstr "%s lần chuyển giao %s - %s"
 
 #. TRANSLATORS: This is a line of ambiguous
@@ -6260,7 +6260,7 @@ msgid "offset beyond end of pack index for %s (truncated index?)"
 msgstr ""
 "vị trí tương đối vượt quá cuối của chỉ mục gói cho %s (mục lục bị cắt cụt à?)"
 
-#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/commit-graph.c:175
+#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/cummit-graph.c:175
 #, c-format
 msgid "option `%s' expects a numerical value"
 msgstr "tùy chọn “%s” cần một giá trị bằng số"
@@ -6585,17 +6585,17 @@ msgstr "không thể đọc kết xuất “log”"
 
 #: range-diff.c:98 sequencer.c:5575
 #, c-format
-msgid "could not parse commit '%s'"
+msgid "could not parse cummit '%s'"
 msgstr "không thể phân tích lần chuyển giao “%s”"
 
 #: range-diff.c:109
 #, c-format
 msgid ""
-"could not parse first line of `log` output: did not start with 'commit ': "
+"could not parse first line of `log` output: did not start with 'cummit ': "
 "'%s'"
 msgstr ""
 "không thể phân tích cú pháp dòng đầu tiên của đầu ra “log”: không bắt đầu "
-"bằng “commit ”: “%s”"
+"bằng “cummit ”: “%s”"
 
 #: range-diff.c:132
 #, c-format
@@ -6629,7 +6629,7 @@ msgstr ""
 
 #: read-cache.c:780 builtin/submodule--helper.c:3359
 #, c-format
-msgid "'%s' does not have a commit checked out"
+msgid "'%s' does not have a cummit checked out"
 msgstr "“%s” không có một lần chuyển giao nào được lấy ra"
 
 #: read-cache.c:832
@@ -6725,7 +6725,7 @@ msgstr "các mục tin stage không đúng thứ tự cho “%s”"
 #: read-cache.c:2096 read-cache.c:2402 rerere.c:549 rerere.c:583 rerere.c:1096
 #: submodule.c:1831 builtin/add.c:586 builtin/check-ignore.c:183
 #: builtin/checkout.c:532 builtin/checkout.c:724 builtin/clean.c:1016
-#: builtin/commit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
+#: builtin/cummit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
 #: builtin/mv.c:148 builtin/reset.c:506 builtin/rm.c:293
 #: builtin/submodule--helper.c:335 builtin/submodule--helper.c:3319
 msgid "index file corrupt"
@@ -6832,59 +6832,59 @@ msgstr ""
 #: rebase-interactive.c:33
 #, c-format
 msgid ""
-"unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
+"unrecognized setting %s for option rebase.missingcummitsCheck. Ignoring."
 msgstr ""
-"không nhận ra cài đặt %s cho tùy chọn rebase.missingCommitsCheck. Nên bỏ qua."
+"không nhận ra cài đặt %s cho tùy chọn rebase.missingcummitsCheck. Nên bỏ qua."
 
 #: rebase-interactive.c:42
 msgid ""
 "\n"
 "Commands:\n"
-"p, pick <commit> = use commit\n"
-"r, reword <commit> = use commit, but edit the commit message\n"
-"e, edit <commit> = use commit, but stop for amending\n"
-"s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup [-C | -c] <commit> = like \"squash\" but keep only the previous\n"
-"                   commit's log message, unless -C is used, in which case\n"
-"                   keep only this commit's message; -c is same as -C but\n"
+"p, pick <cummit> = use cummit\n"
+"r, reword <cummit> = use cummit, but edit the cummit message\n"
+"e, edit <cummit> = use cummit, but stop for amending\n"
+"s, squash <cummit> = use cummit, but meld into previous cummit\n"
+"f, fixup [-C | -c] <cummit> = like \"squash\" but keep only the previous\n"
+"                   cummit's log message, unless -C is used, in which case\n"
+"                   keep only this cummit's message; -c is same as -C but\n"
 "                   opens the editor\n"
 "x, exec <command> = run command (the rest of the line) using shell\n"
 "b, break = stop here (continue rebase later with 'git rebase --continue')\n"
-"d, drop <commit> = remove commit\n"
+"d, drop <cummit> = remove cummit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified); use -c <commit> to reword the commit message\n"
+"m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+".       create a merge cummit using the original merge cummit's\n"
+".       message (or the oneline, if no original merge cummit was\n"
+".       specified); use -c <cummit> to reword the cummit message\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
 "\n"
 "Các lệnh:\n"
-"p, pick <commit> = dùng lần chuyển giao\n"
-"r, reword <commit> = dùng lần chuyển giao, nhưng sửa lại phần chú thích\n"
-"e, edit <commit> = dùng lần chuyển giao, nhưng dừng lại để tu bổ (amend)\n"
-"s, squash <commit> = dùng lần chuyển giao, nhưng trộn vào lần chuyển giao kế "
+"p, pick <cummit> = dùng lần chuyển giao\n"
+"r, reword <cummit> = dùng lần chuyển giao, nhưng sửa lại phần chú thích\n"
+"e, edit <cummit> = dùng lần chuyển giao, nhưng dừng lại để tu bổ (amend)\n"
+"s, squash <cummit> = dùng lần chuyển giao, nhưng trộn vào lần chuyển giao kế "
 "trước\n"
-"f, fixup [-C | -c] <commit> = giống như \"squash\", nhưng chỉ giữ lại phần "
+"f, fixup [-C | -c] <cummit> = giống như \"squash\", nhưng chỉ giữ lại phần "
 "lời nhắn\n"
 "                   nhật ký của lần chuyển giao kế trước, trừ phi -C được "
 "dùng, trong trường hợp\n"
 "                   chỉ giữ ghi chú của lần chuyển giao này; -c giống như -C "
 "nhưng\n"
 "                   mở trình biên soạn\n"
-"x, exec <commit> = chạy lệnh (phần còn lại của dòng) dùng hệ vỏ\n"
+"x, exec <cummit> = chạy lệnh (phần còn lại của dòng) dùng hệ vỏ\n"
 "b, break = dừng tại đây (tiếp tục cải tổ sau này bằng “git rebase --"
 "continue”)\n"
-"d, drop <commit> = xóa bỏ lần chuyển giao\n"
+"d, drop <cummit> = xóa bỏ lần chuyển giao\n"
 "l, label <label> = đánh nhãn HEAD hiện tại bằng một tên\n"
 "t, reset <label> = đặt lại HEAD thành một nhãn\n"
-"m, merge [-C <commit> | -c <commit>] <nhãn> [# <một_dòng>]\n"
+"m, merge [-C <cummit> | -c <cummit>] <nhãn> [# <một_dòng>]\n"
 ".       tạo một lần chuyển giao hòa trộn sử dụng chú thích của lần chuyển\n"
 ".       giao hòa trộn gốc (hoặc một_dòng, nếu không chỉ định lần chuyển giao "
 "hòa\n"
-".       trộn gốc). Dùng -c <commit> để reword chú thích của lần chuyển "
+".       trộn gốc). Dùng -c <cummit> để reword chú thích của lần chuyển "
 "giao.\n"
 "\n"
 "Những dòng này có thể được thay đổi thứ tự; chúng chạy từ trên đỉnh xuống "
@@ -6899,7 +6899,7 @@ msgstr[0] "Cải tổ %s vào %s (%d lệnh )"
 #: rebase-interactive.c:75
 msgid ""
 "\n"
-"Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
+"Do not remove any line. Use 'drop' explicitly to remove a cummit.\n"
 msgstr ""
 "\n"
 "Đừng xóa bất kỳ dòng nào. Dùng “drop” một cách rõ ràng để xóa bỏ một lần "
@@ -6908,7 +6908,7 @@ msgstr ""
 #: rebase-interactive.c:78
 msgid ""
 "\n"
-"If you remove a line here THAT COMMIT WILL BE LOST.\n"
+"If you remove a line here THAT cummit WILL BE LOST.\n"
 msgstr ""
 "\n"
 "Nếu bạn xóa bỏ một dòng ở đây thì LẦN CHUYỂN GIAO ĐÓ SẼ MẤT.\n"
@@ -6952,8 +6952,8 @@ msgstr "không thể ghi “%s”."
 #: rebase-interactive.c:196
 #, c-format
 msgid ""
-"Warning: some commits may have been dropped accidentally.\n"
-"Dropped commits (newer to older):\n"
+"Warning: some cummits may have been dropped accidentally.\n"
+"Dropped cummits (newer to older):\n"
 msgstr ""
 "Cảnh báo: một số lần chuyển giao có lẽ đã bị xóa một cách tình cờ.\n"
 "Các lần chuyển giao bị xóa (từ mới đến cũ):\n"
@@ -6961,9 +6961,9 @@ msgstr ""
 #: rebase-interactive.c:203
 #, c-format
 msgid ""
-"To avoid this message, use \"drop\" to explicitly remove a commit.\n"
+"To avoid this message, use \"drop\" to explicitly remove a cummit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
+"Use 'git config rebase.missingcummitsCheck' to change the level of "
 "warnings.\n"
 "The possible behaviours are: ignore, warn, error.\n"
 "\n"
@@ -6971,7 +6971,7 @@ msgstr ""
 "Để tránh thông báo này, dùng \"drop\" một cách rõ ràng để xóa bỏ một lần "
 "chuyển giao.\n"
 "\n"
-"Dùng “git config rebase.missingCommitsCheck” để thay đổi mức độ của cảnh "
+"Dùng “git config rebase.missingcummitsCheck” để thay đổi mức độ của cảnh "
 "báo.\n"
 "Cánh ứng xử có thể là: ignore, warn, error.\n"
 "\n"
@@ -7215,7 +7215,7 @@ msgstr "tên đối tượng dị hình %s"
 
 #: ref-filter.c:2746
 #, c-format
-msgid "option `%s' must point to a commit"
+msgid "option `%s' must point to a cummit"
 msgstr "tùy chọn “%s” phải chỉ đến một lần chuyển giao"
 
 #: reflog.c:407
@@ -7422,7 +7422,7 @@ msgstr ""
 #: remote.c:1231
 #, c-format
 msgid ""
-"The <src> part of the refspec is a commit object.\n"
+"The <src> part of the refspec is a cummit object.\n"
 "Did you mean to create a new branch by pushing to\n"
 "'%s:refs/heads/%s'?"
 msgstr ""
@@ -7553,7 +7553,7 @@ msgstr "Nhánh của bạn đã cập nhật với “%s”.\n"
 
 #: remote.c:2246
 #, c-format
-msgid "Your branch and '%s' refer to different commits.\n"
+msgid "Your branch and '%s' refer to different cummits.\n"
 msgstr "Nhánh của bạn và “%s” tham chiếu đến các lần chuyển giao khác nhau.\n"
 
 #: remote.c:2249
@@ -7563,19 +7563,19 @@ msgstr "  (dùng \"%s\" để biết thêm chi tiết)\n"
 
 #: remote.c:2253
 #, c-format
-msgid "Your branch is ahead of '%s' by %d commit.\n"
-msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
+msgid "Your branch is ahead of '%s' by %d cummit.\n"
+msgid_plural "Your branch is ahead of '%s' by %d cummits.\n"
 msgstr[0] "Nhánh của bạn đứng trước “%s” %d lần chuyển giao.\n"
 
 #: remote.c:2259
-msgid "  (use \"git push\" to publish your local commits)\n"
+msgid "  (use \"git push\" to publish your local cummits)\n"
 msgstr "  (dùng \"git push\" để xuất bản các lần chuyển giao nội bộ của bạn)\n"
 
 #: remote.c:2262
 #, c-format
-msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
+msgid "Your branch is behind '%s' by %d cummit, and can be fast-forwarded.\n"
 msgid_plural ""
-"Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
+"Your branch is behind '%s' by %d cummits, and can be fast-forwarded.\n"
 msgstr[0] ""
 "Nhánh của bạn đứng đằng sau “%s” %d lần chuyển giao, và có thể được chuyển-"
 "tiếp-nhanh.\n"
@@ -7588,10 +7588,10 @@ msgstr "  (dùng \"git pull\" để cập nhật nhánh nội bộ của bạn)\
 #, c-format
 msgid ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commit each, respectively.\n"
+"and have %d and %d different cummit each, respectively.\n"
 msgid_plural ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commits each, respectively.\n"
+"and have %d and %d different cummits each, respectively.\n"
 msgstr[0] ""
 "Nhánh của bạn và “%s” bị phân kỳ,\n"
 "và có %d và %d lần chuyển giao khác nhau cho từng cái,\n"
@@ -7735,7 +7735,7 @@ msgstr "nhánh hiện tại của bạn có vẻ như bị hỏng"
 
 #: revision.c:2715
 #, c-format
-msgid "your current branch '%s' does not have any commits yet"
+msgid "your current branch '%s' does not have any cummits yet"
 msgstr "nhánh hiện tại của bạn “%s” không có một lần chuyển giao nào cả"
 
 #: revision.c:2901
@@ -7804,7 +7804,7 @@ msgstr "kết thúc nhận không hỗ trợ các tùy chọn của lệnh push"
 
 #: sequencer.c:197
 #, c-format
-msgid "invalid commit message cleanup mode '%s'"
+msgid "invalid cummit message cleanup mode '%s'"
 msgstr "chế độ dọn dẹp ghi chú các lần chuyển giao không hợp lệ “%s”"
 
 #: sequencer.c:325
@@ -7848,7 +7848,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git cherry-pick --continue\".\n"
-"You can instead skip this commit with \"git cherry-pick --skip\".\n"
+"You can instead skip this cummit with \"git cherry-pick --skip\".\n"
 "To abort and get back to the state before \"git cherry-pick\",\n"
 "run \"git cherry-pick --abort\"."
 msgstr ""
@@ -7864,7 +7864,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git revert --continue\".\n"
-"You can instead skip this commit with \"git revert --skip\".\n"
+"You can instead skip this cummit with \"git revert --skip\".\n"
 "To abort and get back to the state before \"git revert\",\n"
 "run \"git revert --abort\"."
 msgstr ""
@@ -7898,7 +7898,7 @@ msgid "failed to finalize '%s'"
 msgstr "gặp lỗi khi hoàn thành “%s”"
 
 #: sequencer.c:473 sequencer.c:1930 sequencer.c:3112 sequencer.c:3547
-#: sequencer.c:3675 builtin/am.c:290 builtin/commit.c:837 builtin/merge.c:1154
+#: sequencer.c:3675 builtin/am.c:290 builtin/cummit.c:837 builtin/merge.c:1154
 #, c-format
 msgid "could not read '%s'"
 msgstr "không thể đọc “%s”"
@@ -7909,7 +7909,7 @@ msgid "your local changes would be overwritten by %s."
 msgstr "các thay đổi nội bộ của bạn có thể bị ghi đè bởi lệnh %s."
 
 #: sequencer.c:503
-msgid "commit your changes or stash them to proceed."
+msgid "cummit your changes or stash them to proceed."
 msgstr "chuyển giao các thay đổi của bạn hay tạm cất (stash) chúng để xử lý."
 
 #: sequencer.c:535
@@ -7935,7 +7935,7 @@ msgid "unable to update cache tree"
 msgstr "không thể cập nhật cây bộ nhớ đệm"
 
 #: sequencer.c:713
-msgid "could not resolve HEAD commit"
+msgid "could not resolve HEAD cummit"
 msgstr "không thể phân giải lần chuyển giao HEAD"
 
 #: sequencer.c:793
@@ -7987,13 +7987,13 @@ msgstr "thiếu “GIT_AUTHOR_DATE”"
 #, c-format
 msgid ""
 "you have staged changes in your working tree\n"
-"If these changes are meant to be squashed into the previous commit, run:\n"
+"If these changes are meant to be squashed into the previous cummit, run:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
-"If they are meant to go into a new commit, run:\n"
+"If they are meant to go into a new cummit, run:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
@@ -8002,19 +8002,19 @@ msgstr ""
 "bạn có các thay đổi so với trong bệ phóng trong thư mục làm việc của bạn.\n"
 "Nếu các thay đổi này là muốn squash vào lần chuyển giao kế trước, chạy:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Nếu chúng có ý là đi đến lần chuyển giao mới, thì chạy:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "Trong cả hai trường hợp, một khi bạn làm xong, tiếp tục bằng:\n"
 "\n"
 "  git rebase --continue\n"
 
 #: sequencer.c:1225
-msgid "'prepare-commit-msg' hook failed"
-msgstr "móc “prepare-commit-msg” bị lỗi"
+msgid "'prepare-cummit-msg' hook failed"
+msgstr "móc “prepare-cummit-msg” bị lỗi"
 
 #: sequencer.c:1231
 msgid ""
@@ -8026,9 +8026,9 @@ msgid ""
 "\n"
 "    git config --global --edit\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Tên và địa chỉ thư điện tử của bạn được cấu hình một cách tự động trên cơ "
 "sở\n"
@@ -8045,7 +8045,7 @@ msgstr ""
 "Sau khi thực hiện xong, bạn có thể sửa chữa định danh được sử dụng cho\n"
 "lần chuyển giao này với lệnh:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1244
 msgid ""
@@ -8056,9 +8056,9 @@ msgid ""
 "    git config --global user.name \"Your Name\"\n"
 "    git config --global user.email you@example.com\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Tên và địa chỉ thư điện tử của bạn được cấu hình một cách tự động trên cơ "
 "sở\n"
@@ -8073,19 +8073,19 @@ msgstr ""
 "Sau khi thực hiện xong, bạn có thể sửa chữa định danh được sử dụng cho lần "
 "chuyển giao này với lệnh:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1287
-msgid "couldn't look up newly created commit"
+msgid "couldn't look up newly created cummit"
 msgstr "không thể tìm thấy lần chuyển giao mới hơn đã được tạo"
 
 #: sequencer.c:1289
-msgid "could not parse newly created commit"
+msgid "could not parse newly created cummit"
 msgstr ""
 "không thể phân tích cú pháp của đối tượng chuyển giao mới hơn đã được tạo"
 
 #: sequencer.c:1336
-msgid "unable to resolve HEAD after creating commit"
+msgid "unable to resolve HEAD after creating cummit"
 msgstr "không thể phân giải HEAD sau khi tạo lần chuyển giao"
 
 #: sequencer.c:1338
@@ -8093,8 +8093,8 @@ msgid "detached HEAD"
 msgstr "đã rời khỏi HEAD"
 
 #: sequencer.c:1342
-msgid " (root-commit)"
-msgstr " (root-commit)"
+msgid " (root-cummit)"
+msgstr " (root-cummit)"
 
 #: sequencer.c:1363
 msgid "could not parse HEAD"
@@ -8102,15 +8102,15 @@ msgstr "không thể phân tích HEAD"
 
 #: sequencer.c:1365
 #, c-format
-msgid "HEAD %s is not a commit!"
+msgid "HEAD %s is not a cummit!"
 msgstr "HEAD %s không phải là một lần chuyển giao!"
 
-#: sequencer.c:1369 sequencer.c:1447 builtin/commit.c:1707
-msgid "could not parse HEAD commit"
-msgstr "không thể phân tích commit (lần chuyển giao) HEAD"
+#: sequencer.c:1369 sequencer.c:1447 builtin/cummit.c:1707
+msgid "could not parse HEAD cummit"
+msgstr "không thể phân tích cummit (lần chuyển giao) HEAD"
 
 #: sequencer.c:1425 sequencer.c:2310
-msgid "unable to parse commit author"
+msgid "unable to parse cummit author"
 msgstr "không thể phân tích tác giả của lần chuyển giao"
 
 #: sequencer.c:1436 builtin/am.c:1644 builtin/merge.c:710
@@ -8119,7 +8119,7 @@ msgstr "lệnh git write-tree gặp lỗi khi ghi một cây"
 
 #: sequencer.c:1469 sequencer.c:1589
 #, c-format
-msgid "unable to read commit message from '%s'"
+msgid "unable to read cummit message from '%s'"
 msgstr "không thể đọc phần chú thích (message) từ “%s”"
 
 #: sequencer.c:1500 sequencer.c:1532
@@ -8131,9 +8131,9 @@ msgstr "định danh tác giả không hợp lệ “%s”"
 msgid "corrupt author: missing date information"
 msgstr "tác giả sai hỏng: thiếu thông tin ngày tháng"
 
-#: sequencer.c:1545 builtin/am.c:1671 builtin/commit.c:1821 builtin/merge.c:921
+#: sequencer.c:1545 builtin/am.c:1671 builtin/cummit.c:1821 builtin/merge.c:921
 #: builtin/merge.c:946 t/helper/test-fast-rebase.c:78
-msgid "failed to write commit object"
+msgid "failed to write cummit object"
 msgstr "gặp lỗi khi ghi đối tượng chuyển giao"
 
 #: sequencer.c:1572 sequencer.c:4496 t/helper/test-fast-rebase.c:199
@@ -8144,12 +8144,12 @@ msgstr "không thể cập nhật %s"
 
 #: sequencer.c:1621
 #, c-format
-msgid "could not parse commit %s"
+msgid "could not parse cummit %s"
 msgstr "không thể phân tích lần chuyển giao %s"
 
 #: sequencer.c:1626
 #, c-format
-msgid "could not parse parent commit %s"
+msgid "could not parse parent cummit %s"
 msgstr "không thể phân tích lần chuyển giao cha mẹ “%s”"
 
 #: sequencer.c:1709 sequencer.c:1990
@@ -8158,26 +8158,26 @@ msgid "unknown command: %d"
 msgstr "không hiểu câu lệnh %d"
 
 #: sequencer.c:1751
-msgid "This is the 1st commit message:"
+msgid "This is the 1st cummit message:"
 msgstr "Đây là chú thích cho lần chuyển giao thứ nhất:"
 
 #: sequencer.c:1752
 #, c-format
-msgid "This is the commit message #%d:"
+msgid "This is the cummit message #%d:"
 msgstr "Đây là chú thích cho lần chuyển giao thứ #%d:"
 
 #: sequencer.c:1753
-msgid "The 1st commit message will be skipped:"
+msgid "The 1st cummit message will be skipped:"
 msgstr "Chú thích cho lần chuyển giao thứ nhất sẽ bị bỏ qua:"
 
 #: sequencer.c:1754
 #, c-format
-msgid "The commit message #%d will be skipped:"
+msgid "The cummit message #%d will be skipped:"
 msgstr "Chú thích cho lần chuyển giao thứ #%d sẽ bị bỏ qua:"
 
 #: sequencer.c:1755
 #, c-format
-msgid "This is a combination of %d commits."
+msgid "This is a combination of %d cummits."
 msgstr "Đây là tổ hợp của %d lần chuyển giao."
 
 #: sequencer.c:1902 sequencer.c:1959
@@ -8194,12 +8194,12 @@ msgid "could not read HEAD"
 msgstr "không thể đọc HEAD"
 
 #: sequencer.c:1953
-msgid "could not read HEAD's commit message"
+msgid "could not read HEAD's cummit message"
 msgstr "không thể đọc phần chú thích (message) của HEAD"
 
 #: sequencer.c:1977
 #, c-format
-msgid "could not read commit message of %s"
+msgid "could not read cummit message of %s"
 msgstr "không thể đọc phần chú thích (message) của %s"
 
 #: sequencer.c:2087
@@ -8207,29 +8207,29 @@ msgid "your index file is unmerged."
 msgstr "tập tin lưu mục lục của bạn không được hòa trộn."
 
 #: sequencer.c:2094
-msgid "cannot fixup root commit"
+msgid "cannot fixup root cummit"
 msgstr "không thể sửa chữa lần chuyển giao gốc"
 
 #: sequencer.c:2113
 #, c-format
-msgid "commit %s is a merge but no -m option was given."
+msgid "cummit %s is a merge but no -m option was given."
 msgstr "lần chuyển giao %s là một lần hòa trộn nhưng không đưa ra tùy chọn -m."
 
 #: sequencer.c:2121 sequencer.c:2129
 #, c-format
-msgid "commit %s does not have parent %d"
+msgid "cummit %s does not have parent %d"
 msgstr "lần chuyển giao %s không có cha mẹ %d"
 
 #: sequencer.c:2135
 #, c-format
-msgid "cannot get commit message for %s"
+msgid "cannot get cummit message for %s"
 msgstr "không thể lấy ghi chú lần chuyển giao cho %s"
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
 #: sequencer.c:2154
 #, c-format
-msgid "%s: cannot parse parent commit %s"
+msgid "%s: cannot parse parent cummit %s"
 msgstr "%s: không thể phân tích lần chuyển giao mẹ của %s"
 
 #: sequencer.c:2220
@@ -8284,7 +8284,7 @@ msgstr "dòng không hợp lệ %d: %.*s"
 
 #: sequencer.c:2572
 #, c-format
-msgid "cannot '%s' without a previous commit"
+msgid "cannot '%s' without a previous cummit"
 msgstr "không thể “%s” thể mà không có lần chuyển giao kế trước"
 
 #: sequencer.c:2620 builtin/rebase.c:185
@@ -8310,7 +8310,7 @@ msgid "unusable instruction sheet: '%s'"
 msgstr "bảng chỉ thị không thể dùng được: %s"
 
 #: sequencer.c:2714
-msgid "no commits parsed."
+msgid "no cummits parsed."
 msgstr "không có lần chuyển giao nào được phân tích."
 
 #: sequencer.c:2725
@@ -8331,7 +8331,7 @@ msgid "malformed options sheet: '%s'"
 msgstr "bảng tùy chọn dị hình: “%s”"
 
 #: sequencer.c:3029 sequencer.c:4875
-msgid "empty commit set passed"
+msgid "empty cummit set passed"
 msgstr "lần chuyển giao trống rỗng đặt là hợp quy cách"
 
 #: sequencer.c:3046
@@ -8408,7 +8408,7 @@ msgid "no cherry-pick in progress"
 msgstr "không có cherry-pick đang được thực hiện"
 
 #: sequencer.c:3256
-msgid "failed to skip the commit"
+msgid "failed to skip the cummit"
 msgstr "gặp lỗi khi bỏ qua đối tượng chuyển giao"
 
 #: sequencer.c:3263
@@ -8418,7 +8418,7 @@ msgstr "ở đây không có gì để mà bỏ qua cả"
 #: sequencer.c:3266
 #, c-format
 msgid ""
-"have you committed already?\n"
+"have you cummitted already?\n"
 "try \"git %s --continue\""
 msgstr ""
 "bạn đã sẵn sàng chuyển giao chưa?\n"
@@ -8436,9 +8436,9 @@ msgstr "không thể chép “%s” sang “%s”"
 #: sequencer.c:3453
 #, c-format
 msgid ""
-"You can amend the commit now, with\n"
+"You can amend the cummit now, with\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
@@ -8446,7 +8446,7 @@ msgid ""
 msgstr ""
 "Bạn có thể tu bổ lần chuyển giao ngay bây giờ bằng:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Một khi đã hài lòng với những thay đổi của mình, thì chạy:\n"
 "\n"
@@ -8496,7 +8496,7 @@ msgstr "và tạo các thay đổi bảng mục lục và/hay cây làm việc\n
 msgid ""
 "execution succeeded: %s\n"
 "but left changes to the index and/or the working tree\n"
-"Commit or stash your changes, and then run\n"
+"cummit or stash your changes, and then run\n"
 "\n"
 "  git rebase --continue\n"
 "\n"
@@ -8514,7 +8514,7 @@ msgid "illegal label name: '%.*s'"
 msgstr "tên nhãn dị hình: “%.*s”"
 
 #: sequencer.c:3655
-msgid "writing fake root commit"
+msgid "writing fake root cummit"
 msgstr "ghi lần chuyển giao gốc giả"
 
 #: sequencer.c:3660
@@ -8546,7 +8546,7 @@ msgstr "hòa trộn octopus không thể được thực thi trên đỉnh của
 
 #: sequencer.c:3869
 #, c-format
-msgid "could not get commit message of '%s'"
+msgid "could not get cummit message of '%s'"
 msgstr "không thể lấy chú thích của lần chuyển giao của “%s”"
 
 #: sequencer.c:4013
@@ -8684,7 +8684,7 @@ msgid "cannot rebase: You have unstaged changes."
 msgstr "không thể cải tổ: Bạn có các thay đổi chưa được đưa lên bệ phóng."
 
 #: sequencer.c:4624
-msgid "cannot amend non-existing commit"
+msgid "cannot amend non-existing cummit"
 msgstr "không thể tu bỏ một lần chuyển giao không tồn tại"
 
 #: sequencer.c:4626
@@ -8700,7 +8700,7 @@ msgstr "nội dung không hợp lệ: “%s”"
 #: sequencer.c:4631
 msgid ""
 "\n"
-"You have uncommitted changes in your working tree. Please, commit them\n"
+"You have uncummitted changes in your working tree. Please, cummit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 "\n"
@@ -8717,7 +8717,7 @@ msgid "could not remove CHERRY_PICK_HEAD"
 msgstr "không thể xóa bỏ CHERRY_PICK_HEAD"
 
 #: sequencer.c:4732
-msgid "could not commit staged changes."
+msgid "could not cummit staged changes."
 msgstr "không thể chuyển giao các thay đổi đã đưa lên bệ phóng."
 
 #: sequencer.c:4852
@@ -8731,16 +8731,16 @@ msgid "%s: bad revision"
 msgstr "%s: điểm xét duyệt sai"
 
 #: sequencer.c:4891
-msgid "can't revert as initial commit"
+msgid "can't revert as initial cummit"
 msgstr "không thể hoàn nguyên một lần chuyển giao khởi tạo"
 
 #: sequencer.c:5162 sequencer.c:5391
 #, c-format
-msgid "skipped previously applied commit %s"
+msgid "skipped previously applied cummit %s"
 msgstr "bỏ qua lần chuyển giao được áp dụng kế trước %s"
 
 #: sequencer.c:5232 sequencer.c:5407
-msgid "use --reapply-cherry-picks to include skipped commits"
+msgid "use --reapply-cherry-picks to include skipped cummits"
 msgstr ""
 "dùng --reapply-cherry-picks để bao gồm các lần chuyển giao đã bị bỏ qua"
 
@@ -9072,7 +9072,7 @@ msgstr "đối số --ignore-submodules sai: %s"
 #: submodule.c:866
 #, c-format
 msgid ""
-"Submodule in commit %s at path: '%s' collides with a submodule named the "
+"Submodule in cummit %s at path: '%s' collides with a submodule named the "
 "same. Skipping it."
 msgstr ""
 "Mô-đun-con trong lần chuyển giao %s tại đường dẫn: “%s” va chạm với mô-đun-"
@@ -9080,14 +9080,14 @@ msgstr ""
 
 #: submodule.c:987
 #, c-format
-msgid "submodule entry '%s' (%s) is a %s, not a commit"
+msgid "submodule entry '%s' (%s) is a %s, not a cummit"
 msgstr ""
 "mục tin mô-đun-con “%s” (%s) là một %s, không phải là một lần chuyển giao"
 
 #: submodule.c:1069
 #, c-format
 msgid ""
-"Could not run 'git rev-list <commits> --not --remotes -n 1' command in "
+"Could not run 'git rev-list <cummits> --not --remotes -n 1' command in "
 "submodule %s"
 msgstr ""
 "Không thể chạy lệnh “git rev-list <các lần chuyển giao> --not --remotes -n "
@@ -9124,12 +9124,12 @@ msgstr "Không thể truy cập mô-đun-con “%s”\n"
 
 #: submodule.c:1618
 #, c-format
-msgid "Could not access submodule '%s' at commit %s\n"
+msgid "Could not access submodule '%s' at cummit %s\n"
 msgstr "Không thể truy cập mô-đun-con “%s” ở lần chuyển giao %s\n"
 
 #: submodule.c:1629
 #, c-format
-msgid "Fetching submodule %s%s at commit %s\n"
+msgid "Fetching submodule %s%s at cummit %s\n"
 msgstr "Đang lấy về mô-đun-con %s%s tại lần chuyển giao %s\n"
 
 #: submodule.c:1849
@@ -9601,7 +9601,7 @@ msgstr "tập tin cây quá ngắn"
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by checkout:\n"
-"%%sPlease commit your changes or stash them before you switch branches."
+"%%sPlease cummit your changes or stash them before you switch branches."
 msgstr ""
 "Các thay đổi nội bộ của bạn với các tập tin sau đây sẽ bị ghi đè bởi lệnh "
 "checkout:\n"
@@ -9622,7 +9622,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
-"%%sPlease commit your changes or stash them before you merge."
+"%%sPlease cummit your changes or stash them before you merge."
 msgstr ""
 "Các thay đổi nội bộ của bạn với các tập tin sau đây sẽ bị ghi đè bởi lệnh "
 "hòa trộn:\n"
@@ -9643,7 +9643,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by %s:\n"
-"%%sPlease commit your changes or stash them before you %s."
+"%%sPlease cummit your changes or stash them before you %s."
 msgstr ""
 "Các thay đổi nội bộ của bạn với các tập tin sau đây sẽ bị ghi đè bởi lệnh "
 "%s:\n"
@@ -10088,19 +10088,19 @@ msgid "  (use \"git rm <file>...\" to mark resolution)"
 msgstr "  (dùng \"git rm <tập-tin>…\" để đánh dấu là cần giải quyết)"
 
 #: wt-status.c:211 wt-status.c:1140
-msgid "Changes to be committed:"
+msgid "Changes to be cummitted:"
 msgstr "Những thay đổi sẽ được chuyển giao:"
 
 #: wt-status.c:234 wt-status.c:1149
-msgid "Changes not staged for commit:"
+msgid "Changes not staged for cummit:"
 msgstr "Các thay đổi chưa được đặt lên bệ phóng để chuyển giao:"
 
 #: wt-status.c:238
-msgid "  (use \"git add <file>...\" to update what will be committed)"
+msgid "  (use \"git add <file>...\" to update what will be cummitted)"
 msgstr "  (dùng \"git add <tập-tin>…\" để cập nhật những gì sẽ chuyển giao)"
 
 #: wt-status.c:240
-msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
+msgid "  (use \"git add/rm <file>...\" to update what will be cummitted)"
 msgstr ""
 "  (dùng \"git add/rm <tập-tin>…\" để cập nhật những gì sẽ được chuyển giao)"
 
@@ -10112,14 +10112,14 @@ msgstr ""
 "việc)"
 
 #: wt-status.c:243
-msgid "  (commit or discard the untracked or modified content in submodules)"
+msgid "  (cummit or discard the untracked or modified content in submodules)"
 msgstr ""
 "  (chuyển giao hoặc là loại bỏ các nội dung chưa được theo dõi hay đã sửa "
 "chữa trong mô-đun-con)"
 
 #: wt-status.c:254
 #, c-format
-msgid "  (use \"git %s <file>...\" to include in what will be committed)"
+msgid "  (use \"git %s <file>...\" to include in what will be cummitted)"
 msgstr ""
 "  (dùng \"git %s <tập-tin>…\" để thêm vào những gì cần được chuyển giao)"
 
@@ -10184,7 +10184,7 @@ msgid "unmerged:"
 msgstr "chưa hòa trộn:"
 
 #: wt-status.c:382
-msgid "new commits, "
+msgid "new cummits, "
 msgstr "lần chuyển giao mới, "
 
 #: wt-status.c:384
@@ -10206,7 +10206,7 @@ msgid "Submodules changed but not updated:"
 msgstr "Những mô-đun-con đã bị thay đổi nhưng chưa được cập nhật:"
 
 #: wt-status.c:1006
-msgid "Submodule changes to be committed:"
+msgid "Submodule changes to be cummitted:"
 msgstr "Những mô-đun-con thay đổi đã được chuyển giao:"
 
 #: wt-status.c:1088
@@ -10233,8 +10233,8 @@ msgid "You have unmerged paths."
 msgstr "Bạn có những đường dẫn chưa được hòa trộn."
 
 #: wt-status.c:1213
-msgid "  (fix conflicts and run \"git commit\")"
-msgstr "  (sửa các xung đột rồi chạy \"git commit\")"
+msgid "  (fix conflicts and run \"git cummit\")"
+msgstr "  (sửa các xung đột rồi chạy \"git cummit\")"
 
 #: wt-status.c:1215
 msgid "  (use \"git merge --abort\" to abort the merge)"
@@ -10245,8 +10245,8 @@ msgid "All conflicts fixed but you are still merging."
 msgstr "Tất cả các xung đột đã được giải quyết nhưng bạn vẫn đang hòa trộn."
 
 #: wt-status.c:1222
-msgid "  (use \"git commit\" to conclude merge)"
-msgstr "  (dùng \"git commit\" để hoàn tất việc hòa trộn)"
+msgid "  (use \"git cummit\" to conclude merge)"
+msgstr "  (dùng \"git cummit\" để hoàn tất việc hòa trộn)"
 
 #: wt-status.c:1233
 msgid "You are in the middle of an am session."
@@ -10266,7 +10266,7 @@ msgstr "  (dùng \"git am --skip\" để bỏ qua miếng vá này)"
 
 #: wt-status.c:1246
 msgid ""
-"  (use \"git am --allow-empty\" to record this patch as an empty commit)"
+"  (use \"git am --allow-empty\" to record this patch as an empty cummit)"
 msgstr ""
 "  (dùng \"git am --allow-empty\" ghi miếng vá này như một lần chuyển giao "
 "rỗng)"
@@ -10340,13 +10340,13 @@ msgstr ""
 #: wt-status.c:1458
 #, c-format
 msgid ""
-"You are currently splitting a commit while rebasing branch '%s' on '%s'."
+"You are currently splitting a cummit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Bạn hiện nay đang thực hiện việc chia tách một lần chuyển giao trong khi "
 "đang “rebase” nhánh “%s” trên “%s”."
 
 #: wt-status.c:1463
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a cummit during a rebase."
 msgstr ""
 "Bạn hiện tại đang cắt đôi một lần chuyển giao trong khi đang thực hiện việc "
 "rebase."
@@ -10359,18 +10359,18 @@ msgstr ""
 
 #: wt-status.c:1470
 #, c-format
-msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
+msgid "You are currently editing a cummit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Bạn hiện nay đang thực hiện việc sửa chữa một lần chuyển giao trong khi đang "
 "rebase nhánh “%s” trên “%s”."
 
 #: wt-status.c:1475
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a cummit during a rebase."
 msgstr "Bạn hiện đang sửa một lần chuyển giao trong khi bạn thực hiện rebase."
 
 #: wt-status.c:1478
-msgid "  (use \"git commit --amend\" to amend the current commit)"
-msgstr "  (dùng \"git commit --amend\" để “tu bổ” lần chuyển giao hiện tại)"
+msgid "  (use \"git cummit --amend\" to amend the current cummit)"
+msgstr "  (dùng \"git cummit --amend\" để “tu bổ” lần chuyển giao hiện tại)"
 
 #: wt-status.c:1480
 msgid ""
@@ -10385,7 +10385,7 @@ msgstr "Cherry-pick hiện tại đang được thực hiện."
 
 #: wt-status.c:1494
 #, c-format
-msgid "You are currently cherry-picking commit %s."
+msgid "You are currently cherry-picking cummit %s."
 msgstr "Bạn hiện nay đang thực hiện việc cherry-pick lần chuyển giao %s."
 
 #: wt-status.c:1501
@@ -10417,7 +10417,7 @@ msgstr "Hoàn nguyên hiện tại đang thực hiện."
 
 #: wt-status.c:1524
 #, c-format
-msgid "You are currently reverting commit %s."
+msgid "You are currently reverting cummit %s."
 msgstr "Bạn hiện nay đang thực hiện thao tác hoàn nguyên lần chuyển giao “%s”."
 
 #: wt-status.c:1530
@@ -10492,11 +10492,11 @@ msgid "Not currently on any branch."
 msgstr "Hiện tại chẳng ở nhánh nào cả."
 
 #: wt-status.c:1851
-msgid "Initial commit"
+msgid "Initial cummit"
 msgstr "Lần chuyển giao khởi tạo"
 
 #: wt-status.c:1852
-msgid "No commits yet"
+msgid "No cummits yet"
 msgstr "Vẫn chưa chuyển giao"
 
 #: wt-status.c:1866
@@ -10534,20 +10534,20 @@ msgstr "Không có thay đổi nào"
 
 #: wt-status.c:1891
 #, c-format
-msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
+msgid "no changes added to cummit (use \"git add\" and/or \"git cummit -a\")\n"
 msgstr ""
 "không có thay đổi nào được thêm vào để chuyển giao (dùng \"git add\" và/hoặc "
-"\"git commit -a\")\n"
+"\"git cummit -a\")\n"
 
 #: wt-status.c:1895
 #, c-format
-msgid "no changes added to commit\n"
+msgid "no changes added to cummit\n"
 msgstr "không có thay đổi nào được thêm vào để chuyển giao\n"
 
 #: wt-status.c:1899
 #, c-format
 msgid ""
-"nothing added to commit but untracked files present (use \"git add\" to "
+"nothing added to cummit but untracked files present (use \"git add\" to "
 "track)\n"
 msgstr ""
 "không có gì được thêm vào lần chuyển giao nhưng có những tập tin chưa được "
@@ -10555,36 +10555,36 @@ msgstr ""
 
 #: wt-status.c:1903
 #, c-format
-msgid "nothing added to commit but untracked files present\n"
+msgid "nothing added to cummit but untracked files present\n"
 msgstr ""
 "không có gì được thêm vào lần chuyển giao nhưng có những tập tin chưa được "
 "theo dõi hiện diện\n"
 
 #: wt-status.c:1907
 #, c-format
-msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
+msgid "nothing to cummit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
 "không có gì để chuyển giao (tạo/sao-chép các tập tin và dùng \"git add\" để "
 "đưa vào theo dõi)\n"
 
 #: wt-status.c:1911 wt-status.c:1917
 #, c-format
-msgid "nothing to commit\n"
+msgid "nothing to cummit\n"
 msgstr "không có gì để chuyển giao\n"
 
 #: wt-status.c:1914
 #, c-format
-msgid "nothing to commit (use -u to show untracked files)\n"
+msgid "nothing to cummit (use -u to show untracked files)\n"
 msgstr ""
 "không có gì để chuyển giao (dùng -u xem các tập tin chưa được theo dõi)\n"
 
 #: wt-status.c:1919
 #, c-format
-msgid "nothing to commit, working tree clean\n"
+msgid "nothing to cummit, working tree clean\n"
 msgstr "không có gì để chuyển giao, thư mục làm việc sạch sẽ\n"
 
 #: wt-status.c:2024
-msgid "No commits yet on "
+msgid "No cummits yet on "
 msgstr "Vẫn không thực hiện lệnh chuyển giao nào "
 
 #: wt-status.c:2028
@@ -10610,13 +10610,13 @@ msgid "cannot %s: You have unstaged changes."
 msgstr "không thể %s: Bạn có các thay đổi chưa được đưa lên bệ phóng."
 
 #: wt-status.c:2611
-msgid "additionally, your index contains uncommitted changes."
+msgid "additionally, your index contains uncummitted changes."
 msgstr ""
 "thêm vào đó, bảng mục lục của bạn có chứa các thay đổi chưa được chuyển giao."
 
 #: wt-status.c:2613
 #, c-format
-msgid "cannot %s: Your index contains uncommitted changes."
+msgid "cannot %s: Your index contains uncummitted changes."
 msgstr ""
 "không thể %s: Mục lục của bạn có chứa các thay đổi chưa được chuyển giao."
 
@@ -10665,7 +10665,7 @@ msgstr "không thể chmod %cx “%s”"
 msgid "unexpected diff status %c"
 msgstr "trạng thái lệnh diff không như mong đợi %c"
 
-#: builtin/add.c:110 builtin/commit.c:299
+#: builtin/add.c:110 builtin/cummit.c:299
 msgid "updating files failed"
 msgstr "cập nhật tập tin gặp lỗi"
 
@@ -10717,7 +10717,7 @@ msgstr ""
 msgid "dry run"
 msgstr "chạy thử"
 
-#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/commit.c:1483
+#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/cummit.c:1483
 #: builtin/count-objects.c:98 builtin/fsck.c:789 builtin/log.c:2338
 #: builtin/mv.c:123 builtin/read-tree.c:120
 msgid "be verbose"
@@ -10842,7 +10842,7 @@ msgstr "thêm tập tin gặp lỗi"
 msgid "--chmod param '%s' must be either -x or +x"
 msgstr "--chmod tham số “%s” phải hoặc là -x hay +x"
 
-#: builtin/add.c:555 builtin/checkout.c:1770 builtin/commit.c:365
+#: builtin/add.c:555 builtin/checkout.c:1770 builtin/cummit.c:365
 #: builtin/reset.c:436 builtin/rm.c:275 builtin/stash.c:1702
 #, c-format
 msgid "'%s' and pathspec arguments cannot be used together"
@@ -10933,7 +10933,7 @@ msgstr ""
 
 #: builtin/am.c:1160
 #, c-format
-msgid "To record the empty patch as an empty commit, run \"%s --allow-empty\"."
+msgid "To record the empty patch as an empty cummit, run \"%s --allow-empty\"."
 msgstr ""
 "Để ghi một miếng vá trống rỗng như một lần chuyển giao rông, \"%s --allow-"
 "empty\"."
@@ -10951,7 +10951,7 @@ msgstr ""
 
 #: builtin/am.c:1345
 #, c-format
-msgid "missing author line in commit %s"
+msgid "missing author line in cummit %s"
 msgstr "thiếu dòng tác giả trong lần chuyển gia %s"
 
 #: builtin/am.c:1348
@@ -10994,7 +10994,7 @@ msgid "cannot resume: %s does not exist."
 msgstr "không thể phục hồi: %s không tồn tại."
 
 #: builtin/am.c:1726
-msgid "Commit Body is:"
+msgid "cummit Body is:"
 msgstr "Thân của lần chuyển giao là:"
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
@@ -11008,7 +11008,7 @@ msgstr ""
 "Áp dụng? đồng ý [y]/khô[n]g/chỉnh sửa [e]/hiển thị miếng [v]á/chấp nhận tất "
 "cả [a]: "
 
-#: builtin/am.c:1782 builtin/commit.c:410
+#: builtin/am.c:1782 builtin/cummit.c:410
 msgid "unable to write index file"
 msgstr "không thể ghi tập tin lưu mục lục"
 
@@ -11024,7 +11024,7 @@ msgstr "Đang bỏ qua: %.*s"
 
 #: builtin/am.c:1833
 #, c-format
-msgid "Creating an empty commit: %.*s"
+msgid "Creating an empty cummit: %.*s"
 msgstr "Đang tạo một lần chuyển giao trống rỗng: %.*s"
 
 #: builtin/am.c:1837
@@ -11050,7 +11050,7 @@ msgid "Use 'git am --show-current-patch=diff' to see the failed patch"
 msgstr "Dùng “git am --show-current-patch=diff” để xem miếng vá bị lỗi"
 
 #: builtin/am.c:1921
-msgid "No changes - recorded it as an empty commit."
+msgid "No changes - recorded it as an empty cummit."
 msgstr "Không có thay đổi nào - được ghi thành một lần chuyển giao rỗng."
 
 #: builtin/am.c:1923
@@ -11126,7 +11126,7 @@ msgid "be quiet"
 msgstr "im lặng"
 
 #: builtin/am.c:2337
-msgid "add a Signed-off-by trailer to the commit message"
+msgid "add a Signed-off-by trailer to the cummit message"
 msgstr "thêm dòng Signed-off-by vào cuối ghi chú của lần chuyển giao"
 
 #: builtin/am.c:2340
@@ -11168,7 +11168,7 @@ msgstr "chuyển nó qua git-mailinfo"
 msgid "pass it through git-apply"
 msgstr "chuyển nó qua git-apply"
 
-#: builtin/am.c:2376 builtin/commit.c:1514 builtin/fmt-merge-msg.c:18
+#: builtin/am.c:2376 builtin/cummit.c:1514 builtin/fmt-merge-msg.c:18
 #: builtin/fmt-merge-msg.c:21 builtin/grep.c:920 builtin/merge.c:263
 #: builtin/pull.c:142 builtin/pull.c:204 builtin/pull.c:221
 #: builtin/rebase.c:1074 builtin/repack.c:657 builtin/repack.c:661
@@ -11218,25 +11218,25 @@ msgid "show the patch being applied"
 msgstr "hiển thị miếng vá đã được áp dụng rồi"
 
 #: builtin/am.c:2411
-msgid "record the empty patch as an empty commit"
+msgid "record the empty patch as an empty cummit"
 msgstr "ghi lại miếng vá trống rỗng như là một lần chuyển giao trống"
 
 #: builtin/am.c:2415
-msgid "lie about committer date"
+msgid "lie about cummitter date"
 msgstr "nói dối về ngày chuyển giao"
 
 #: builtin/am.c:2417
 msgid "use current timestamp for author date"
 msgstr "dùng dấu thời gian hiện tại cho ngày tác giả"
 
-#: builtin/am.c:2419 builtin/commit-tree.c:118 builtin/commit.c:1642
+#: builtin/am.c:2419 builtin/cummit-tree.c:118 builtin/cummit.c:1642
 #: builtin/merge.c:302 builtin/pull.c:179 builtin/rebase.c:1127
 #: builtin/revert.c:117 builtin/tag.c:461
 msgid "key-id"
 msgstr "mã-số-khóa"
 
 #: builtin/am.c:2420 builtin/rebase.c:1128
-msgid "GPG-sign commits"
+msgid "GPG-sign cummits"
 msgstr "Các lần chuyển giao ký-GPG"
 
 #: builtin/am.c:2423
@@ -11311,7 +11311,7 @@ msgid "git archive: expected a flush"
 msgstr "git archive: cần một flush (đẩy dữ liệu lên đĩa)"
 
 #: builtin/bisect--helper.c:24
-msgid "git bisect--helper --bisect-reset [<commit>]"
+msgid "git bisect--helper --bisect-reset [<cummit>]"
 msgstr "git bisect--helper --bisect-reset [<lần_chuyển_giao>]"
 
 #: builtin/bisect--helper.c:26
@@ -11385,13 +11385,13 @@ msgstr "Chúng tôi đang không bisect.\n"
 
 #: builtin/bisect--helper.c:218
 #, c-format
-msgid "'%s' is not a valid commit"
+msgid "'%s' is not a valid cummit"
 msgstr "“%s” không phải một lần chuyển giao hợp lệ"
 
 #: builtin/bisect--helper.c:227
 #, c-format
 msgid ""
-"could not check out original HEAD '%s'. Try 'git bisect reset <commit>'."
+"could not check out original HEAD '%s'. Try 'git bisect reset <cummit>'."
 msgstr ""
 "không thể lấy ra HEAD nguyên thủy của “%s”. Hãy thử “git bisect reset <lần-"
 "chuyển-giao>”."
@@ -11438,7 +11438,7 @@ msgstr ""
 
 #: builtin/bisect--helper.c:365
 #, c-format
-msgid "bisecting only with a %s commit"
+msgid "bisecting only with a %s cummit"
 msgstr "chỉ thực hiện việc bisect với một lần chuyển giao %s"
 
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -11544,7 +11544,7 @@ msgstr "Đầu vào rev sai: %s"
 
 #: builtin/bisect--helper.c:904
 #, c-format
-msgid "Bad rev input (not a commit): %s"
+msgid "Bad rev input (not a cummit): %s"
 msgstr "Đầu vào rev sai (không phải là lần chuyển giao): %s"
 
 #: builtin/bisect--helper.c:936
@@ -11601,7 +11601,7 @@ msgstr "bisect chạy thành công"
 
 #: builtin/bisect--helper.c:1218
 #, c-format
-msgid "bisect found first bad commit"
+msgid "bisect found first bad cummit"
 msgstr "bisect tìm thấy lần chuyển giao sai đầu tiên"
 
 #: builtin/bisect--helper.c:1221
@@ -11630,7 +11630,7 @@ msgid "start the bisect session"
 msgstr "bắt đầu phiên di chuyển nửa bước"
 
 #: builtin/bisect--helper.c:1261
-msgid "find the next bisection commit"
+msgid "find the next bisection cummit"
 msgstr "tìm lần chuyển giao không di chuyển phân đôi"
 
 #: builtin/bisect--helper.c:1263
@@ -11646,7 +11646,7 @@ msgid "replay the bisection process from the given file"
 msgstr "phát lại quá trình bisection từ tệp đã cho"
 
 #: builtin/bisect--helper.c:1269
-msgid "skip some commits for checkout"
+msgid "skip some cummits for checkout"
 msgstr "bỏ qua một số lần chuyển giao để lấy ra"
 
 #: builtin/bisect--helper.c:1271
@@ -11662,7 +11662,7 @@ msgid "no log for BISECT_WRITE"
 msgstr "không có nhật ký cho BISECT_WRITE"
 
 #: builtin/bisect--helper.c:1290
-msgid "--bisect-reset requires either no argument or a commit"
+msgid "--bisect-reset requires either no argument or a cummit"
 msgstr ""
 "--bisect-reset requires không nhận đối số cũng không nhận lần chuyển giao"
 
@@ -11709,13 +11709,13 @@ msgid "show blame entries as we find them, incrementally"
 msgstr "hiển thị các mục “blame” như là chúng ta thấy chúng, tăng dần"
 
 #: builtin/blame.c:865
-msgid "do not show object names of boundary commits (Default: off)"
+msgid "do not show object names of boundary cummits (Default: off)"
 msgstr ""
 "đừng hiển thị tên đối tượng của những lần chuyển giao biên giới (Mặc định: "
 "off)"
 
 #: builtin/blame.c:866
-msgid "do not treat root commits as boundaries (Default: off)"
+msgid "do not treat root cummits as boundaries (Default: off)"
 msgstr "không coi các lần chuyển giao gốc là giới hạn (Mặc định: off)"
 
 #: builtin/blame.c:867
@@ -11723,7 +11723,7 @@ msgid "show work cost statistics"
 msgstr "hiển thị thống kê công sức làm việc"
 
 #: builtin/blame.c:868 builtin/checkout.c:1554 builtin/clone.c:98
-#: builtin/commit-graph.c:75 builtin/commit-graph.c:228 builtin/fetch.c:181
+#: builtin/cummit-graph.c:75 builtin/cummit-graph.c:228 builtin/fetch.c:181
 #: builtin/merge.c:301 builtin/multi-pack-index.c:103
 #: builtin/multi-pack-index.c:154 builtin/multi-pack-index.c:180
 #: builtin/multi-pack-index.c:208 builtin/pull.c:120 builtin/push.c:566
@@ -11748,7 +11748,7 @@ msgid "show in a format designed for machine consumption"
 msgstr "hiển thị ở định dạng đã thiết kế cho dùng bằng máy"
 
 #: builtin/blame.c:873
-msgid "show porcelain format with per-line commit information"
+msgid "show porcelain format with per-line cummit information"
 msgstr "hiển thị định dạng “porcelain” với thông tin chuyển giao mỗi dòng"
 
 #: builtin/blame.c:874
@@ -11760,7 +11760,7 @@ msgid "show raw timestamp (Default: off)"
 msgstr "hiển thị dấu vết thời gian dạng thô (Mặc định: off)"
 
 #: builtin/blame.c:876
-msgid "show long commit SHA1 (Default: off)"
+msgid "show long cummit SHA1 (Default: off)"
 msgstr "hiển thị SHA1 của lần chuyển giao dạng dài (Mặc định: off)"
 
 #: builtin/blame.c:877
@@ -11911,7 +11911,7 @@ msgstr ""
 
 #: builtin/branch.c:183
 #, c-format
-msgid "Couldn't look up commit object for '%s'"
+msgid "Couldn't look up cummit object for '%s'"
 msgstr "Không thể tìm kiếm đối tượng chuyển giao cho “%s”"
 
 #: builtin/branch.c:187
@@ -11932,7 +11932,7 @@ msgid "cannot use -a with -d"
 msgstr "không thể dùng tùy chọn -a với -d"
 
 #: builtin/branch.c:242
-msgid "Couldn't look up commit object for HEAD"
+msgid "Couldn't look up cummit object for HEAD"
 msgstr "Không thể tìm kiếm đối tượng chuyển giao cho HEAD"
 
 #: builtin/branch.c:259
@@ -12080,11 +12080,11 @@ msgid "act on remote-tracking branches"
 msgstr "thao tác trên nhánh “remote-tracking”"
 
 #: builtin/branch.c:666 builtin/branch.c:668
-msgid "print only branches that contain the commit"
+msgid "print only branches that contain the cummit"
 msgstr "chỉ hiển thị những nhánh mà nó chứa lần chuyển giao"
 
 #: builtin/branch.c:667 builtin/branch.c:669
-msgid "print only branches that don't contain the commit"
+msgid "print only branches that don't contain the cummit"
 msgstr "chỉ hiển thị những nhánh mà nó không chứa lần chuyển giao"
 
 #: builtin/branch.c:672
@@ -12204,7 +12204,7 @@ msgstr "không thể sửa mô tả cho nhiều hơn một nhánh"
 
 #: builtin/branch.c:814
 #, c-format
-msgid "No commit on branch '%s' yet."
+msgid "No cummit on branch '%s' yet."
 msgstr "Vẫn chưa chuyển giao trên nhánh “%s”."
 
 #: builtin/branch.c:817
@@ -12507,9 +12507,9 @@ msgid "Emit [broken] object attributes"
 msgstr "Phát các thuộc tính đối tượng [hỏng]"
 
 #: builtin/cat-file.c:842
-msgid "show object type (one of 'blob', 'tree', 'commit', 'tag', ...)"
+msgid "show object type (one of 'blob', 'tree', 'cummit', 'tag', ...)"
 msgstr ""
-"hiển thị kiểu của đối tượng (là một trong số 'blob', 'tree', 'commit', "
+"hiển thị kiểu của đối tượng (là một trong số 'blob', 'tree', 'cummit', "
 "'tag', ...)"
 
 #: builtin/cat-file.c:843
@@ -12926,12 +12926,12 @@ msgstr " … và nhiều hơn %d.\n"
 #: builtin/checkout.c:1023
 #, c-format
 msgid ""
-"Warning: you are leaving %d commit behind, not connected to\n"
+"Warning: you are leaving %d cummit behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"Warning: you are leaving %d commits behind, not connected to\n"
+"Warning: you are leaving %d cummits behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
@@ -13045,12 +13045,12 @@ msgstr "cần một nhánh, nhưng lại nhận được “%s”"
 
 #: builtin/checkout.c:1420
 #, c-format
-msgid "a branch is expected, got commit '%s'"
+msgid "a branch is expected, got cummit '%s'"
 msgstr "cần một nhánh, nhưng lại nhận được “%s”"
 
 #: builtin/checkout.c:1429
 msgid ""
-"If you want to detach HEAD at the commit, try again with the --detach option."
+"If you want to detach HEAD at the cummit, try again with the --detach option."
 msgstr ""
 "Nếu bạn muốn tách rời HEAD ở lần chuyển giao, hay thử lại với tùy chọn --"
 "detach."
@@ -13123,11 +13123,11 @@ msgstr "“%s” không thể nhận <điểm-đầu>"
 
 #: builtin/checkout.c:1505
 #, c-format
-msgid "Cannot switch branch to a non-commit '%s'"
+msgid "Cannot switch branch to a non-cummit '%s'"
 msgstr "Không thể chuyển nhánh đến một thứ không phải là lần chuyển giao “%s”"
 
 #: builtin/checkout.c:1512
-msgid "missing branch or commit argument"
+msgid "missing branch or cummit argument"
 msgstr "thiếu tham số là nhánh hoặc lần chuyển giao"
 
 #: builtin/checkout.c:1555
@@ -13143,7 +13143,7 @@ msgid "conflict style (merge, diff3, or zdiff3)"
 msgstr "xung đột kiểu (hòa trộn, diff3 hoặc zdiff3)"
 
 #: builtin/checkout.c:1569 builtin/worktree.c:560
-msgid "detach HEAD at named commit"
+msgid "detach HEAD at named cummit"
 msgstr "rời bỏ HEAD tại lần chuyển giao theo tên"
 
 #: builtin/checkout.c:1574
@@ -13205,7 +13205,7 @@ msgstr "đường dẫn đã cho không hợp lệ"
 
 #: builtin/checkout.c:1760
 #, c-format
-msgid "'%s' is not a commit and a branch '%s' cannot be created from it"
+msgid "'%s' is not a cummit and a branch '%s' cannot be created from it"
 msgstr ""
 "“%s” không phải là một lần chuyển giao và một nhánh'%s” không thể được tạo "
 "từ đó"
@@ -13875,194 +13875,194 @@ msgstr "chèn thêm khoảng trắng giữa các cột"
 msgid "--command must be the first argument"
 msgstr "--command phải là đối số đầu tiên"
 
-#: builtin/commit-graph.c:13
+#: builtin/cummit-graph.c:13
 msgid ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
+"git cummit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
 msgstr ""
-"git commit-graph verify [--object-dir </thư/mục/đối/tượng>] [--shallow] [--"
+"git cummit-graph verify [--object-dir </thư/mục/đối/tượng>] [--shallow] [--"
 "[no-]progress]"
 
-#: builtin/commit-graph.c:16
+#: builtin/cummit-graph.c:16
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--"
-"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
+"git cummit-graph write [--object-dir <objdir>] [--append] [--"
+"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-cummits] [--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
 msgstr ""
-"git commit-graph write [--object-dir </thư/mục/đối/tượng>] [--append][--"
-"split[=<chiến lược>]] [--reachable|--stdin-packs|--stdin-commits][--changed-"
+"git cummit-graph write [--object-dir </thư/mục/đối/tượng>] [--append][--"
+"split[=<chiến lược>]] [--reachable|--stdin-packs|--stdin-cummits][--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] <các tùy chọn chia "
 "tách>"
 
-#: builtin/commit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
+#: builtin/cummit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
 msgid "dir"
 msgstr "tmục"
 
-#: builtin/commit-graph.c:52
+#: builtin/cummit-graph.c:52
 msgid "the object directory to store the graph"
 msgstr "thư mục đối tượng để lưu đồ thị"
 
-#: builtin/commit-graph.c:73
-msgid "if the commit-graph is split, only verify the tip file"
+#: builtin/cummit-graph.c:73
+msgid "if the cummit-graph is split, only verify the tip file"
 msgstr ""
 "nếu đồ-thị-các-lần-chuyển-giao bị chia cắt, thì chỉ thẩm tra tập tin đỉnh"
 
-#: builtin/commit-graph.c:100
+#: builtin/cummit-graph.c:100
 #, c-format
-msgid "Could not open commit-graph '%s'"
+msgid "Could not open cummit-graph '%s'"
 msgstr "Không thể mở đồ thị chuyển giao “%s”"
 
-#: builtin/commit-graph.c:137
+#: builtin/cummit-graph.c:137
 #, c-format
 msgid "unrecognized --split argument, %s"
 msgstr "đối số --split không được thừa nhận, %s"
 
-#: builtin/commit-graph.c:150
+#: builtin/cummit-graph.c:150
 #, c-format
 msgid "unexpected non-hex object ID: %s"
 msgstr "nhận được ID đối tượng không phải dạng hex không cần: %s"
 
-#: builtin/commit-graph.c:155
+#: builtin/cummit-graph.c:155
 #, c-format
 msgid "invalid object: %s"
 msgstr "đối tượng không hợp lệ: %s"
 
-#: builtin/commit-graph.c:205
+#: builtin/cummit-graph.c:205
 msgid "start walk at all refs"
 msgstr "bắt đầu di chuyển tại mọi tham chiếu"
 
-#: builtin/commit-graph.c:207
-msgid "scan pack-indexes listed by stdin for commits"
+#: builtin/cummit-graph.c:207
+msgid "scan pack-indexes listed by stdin for cummits"
 msgstr ""
 "quét dó các mục lục gói được liệt kê bởi đầu vào tiêu chuẩn cho các lần "
 "chuyển giao"
 
-#: builtin/commit-graph.c:209
-msgid "start walk at commits listed by stdin"
+#: builtin/cummit-graph.c:209
+msgid "start walk at cummits listed by stdin"
 msgstr ""
 "bắt đầu di chuyển tại các lần chuyển giao được liệt kê bởi đầu vào tiêu chuẩn"
 
-#: builtin/commit-graph.c:211
-msgid "include all commits already in the commit-graph file"
+#: builtin/cummit-graph.c:211
+msgid "include all cummits already in the cummit-graph file"
 msgstr ""
 "bao gồm mọi lần chuyển giao đã sẵn có trongười tập tin đồ-thị-các-lần-chuyển-"
 "giao"
 
-#: builtin/commit-graph.c:213
+#: builtin/cummit-graph.c:213
 msgid "enable computation for changed paths"
 msgstr "cho phép tính toán các đường dẫn đã bị thay đổi"
 
-#: builtin/commit-graph.c:215
-msgid "allow writing an incremental commit-graph file"
+#: builtin/cummit-graph.c:215
+msgid "allow writing an incremental cummit-graph file"
 msgstr "cho phép ghi một tập tin đồ họa các lần chuyển giao lớn lên"
 
-#: builtin/commit-graph.c:219
-msgid "maximum number of commits in a non-base split commit-graph"
+#: builtin/cummit-graph.c:219
+msgid "maximum number of cummits in a non-base split cummit-graph"
 msgstr ""
 "số lượng tối đa của các lần chuyển giao trong một đồ-thị-các-lần-chuyển-giao "
 "chia cắt không-cơ-sở"
 
-#: builtin/commit-graph.c:221
-msgid "maximum ratio between two levels of a split commit-graph"
+#: builtin/cummit-graph.c:221
+msgid "maximum ratio between two levels of a split cummit-graph"
 msgstr "tỷ lệ tối đa giữa hai mức của một đồ-thị-các-lần-chuyển-giao chia cắt"
 
-#: builtin/commit-graph.c:223
+#: builtin/cummit-graph.c:223
 msgid "only expire files older than a given date-time"
 msgstr "chỉ làm hết hạn các tập tin khi nó cũ hơn khoảng <thời gian> đưa ra"
 
-#: builtin/commit-graph.c:225
+#: builtin/cummit-graph.c:225
 msgid "maximum number of changed-path Bloom filters to compute"
 msgstr "số tối đa các bộ lọc các đường dẫn thay đổi Bloom để tính toán"
 
-#: builtin/commit-graph.c:251
-msgid "use at most one of --reachable, --stdin-commits, or --stdin-packs"
+#: builtin/cummit-graph.c:251
+msgid "use at most one of --reachable, --stdin-cummits, or --stdin-packs"
 msgstr ""
-"không thể sử dụng hơn một --reachable, --stdin-commits, hay --stdin-packs"
+"không thể sử dụng hơn một --reachable, --stdin-cummits, hay --stdin-packs"
 
-#: builtin/commit-graph.c:282
-msgid "Collecting commits from input"
+#: builtin/cummit-graph.c:282
+msgid "Collecting cummits from input"
 msgstr "Sưu tập các lần chuyển giao từ đầu vào"
 
-#: builtin/commit-graph.c:328 builtin/multi-pack-index.c:259
+#: builtin/cummit-graph.c:328 builtin/multi-pack-index.c:259
 #, c-format
 msgid "unrecognized subcommand: %s"
 msgstr "không hiểu câu lệnh con: %s"
 
-#: builtin/commit-tree.c:18
+#: builtin/cummit-tree.c:18
 msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
+"git cummit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
 "<file>)...] <tree>"
 msgstr ""
-"git commit-tree [(-p <cha>)…] [-S[<keyid>]] [(-m <ghi chú>)…] [(-F <tập tin>)"
+"git cummit-tree [(-p <cha>)…] [-S[<keyid>]] [(-m <ghi chú>)…] [(-F <tập tin>)"
 "…] <cây>"
 
-#: builtin/commit-tree.c:31
+#: builtin/cummit-tree.c:31
 #, c-format
 msgid "duplicate parent %s ignored"
 msgstr "cha mẹ bị trùng lặp %s đã bị bỏ qua"
 
-#: builtin/commit-tree.c:56 builtin/commit-tree.c:134 builtin/log.c:590
+#: builtin/cummit-tree.c:56 builtin/cummit-tree.c:134 builtin/log.c:590
 #, c-format
 msgid "not a valid object name %s"
 msgstr "không phải là tên đối tượng hợp lệ “%s”"
 
-#: builtin/commit-tree.c:94
+#: builtin/cummit-tree.c:94
 #, c-format
-msgid "git commit-tree: failed to read '%s'"
-msgstr "git commit-tree: gặp lỗi khi đọc “%s”"
+msgid "git cummit-tree: failed to read '%s'"
+msgstr "git cummit-tree: gặp lỗi khi đọc “%s”"
 
-#: builtin/commit-tree.c:96
+#: builtin/cummit-tree.c:96
 #, c-format
-msgid "git commit-tree: failed to close '%s'"
-msgstr "git commit-tree: gặp lỗi khi đóng “%s”"
+msgid "git cummit-tree: failed to close '%s'"
+msgstr "git cummit-tree: gặp lỗi khi đóng “%s”"
 
-#: builtin/commit-tree.c:109
+#: builtin/cummit-tree.c:109
 msgid "parent"
 msgstr "cha-mẹ"
 
-#: builtin/commit-tree.c:110
-msgid "id of a parent commit object"
+#: builtin/cummit-tree.c:110
+msgid "id of a parent cummit object"
 msgstr "mã số của đối tượng chuyển giao cha mẹ"
 
-#: builtin/commit-tree.c:112 builtin/commit.c:1626 builtin/merge.c:284
+#: builtin/cummit-tree.c:112 builtin/cummit.c:1626 builtin/merge.c:284
 #: builtin/notes.c:407 builtin/notes.c:573 builtin/stash.c:1666
 #: builtin/tag.c:455
 msgid "message"
 msgstr "chú thích"
 
-#: builtin/commit-tree.c:113 builtin/commit.c:1626
-msgid "commit message"
+#: builtin/cummit-tree.c:113 builtin/cummit.c:1626
+msgid "cummit message"
 msgstr "chú thích của lần chuyển giao"
 
-#: builtin/commit-tree.c:116
-msgid "read commit log message from file"
+#: builtin/cummit-tree.c:116
+msgid "read cummit log message from file"
 msgstr "đọc chú thích nhật ký lần chuyển giao từ tập tin"
 
-#: builtin/commit-tree.c:119 builtin/commit.c:1643 builtin/merge.c:303
+#: builtin/cummit-tree.c:119 builtin/cummit.c:1643 builtin/merge.c:303
 #: builtin/pull.c:180 builtin/revert.c:118
-msgid "GPG sign commit"
+msgid "GPG sign cummit"
 msgstr "Ký lần chuyển giao dùng GPG"
 
-#: builtin/commit-tree.c:131
+#: builtin/cummit-tree.c:131
 msgid "must give exactly one tree"
 msgstr "phải đưa ra chính xác một cây"
 
-#: builtin/commit-tree.c:138
-msgid "git commit-tree: failed to read"
-msgstr "git commit-tree: gặp lỗi khi đọc"
+#: builtin/cummit-tree.c:138
+msgid "git cummit-tree: failed to read"
+msgstr "git cummit-tree: gặp lỗi khi đọc"
 
-#: builtin/commit.c:43
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<các tùy chọn>] [--] <pathspec>…"
+#: builtin/cummit.c:43
+msgid "git cummit [<options>] [--] <pathspec>..."
+msgstr "git cummit [<các tùy chọn>] [--] <pathspec>…"
 
-#: builtin/commit.c:48
+#: builtin/cummit.c:48
 msgid "git status [<options>] [--] <pathspec>..."
 msgstr "git status [<các tùy chọn>] [--] <pathspec>…"
 
-#: builtin/commit.c:53
+#: builtin/cummit.c:53
 msgid ""
-"You asked to amend the most recent commit, but doing so would make\n"
+"You asked to amend the most recent cummit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
-"remove the commit entirely with \"git reset HEAD^\".\n"
+"remove the cummit entirely with \"git reset HEAD^\".\n"
 msgstr ""
 "Bạn đã yêu cầu amend (“tu bổ”) phần lớn các lần chuyển giao gần đây, nhưng "
 "làm như thế\n"
@@ -14071,37 +14071,37 @@ msgstr ""
 "hoặc là bạn gỡ bỏ các lần chuyển giao một cách hoàn toàn bằng lệnh:\n"
 "\"git reset HEAD^\".\n"
 
-#: builtin/commit.c:58
+#: builtin/cummit.c:58
 msgid ""
 "The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
-"If you wish to commit it anyway, use:\n"
+"If you wish to cummit it anyway, use:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 msgstr ""
 "Lần cherry-pick trước hiện nay trống rỗng, có lẽ là bởi vì sự phân giải xung "
 "đột.\n"
 "Nếu bạn vẫn muốn chuyển giao nó cho dù thế nào đi nữa, hãy dùng:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 
-#: builtin/commit.c:65
+#: builtin/cummit.c:65
 msgid "Otherwise, please use 'git rebase --skip'\n"
 msgstr "Nếu không được thì dùng lệnh \"git rebase --skip\"\n"
 
-#: builtin/commit.c:68
+#: builtin/cummit.c:68
 msgid "Otherwise, please use 'git cherry-pick --skip'\n"
 msgstr "Nếu không được thì dùng lệnh \"git cherry-pick --skip\"\n"
 
-#: builtin/commit.c:71
+#: builtin/cummit.c:71
 msgid ""
 "and then use:\n"
 "\n"
 "    git cherry-pick --continue\n"
 "\n"
-"to resume cherry-picking the remaining commits.\n"
-"If you wish to skip this commit, use:\n"
+"to resume cherry-picking the remaining cummits.\n"
+"If you wish to skip this cummit, use:\n"
 "\n"
 "    git cherry-pick --skip\n"
 "\n"
@@ -14116,161 +14116,161 @@ msgstr ""
 "    git cherry-pick --skip\n"
 "\n"
 
-#: builtin/commit.c:326
+#: builtin/cummit.c:326
 msgid "failed to unpack HEAD tree object"
 msgstr "gặp lỗi khi tháo dỡ HEAD đối tượng cây"
 
-#: builtin/commit.c:376
+#: builtin/cummit.c:376
 msgid "No paths with --include/--only does not make sense."
 msgstr "Không đường dẫn với các tùy chọn --include/--only không hợp lý."
 
-#: builtin/commit.c:388
+#: builtin/cummit.c:388
 msgid "unable to create temporary index"
 msgstr "không thể tạo bảng mục lục tạm thời"
 
-#: builtin/commit.c:397
+#: builtin/cummit.c:397
 msgid "interactive add failed"
 msgstr "gặp lỗi khi thêm bằng cách tương"
 
-#: builtin/commit.c:412
+#: builtin/cummit.c:412
 msgid "unable to update temporary index"
 msgstr "không thể cập nhật bảng mục lục tạm thời"
 
-#: builtin/commit.c:414
+#: builtin/cummit.c:414
 msgid "Failed to update main cache tree"
 msgstr "Gặp lỗi khi cập nhật cây bộ nhớ đệm"
 
-#: builtin/commit.c:439 builtin/commit.c:462 builtin/commit.c:510
+#: builtin/cummit.c:439 builtin/cummit.c:462 builtin/cummit.c:510
 msgid "unable to write new_index file"
 msgstr "không thể ghi tập tin lưu bảng mục lục mới (new_index)"
 
-#: builtin/commit.c:491
-msgid "cannot do a partial commit during a merge."
+#: builtin/cummit.c:491
+msgid "cannot do a partial cummit during a merge."
 msgstr ""
 "không thể thực hiện việc chuyển giao cục bộ trong khi đang được hòa trộn."
 
-#: builtin/commit.c:493
-msgid "cannot do a partial commit during a cherry-pick."
+#: builtin/cummit.c:493
+msgid "cannot do a partial cummit during a cherry-pick."
 msgstr ""
 "không thể thực hiện việc chuyển giao bộ phận trong khi đang cherry-pick."
 
-#: builtin/commit.c:495
-msgid "cannot do a partial commit during a rebase."
+#: builtin/cummit.c:495
+msgid "cannot do a partial cummit during a rebase."
 msgstr ""
 "không thể thực hiện việc chuyển giao cục bộ trong khi đang thực hiện cải tổ."
 
-#: builtin/commit.c:503
+#: builtin/cummit.c:503
 msgid "cannot read the index"
 msgstr "không đọc được bảng mục lục"
 
-#: builtin/commit.c:522
+#: builtin/cummit.c:522
 msgid "unable to write temporary index file"
 msgstr "không thể ghi tập tin lưu bảng mục lục tạm thời"
 
-#: builtin/commit.c:620
+#: builtin/cummit.c:620
 #, c-format
-msgid "commit '%s' lacks author header"
+msgid "cummit '%s' lacks author header"
 msgstr "lần chuyển giao “%s” thiếu phần tác giả ở đầu"
 
-#: builtin/commit.c:622
+#: builtin/cummit.c:622
 #, c-format
-msgid "commit '%s' has malformed author line"
+msgid "cummit '%s' has malformed author line"
 msgstr "lần chuyển giao “%s” có phần tác giả ở đầu dị dạng"
 
-#: builtin/commit.c:641
+#: builtin/cummit.c:641
 msgid "malformed --author parameter"
 msgstr "đối số cho --author bị dị hình"
 
-#: builtin/commit.c:694
+#: builtin/cummit.c:694
 msgid ""
 "unable to select a comment character that is not used\n"
-"in the current commit message"
+"in the current cummit message"
 msgstr ""
 "không thể chọn một ký tự ghi chú cái mà không được dùng\n"
 "trong phần ghi chú hiện tại"
 
-#: builtin/commit.c:750 builtin/commit.c:784 builtin/commit.c:1170
+#: builtin/cummit.c:750 builtin/cummit.c:784 builtin/cummit.c:1170
 #, c-format
-msgid "could not lookup commit %s"
-msgstr "không thể tìm kiếm commit (lần chuyển giao) %s"
+msgid "could not lookup cummit %s"
+msgstr "không thể tìm kiếm cummit (lần chuyển giao) %s"
 
-#: builtin/commit.c:762 builtin/shortlog.c:417
+#: builtin/cummit.c:762 builtin/shortlog.c:417
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr "(đang đọc thông điệp nhật ký từ đầu vào tiêu chuẩn)\n"
 
-#: builtin/commit.c:764
+#: builtin/cummit.c:764
 msgid "could not read log from standard input"
 msgstr "không thể đọc nhật ký từ đầu vào tiêu chuẩn"
 
-#: builtin/commit.c:768
+#: builtin/cummit.c:768
 #, c-format
 msgid "could not read log file '%s'"
 msgstr "không đọc được tệp nhật ký “%s”"
 
-#: builtin/commit.c:805
+#: builtin/cummit.c:805
 #, c-format
 msgid "options '%s' and '%s:%s' cannot be used together"
 msgstr "tùy chọn '%s', và '%s:%s' không thể dùng cùng nhau"
 
-#: builtin/commit.c:817 builtin/commit.c:833
+#: builtin/cummit.c:817 builtin/cummit.c:833
 msgid "could not read SQUASH_MSG"
 msgstr "không thể đọc SQUASH_MSG"
 
-#: builtin/commit.c:824
+#: builtin/cummit.c:824
 msgid "could not read MERGE_MSG"
 msgstr "không thể đọc MERGE_MSG"
 
-#: builtin/commit.c:884
-msgid "could not write commit template"
+#: builtin/cummit.c:884
+msgid "could not write cummit template"
 msgstr "không thể ghi mẫu chuyển giao"
 
-#: builtin/commit.c:897
+#: builtin/cummit.c:897
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be ignored.\n"
 msgstr ""
 "Hãy nhập vào các thông tin để giải thích các thay đổi của bạn. Những\n"
 "dòng được bắt đầu bằng “%c” sẽ được bỏ qua.\n"
 
-#: builtin/commit.c:899
+#: builtin/cummit.c:899
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be ignored, and an empty message aborts the commit.\n"
+"Please enter the cummit message for your changes. Lines starting\n"
+"with '%c' will be ignored, and an empty message aborts the cummit.\n"
 msgstr ""
 "Hãy nhập vào các thông tin để giải thích các thay đổi của bạn. Những dòng "
 "được\n"
 "bắt đầu bằng “%c” sẽ được bỏ qua, nếu phần chú thích rỗng sẽ hủy bỏ lần "
 "chuyển giao.\n"
 
-#: builtin/commit.c:903
+#: builtin/cummit.c:903
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
 msgstr ""
 "Hãy nhập vào các thông tin để giải thích các thay đổi của bạn. Những dòng "
 "được\n"
 "bắt đầu bằng “%c” sẽ được bỏ qua; bạn có thể xóa chúng đi nếu muốn thế.\n"
 
-#: builtin/commit.c:907
+#: builtin/cummit.c:907
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
-"An empty message aborts the commit.\n"
+"An empty message aborts the cummit.\n"
 msgstr ""
 "Hãy nhập vào các thông tin để giải thích các thay đổi của bạn. Những dòng "
 "được\n"
 "bắt đầu bằng “%c” sẽ được bỏ qua; bạn có thể xóa chúng đi nếu muốn thế.\n"
 "Phần chú thích này nếu trống rỗng sẽ hủy bỏ lần chuyển giao.\n"
 
-#: builtin/commit.c:919
+#: builtin/cummit.c:919
 msgid ""
 "\n"
-"It looks like you may be committing a merge.\n"
+"It looks like you may be cummitting a merge.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d MERGE_HEAD\n"
 "and try again.\n"
@@ -14281,10 +14281,10 @@ msgstr ""
 "\tgit update-ref -d MERGE_HEAD\n"
 "và thử lại.\n"
 
-#: builtin/commit.c:924
+#: builtin/cummit.c:924
 msgid ""
 "\n"
-"It looks like you may be committing a cherry-pick.\n"
+"It looks like you may be cummitting a cherry-pick.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "and try again.\n"
@@ -14295,158 +14295,158 @@ msgstr ""
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "và thử lại.\n"
 
-#: builtin/commit.c:951
+#: builtin/cummit.c:951
 #, c-format
 msgid "%sAuthor:    %.*s <%.*s>"
 msgstr "%sTác giả:           %.*s <%.*s>"
 
-#: builtin/commit.c:959
+#: builtin/cummit.c:959
 #, c-format
 msgid "%sDate:      %s"
 msgstr "%sNgày tháng:        %s"
 
-#: builtin/commit.c:966
+#: builtin/cummit.c:966
 #, c-format
-msgid "%sCommitter: %.*s <%.*s>"
+msgid "%scummitter: %.*s <%.*s>"
 msgstr "%sNgười chuyển giao: %.*s <%.*s>"
 
-#: builtin/commit.c:984
+#: builtin/cummit.c:984
 msgid "Cannot read index"
 msgstr "Không đọc được bảng mục lục"
 
-#: builtin/commit.c:1029
+#: builtin/cummit.c:1029
 msgid "unable to pass trailers to --trailers"
 msgstr "không thể chuyển phần đuôi cho “--trailers”"
 
-#: builtin/commit.c:1069
+#: builtin/cummit.c:1069
 msgid "Error building trees"
 msgstr "Gặp lỗi khi xây dựng cây"
 
-#: builtin/commit.c:1083 builtin/tag.c:317
+#: builtin/cummit.c:1083 builtin/tag.c:317
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr "Xin hãy cung cấp lời chú giải hoặc là dùng tùy chọn -m hoặc là -F.\n"
 
-#: builtin/commit.c:1128
+#: builtin/cummit.c:1128
 #, c-format
 msgid "--author '%s' is not 'Name <email>' and matches no existing author"
 msgstr ""
 "--author “%s” không phải là “Họ và tên <thư điện tửl>” và không khớp bất kỳ "
 "tác giả nào sẵn có"
 
-#: builtin/commit.c:1142
+#: builtin/cummit.c:1142
 #, c-format
 msgid "Invalid ignored mode '%s'"
 msgstr "Chế độ bỏ qua không hợp lệ “%s”"
 
-#: builtin/commit.c:1160 builtin/commit.c:1450
+#: builtin/cummit.c:1160 builtin/cummit.c:1450
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr "Chế độ cho các tập tin chưa được theo dõi không hợp lệ “%s”"
 
-#: builtin/commit.c:1231
+#: builtin/cummit.c:1231
 msgid "You are in the middle of a merge -- cannot reword."
 msgstr ""
 "Bạn đang ở giữa của quá trình hòa trộn -- không thể thực hiện việc “reword”."
 
-#: builtin/commit.c:1233
+#: builtin/cummit.c:1233
 msgid "You are in the middle of a cherry-pick -- cannot reword."
 msgstr ""
 "Bạn đang ở giữa của quá trình cherry-pick -- không thể thực hiện việc "
 "“reword”."
 
-#: builtin/commit.c:1236
+#: builtin/cummit.c:1236
 #, c-format
 msgid "reword option of '%s' and path '%s' cannot be used together"
 msgstr ""
 "không thể tổ hợp tùy chọn \"reword\" của '%s' với đường dẫn '%s' cùng nhau"
 
-#: builtin/commit.c:1238
+#: builtin/cummit.c:1238
 #, c-format
 msgid "reword option of '%s' and '%s' cannot be used together"
 msgstr "không thể tổ hợp tùy chọn \"reword\" của '%s' với '%s' cùng nhau"
 
-#: builtin/commit.c:1263
+#: builtin/cummit.c:1263
 msgid "You have nothing to amend."
 msgstr "Không có gì để mà “tu bổ” cả."
 
-#: builtin/commit.c:1266
+#: builtin/cummit.c:1266
 msgid "You are in the middle of a merge -- cannot amend."
 msgstr ""
 "Bạn đang ở giữa của quá trình hòa trộn -- không thể thực hiện việc “tu bổ”."
 
-#: builtin/commit.c:1268
+#: builtin/cummit.c:1268
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr ""
 "Bạn đang ở giữa của quá trình cherry-pick -- không thể thực hiện việc “tu "
 "bổ”."
 
-#: builtin/commit.c:1270
+#: builtin/cummit.c:1270
 msgid "You are in the middle of a rebase -- cannot amend."
 msgstr ""
 "Bạn đang ở giữa của quá trình cải tổ -- nên không thể thực hiện việc “tu bổ”."
 
-#: builtin/commit.c:1290
+#: builtin/cummit.c:1290
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr ""
 "--reset-author chỉ có thể được sử dụng với tùy chọn -C, -c hay --amend."
 
-#: builtin/commit.c:1337
+#: builtin/cummit.c:1337
 #, c-format
 msgid "unknown option: --fixup=%s:%s"
 msgstr "không hiểu tùy chọn: --fixup=%s:%s"
 
-#: builtin/commit.c:1354
+#: builtin/cummit.c:1354
 #, c-format
 msgid "paths '%s ...' with -a does not make sense"
 msgstr "các đường dẫn “%s …” với tùy chọn -a không hợp lý"
 
-#: builtin/commit.c:1485 builtin/commit.c:1654
+#: builtin/cummit.c:1485 builtin/cummit.c:1654
 msgid "show status concisely"
 msgstr "hiển thị trạng thái ở dạng súc tích"
 
-#: builtin/commit.c:1487 builtin/commit.c:1656
+#: builtin/cummit.c:1487 builtin/cummit.c:1656
 msgid "show branch information"
 msgstr "hiển thị thông tin nhánh"
 
-#: builtin/commit.c:1489
+#: builtin/cummit.c:1489
 msgid "show stash information"
 msgstr "hiển thị thông tin về tạm cất"
 
-#: builtin/commit.c:1491 builtin/commit.c:1658
+#: builtin/cummit.c:1491 builtin/cummit.c:1658
 msgid "compute full ahead/behind values"
 msgstr "tính đầy đủ giá trị trước/sau"
 
-#: builtin/commit.c:1493
+#: builtin/cummit.c:1493
 msgid "version"
 msgstr "phiên bản"
 
-#: builtin/commit.c:1493 builtin/commit.c:1660 builtin/push.c:551
+#: builtin/cummit.c:1493 builtin/cummit.c:1660 builtin/push.c:551
 #: builtin/worktree.c:765
 msgid "machine-readable output"
 msgstr "kết xuất dạng máy-có-thể-đọc"
 
-#: builtin/commit.c:1496 builtin/commit.c:1662
+#: builtin/cummit.c:1496 builtin/cummit.c:1662
 msgid "show status in long format (default)"
 msgstr "hiển thị trạng thái ở định dạng dài (mặc định)"
 
-#: builtin/commit.c:1499 builtin/commit.c:1665
+#: builtin/cummit.c:1499 builtin/cummit.c:1665
 msgid "terminate entries with NUL"
 msgstr "chấm dứt các mục bằng NUL"
 
-#: builtin/commit.c:1501 builtin/commit.c:1505 builtin/commit.c:1668
+#: builtin/cummit.c:1501 builtin/cummit.c:1505 builtin/cummit.c:1668
 #: builtin/fast-export.c:1172 builtin/fast-export.c:1175
 #: builtin/fast-export.c:1178 builtin/rebase.c:1139 parse-options.h:368
 msgid "mode"
 msgstr "chế độ"
 
-#: builtin/commit.c:1502 builtin/commit.c:1668
+#: builtin/cummit.c:1502 builtin/cummit.c:1668
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
 "hiển thị các tập tin chưa được theo dõi  dấu vết, các chế độ tùy chọn:  all, "
 "normal, no. (Mặc định: all)"
 
-#: builtin/commit.c:1506
+#: builtin/cummit.c:1506
 msgid ""
 "show ignored files, optional modes: traditional, matching, no. (Default: "
 "traditional)"
@@ -14454,11 +14454,11 @@ msgstr ""
 "hiển thị các tập tin bị bỏ qua, các chế độ tùy chọn: traditional, matching, "
 "no. (Mặc định: traditional)"
 
-#: builtin/commit.c:1508 parse-options.h:197
+#: builtin/cummit.c:1508 parse-options.h:197
 msgid "when"
 msgstr "khi"
 
-#: builtin/commit.c:1509
+#: builtin/cummit.c:1509
 msgid ""
 "ignore changes to submodules, optional when: all, dirty, untracked. "
 "(Default: all)"
@@ -14466,199 +14466,199 @@ msgstr ""
 "bỏ qua các thay đổi trong mô-đun-con, tùy chọn khi: all, dirty, untracked. "
 "(Mặc định: all)"
 
-#: builtin/commit.c:1511
+#: builtin/cummit.c:1511
 msgid "list untracked files in columns"
 msgstr "hiển thị danh sách các tập-tin chưa được theo dõi trong các cột"
 
-#: builtin/commit.c:1512
+#: builtin/cummit.c:1512
 msgid "do not detect renames"
 msgstr "không dò tìm các tên thay đổi"
 
-#: builtin/commit.c:1514
+#: builtin/cummit.c:1514
 msgid "detect renames, optionally set similarity index"
 msgstr "dò các tên thay đổi, tùy ý đặt mục lục tương tự"
 
-#: builtin/commit.c:1537
+#: builtin/cummit.c:1537
 msgid "Unsupported combination of ignored and untracked-files arguments"
 msgstr ""
 "Không hỗ trỡ tổ hợp các tham số các tập tin bị bỏ qua và không được theo dõi"
 
-#: builtin/commit.c:1619
-msgid "suppress summary after successful commit"
+#: builtin/cummit.c:1619
+msgid "suppress summary after successful cummit"
 msgstr "không hiển thị tổng kết sau khi chuyển giao thành công"
 
-#: builtin/commit.c:1620
-msgid "show diff in commit message template"
+#: builtin/cummit.c:1620
+msgid "show diff in cummit message template"
 msgstr "hiển thị sự khác biệt trong mẫu tin nhắn chuyển giao"
 
-#: builtin/commit.c:1622
-msgid "Commit message options"
-msgstr "Các tùy chọn ghi chú commit"
+#: builtin/cummit.c:1622
+msgid "cummit message options"
+msgstr "Các tùy chọn ghi chú cummit"
 
-#: builtin/commit.c:1623 builtin/merge.c:288 builtin/tag.c:457
+#: builtin/cummit.c:1623 builtin/merge.c:288 builtin/tag.c:457
 msgid "read message from file"
 msgstr "đọc chú thích từ tập tin"
 
-#: builtin/commit.c:1624
+#: builtin/cummit.c:1624
 msgid "author"
 msgstr "tác giả"
 
-#: builtin/commit.c:1624
-msgid "override author for commit"
-msgstr "ghi đè tác giả cho commit"
+#: builtin/cummit.c:1624
+msgid "override author for cummit"
+msgstr "ghi đè tác giả cho cummit"
 
-#: builtin/commit.c:1625 builtin/gc.c:551
+#: builtin/cummit.c:1625 builtin/gc.c:551
 msgid "date"
 msgstr "ngày tháng"
 
-#: builtin/commit.c:1625
-msgid "override date for commit"
+#: builtin/cummit.c:1625
+msgid "override date for cummit"
 msgstr "ghi đè ngày tháng cho lần chuyển giao"
 
-#: builtin/commit.c:1627 builtin/commit.c:1628 builtin/commit.c:1634
+#: builtin/cummit.c:1627 builtin/cummit.c:1628 builtin/cummit.c:1634
 #: parse-options.h:360 ref-filter.h:89
-msgid "commit"
+msgid "cummit"
 msgstr "lần_chuyển_giao"
 
-#: builtin/commit.c:1627
-msgid "reuse and edit message from specified commit"
+#: builtin/cummit.c:1627
+msgid "reuse and edit message from specified cummit"
 msgstr "dùng lại các ghi chú từ lần chuyển giao đã cho nhưng có cho sửa chữa"
 
-#: builtin/commit.c:1628
-msgid "reuse message from specified commit"
+#: builtin/cummit.c:1628
+msgid "reuse message from specified cummit"
 msgstr "dùng lại các ghi chú từ lần chuyển giao đã cho"
 
 #. TRANSLATORS: Leave "[(amend|reword):]" as-is,
-#. and only translate <commit>.
+#. and only translate <cummit>.
 #.
-#: builtin/commit.c:1633
-msgid "[(amend|reword):]commit"
-msgstr "[(amend|reword):]commit"
+#: builtin/cummit.c:1633
+msgid "[(amend|reword):]cummit"
+msgstr "[(amend|reword):]cummit"
 
-#: builtin/commit.c:1633
+#: builtin/cummit.c:1633
 msgid ""
-"use autosquash formatted message to fixup or amend/reword specified commit"
+"use autosquash formatted message to fixup or amend/reword specified cummit"
 msgstr ""
 "dùng ghi chú có định dạng autosquash để sửa chữa hoặc tu bổ/reword lần "
 "chuyển giao đã chỉ ra"
 
-#: builtin/commit.c:1634
-msgid "use autosquash formatted message to squash specified commit"
+#: builtin/cummit.c:1634
+msgid "use autosquash formatted message to squash specified cummit"
 msgstr ""
 "dùng lời nhắn có định dạng tự động nén để nén lại các lần chuyển giao đã chỉ "
 "ra"
 
-#: builtin/commit.c:1635
-msgid "the commit is authored by me now (used with -C/-c/--amend)"
+#: builtin/cummit.c:1635
+msgid "the cummit is authored by me now (used with -C/-c/--amend)"
 msgstr ""
 "lần chuyển giao nhận tôi là tác giả (được dùng với tùy chọn -C/-c/--amend)"
 
-#: builtin/commit.c:1636 builtin/interpret-trailers.c:111
+#: builtin/cummit.c:1636 builtin/interpret-trailers.c:111
 msgid "trailer"
 msgstr "bộ dò vết"
 
-#: builtin/commit.c:1636
+#: builtin/cummit.c:1636
 msgid "add custom trailer(s)"
 msgstr "thêm đuôi tự chọn"
 
-#: builtin/commit.c:1637 builtin/log.c:1788 builtin/merge.c:306
+#: builtin/cummit.c:1637 builtin/log.c:1788 builtin/merge.c:306
 #: builtin/pull.c:146 builtin/revert.c:110
 msgid "add a Signed-off-by trailer"
 msgstr "thêm dòng Signed-off-by vào cuối"
 
-#: builtin/commit.c:1638
+#: builtin/cummit.c:1638
 msgid "use specified template file"
 msgstr "sử dụng tập tin mẫu đã cho"
 
-#: builtin/commit.c:1639
-msgid "force edit of commit"
-msgstr "ép buộc sửa lần commit"
+#: builtin/cummit.c:1639
+msgid "force edit of cummit"
+msgstr "ép buộc sửa lần cummit"
 
-#: builtin/commit.c:1641
-msgid "include status in commit message template"
+#: builtin/cummit.c:1641
+msgid "include status in cummit message template"
 msgstr "bao gồm các trạng thái trong mẫu ghi chú chuyển giao"
 
-#: builtin/commit.c:1646
-msgid "Commit contents options"
-msgstr "Các tùy nội dung ghi chú commit"
+#: builtin/cummit.c:1646
+msgid "cummit contents options"
+msgstr "Các tùy nội dung ghi chú cummit"
 
-#: builtin/commit.c:1647
-msgid "commit all changed files"
+#: builtin/cummit.c:1647
+msgid "cummit all changed files"
 msgstr "chuyển giao tất cả các tập tin có thay đổi"
 
-#: builtin/commit.c:1648
-msgid "add specified files to index for commit"
+#: builtin/cummit.c:1648
+msgid "add specified files to index for cummit"
 msgstr "thêm các tập tin đã chỉ ra vào bảng mục lục để chuyển giao"
 
-#: builtin/commit.c:1649
+#: builtin/cummit.c:1649
 msgid "interactively add files"
 msgstr "thêm các tập-tin bằng tương tác"
 
-#: builtin/commit.c:1650
+#: builtin/cummit.c:1650
 msgid "interactively add changes"
 msgstr "thêm các thay đổi bằng tương tác"
 
-#: builtin/commit.c:1651
-msgid "commit only specified files"
+#: builtin/cummit.c:1651
+msgid "cummit only specified files"
 msgstr "chỉ chuyển giao các tập tin đã chỉ ra"
 
-#: builtin/commit.c:1652
-msgid "bypass pre-commit and commit-msg hooks"
-msgstr "vòng qua móc (hook) pre-commit và commit-msg"
+#: builtin/cummit.c:1652
+msgid "bypass pre-cummit and cummit-msg hooks"
+msgstr "vòng qua móc (hook) pre-cummit và cummit-msg"
 
-#: builtin/commit.c:1653
-msgid "show what would be committed"
+#: builtin/cummit.c:1653
+msgid "show what would be cummitted"
 msgstr "hiển thị xem cái gì có thể được chuyển giao"
 
-#: builtin/commit.c:1666
-msgid "amend previous commit"
-msgstr "“tu bổ” (amend) lần commit trước"
+#: builtin/cummit.c:1666
+msgid "amend previous cummit"
+msgstr "“tu bổ” (amend) lần cummit trước"
 
-#: builtin/commit.c:1667
+#: builtin/cummit.c:1667
 msgid "bypass post-rewrite hook"
 msgstr "vòng qua móc (hook) post-rewrite"
 
-#: builtin/commit.c:1674
+#: builtin/cummit.c:1674
 msgid "ok to record an empty change"
 msgstr "ok để ghi lại một thay đổi trống rỗng"
 
-#: builtin/commit.c:1676
+#: builtin/cummit.c:1676
 msgid "ok to record a change with an empty message"
 msgstr "ok để ghi các thay đổi với lời nhắn trống rỗng"
 
-#: builtin/commit.c:1752
+#: builtin/cummit.c:1752
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "Tập tin MERGE_HEAD sai hỏng (%s)"
 
-#: builtin/commit.c:1759
+#: builtin/cummit.c:1759
 msgid "could not read MERGE_MODE"
 msgstr "không thể đọc MERGE_MODE"
 
-#: builtin/commit.c:1780
+#: builtin/cummit.c:1780
 #, c-format
-msgid "could not read commit message: %s"
+msgid "could not read cummit message: %s"
 msgstr "không thể đọc phần chú thích (message) của lần chuyển giao: %s"
 
-#: builtin/commit.c:1787
+#: builtin/cummit.c:1787
 #, c-format
-msgid "Aborting commit due to empty commit message.\n"
+msgid "Aborting cummit due to empty cummit message.\n"
 msgstr "Bãi bỏ việc chuyển giao bởi vì phần chú thích của nó trống rỗng.\n"
 
-#: builtin/commit.c:1792
+#: builtin/cummit.c:1792
 #, c-format
-msgid "Aborting commit; you did not edit the message.\n"
+msgid "Aborting cummit; you did not edit the message.\n"
 msgstr ""
 "Đang bỏ qua việc chuyển giao; bạn đã không biên soạn phần chú thích "
 "(message).\n"
 
-#: builtin/commit.c:1803
+#: builtin/cummit.c:1803
 #, c-format
-msgid "Aborting commit due to empty commit message body.\n"
+msgid "Aborting cummit due to empty cummit message body.\n"
 msgstr ""
 "Bãi bỏ việc chuyển giao bởi vì phần thân chú thích của nó trống rỗng.\n"
 
-#: builtin/commit.c:1839
+#: builtin/cummit.c:1839
 msgid ""
 "repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -15035,8 +15035,8 @@ msgid "unable to get credential storage lock in %d ms"
 msgstr "không thể lấy khóa lưu trữ ủy nhiệm %d ms"
 
 #: builtin/describe.c:26
-msgid "git describe [<options>] [<commit-ish>...]"
-msgstr "git describe [<các tùy chọn>] <commit-ish>*"
+msgid "git describe [<options>] [<cummit-ish>...]"
+msgstr "git describe [<các tùy chọn>] <cummit-ish>*"
 
 #: builtin/describe.c:27
 msgid "git describe [<options>] --dirty"
@@ -15099,7 +15099,7 @@ msgstr ""
 
 #: builtin/describe.c:458
 #, c-format
-msgid "traversed %lu commits\n"
+msgid "traversed %lu cummits\n"
 msgstr "đã xuyên %lu qua lần chuyển giao\n"
 
 #: builtin/describe.c:461
@@ -15123,11 +15123,11 @@ msgstr "Không phải tên đối tượng %s hợp lệ"
 
 #: builtin/describe.c:540
 #, c-format
-msgid "%s is neither a commit nor blob"
-msgstr "%s không phải là một lần commit cũng không phải blob"
+msgid "%s is neither a cummit nor blob"
+msgstr "%s không phải là một lần cummit cũng không phải blob"
 
 #: builtin/describe.c:554
-msgid "find the tag that comes after the commit"
+msgid "find the tag that comes after the cummit"
 msgstr "tìm các thẻ mà nó đến trước lần chuyển giao"
 
 #: builtin/describe.c:555
@@ -15167,7 +15167,7 @@ msgid "do not consider tags matching <pattern>"
 msgstr "không coi rằng các thẻ khớp với <mẫu>"
 
 #: builtin/describe.c:570 builtin/name-rev.c:595
-msgid "show abbreviated commit object as fallback"
+msgid "show abbreviated cummit object as fallback"
 msgstr "hiển thị đối tượng chuyển giao vắn tắt như là fallback"
 
 #: builtin/describe.c:571 builtin/describe.c:574
@@ -15188,11 +15188,11 @@ msgstr "Không tìm thấy các tên, không thể mô tả gì cả."
 
 #: builtin/describe.c:673 builtin/describe.c:675
 #, c-format
-msgid "option '%s' and commit-ishes cannot be used together"
-msgstr "tùy chọn '%s' và commit-ishes không thể dùng cùng nhau"
+msgid "option '%s' and cummit-ishes cannot be used together"
+msgstr "tùy chọn '%s' và cummit-ishes không thể dùng cùng nhau"
 
 #: builtin/diff-tree.c:157
-msgid "--merge-base only works with two commits"
+msgid "--merge-base only works with two cummits"
 msgstr "--merge-base chỉ hoạt động với hai lần chuyển giao"
 
 #: builtin/diff.c:92
@@ -15235,7 +15235,7 @@ msgid "%s...%s: multiple merge bases, using %s"
 msgstr "%s…%s: có nhiều cơ sở để hòa trộn, nên dùng %s"
 
 #: builtin/difftool.c:31
-msgid "git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"
+msgid "git difftool [<options>] [<cummit> [<cummit>]] [--] [<path>...]"
 msgstr ""
 "git difftool [<các tùy chọn>] [<lần_chuyển_giao> [<lần_chuyển_giao>]] [--] </"
 "đường/dẫn>…]"
@@ -15392,7 +15392,7 @@ msgid "select handling of tags that tag filtered objects"
 msgstr "chọn sự xử lý của các thẻ, cái mà đánh thẻ các đối tượng được lọc ra"
 
 #: builtin/fast-export.c:1179
-msgid "select handling of commit messages in an alternate encoding"
+msgid "select handling of cummit messages in an alternate encoding"
 msgstr ""
 "chọn bộ xử lý cho các ghi chú của lần chuyển giao theo một bộ mã thay thế"
 
@@ -15413,7 +15413,7 @@ msgid "fake a tagger when tags lack one"
 msgstr "làm giả một cái thẻ khi thẻ bị thiếu một cái"
 
 #: builtin/fast-export.c:1192
-msgid "output full tree for each commit"
+msgid "output full tree for each cummit"
 msgstr "xuất ra toàn bộ cây cho mỗi lần chuyển giao"
 
 #: builtin/fast-export.c:1194
@@ -15451,8 +15451,8 @@ msgstr ""
 "đối tượng"
 
 #: builtin/fast-export.c:1205
-msgid "show original object ids of blobs/commits"
-msgstr "hiển thị các mã id nguyên gốc của blobs/commits"
+msgid "show original object ids of blobs/cummits"
+msgstr "hiển thị các mã id nguyên gốc của blobs/cummits"
 
 #: builtin/fast-export.c:1207
 msgid "label tags with mark ids"
@@ -15602,7 +15602,7 @@ msgid "convert to a complete repository"
 msgstr "chuyển đổi hoàn toàn sang kho git"
 
 #: builtin/fetch.c:194
-msgid "re-fetch without negotiating common commits"
+msgid "re-fetch without negotiating common cummits"
 msgstr "re-fetch mà không dàn xếp các lần chuyển giao chung"
 
 #: builtin/fetch.c:197
@@ -15648,7 +15648,7 @@ msgid "check for forced-updates on all updated branches"
 msgstr "kiểm cho các-cập-nhật-bắt-buộc trên mọi nhánh đã cập nhật"
 
 #: builtin/fetch.c:224
-msgid "write the commit-graph after fetching"
+msgid "write the cummit-graph after fetching"
 msgstr "ghi ra đồ thị các lần chuyển giao sau khi lấy về"
 
 #: builtin/fetch.c:226
@@ -15951,13 +15951,13 @@ msgid "git for-each-ref [--points-at <object>]"
 msgstr "git for-each-ref [--points-at <đối tượng>]"
 
 #: builtin/for-each-ref.c:12
-msgid "git for-each-ref [--merged [<commit>]] [--no-merged [<commit>]]"
+msgid "git for-each-ref [--merged [<cummit>]] [--no-merged [<cummit>]]"
 msgstr ""
 "git for-each-ref [--merged [<lần-chuyển-giao>]] [--no-merged [<lần-chuyển-"
 "giao>]]"
 
 #: builtin/for-each-ref.c:13
-msgid "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
+msgid "git for-each-ref [--contains [<cummit>]] [--no-contains [<cummit>]]"
 msgstr ""
 "git for-each-ref [--contains [<lần-chuyển-giao>]] [--no-contains [<lần-"
 "chuyển-giao>]]"
@@ -15999,11 +15999,11 @@ msgid "print only refs that are not merged"
 msgstr "chỉ hiển thị những tham chiếu mà nó không được hòa trộn"
 
 #: builtin/for-each-ref.c:49
-msgid "print only refs which contain the commit"
+msgid "print only refs which contain the cummit"
 msgstr "chỉ hiển thị những tham chiếu mà nó chứa lần chuyển giao"
 
 #: builtin/for-each-ref.c:50
-msgid "print only refs which don't contain the commit"
+msgid "print only refs which don't contain the cummit"
 msgstr "chỉ hiển thị những tham chiếu mà nó không chứa lần chuyển giao"
 
 #: builtin/for-each-repo.c:9
@@ -16131,7 +16131,7 @@ msgstr "%s: con trỏ sha1 không hợp lệ %s"
 
 #: builtin/fsck.c:537
 #, c-format
-msgid "%s: not a commit"
+msgid "%s: not a cummit"
 msgstr "%s: không phải là một lần chuyển giao"
 
 #: builtin/fsck.c:591
@@ -16499,7 +16499,7 @@ msgid "unrecognized --schedule argument '%s'"
 msgstr "đối số --schedule không được thừa nhận %s"
 
 #: builtin/gc.c:870
-msgid "failed to write commit-graph"
+msgid "failed to write cummit-graph"
 msgstr "gặp lỗi khi ghi đồ thị các lần chuyển giao"
 
 #: builtin/gc.c:906
@@ -17709,7 +17709,7 @@ msgstr "hai thư mục kết xuất?"
 
 #: builtin/log.c:1536 builtin/log.c:2369 builtin/log.c:2371 builtin/log.c:2383
 #, c-format
-msgid "unknown commit %s"
+msgid "unknown cummit %s"
 msgstr "không hiểu lần chuyển giao %s"
 
 #: builtin/log.c:1547 builtin/replace.c:58 builtin/replace.c:207
@@ -17724,25 +17724,25 @@ msgstr "không tìm thấy nền hòa trộn chính xác"
 
 #: builtin/log.c:1566
 msgid ""
-"failed to get upstream, if you want to record base commit automatically,\n"
+"failed to get upstream, if you want to record base cummit automatically,\n"
 "please use git branch --set-upstream-to to track a remote branch.\n"
-"Or you could specify base commit by --base=<base-commit-id> manually"
+"Or you could specify base cummit by --base=<base-cummit-id> manually"
 msgstr ""
 "gặp lỗi khi lấy thượng nguồn, nếu bạn muốn ghi lại lần chuyển giao nền một\n"
 "cách tự động, vui lòng dùng \"git branch --set-upstream-to\" để theo dõi\n"
 "nhánh máy chủ. Hoặc là bạn có thể chỉ định lần chuyển giao nền bằng\n"
-"\"--base=<base-commit-id>\" một cách thủ công"
+"\"--base=<base-cummit-id>\" một cách thủ công"
 
 #: builtin/log.c:1589
 msgid "failed to find exact merge base"
 msgstr "gặp lỗi khi tìm nền hòa trộn chính xác"
 
 #: builtin/log.c:1606
-msgid "base commit should be the ancestor of revision list"
+msgid "base cummit should be the ancestor of revision list"
 msgstr "lần chuyển giao nền không là tổ tiên của danh sách điểm xét duyệt"
 
 #: builtin/log.c:1616
-msgid "base commit shouldn't be in revision list"
+msgid "base cummit shouldn't be in revision list"
 msgstr "lần chuyển giao nền không được trong danh sách điểm xét duyệt"
 
 #: builtin/log.c:1674
@@ -17836,7 +17836,7 @@ msgid "output all-zero hash in From header"
 msgstr "xuất mọi mã băm all-zero trong phần đầu From"
 
 #: builtin/log.c:1823
-msgid "don't include a patch matching a commit upstream"
+msgid "don't include a patch matching a cummit upstream"
 msgstr "không bao gồm miếng vá khớp với một lần chuyển giao thượng nguồn"
 
 #: builtin/log.c:1825
@@ -17872,9 +17872,9 @@ msgid "ident"
 msgstr "thụt lề"
 
 #: builtin/log.c:1833
-msgid "set From address to <ident> (or committer ident if absent)"
+msgid "set From address to <ident> (or cummitter ident if absent)"
 msgstr ""
-"đặt “Địa chỉ gửi” thành <thụ lề> (hoặc thụt lề người commit nếu bỏ quên)"
+"đặt “Địa chỉ gửi” thành <thụ lề> (hoặc thụt lề người cummit nếu bỏ quên)"
 
 #: builtin/log.c:1835
 msgid "message-id"
@@ -17909,7 +17909,7 @@ msgid "add a signature"
 msgstr "thêm chữ ký"
 
 #: builtin/log.c:1849
-msgid "base-commit"
+msgid "base-cummit"
 msgstr "lần_chuyển_giao_nền"
 
 #: builtin/log.c:1850
@@ -18255,12 +18255,12 @@ msgid "keep non patch brackets in subject"
 msgstr "giữ không dấu ngoặc vá trong chủ đề"
 
 #: builtin/mailinfo.c:62
-msgid "copy Message-ID to the end of commit message"
+msgid "copy Message-ID to the end of cummit message"
 msgstr "sao chép Message-ID vào cuối của ghi chú lần chuyển giao"
 
 #: builtin/mailinfo.c:64
-msgid "re-code metadata to i18n.commitEncoding"
-msgstr "mã hóa lại siêu dữ liệu thành i18n.commitEncoding"
+msgid "re-code metadata to i18n.cummitEncoding"
+msgstr "mã hóa lại siêu dữ liệu thành i18n.cummitEncoding"
 
 #: builtin/mailinfo.c:67
 msgid "disable charset re-coding of metadata"
@@ -18300,23 +18300,23 @@ msgid "empty mbox: '%s'"
 msgstr "mbox trống rỗng: “%s”"
 
 #: builtin/merge-base.c:32
-msgid "git merge-base [-a | --all] <commit> <commit>..."
+msgid "git merge-base [-a | --all] <cummit> <cummit>..."
 msgstr "git merge-base [-a | --all] <lần_chuyển_giao> <lần_chuyển_giao>…"
 
 #: builtin/merge-base.c:33
-msgid "git merge-base [-a | --all] --octopus <commit>..."
+msgid "git merge-base [-a | --all] --octopus <cummit>..."
 msgstr "git merge-base [-a | --all] --octopus <lần_chuyển_giao>…"
 
 #: builtin/merge-base.c:34
-msgid "git merge-base --independent <commit>..."
+msgid "git merge-base --independent <cummit>..."
 msgstr "git merge-base --independent <lần_chuyển_giao>…"
 
 #: builtin/merge-base.c:35
-msgid "git merge-base --is-ancestor <commit> <commit>"
-msgstr "git merge-base --is-ancestor <commit> <lần_chuyển_giao>"
+msgid "git merge-base --is-ancestor <cummit> <cummit>"
+msgstr "git merge-base --is-ancestor <cummit> <lần_chuyển_giao>"
 
 #: builtin/merge-base.c:36
-msgid "git merge-base --fork-point <ref> [<commit>]"
+msgid "git merge-base --fork-point <ref> [<cummit>]"
 msgstr "git merge-base --fork-point <tham-chiếu> [<lần_chuyển_giao>]"
 
 #: builtin/merge-base.c:144
@@ -18336,8 +18336,8 @@ msgid "is the first one ancestor of the other?"
 msgstr "là cha mẹ đầu tiên của cái khác?"
 
 #: builtin/merge-base.c:152
-msgid "find where <commit> forked from reflog of <ref>"
-msgstr "tìm xem <commit> được rẽ nhánh ở đâu từ reflog của <th.chiếu>"
+msgid "find where <cummit> forked from reflog of <ref>"
+msgstr "tìm xem <cummit> được rẽ nhánh ở đâu từ reflog của <th.chiếu>"
 
 #: builtin/merge-file.c:9
 msgid ""
@@ -18414,8 +18414,8 @@ msgid "Merging %s with %s\n"
 msgstr "Đang hòa trộn %s với %s\n"
 
 #: builtin/merge.c:59
-msgid "git merge [<options>] [<commit>...]"
-msgstr "git merge [<các tùy chọn>] [<commit>…]"
+msgid "git merge [<options>] [<cummit>...]"
+msgstr "git merge [<các tùy chọn>] [<cummit>…]"
 
 #: builtin/merge.c:125
 msgid "switch `m' requires a value"
@@ -18454,19 +18454,19 @@ msgid "(synonym to --stat)"
 msgstr "(đồng nghĩa với --stat)"
 
 #: builtin/merge.c:264 builtin/pull.c:143
-msgid "add (at most <n>) entries from shortlog to merge commit message"
+msgid "add (at most <n>) entries from shortlog to merge cummit message"
 msgstr "thêm (ít nhất <n>) mục từ shortlog cho ghi chú chuyển giao hòa trộn"
 
 #: builtin/merge.c:267 builtin/pull.c:149
-msgid "create a single commit instead of doing a merge"
+msgid "create a single cummit instead of doing a merge"
 msgstr "tạo một lần chuyển giao đưon thay vì thực hiện việc hòa trộn"
 
 #: builtin/merge.c:269 builtin/pull.c:152
-msgid "perform a commit if the merge succeeds (default)"
+msgid "perform a cummit if the merge succeeds (default)"
 msgstr "thực hiện chuyển giao nếu hòa trộn thành công (mặc định)"
 
 #: builtin/merge.c:271 builtin/pull.c:155
-msgid "edit message before committing"
+msgid "edit message before cummitting"
 msgstr "sửa chú thích trước khi chuyển giao"
 
 #: builtin/merge.c:273
@@ -18499,7 +18499,7 @@ msgid "option for selected merge strategy"
 msgstr "tùy chọn cho chiến lược hòa trộn đã chọn"
 
 #: builtin/merge.c:285
-msgid "merge commit message (for a non-fast-forward merge)"
+msgid "merge cummit message (for a non-fast-forward merge)"
 msgstr ""
 "hòa trộn ghi chú của lần chuyển giao (dành cho hòa trộn không-chuyển-tiếp-"
 "nhanh)"
@@ -18525,8 +18525,8 @@ msgid "allow merging unrelated histories"
 msgstr "cho phép hòa trộn lịch sử không liên quan"
 
 #: builtin/merge.c:307
-msgid "bypass pre-merge-commit and commit-msg hooks"
-msgstr "vòng qua móc (hook) pre-merge-commit và commit-msg"
+msgid "bypass pre-merge-cummit and cummit-msg hooks"
+msgstr "vòng qua móc (hook) pre-merge-cummit và cummit-msg"
 
 #: builtin/merge.c:323
 msgid "could not run stash."
@@ -18551,8 +18551,8 @@ msgstr "Đã cập nhật rồi. (không có gì để squash)"
 
 #: builtin/merge.c:417
 #, c-format
-msgid "Squash commit -- not updating HEAD\n"
-msgstr "Squash commit -- không cập nhật HEAD\n"
+msgid "Squash cummit -- not updating HEAD\n"
+msgstr "Squash cummit -- không cập nhật HEAD\n"
 
 #: builtin/merge.c:467
 #, c-format
@@ -18561,7 +18561,7 @@ msgstr "Không có lời chú thích hòa trộn -- nên không cập nhật HEA
 
 #: builtin/merge.c:517
 #, c-format
-msgid "'%s' does not point to a commit"
+msgid "'%s' does not point to a cummit"
 msgstr "“%s” không chỉ đến một lần chuyển giao nào cả"
 
 #: builtin/merge.c:605
@@ -18590,14 +18590,14 @@ msgstr "Không thể đọc từ “%s”"
 
 #: builtin/merge.c:825
 #, c-format
-msgid "Not committing merge; use 'git commit' to complete the merge.\n"
+msgid "Not cummitting merge; use 'git cummit' to complete the merge.\n"
 msgstr ""
-"Vẫn chưa hòa trộn các lần chuyển giao; sử dụng lệnh “git commit” để hoàn tất "
+"Vẫn chưa hòa trộn các lần chuyển giao; sử dụng lệnh “git cummit” để hoàn tất "
 "việc hòa trộn.\n"
 
 #: builtin/merge.c:831
 msgid ""
-"Please enter a commit message to explain why this merge is necessary,\n"
+"Please enter a cummit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
 "\n"
 msgstr ""
@@ -18608,21 +18608,21 @@ msgstr ""
 "\n"
 
 #: builtin/merge.c:836
-msgid "An empty message aborts the commit.\n"
+msgid "An empty message aborts the cummit.\n"
 msgstr "Nếu phần chú thích rỗng sẽ hủy bỏ lần chuyển giao.\n"
 
 #: builtin/merge.c:839
 #, c-format
 msgid ""
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
-"the commit.\n"
+"the cummit.\n"
 msgstr ""
 "Những dòng được bắt đầu bằng “%c” sẽ được bỏ qua, và nếu phần chú\n"
 "thích rỗng sẽ hủy bỏ lần chuyển giao.\n"
 
 #: builtin/merge.c:900
-msgid "Empty commit message."
-msgstr "Chú thích của lần commit (chuyển giao) bị trống rỗng."
+msgid "Empty cummit message."
+msgstr "Chú thích của lần cummit (chuyển giao) bị trống rỗng."
 
 #: builtin/merge.c:915
 #, c-format
@@ -18631,7 +18631,7 @@ msgstr "Tuyệt vời.\n"
 
 #: builtin/merge.c:976
 #, c-format
-msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
+msgid "Automatic merge failed; fix conflicts and then cummit the result.\n"
 msgstr ""
 "Việc tự động hòa trộn gặp lỗi; hãy sửa các xung đột sau đó chuyển giao kết "
 "quả.\n"
@@ -18691,7 +18691,7 @@ msgstr "Ở đây không có lần hòa trộn nào đang được xử lý cả
 #: builtin/merge.c:1385
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Bạn chưa kết thúc việc hòa trộn (MERGE_HEAD vẫn tồn tại).\n"
 "Hãy chuyển giao các thay đổi trước khi bạn có thể hòa trộn."
@@ -18699,7 +18699,7 @@ msgstr ""
 #: builtin/merge.c:1392
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Bạn chưa kết thúc việc cherry-pick (CHERRY_PICK_HEAD vẫn tồn tại).\n"
 "Hãy chuyển giao các thay đổi trước khi bạn có thể hòa trộn."
@@ -18709,15 +18709,15 @@ msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
 msgstr "Bạn chưa kết thúc việc cherry-pick (CHERRY_PICK_HEAD vẫn tồn tại)."
 
 #: builtin/merge.c:1427
-msgid "No commit specified and merge.defaultToUpstream not set."
+msgid "No cummit specified and merge.defaultToUpstream not set."
 msgstr "Không chỉ ra lần chuyển giao và merge.defaultToUpstream chưa được đặt."
 
 #: builtin/merge.c:1444
-msgid "Squash commit into empty head not supported yet"
-msgstr "Squash commit vào một head trống rỗng vẫn chưa được hỗ trợ"
+msgid "Squash cummit into empty head not supported yet"
+msgstr "Squash cummit vào một head trống rỗng vẫn chưa được hỗ trợ"
 
 #: builtin/merge.c:1446
-msgid "Non-fast-forward commit does not make sense into an empty head"
+msgid "Non-fast-forward cummit does not make sense into an empty head"
 msgstr ""
 "Chuyển giao không-chuyển-tiếp-nhanh không hợp lý ở trong một head trống rỗng"
 
@@ -18727,7 +18727,7 @@ msgid "%s - not something we can merge"
 msgstr "%s - không phải là thứ gì đó mà chúng tôi có thể hòa trộn"
 
 #: builtin/merge.c:1453
-msgid "Can merge only exactly one commit into empty head"
+msgid "Can merge only exactly one cummit into empty head"
 msgstr ""
 "Không thể hòa trộn một cách đúng đắn một lần chuyển giao vào một head rỗng"
 
@@ -18777,7 +18777,7 @@ msgstr "Sử dụng chiến lược %s để chuẩn bị giải quyết bằng 
 
 #: builtin/merge.c:1753
 #, c-format
-msgid "Automatic merge went well; stopped before committing as requested\n"
+msgid "Automatic merge went well; stopped before cummitting as requested\n"
 msgstr ""
 "Hòa trộn tự động đã trở nên tốt; bị dừng trước khi việc chuyển giao được yêu "
 "cầu\n"
@@ -18874,7 +18874,7 @@ msgid "write multi-pack index containing only given indexes"
 msgstr "ghi mục lục multi-pack chỉ chứa các mục lục đã cho"
 
 #: builtin/multi-pack-index.c:107
-msgid "refs snapshot for selecting bitmap commits"
+msgid "refs snapshot for selecting bitmap cummits"
 msgstr "ảnh chụp nhanh refs để chọn các lần chuyển giao ánh xạ"
 
 #: builtin/multi-pack-index.c:206
@@ -18983,8 +18983,8 @@ msgid "renaming '%s' failed"
 msgstr "gặp lỗi khi đổi tên “%s”"
 
 #: builtin/name-rev.c:524
-msgid "git name-rev [<options>] <commit>..."
-msgstr "git name-rev [<các tùy chọn>] <commit>…"
+msgid "git name-rev [<options>] <cummit>..."
+msgstr "git name-rev [<các tùy chọn>] <cummit>…"
 
 #: builtin/name-rev.c:525
 msgid "git name-rev [<options>] --all"
@@ -18999,7 +18999,7 @@ msgid "print only ref-based names (no object names)"
 msgstr "chỉ hiển thị các tham chiếu cơ sở (không phải các tên đối tượng)"
 
 #: builtin/name-rev.c:584
-msgid "only use tags to name the commits"
+msgid "only use tags to name the cummits"
 msgstr "chỉ dùng các thẻ để đặt tên cho các lần chuyển giao"
 
 #: builtin/name-rev.c:586
@@ -19011,7 +19011,7 @@ msgid "ignore refs matching <pattern>"
 msgstr "bỏ qua các tham chiếu khớp với <mẫu>"
 
 #: builtin/name-rev.c:590
-msgid "list all commits reachable from all refs"
+msgid "list all cummits reachable from all refs"
 msgstr ""
 "liệt kê tất cả các lần chuyển giao có thể đọc được từ tất cả các tham chiếu"
 
@@ -19114,8 +19114,8 @@ msgid "git notes merge [<options>] <notes-ref>"
 msgstr "git notes merge [<các tùy chọn>] <notes-ref>"
 
 #: builtin/notes.c:76
-msgid "git notes merge --commit [<options>]"
-msgstr "git notes merge --commit [<các tùy chọn>]"
+msgid "git notes merge --cummit [<options>]"
+msgstr "git notes merge --cummit [<các tùy chọn>]"
 
 #: builtin/notes.c:77
 msgid "git notes merge --abort [<options>]"
@@ -19301,11 +19301,11 @@ msgid "failed to read ref NOTES_MERGE_PARTIAL"
 msgstr "gặp lỗi khi đọc tham chiếu NOTES_MERGE_PARTIAL"
 
 #: builtin/notes.c:722
-msgid "could not find commit from NOTES_MERGE_PARTIAL."
+msgid "could not find cummit from NOTES_MERGE_PARTIAL."
 msgstr "không thể tìm thấy lần chuyển giao từ NOTES_MERGE_PARTIAL."
 
 #: builtin/notes.c:724
-msgid "could not parse commit from NOTES_MERGE_PARTIAL."
+msgid "could not parse cummit from NOTES_MERGE_PARTIAL."
 msgstr "không thể phân tích cú pháp lần chuyển giao từ NOTES_MERGE_PARTIAL."
 
 #: builtin/notes.c:737
@@ -19338,11 +19338,11 @@ msgstr ""
 "theirs/union/cat_sort_uniq)"
 
 #: builtin/notes.c:788
-msgid "Committing unmerged notes"
+msgid "cummitting unmerged notes"
 msgstr "Chuyển giao các note chưa được hòa trộn"
 
 #: builtin/notes.c:790
-msgid "finalize notes merge by committing unmerged notes"
+msgid "finalize notes merge by cummitting unmerged notes"
 msgstr ""
 "các note cuối cùng được hòa trộn bởi các note chưa hòa trộn của lần chuyển "
 "giao"
@@ -19356,8 +19356,8 @@ msgid "abort notes merge"
 msgstr "bỏ qua hòa trộn các ghi chú (note)"
 
 #: builtin/notes.c:805
-msgid "cannot mix --commit, --abort or -s/--strategy"
-msgstr "không thể trộn lẫn --commit, --abort hay -s/--strategy"
+msgid "cannot mix --cummit, --abort or -s/--strategy"
+msgstr "không thể trộn lẫn --cummit, --abort hay -s/--strategy"
 
 #: builtin/notes.c:810
 msgid "must specify a notes ref to merge"
@@ -19381,12 +19381,12 @@ msgstr "gặp lỗi khi lưu liên kết đến tham chiếu ghi chú hiện t�
 #: builtin/notes.c:880
 #, c-format
 msgid ""
-"Automatic notes merge failed. Fix conflicts in %s and commit the result with "
-"'git notes merge --commit', or abort the merge with 'git notes merge --"
+"Automatic notes merge failed. Fix conflicts in %s and cummit the result with "
+"'git notes merge --cummit', or abort the merge with 'git notes merge --"
 "abort'.\n"
 msgstr ""
 "Gặp lỗi khi hòa trộn các ghi chú tự động. Sửa các xung đột này trong %s và "
-"chuyển giao kết quả bằng “git notes merge --commit”, hoặc bãi bỏ việc hòa "
+"chuyển giao kết quả bằng “git notes merge --cummit”, hoặc bãi bỏ việc hòa "
 "trộn bằng “git notes merge --abort”.\n"
 
 #: builtin/notes.c:899 builtin/tag.c:595
@@ -19761,7 +19761,7 @@ msgid "pack compression level"
 msgstr "mức nén gói"
 
 #: builtin/pack-objects.c:3972
-msgid "do not hide commits by grafts"
+msgid "do not hide cummits by grafts"
 msgstr "không ẩn các lần chuyển giao bởi “grafts”"
 
 #: builtin/pack-objects.c:3974
@@ -19911,8 +19911,8 @@ msgid "allow fast-forward"
 msgstr "cho phép chuyển-tiếp-nhanh"
 
 #: builtin/pull.c:165
-msgid "control use of pre-merge-commit and commit-msg hooks"
-msgstr "điều khiển cách dùng các móc (hook) pre-merge-commit và commit-msg"
+msgid "control use of pre-merge-cummit and cummit-msg hooks"
+msgstr "điều khiển cách dùng các móc (hook) pre-merge-cummit và cummit-msg"
 
 #: builtin/pull.c:171 parse-options.h:371
 msgid "automatically stash/stash pop before and after"
@@ -20013,7 +20013,7 @@ msgstr ""
 
 #: builtin/pull.c:600
 #, c-format
-msgid "unable to access commit %s"
+msgid "unable to access cummit %s"
 msgstr "không thể truy cập lần chuyển giao “%s”"
 
 #: builtin/pull.c:908
@@ -20062,7 +20062,7 @@ msgid "pull with rebase"
 msgstr "pull với rebase"
 
 #: builtin/pull.c:1052
-msgid "please commit or stash them."
+msgid "please cummit or stash them."
 msgstr "xin hãy chuyển giao hoặc tạm cất (stash) chúng."
 
 #: builtin/pull.c:1077
@@ -20070,7 +20070,7 @@ msgstr "xin hãy chuyển giao hoặc tạm cất (stash) chúng."
 msgid ""
 "fetch updated the current branch head.\n"
 "fast-forwarding your working tree from\n"
-"commit %s."
+"cummit %s."
 msgstr ""
 "fetch đã cập nhật head nhánh hiện tại.\n"
 "đang chuyển-tiếp-nhanh cây làm việc của bạn từ\n"
@@ -20262,8 +20262,8 @@ msgstr "Việc cập nhật bị từ chối bởi vì thẻ đã sẵn có từ
 
 #: builtin/push.c:280
 msgid ""
-"You cannot update a remote ref that points at a non-commit object,\n"
-"or update a remote ref to make it point at a non-commit object,\n"
+"You cannot update a remote ref that points at a non-cummit object,\n"
+"or update a remote ref to make it point at a non-cummit object,\n"
 "without using the '--force' option.\n"
 msgstr ""
 "Không thể cập nhật một tham chiếu trên máy chủ mà nó chỉ đến đối tượng "
@@ -20444,7 +20444,7 @@ msgstr "chỉ phát ra kết xuất liên quan đến vùng thứ hai"
 
 #: builtin/range-diff.c:60 builtin/range-diff.c:64
 #, c-format
-msgid "not a commit range: '%s'"
+msgid "not a cummit range: '%s'"
 msgstr "không phải là vùng chuyển giao: “%s”"
 
 #: builtin/range-diff.c:74
@@ -20452,7 +20452,7 @@ msgid "single arg format must be symmetric range"
 msgstr "định dạng đối số đơn phải là một vùng đối xứng"
 
 #: builtin/range-diff.c:89
-msgid "need two commit ranges"
+msgid "need two cummit ranges"
 msgstr "cần hai vùng lần chuyển giao"
 
 #: builtin/read-tree.c:41
@@ -20567,7 +20567,7 @@ msgid "could not generate todo list"
 msgstr "không thể tạo danh sách cần làm"
 
 #: builtin/rebase.c:332
-msgid "a base commit must be provided with --upstream or --onto"
+msgid "a base cummit must be provided with --upstream or --onto"
 msgstr "lần chuyển giao cơ sỏ phải được chỉ định với --upstream hoặc --onto"
 
 #: builtin/rebase.c:391
@@ -20594,7 +20594,7 @@ msgstr "đang bỏ qua allow_rerere_autoupdate không hợp lệ: “%s”"
 msgid ""
 "Resolve all conflicts manually, mark them as resolved with\n"
 "\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
+"You can instead skip this cummit: run \"git rebase --skip\".\n"
 "To abort and get back to the state before \"git rebase\", run \"git rebase --"
 "abort\"."
 msgstr ""
@@ -20703,11 +20703,11 @@ msgid "do not show diffstat of what changed upstream"
 msgstr "đừng hiển thị diffstat của những thay đổi thượng nguồn"
 
 #: builtin/rebase.c:1066
-msgid "add a Signed-off-by trailer to each commit"
+msgid "add a Signed-off-by trailer to each cummit"
 msgstr "thêm dòng Signed-off-by vào cuối cho từng lần chuyển giao"
 
 #: builtin/rebase.c:1069
-msgid "make committer date match author date"
+msgid "make cummitter date match author date"
 msgstr "làm ngày tháng chuyển giao khớp với ngày của tác giả"
 
 #: builtin/rebase.c:1071
@@ -20727,7 +20727,7 @@ msgid "ignore changes in whitespace"
 msgstr "lờ đi sự thay đổi do khoảng trắng gây ra"
 
 #: builtin/rebase.c:1081 builtin/rebase.c:1084
-msgid "cherry-pick all commits, even if unchanged"
+msgid "cherry-pick all cummits, even if unchanged"
 msgstr ""
 "cherry-pick tất cả các lần chuyển giao, ngay cả khi không có thay đổi gì"
 
@@ -20764,7 +20764,7 @@ msgid "use merging strategies to rebase"
 msgstr "dùng chiến lược hòa trộn để cải tổ"
 
 #: builtin/rebase.c:1109
-msgid "let the user edit the list of commits to rebase"
+msgid "let the user edit the list of cummits to rebase"
 msgstr "để người dùng sửa danh sách các lần chuyển giao muốn cải tổ"
 
 #: builtin/rebase.c:1113
@@ -20772,23 +20772,23 @@ msgid "(DEPRECATED) try to recreate merges instead of ignoring them"
 msgstr "(ĐÃ LẠC HẬU) hay thử tạo lại các hòa trộn thay vì bỏ qua chúng"
 
 #: builtin/rebase.c:1118
-msgid "how to handle commits that become empty"
+msgid "how to handle cummits that become empty"
 msgstr "xử lý các lần chuyển giao mà nó trở thành trống rỗng như thế nào"
 
 #: builtin/rebase.c:1121
-msgid "keep commits which start empty"
+msgid "keep cummits which start empty"
 msgstr "bỏ qua các lần chuyển giao mà nó bắt đầu trống rỗng"
 
 #: builtin/rebase.c:1125
-msgid "move commits that begin with squash!/fixup! under -i"
+msgid "move cummits that begin with squash!/fixup! under -i"
 msgstr "di chuyển các lần chuyển giao mà bắt đầu bằng squash!/fixup! dưới -i"
 
 #: builtin/rebase.c:1132
-msgid "add exec lines after each commit of the editable list"
+msgid "add exec lines after each cummit of the editable list"
 msgstr "thêm các dòng thực thi sau từng lần chuyển giao của danh sách sửa được"
 
 #: builtin/rebase.c:1136
-msgid "allow rebasing commits with empty messages"
+msgid "allow rebasing cummits with empty messages"
 msgstr "chấp nhận cải tổ các chuyển giao mà không ghi chú gì"
 
 #: builtin/rebase.c:1140
@@ -20812,7 +20812,7 @@ msgid "pass the argument through to the merge strategy"
 msgstr "chuyển thao số đến chiến lược hòa trộn"
 
 #: builtin/rebase.c:1151
-msgid "rebase all reachable commits up to the root(s)"
+msgid "rebase all reachable cummits up to the root(s)"
 msgstr "cải tổ tất các các lần chuyển giao cho đến root"
 
 #: builtin/rebase.c:1154
@@ -20918,7 +20918,7 @@ msgid "invalid upstream '%s'"
 msgstr "thượng nguồn không hợp lệ “%s”"
 
 #: builtin/rebase.c:1571
-msgid "Could not create new root commit"
+msgid "Could not create new root cummit"
 msgstr "Không thể tạo lần chuyển giao gốc mới"
 
 #: builtin/rebase.c:1597
@@ -20933,12 +20933,12 @@ msgstr "“%s”: cần chính xác một cơ sở hòa trộn"
 
 #: builtin/rebase.c:1609
 #, c-format
-msgid "Does not point to a valid commit '%s'"
+msgid "Does not point to a valid cummit '%s'"
 msgstr "Không chỉ đến một lần chuyển giao không hợp lệ “%s”"
 
 #: builtin/rebase.c:1636
 #, c-format
-msgid "no such branch/commit '%s'"
+msgid "no such branch/cummit '%s'"
 msgstr "không có nhánh/lần chuyển giao “%s” như thế"
 
 #: builtin/rebase.c:1647 builtin/submodule--helper.c:43
@@ -20952,7 +20952,7 @@ msgid "Could not resolve HEAD to a revision"
 msgstr "Không thể phân giải lần chuyển giao HEAD đến một điểm xét duyệt"
 
 #: builtin/rebase.c:1679
-msgid "Please commit or stash them."
+msgid "Please cummit or stash them."
 msgstr "Xin hãy chuyển giao hoặc tạm cất (stash) chúng."
 
 #: builtin/rebase.c:1714
@@ -21132,7 +21132,7 @@ msgstr ""
 "đỉnh hiện tại của nhánh"
 
 #: builtin/reflog.c:258
-msgid "prune any reflog entries that point to broken commits"
+msgid "prune any reflog entries that point to broken cummits"
 msgstr "cắt ngắn bất kỳ mục tin reflog cái mà chỉ đến lần chuyển giao hỏng"
 
 #: builtin/reflog.c:259
@@ -21847,7 +21847,7 @@ msgid "git replace [-f] --edit <object>"
 msgstr "git replace [-f] --edit <đối tượng>"
 
 #: builtin/replace.c:24
-msgid "git replace [-f] --graft <commit> [<parent>...]"
+msgid "git replace [-f] --graft <cummit> [<parent>...]"
 msgstr "git replace [-f] --graft <lần_chuyển_giao> [<cha_mẹ>…]"
 
 #: builtin/replace.c:26
@@ -21953,23 +21953,23 @@ msgstr "đối tượng mới là giống với cái cũ: “%s”"
 
 #: builtin/replace.c:383
 #, c-format
-msgid "could not parse %s as a commit"
+msgid "could not parse %s as a cummit"
 msgstr "không thể phân tích %s như là một lần chuyển giao"
 
 #: builtin/replace.c:415
 #, c-format
-msgid "bad mergetag in commit '%s'"
+msgid "bad mergetag in cummit '%s'"
 msgstr "thẻ hòa trộn sai trong lần chuyển giao “%s”"
 
 #: builtin/replace.c:417
 #, c-format
-msgid "malformed mergetag in commit '%s'"
+msgid "malformed mergetag in cummit '%s'"
 msgstr "thẻ hòa trộn không đúng dạng ở lần chuyển giao “%s”"
 
 #: builtin/replace.c:429
 #, c-format
 msgid ""
-"original commit '%s' contains mergetag '%s' that is discarded; use --edit "
+"original cummit '%s' contains mergetag '%s' that is discarded; use --edit "
 "instead of --graft"
 msgstr ""
 "lần chuyển giao gốc “%s” có chứa thẻ hòa trộn “%s” cái mà bị loại bỏ; dùng "
@@ -21977,16 +21977,16 @@ msgstr ""
 
 #: builtin/replace.c:468
 #, c-format
-msgid "the original commit '%s' has a gpg signature"
+msgid "the original cummit '%s' has a gpg signature"
 msgstr "lần chuyển giao gốc “%s” có chữ ký GPG"
 
 #: builtin/replace.c:469
-msgid "the signature will be removed in the replacement commit!"
+msgid "the signature will be removed in the replacement cummit!"
 msgstr "chữ ký sẽ được bỏ đi trong lần chuyển giao thay thế!"
 
 #: builtin/replace.c:479
 #, c-format
-msgid "could not write replacement commit for: '%s'"
+msgid "could not write replacement cummit for: '%s'"
 msgstr "không thể ghi lần chuyển giao thay thế cho: “%s”"
 
 #: builtin/replace.c:487
@@ -21996,7 +21996,7 @@ msgstr "graft cho “%s” không cần thiết"
 
 #: builtin/replace.c:491
 #, c-format
-msgid "new commit is the same as the old one: '%s'"
+msgid "new cummit is the same as the old one: '%s'"
 msgstr "lần chuyển giao mới là giống với cái cũ: “%s”"
 
 #: builtin/replace.c:526
@@ -22021,7 +22021,7 @@ msgid "edit existing object"
 msgstr "sửa đối tượng sẵn có"
 
 #: builtin/replace.c:550
-msgid "change a commit's parents"
+msgid "change a cummit's parents"
 msgstr "thay đổi cha mẹ của lần chuyển giao"
 
 #: builtin/replace.c:551
@@ -22096,9 +22096,9 @@ msgstr "không thể tạo khác biệt cho “%s”"
 
 #: builtin/reset.c:33
 msgid ""
-"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
+"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"
 msgstr ""
-"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
+"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"
 
 #: builtin/reset.c:34
 msgid "git reset [-q] [<tree-ish>] [--] <pathspec>..."
@@ -22331,16 +22331,16 @@ msgid "unknown mode for --show-object-format: %s"
 msgstr "không hiểu chế độ cho --show-object-format: %s"
 
 #: builtin/revert.c:24
-msgid "git revert [<options>] <commit-ish>..."
-msgstr "git revert [<các tùy chọn>] <commit-ish>…"
+msgid "git revert [<options>] <cummit-ish>..."
+msgstr "git revert [<các tùy chọn>] <cummit-ish>…"
 
 #: builtin/revert.c:25
 msgid "git revert <subcommand>"
 msgstr "git revert <lệnh-con>"
 
 #: builtin/revert.c:30
-msgid "git cherry-pick [<options>] <commit-ish>..."
-msgstr "git cherry-pick [<các tùy chọn>] <commit-ish>…"
+msgid "git cherry-pick [<options>] <cummit-ish>..."
+msgstr "git cherry-pick [<các tùy chọn>] <cummit-ish>…"
 
 #: builtin/revert.c:31
 msgid "git cherry-pick <subcommand>"
@@ -22369,15 +22369,15 @@ msgid "cancel revert or cherry-pick sequence"
 msgstr "không cherry-pick hay hoàn nguyên liên tiếp nhau"
 
 #: builtin/revert.c:105
-msgid "skip current commit and continue"
+msgid "skip current cummit and continue"
 msgstr "bỏ qua lần chuyển giao hiện tại và tiếp tục"
 
 #: builtin/revert.c:107
-msgid "don't automatically commit"
+msgid "don't automatically cummit"
 msgstr "đừng chuyển giao một cách tự động"
 
 #: builtin/revert.c:108
-msgid "edit the commit message"
+msgid "edit the cummit message"
 msgstr "sửa lại chú thích cho lần chuyển giao"
 
 #: builtin/revert.c:111
@@ -22397,19 +22397,19 @@ msgid "option for merge strategy"
 msgstr "tùy chọn cho chiến lược hòa trộn"
 
 #: builtin/revert.c:125
-msgid "append commit name"
+msgid "append cummit name"
 msgstr "nối thêm tên lần chuyển giao"
 
 #: builtin/revert.c:127
-msgid "preserve initially empty commits"
+msgid "preserve initially empty cummits"
 msgstr "cấm khởi tạo lần chuyển giao trống rỗng"
 
 #: builtin/revert.c:128
-msgid "allow commits with empty messages"
+msgid "allow cummits with empty messages"
 msgstr "chấp nhận chuyển giao mà không ghi chú gì"
 
 #: builtin/revert.c:129
-msgid "keep redundant, empty commits"
+msgid "keep redundant, empty cummits"
 msgstr "giữ lại các lần chuyển giao dư thừa, rỗng"
 
 #: builtin/revert.c:241
@@ -22551,15 +22551,15 @@ msgid "unknown group type: %s"
 msgstr "không nhận ra kiểu nhóm: %s"
 
 #: builtin/shortlog.c:351
-msgid "group by committer rather than author"
+msgid "group by cummitter rather than author"
 msgstr "nhóm theo người chuyển giao thay vì tác giả"
 
 #: builtin/shortlog.c:354
-msgid "sort output according to the number of commits per author"
+msgid "sort output according to the number of cummits per author"
 msgstr "sắp xếp kết xuất tuân theo số lượng chuyển giao trên mỗi tác giả"
 
 #: builtin/shortlog.c:356
-msgid "suppress commit descriptions, only provides commit count"
+msgid "suppress cummit descriptions, only provides cummit count"
 msgstr "chặn mọi mô tả lần chuyển giao, chỉ đưa ra số lượng lần chuyển giao"
 
 #: builtin/shortlog.c:358
@@ -22626,7 +22626,7 @@ msgid "color '*!+-' corresponding to the branch"
 msgstr "màu “*!+-” tương ứng với nhánh"
 
 #: builtin/show-branch.c:651
-msgid "show <n> more commits after the common ancestor"
+msgid "show <n> more cummits after the common ancestor"
 msgstr "hiển thị thêm <n> lần chuyển giao sau cha mẹ chung"
 
 #: builtin/show-branch.c:653
@@ -22642,7 +22642,7 @@ msgid "include the current branch"
 msgstr "bao gồm nhánh hiện hành"
 
 #: builtin/show-branch.c:658
-msgid "name commits with their object names"
+msgid "name cummits with their object names"
 msgstr "đặt tên các lần chuyển giao bằng các tên của đối tượng của chúng"
 
 #: builtin/show-branch.c:660
@@ -22654,11 +22654,11 @@ msgid "show refs unreachable from any other ref"
 msgstr "hiển thị các tham chiếu không thể được đọc bởi bất kỳ tham chiếu khác"
 
 #: builtin/show-branch.c:664
-msgid "show commits in topological order"
+msgid "show cummits in topological order"
 msgstr "hiển thị các lần chuyển giao theo thứ tự tôpô"
 
 #: builtin/show-branch.c:667
-msgid "show only commits not on the first branch"
+msgid "show only cummits not on the first branch"
 msgstr "chỉ hiển thị các lần chuyển giao không nằm trên nhánh đầu tiên"
 
 #: builtin/show-branch.c:669
@@ -22709,7 +22709,7 @@ msgstr "“%s” không phải tham chiếu hợp lệ."
 
 #: builtin/show-branch.c:838
 #, c-format
-msgid "cannot find commit %s (%s)"
+msgid "cannot find cummit %s (%s)"
 msgstr "không thể tìm thấy lần chuyển giao %s (%s)"
 
 #: builtin/show-index.c:21
@@ -22971,8 +22971,8 @@ msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
 msgstr "git stash apply [--index] [-q|--quiet] [<stash>]"
 
 #: builtin/stash.c:75
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
-msgstr "git stash store [-m|--message <ghi chú>] [-q|--quiet] <commit>"
+msgid "git stash store [-m|--message <message>] [-q|--quiet] <cummit>"
+msgstr "git stash store [-m|--message <ghi chú>] [-q|--quiet] <cummit>"
 
 #: builtin/stash.c:80
 msgid ""
@@ -22994,7 +22994,7 @@ msgstr ""
 
 #: builtin/stash.c:130
 #, c-format
-msgid "'%s' is not a stash-like commit"
+msgid "'%s' is not a stash-like cummit"
 msgstr "“%s” không phải là lần chuyển giao kiểu-stash (cất đi)"
 
 #: builtin/stash.c:150
@@ -23109,7 +23109,7 @@ msgid "stash message"
 msgstr "phần chú thích cho stash"
 
 #: builtin/stash.c:958
-msgid "\"git stash store\" requires one <commit> argument"
+msgid "\"git stash store\" requires one <cummit> argument"
 msgstr "\"git stash store\" cần một đối số <lần chuyển giao>"
 
 #: builtin/stash.c:1143
@@ -23121,7 +23121,7 @@ msgid "No changes selected"
 msgstr "Chưa có thay đổi nào được chọn"
 
 #: builtin/stash.c:1304
-msgid "You do not have the initial commit yet"
+msgid "You do not have the initial cummit yet"
 msgstr "Bạn chưa còn có lần chuyển giao khởi tạo"
 
 #: builtin/stash.c:1331
@@ -23331,7 +23331,7 @@ msgstr "chặn kết xuất về tình trạng mô-đun-con"
 
 #: builtin/submodule--helper.c:875
 msgid ""
-"use commit stored in the index instead of the one stored in the submodule "
+"use cummit stored in the index instead of the one stored in the submodule "
 "HEAD"
 msgstr ""
 "dùng lần chuyển giao lưu trong mục lục thay cho cái được lưu trong HEAD mô-"
@@ -23374,11 +23374,11 @@ msgid "unexpected mode %o\n"
 msgstr "gặp chế độ không như mong chờ %o\n"
 
 #: builtin/submodule--helper.c:1288
-msgid "use the commit stored in the index instead of the submodule HEAD"
+msgid "use the cummit stored in the index instead of the submodule HEAD"
 msgstr "hùng lần chuyển giao đã lưu trong mục lục thay cho HEAD mô-đun-con"
 
 #: builtin/submodule--helper.c:1290
-msgid "compare the commit in the index with that in the submodule HEAD"
+msgid "compare the cummit in the index with that in the submodule HEAD"
 msgstr "để so sánh lần trong mục lục với cái trong HEAD mô-đun-con"
 
 #: builtin/submodule--helper.c:1292
@@ -23391,7 +23391,7 @@ msgid "limit the summary size"
 msgstr "giới hạn kích cỡ tổng hợp"
 
 #: builtin/submodule--helper.c:1299
-msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
+msgid "git submodule--helper summary [<options>] [<cummit>] [--] [<path>]"
 msgstr ""
 "git submodule--helper summary [<các tùy chọn>] [<lần_chuyển_giao>] [--] [</"
 "đường/dẫn>]"
@@ -23660,7 +23660,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Fetched in submodule path '%s', but it did not contain %s. Direct fetching "
-"of that commit failed."
+"of that cummit failed."
 msgstr ""
 "Đã lấy về từ đường dẫn mô-đun con “%s”, nhưng nó không chứa %s. Lấy về trực "
 "tiếp lần chuyển giao gặp lỗi đó."
@@ -24007,9 +24007,9 @@ msgstr "git tag -d <tên-thẻ>…"
 
 #: builtin/tag.c:29
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
+"git tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--"
 "points-at <object>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] "
+"        [--format=<format>] [--merged <cummit>] [--no-merged <cummit>] "
 "[<pattern>...]"
 msgstr ""
 "git tag -l [-n[<số>]] [--contains <lần_chuyển_giao>] [--no-contains "
@@ -24119,7 +24119,7 @@ msgstr "phần chú thích cho thẻ"
 
 #: builtin/tag.c:458
 msgid "force edit of tag message"
-msgstr "ép buộc sửa thẻ lần commit"
+msgstr "ép buộc sửa thẻ lần cummit"
 
 #: builtin/tag.c:459
 msgid "annotated and GPG-signed tag"
@@ -24146,11 +24146,11 @@ msgid "show tag list in columns"
 msgstr "hiển thị danh sách thẻ trong các cột"
 
 #: builtin/tag.c:468 builtin/tag.c:470
-msgid "print only tags that contain the commit"
+msgid "print only tags that contain the cummit"
 msgstr "chỉ hiển thị những nhánh mà nó chứa lần chuyển giao"
 
 #: builtin/tag.c:469 builtin/tag.c:471
-msgid "print only tags that don't contain the commit"
+msgid "print only tags that don't contain the cummit"
 msgstr "chỉ hiển thị những thẻ mà nó không chứa lần chuyển giao"
 
 #: builtin/tag.c:472
@@ -24501,15 +24501,15 @@ msgstr "đừng thử <thư_mục>/.git/ nếu <thư_mục> không phải là th
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "ngắt truyền thông sau <n> giây không hoạt động"
 
-#: builtin/verify-commit.c:19
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] <lần_chuyển_giao>…"
+#: builtin/verify-cummit.c:19
+msgid "git verify-cummit [-v | --verbose] <cummit>..."
+msgstr "git verify-cummit [-v | --verbose] <lần_chuyển_giao>…"
 
-#: builtin/verify-commit.c:68
-msgid "print commit contents"
+#: builtin/verify-cummit.c:68
+msgid "print cummit contents"
 msgstr "hiển thị nội dung của lần chuyển giao"
 
-#: builtin/verify-commit.c:69 builtin/verify-tag.c:37
+#: builtin/verify-cummit.c:69 builtin/verify-tag.c:37
 msgid "print raw gpg status output"
 msgstr "in kết xuất trạng thái gpg dạng thô"
 
@@ -24534,8 +24534,8 @@ msgid "print tag contents"
 msgstr "hiển thị nội dung của thẻ"
 
 #: builtin/worktree.c:19
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
-msgstr "git worktree add [<các tùy chọn>] </đường/dẫn> [<commit-ish>]"
+msgid "git worktree add [<options>] <path> [<cummit-ish>]"
+msgstr "git worktree add [<các tùy chọn>] </đường/dẫn> [<cummit-ish>]"
 
 #: builtin/worktree.c:20
 msgid "git worktree list [<options>]"
@@ -24990,11 +24990,11 @@ msgstr "gặp lỗi khi chuẩn bị các điểm xét duyệt"
 
 #: t/helper/test-reach.c:154
 #, c-format
-msgid "commit %s is not marked reachable"
+msgid "cummit %s is not marked reachable"
 msgstr "lần chuyển giao %s chưa được đánh dấu là tiếp cận được"
 
 #: t/helper/test-reach.c:164
-msgid "too many commits marked reachable"
+msgid "too many cummits marked reachable"
 msgstr "có quá nhiều lần chuyển giao được đánh dấu là tiếp cận được"
 
 #: t/helper/test-serve-v2.c:7
@@ -25518,7 +25518,7 @@ msgid "Apply a series of patches from a mailbox"
 msgstr "Áp dụng một chuỗi các miếng và từ một mailbox"
 
 #: command-list.h:52
-msgid "Annotate file lines with commit information"
+msgid "Annotate file lines with cummit information"
 msgstr "Các dòng diễn giải tập tin với thông tin chuyển giao"
 
 #: command-list.h:53
@@ -25535,7 +25535,7 @@ msgid "Create an archive of files from a named tree"
 msgstr "Tạo một kho nén các tập tin từ cây làm việc có tên"
 
 #: command-list.h:56
-msgid "Use binary search to find the commit that introduced a bug"
+msgid "Use binary search to find the cummit that introduced a bug"
 msgstr "Tìm kiếm dạng nhị phân để tìm ra lần chuyển giao nào đưa ra lỗi"
 
 #: command-list.h:57
@@ -25585,16 +25585,16 @@ msgid "Copy files from the index to the working tree"
 msgstr "Sao chép các tập tin từ mục lục ra cây làm việc"
 
 #: command-list.h:68
-msgid "Find commits yet to be applied to upstream"
+msgid "Find cummits yet to be applied to upstream"
 msgstr "Tìm những lần chuyển giao còn chưa được áp dụng lên thượng nguồn"
 
 #: command-list.h:69
-msgid "Apply the changes introduced by some existing commits"
+msgid "Apply the changes introduced by some existing cummits"
 msgstr "Áp dụng các thay đổi được đưa ra bởi một số lần chuyển giao sẵn có"
 
 #: command-list.h:70
-msgid "Graphical alternative to git-commit"
-msgstr "Tương tác đồ họa với git-commit"
+msgid "Graphical alternative to git-cummit"
+msgstr "Tương tác đồ họa với git-cummit"
 
 #: command-list.h:71
 msgid "Remove untracked files from the working tree"
@@ -25613,11 +25613,11 @@ msgid "Record changes to the repository"
 msgstr "Ghi các thay đổi vào kho chứa"
 
 #: command-list.h:75
-msgid "Write and verify Git commit-graph files"
+msgid "Write and verify Git cummit-graph files"
 msgstr "Ghi và thẩm tra các tập tin đồ họa các lần chuyển giao Git"
 
 #: command-list.h:76
-msgid "Create a new commit object"
+msgid "Create a new cummit object"
 msgstr "Tạo một đối tượng chuyển giao"
 
 #: command-list.h:77
@@ -25642,7 +25642,7 @@ msgid "Helper to store credentials on disk"
 msgstr "Bộ hỗ trợ để lưu chứng nhận vào đĩa"
 
 #: command-list.h:82
-msgid "Export a single commit to a CVS checkout"
+msgid "Export a single cummit to a CVS checkout"
 msgstr "Xuất một lần chuyển giao thành một lần lấy ra CVS"
 
 #: command-list.h:83
@@ -25664,7 +25664,7 @@ msgstr ""
 "tham chiếu sẵn có"
 
 #: command-list.h:87
-msgid "Show changes between commits, commit and working tree, etc"
+msgid "Show changes between cummits, cummit and working tree, etc"
 msgstr ""
 "Hiển thị các thay đổi giữa những lần chuyển giao, giữa một lần chuyển giao "
 "và cây làm việc, v.v.."
@@ -25707,7 +25707,7 @@ msgid "Rewrite branches"
 msgstr "Những nhánh ghi lại"
 
 #: command-list.h:97
-msgid "Produce a merge commit message"
+msgid "Produce a merge cummit message"
 msgstr "Sản sinh một ghi chú lần chuyển giao hòa trộn"
 
 #: command-list.h:98
@@ -25733,7 +25733,7 @@ msgid "Cleanup unnecessary files and optimize the local repository"
 msgstr "Dọn dẹp các tập tin không cần thiết và tối ưu kho nội bộ"
 
 #: command-list.h:103
-msgid "Extract commit ID from an archive created using git-archive"
+msgid "Extract cummit ID from an archive created using git-archive"
 msgstr ""
 "Rút trích mã số lần chuyển giao từ một kho nén đã được tạo bởi git-archive"
 
@@ -25787,11 +25787,11 @@ msgid "Instantly browse your working repository in gitweb"
 msgstr "Duyệt ngay kho làm việc của bạn trong gitweb"
 
 #: command-list.h:116
-msgid "Add or parse structured information in commit messages"
+msgid "Add or parse structured information in cummit messages"
 msgstr "Thêm hay phân tích thông tin cấu trúc trong ghi chú lần chuyển giao"
 
 #: command-list.h:117
-msgid "Show commit logs"
+msgid "Show cummit logs"
 msgstr "Hiển thị nhật ký các lần chuyển giao"
 
 #: command-list.h:118
@@ -25914,7 +25914,7 @@ msgid "Applies a quilt patchset onto the current branch"
 msgstr "Ấp dụng một bộ miếng vá quilt vào trong nhánh hiện hành"
 
 #: command-list.h:147
-msgid "Compare two commit ranges (e.g. two versions of a branch)"
+msgid "Compare two cummit ranges (e.g. two versions of a branch)"
 msgstr "So sánh hai vùng chuyển giao (vd: hai phiên bản của một nhánh)"
 
 #: command-list.h:148
@@ -25922,7 +25922,7 @@ msgid "Reads tree information into the index"
 msgstr "Đọc thông tin cây vào trong mục lục"
 
 #: command-list.h:149
-msgid "Reapply commits on top of another base tip"
+msgid "Reapply cummits on top of another base tip"
 msgstr "Thu hoạch các lần chuyển giao trên đỉnh của đầu mút cơ sở khác"
 
 #: command-list.h:150
@@ -25962,7 +25962,7 @@ msgid "Restore working tree files"
 msgstr "Hoàn nguyên các tập tin cây làm việc"
 
 #: command-list.h:159
-msgid "Lists commit objects in reverse chronological order"
+msgid "Lists cummit objects in reverse chronological order"
 msgstr "Liệt kê các đối tượng chuyển giao theo thứ tự tôpô đảo ngược"
 
 #: command-list.h:160
@@ -25970,7 +25970,7 @@ msgid "Pick out and massage parameters"
 msgstr "Cậy ra và xử lý các tham số"
 
 #: command-list.h:161
-msgid "Revert some existing commits"
+msgid "Revert some existing cummits"
 msgstr "Hoàn lại một số lần chuyển giao sẵn có"
 
 #: command-list.h:162
@@ -26006,7 +26006,7 @@ msgid "Show various types of objects"
 msgstr "Hiển thị các kiểu khác nhau của các đối tượng"
 
 #: command-list.h:170
-msgid "Show branches and their commits"
+msgid "Show branches and their cummits"
 msgstr "Hiển thị những nhánh và các lần chuyển giao của chúng"
 
 #: command-list.h:171
@@ -26092,7 +26092,7 @@ msgid "Show a Git logical variable"
 msgstr "Hiển thị một biến Git luận lý"
 
 #: command-list.h:191
-msgid "Check the GPG signature of commits"
+msgid "Check the GPG signature of cummits"
 msgstr "Kiểm tra ký lần chuyển giao dùng GPG"
 
 #: command-list.h:192
@@ -26104,7 +26104,7 @@ msgid "Check the GPG signature of tags"
 msgstr "Kiểm tra chữ ký GPG của các thẻ"
 
 #: command-list.h:194
-msgid "Show logs with difference each commit introduces"
+msgid "Show logs with difference each cummit introduces"
 msgstr "Hiển thị các nhật ký với từng lần chuyển giao khác nhau đưa ra"
 
 #: command-list.h:195
@@ -26164,7 +26164,7 @@ msgid "The Git repository browser"
 msgstr "Bộ duyện kho Git"
 
 #: command-list.h:209
-msgid "Map author/committer names and/or E-Mail addresses"
+msgid "Map author/cummitter names and/or E-Mail addresses"
 msgstr "Ánh xạ tên tác giả/người chuyển giao và/hoặc địa chỉ E-Mail"
 
 #: command-list.h:210
@@ -26225,7 +26225,7 @@ msgstr "Không thể thực hiện một octopus."
 
 #: git-merge-octopus.sh:73
 #, sh-format
-msgid "Unable to find common commit with $pretty_name"
+msgid "Unable to find common cummit with $pretty_name"
 msgstr "Không thể tìm thấy lần chuyển giao chung với $pretty_name"
 
 #: git-merge-octopus.sh:77
@@ -26277,13 +26277,13 @@ msgstr "Không thể $action: Bạn có các thay đổi chưa được đưa l�
 
 #: git-sh-setup.sh:226
 #, sh-format
-msgid "Cannot $action: Your index contains uncommitted changes."
+msgid "Cannot $action: Your index contains uncummitted changes."
 msgstr ""
 "Không thể $action: Mục lục của bạn có chứa các thay đổi chưa được chuyển "
 "giao."
 
 #: git-sh-setup.sh:228
-msgid "Additionally, your index contains uncommitted changes."
+msgid "Additionally, your index contains uncummitted changes."
 msgstr ""
 "Thêm vào đó, bảng mục lục của bạn có chứa các thay đổi chưa được chuyển giao."
 
@@ -26714,7 +26714,7 @@ msgstr "cảnh báo: dòng sendmail không nhận ra được: %s\n"
 #: git-send-email.perl:747
 #, perl-format
 msgid ""
-"File '%s' exists but it could also be the range of commits\n"
+"File '%s' exists but it could also be the range of cummits\n"
 "to produce patches for.  Please disambiguate by...\n"
 "\n"
 "    * Saying \"./%s\" if you mean a file; or\n"
@@ -26843,7 +26843,7 @@ msgstr "Đường dẫn CA “%s” không tồn tại"
 #: git-send-email.perl:1565
 msgid ""
 "    The Cc list above has been expanded by additional\n"
-"    addresses found in the patch commit message. By default\n"
+"    addresses found in the patch cummit message. By default\n"
 "    send-email prompts before sending whenever this occurs.\n"
 "    This behavior is controlled by the sendemail.confirm\n"
 "    configuration setting.\n"
@@ -27142,8 +27142,8 @@ msgstr "Bạn có thực sự muốn gửi %s? [y|N](có/KHÔNG): "
 #~ msgid "read from stdin"
 #~ msgstr "đọc từ đầu vào tiêu chuẩn"
 
-#~ msgid "git notes merge --commit [-v | -q]"
-#~ msgstr "git notes merge --commit [-v | -q]"
+#~ msgid "git notes merge --cummit [-v | -q]"
+#~ msgstr "git notes merge --cummit [-v | -q]"
 
 #~ msgid "git notes merge --abort [-v | -q]"
 #~ msgstr "git notes merge --abort [-v | -q]"

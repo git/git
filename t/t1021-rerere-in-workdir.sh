@@ -11,16 +11,16 @@ test_expect_success SYMLINKS setup '
 	>world &&
 	git add world &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	echo hello >world &&
 	test_tick &&
-	git commit -a -m hello &&
+	git cummit -a -m hello &&
 
 	git checkout -b side HEAD^ &&
 	echo goodbye >world &&
 	test_tick &&
-	git commit -a -m goodbye &&
+	git cummit -a -m goodbye &&
 
 	git checkout main
 '

@@ -222,8 +222,8 @@ test_expect_success 'empty filename in tree' '
 	test_i18ngrep "empty filename in tree entry" err
 '
 
-test_expect_success 'corrupt commit' '
-	test_must_fail git hash-object -t commit --stdin </dev/null
+test_expect_success 'corrupt cummit' '
+	test_must_fail git hash-object -t cummit --stdin </dev/null
 '
 
 test_expect_success 'corrupt tag' '

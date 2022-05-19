@@ -16,16 +16,16 @@ test_expect_success 'setup rebasing on top of a lot of changes' '
 		test_seq 1000 >>unrelated-file$i &&
 		git add unrelated-file$i &&
 		test_tick &&
-		git commit -m commit$i unrelated-file$i &&
+		git cummit -m cummit$i unrelated-file$i &&
 		echo change$i >unrelated-file$i &&
 		test_seq 1000 | sort -nr >>unrelated-file$i &&
 		git add unrelated-file$i &&
 		test_tick &&
-		git commit -m commit$i-reverse unrelated-file$i ||
+		git cummit -m cummit$i-reverse unrelated-file$i ||
 		return 1
 	done &&
 	git checkout to-rebase &&
-	test_commit our-patch interesting-file
+	test_cummit our-patch interesting-file
 '
 
 test_perf 'rebase on top of a lot of unrelated changes' '

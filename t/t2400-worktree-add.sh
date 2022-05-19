@@ -10,7 +10,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
 test_expect_success 'setup' '
-	test_commit init
+	test_cummit init
 '
 
 test_expect_success '"add" an existing worktree' '
@@ -31,7 +31,7 @@ test_expect_success '"add" using - shorthand' '
 	git checkout -b newbranch &&
 	echo hello >myworld &&
 	git add myworld &&
-	git commit -m myworld &&
+	git cummit -m myworld &&
 	git checkout main &&
 	git worktree add short-hand - &&
 	echo refs/heads/newbranch >expect &&
@@ -225,10 +225,10 @@ test_expect_success '"add" to bare repo with worktree config' '
 
 test_expect_success 'checkout with grafts' '
 	test_when_finished rm .git/info/grafts &&
-	test_commit abc &&
+	test_cummit abc &&
 	SHA1=$(git rev-parse HEAD) &&
-	test_commit def &&
-	test_commit xyz &&
+	test_cummit def &&
+	test_cummit xyz &&
 	echo "$(git rev-parse HEAD) $SHA1" >.git/info/grafts &&
 	cat >expected <<-\EOF &&
 	xyz
@@ -242,9 +242,9 @@ test_expect_success 'checkout with grafts' '
 '
 
 test_expect_success '"add" from relative HEAD' '
-	test_commit a &&
-	test_commit b &&
-	test_commit c &&
+	test_cummit a &&
+	test_cummit b &&
+	test_cummit c &&
 	git rev-parse HEAD~1 >expected &&
 	git worktree add relhead HEAD~1 &&
 	git -C relhead rev-parse HEAD >actual &&
@@ -429,14 +429,14 @@ setup_remote_repo () {
 	git init $1 &&
 	(
 		cd $1 &&
-		test_commit $1_main &&
+		test_cummit $1_main &&
 		git checkout -b foo &&
-		test_commit upstream_foo
+		test_cummit upstream_foo
 	) &&
 	git init $2 &&
 	(
 		cd $2 &&
-		test_commit $2_main &&
+		test_cummit $2_main &&
 		git remote add $1 ../$1 &&
 		git config remote.$1.fetch \
 			"refs/heads/*:refs/remotes/$1/*" &&
@@ -656,7 +656,7 @@ test_expect_success '"add" should not fail because of another bad worktree' '
 	git init add-fail &&
 	(
 		cd add-fail &&
-		test_commit first &&
+		test_cummit first &&
 		mkdir sub &&
 		git worktree add sub/to-be-deleted &&
 		rm -rf sub &&
@@ -666,12 +666,12 @@ test_expect_success '"add" should not fail because of another bad worktree' '
 
 test_expect_success '"add" with uninitialized submodule, with submodule.recurse unset' '
 	test_create_repo submodule &&
-	test_commit -C submodule first &&
+	test_cummit -C submodule first &&
 	test_create_repo project &&
 	git -C project submodule add ../submodule &&
 	git -C project add submodule &&
 	test_tick &&
-	git -C project commit -m add_sub &&
+	git -C project cummit -m add_sub &&
 	git clone project project-clone &&
 	git -C project-clone worktree add ../project-2
 '

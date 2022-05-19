@@ -22,7 +22,7 @@ UI, Workflows & Features
    optionally pick trailers selectively by keyword, show only values,
    etc.
 
- * Four new configuration variables {author,committer}.{name,email}
+ * Four new configuration variables {author,cummitter}.{name,email}
    have been introduced to override user.{name,email} in more specific
    cases.
 
@@ -40,7 +40,7 @@ UI, Workflows & Features
 
  * The final report from "git bisect" used to show the suspected
    culprit using a raw "diff-tree", with which there is no output for
-   a merge commit.  This has been updated to use a more modern and
+   a merge cummit.  This has been updated to use a more modern and
    human readable output that still is concise enough.
 
  * "git rebase --rebase-merges" replaces its old "--preserve-merges"
@@ -108,8 +108,8 @@ UI, Workflows & Features
 
  * "git branch new A...B" and "git checkout -b new A...B" have been
    taught that in their contexts, the notation A...B means "the merge
-   base between these two commits", just like "git checkout A...B"
-   detaches HEAD at that commit.
+   base between these two cummits", just like "git checkout A...B"
+   detaches HEAD at that cummit.
 
  * Update "git difftool" and "git mergetool" so that the combinations
    of {diff,merge}.{tool,guitool} configuration variables serve as
@@ -134,7 +134,7 @@ Performance, Internal Implementation, Development Support etc.
  * "git prune" has been taught to take advantage of reachability
    bitmap when able.
 
- * The command line parser of "git commit-tree" has been rewritten to
+ * The command line parser of "git cummit-tree" has been rewritten to
    use the parse-options API.
 
  * Suggest GitGitGadget instead of submitGit as a way to submit
@@ -368,9 +368,9 @@ Fixes since v2.21
    update_server_info() function.
    (merge b3223761c8 jk/server-info-rabbit-hole later to maint).
 
- * The message given when "git commit -a <paths>" errors out has been
+ * The message given when "git cummit -a <paths>" errors out has been
    updated.
-   (merge 5a1dbd48bc nd/commit-a-with-paths-msg-update later to maint).
+   (merge 5a1dbd48bc nd/cummit-a-with-paths-msg-update later to maint).
 
  * "git cherry-pick --options A..B", after giving control back to the
    user to ask help resolving a conflicted step, did not honor the
@@ -378,7 +378,7 @@ Fixes since v2.21
 
  * Various glitches in "git gc" around reflog handling have been fixed.
 
- * The code to read from commit-graph file has been cleanup with more
+ * The code to read from cummit-graph file has been cleanup with more
    careful error checking before using data read from it.
 
  * Performance fix around "git fetch" that grabs many refs.
@@ -401,7 +401,7 @@ Fixes since v2.21
  * "git blame -- path" in a non-bare repository starts blaming from
    the working tree, and the same command in a bare repository errors
    out because there is no working tree by definition.  The command
-   has been taught to instead start blaming from the commit at HEAD,
+   has been taught to instead start blaming from the cummit at HEAD,
    which is more useful.
    (merge a544fb08f8 sg/blame-in-bare-start-at-head later to maint).
 
@@ -450,14 +450,14 @@ Fixes since v2.21
    (merge f937bc2f86 km/empty-repo-is-still-a-repo later to maint).
 
  * "git cherry-pick" run with the "-x" or the "--signoff" option used
-   to (and more importantly, ought to) clean up the commit log message
+   to (and more importantly, ought to) clean up the cummit log message
    with the --cleanup=space option by default, but this has been
    broken since late 2017.  This has been fixed.
 
- * When given a tag that points at a commit-ish, "git replace --graft"
+ * When given a tag that points at a cummit-ish, "git replace --graft"
    failed to peel the tag before writing a replace ref, which did not
    make sense because the old graft mechanism the feature wants to
-   mimic only allowed to replace one commit object with another.
+   mimic only allowed to replace one cummit object with another.
    This has been fixed.
    (merge ee521ec4cb cc/replace-graft-peel-tags later to maint).
 
@@ -508,11 +508,11 @@ Fixes since v2.21
    resolved results are added to the index.  This has been corrected.
 
  * "git cherry-pick" (and "revert" that shares the same runtime engine)
-   that deals with multiple commits got confused when the final step
+   that deals with multiple cummits got confused when the final step
    gets stopped with a conflict and the user concluded the sequence
-   with "git commit".  Attempt to fix it by cleaning up the state
+   with "git cummit".  Attempt to fix it by cleaning up the state
    files used by these commands in such a situation.
-   (merge 4a72486de9 pw/clean-sequencer-state-upon-final-commit later to maint).
+   (merge 4a72486de9 pw/clean-sequencer-state-upon-final-cummit later to maint).
 
  * On a filesystem like HFS+, the names of the refs stored as filesystem
    entities may become different from what the end-user expects, just
@@ -531,7 +531,7 @@ Fixes since v2.21
    dependency, namely, libsvn-perl.
    (merge db864306cf sg/ci-libsvn-perl later to maint).
 
- * "git cvsexportcommit" running on msys did not expect cvsnt showed
+ * "git cvsexportcummit" running on msys did not expect cvsnt showed
    "cvs status" output with CRLF line endings.
 
  * The fsmonitor interface got out of sync after the in-core index

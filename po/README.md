@@ -142,7 +142,7 @@ just "Git":
 perl -pi -e 's/(?<="Project-Id-Version: )PACKAGE VERSION/Git/' XX.po
 ```
 
-Once you are done testing the translation (see below), commit the result
+Once you are done testing the translation (see below), cummit the result
 and ask the l10n coordinator to pull from you.
 
 
@@ -164,7 +164,7 @@ msgmerge --add-location --backup=off -U XX.po git.pot
 
 in the "po/" directory, where "XX.po" is the file you want to update.
 
-Once you are done testing the translation (see below), commit the result
+Once you are done testing the translation (see below), cummit the result
 and ask the l10n coordinator to pull from you.
 
 
@@ -270,7 +270,7 @@ interface. We currently export these functions:
   Mark and translate a plural string. E.g.:
 
   ```c
-  printf(Q_("%d commit", "%d commits", number_of_commits));
+  printf(Q_("%d cummit", "%d cummits", number_of_cummits));
   ```
 
   This is just a wrapper for the ngettext() function.
@@ -384,11 +384,11 @@ Usage for git-po-helper:
   git-po-helper update XX.po
   ```
 
-- To check commit log and syntax of "XX.po":
+- To check cummit log and syntax of "XX.po":
 
   ```shell
   git-po-helper check-po XX.po
-  git-po-helper check-commits
+  git-po-helper check-cummits
   ```
 
 Run "git-po-helper" without arguments to show usage.
@@ -398,30 +398,30 @@ Run "git-po-helper" without arguments to show usage.
 
 There are some conventions that l10n contributors must follow:
 
-- The subject of each l10n commit should be prefixed with "l10n: ".
+- The subject of each l10n cummit should be prefixed with "l10n: ".
 
-- Do not use non-ASCII characters in the subject of a commit.
+- Do not use non-ASCII characters in the subject of a cummit.
 
-- The length of commit subject (first line of the commit log) should
+- The length of cummit subject (first line of the cummit log) should
   be less than 50 characters, and the length of other lines of the
-  commit log should be no more than 72 characters.
+  cummit log should be no more than 72 characters.
 
-- Add "Signed-off-by" trailer to your commit log, like other commits
-  in Git. You can automatically add the trailer by committing with
+- Add "Signed-off-by" trailer to your cummit log, like other cummits
+  in Git. You can automatically add the trailer by cummitting with
   the following command:
 
   ```shell
-  git commit -s
+  git cummit -s
   ```
 
 - Check syntax with "msgfmt" or the following command before creating
-  your commit:
+  your cummit:
 
   ```shell
   git-po-helper check-po <XX.po>
   ```
 
-- Squash trivial commits to make history clear.
+- Squash trivial cummits to make history clear.
 
 - DO NOT edit files outside "po/" directory.
 

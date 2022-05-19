@@ -9,7 +9,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'setup and inject "corrupt or missing" object' '
 	echo hello >greetings &&
 	git add greetings &&
-	git commit -m greetings &&
+	git cummit -m greetings &&
 
 	S=$(git rev-parse :greetings | sed -e "s|^..|&/|") &&
 	X=$(echo bye | git hash-object -w --stdin | sed -e "s|^..|&/|") &&
@@ -129,16 +129,16 @@ test_expect_success 'repair the "corrupt or missing" object' '
 	git fsck
 '
 
-cat >bogus-commit <<EOF
+cat >bogus-cummit <<EOF
 tree $EMPTY_TREE
 author Bugs Bunny 1234567890 +0000
-committer Bugs Bunny <bugs@bun.ni> 1234567890 +0000
+cummitter Bugs Bunny <bugs@bun.ni> 1234567890 +0000
 
-This commit object intentionally broken
+This cummit object intentionally broken
 EOF
 
-test_expect_success 'setup bogus commit' '
-	commit="$(git hash-object -t commit -w --stdin <bogus-commit)"
+test_expect_success 'setup bogus cummit' '
+	cummit="$(git hash-object -t cummit -w --stdin <bogus-cummit)"
 '
 
 test_expect_success 'fsck with no skipList input' '
@@ -150,7 +150,7 @@ test_expect_success 'setup sorted and unsorted skipLists' '
 	cat >SKIP.unsorted <<-EOF &&
 	$(test_oid 004)
 	$(test_oid 002)
-	$commit
+	$cummit
 	$(test_oid 001)
 	$(test_oid 003)
 	EOF
@@ -175,7 +175,7 @@ test_expect_success 'fsck with invalid or bogus skipList input' '
 
 test_expect_success 'fsck with other accepted skipList input (comments & empty lines)' '
 	cat >SKIP.with-comment <<-EOF &&
-	# Some bad commit
+	# Some bad cummit
 	$(test_oid 001)
 	EOF
 	test_must_fail git -c fsck.skipList=SKIP.with-comment fsck 2>err-with-comment &&
@@ -195,7 +195,7 @@ test_expect_success 'fsck no garbage output from comments & empty lines errors' 
 '
 
 test_expect_success 'fsck with invalid abbreviated skipList input' '
-	echo $commit | test_copy_bytes 20 >SKIP.abbreviated &&
+	echo $cummit | test_copy_bytes 20 >SKIP.abbreviated &&
 	test_must_fail git -c fsck.skipList=SKIP.abbreviated fsck 2>err-abbreviated &&
 	test_i18ngrep "^fatal: invalid object name: " err-abbreviated
 '
@@ -206,20 +206,20 @@ test_expect_success 'fsck with exhaustive accepted skipList input (various types
 	echo "" >>SKIP.exhaustive &&
 	echo " " >>SKIP.exhaustive &&
 	echo " # Comment after whitespace" >>SKIP.exhaustive &&
-	echo "$commit # Our bad commit (with leading whitespace and trailing comment)" >>SKIP.exhaustive &&
-	echo "# Some bad commit (leading whitespace)" >>SKIP.exhaustive &&
+	echo "$cummit # Our bad cummit (with leading whitespace and trailing comment)" >>SKIP.exhaustive &&
+	echo "# Some bad cummit (leading whitespace)" >>SKIP.exhaustive &&
 	echo "  $(test_oid 001)" >>SKIP.exhaustive &&
 	git -c fsck.skipList=SKIP.exhaustive fsck 2>err &&
 	test_must_be_empty err
 '
 
 test_expect_success 'push with receive.fsck.skipList' '
-	git push . $commit:refs/heads/bogus &&
+	git push . $cummit:refs/heads/bogus &&
 	rm -rf dst &&
 	git init dst &&
 	git --git-dir=dst/.git config receive.fsckObjects true &&
 	test_must_fail git push --porcelain dst bogus &&
-	echo $commit >dst/.git/SKIP &&
+	echo $cummit >dst/.git/SKIP &&
 
 	# receive.fsck.* does not fall back on fsck.*
 	git --git-dir=dst/.git config fsck.skipList SKIP &&
@@ -241,14 +241,14 @@ test_expect_success 'push with receive.fsck.skipList' '
 
 test_expect_success 'fetch with fetch.fsck.skipList' '
 	refspec=refs/heads/bogus:refs/heads/bogus &&
-	git push . $commit:refs/heads/bogus &&
+	git push . $cummit:refs/heads/bogus &&
 	rm -rf dst &&
 	git init dst &&
 	git --git-dir=dst/.git config fetch.fsckObjects true &&
 	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
 	git --git-dir=dst/.git config fetch.fsck.skipList /dev/null &&
 	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
-	echo $commit >dst/.git/SKIP &&
+	echo $cummit >dst/.git/SKIP &&
 
 	# fetch.fsck.* does not fall back on fsck.*
 	git --git-dir=dst/.git config fsck.skipList dst/.git/SKIP &&
@@ -274,7 +274,7 @@ test_expect_success 'fsck.<unknownmsg-id> dies' '
 '
 
 test_expect_success 'push with receive.fsck.missingEmail=warn' '
-	git push . $commit:refs/heads/bogus &&
+	git push . $cummit:refs/heads/bogus &&
 	rm -rf dst &&
 	git init dst &&
 	git --git-dir=dst/.git config receive.fsckobjects true &&
@@ -302,7 +302,7 @@ test_expect_success 'push with receive.fsck.missingEmail=warn' '
 
 test_expect_success 'fetch with fetch.fsck.missingEmail=warn' '
 	refspec=refs/heads/bogus:refs/heads/bogus &&
-	git push . $commit:refs/heads/bogus &&
+	git push . $cummit:refs/heads/bogus &&
 	rm -rf dst &&
 	git init dst &&
 	git --git-dir=dst/.git config fetch.fsckobjects true &&

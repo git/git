@@ -9,7 +9,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 unset PAGER GIT_PAGER
 
 test_expect_success 'setup' '
-	test_commit initial grep.h "
+	test_cummit initial grep.h "
 enum grep_pat_token {
 	GREP_PATTERN,
 	GREP_PATTERN_HEAD,
@@ -21,7 +21,7 @@ enum grep_pat_token {
 	GREP_OR,
 };" &&
 
-	test_commit add-user revision.c "
+	test_cummit add-user revision.c "
 	}
 	if (seen_dashdash)
 		read_pathspec_from_stdin(revs, &sb, prune);
@@ -34,9 +34,9 @@ static void add_grep(struct rev_info *revs, const char *ptn, enum grep_pat_token
 " &&
 
 	mkdir subdir &&
-	test_commit subdir subdir/grep.c "enum grep_pat_token" &&
+	test_cummit subdir subdir/grep.c "enum grep_pat_token" &&
 
-	test_commit uninteresting unrelated "hello, world" &&
+	test_cummit uninteresting unrelated "hello, world" &&
 
 	echo GREP_PATTERN >untracked
 '

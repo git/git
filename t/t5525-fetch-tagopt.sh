@@ -13,7 +13,7 @@ setup_clone () {
 }
 
 test_expect_success setup '
-	test_commit test &&
+	test_cummit test &&
 	setup_clone one &&
 	git config remote.remote_one.tagopt --no-tags &&
 	setup_clone two &&

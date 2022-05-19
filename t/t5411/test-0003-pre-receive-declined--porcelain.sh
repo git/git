@@ -16,14 +16,14 @@ test_expect_success "git-push is declined ($PROTOCOL/porcelain)" '
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	format_and_save_expect <<-EOF &&
 	> To <URL/of/upstream.git>
-	> !	<COMMIT-B>:refs/heads/main	[remote rejected] (pre-receive hook declined)
+	> !	<cummit-B>:refs/heads/main	[remote rejected] (pre-receive hook declined)
 	> !	HEAD:refs/heads/next	[remote rejected] (pre-receive hook declined)
 	Done
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<COMMIT-A> refs/heads/main
+	<cummit-A> refs/heads/main
 	EOF
 '
 

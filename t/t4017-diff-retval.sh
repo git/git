@@ -10,13 +10,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'setup' '
 	echo "1 " >a &&
 	git add . &&
-	git commit -m zeroth &&
+	git cummit -m zeroth &&
 	echo 1 >a &&
 	git add . &&
-	git commit -m first &&
+	git cummit -m first &&
 	echo 2 >b &&
 	git add . &&
-	git commit -a -m second
+	git cummit -a -m second
 '
 
 test_expect_success 'git diff --quiet -w  HEAD^^ HEAD^' '
@@ -62,7 +62,7 @@ test_expect_success 'git diff-index --cached HEAD^' '
 	test_expect_code 1 git diff-index --exit-code --cached HEAD^
 '
 test_expect_success 'git diff-tree -Stext HEAD^ HEAD -- b' '
-	git commit -m "text in b" &&
+	git cummit -m "text in b" &&
 	test_expect_code 1 git diff-tree -p --exit-code -Stext HEAD^ HEAD -- b
 '
 test_expect_success 'git diff-tree -Snot-found HEAD^ HEAD -- b' '
@@ -113,7 +113,7 @@ test_expect_success 'check detects leftover conflict markers' '
 	git reset --hard &&
 	git checkout HEAD^ &&
 	echo binary >>b &&
-	git commit -m "side" b &&
+	git cummit -m "side" b &&
 	test_must_fail git merge main &&
 	git add b &&
 	test_expect_code 2 git --no-pager diff --cached --check >test.out &&

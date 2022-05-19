@@ -5,7 +5,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'set up some sample branches' '
-	test_commit foo &&
+	test_cummit foo &&
 	git branch -M main &&
 	git update-ref refs/remotes/origin/main HEAD &&
 	git update-ref refs/heads/other HEAD

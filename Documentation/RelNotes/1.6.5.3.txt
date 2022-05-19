@@ -56,7 +56,7 @@ Fixes since v1.6.5.2
 
  * "gitweb" did not escape non-ascii characters correctly in the URL.
 
- * "gitweb" showed "patch" link even for merge commits.
+ * "gitweb" showed "patch" link even for merge cummits.
 
  * "gitweb" showed incorrect links for blob line numbers in pathinfo mode.
 

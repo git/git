@@ -41,7 +41,7 @@ test_expect_success 'setup test files' '
 	cp test.utf32.raw test.utf32 &&
 	cp test.utf16lebom.raw test.utf16lebom &&
 	git add .gitattributes test.utf16 test.utf16lebom &&
-	git commit -m initial
+	git cummit -m initial
 '
 
 test_expect_success 'ensure UTF-8 is stored in Git' '
@@ -137,7 +137,7 @@ do
 		EOF
 
 		git add eol.utf${i} &&
-		git commit -m eol &&
+		git cummit -m eol &&
 
 		# UTF-${i} with CRLF (Windows line endings)
 		rm eol.utf${i} &&
@@ -186,7 +186,7 @@ test_expect_success 'error if encoding round trip is not the same during refresh
 	BEFORE_STATE=$(git rev-parse HEAD) &&
 	test_when_finished "git reset --hard $BEFORE_STATE" &&
 
-	# Add and commit a UTF-16 file but skip the "working-tree-encoding"
+	# Add and cummit a UTF-16 file but skip the "working-tree-encoding"
 	# filter. Consequently, the in-repo representation is UTF-16 and not
 	# UTF-8. This simulates a Git version that has no working tree encoding
 	# support.
@@ -194,8 +194,8 @@ test_expect_success 'error if encoding round trip is not the same during refresh
 	echo "hallo" >nonsense.utf16le &&
 	TEST_HASH=$(git hash-object --no-filters -w nonsense.utf16le) &&
 	git update-index --add --cacheinfo 100644 $TEST_HASH nonsense.utf16le &&
-	COMMIT=$(git commit-tree -p $(git rev-parse HEAD) -m "plain commit" $(git write-tree)) &&
-	git update-ref refs/heads/main $COMMIT &&
+	cummit=$(git cummit-tree -p $(git rev-parse HEAD) -m "plain cummit" $(git write-tree)) &&
+	git update-ref refs/heads/main $cummit &&
 
 	test_must_fail git checkout HEAD^ 2>err.out &&
 	test_i18ngrep "error: .* overwritten by checkout:" err.out
@@ -210,8 +210,8 @@ test_expect_success 'error if encoding garbage is already in Git' '
 	cp nobom.utf16be.raw nonsense.utf16 &&
 	TEST_HASH=$(git hash-object --no-filters -w nonsense.utf16) &&
 	git update-index --add --cacheinfo 100644 $TEST_HASH nonsense.utf16 &&
-	COMMIT=$(git commit-tree -p $(git rev-parse HEAD) -m "plain commit" $(git write-tree)) &&
-	git update-ref refs/heads/main $COMMIT &&
+	cummit=$(git cummit-tree -p $(git rev-parse HEAD) -m "plain cummit" $(git write-tree)) &&
+	git update-ref refs/heads/main $cummit &&
 
 	git diff 2>err.out &&
 	test_i18ngrep "error: BOM is required" err.out
@@ -263,22 +263,22 @@ test_expect_success ICONV_SHIFT_JIS 'check roundtrip encoding' '
 # $1: checkout encoding
 # $2: test string
 # $3: binary test string in checkout encoding
-test_commit_utf8_checkout_other () {
+test_cummit_utf8_checkout_other () {
 	encoding="$1"
 	orig_string="$2"
 	expect_bytes="$3"
 
-	test_expect_success "Commit UTF-8, checkout $encoding" '
+	test_expect_success "cummit UTF-8, checkout $encoding" '
 		test_when_finished "git checkout HEAD -- .gitattributes" &&
 
-		test_ext="commit_utf8_checkout_$encoding" &&
+		test_ext="cummit_utf8_checkout_$encoding" &&
 		test_file="test.$test_ext" &&
 
-		# Commit as UTF-8
+		# cummit as UTF-8
 		echo "*.$test_ext text working-tree-encoding=UTF-8" >.gitattributes &&
 		printf "$orig_string" >$test_file &&
 		git add $test_file &&
-		git commit -m "Test data" &&
+		git cummit -m "Test data" &&
 
 		# Checkout in tested encoding
 		rm $test_file &&
@@ -291,12 +291,12 @@ test_commit_utf8_checkout_other () {
 	'
 }
 
-test_commit_utf8_checkout_other "UTF-8"        "Test Тест" "\124\145\163\164\040\320\242\320\265\321\201\321\202"
-test_commit_utf8_checkout_other "UTF-16LE"     "Test Тест" "\124\000\145\000\163\000\164\000\040\000\042\004\065\004\101\004\102\004"
-test_commit_utf8_checkout_other "UTF-16BE"     "Test Тест" "\000\124\000\145\000\163\000\164\000\040\004\042\004\065\004\101\004\102"
-test_commit_utf8_checkout_other "UTF-16LE-BOM" "Test Тест" "\377\376\124\000\145\000\163\000\164\000\040\000\042\004\065\004\101\004\102\004"
-test_commit_utf8_checkout_other "UTF-16BE-BOM" "Test Тест" "\376\377\000\124\000\145\000\163\000\164\000\040\004\042\004\065\004\101\004\102"
-test_commit_utf8_checkout_other "UTF-32LE"     "Test Тест" "\124\000\000\000\145\000\000\000\163\000\000\000\164\000\000\000\040\000\000\000\042\004\000\000\065\004\000\000\101\004\000\000\102\004\000\000"
-test_commit_utf8_checkout_other "UTF-32BE"     "Test Тест" "\000\000\000\124\000\000\000\145\000\000\000\163\000\000\000\164\000\000\000\040\000\000\004\042\000\000\004\065\000\000\004\101\000\000\004\102"
+test_cummit_utf8_checkout_other "UTF-8"        "Test Тест" "\124\145\163\164\040\320\242\320\265\321\201\321\202"
+test_cummit_utf8_checkout_other "UTF-16LE"     "Test Тест" "\124\000\145\000\163\000\164\000\040\000\042\004\065\004\101\004\102\004"
+test_cummit_utf8_checkout_other "UTF-16BE"     "Test Тест" "\000\124\000\145\000\163\000\164\000\040\004\042\004\065\004\101\004\102"
+test_cummit_utf8_checkout_other "UTF-16LE-BOM" "Test Тест" "\377\376\124\000\145\000\163\000\164\000\040\000\042\004\065\004\101\004\102\004"
+test_cummit_utf8_checkout_other "UTF-16BE-BOM" "Test Тест" "\376\377\000\124\000\145\000\163\000\164\000\040\004\042\004\065\004\101\004\102"
+test_cummit_utf8_checkout_other "UTF-32LE"     "Test Тест" "\124\000\000\000\145\000\000\000\163\000\000\000\164\000\000\000\040\000\000\000\042\004\000\000\065\004\000\000\101\004\000\000\102\004\000\000"
+test_cummit_utf8_checkout_other "UTF-32BE"     "Test Тест" "\000\000\000\124\000\000\000\145\000\000\000\163\000\000\000\164\000\000\000\040\000\000\004\042\000\000\004\065\000\000\004\101\000\000\004\102"
 
 test_done

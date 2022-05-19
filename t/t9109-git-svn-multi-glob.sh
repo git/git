@@ -21,23 +21,23 @@ test_expect_success 'test refspec globbing' '
 		mkdir branches branches/v1 tags &&
 		svn_cmd add branches tags &&
 		svn_cmd cp trunk branches/v1/start &&
-		svn_cmd commit -m "start a new branch" &&
+		svn_cmd cummit -m "start a new branch" &&
 		svn_cmd up &&
 		echo "hi" >> branches/v1/start/src/b/readme &&
 		poke branches/v1/start/src/b/readme &&
 		echo "hey" >> branches/v1/start/src/a/readme &&
 		poke branches/v1/start/src/a/readme &&
-		svn_cmd commit -m "hi" &&
+		svn_cmd cummit -m "hi" &&
 		svn_cmd up &&
 		svn_cmd cp branches/v1/start tags/end &&
 		echo "bye" >> tags/end/src/b/readme &&
 		poke tags/end/src/b/readme &&
 		echo "aye" >> tags/end/src/a/readme &&
 		poke tags/end/src/a/readme &&
-		svn_cmd commit -m "the end" &&
+		svn_cmd cummit -m "the end" &&
 		echo "byebye" >> tags/end/src/b/readme &&
 		poke tags/end/src/b/readme &&
-		svn_cmd commit -m "nothing to see here"
+		svn_cmd cummit -m "nothing to see here"
 	) &&
 	git config --add svn-remote.svn.url "$svnrepo" &&
 	git config --add svn-remote.svn.fetch \
@@ -72,7 +72,7 @@ test_expect_success 'test left-hand-side only globbing' '
 		cd tmp &&
 		echo "try try" >> tags/end/src/b/readme &&
 		poke tags/end/src/b/readme &&
-		svn_cmd commit -m "try to try"
+		svn_cmd cummit -m "try to try"
 	) &&
 	git svn fetch two &&
 	git rev-list refs/remotes/two/tags/end >actual &&
@@ -101,23 +101,23 @@ test_expect_success 'test another branch' '
 		mkdir branches/v2 &&
 		svn_cmd add branches/v2 &&
 		svn_cmd cp trunk branches/v2/start &&
-		svn_cmd commit -m "Another versioned branch" &&
+		svn_cmd cummit -m "Another versioned branch" &&
 		svn_cmd up &&
 		echo "hello" >> branches/v2/start/src/b/readme &&
 		poke branches/v2/start/src/b/readme &&
 		echo "howdy" >> branches/v2/start/src/a/readme &&
 		poke branches/v2/start/src/a/readme &&
-		svn_cmd commit -m "Changed 2 in v2/start" &&
+		svn_cmd cummit -m "Changed 2 in v2/start" &&
 		svn_cmd up &&
 		svn_cmd cp branches/v2/start tags/next &&
 		echo "bye" >> tags/next/src/b/readme &&
 		poke tags/next/src/b/readme &&
 		echo "aye" >> tags/next/src/a/readme &&
 		poke tags/next/src/a/readme &&
-		svn_cmd commit -m "adding more" &&
+		svn_cmd cummit -m "adding more" &&
 		echo "byebye" >> tags/next/src/b/readme &&
 		poke tags/next/src/b/readme &&
-		svn_cmd commit -m "adios"
+		svn_cmd cummit -m "adios"
 	) &&
 	git config --add svn-remote.four.url "$svnrepo" &&
 	git config --add svn-remote.four.fetch trunk:refs/remotes/four/trunk &&
@@ -158,7 +158,7 @@ test_expect_success 'test disallow multiple globs' '
 		cd tmp &&
 		echo "try try" >> tags/end/src/b/readme &&
 		poke tags/end/src/b/readme &&
-		svn_cmd commit -m "try to try"
+		svn_cmd cummit -m "try to try"
 	) &&
 	test_must_fail git svn fetch three 2> stderr.three &&
 	test_cmp expect.three stderr.three

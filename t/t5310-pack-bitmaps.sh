@@ -37,20 +37,20 @@ test_expect_success 'full repack creates bitmaps' '
 		git repack -ad &&
 	ls .git/objects/pack/ | grep bitmap >output &&
 	test_line_count = 1 output &&
-	grep "\"key\":\"num_selected_commits\",\"value\":\"106\"" trace &&
-	grep "\"key\":\"num_maximal_commits\",\"value\":\"107\"" trace
+	grep "\"key\":\"num_selected_cummits\",\"value\":\"106\"" trace &&
+	grep "\"key\":\"num_maximal_cummits\",\"value\":\"107\"" trace
 '
 
 basic_bitmap_tests
 
 test_expect_success 'incremental repack fails when bitmaps are requested' '
-	test_commit more-1 &&
+	test_cummit more-1 &&
 	test_must_fail git repack -d 2>err &&
 	test_i18ngrep "Incremental repacks are incompatible with bitmap" err
 '
 
 test_expect_success 'incremental repack can disable bitmaps' '
-	test_commit more-2 &&
+	test_cummit more-2 &&
 	git repack -d --no-write-bitmap-index
 '
 
@@ -64,7 +64,7 @@ test_expect_success 'pack-objects respects --local (non-local loose)' '
 	git cat-file blob $blob | GIT_DIR=alt.git git hash-object -w --stdin &&
 	git add file1 &&
 	test_tick &&
-	git commit -m commit_file1 &&
+	git cummit -m cummit_file1 &&
 	echo HEAD | git pack-objects --local --stdout --revs >1.pack &&
 	git index-pack 1.pack &&
 	list_packed_objects 1.idx >1.objects &&
@@ -77,7 +77,7 @@ test_expect_success 'pack-objects respects --honor-pack-keep (local non-bitmappe
 	blob2=$(git hash-object -w file2) &&
 	git add file2 &&
 	test_tick &&
-	git commit -m commit_file2 &&
+	git cummit -m cummit_file2 &&
 	printf "%s\n" "$blob2" "$bitmaptip" >keepobjects &&
 	pack2=$(git pack-objects pack2 <keepobjects) &&
 	mv pack2-$pack2.* .git/objects/pack/ &&
@@ -148,25 +148,25 @@ test_expect_success 'fetch (full bitmap)' '
 test_expect_success 'create objects for missing-HAVE tests' '
 	blob=$(echo "missing have" | git hash-object -w --stdin) &&
 	tree=$(printf "100644 blob $blob\tfile\n" | git mktree) &&
-	parent=$(echo parent | git commit-tree $tree) &&
-	commit=$(echo commit | git commit-tree $tree -p $parent) &&
+	parent=$(echo parent | git cummit-tree $tree) &&
+	cummit=$(echo cummit | git cummit-tree $tree -p $parent) &&
 	cat >revs <<-EOF
 	HEAD
 	^HEAD^
-	^$commit
+	^$cummit
 	EOF
 '
 
 test_expect_success 'pack-objects respects --incremental' '
 	cat >revs2 <<-EOF &&
 	HEAD
-	$commit
+	$cummit
 	EOF
 	git pack-objects --incremental --stdout --revs <revs2 >4.pack &&
 	git index-pack 4.pack &&
 	list_packed_objects 4.idx >4.objects &&
 	test_line_count = 4 4.objects &&
-	git rev-list --objects $commit >revlist &&
+	git rev-list --objects $cummit >revlist &&
 	cut -d" " -f1 revlist |sort >objects &&
 	test_cmp 4.objects objects
 '
@@ -209,7 +209,7 @@ test_expect_success JGIT,SHA1 'jgit can read our bitmaps' '
 test_expect_success 'splitting packs does not generate bogus bitmaps' '
 	test-tool genrandom foo $((1024 * 1024)) >rand &&
 	git add rand &&
-	git commit -m "commit with big file" &&
+	git cummit -m "cummit with big file" &&
 	git -c pack.packSizeLimit=500k repack -adb &&
 	git init --bare no-bitmaps.git &&
 	git -C no-bitmaps.git fetch .. HEAD
@@ -295,18 +295,18 @@ test_expect_success 'truncated bitmap fails gracefully (cache)' '
 # that the client has it), but we will do so if bitmaps can tell us cheaply
 # that the other side has it.
 test_expect_success 'set up thin delta-reuse parent' '
-	# This first commit contains the buried base object.
+	# This first cummit contains the buried base object.
 	test-tool genrandom delta 16384 >file &&
 	git add file &&
-	git commit -m "delta base" &&
+	git cummit -m "delta base" &&
 	base=$(git rev-parse --verify HEAD:file) &&
 
-	# These intermediate commits bury the base back in history.
+	# These intermediate cummits bury the base back in history.
 	# This becomes the "old" state.
 	for i in 1 2 3 4 5
 	do
 		echo $i >file &&
-		git commit -am "intermediate $i" || return 1
+		git cummit -am "intermediate $i" || return 1
 	done &&
 	git branch delta-reuse-old &&
 
@@ -314,7 +314,7 @@ test_expect_success 'set up thin delta-reuse parent' '
 	# that this must be smaller than the original file, since pack-objects
 	# prefers to create deltas from smaller objects to larger.
 	test-tool genrandom delta 16300 >file &&
-	git commit -am "delta result" &&
+	git cummit -am "delta result" &&
 	delta=$(git rev-parse --verify HEAD:file) &&
 	git branch delta-reuse-new &&
 
@@ -365,33 +365,33 @@ test_expect_success 'pack.preferBitmapTips' '
 	(
 		cd repo &&
 
-		# create enough commits that not all are receive bitmap
+		# create enough cummits that not all are receive bitmap
 		# coverage even if they are all at the tip of some reference.
-		test_commit_bulk --message="%s" 103 &&
+		test_cummit_bulk --message="%s" 103 &&
 
-		git rev-list HEAD >commits.raw &&
-		sort <commits.raw >commits &&
+		git rev-list HEAD >cummits.raw &&
+		sort <cummits.raw >cummits &&
 
 		git log --format="create refs/tags/%s %H" HEAD >refs &&
 		git update-ref --stdin <refs &&
 
 		git repack -adb &&
-		test-tool bitmap list-commits | sort >bitmaps &&
+		test-tool bitmap list-cummits | sort >bitmaps &&
 
-		# remember which commits did not receive bitmaps
-		comm -13 bitmaps commits >before &&
+		# remember which cummits did not receive bitmaps
+		comm -13 bitmaps cummits >before &&
 		test_file_not_empty before &&
 
-		# mark the commits which did not receive bitmaps as preferred,
+		# mark the cummits which did not receive bitmaps as preferred,
 		# and generate the bitmap again
 		perl -pe "s{^}{create refs/tags/include/$. }" <before |
 			git update-ref --stdin &&
 		git -c pack.preferBitmapTips=refs/tags/include repack -adb &&
 
-		# finally, check that the commit(s) without bitmap coverage
+		# finally, check that the cummit(s) without bitmap coverage
 		# are not the same ones as before
-		test-tool bitmap list-commits | sort >bitmaps &&
-		comm -13 bitmaps commits >after &&
+		test-tool bitmap list-cummits | sort >bitmaps &&
+		comm -13 bitmaps cummits >after &&
 
 		! test_cmp before after
 	)
@@ -404,13 +404,13 @@ test_expect_success 'complains about multiple pack bitmaps' '
 	(
 		cd repo &&
 
-		test_commit base &&
+		test_cummit base &&
 
 		git repack -adb &&
 		bitmap="$(ls .git/objects/pack/pack-*.bitmap)" &&
 		mv "$bitmap" "$bitmap.bak" &&
 
-		test_commit other &&
+		test_cummit other &&
 		git repack -ab &&
 
 		mv "$bitmap.bak" "$bitmap" &&

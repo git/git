@@ -7,7 +7,7 @@ test_description='test disabling of remote-helper paths in clone/fetch'
 setup_ext_wrapper
 
 test_expect_success 'setup repository to clone' '
-	test_commit one &&
+	test_cummit one &&
 	mkdir remote &&
 	git init --bare remote/repo.git &&
 	git push remote/repo.git HEAD

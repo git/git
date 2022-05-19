@@ -67,7 +67,7 @@ else
 	not_in_next=`git rev-list --pretty=oneline ^${publish} "$topic"`
 	@PERL_PATH@ -e '
 		my $topic = $ARGV[0];
-		my $msg = "* $topic has commits already merged to public branch:\n";
+		my $msg = "* $topic has cummits already merged to public branch:\n";
 		my (%not_in_next) = map {
 			/^([0-9a-f]+) /;
 			($1 => 1);

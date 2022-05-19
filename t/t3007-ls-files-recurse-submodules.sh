@@ -13,13 +13,13 @@ test_expect_success 'setup directory structure and submodules' '
 	mkdir b &&
 	echo b >b/b &&
 	git add a b &&
-	git commit -m "add a and b" &&
+	git cummit -m "add a and b" &&
 	git init submodule &&
 	echo c >submodule/c &&
 	git -C submodule add c &&
-	git -C submodule commit -m "add c" &&
+	git -C submodule cummit -m "add c" &&
 	git submodule add ./submodule &&
-	git commit -m "added submodule"
+	git cummit -m "added submodule"
 '
 
 test_expect_success 'ls-files correctly outputs files in submodule' '
@@ -91,9 +91,9 @@ test_expect_success 'ls-files recurses more than 1 level' '
 	git init submodule/subsub &&
 	echo d >submodule/subsub/d &&
 	git -C submodule/subsub add d &&
-	git -C submodule/subsub commit -m "add d" &&
+	git -C submodule/subsub cummit -m "add d" &&
 	git -C submodule submodule add ./subsub &&
-	git -C submodule commit -m "added subsub" &&
+	git -C submodule cummit -m "added subsub" &&
 	git submodule absorbgitdirs &&
 	git ls-files --recurse-submodules >actual &&
 	test_cmp expect actual
@@ -113,22 +113,22 @@ test_expect_success 'ls-files works with GIT_DIR' '
 test_expect_success '--recurse-submodules and pathspecs setup' '
 	echo e >submodule/subsub/e.txt &&
 	git -C submodule/subsub add e.txt &&
-	git -C submodule/subsub commit -m "adding e.txt" &&
+	git -C submodule/subsub cummit -m "adding e.txt" &&
 	echo f >submodule/f.TXT &&
 	echo g >submodule/g.txt &&
 	git -C submodule add f.TXT g.txt &&
-	git -C submodule commit -m "add f and g" &&
+	git -C submodule cummit -m "add f and g" &&
 	echo h >h.txt &&
 	mkdir sib &&
 	echo sib >sib/file &&
 	git add h.txt sib/file &&
-	git commit -m "add h and sib/file" &&
+	git cummit -m "add h and sib/file" &&
 	git init sub &&
 	echo sub >sub/file &&
 	git -C sub add file &&
-	git -C sub commit -m "add file" &&
+	git -C sub cummit -m "add file" &&
 	git submodule add ./sub &&
-	git commit -m "added sub" &&
+	git cummit -m "added sub" &&
 
 	cat >expect <<-\EOF &&
 	.gitmodules

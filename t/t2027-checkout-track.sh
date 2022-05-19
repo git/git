@@ -8,8 +8,8 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit one &&
-	test_commit two
+	test_cummit one &&
+	test_cummit two
 '
 
 test_expect_success 'checkout --track -b creates a new tracking branch' '

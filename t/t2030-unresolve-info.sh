@@ -49,27 +49,27 @@ test_expect_success setup '
 	mkdir fi &&
 	printf "a\0a" >binary &&
 	git add binary &&
-	test_commit initial fi/le first &&
+	test_cummit initial fi/le first &&
 	git branch side &&
 	git branch another &&
 	printf "a\0b" >binary &&
 	git add binary &&
-	test_commit second fi/le second &&
+	test_cummit second fi/le second &&
 	git checkout side &&
-	test_commit third fi/le third &&
+	test_cummit third fi/le third &&
 	git branch add-add &&
 	git checkout another &&
-	test_commit fourth fi/le fourth &&
+	test_cummit fourth fi/le fourth &&
 	git checkout add-add &&
-	test_commit fifth add-differently &&
+	test_cummit fifth add-differently &&
 	git checkout main
 '
 
 test_expect_success 'add records switch clears' '
 	prime_resolve_undo &&
 	test_tick &&
-	git commit -m merged &&
-	echo committing keeps &&
+	git cummit -m merged &&
+	echo cummitting keeps &&
 	check_resolve_undo kept fi/le initial:fi/le second:fi/le third:fi/le &&
 	git checkout second^0 &&
 	echo switching clears &&
@@ -79,8 +79,8 @@ test_expect_success 'add records switch clears' '
 test_expect_success 'rm records reset clears' '
 	prime_resolve_undo &&
 	test_tick &&
-	git commit -m merged &&
-	echo committing keeps &&
+	git cummit -m merged &&
+	echo cummitting keeps &&
 	check_resolve_undo kept fi/le initial:fi/le second:fi/le third:fi/le &&
 
 	echo merge clears upfront &&
@@ -99,8 +99,8 @@ test_expect_success 'rm records reset clears' '
 test_expect_success 'plumbing clears' '
 	prime_resolve_undo &&
 	test_tick &&
-	git commit -m merged &&
-	echo committing keeps &&
+	git cummit -m merged &&
+	echo cummitting keeps &&
 	check_resolve_undo kept fi/le initial:fi/le second:fi/le third:fi/le &&
 
 	echo plumbing clear &&
@@ -179,7 +179,7 @@ test_expect_success 'rerere and rerere forget (subdirectory)' '
 
 test_expect_success 'rerere forget (binary)' '
 	git checkout -f side &&
-	test_commit --printf binary binary "a\0c" &&
+	test_cummit --printf binary binary "a\0c" &&
 	test_must_fail git merge second &&
 	git rerere forget binary
 '
@@ -188,7 +188,7 @@ test_expect_success 'rerere forget (add-add conflict)' '
 	git checkout -f main &&
 	echo main >add-differently &&
 	git add add-differently &&
-	git commit -m "add differently" &&
+	git cummit -m "add differently" &&
 	test_must_fail git merge fifth &&
 	git rerere forget add-differently 2>actual &&
 	test_i18ngrep "no remembered" actual

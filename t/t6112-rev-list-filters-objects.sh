@@ -18,7 +18,7 @@ test_expect_success 'setup r1' '
 	do
 		echo "This is file: $n" > r1/file.$n &&
 		git -C r1 add file.$n &&
-		git -C r1 commit -m "$n" || return 1
+		git -C r1 cummit -m "$n" || return 1
 	done
 '
 
@@ -75,7 +75,7 @@ test_expect_success 'setup r2' '
 	do
 		printf "%"$n"s" X > r2/large.$n &&
 		git -C r2 add large.$n &&
-		git -C r2 commit -m "$n" || return 1
+		git -C r2 cummit -m "$n" || return 1
 	done
 '
 
@@ -163,7 +163,7 @@ test_expect_success 'verify blob:limit=1m' '
 
 test_expect_success 'setup object-type' '
 	test_create_repo object-type &&
-	test_commit --no-tag -C object-type message blob &&
+	test_cummit --no-tag -C object-type message blob &&
 	git -C object-type tag tag -m tag-message
 '
 
@@ -172,14 +172,14 @@ test_expect_success 'verify object:type= fails with invalid type' '
 	test_must_fail git -C object-type rev-list --objects --filter=object:type=invalid HEAD
 '
 
-test_expect_success 'verify object:type=blob prints blob and commit' '
+test_expect_success 'verify object:type=blob prints blob and cummit' '
 	git -C object-type rev-parse HEAD >expected &&
 	printf "%s blob\n" $(git -C object-type rev-parse HEAD:blob) >>expected &&
 	git -C object-type rev-list --objects --filter=object:type=blob HEAD >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'verify object:type=tree prints tree and commit' '
+test_expect_success 'verify object:type=tree prints tree and cummit' '
 	(
 		git -C object-type rev-parse HEAD &&
 		printf "%s \n" $(git -C object-type rev-parse HEAD^{tree})
@@ -188,7 +188,7 @@ test_expect_success 'verify object:type=tree prints tree and commit' '
 	test_cmp expected actual
 '
 
-test_expect_success 'verify object:type=commit prints commit' '
+test_expect_success 'verify object:type=cummit prints cummit' '
 	git -C object-type rev-parse HEAD >expected &&
 	git -C object-type rev-list --objects --filter=object:type=commit HEAD >actual &&
 	test_cmp expected actual
@@ -217,10 +217,10 @@ test_expect_success 'verify object:type=tree prints only tree with --filter-prov
 	test_cmp expected actual
 '
 
-test_expect_success 'verify object:type=commit prints only commit with --filter-provided-objects' '
+test_expect_success 'verify object:type=cummit prints only cummit with --filter-provided-objects' '
 	git -C object-type rev-parse HEAD >expected &&
 	git -C object-type rev-list --objects \
-		--filter=object:type=commit --filter-provided-objects HEAD >actual &&
+		--filter=object:type=cummit --filter-provided-objects HEAD >actual &&
 	test_cmp expected actual
 '
 
@@ -250,7 +250,7 @@ test_expect_success 'setup r3' '
 		echo "This is file: dir1/$n" > r3/dir1/$n &&
 		git -C r3 add dir1/$n || return 1
 	done &&
-	git -C r3 commit -m "sparse" &&
+	git -C r3 cummit -m "sparse" &&
 	echo dir1/ >pattern1 &&
 	echo sparse1 >pattern2
 '
@@ -273,7 +273,7 @@ test_expect_success 'verify sparse:path=pattern2 fails' '
 test_expect_success 'setup r3 part 2' '
 	echo dir1/ >r3/pattern &&
 	git -C r3 add pattern &&
-	git -C r3 commit -m "pattern"
+	git -C r3 cummit -m "pattern"
 '
 
 test_expect_success 'verify sparse:oid=OID omits top-level files' '
@@ -349,7 +349,7 @@ test_expect_success 'verify skipping tree iteration when not collecting omits' '
 	GIT_TRACE=1 git -C r3 rev-list \
 		--objects --filter=tree:0 HEAD 2>filter_trace &&
 	grep "Skipping contents of tree [.][.][.]" filter_trace >actual &&
-	# One line for each commit traversed.
+	# One line for each cummit traversed.
 	test_line_count = 2 actual &&
 
 	# Make sure no other trees were considered besides the root.
@@ -362,7 +362,7 @@ test_expect_success 'verify skipping tree iteration when not collecting omits' '
 	GIT_TRACE=1 git -C r3 rev-list \
 		--objects --filter=combine:tree:1+tree:3 HEAD 2>filter_trace &&
 
-	# Only skip the dir1/ tree, which is shared between the two commits.
+	# Only skip the dir1/ tree, which is shared between the two cummits.
 	grep "Skipping contents of tree " filter_trace >actual &&
 	test_write_lines "Skipping contents of tree dir1/..." >expected &&
 	test_cmp expected actual
@@ -371,17 +371,17 @@ test_expect_success 'verify skipping tree iteration when not collecting omits' '
 # Test tree:# filters.
 
 expect_has () {
-	commit=$1 &&
+	cummit=$1 &&
 	name=$2 &&
 
-	hash=$(git -C r3 rev-parse $commit:$name) &&
+	hash=$(git -C r3 rev-parse $cummit:$name) &&
 	grep "^$hash $name$" actual
 }
 
 test_expect_success 'verify tree:1 includes root trees' '
 	git -C r3 rev-list --objects --filter=tree:1 HEAD >actual &&
 
-	# We should get two root directories and two commits.
+	# We should get two root directories and two cummits.
 	expect_has HEAD "" &&
 	expect_has HEAD~1 ""  &&
 	test_line_count = 4 actual
@@ -397,7 +397,7 @@ test_expect_success 'verify tree:2 includes root trees and immediate children' '
 	expect_has HEAD sparse1 &&
 	expect_has HEAD sparse2 &&
 
-	# There are also 2 commit objects
+	# There are also 2 cummit objects
 	test_line_count = 8 actual
 '
 
@@ -413,7 +413,7 @@ test_expect_success 'verify tree:3 includes everything expected' '
 	expect_has HEAD sparse1 &&
 	expect_has HEAD sparse2 &&
 
-	# There are also 2 commit objects
+	# There are also 2 cummit objects
 	test_line_count = 10 actual
 '
 
@@ -425,7 +425,7 @@ test_expect_success 'combine:... for a simple combination' '
 	expect_has HEAD~1 "" &&
 	expect_has HEAD dir1 &&
 
-	# There are also 2 commit objects
+	# There are also 2 cummit objects
 	test_line_count = 5 actual &&
 
 	cp actual expected &&
@@ -446,7 +446,7 @@ test_expect_success 'combine:... with URL encoding' '
 	expect_has HEAD~1 "" &&
 	expect_has HEAD dir1 &&
 
-	# There are also 2 commit objects
+	# There are also 2 cummit objects
 	test_line_count = 5 actual
 '
 
@@ -506,7 +506,7 @@ test_expect_success 'add sparse pattern blobs whose paths have reserved chars' '
 	cp r3/pattern "r3/p;at%ter+n" &&
 	cp r3/pattern r3/^~pattern &&
 	git -C r3 add pattern1+renamed% "p;at%ter+n" ^~pattern &&
-	git -C r3 commit -m "add sparse pattern files with reserved chars"
+	git -C r3 cummit -m "add sparse pattern files with reserved chars"
 '
 
 test_expect_success 'combine:... with more than two sub-filters' '
@@ -521,7 +521,7 @@ test_expect_success 'combine:... with more than two sub-filters' '
 	expect_has HEAD dir1/sparse1 &&
 	expect_has HEAD dir1/sparse2 &&
 
-	# Should also have 3 commits
+	# Should also have 3 cummits
 	test_line_count = 9 actual &&
 
 	# Try again, this time making sure the last sub-filter is only
@@ -573,7 +573,7 @@ test_expect_success 'setup r4' '
 	cp -r r4/foo r4/subdir r4/filt &&
 
 	git -C r4 add foo subdir filt &&
-	git -C r4 commit -m "commit msg"
+	git -C r4 cummit -m "cummit msg"
 '
 
 expect_has_with_different_name () {
@@ -612,7 +612,7 @@ test_expect_success 'setup r5' '
 	echo abcde >r5/subdir/long-subdir  &&
 
 	git -C r5 add short-root long-root subdir &&
-	git -C r5 commit -m "commit msg"
+	git -C r5 cummit -m "cummit msg"
 '
 
 test_expect_success 'verify collecting omits in combined: filter' '
@@ -622,7 +622,7 @@ test_expect_success 'verify collecting omits in combined: filter' '
 	git -C r5 rev-list --objects --quiet --filter-print-omitted \
 		--filter=combine:tree:2+blob:limit=3 HEAD >actual &&
 
-	# Expect 0 trees/commits, 3 blobs omitted (all blobs except short-root)
+	# Expect 0 trees/cummits, 3 blobs omitted (all blobs except short-root)
 	omitted_1=$(echo 12345 | git hash-object --stdin) &&
 	omitted_2=$(echo a     | git hash-object --stdin) &&
 	omitted_3=$(echo abcde | git hash-object --stdin) &&
@@ -648,7 +648,7 @@ test_expect_success 'tree:<depth> where we iterate over tree at two levels' '
 	echo foo > r5/subdir/b/foo &&
 
 	git -C r5 add a subdir &&
-	git -C r5 commit -m "commit msg" &&
+	git -C r5 cummit -m "cummit msg" &&
 
 	git -C r5 rev-list --objects --filter=tree:4 HEAD >actual &&
 	expect_has_with_different_name r5 a/subdir/b/foo

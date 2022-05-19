@@ -4,18 +4,18 @@ Git v1.6.6.1 Release Notes
 Fixes since v1.6.6
 ------------------
 
- * "git blame" did not work well when commit lacked the author name.
+ * "git blame" did not work well when cummit lacked the author name.
 
  * "git branch -a name" wasn't diagnosed as an error.
 
  * "git count-objects" did not handle packfiles that are bigger than 4G on
    platforms with 32-bit off_t.
 
- * "git checkout -m other" while on a branch that does not have any commit
+ * "git checkout -m other" while on a branch that does not have any cummit
    segfaulted, instead of failing.
 
  * "git fast-import" choked when fed a tag that do not point at a
-   commit.
+   cummit.
 
  * "git grep" finding from work tree files could have fed garbage to
    the underlying regexec(3).

@@ -18,17 +18,17 @@ test_expect_success 'submodule config cache setup' '
 		git init &&
 		echo a >a &&
 		git add . &&
-		git commit -ma &&
+		git cummit -ma &&
 		git checkout -b topic &&
 		echo b >a &&
 		git add . &&
-		git commit -mb
+		git cummit -mb
 	) &&
 	mkdir super &&
 	(cd super &&
 		git init &&
 		git submodule add ../submodule &&
-		git commit -m "add submodule"
+		git cummit -m "add submodule"
 	)
 '
 
@@ -52,7 +52,7 @@ test_expect_success 'test submodule set-branch --branch' '
 '
 
 test_expect_success 'test submodule set-branch --default' '
-	test_commit -C submodule c &&
+	test_cummit -C submodule c &&
 	(cd super &&
 		git submodule set-branch --default submodule &&
 		! grep branch .gitmodules &&
@@ -66,7 +66,7 @@ test_expect_success 'test submodule set-branch --default' '
 '
 
 test_expect_success 'test submodule set-branch -b' '
-	test_commit -C submodule b &&
+	test_cummit -C submodule b &&
 	(cd super &&
 		git submodule set-branch -b topic submodule &&
 		grep "branch = topic" .gitmodules &&
@@ -80,7 +80,7 @@ test_expect_success 'test submodule set-branch -b' '
 '
 
 test_expect_success 'test submodule set-branch -d' '
-	test_commit -C submodule d &&
+	test_cummit -C submodule d &&
 	(cd super &&
 		git submodule set-branch -d submodule &&
 		! grep branch .gitmodules &&

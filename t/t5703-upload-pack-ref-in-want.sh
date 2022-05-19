@@ -12,20 +12,20 @@ get_actual_refs () {
 		}' <out | test-tool pkt-line unpack >actual_refs
 }
 
-get_actual_commits () {
+get_actual_cummits () {
 	test-tool pkt-line unpack-sideband <out >o.pack &&
 	git index-pack o.pack &&
 	git verify-pack -v o.idx >objs &&
-	sed -n -e 's/\([0-9a-f][0-9a-f]*\) commit .*/\1/p' objs >objs.sed &&
-	sort >actual_commits <objs.sed
+	sed -n -e 's/\([0-9a-f][0-9a-f]*\) cummit .*/\1/p' objs >objs.sed &&
+	sort >actual_cummits <objs.sed
 }
 
 check_output () {
 	get_actual_refs &&
 	test_cmp expected_refs actual_refs &&
-	get_actual_commits &&
-	sort expected_commits >sorted_commits &&
-	test_cmp sorted_commits actual_commits
+	get_actual_cummits &&
+	sort expected_cummits >sorted_cummits &&
+	test_cmp sorted_cummits actual_cummits
 }
 
 write_command () {
@@ -68,17 +68,17 @@ write_fetch_command () {
 #             \ | /
 #               a
 test_expect_success 'setup repository' '
-	test_commit a &&
+	test_cummit a &&
 	git branch -M main &&
 	git checkout -b o/foo &&
-	test_commit b &&
-	test_commit c &&
+	test_cummit b &&
+	test_cummit c &&
 	git checkout -b o/bar b &&
-	test_commit d &&
+	test_cummit d &&
 	git checkout -b baz a &&
-	test_commit e &&
+	test_cummit e &&
 	git checkout main &&
-	test_commit f
+	test_cummit f
 '
 
 test_expect_success 'config controls ref-in-want advertisement' '
@@ -112,7 +112,7 @@ test_expect_success 'basic want-ref' '
 	cat >expected_refs <<-EOF &&
 	$oid refs/heads/main
 	EOF
-	git rev-parse f >expected_commits &&
+	git rev-parse f >expected_cummits &&
 
 	write_fetch_command >pkt <<-EOF &&
 	want-ref refs/heads/main
@@ -131,7 +131,7 @@ test_expect_success 'multiple want-ref lines' '
 	$oid_c refs/heads/o/foo
 	$oid_d refs/heads/o/bar
 	EOF
-	git rev-parse c d >expected_commits &&
+	git rev-parse c d >expected_cummits &&
 
 	write_fetch_command >pkt <<-EOF &&
 	want-ref refs/heads/o/foo
@@ -149,7 +149,7 @@ test_expect_success 'mix want and want-ref' '
 	cat >expected_refs <<-EOF &&
 	$oid refs/heads/main
 	EOF
-	git rev-parse e f >expected_commits &&
+	git rev-parse e f >expected_cummits &&
 
 	write_fetch_command >pkt <<-EOF &&
 	want-ref refs/heads/main
@@ -162,12 +162,12 @@ test_expect_success 'mix want and want-ref' '
 	check_output
 '
 
-test_expect_success 'want-ref with ref we already have commit for' '
+test_expect_success 'want-ref with ref we already have cummit for' '
 	oid=$(git rev-parse c) &&
 	cat >expected_refs <<-EOF &&
 	$oid refs/heads/o/foo
 	EOF
-	>expected_commits &&
+	>expected_cummits &&
 
 	write_fetch_command >pkt <<-EOF &&
 	want-ref refs/heads/o/foo
@@ -201,28 +201,28 @@ test_expect_success 'setup repos for fetching with ref-in-want tests' '
 	(
 		git init -b main "$REPO" &&
 		cd "$REPO" &&
-		test_commit a &&
+		test_cummit a &&
 
-		# Local repo with many commits (so that negotiation will take
+		# Local repo with many cummits (so that negotiation will take
 		# more than 1 request/response pair)
 		rm -rf "$LOCAL_PRISTINE" &&
 		git clone "file://$REPO" "$LOCAL_PRISTINE" &&
 		cd "$LOCAL_PRISTINE" &&
 		git checkout -b side &&
-		test_commit_bulk --id=s 33 &&
+		test_cummit_bulk --id=s 33 &&
 
-		# Add novel commits to upstream
+		# Add novel cummits to upstream
 		git checkout main &&
 		cd "$REPO" &&
 		git checkout -b o/foo &&
-		test_commit b &&
-		test_commit c &&
+		test_cummit b &&
+		test_cummit c &&
 		git checkout -b o/bar b &&
-		test_commit d &&
+		test_cummit d &&
 		git checkout -b baz a &&
-		test_commit e &&
+		test_cummit e &&
 		git checkout main &&
-		test_commit f
+		test_cummit f
 	) &&
 	git -C "$REPO" config uploadpack.allowRefInWant true &&
 	git -C "$LOCAL_PRISTINE" config protocol.version 2
@@ -302,12 +302,12 @@ test_expect_success 'setup namespaced repo' '
 	(
 		git init -b main "$REPO" &&
 		cd "$REPO" &&
-		test_commit a &&
-		test_commit b &&
+		test_cummit a &&
+		test_cummit b &&
 		git checkout a &&
-		test_commit c &&
+		test_cummit c &&
 		git checkout a &&
-		test_commit d &&
+		test_cummit d &&
 		git update-ref refs/heads/ns-no b &&
 		git update-ref refs/namespaces/ns/refs/heads/ns-yes c &&
 		git update-ref refs/namespaces/ns/refs/heads/hidden d
@@ -322,7 +322,7 @@ test_expect_success 'with namespace: want-ref is considered relative to namespac
 	cat >expected_refs <<-EOF &&
 	$oid $wanted_ref
 	EOF
-	cat >expected_commits <<-EOF &&
+	cat >expected_cummits <<-EOF &&
 	$oid
 	$(git -C "$REPO" rev-parse a)
 	EOF
@@ -357,7 +357,7 @@ test_expect_success 'without namespace: want-ref outside namespace succeeds' '
 	cat >expected_refs <<-EOF &&
 	$oid $wanted_ref
 	EOF
-	cat >expected_commits <<-EOF &&
+	cat >expected_cummits <<-EOF &&
 	$oid
 	$(git -C "$REPO" rev-parse a)
 	EOF
@@ -394,7 +394,7 @@ test_expect_success 'with namespace: want-ref succeeds if hideRefs is removed' '
 	cat >expected_refs <<-EOF &&
 	$oid $wanted_ref
 	EOF
-	cat >expected_commits <<-EOF &&
+	cat >expected_cummits <<-EOF &&
 	$oid
 	$(git -C "$REPO" rev-parse a)
 	EOF
@@ -416,7 +416,7 @@ test_expect_success 'without namespace: relative hideRefs does not match' '
 	cat >expected_refs <<-EOF &&
 	$oid $wanted_ref
 	EOF
-	cat >expected_commits <<-EOF &&
+	cat >expected_cummits <<-EOF &&
 	$oid
 	$(git -C "$REPO" rev-parse a)
 	EOF
@@ -442,22 +442,22 @@ test_expect_success 'setup repos for change-while-negotiating test' '
 		git init -b main "$REPO" &&
 		cd "$REPO" &&
 		>.git/git-daemon-export-ok &&
-		test_commit m1 &&
+		test_cummit m1 &&
 		git tag -d m1 &&
 
-		# Local repo with many commits (so that negotiation will take
+		# Local repo with many cummits (so that negotiation will take
 		# more than 1 request/response pair)
 		rm -rf "$LOCAL_PRISTINE" &&
 		git clone "http://127.0.0.1:$LIB_HTTPD_PORT/smart/repo" "$LOCAL_PRISTINE" &&
 		cd "$LOCAL_PRISTINE" &&
 		git checkout -b side &&
-		test_commit_bulk --id=s 33 &&
+		test_cummit_bulk --id=s 33 &&
 
-		# Add novel commits to upstream
+		# Add novel cummits to upstream
 		git checkout main &&
 		cd "$REPO" &&
-		test_commit m2 &&
-		test_commit m3 &&
+		test_cummit m2 &&
+		test_cummit m3 &&
 		git tag -d m2 m3
 	) &&
 	git -C "$LOCAL_PRISTINE" remote set-url origin "http://127.0.0.1:$LIB_HTTPD_PORT/one_time_perl/repo" &&

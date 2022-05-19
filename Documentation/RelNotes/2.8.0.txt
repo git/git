@@ -92,7 +92,7 @@ UI, Workflows & Features
    setting the variable to an empty string.
 
  * A new "<branch>^{/!-<pattern>}" notation can be used to name a
-   commit that is reachable from <branch> that does not match the
+   cummit that is reachable from <branch> that does not match the
    given <pattern>.
 
  * The "user.useConfigOnly" configuration variable can be used to
@@ -122,10 +122,10 @@ UI, Workflows & Features
    filesystem that houses the repository harder; now the process
    chdir()s to the directory that house its own socket on startup.
 
- * When "git submodule update" did not result in fetching the commit
+ * When "git submodule update" did not result in fetching the cummit
    object in the submodule that is referenced by the superproject, the
    command learned to retry another fetch, specifically asking for
-   that commit that may not be connected to the refs it usually
+   that cummit that may not be connected to the refs it usually
    fetches.
 
  * "git merge-recursive" learned "--no-renames" option to disable its
@@ -288,20 +288,20 @@ notes for details).
    the '--signoff' option and DCO.
 
  * "git reflog" incorrectly assumed that all objects that used to be
-   at the tip of a ref must be commits, which caused it to segfault.
+   at the tip of a ref must be cummits, which caused it to segfault.
 
  * The ignore mechanism saw a few regressions around untracked file
    listing and sparse checkout selection areas in 2.7.0; the change
    that is responsible for the regression has been reverted.
 
  * Some codepaths used fopen(3) when opening a fixed path in $GIT_DIR
-   (e.g. COMMIT_EDITMSG) that is meant to be left after the command is
+   (e.g. cummit_EDITMSG) that is meant to be left after the command is
    done.  This however did not work well if the repository is set to
    be shared with core.sharedRepository and the umask of the previous
    user is tighter.  They have been made to work better by calling
    unlink(2) and retrying after fopen(3) fails with EPERM.
 
- * Asking gitweb for a nonexistent commit left a warning in the server
+ * Asking gitweb for a nonexistent cummit left a warning in the server
    log.
 
    Somebody may want to follow this up with an additional test, perhaps?
@@ -435,5 +435,5 @@ notes for details).
    (merge f459823 ak/extract-argv0-last-dir-sep later to maint).
    (merge 63ca1c0 ak/git-strip-extension-from-dashed-command later to maint).
    (merge 4867f11 ps/plug-xdl-merge-leak later to maint).
-   (merge 4938686 dt/initial-ref-xn-commit-doc later to maint).
+   (merge 4938686 dt/initial-ref-xn-cummit-doc later to maint).
    (merge 9537f21 ma/update-hooks-sample-typofix later to maint).

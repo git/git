@@ -4,11 +4,11 @@ test_description='test dwim of revs versus pathspecs in revision parser'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit base &&
+	test_cummit base &&
 	echo content >"br[ack]ets" &&
 	git add . &&
 	test_tick &&
-	git commit -m brackets
+	git cummit -m brackets
 '
 
 test_expect_success 'non-rev wildcard dwims to pathspec' '

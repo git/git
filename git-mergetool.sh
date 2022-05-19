@@ -80,7 +80,7 @@ describe_file () {
 		echo "a symbolic link -> '$(cat "$file")'"
 	elif is_submodule "$mode"
 	then
-		echo "submodule commit $file"
+		echo "submodule cummit $file"
 	elif base_present
 	then
 		echo "modified file"

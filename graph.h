@@ -3,7 +3,7 @@
 #include "diff.h"
 
 /**
- * The graph API is used to draw a text-based representation of the commit
+ * The graph API is used to draw a text-based representation of the cummit
  * history. The API generates the graph in a line-by-line fashion.
  *
  * Calling sequence
@@ -13,46 +13,46 @@
  *   revision walking API, this is done automatically by `setup_revisions()` if
  *   the '--graph' option is supplied.
  *
- * - Use the revision walking API to walk through a group of contiguous commits.
+ * - Use the revision walking API to walk through a group of contiguous cummits.
  *   The `get_revision()` function automatically calls `graph_update()` each time
  *   it is invoked.
  *
- * - For each commit, call `graph_next_line()` repeatedly, until
- *   `graph_is_commit_finished()` returns non-zero.  Each call to
+ * - For each cummit, call `graph_next_line()` repeatedly, until
+ *   `graph_is_cummit_finished()` returns non-zero.  Each call to
  *   `graph_next_line()` will output a single line of the graph.  The resulting
  *   lines will not contain any newlines.  `graph_next_line()` returns 1 if the
- *   resulting line contains the current commit, or 0 if this is merely a line
- *   needed to adjust the graph before or after the current commit.  This return
- *   value can be used to determine where to print the commit summary information
+ *   resulting line contains the current cummit, or 0 if this is merely a line
+ *   needed to adjust the graph before or after the current cummit.  This return
+ *   value can be used to determine where to print the cummit summary information
  *   alongside the graph output.
  *
  * Limitations
  * -----------
  * - Check the graph_update() function for its limitations.
  *
- * - The graph API does not currently support reverse commit ordering.  In
+ * - The graph API does not currently support reverse cummit ordering.  In
  *   order to implement reverse ordering, the graphing API needs an
- *   (efficient) mechanism to find the children of a commit.
+ *   (efficient) mechanism to find the children of a cummit.
  *
  * Sample usage
  * ------------
  *
  * ------------
- * struct commit *commit;
+ * struct cummit *cummit;
  * struct git_graph *graph = graph_init(opts);
  *
- * while ((commit = get_revision(opts)) != NULL) {
- * 	while (!graph_is_commit_finished(graph))
+ * while ((cummit = get_revision(opts)) != NULL) {
+ * 	while (!graph_is_cummit_finished(graph))
  * 	{
  * 		struct strbuf sb;
- * 		int is_commit_line;
+ * 		int is_cummit_line;
  *
  * 		strbuf_init(&sb, 0);
- * 		is_commit_line = graph_next_line(graph, &sb);
+ * 		is_cummit_line = graph_next_line(graph, &sb);
  * 		fputs(sb.buf, stdout);
  *
- * 		if (is_commit_line)
- * 			log_tree_commit(opts, commit);
+ * 		if (is_cummit_line)
+ * 			log_tree_cummit(opts, cummit);
  * 		else
  * 			putchar(opts->diffopt.line_termination);
  * 	}
@@ -62,7 +62,7 @@
  * -------------
  *
  * The following is an example of the output from the graph API.  This output does
- * not include any commit summary information--callers are responsible for
+ * not include any cummit summary information--callers are responsible for
  * outputting that information, if desired.
  * ------------
  * *
@@ -145,38 +145,38 @@ struct git_graph *graph_init(struct rev_info *opt);
 void graph_clear(struct git_graph *graph);
 
 /*
- * Update a git_graph with a new commit.
- * This will cause the graph to begin outputting lines for the new commit
+ * Update a git_graph with a new cummit.
+ * This will cause the graph to begin outputting lines for the new cummit
  * the next time graph_next_line() is called.
  *
- * If graph_update() is called before graph_is_commit_finished() returns 1,
+ * If graph_update() is called before graph_is_cummit_finished() returns 1,
  * the next call to graph_next_line() will output an ellipsis ("...")
  * to indicate that a portion of the graph is missing.
  *
  * Limitations:
  * -----------
  *
- * - `graph_update()` must be called with commits in topological order.  It should
- *   not be called on a commit if it has already been invoked with an ancestor of
- *   that commit, or the graph output will be incorrect.
+ * - `graph_update()` must be called with cummits in topological order.  It should
+ *   not be called on a cummit if it has already been invoked with an ancestor of
+ *   that cummit, or the graph output will be incorrect.
  *
- * - `graph_update()` must be called on a contiguous group of commits.  If
- *   `graph_update()` is called on a particular commit, it should later be called
- *   on all parents of that commit.  Parents must not be skipped, or the graph
+ * - `graph_update()` must be called on a contiguous group of cummits.  If
+ *   `graph_update()` is called on a particular cummit, it should later be called
+ *   on all parents of that cummit.  Parents must not be skipped, or the graph
  *   output will appear incorrect.
  *
- * - `graph_update()` may be used on a pruned set of commits only if the parent list
+ * - `graph_update()` may be used on a pruned set of cummits only if the parent list
  *   has been rewritten so as to include only ancestors from the pruned set.
  */
-void graph_update(struct git_graph *graph, struct commit *commit);
+void graph_update(struct git_graph *graph, struct cummit *cummit);
 
 /*
  * Determine if a graph has finished outputting lines for the current
- * commit.
+ * cummit.
  *
  * Returns 1 if graph_next_line() needs to be called again before
  * graph_update() should be called.  Returns 0 if no more lines are needed
- * for this commit.  If 0 is returned, graph_next_line() may still be
+ * for this cummit.  If 0 is returned, graph_next_line() may still be
  * called without calling graph_update(), and it will merely output
  * appropriate "vertical padding" in the graph.
  *
@@ -184,14 +184,14 @@ void graph_update(struct git_graph *graph, struct commit *commit);
  * been printed, the next call to `graph_next_line()` will output an ellipsis,
  * to indicate that a portion of the graph was omitted.
  */
-int graph_is_commit_finished(struct git_graph const *graph);
+int graph_is_cummit_finished(struct git_graph const *graph);
 
 /*
  * Output the next line for a graph.
  * This formats the next graph line into the specified strbuf.  It is not
  * terminated with a newline.
  *
- * Returns 1 if the line includes the current commit, and 0 otherwise.
+ * Returns 1 if the line includes the current cummit, and 0 otherwise.
  * graph_next_line() will return 1 exactly once for each time
  * graph_update() is called.
  *
@@ -213,10 +213,10 @@ int graph_width(struct git_graph *graph);
 
 /*
  * If the graph is non-NULL, print the history graph to stdout,
- * up to and including the line containing this commit.
+ * up to and including the line containing this cummit.
  * Does not print a terminating newline on the last line.
  */
-void graph_show_commit(struct git_graph *graph);
+void graph_show_cummit(struct git_graph *graph);
 
 /*
  * If the graph is non-NULL, print one line of the history graph to stdout.
@@ -232,13 +232,13 @@ void graph_show_padding(struct git_graph *graph);
 
 /*
  * If the graph is non-NULL, print the rest of the history graph for this
- * commit to stdout.  Does not print a terminating newline on the last line.
+ * cummit to stdout.  Does not print a terminating newline on the last line.
  * Returns 1 if output was printed, and 0 if no output was necessary.
  */
 int graph_show_remainder(struct git_graph *graph);
 
 /*
- * Print a commit message strbuf and the remainder of the graph to stdout.
+ * Print a cummit message strbuf and the remainder of the graph to stdout.
  *
  * This is similar to graph_show_strbuf(), but it always prints the
  * remainder of the graph.
@@ -248,17 +248,17 @@ int graph_show_remainder(struct git_graph *graph);
  * a terminating newline.
  *
  * If the strbuf ends with a newline, the output printed by
- * graph_show_commit_msg() will end with a newline.  If the strbuf is
+ * graph_show_cummit_msg() will end with a newline.  If the strbuf is
  * missing a terminating newline (including if it is empty), the output
- * printed by graph_show_commit_msg() will also be missing a terminating
+ * printed by graph_show_cummit_msg() will also be missing a terminating
  * newline.
  *
  * Note that unlike some other graph display functions, you must pass the file
  * handle directly. It is assumed that this is the same file handle as the
  * file specified by the graph diff options. This is necessary so that
- * graph_show_commit_msg can be called even with a NULL graph.
+ * graph_show_cummit_msg can be called even with a NULL graph.
  */
-void graph_show_commit_msg(struct git_graph *graph,
+void graph_show_cummit_msg(struct git_graph *graph,
 			   FILE *file,
 			   struct strbuf const *sb);
 

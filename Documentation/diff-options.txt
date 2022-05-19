@@ -36,19 +36,19 @@ endif::git-format-patch[]
 ifdef::git-log[]
 --diff-merges=(off|none|on|first-parent|1|separate|m|combined|c|dense-combined|cc|remerge|r)::
 --no-diff-merges::
-	Specify diff format to be used for merge commits. Default is
+	Specify diff format to be used for merge cummits. Default is
 	{diff-merges-default} unless `--first-parent` is in use, in which case
 	`first-parent` is the default.
 +
 --diff-merges=(off|none):::
 --no-diff-merges:::
-	Disable output of diffs for merge commits. Useful to override
+	Disable output of diffs for merge cummits. Useful to override
 	implied value.
 +
 --diff-merges=on:::
 --diff-merges=m:::
 -m:::
-	This option makes diff output for merge commits to be shown in
+	This option makes diff output for merge cummits to be shown in
 	the default format. `-m` will produce the output only if `-p`
 	is given as well. The default format could be changed using
 	`log.diffMerges` configuration parameter, which default value
@@ -56,21 +56,21 @@ ifdef::git-log[]
 +
 --diff-merges=first-parent:::
 --diff-merges=1:::
-	This option makes merge commits show the full diff with
+	This option makes merge cummits show the full diff with
 	respect to the first parent only.
 +
 --diff-merges=separate:::
-	This makes merge commits show the full diff with respect to
+	This makes merge cummits show the full diff with respect to
 	each of the parents. Separate log entry and diff is generated
 	for each parent.
 +
 --diff-merges=remerge:::
 --diff-merges=r:::
 --remerge-diff:::
-	With this option, two-parent merge commits are remerged to
+	With this option, two-parent merge cummits are remerged to
 	create a temporary tree object -- potentially containing files
 	with conflict markers and such.  A diff is then shown between
-	that temporary tree and the actual merge commit.
+	that temporary tree and the actual merge cummit.
 +
 The output emitted when this option is used is subject to change, and
 so is its interaction with other options (unless explicitly
@@ -79,7 +79,7 @@ documented).
 --diff-merges=combined:::
 --diff-merges=c:::
 -c:::
-	With this option, diff output for a merge commit shows the
+	With this option, diff output for a merge cummit shows the
 	differences from each of the parents to the merge result
 	simultaneously instead of showing pairwise diff between a
 	parent and the result one at a time. Furthermore, it lists
@@ -96,7 +96,7 @@ documented).
 	modification.  `--cc` implies `-p`.
 
 --combined-all-paths::
-	This flag causes combined diffs (used for merge commits) to
+	This flag causes combined diffs (used for merge cummits) to
 	list the name of the file from all parents.  It thus only has
 	effect when `--diff-merges=[dense-]combined` is in use, and
 	is likely only useful if filename changes are detected (i.e.
@@ -130,7 +130,7 @@ ifdef::git-diff-core[]
 endif::git-diff-core[]
 endif::git-log[]
 ifdef::git-log[]
-	For each commit, show a summary of changes using the raw diff
+	For each cummit, show a summary of changes using the raw diff
 	format. See the "RAW OUTPUT FORMAT" section of
 	linkgit:git-diff[1]. This is different from showing the log
 	itself in raw format, which you can achieve with
@@ -297,7 +297,7 @@ ifndef::git-format-patch[]
 
 -z::
 ifdef::git-log[]
-	Separate the commits with NULs instead of with new newlines.
+	Separate the cummits with NULs instead of with new newlines.
 +
 Also, when `--raw` or `--numstat` has been given, do not munge
 pathnames and use NULs as output field terminators.
@@ -324,13 +324,13 @@ linkgit:git-config[1]).
 --submodule[=<format>]::
 	Specify how differences in submodules are shown.  When specifying
 	`--submodule=short` the 'short' format is used.  This format just
-	shows the names of the commits at the beginning and end of the range.
+	shows the names of the cummits at the beginning and end of the range.
 	When `--submodule` or `--submodule=log` is specified, the 'log'
-	format is used.  This format lists the commits in the range like
+	format is used.  This format lists the cummits in the range like
 	linkgit:git-submodule[1] `summary` does.  When `--submodule=diff`
 	is specified, the 'diff' format is used.  This format shows an
 	inline diff of the changes in the submodule contents between the
-	commit range.  Defaults to `diff.submodule` or the 'short' format
+	cummit range.  Defaults to `diff.submodule` or the 'short' format
 	if the config option is unset.
 
 --color[=<when>]::
@@ -558,7 +558,7 @@ ifndef::git-log[]
 	Detect renames.
 endif::git-log[]
 ifdef::git-log[]
-	If generating diffs, detect and report renames for each commit.
+	If generating diffs, detect and report renames for each cummit.
 	For following files across renames while traversing history, see
 	`--follow`.
 endif::git-log[]
@@ -649,7 +649,7 @@ Binary files are searched as well.
 	lines that match <regex>.
 +
 To illustrate the difference between `-S<regex> --pickaxe-regex` and
-`-G<regex>`, consider a commit with the following diff in the same
+`-G<regex>`, consider a cummit with the following diff in the same
 file:
 +
 ----
@@ -658,7 +658,7 @@ file:
 -    hit = frotz(nitfol, mf2.ptr, 1, 0);
 ----
 +
-While `git log -G"frotz\(nitfol"` will show this commit, `git log
+While `git log -G"frotz\(nitfol"` will show this cummit, `git log
 -S"frotz\(nitfol" --pickaxe-regex` will not (because the number of
 occurrences of that string did not change).
 +
@@ -674,7 +674,7 @@ information.
 	in that it doesn't search for a specific string but for a specific
 	object id.
 +
-The object can be a blob or a submodule commit. It implies the `-t` option in
+The object can be a blob or a submodule cummit. It implies the `-t` option in
 `git-log` to also find trees.
 
 --pickaxe-all::
@@ -828,13 +828,13 @@ endif::git-format-patch[]
 	Ignore changes to submodules in the diff generation. <when> can be
 	either "none", "untracked", "dirty" or "all", which is the default.
 	Using "none" will consider the submodule modified when it either contains
-	untracked or modified files or its HEAD differs from the commit recorded
+	untracked or modified files or its HEAD differs from the cummit recorded
 	in the superproject and can be used to override any settings of the
 	'ignore' option in linkgit:git-config[1] or linkgit:gitmodules[5]. When
 	"untracked" is used submodules are not considered dirty when they only
 	contain untracked content (but they are still scanned for modified
 	content). Using "dirty" ignores all changes to the work tree of submodules,
-	only changes to the commits stored in the superproject are shown (this was
+	only changes to the cummits stored in the superproject are shown (this was
 	the behavior until 1.7.0). Using "all" hides all changes to submodules.
 
 --src-prefix=<prefix>::

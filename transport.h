@@ -51,9 +51,9 @@ struct git_transport_options {
 
 	/*
 	 * If allocated, whenever transport_fetch_refs() is called, add known
-	 * common commits to this oidset instead of fetching any packfiles.
+	 * common cummits to this oidset instead of fetching any packfiles.
 	 */
-	struct oidset *acked_commits;
+	struct oidset *acked_cummits;
 };
 
 enum transport_family {

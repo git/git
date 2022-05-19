@@ -35,7 +35,7 @@ Fixes since v2.8.2
    repository location to use absolute paths by accident.  This has
    been corrected.
 
- * "git commit" misbehaved in a few minor ways when an empty message
+ * "git cummit" misbehaved in a few minor ways when an empty message
    is given via -m '', all of which has been corrected.
 
  * Support for CRAM-MD5 authentication method in "git imap-send" did

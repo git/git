@@ -3,7 +3,7 @@
 
 #include "oid-array.h"
 #include "refs.h"
-#include "commit.h"
+#include "cummit.h"
 #include "parse-options.h"
 
 /* Quoting styles */
@@ -38,7 +38,7 @@ struct ref_array_item {
 	int flag;
 	unsigned int kind;
 	const char *symref;
-	struct commit *commit;
+	struct cummit *cummit;
 	struct atom_value *value;
 	char refname[FLEX_ARRAY];
 };
@@ -52,12 +52,12 @@ struct ref_array {
 struct ref_filter {
 	const char **name_patterns;
 	struct oid_array points_at;
-	struct commit_list *with_commit;
-	struct commit_list *no_commit;
-	struct commit_list *reachable_from;
-	struct commit_list *unreachable_from;
+	struct cummit_list *with_cummit;
+	struct cummit_list *no_cummit;
+	struct cummit_list *reachable_from;
+	struct cummit_list *unreachable_from;
 
-	unsigned int with_commit_tag_algo : 1,
+	unsigned int with_cummit_tag_algo : 1,
 		match_as_path : 1,
 		ignore_case : 1,
 		detached : 1;
@@ -86,7 +86,7 @@ struct ref_format {
 
 /*  Macros for checking --merged and --no-merged options */
 #define _OPT_MERGED_NO_MERGED(option, filter, h) \
-	{ OPTION_CALLBACK, 0, option, (filter), N_("commit"), (h), \
+	{ OPTION_CALLBACK, 0, option, (filter), N_("cummit"), (h), \
 	  PARSE_OPT_LASTARG_DEFAULT | PARSE_OPT_NONEG, \
 	  parse_opt_merge_filter, (intptr_t) "HEAD" \
 	}

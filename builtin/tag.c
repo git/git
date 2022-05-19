@@ -26,8 +26,8 @@ static const char * const git_tag_usage[] = {
 	N_("git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>]\n"
 	   "        <tagname> [<head>]"),
 	N_("git tag -d <tagname>..."),
-	N_("git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--points-at <object>]\n"
-	   "        [--format=<format>] [--merged <commit>] [--no-merged <commit>] [<pattern>...]"),
+	N_("git tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--points-at <object>]\n"
+	   "        [--format=<format>] [--merged <cummit>] [--no-merged <cummit>] [<pattern>...]"),
 	N_("git tag -v [--format=<format>] <tagname>..."),
 	NULL
 };
@@ -62,7 +62,7 @@ static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting,
 
 	if (verify_ref_format(format))
 		die(_("unable to parse format string"));
-	filter->with_commit_tag_algo = 1;
+	filter->with_cummit_tag_algo = 1;
 	filter_refs(&array, filter, FILTER_REFS_TAGS);
 	ref_array_sort(sorting, &array);
 
@@ -286,7 +286,7 @@ static void create_tag(const struct object_id *object, const char *object_ref,
 		    oid_to_hex(object),
 		    type_name(type),
 		    tag,
-		    git_committer_info(IDENT_STRICT));
+		    git_cummitter_info(IDENT_STRICT));
 
 	if (!opt->message_given || opt->use_editor) {
 		int fd;
@@ -343,7 +343,7 @@ static void create_tag(const struct object_id *object, const char *object_ref,
 static void create_reflog_msg(const struct object_id *oid, struct strbuf *sb)
 {
 	enum object_type type;
-	struct commit *c;
+	struct cummit *c;
 	char *buf;
 	unsigned long size;
 	int subject_len = 0;
@@ -363,16 +363,16 @@ static void create_reflog_msg(const struct object_id *oid, struct strbuf *sb)
 	default:
 		strbuf_addstr(sb, "object of unknown type");
 		break;
-	case OBJ_COMMIT:
+	case OBJ_cummit:
 		if ((buf = read_object_file(oid, &type, &size)) != NULL) {
-			subject_len = find_commit_subject(buf, &subject_start);
+			subject_len = find_cummit_subject(buf, &subject_start);
 			strbuf_insert(sb, sb->len, subject_start, subject_len);
 		} else {
-			strbuf_addstr(sb, "commit object");
+			strbuf_addstr(sb, "cummit object");
 		}
 		free(buf);
 
-		if ((c = lookup_commit_reference(the_repository, oid)) != NULL)
+		if ((c = lookup_cummit_reference(the_repository, oid)) != NULL)
 			strbuf_addf(sb, ", %s", show_date(c->date, 0, DATE_MODE(SHORT)));
 		break;
 	case OBJ_TREE:
@@ -465,10 +465,10 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 
 		OPT_GROUP(N_("Tag listing options")),
 		OPT_COLUMN(0, "column", &colopts, N_("show tag list in columns")),
-		OPT_CONTAINS(&filter.with_commit, N_("print only tags that contain the commit")),
-		OPT_NO_CONTAINS(&filter.no_commit, N_("print only tags that don't contain the commit")),
-		OPT_WITH(&filter.with_commit, N_("print only tags that contain the commit")),
-		OPT_WITHOUT(&filter.no_commit, N_("print only tags that don't contain the commit")),
+		OPT_CONTAINS(&filter.with_cummit, N_("print only tags that contain the cummit")),
+		OPT_NO_CONTAINS(&filter.no_cummit, N_("print only tags that don't contain the cummit")),
+		OPT_WITH(&filter.with_cummit, N_("print only tags that contain the cummit")),
+		OPT_WITHOUT(&filter.no_cummit, N_("print only tags that don't contain the cummit")),
 		OPT_MERGED(&filter, N_("print only tags that are merged")),
 		OPT_NO_MERGED(&filter, N_("print only tags that are not merged")),
 		OPT_REF_SORT(&sorting_options),
@@ -500,7 +500,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	if (!cmdmode) {
 		if (argc == 0)
 			cmdmode = 'l';
-		else if (filter.with_commit || filter.no_commit ||
+		else if (filter.with_cummit || filter.no_cummit ||
 			 filter.reachable_from || filter.unreachable_from ||
 			 filter.points_at.nr || filter.lines != -1)
 			cmdmode = 'l';
@@ -545,9 +545,9 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	}
 	if (filter.lines != -1)
 		only_in_list = "-n";
-	else if (filter.with_commit)
+	else if (filter.with_cummit)
 		only_in_list = "--contains";
-	else if (filter.no_commit)
+	else if (filter.no_cummit)
 		only_in_list = "--no-contains";
 	else if (filter.points_at.nr)
 		only_in_list = "--points-at";
@@ -627,7 +627,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	    ref_transaction_update(transaction, ref.buf, &object, &prev,
 				   create_reflog ? REF_FORCE_CREATE_REFLOG : 0,
 				   reflog_msg.buf, &err) ||
-	    ref_transaction_commit(transaction, &err))
+	    ref_transaction_cummit(transaction, &err))
 		die("%s", err.buf);
 	ref_transaction_free(transaction);
 	if (force && !is_null_oid(&prev) && !oideq(&prev, &object))

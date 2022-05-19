@@ -11,11 +11,11 @@ test_expect_success 'setup' '
 	version sha1:2
 	version sha256:3
 	EOF
-	test_commit initial &&
+	test_cummit initial &&
 	test_tick &&
 	git tag -m tag tag &&
-	test_commit second &&
-	test_commit third &&
+	test_cummit second &&
+	test_cummit third &&
 	git tag -d initial &&
 	git tag -d second &&
 	git tag -d third
@@ -80,8 +80,8 @@ test_expect_success 'ridiculously long subject in boundary' '
 	>file4 &&
 	test_tick &&
 	git add file4 &&
-	printf "%01200d\n" 0 | git commit -F - &&
-	test_commit fifth &&
+	printf "%01200d\n" 0 | git cummit -F - &&
+	test_cummit fifth &&
 	git bundle create long-subject-bundle.bdl HEAD^..HEAD &&
 	cat >expect <<-EOF &&
 	$(git rev-parse main) HEAD
@@ -111,12 +111,12 @@ test_expect_success 'ridiculously long subject in boundary' '
 	test_cmp expect actual
 '
 
-test_expect_success 'prerequisites with an empty commit message' '
+test_expect_success 'prerequisites with an empty cummit message' '
 	>file1 &&
 	git add file1 &&
 	test_tick &&
-	git commit --allow-empty-message -m "" &&
-	test_commit file2 &&
+	git cummit --allow-empty-message -m "" &&
+	test_cummit file2 &&
 	git bundle create bundle HEAD^.. &&
 	git bundle verify bundle
 '
@@ -129,7 +129,7 @@ test_expect_success 'failed bundle creation does not leave cruft' '
 
 test_expect_success 'fetch SHA-1 from bundle' '
 	test_create_repo foo &&
-	test_commit -C foo x &&
+	test_cummit -C foo x &&
 	git -C foo bundle create tip.bundle -1 main &&
 	git -C foo rev-parse HEAD >hash &&
 

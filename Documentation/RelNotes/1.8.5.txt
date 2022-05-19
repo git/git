@@ -26,7 +26,7 @@ can set it to "simple" today without waiting for Git 2.0.
 When "git add -u" (and "git add -A") is run inside a subdirectory and
 does not specify which paths to add on the command line, it
 will operate on the entire tree in Git 2.0 for consistency
-with "git commit -a" and other commands.  There will be no
+with "git cummit -a" and other commands.  There will be no
 mechanism to make plain "git add -u" behave like "git add -u .".
 Current users of "git add -u" (without a pathspec) should start
 training their fingers to explicitly say "git add -u ."
@@ -94,7 +94,7 @@ UI, Workflows & Features
  * "git rebase -i" honours core.abbrev when preparing the insn sheet
    for editing.
 
- * "git status" during a cherry-pick shows which original commit is
+ * "git status" during a cherry-pick shows which original cummit is
    being picked.
 
  * Instead of typing four capital letters "HEAD", you can say "@" now,
@@ -107,7 +107,7 @@ UI, Workflows & Features
    have been mistakenly added to the index.
 
  * Some irrelevant "advice" messages that are shared with "git status"
-   output have been removed from the commit log template.
+   output have been removed from the cummit log template.
 
  * "update-refs" learned a "--stdin" option to read multiple update
    requests and perform them in an all-or-none fashion.
@@ -121,7 +121,7 @@ UI, Workflows & Features
    branch.
 
  * "git status" now omits the prefix to make its output a comment in a
-   commit log editor, which is not necessary for human consumption.
+   cummit log editor, which is not necessary for human consumption.
    Scripts that parse the output of "git status" are advised to use
    "git status --porcelain" instead, as its format is stable and easier
    to parse.
@@ -273,7 +273,7 @@ details).
    (merge 1136265 ap/remote-hg-unquote-cquote later to maint).
 
  * "git reset -p HEAD" has a codepath to special-case it to behave
-   differently from resetting to contents of other commits, but a
+   differently from resetting to contents of other cummits, but a
    recent change broke it.
 
  * Coloring around octopus merges in "log --graph" output was screwy.
@@ -291,7 +291,7 @@ details).
    "HEAD" points at, and the receiving end needed to guess.  A new
    capability has been defined in the pack protocol to convey this
    information so that cloning from a repository with more than one
-   branch pointing at the same commit where the HEAD is at now
+   branch pointing at the same cummit where the HEAD is at now
    reliably sets the initial branch in the resulting repository.
    (merge 360a326 jc/upload-pack-send-symref later to maint).
 
@@ -303,8 +303,8 @@ details).
    was coded in a way unsupported by older Bash versions (3.x).
    (merge 52ec889 sg/prompt-svn-remote-fix later to maint).
 
- * The fall-back parsing of commit objects with broken author or
-   committer lines was less robust than ideal in picking up the
+ * The fall-back parsing of cummit objects with broken author or
+   cummitter lines was less robust than ideal in picking up the
    timestamps.
    (merge 03818a4 jk/split-broken-ident later to maint).
 
@@ -322,9 +322,9 @@ details).
    (merge 662cc30 jk/format-patch-from later to maint).
 
  * "git shortlog" used to choke and die when there is a malformed
-   commit (e.g. missing authors); it now simply ignores such a commit
+   cummit (e.g. missing authors); it now simply ignores such a cummit
    and keeps going.
-   (merge cd4f09e jk/shortlog-tolerate-broken-commit later to maint).
+   (merge cd4f09e jk/shortlog-tolerate-broken-cummit later to maint).
 
  * "git merge-recursive" did not parse its "--diff-algorithm=" command
    line option correctly.
@@ -380,11 +380,11 @@ details).
    has_sha1_file().
    (merge 45e8a74 jk/has-sha1-file-retry-packed later to maint).
 
- * "git commit --author=$name", when $name is not in the canonical
+ * "git cummit --author=$name", when $name is not in the canonical
    "A. U. Thor <au.thor@example.xz>" format, looks for a matching name
    from existing history, but did not consult mailmap to grab the
    preferred author name.
-   (merge ea16794 ap/commit-author-mailmap later to maint).
+   (merge ea16794 ap/cummit-author-mailmap later to maint).
 
  * "git ls-files -k" needs to crawl only the part of the working tree
    that may overlap the paths in the index to find killed files, but
@@ -392,9 +392,9 @@ details).
    made it unnecessarily inefficient.
    (merge 680be04 jc/ls-files-killed-optim later to maint).
 
- * The shortened commit object names in the insn sheet that is prepared at the
+ * The shortened cummit object names in the insn sheet that is prepared at the
    beginning of a "rebase -i" session can become ambiguous as the
-   rebasing progresses and the repository gains more commits. Make
+   rebasing progresses and the repository gains more cummits. Make
    sure the internal record is kept with full 40-hex object names.
    (merge 75c6976 es/rebase-i-no-abbrev later to maint).
 
@@ -428,8 +428,8 @@ details).
    (merge 0f73f8b jc/transport-do-not-use-connect-twice-in-fetch later to maint).
 
  * "git log --full-diff -- <pathspec>" showed a huge diff for paths
-   outside the given <pathspec> for each commit, instead of showing
-   the change relative to the parent of the commit.  "git reflog -p"
+   outside the given <pathspec> for each cummit, instead of showing
+   the change relative to the parent of the cummit.  "git reflog -p"
    had a similar problem.
    (merge 838f9a1 tr/log-full-diff-keep-true-parents later to maint).
 

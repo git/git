@@ -15,24 +15,24 @@ test_expect_success 'setup' '
 	git add . &&
 	TREE_SHA1=$(git write-tree) &&
 	git tag -a -m tree tree-tag "$TREE_SHA1" &&
-	git commit -m Initial &&
-	git tag -a -m commit commit-tag &&
+	git cummit -m Initial &&
+	git tag -a -m cummit cummit-tag &&
 	git branch ref &&
 	git checkout main &&
 	echo modified >>a-blob &&
 	git add -u &&
-	git commit -m Modified &&
+	git cummit -m Modified &&
 	git branch modref &&
 	echo changed! >>a-blob &&
 	git add -u &&
-	git commit -m !Exp &&
+	git cummit -m !Exp &&
 	git branch expref &&
 	echo changed >>a-blob &&
 	git add -u &&
-	git commit -m Changed &&
+	git cummit -m Changed &&
 	echo changed-again >>a-blob &&
 	git add -u &&
-	git commit -m Changed-again
+	git cummit -m Changed-again
 '
 
 test_expect_success 'ref^{non-existent}' '
@@ -43,25 +43,25 @@ test_expect_success 'ref^{}' '
 	git rev-parse ref >expected &&
 	git rev-parse ref^{} >actual &&
 	test_cmp expected actual &&
-	git rev-parse commit-tag^{} >actual &&
+	git rev-parse cummit-tag^{} >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'ref^{commit}' '
+test_expect_success 'ref^{cummit}' '
 	git rev-parse ref >expected &&
-	git rev-parse ref^{commit} >actual &&
+	git rev-parse ref^{cummit} >actual &&
 	test_cmp expected actual &&
-	git rev-parse commit-tag^{commit} >actual &&
+	git rev-parse cummit-tag^{cummit} >actual &&
 	test_cmp expected actual &&
-	test_must_fail git rev-parse tree-tag^{commit} &&
-	test_must_fail git rev-parse blob-tag^{commit}
+	test_must_fail git rev-parse tree-tag^{cummit} &&
+	test_must_fail git rev-parse blob-tag^{cummit}
 '
 
 test_expect_success 'ref^{tree}' '
 	echo $TREE_SHA1 >expected &&
 	git rev-parse ref^{tree} >actual &&
 	test_cmp expected actual &&
-	git rev-parse commit-tag^{tree} >actual &&
+	git rev-parse cummit-tag^{tree} >actual &&
 	test_cmp expected actual &&
 	git rev-parse tree-tag^{tree} >actual &&
 	test_cmp expected actual &&
@@ -70,8 +70,8 @@ test_expect_success 'ref^{tree}' '
 
 test_expect_success 'ref^{tag}' '
 	test_must_fail git rev-parse HEAD^{tag} &&
-	git rev-parse commit-tag >expected &&
-	git rev-parse commit-tag^{tag} >actual &&
+	git rev-parse cummit-tag >expected &&
+	git rev-parse cummit-tag^{tag} >actual &&
 	test_cmp expected actual
 '
 

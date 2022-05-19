@@ -7,7 +7,7 @@
 #include "object-store.h"
 #include "tag.h"
 #include "object.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "revision.h"
 #include "list-objects.h"
@@ -24,8 +24,8 @@
 #include "quote.h"
 #include "upload-pack.h"
 #include "serve.h"
-#include "commit-graph.h"
-#include "commit-reach.h"
+#include "cummit-graph.h"
+#include "cummit-reach.h"
 #include "shallow.h"
 
 /* Remember to update object flag allocation in object.h */
@@ -185,7 +185,7 @@ static void send_client_data(int fd, const char *data, ssize_t sz,
 	write_or_die(fd, data, sz);
 }
 
-static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
+static int write_one_shallow(const struct cummit_graft *graft, void *cb_data)
 {
 	FILE *fp = cb_data;
 	if (graft->nr_parent == -1)
@@ -331,7 +331,7 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 	pipe_fd = xfdopen(pack_objects.in, "w");
 
 	if (pack_data->shallow_nr)
-		for_each_commit_graft(write_one_shallow, pipe_fd);
+		for_each_cummit_graft(write_one_shallow, pipe_fd);
 
 	for (i = 0; i < pack_data->want_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
@@ -467,16 +467,16 @@ static int do_got_oid(struct upload_pack_data *data, const struct object_id *oid
 
 	if (!o)
 		die("oops (%s)", oid_to_hex(oid));
-	if (o->type == OBJ_COMMIT) {
-		struct commit_list *parents;
-		struct commit *commit = (struct commit *)o;
+	if (o->type == OBJ_cummit) {
+		struct cummit_list *parents;
+		struct cummit *cummit = (struct cummit *)o;
 		if (o->flags & THEY_HAVE)
 			we_knew_they_have = 1;
 		else
 			o->flags |= THEY_HAVE;
-		if (!data->oldest_have || (commit->date < data->oldest_have))
-			data->oldest_have = commit->date;
-		for (parents = commit->parents;
+		if (!data->oldest_have || (cummit->date < data->oldest_have))
+			data->oldest_have = cummit->date;
+		for (parents = cummit->parents;
 		     parents;
 		     parents = parents->next)
 			parents->item->object.flags |= THEY_HAVE;
@@ -511,7 +511,7 @@ static int ok_to_give_up(struct upload_pack_data *data)
 					    min_generation);
 }
 
-static int get_common_commits(struct upload_pack_data *data,
+static int get_common_cummits(struct upload_pack_data *data,
 			      struct packet_reader *reader)
 {
 	struct object_id oid;
@@ -520,7 +520,7 @@ static int get_common_commits(struct upload_pack_data *data,
 	int got_other = 0;
 	int sent_ready = 0;
 
-	save_commit_buffer = 0;
+	save_cummit_buffer = 0;
 
 	for (;;) {
 		const char *arg;
@@ -614,7 +614,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 	cmd->out = -1;
 
 	/*
-	 * If the next rev-list --stdin encounters an unknown commit,
+	 * If the next rev-list --stdin encounters an unknown cummit,
 	 * it terminates, which will cause SIGPIPE in the write loop
 	 * below.
 	 */
@@ -629,7 +629,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 		o = get_indexed_object(--i);
 		if (!o)
 			continue;
-		if (reachable && o->type == OBJ_COMMIT)
+		if (reachable && o->type == OBJ_cummit)
 			o->flags &= ~TMP_MARK;
 		if (!is_our_ref(o, allow_uor))
 			continue;
@@ -643,7 +643,7 @@ static int do_reachable_revlist(struct child_process *cmd,
 				add_object_array(o, NULL, reachable);
 			continue;
 		}
-		if (reachable && o->type == OBJ_COMMIT)
+		if (reachable && o->type == OBJ_cummit)
 			o->flags |= TMP_MARK;
 		if (fprintf(cmd_in, "%s\n", oid_to_hex(&o->oid)) < 0)
 			goto error;
@@ -687,13 +687,13 @@ static int get_reachable_list(struct upload_pack_data *data,
 			break;
 
 		o = lookup_object(the_repository, &oid);
-		if (o && o->type == OBJ_COMMIT) {
+		if (o && o->type == OBJ_cummit) {
 			o->flags &= ~TMP_MARK;
 		}
 	}
 	for (i = get_max_object_index(); 0 < i; i--) {
 		o = get_indexed_object(i - 1);
-		if (o && o->type == OBJ_COMMIT &&
+		if (o && o->type == OBJ_cummit &&
 		    (o->flags & TMP_MARK)) {
 			add_object_array(o, NULL, reachable);
 				o->flags &= ~TMP_MARK;
@@ -717,7 +717,7 @@ static int has_unreachable(struct object_array *src, enum allow_uor allow_uor)
 		return 1;
 
 	/*
-	 * The commits out of the rev-list are not ancestors of
+	 * The cummits out of the rev-list are not ancestors of
 	 * our ref.
 	 */
 	i = read_in_full(cmd.out, buf, 1);
@@ -727,9 +727,9 @@ static int has_unreachable(struct object_array *src, enum allow_uor allow_uor)
 	cmd.out = -1;
 
 	/*
-	 * rev-list may have died by encountering a bad commit
+	 * rev-list may have died by encountering a bad cummit
 	 * in the history, in which case we do want to bail out
-	 * even when it showed no commit.
+	 * even when it showed no cummit.
 	 */
 	if (finish_command(&cmd))
 		goto error;
@@ -773,7 +773,7 @@ error:
 }
 
 static void send_shallow(struct upload_pack_data *data,
-			 struct commit_list *result)
+			 struct cummit_list *result)
 {
 	while (result) {
 		struct object *object = &result->item->object;
@@ -794,7 +794,7 @@ static void send_unshallow(struct upload_pack_data *data)
 	for (i = 0; i < data->shallows.nr; i++) {
 		struct object *object = data->shallows.objects[i].item;
 		if (object->flags & NOT_SHALLOW) {
-			struct commit_list *parents;
+			struct cummit_list *parents;
 			packet_writer_write(&data->writer, "unshallow %s",
 					    oid_to_hex(&object->oid));
 			object->flags &= ~CLIENT_SHALLOW;
@@ -807,8 +807,8 @@ static void send_unshallow(struct upload_pack_data *data)
 			 */
 			unregister_shallow(&object->oid);
 			object->parsed = 0;
-			parse_commit_or_die((struct commit *)object);
-			parents = ((struct commit *)object)->parents;
+			parse_cummit_or_die((struct cummit *)object);
+			parents = ((struct cummit *)object)->parents;
 			while (parents) {
 				add_object_array(&parents->item->object,
 						 NULL, &data->want_obj);
@@ -816,7 +816,7 @@ static void send_unshallow(struct upload_pack_data *data)
 			}
 			add_object_array(object, NULL, &data->extra_edge_obj);
 		}
-		/* make sure commit traversal conforms to client */
+		/* make sure cummit traversal conforms to client */
 		register_shallow(the_repository, &object->oid);
 	}
 }
@@ -834,7 +834,7 @@ static void deepen(struct upload_pack_data *data, int depth)
 		}
 	} else if (data->deepen_relative) {
 		struct object_array reachable_shallows = OBJECT_ARRAY_INIT;
-		struct commit_list *result;
+		struct cummit_list *result;
 
 		/*
 		 * Checking for reachable shallows requires that our refs be
@@ -844,19 +844,19 @@ static void deepen(struct upload_pack_data *data, int depth)
 		for_each_namespaced_ref(check_ref, NULL);
 
 		get_reachable_list(data, &reachable_shallows);
-		result = get_shallow_commits(&reachable_shallows,
+		result = get_shallow_cummits(&reachable_shallows,
 					     depth + 1,
 					     SHALLOW, NOT_SHALLOW);
 		send_shallow(data, result);
-		free_commit_list(result);
+		free_cummit_list(result);
 		object_array_clear(&reachable_shallows);
 	} else {
-		struct commit_list *result;
+		struct cummit_list *result;
 
-		result = get_shallow_commits(&data->want_obj, depth,
+		result = get_shallow_cummits(&data->want_obj, depth,
 					     SHALLOW, NOT_SHALLOW);
 		send_shallow(data, result);
-		free_commit_list(result);
+		free_cummit_list(result);
 	}
 
 	send_unshallow(data);
@@ -866,12 +866,12 @@ static void deepen_by_rev_list(struct upload_pack_data *data,
 			       int ac,
 			       const char **av)
 {
-	struct commit_list *result;
+	struct cummit_list *result;
 
-	disable_commit_graph(the_repository);
-	result = get_shallow_commits_by_rev_list(ac, av, SHALLOW, NOT_SHALLOW);
+	disable_cummit_graph(the_repository);
+	result = get_shallow_cummits_by_rev_list(ac, av, SHALLOW, NOT_SHALLOW);
 	send_shallow(data, result);
-	free_commit_list(result);
+	free_cummit_list(result);
 	send_unshallow(data);
 }
 
@@ -931,7 +931,7 @@ static int process_shallow(const char *line, struct object_array *shallows)
 		object = parse_object(the_repository, &oid);
 		if (!object)
 			return 1;
-		if (object->type != OBJ_COMMIT)
+		if (object->type != OBJ_cummit)
 			die("invalid shallow object %s", oid_to_hex(&oid));
 		if (!(object->flags & CLIENT_SHALLOW)) {
 			object->flags |= CLIENT_SHALLOW;
@@ -1386,7 +1386,7 @@ void upload_pack(const int advertise_refs, const int stateless_rpc,
 		if (data.want_obj.nr &&
 		    packet_reader_peek(&reader) != PACKET_READ_EOF) {
 			reader.options &= ~PACKET_READ_GENTLE_ON_EOF;
-			get_common_commits(&data, &reader);
+			get_common_cummits(&data, &reader);
 			create_pack_file(&data, NULL);
 		}
 	}
@@ -1400,16 +1400,16 @@ static int parse_want(struct packet_writer *writer, const char *line,
 	const char *arg;
 	if (skip_prefix(line, "want ", &arg)) {
 		struct object_id oid;
-		struct commit *commit;
+		struct cummit *cummit;
 		struct object *o;
 
 		if (get_oid_hex(arg, &oid))
 			die("git upload-pack: protocol error, "
 			    "expected to get oid, not '%s'", line);
 
-		commit = lookup_commit_in_graph(the_repository, &oid);
-		if (commit)
-			o = &commit->object;
+		cummit = lookup_cummit_in_graph(the_repository, &oid);
+		if (cummit)
+			o = &cummit->object;
 		else
 			o = parse_object(the_repository, &oid);
 
@@ -1455,9 +1455,9 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 		item->util = oiddup(&oid);
 
 		if (!starts_with(refname_nons, "refs/tags/")) {
-			struct commit *commit = lookup_commit_in_graph(the_repository, &oid);
-			if (commit)
-				o = &commit->object;
+			struct cummit *cummit = lookup_cummit_in_graph(the_repository, &oid);
+			if (cummit)
+				o = &cummit->object;
 		}
 
 		if (!o)

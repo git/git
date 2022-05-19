@@ -14,7 +14,7 @@
 #include "dir.h"
 #include "object-store.h"
 #include "tree.h"
-#include "commit.h"
+#include "cummit.h"
 #include "blob.h"
 #include "resolve-undo.h"
 #include "run-command.h"
@@ -433,7 +433,7 @@ int ie_match_stat(struct index_state *istate,
 	 * We could detect this at update-index time (the cache entry
 	 * being registered/updated records the same time as "now")
 	 * and delay the return from git-update-index, but that would
-	 * effectively mean we can make at most one commit per second,
+	 * effectively mean we can make at most one cummit per second,
 	 * which is not acceptable.  Instead, we check cache entries
 	 * whose mtime are the same as the index file timestamp more
 	 * carefully than others.
@@ -777,7 +777,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	namelen = strlen(path);
 	if (S_ISDIR(st_mode)) {
 		if (resolve_gitlink_ref(path, "HEAD", &oid) < 0)
-			return error(_("'%s' does not have a commit checked out"), path);
+			return error(_("'%s' does not have a cummit checked out"), path);
 		while (namelen && path[namelen-1] == '/')
 			namelen--;
 	}
@@ -1583,7 +1583,7 @@ int repo_refresh_and_write_index(struct repository *repo,
 		return -1;
 	if (refresh_index(repo->index, refresh_flags, pathspec, seen, header_msg))
 		ret = 1;
-	if (0 <= fd && write_locked_index(repo->index, &lock_file, COMMIT_LOCK | write_flags))
+	if (0 <= fd && write_locked_index(repo->index, &lock_file, cummit_LOCK | write_flags))
 		ret = -1;
 	return ret;
 }
@@ -2812,7 +2812,7 @@ void repo_update_index_if_able(struct repository *repo,
 	if ((repo->index->cache_changed ||
 	     has_racy_timestamp(repo->index)) &&
 	    repo_verify_index(repo))
-		write_locked_index(repo->index, lockfile, COMMIT_LOCK);
+		write_locked_index(repo->index, lockfile, cummit_LOCK);
 	else
 		rollback_lock_file(lockfile);
 }
@@ -3104,7 +3104,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	}
 
 	csum_fsync_flag = 0;
-	if (!alternate_index_output && (flags & COMMIT_LOCK))
+	if (!alternate_index_output && (flags & cummit_LOCK))
 		csum_fsync_flag = CSUM_FSYNC;
 
 	finalize_hashfile(f, istate->oid.hash, FSYNC_COMPONENT_INDEX,
@@ -3137,12 +3137,12 @@ void set_alternate_index_output(const char *name)
 	alternate_index_output = name;
 }
 
-static int commit_locked_index(struct lock_file *lk)
+static int cummit_locked_index(struct lock_file *lk)
 {
 	if (alternate_index_output)
-		return commit_lock_file_to(lk, alternate_index_output);
+		return cummit_lock_file_to(lk, alternate_index_output);
 	else
-		return commit_lock_file(lk);
+		return cummit_lock_file(lk);
 }
 
 static int do_write_locked_index(struct index_state *istate, struct lock_file *lock,
@@ -3173,8 +3173,8 @@ static int do_write_locked_index(struct index_state *istate, struct lock_file *l
 
 	if (ret)
 		return ret;
-	if (flags & COMMIT_LOCK)
-		ret = commit_locked_index(lock);
+	if (flags & cummit_LOCK)
+		ret = cummit_locked_index(lock);
 	else
 		ret = close_lock_file_gently(lock);
 
@@ -3332,7 +3332,7 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		cache_tree_verify(the_repository, istate);
 
 	if ((flags & SKIP_IF_UNCHANGED) && !istate->cache_changed) {
-		if (flags & COMMIT_LOCK)
+		if (flags & cummit_LOCK)
 			rollback_lock_file(lock);
 		return 0;
 	}
@@ -3398,7 +3398,7 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	}
 
 out:
-	if (flags & COMMIT_LOCK)
+	if (flags & cummit_LOCK)
 		rollback_lock_file(lock);
 	return ret;
 }

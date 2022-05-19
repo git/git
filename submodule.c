@@ -6,7 +6,7 @@
 #include "submodule.h"
 #include "dir.h"
 #include "diff.h"
-#include "commit.h"
+#include "cummit.h"
 #include "revision.h"
 #include "run-command.h"
 #include "diffcore.h"
@@ -21,7 +21,7 @@
 #include "worktree.h"
 #include "parse-options.h"
 #include "object-store.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 #include "shallow.h"
 
 static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
@@ -460,10 +460,10 @@ void handle_ignore_submodules_arg(struct diff_options *diffopt,
 
 static int prepare_submodule_diff_summary(struct repository *r, struct rev_info *rev,
 					  const char *path,
-					  struct commit *left, struct commit *right,
-					  struct commit_list *merge_bases)
+					  struct cummit *left, struct cummit *right,
+					  struct cummit_list *merge_bases)
 {
-	struct commit_list *list;
+	struct cummit_list *list;
 
 	repo_init_revisions(r, rev, NULL);
 	setup_revisions(0, NULL, rev, NULL);
@@ -484,17 +484,17 @@ static void print_submodule_diff_summary(struct repository *r, struct rev_info *
 {
 	static const char format[] = "  %m %s";
 	struct strbuf sb = STRBUF_INIT;
-	struct commit *commit;
+	struct cummit *cummit;
 
-	while ((commit = get_revision(rev))) {
+	while ((cummit = get_revision(rev))) {
 		struct pretty_print_context ctx = {0};
 		ctx.date_mode = rev->date_mode;
 		ctx.output_encoding = get_log_output_encoding();
 		strbuf_setlen(&sb, 0);
-		repo_format_commit_message(r, commit, format, &sb,
+		repo_format_cummit_message(r, cummit, format, &sb,
 				      &ctx);
 		strbuf_addch(&sb, '\n');
-		if (commit->object.flags & SYMMETRIC_LEFT)
+		if (cummit->object.flags & SYMMETRIC_LEFT)
 			diff_emit_submodule_del(o, sb.buf);
 		else
 			diff_emit_submodule_add(o, sb.buf);
@@ -541,7 +541,7 @@ static struct repository *open_submodule(const char *path)
  * summary output.
  *
  * If it can locate the submodule git directory it will create a repository
- * handle for the submodule and lookup both the left and right commits and
+ * handle for the submodule and lookup both the left and right cummits and
  * put them into the left and right pointers.
  */
 static void show_submodule_header(struct diff_options *o,
@@ -549,8 +549,8 @@ static void show_submodule_header(struct diff_options *o,
 		struct object_id *one, struct object_id *two,
 		unsigned dirty_submodule,
 		struct repository *sub,
-		struct commit **left, struct commit **right,
-		struct commit_list **merge_bases)
+		struct cummit **left, struct cummit **right,
+		struct cummit_list **merge_bases)
 {
 	const char *message = NULL;
 	struct strbuf sb = STRBUF_INIT;
@@ -569,24 +569,24 @@ static void show_submodule_header(struct diff_options *o,
 
 	if (!sub) {
 		if (!message)
-			message = "(commits not present)";
+			message = "(cummits not present)";
 		goto output_header;
 	}
 
 	/*
-	 * Attempt to lookup the commit references, and determine if this is
+	 * Attempt to lookup the cummit references, and determine if this is
 	 * a fast forward or fast backwards update.
 	 */
-	*left = lookup_commit_reference(sub, one);
-	*right = lookup_commit_reference(sub, two);
+	*left = lookup_cummit_reference(sub, one);
+	*right = lookup_cummit_reference(sub, two);
 
 	/*
-	 * Warn about missing commits in the submodule project, but only if
+	 * Warn about missing cummits in the submodule project, but only if
 	 * they aren't null.
 	 */
 	if ((!is_null_oid(one) && !*left) ||
 	     (!is_null_oid(two) && !*right))
-		message = "(commits not present)";
+		message = "(cummits not present)";
 
 	*merge_bases = repo_get_merge_bases(sub, *left, *right);
 	if (*merge_bases) {
@@ -620,8 +620,8 @@ void show_submodule_diff_summary(struct diff_options *o, const char *path,
 		unsigned dirty_submodule)
 {
 	struct rev_info rev;
-	struct commit *left = NULL, *right = NULL;
-	struct commit_list *merge_bases = NULL;
+	struct cummit *left = NULL, *right = NULL;
+	struct cummit_list *merge_bases = NULL;
 	struct repository *sub;
 
 	sub = open_submodule(path);
@@ -636,7 +636,7 @@ void show_submodule_diff_summary(struct diff_options *o, const char *path,
 	if (!left || !right || !sub)
 		goto out;
 
-	/* Treat revision walker failure the same as missing commits */
+	/* Treat revision walker failure the same as missing cummits */
 	if (prepare_submodule_diff_summary(sub, &rev, path, left, right, merge_bases)) {
 		diff_emit_submodule_error(o, "(revision walker failed)\n");
 		goto out;
@@ -646,9 +646,9 @@ void show_submodule_diff_summary(struct diff_options *o, const char *path,
 
 out:
 	if (merge_bases)
-		free_commit_list(merge_bases);
-	clear_commit_marks(left, ~0);
-	clear_commit_marks(right, ~0);
+		free_cummit_list(merge_bases);
+	clear_cummit_marks(left, ~0);
+	clear_cummit_marks(right, ~0);
 	if (sub) {
 		repo_clear(sub);
 		free(sub);
@@ -660,8 +660,8 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 		unsigned dirty_submodule)
 {
 	const struct object_id *old_oid = the_hash_algo->empty_tree, *new_oid = the_hash_algo->empty_tree;
-	struct commit *left = NULL, *right = NULL;
-	struct commit_list *merge_bases = NULL;
+	struct cummit *left = NULL, *right = NULL;
+	struct cummit_list *merge_bases = NULL;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	struct repository *sub;
@@ -670,7 +670,7 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 	show_submodule_header(o, path, one, two, dirty_submodule,
 			      sub, &left, &right, &merge_bases);
 
-	/* We need a valid left and right commit to display a difference */
+	/* We need a valid left and right cummit to display a difference */
 	if (!(left || is_null_oid(one)) ||
 	    !(right || is_null_oid(two)))
 		goto done;
@@ -706,7 +706,7 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 	 * If the submodule has modified content, we will diff against the
 	 * work tree, under the assumption that the user has asked for the
 	 * diff format and wishes to actually see all differences even if they
-	 * haven't yet been committed to the submodule yet.
+	 * haven't yet been cummitted to the submodule yet.
 	 */
 	if (!(dirty_submodule & DIRTY_SUBMODULE_MODIFIED))
 		strvec_push(&cp.args, oid_to_hex(new_oid));
@@ -736,11 +736,11 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 done:
 	strbuf_release(&sb);
 	if (merge_bases)
-		free_commit_list(merge_bases);
+		free_cummit_list(merge_bases);
 	if (left)
-		clear_commit_marks(left, ~0);
+		clear_cummit_marks(left, ~0);
 	if (right)
-		clear_commit_marks(right, ~0);
+		clear_cummit_marks(right, ~0);
 	if (sub) {
 		repo_clear(sub);
 		free(sub);
@@ -767,7 +767,7 @@ const struct submodule *submodule_from_ce(const struct cache_entry *ce)
 struct collect_changed_submodules_cb_data {
 	struct repository *repo;
 	struct string_list *changed;
-	const struct object_id *commit_oid;
+	const struct object_id *cummit_oid;
 };
 
 /*
@@ -793,12 +793,12 @@ static const char *default_name_or_path(const char *path_or_name)
  *
  * (super_oid, path) allows the submodule config to be read from _some_
  * .gitmodules file. We store this information the first time we find a
- * superproject commit that points to the submodule, but this is
+ * superproject cummit that points to the submodule, but this is
  * arbitrary - we can choose any (super_oid, path) that matches the
  * submodule's name.
  *
- * NEEDSWORK: Storing an arbitrary commit is undesirable because we can't
- * guarantee that we're reading the commit that the user would expect. A better
+ * NEEDSWORK: Storing an arbitrary cummit is undesirable because we can't
+ * guarantee that we're reading the cummit that the user would expect. A better
  * scheme would be to just fetch a submodule by its name. This requires two
  * steps:
  * - Create a function that behaves like repo_submodule_init(), but accepts a
@@ -814,22 +814,22 @@ static const char *default_name_or_path(const char *path_or_name)
  */
 struct changed_submodule_data {
 	/*
-	 * The first superproject commit in the rev walk that points to
+	 * The first superproject cummit in the rev walk that points to
 	 * the submodule.
 	 */
 	const struct object_id *super_oid;
 	/*
-	 * Path to the submodule in the superproject commit referenced
+	 * Path to the submodule in the superproject cummit referenced
 	 * by 'super_oid'.
 	 */
 	char *path;
-	/* The submodule commits that have changed in the rev walk. */
-	struct oid_array new_commits;
+	/* The submodule cummits that have changed in the rev walk. */
+	struct oid_array new_cummits;
 };
 
 static void changed_submodule_data_clear(struct changed_submodule_data *cs_data)
 {
-	oid_array_clear(&cs_data->new_commits);
+	oid_array_clear(&cs_data->new_cummits);
 	free(cs_data->path);
 }
 
@@ -839,7 +839,7 @@ static void collect_changed_submodules_cb(struct diff_queue_struct *q,
 {
 	struct collect_changed_submodules_cb_data *me = data;
 	struct string_list *changed = me->changed;
-	const struct object_id *commit_oid = me->commit_oid;
+	const struct object_id *cummit_oid = me->cummit_oid;
 	int i;
 
 	for (i = 0; i < q->nr; i++) {
@@ -853,7 +853,7 @@ static void collect_changed_submodules_cb(struct diff_queue_struct *q,
 			continue;
 
 		submodule = submodule_from_path(me->repo,
-						commit_oid, p->two->path);
+						cummit_oid, p->two->path);
 		if (submodule)
 			name = submodule->name;
 		else {
@@ -861,12 +861,12 @@ static void collect_changed_submodules_cb(struct diff_queue_struct *q,
 			/* make sure name does not collide with existing one */
 			if (name)
 				submodule = submodule_from_name(me->repo,
-								commit_oid, name);
+								cummit_oid, name);
 			if (submodule) {
-				warning(_("Submodule in commit %s at path: "
+				warning(_("Submodule in cummit %s at path: "
 					"'%s' collides with a submodule named "
 					"the same. Skipping it."),
-					oid_to_hex(commit_oid), p->two->path);
+					oid_to_hex(cummit_oid), p->two->path);
 				name = NULL;
 			}
 		}
@@ -880,10 +880,10 @@ static void collect_changed_submodules_cb(struct diff_queue_struct *q,
 		else {
 			item->util = xcalloc(1, sizeof(struct changed_submodule_data));
 			cs_data = item->util;
-			cs_data->super_oid = commit_oid;
+			cs_data->super_oid = cummit_oid;
 			cs_data->path = xstrdup(p->two->path);
 		}
-		oid_array_append(&cs_data->new_commits, &p->two->oid);
+		oid_array_append(&cs_data->new_cummits, &p->two->oid);
 	}
 }
 
@@ -898,7 +898,7 @@ static void collect_changed_submodules(struct repository *r,
 				       struct strvec *argv)
 {
 	struct rev_info rev;
-	const struct commit *commit;
+	const struct cummit *cummit;
 	int save_warning;
 	struct setup_revision_opt s_r_opt = {
 		.assume_dashdash = 1,
@@ -912,19 +912,19 @@ static void collect_changed_submodules(struct repository *r,
 	if (prepare_revision_walk(&rev))
 		die(_("revision walk setup failed"));
 
-	while ((commit = get_revision(&rev))) {
+	while ((cummit = get_revision(&rev))) {
 		struct rev_info diff_rev;
 		struct collect_changed_submodules_cb_data data;
 		data.repo = r;
 		data.changed = changed;
-		data.commit_oid = &commit->object.oid;
+		data.cummit_oid = &cummit->object.oid;
 
 		repo_init_revisions(r, &diff_rev, NULL);
 		diff_rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 		diff_rev.diffopt.format_callback = collect_changed_submodules_cb;
 		diff_rev.diffopt.format_callback_data = &data;
 		diff_rev.dense_combined_merges = 1;
-		diff_tree_combined_merge(commit, &diff_rev);
+		diff_tree_combined_merge(cummit, &diff_rev);
 	}
 
 	reset_revision_walk();
@@ -952,16 +952,16 @@ static int append_oid_to_argv(const struct object_id *oid, void *data)
 	return 0;
 }
 
-struct has_commit_data {
+struct has_cummit_data {
 	struct repository *repo;
 	int result;
 	const char *path;
 	const struct object_id *super_oid;
 };
 
-static int check_has_commit(const struct object_id *oid, void *data)
+static int check_has_cummit(const struct object_id *oid, void *data)
 {
-	struct has_commit_data *cb = data;
+	struct has_cummit_data *cb = data;
 	struct repository subrepo;
 	enum object_type type;
 
@@ -974,7 +974,7 @@ static int check_has_commit(const struct object_id *oid, void *data)
 	type = oid_object_info(&subrepo, oid, NULL);
 
 	switch (type) {
-	case OBJ_COMMIT:
+	case OBJ_cummit:
 		goto cleanup;
 	case OBJ_BAD:
 		/*
@@ -984,7 +984,7 @@ static int check_has_commit(const struct object_id *oid, void *data)
 		cb->result = 0;
 		goto cleanup;
 	default:
-		die(_("submodule entry '%s' (%s) is a %s, not a commit"),
+		die(_("submodule entry '%s' (%s) is a %s, not a cummit"),
 		    cb->path, oid_to_hex(oid), type_name(type));
 	}
 cleanup:
@@ -992,23 +992,23 @@ cleanup:
 	return 0;
 }
 
-static int submodule_has_commits(struct repository *r,
+static int submodule_has_cummits(struct repository *r,
 				 const char *path,
 				 const struct object_id *super_oid,
-				 struct oid_array *commits)
+				 struct oid_array *cummits)
 {
-	struct has_commit_data has_commit = {
+	struct has_cummit_data has_cummit = {
 		.repo = r,
 		.result = 1,
 		.path = path,
 		.super_oid = super_oid
 	};
 
-	oid_array_for_each_unique(commits, check_has_commit, &has_commit);
+	oid_array_for_each_unique(cummits, check_has_cummit, &has_cummit);
 
-	if (has_commit.result) {
+	if (has_cummit.result) {
 		/*
-		 * Even if the submodule is checked out and the commit is
+		 * Even if the submodule is checked out and the cummit is
 		 * present, make sure it exists in the submodule's object store
 		 * and that it is reachable from a ref.
 		 */
@@ -1016,7 +1016,7 @@ static int submodule_has_commits(struct repository *r,
 		struct strbuf out = STRBUF_INIT;
 
 		strvec_pushl(&cp.args, "rev-list", "-n", "1", NULL);
-		oid_array_for_each_unique(commits, append_oid_to_argv, &cp.args);
+		oid_array_for_each_unique(cummits, append_oid_to_argv, &cp.args);
 		strvec_pushl(&cp.args, "--not", "--all", NULL);
 
 		prepare_submodule_repo_env(&cp.env_array);
@@ -1025,19 +1025,19 @@ static int submodule_has_commits(struct repository *r,
 		cp.dir = path;
 
 		if (capture_command(&cp, &out, GIT_MAX_HEXSZ + 1) || out.len)
-			has_commit.result = 0;
+			has_cummit.result = 0;
 
 		strbuf_release(&out);
 	}
 
-	return has_commit.result;
+	return has_cummit.result;
 }
 
 static int submodule_needs_pushing(struct repository *r,
 				   const char *path,
-				   struct oid_array *commits)
+				   struct oid_array *cummits)
 {
-	if (!submodule_has_commits(r, path, null_oid(), commits))
+	if (!submodule_has_cummits(r, path, null_oid(), cummits))
 		/*
 		 * NOTE: We do consider it safe to return "no" here. The
 		 * correct answer would be "We do not know" instead of
@@ -1057,7 +1057,7 @@ static int submodule_needs_pushing(struct repository *r,
 		int needs_pushing = 0;
 
 		strvec_push(&cp.args, "rev-list");
-		oid_array_for_each_unique(commits, append_oid_to_argv, &cp.args);
+		oid_array_for_each_unique(cummits, append_oid_to_argv, &cp.args);
 		strvec_pushl(&cp.args, "--not", "--remotes", "-n", "1" , NULL);
 
 		prepare_submodule_repo_env(&cp.env_array);
@@ -1066,7 +1066,7 @@ static int submodule_needs_pushing(struct repository *r,
 		cp.out = -1;
 		cp.dir = path;
 		if (start_command(&cp))
-			die(_("Could not run 'git rev-list <commits> --not --remotes -n 1' command in submodule %s"),
+			die(_("Could not run 'git rev-list <cummits> --not --remotes -n 1' command in submodule %s"),
 					path);
 		if (strbuf_read(&buf, cp.out, the_hash_algo->hexsz + 1))
 			needs_pushing = 1;
@@ -1080,7 +1080,7 @@ static int submodule_needs_pushing(struct repository *r,
 }
 
 int find_unpushed_submodules(struct repository *r,
-			     struct oid_array *commits,
+			     struct oid_array *cummits,
 			     const char *remotes_name,
 			     struct string_list *needs_pushing)
 {
@@ -1090,7 +1090,7 @@ int find_unpushed_submodules(struct repository *r,
 
 	/* argv.v[0] will be ignored by setup_revisions */
 	strvec_push(&argv, "find_unpushed_submodules");
-	oid_array_for_each_unique(commits, append_oid_to_argv, &argv);
+	oid_array_for_each_unique(cummits, append_oid_to_argv, &argv);
 	strvec_push(&argv, "--not");
 	strvec_pushf(&argv, "--remotes=%s", remotes_name);
 
@@ -1110,7 +1110,7 @@ int find_unpushed_submodules(struct repository *r,
 		if (!path)
 			continue;
 
-		if (submodule_needs_pushing(r, path, &cs_data->new_commits))
+		if (submodule_needs_pushing(r, path, &cs_data->new_cummits))
 			string_list_insert(needs_pushing, path);
 	}
 
@@ -1193,7 +1193,7 @@ static void submodule_push_check(const char *path, const char *head,
 }
 
 int push_unpushed_submodules(struct repository *r,
-			     struct oid_array *commits,
+			     struct oid_array *cummits,
 			     const struct remote *remote,
 			     const struct refspec *rs,
 			     const struct string_list *push_options,
@@ -1202,7 +1202,7 @@ int push_unpushed_submodules(struct repository *r,
 	int i, ret = 1;
 	struct string_list needs_pushing = STRING_LIST_INIT_DUP;
 
-	if (!find_unpushed_submodules(r, commits,
+	if (!find_unpushed_submodules(r, cummits,
 				      remote->name, &needs_pushing))
 		return 1;
 
@@ -1250,7 +1250,7 @@ static int append_oid_to_array(const char *ref, const struct object_id *oid,
 	return 0;
 }
 
-void check_for_new_submodule_commits(struct object_id *oid)
+void check_for_new_submodule_cummits(struct object_id *oid)
 {
 	if (!initialized_fetch_ref_tips) {
 		for_each_ref(append_oid_to_array, &ref_tips_before_fetch);
@@ -1301,7 +1301,7 @@ static void calculate_changed_submodule_paths(struct repository *r,
 
 	/*
 	 * Collect all submodules (whether checked out or not) for which new
-	 * commits have been recorded upstream in "changed_submodule_names".
+	 * cummits have been recorded upstream in "changed_submodule_names".
 	 */
 	collect_changed_submodules(r, changed_submodule_names, &argv);
 
@@ -1319,7 +1319,7 @@ static void calculate_changed_submodule_paths(struct repository *r,
 		if (!path)
 			continue;
 
-		if (submodule_has_commits(r, path, null_oid(), &cs_data->new_commits)) {
+		if (submodule_has_cummits(r, path, null_oid(), &cs_data->new_cummits)) {
 			changed_submodule_data_clear(cs_data);
 			*name->string = '\0';
 		}
@@ -1381,8 +1381,8 @@ struct submodule_parallel_fetch {
 	int result;
 
 	/*
-	 * Names of submodules that have new commits. Generated by
-	 * walking the newly fetched superproject commits.
+	 * Names of submodules that have new cummits. Generated by
+	 * walking the newly fetched superproject cummits.
 	 */
 	struct string_list changed_submodule_names;
 	/*
@@ -1440,7 +1440,7 @@ struct fetch_task {
 	const char *default_argv; /* The default fetch mode. */
 	struct strvec git_args; /* Args for the child git process. */
 
-	struct oid_array *commits; /* Ensure these commits are fetched */
+	struct oid_array *cummits; /* Ensure these cummits are fetched */
 };
 
 /**
@@ -1615,7 +1615,7 @@ get_fetch_task_from_changed(struct submodule_parallel_fetch *spf,
 			continue;
 
 		if (!task->repo) {
-			strbuf_addf(err, _("Could not access submodule '%s' at commit %s\n"),
+			strbuf_addf(err, _("Could not access submodule '%s' at cummit %s\n"),
 				    cs_data->path,
 				    find_unique_abbrev(cs_data->super_oid, DEFAULT_ABBREV));
 
@@ -1626,7 +1626,7 @@ get_fetch_task_from_changed(struct submodule_parallel_fetch *spf,
 
 		if (!spf->quiet)
 			strbuf_addf(err,
-				    _("Fetching submodule %s%s at commit %s\n"),
+				    _("Fetching submodule %s%s at cummit %s\n"),
 				    spf->prefix, task->sub->path,
 				    find_unique_abbrev(cs_data->super_oid,
 						       DEFAULT_ABBREV));
@@ -1720,7 +1720,7 @@ static int get_next_submodule(struct child_process *cp, struct strbuf *err,
 
 		/* NEEDSWORK: have get_default_remote from submodule--helper */
 		strvec_push(&cp->args, "origin");
-		oid_array_for_each_unique(task->commits,
+		oid_array_for_each_unique(task->cummits,
 					  append_oid_to_argv, &cp->args);
 
 		*task_cb = task;
@@ -1743,13 +1743,13 @@ static int fetch_start_failure(struct strbuf *err,
 	return 0;
 }
 
-static int commit_missing_in_sub(const struct object_id *oid, void *data)
+static int cummit_missing_in_sub(const struct object_id *oid, void *data)
 {
 	struct repository *subrepo = data;
 
 	enum object_type type = oid_object_info(subrepo, oid, NULL);
 
-	return type != OBJ_COMMIT;
+	return type != OBJ_cummit;
 }
 
 static int fetch_finish(int retvalue, struct strbuf *err,
@@ -1779,7 +1779,7 @@ static int fetch_finish(int retvalue, struct strbuf *err,
 	}
 
 	/* Is this the second time we process this submodule? */
-	if (task->commits)
+	if (task->cummits)
 		goto out;
 
 	it = string_list_lookup(&spf->changed_submodule_names, task->sub->name);
@@ -1788,13 +1788,13 @@ static int fetch_finish(int retvalue, struct strbuf *err,
 		goto out;
 
 	cs_data = it->util;
-	oid_array_filter(&cs_data->new_commits,
-			 commit_missing_in_sub,
+	oid_array_filter(&cs_data->new_cummits,
+			 cummit_missing_in_sub,
 			 task->repo);
 
-	/* Are there commits we want, but do not exist? */
-	if (cs_data->new_commits.nr) {
-		task->commits = &cs_data->new_commits;
+	/* Are there cummits we want, but do not exist? */
+	if (cs_data->new_cummits.nr) {
+		task->cummits = &cs_data->new_cummits;
 		ALLOC_GROW(spf->oid_fetch_tasks,
 			   spf->oid_fetch_tasks_nr + 1,
 			   spf->oid_fetch_tasks_alloc);
@@ -2509,8 +2509,8 @@ void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 	 * its location in .git/modules/ has problems with some naming
 	 * schemes. For example, if a submodule is named "foo" and
 	 * another is named "foo/bar" (whether present in the same
-	 * superproject commit or not - the problem will arise if both
-	 * superproject commits have been checked out at any point in
+	 * superproject cummit or not - the problem will arise if both
+	 * superproject cummits have been checked out at any point in
 	 * time), or if two submodule names only have different cases in
 	 * a case-insensitive filesystem.
 	 *

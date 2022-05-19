@@ -14,6 +14,6 @@ Fixes since v1.7.7.2
    "gitweb" was broken for some time.
 
  * "git branch -m/-M" advertised to update RENAME_REF ref in the
-   commit log message that introduced the feature but not anywhere in
+   cummit log message that introduced the feature but not anywhere in
    the documentation, and never did update such a ref anyway. This
    undocumented misfeature that did not exist has been excised.

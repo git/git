@@ -8,7 +8,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'setup' '
 	echo 1 >original &&
 	git add . &&
-	git commit -m"Adding original file." &&
+	git cummit -m"Adding original file." &&
 	mv original renamed &&
 	echo 2 >> renamed &&
 	git add . &&
@@ -64,13 +64,13 @@ test_expect_success 'status status.renames=true' '
 '
 
 test_expect_success 'commit honors status.renames=false' '
-	git -c status.renames=false commit --dry-run >actual &&
+	git -c status.renames=false cummit --dry-run >actual &&
 	test_i18ngrep "deleted:" actual &&
 	test_i18ngrep "new file:" actual
 '
 
 test_expect_success 'commit honors status.renames=true' '
-	git -c status.renames=true commit --dry-run >actual &&
+	git -c status.renames=true cummit --dry-run >actual &&
 	test_i18ngrep "renamed:" actual
 '
 

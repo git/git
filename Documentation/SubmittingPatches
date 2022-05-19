@@ -40,16 +40,16 @@ change is relevant to.
   these parts should be based on their trees.
 
 To find the tip of a topic branch, run `git log --first-parent
-master..seen` and look for the merge commit. The second parent of this
-commit is the tip of the topic branch.
+master..seen` and look for the merge cummit. The second parent of this
+cummit is the tip of the topic branch.
 
-[[separate-commits]]
-=== Make separate commits for logically separate changes.
+[[separate-cummits]]
+=== Make separate cummits for logically separate changes.
 
 Unless your patch is really trivial, you should not be sending
 out a patch that was generated between your working tree and
-your commit head.  Instead, always make a commit with complete
-commit message and generate a series of patches from your
+your commit head.  Instead, always make a cummit with complete
+cummit message and generate a series of patches from your
 repository.  It is a good discipline.
 
 Give an explanation for the change(s) that is detailed enough so
@@ -58,7 +58,7 @@ the actual patch text to determine how well the code does what
 the explanation promises to do.
 
 If your description starts to get too long, that's a sign that you
-probably need to split up your commit to finer grained pieces.
+probably need to split up your cummit to finer grained pieces.
 That being said, patches which plainly describe the things that
 help reviewers check the patch, and future maintainers understand
 the code, are the most beautiful patches.  Descriptions that summarize
@@ -104,8 +104,8 @@ patches separate from other documentation changes.
 [[whitespace-check]]
 Oh, another thing.  We are picky about whitespaces.  Make sure your
 changes do not trigger errors with the sample pre-commit hook shipped
-in `templates/hooks--pre-commit`.  To help ensure this does not happen,
-run `git diff --check` on your changes before you commit.
+in `templates/hooks--pre-cummit`.  To help ensure this does not happen,
+run `git diff --check` on your changes before you cummit.
 
 [[describe-changes]]
 === Describe your changes well.
@@ -139,8 +139,8 @@ reasons:
 The goal of your log message is to convey the _why_ behind your
 change to help future developers.
 
-The first line of the commit message should be a short description (50
-characters is the soft limit, see DISCUSSION in linkgit:git-commit[1]),
+The first line of the cummit message should be a short description (50
+characters is the soft limit, see DISCUSSION in linkgit:git-cummit[1]),
 and should skip the full stop.  It is also conventional in most cases to
 prefix the first line with "area: " where the area is a filename or
 identifier for the general area of the code being modified, e.g.
@@ -161,7 +161,7 @@ treated as a ref" is correct, as we spell `HEAD` in all caps even when
 it appears in the middle of a sentence.
 
 [[meaningful-message]]
-The body should provide a meaningful commit message, which:
+The body should provide a meaningful cummit message, which:
 
 . explains the problem the change tries to solve, i.e. what is wrong
   with the current code without the change.
@@ -186,40 +186,40 @@ its behavior.  Try to make sure your explanation can be understood
 without external resources. Instead of giving a URL to a mailing list
 archive, summarize the relevant points of the discussion.
 
-[[commit-reference]]
+[[cummit-reference]]
 
-There are a few reasons why you may want to refer to another commit in
+There are a few reasons why you may want to refer to another cummit in
 the "more stable" part of the history (i.e. on branches like `maint`,
 `master`, and `next`):
 
-. A commit that introduced the root cause of a bug you are fixing.
+. A cummit that introduced the root cause of a bug you are fixing.
 
-. A commit that introduced a feature that you are enhancing.
+. A cummit that introduced a feature that you are enhancing.
 
-. A commit that conflicts with your work when you made a trial merge
+. A cummit that conflicts with your work when you made a trial merge
   of your work into `next` and `seen` for testing.
 
-When you reference a commit on a more stable branch (like `master`,
+When you reference a cummit on a more stable branch (like `master`,
 `maint` and `next`), use the format "abbreviated hash (subject,
 date)", like this:
 
 ....
-	Commit f86a374 (pack-bitmap.c: fix a memleak, 2015-03-30)
+	cummit f86a374 (pack-bitmap.c: fix a memleak, 2015-03-30)
 	noticed that ...
 ....
 
-The "Copy commit summary" command of gitk can be used to obtain this
+The "Copy cummit summary" command of gitk can be used to obtain this
 format (with the subject enclosed in a pair of double-quotes), or this
 invocation of `git show`:
 
 ....
-	git show -s --pretty=reference <commit>
+	git show -s --pretty=reference <cummit>
 ....
 
 or, on an older version of Git without support for --pretty=reference:
 
 ....
-	git show -s --date=short --pretty='format:%h (%s, %ad)' <commit>
+	git show -s --date=short --pretty='format:%h (%s, %ad)' <cummit>
 ....
 
 [[sign-off]]
@@ -260,14 +260,14 @@ d. I understand and agree that this project and the contribution
    this project or the open source license(s) involved.
 ____
 
-you add a "Signed-off-by" trailer to your commit, that looks like
+you add a "Signed-off-by" trailer to your cummit, that looks like
 this:
 
 ....
 	Signed-off-by: Random J Developer <random@developer.example.org>
 ....
 
-This line can be added by Git if you run the git-commit command with
+This line can be added by Git if you run the git-cummit command with
 the -s option.
 
 Notice that you can place your own `Signed-off-by` trailer when
@@ -285,7 +285,7 @@ from that of the project you are accustomed to.
 Also notice that a real name is used in the `Signed-off-by` trailer. Please
 don't hide your real name.
 
-[[commit-trailers]]
+[[cummit-trailers]]
 If you like, you can put extra tags at the end:
 
 . `Reported-by:` is used to credit someone who found the bug that
@@ -302,7 +302,7 @@ You can also create your own tag or use one that's in common usage
 such as "Thanks-to:", "Based-on-patch-by:", or "Mentored-by:".
 
 [[git-tools]]
-=== Generate your patch using Git tools out of your commits.
+=== Generate your patch using Git tools out of your cummits.
 
 Git based diff tools generate unidiff which is the preferred format.
 
@@ -367,11 +367,11 @@ previously sent.
 
 The `git format-patch` command follows the best current practice to
 format the body of an e-mail message.  At the beginning of the
-patch should come your commit message, ending with the
+patch should come your cummit message, ending with the
 `Signed-off-by` trailers, and a line that consists of three dashes,
 followed by the diffstat information and the patch itself.  If
 you are forwarding a patch from somebody else, optionally, at
-the beginning of the e-mail message just before the commit
+the beginning of the e-mail message just before the cummit
 message starts, you can put a "From: " line to name that person.
 To change the default "[PATCH]" in the subject to "[<text>]", use
 `git format-patch --subject-prefix=<text>`.  As a shortcut, you
@@ -379,7 +379,7 @@ can use `--rfc` instead of `--subject-prefix="RFC PATCH"`, or
 `-v <n>` instead of `--subject-prefix="PATCH v<n>"`.
 
 You often want to add additional explanation about the patch,
-other than the commit message itself.  Place such "cover letter"
+other than the cummit message itself.  Place such "cover letter"
 material between the three-dash line and the diffstat.  For
 patches requiring multiple iterations of review and discussion,
 an explanation of changes between each iteration can be kept in
@@ -546,14 +546,14 @@ See the DISCUSSION section of linkgit:git-format-patch[1] for hints on
 checking your patch by mailing it to yourself and applying with
 linkgit:git-am[1].
 
-While you are at it, check the resulting commit log message from
+While you are at it, check the resulting cummit log message from
 a trial run of applying the patch.  If what is in the resulting
-commit is not exactly what you would want to see, it is very
+cummit is not exactly what you would want to see, it is very
 likely that your maintainer would end up hand editing the log
 message when he applies your patch.  Things like "Hi, this is my
 first patch.\n", if you really want to put in the patch e-mail,
 should come after the three-dash line that signals the end of the
-commit message.
+cummit message.
 
 
 === Pine

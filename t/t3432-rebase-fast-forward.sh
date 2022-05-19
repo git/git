@@ -3,7 +3,7 @@
 # Copyright (c) 2019 Denton Liu
 #
 
-test_description='ensure rebase fast-forwards commits when possible'
+test_description='ensure rebase fast-forwards cummits when possible'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
@@ -11,10 +11,10 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success setup '
-	test_commit A &&
-	test_commit B &&
-	test_commit C &&
-	test_commit D &&
+	test_cummit A &&
+	test_cummit B &&
+	test_cummit C &&
+	test_cummit D &&
 	git checkout -t -b side
 '
 
@@ -102,7 +102,7 @@ test_rebase_same_head success noop same success work same --fork-point --onto ma
 test_rebase_same_head success noop same success work same --keep-base --keep-base main
 
 test_expect_success 'add work same to side' '
-	test_commit E
+	test_cummit E
 '
 
 changes='our changes'
@@ -123,7 +123,7 @@ test_rebase_same_head success noop same success work same --fork-point --keep-ba
 
 test_expect_success 'add work same to upstream' '
 	git checkout main &&
-	test_commit F &&
+	test_cummit F &&
 	git checkout side
 '
 

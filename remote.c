@@ -4,7 +4,7 @@
 #include "refs.h"
 #include "refspec.h"
 #include "object-store.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "revision.h"
 #include "dir.h"
@@ -12,7 +12,7 @@
 #include "string-list.h"
 #include "mergesort.h"
 #include "strvec.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 #include "advice.h"
 
 enum map_direction { FROM_SRC, FROM_DST };
@@ -1227,8 +1227,8 @@ static void show_push_unqualified_ref_name_error(const char *dst_value,
 		    "match_explicit_lhs() should catch this!",
 		    matched_src_name);
 	type = oid_object_info(the_repository, &oid, NULL);
-	if (type == OBJ_COMMIT) {
-		advise(_("The <src> part of the refspec is a commit object.\n"
+	if (type == OBJ_cummit) {
+		advise(_("The <src> part of the refspec is a cummit object.\n"
 			 "Did you mean to create a new branch by pushing to\n"
 			 "'%s:refs/heads/%s'?"),
 		       matched_src_name, dst_value);
@@ -1248,7 +1248,7 @@ static void show_push_unqualified_ref_name_error(const char *dst_value,
 			 "'%s:refs/tags/%s'?"),
 		       matched_src_name, dst_value);
 	} else {
-		BUG("'%s' should be commit/tag/tree/blob, is '%d'",
+		BUG("'%s' should be cummit/tag/tree/blob, is '%d'",
 		    matched_src_name, type);
 	}
 }
@@ -1390,22 +1390,22 @@ static struct ref **tail_ref(struct ref **head)
 }
 
 struct tips {
-	struct commit **tip;
+	struct cummit **tip;
 	int nr, alloc;
 };
 
 static void add_to_tips(struct tips *tips, const struct object_id *oid)
 {
-	struct commit *commit;
+	struct cummit *cummit;
 
 	if (is_null_oid(oid))
 		return;
-	commit = lookup_commit_reference_gently(the_repository, oid, 1);
-	if (!commit || (commit->object.flags & TMP_MARK))
+	cummit = lookup_cummit_reference_gently(the_repository, oid, 1);
+	if (!cummit || (cummit->object.flags & TMP_MARK))
 		return;
-	commit->object.flags |= TMP_MARK;
+	cummit->object.flags |= TMP_MARK;
 	ALLOC_GROW(tips->tip, tips->nr + 1, tips->alloc);
-	tips->tip[tips->nr++] = commit;
+	tips->tip[tips->nr++] = cummit;
 }
 
 static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***dst_tail)
@@ -1430,7 +1430,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 		if (starts_with(ref->name, "refs/tags/"))
 			string_list_append(&dst_tag, ref->name);
 	}
-	clear_commit_marks_many(sent_tips.nr, sent_tips.tip, TMP_MARK);
+	clear_cummit_marks_many(sent_tips.nr, sent_tips.tip, TMP_MARK);
 
 	string_list_sort(&dst_tag);
 
@@ -1456,51 +1456,51 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 	 */
 	if (sent_tips.nr) {
 		const int reachable_flag = 1;
-		struct commit_list *found_commits;
-		struct commit **src_commits;
-		int nr_src_commits = 0, alloc_src_commits = 16;
-		ALLOC_ARRAY(src_commits, alloc_src_commits);
+		struct cummit_list *found_cummits;
+		struct cummit **src_cummits;
+		int nr_src_cummits = 0, alloc_src_cummits = 16;
+		ALLOC_ARRAY(src_cummits, alloc_src_cummits);
 
 		for_each_string_list_item(item, &src_tag) {
 			struct ref *ref = item->util;
-			struct commit *commit;
+			struct cummit *cummit;
 
 			if (is_null_oid(&ref->new_oid))
 				continue;
-			commit = lookup_commit_reference_gently(the_repository,
+			cummit = lookup_cummit_reference_gently(the_repository,
 								&ref->new_oid,
 								1);
-			if (!commit)
-				/* not pushing a commit, which is not an error */
+			if (!cummit)
+				/* not pushing a cummit, which is not an error */
 				continue;
 
-			ALLOC_GROW(src_commits, nr_src_commits + 1, alloc_src_commits);
-			src_commits[nr_src_commits++] = commit;
+			ALLOC_GROW(src_cummits, nr_src_cummits + 1, alloc_src_cummits);
+			src_cummits[nr_src_cummits++] = cummit;
 		}
 
-		found_commits = get_reachable_subset(sent_tips.tip, sent_tips.nr,
-						     src_commits, nr_src_commits,
+		found_cummits = get_reachable_subset(sent_tips.tip, sent_tips.nr,
+						     src_cummits, nr_src_cummits,
 						     reachable_flag);
 
 		for_each_string_list_item(item, &src_tag) {
 			struct ref *dst_ref;
 			struct ref *ref = item->util;
-			struct commit *commit;
+			struct cummit *cummit;
 
 			if (is_null_oid(&ref->new_oid))
 				continue;
-			commit = lookup_commit_reference_gently(the_repository,
+			cummit = lookup_cummit_reference_gently(the_repository,
 								&ref->new_oid,
 								1);
-			if (!commit)
-				/* not pushing a commit, which is not an error */
+			if (!cummit)
+				/* not pushing a cummit, which is not an error */
 				continue;
 
 			/*
 			 * Is this tag, which they do not have, reachable from
-			 * any of the commits we are sending?
+			 * any of the cummits we are sending?
 			 */
-			if (!(commit->object.flags & reachable_flag))
+			if (!(cummit->object.flags & reachable_flag))
 				continue;
 
 			/* Add it in */
@@ -1509,9 +1509,9 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 			dst_ref->peer_ref = copy_ref(ref);
 		}
 
-		clear_commit_marks_many(nr_src_commits, src_commits, reachable_flag);
-		free(src_commits);
-		free_commit_list(found_commits);
+		clear_cummit_marks_many(nr_src_cummits, src_cummits, reachable_flag);
+		free(src_cummits);
+		free_cummit_list(found_cummits);
 	}
 
 	string_list_clear(&src_tag, 0);
@@ -1720,7 +1720,7 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 		 *     pushing :B where no source is specified)
 		 *
 		 * (3) the destination is not under refs/tags/, and
-		 *     if the old and new value is a commit, the new
+		 *     if the old and new value is a cummit, the new
 		 *     is a descendant of the old.
 		 *
 		 * (4) it is forced using the +A:B notation, or by
@@ -1732,8 +1732,8 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 				reject_reason = REF_STATUS_REJECT_ALREADY_EXISTS;
 			else if (!has_object_file(&ref->old_oid))
 				reject_reason = REF_STATUS_REJECT_FETCH_FIRST;
-			else if (!lookup_commit_reference_gently(the_repository, &ref->old_oid, 1) ||
-				 !lookup_commit_reference_gently(the_repository, &ref->new_oid, 1))
+			else if (!lookup_cummit_reference_gently(the_repository, &ref->old_oid, 1) ||
+				 !lookup_cummit_reference_gently(the_repository, &ref->new_oid, 1))
 				reject_reason = REF_STATUS_REJECT_NEEDS_FORCE;
 			else if (!ref_newer(&ref->new_oid, &ref->old_oid))
 				reject_reason = REF_STATUS_REJECT_NONFASTFORWARD;
@@ -2099,7 +2099,7 @@ int resolve_remote_symref(struct ref *ref, struct ref *list)
 }
 
 /*
- * Compute the commit ahead/behind values for the pair branch_name, base.
+ * Compute the cummit ahead/behind values for the pair branch_name, base.
  *
  * If abf is AHEAD_BEHIND_FULL, compute the full ahead/behind and return the
  * counts in *num_ours and *num_theirs.  If abf is AHEAD_BEHIND_QUICK, skip
@@ -2107,8 +2107,8 @@ int resolve_remote_symref(struct ref *ref, struct ref *list)
  * set to zero).
  *
  * Returns -1 if num_ours and num_theirs could not be filled in (e.g., ref
- * does not exist).  Returns 0 if the commits are identical.  Returns 1 if
- * commits are different.
+ * does not exist).  Returns 0 if the cummits are identical.  Returns 1 if
+ * cummits are different.
  */
 
 static int stat_branch_pair(const char *branch_name, const char *base,
@@ -2116,20 +2116,20 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 			     enum ahead_behind_flags abf)
 {
 	struct object_id oid;
-	struct commit *ours, *theirs;
+	struct cummit *ours, *theirs;
 	struct rev_info revs;
 	struct strvec argv = STRVEC_INIT;
 
 	/* Cannot stat if what we used to build on no longer exists */
 	if (read_ref(base, &oid))
 		return -1;
-	theirs = lookup_commit_reference(the_repository, &oid);
+	theirs = lookup_cummit_reference(the_repository, &oid);
 	if (!theirs)
 		return -1;
 
 	if (read_ref(branch_name, &oid))
 		return -1;
-	ours = lookup_commit_reference(the_repository, &oid);
+	ours = lookup_cummit_reference(the_repository, &oid);
 	if (!ours)
 		return -1;
 
@@ -2156,9 +2156,9 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
 
-	/* ... and count the commits on each side. */
+	/* ... and count the cummits on each side. */
 	while (1) {
-		struct commit *c = get_revision(&revs);
+		struct cummit *c = get_revision(&revs);
 		if (!c)
 			break;
 		if (c->object.flags & SYMMETRIC_LEFT)
@@ -2168,8 +2168,8 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 	}
 
 	/* clear object flags smudged by the above traversal */
-	clear_commit_marks(ours, ALL_REV_FLAGS);
-	clear_commit_marks(theirs, ALL_REV_FLAGS);
+	clear_cummit_marks(ours, ALL_REV_FLAGS);
+	clear_cummit_marks(theirs, ALL_REV_FLAGS);
 
 	strvec_clear(&argv);
 	return 1;
@@ -2177,7 +2177,7 @@ static int stat_branch_pair(const char *branch_name, const char *base,
 
 /*
  * Lookup the tracking branch for the given branch and if present, optionally
- * compute the commit ahead/behind values for the pair.
+ * compute the cummit ahead/behind values for the pair.
  *
  * If for_push is true, the tracking branch refers to the push branch,
  * otherwise it refers to the upstream branch.
@@ -2191,8 +2191,8 @@ static int stat_branch_pair(const char *branch_name, const char *base,
  * set to zero).
  *
  * Returns -1 if num_ours and num_theirs could not be filled in (e.g., no
- * upstream defined, or ref does not exist).  Returns 0 if the commits are
- * identical.  Returns 1 if commits are different.
+ * upstream defined, or ref does not exist).  Returns 0 if the cummits are
+ * identical.  Returns 1 if cummits are different.
  */
 int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 		       const char **tracking_name, int for_push,
@@ -2243,25 +2243,25 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			base);
 	} else if (abf == AHEAD_BEHIND_QUICK) {
 		strbuf_addf(sb,
-			    _("Your branch and '%s' refer to different commits.\n"),
+			    _("Your branch and '%s' refer to different cummits.\n"),
 			    base);
 		if (advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addf(sb, _("  (use \"%s\" for details)\n"),
 				    "git status --ahead-behind");
 	} else if (!theirs) {
 		strbuf_addf(sb,
-			Q_("Your branch is ahead of '%s' by %d commit.\n",
-			   "Your branch is ahead of '%s' by %d commits.\n",
+			Q_("Your branch is ahead of '%s' by %d cummit.\n",
+			   "Your branch is ahead of '%s' by %d cummits.\n",
 			   ours),
 			base, ours);
 		if (advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
-				_("  (use \"git push\" to publish your local commits)\n"));
+				_("  (use \"git push\" to publish your local cummits)\n"));
 	} else if (!ours) {
 		strbuf_addf(sb,
-			Q_("Your branch is behind '%s' by %d commit, "
+			Q_("Your branch is behind '%s' by %d cummit, "
 			       "and can be fast-forwarded.\n",
-			   "Your branch is behind '%s' by %d commits, "
+			   "Your branch is behind '%s' by %d cummits, "
 			       "and can be fast-forwarded.\n",
 			   theirs),
 			base, theirs);
@@ -2271,10 +2271,10 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 	} else {
 		strbuf_addf(sb,
 			Q_("Your branch and '%s' have diverged,\n"
-			       "and have %d and %d different commit each, "
+			       "and have %d and %d different cummit each, "
 			       "respectively.\n",
 			   "Your branch and '%s' have diverged,\n"
-			       "and have %d and %d different commits each, "
+			       "and have %d and %d different cummits each, "
 			       "respectively.\n",
 			   ours + theirs),
 			base, ours, theirs);
@@ -2491,7 +2491,7 @@ int is_empty_cas(const struct push_cas_option *cas)
  * Look at remote.fetch refspec and see if we have a remote
  * tracking branch for the refname there. Fill the name of
  * the remote-tracking branch in *dst_refname, and the name
- * of the commit object at its tip in oid[].
+ * of the cummit object at its tip in oid[].
  * If we cannot do so, return negative to signal an error.
  */
 static int remote_tracking(struct remote *remote, const char *refname,
@@ -2510,35 +2510,35 @@ static int remote_tracking(struct remote *remote, const char *refname,
 }
 
 /*
- * The struct "reflog_commit_array" and related helper functions
- * are used for collecting commits into an array during reflog
+ * The struct "reflog_cummit_array" and related helper functions
+ * are used for collecting cummits into an array during reflog
  * traversals in "check_and_collect_until()".
  */
-struct reflog_commit_array {
-	struct commit **item;
+struct reflog_cummit_array {
+	struct cummit **item;
 	size_t nr, alloc;
 };
 
-#define REFLOG_COMMIT_ARRAY_INIT { 0 }
+#define REFLOG_cummit_ARRAY_INIT { 0 }
 
-/* Append a commit to the array. */
-static void append_commit(struct reflog_commit_array *arr,
-			  struct commit *commit)
+/* Append a cummit to the array. */
+static void append_cummit(struct reflog_cummit_array *arr,
+			  struct cummit *cummit)
 {
 	ALLOC_GROW(arr->item, arr->nr + 1, arr->alloc);
-	arr->item[arr->nr++] = commit;
+	arr->item[arr->nr++] = cummit;
 }
 
 /* Free and reset the array. */
-static void free_commit_array(struct reflog_commit_array *arr)
+static void free_cummit_array(struct reflog_cummit_array *arr)
 {
 	FREE_AND_NULL(arr->item);
 	arr->nr = arr->alloc = 0;
 }
 
 struct check_and_collect_until_cb_data {
-	struct commit *remote_commit;
-	struct reflog_commit_array *local_commits;
+	struct cummit *remote_cummit;
+	struct reflog_cummit_array *local_cummits;
 	timestamp_t remote_reflog_timestamp;
 };
 
@@ -2557,15 +2557,15 @@ static int check_and_collect_until(struct object_id *o_oid,
 				   const char *ident, timestamp_t timestamp,
 				   int tz, const char *message, void *cb_data)
 {
-	struct commit *commit;
+	struct cummit *cummit;
 	struct check_and_collect_until_cb_data *cb = cb_data;
 
 	/* An entry was found. */
-	if (oideq(n_oid, &cb->remote_commit->object.oid))
+	if (oideq(n_oid, &cb->remote_cummit->object.oid))
 		return 1;
 
-	if ((commit = lookup_commit_reference(the_repository, n_oid)))
-		append_commit(cb->local_commits, commit);
+	if ((cummit = lookup_cummit_reference(the_repository, n_oid)))
+		append_cummit(cb->local_cummits, cummit);
 
 	/*
 	 * If the reflog entry timestamp is older than the remote ref's
@@ -2583,22 +2583,22 @@ static int check_and_collect_until(struct object_id *o_oid,
 /*
  * Iterate through the reflog of the local ref to check if there is an entry
  * for the given remote-tracking ref; runs until the timestamp of an entry is
- * older than latest timestamp of remote-tracking ref's reflog. Any commits
+ * older than latest timestamp of remote-tracking ref's reflog. Any cummits
  * are that seen along the way are collected into an array to check if the
  * remote-tracking ref is reachable from any of them.
  */
 static int is_reachable_in_reflog(const char *local, const struct ref *remote)
 {
 	timestamp_t date;
-	struct commit *commit;
-	struct commit **chunk;
+	struct cummit *cummit;
+	struct cummit **chunk;
 	struct check_and_collect_until_cb_data cb;
-	struct reflog_commit_array arr = REFLOG_COMMIT_ARRAY_INIT;
+	struct reflog_cummit_array arr = REFLOG_cummit_ARRAY_INIT;
 	size_t size = 0;
 	int ret = 0;
 
-	commit = lookup_commit_reference(the_repository, &remote->old_oid);
-	if (!commit)
+	cummit = lookup_cummit_reference(the_repository, &remote->old_oid);
+	if (!cummit)
 		goto cleanup_return;
 
 	/*
@@ -2607,8 +2607,8 @@ static int is_reachable_in_reflog(const char *local, const struct ref *remote)
 	 */
 	for_each_reflog_ent_reverse(remote->tracking_ref, peek_reflog, &date);
 
-	cb.remote_commit = commit;
-	cb.local_commits = &arr;
+	cb.remote_cummit = cummit;
+	cb.local_cummits = &arr;
 	cb.remote_reflog_timestamp = date;
 	ret = for_each_reflog_ent_reverse(local, check_and_collect_until, &cb);
 
@@ -2617,20 +2617,20 @@ static int is_reachable_in_reflog(const char *local, const struct ref *remote)
 		goto cleanup_return;
 
 	/*
-	 * Check if the remote commit is reachable from any
-	 * of the commits in the collected array, in batches.
+	 * Check if the remote cummit is reachable from any
+	 * of the cummits in the collected array, in batches.
 	 */
 	for (chunk = arr.item; chunk < arr.item + arr.nr; chunk += size) {
 		size = arr.item + arr.nr - chunk;
 		if (MERGE_BASES_BATCH_SIZE < size)
 			size = MERGE_BASES_BATCH_SIZE;
 
-		if ((ret = in_merge_bases_many(commit, size, chunk)))
+		if ((ret = in_merge_bases_many(cummit, size, chunk)))
 			break;
 	}
 
 cleanup_return:
-	free_commit_array(&arr);
+	free_cummit_array(&arr);
 	return ret;
 }
 

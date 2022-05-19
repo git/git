@@ -28,35 +28,35 @@ unnote () {
 }
 
 test_expect_success setup '
-	test_commit "Initial file" file "Hi there" A &&
+	test_cummit "Initial file" file "Hi there" A &&
 	git branch other-branch &&
 
-	test_commit "file=Hello" file "Hello" B &&
+	test_cummit "file=Hello" file "Hello" B &&
 	git branch third-branch &&
 
 	git checkout other-branch &&
-	test_commit "Added other" other "Hello" C &&
+	test_cummit "Added other" other "Hello" C &&
 
 	git checkout main &&
 	test_merge D other-branch &&
 
 	git checkout third-branch &&
-	test_commit "Third file" third "Nothing" E &&
+	test_cummit "Third file" third "Nothing" E &&
 
 	git checkout main &&
-	test_commit "file=Blah" file "Blah" F &&
+	test_cummit "file=Blah" file "Blah" F &&
 
-	test_tick && git merge --no-commit third-branch &&
+	test_tick && git merge --no-cummit third-branch &&
 	git checkout third-branch file &&
-	git commit &&
+	git cummit &&
 	note G &&
 	git branch fiddler-branch &&
 
 	git checkout -b part2-branch &&
-	test_commit "file=Part 2" file "Part 2" H &&
+	test_cummit "file=Part 2" file "Part 2" H &&
 
 	git checkout fiddler-branch &&
-	test_commit "Bad commit" file "Silly" I &&
+	test_cummit "Bad cummit" file "Silly" I &&
 
 	test_tick && git revert I && note J &&
 
@@ -64,10 +64,10 @@ test_expect_success setup '
 	test_tick && git merge --no-ff fiddler-branch &&
 	note K &&
 
-	test_commit "file=Part 1" file "Part 1" L &&
+	test_cummit "file=Part 1" file "Part 1" L &&
 
 	test_tick && test_must_fail git merge part2-branch &&
-	test_commit M file "Parts 1+2"
+	test_cummit M file "Parts 1+2"
 '
 
 check_outcome () {
@@ -136,7 +136,7 @@ check_result '(LH)M (G)H (J)L (I)J (G)I (FE)G' F..M --ancestry-path --simplify-m
 check_result 'M L K G' F..M --first-parent
 check_result 'M L G' F..M --first-parent -- file
 
-# Note that G is pruned when E is the bottom, even if it's the same commit list
+# Note that G is pruned when E is the bottom, even if it's the same cummit list
 # If we want history since E, then we're quite happy to ignore G that took E.
 check_result 'M L K J I H G' E..M --ancestry-path
 check_result 'M L J I H' E..M --ancestry-path -- file
@@ -160,7 +160,7 @@ check_result 'M H L J I' G..M --ancestry-path --simplify-merges -- file
 # B..F should be able to simplify the merge D from irrelevant side branch C.
 # Default log should also be free to follow B-D, and ignore C.
 # But --full-history shouldn't drop D on its own - without simplification,
-# we can't decide if the merge from INTERESTING commit C was sensible.
+# we can't decide if the merge from INTERESTING cummit C was sensible.
 check_result 'F D C' B..F
 check_result 'F' B..F -- file
 check_result '(B)F' B..F --parents -- file

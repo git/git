@@ -21,19 +21,19 @@ test_expect_success \
     'echo First > A &&
      git update-index --add A &&
      test_tick &&
-     git commit -m "Add A." &&
+     git cummit -m "Add A." &&
 
      git checkout -b my-topic-branch &&
 
      echo Second > B &&
      git update-index --add B &&
      test_tick &&
-     git commit -m "Add B." &&
+     git cummit -m "Add B." &&
 
      echo AnotherSecond > C &&
      git update-index --add C &&
      test_tick &&
-     git commit -m "Add C." &&
+     git cummit -m "Add C." &&
 
      git checkout -f main &&
      rm -f B C &&
@@ -41,7 +41,7 @@ test_expect_success \
      echo Third >> A &&
      git update-index A &&
      test_tick &&
-     git commit -m "Modify A." &&
+     git cummit -m "Modify A." &&
 
      expr "$(echo $(git cherry main my-topic-branch) )" : "+ [^ ]* + .*"
 '
@@ -60,23 +60,23 @@ test_expect_success \
 
 test_expect_success 'cherry ignores whitespace' '
 	git switch --orphan=upstream-with-space &&
-	test_commit initial file &&
+	test_cummit initial file &&
 	>expect &&
 	git switch --create=feature-without-space &&
 
 	# A spaceless file on the feature branch.  Expect a match upstream.
 	printf space >file &&
 	git add file &&
-	git commit -m"file without space" &&
+	git cummit -m"file without space" &&
 	git log --format="- %H" -1 >>expect &&
 
 	# A further change.  Should not match upstream.
-	test_commit change file &&
+	test_cummit change file &&
 	git log --format="+ %H" -1 >>expect &&
 
 	git switch upstream-with-space &&
 	# Same as the spaceless file, just with spaces and on upstream.
-	test_commit "file with space" file "s p a c e" file-with-space &&
+	test_cummit "file with space" file "s p a c e" file-with-space &&
 	git cherry upstream-with-space feature-without-space >actual &&
 	test_cmp expect actual
 '

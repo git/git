@@ -17,10 +17,10 @@ test_expect_success 'setup test repository' '
 		svn_cmd add qqq &&
 		svn_cmd add www &&
 		svn_cmd add xxx &&
-		svn_cmd commit -m "create some files" &&
+		svn_cmd cummit -m "create some files" &&
 		svn_cmd up &&
 		echo hi >> www/test_www.txt &&
-		svn_cmd commit -m "modify www/test_www.txt" &&
+		svn_cmd cummit -m "modify www/test_www.txt" &&
 		svn_cmd up
 	)
 '
@@ -53,7 +53,7 @@ test_expect_success 'SVN-side change outside of www' '
 	(
 		cd s &&
 		echo b >> qqq/test_qqq.txt &&
-		svn_cmd commit -m "SVN-side change outside of www" &&
+		svn_cmd cummit -m "SVN-side change outside of www" &&
 		svn_cmd up &&
 		svn_cmd log -v | fgrep "SVN-side change outside of www"
 	)
@@ -85,7 +85,7 @@ test_expect_success 'SVN-side change inside of ignored www' '
 	(
 		cd s &&
 		echo zaq >> www/test_www.txt &&
-		svn_cmd commit -m "SVN-side change inside of www/test_www.txt" &&
+		svn_cmd cummit -m "SVN-side change inside of www/test_www.txt" &&
 		svn_cmd up &&
 		svn_cmd log -v | fgrep "SVN-side change inside of www/test_www.txt"
 	)
@@ -118,7 +118,7 @@ test_expect_success 'SVN-side change in and out of included qqq' '
 		cd s &&
 		echo cvf >> www/test_www.txt &&
 		echo ygg >> qqq/test_qqq.txt &&
-		svn_cmd commit -m "SVN-side change in and out of ignored www" &&
+		svn_cmd cummit -m "SVN-side change in and out of ignored www" &&
 		svn_cmd up &&
 		svn_cmd log -v | fgrep "SVN-side change in and out of ignored www"
 	)

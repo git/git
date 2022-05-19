@@ -14,7 +14,7 @@ test_expect_success 'initialize source svn repo' '
 		cd "$SVN_TREE" &&
 		touch foo &&
 		svn_cmd add foo &&
-		svn_cmd commit -m "initial commit"
+		svn_cmd cummit -m "initial cummit"
 	) &&
 	rm -rf "$SVN_TREE"
 '
@@ -27,8 +27,8 @@ test_expect_success 'clone svn repo' '
 test_expect_success 'change svn:mergeinfo' '
 	touch bar &&
 	git add bar &&
-	git commit -m "bar" &&
-	git svn dcommit --mergeinfo="/branches/foo:1-10"
+	git cummit -m "bar" &&
+	git svn dcummit --mergeinfo="/branches/foo:1-10"
 '
 
 test_expect_success 'verify svn:mergeinfo' '
@@ -39,8 +39,8 @@ test_expect_success 'verify svn:mergeinfo' '
 test_expect_success 'change svn:mergeinfo multiline' '
 	touch baz &&
 	git add baz &&
-	git commit -m "baz" &&
-	git svn dcommit --mergeinfo="/branches/bar:1-10 /branches/other:3-5,8,10-11"
+	git cummit -m "baz" &&
+	git svn dcummit --mergeinfo="/branches/bar:1-10 /branches/other:3-5,8,10-11"
 '
 
 test_expect_success 'verify svn:mergeinfo multiline' '

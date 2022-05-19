@@ -16,15 +16,15 @@ test_expect_success 'setup repo and indexes' '
 	if git config --file .gitmodules --get-regexp "submodule.*.path" >modules
 	then
 		git rm $(awk "{print \$2}" modules) &&
-		git commit -m "remove submodules" || return 1
+		git cummit -m "remove submodules" || return 1
 	fi &&
 
 	echo bogus >a &&
 	cp a b &&
 	git add a b &&
-	git commit -m "level 0" &&
+	git cummit -m "level 0" &&
 	BLOB=$(git rev-parse HEAD:a) &&
-	OLD_COMMIT=$(git rev-parse HEAD) &&
+	OLD_cummit=$(git rev-parse HEAD) &&
 	OLD_TREE=$(git rev-parse HEAD^{tree}) &&
 
 	for i in $(test_seq 1 3)
@@ -37,19 +37,19 @@ test_expect_success 'setup repo and indexes' '
 			040000 tree $OLD_TREE	f4
 		EOF
 		NEW_TREE=$(git mktree <in) &&
-		NEW_COMMIT=$(git commit-tree $NEW_TREE -p $OLD_COMMIT -m "level $i") &&
+		NEW_cummit=$(git cummit-tree $NEW_TREE -p $OLD_cummit -m "level $i") &&
 		OLD_TREE=$NEW_TREE &&
-		OLD_COMMIT=$NEW_COMMIT || return 1
+		OLD_cummit=$NEW_cummit || return 1
 	done &&
 
 	git sparse-checkout init --cone &&
 	git sparse-checkout set $SPARSE_CONE &&
-	git checkout -b wide $OLD_COMMIT &&
+	git checkout -b wide $OLD_cummit &&
 
 	for l2 in f1 f2 f3 f4
 	do
 		echo more bogus >>$SPARSE_CONE/$l2/a &&
-		git commit -a -m "edit $SPARSE_CONE/$l2/a" || return 1
+		git cummit -a -m "edit $SPARSE_CONE/$l2/a" || return 1
 	done &&
 
 	git -c core.sparseCheckoutCone=true clone --branch=wide --sparse . full-v3 &&
@@ -108,7 +108,7 @@ test_perf_on_all () {
 test_perf_on_all git status
 test_perf_on_all git add -A
 test_perf_on_all git add .
-test_perf_on_all git commit -a -m A
+test_perf_on_all git cummit -a -m A
 test_perf_on_all git checkout -f -
 test_perf_on_all git reset
 test_perf_on_all git reset --hard

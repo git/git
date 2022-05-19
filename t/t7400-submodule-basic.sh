@@ -18,10 +18,10 @@ test_expect_success 'submodule deinit works on empty repository' '
 	git submodule deinit --all
 '
 
-test_expect_success 'setup - initial commit' '
+test_expect_success 'setup - initial cummit' '
 	>t &&
 	git add t &&
-	git commit -m "initial commit" &&
+	git cummit -m "initial cummit" &&
 	git branch initial
 '
 
@@ -49,12 +49,12 @@ test_expect_success 'submodule update aborts on missing gitmodules url' '
 	test_must_fail git submodule init
 '
 
-test_expect_success 'add aborts on repository with no commits' '
+test_expect_success 'add aborts on repository with no cummits' '
 	cat >expect <<-\EOF &&
-	fatal: '"'repo-no-commits'"' does not have a commit checked out
+	fatal: '"'repo-no-cummits'"' does not have a cummit checked out
 	EOF
-	git init repo-no-commits &&
-	test_must_fail git submodule add ../a ./repo-no-commits 2>actual &&
+	git init repo-no-cummits &&
+	test_must_fail git submodule add ../a ./repo-no-cummits 2>actual &&
 	test_cmp expect actual
 '
 
@@ -66,7 +66,7 @@ test_expect_success 'status should ignore inner git repo when not added' '
 		git init &&
 		>t &&
 		git add t &&
-		git commit -m "initial"
+		git cummit -m "initial"
 	) &&
 	test_must_fail git submodule status inner 2>output.err &&
 	rm -fr inner &&
@@ -80,16 +80,16 @@ test_expect_success 'setup - repository in init subdirectory' '
 		git init &&
 		echo a >a &&
 		git add a &&
-		git commit -m "submodule commit 1" &&
+		git cummit -m "submodule cummit 1" &&
 		git tag -a -m "rev-1" rev-1
 	)
 '
 
-test_expect_success 'setup - commit with gitlink' '
+test_expect_success 'setup - cummit with gitlink' '
 	echo a >a &&
 	echo z >z &&
 	git add a init z &&
-	git commit -m "super commit 1"
+	git cummit -m "super cummit 1"
 '
 
 test_expect_success 'setup - hide init subdirectory' '
@@ -154,7 +154,7 @@ test_expect_success 'submodule add' '
 
 test_expect_success 'setup parent and one repository' '
 	test_create_repo parent &&
-	test_commit -C parent one
+	test_cummit -C parent one
 '
 
 test_expect_success 'redirected submodule add does not show progress' '
@@ -180,10 +180,10 @@ test_expect_success 'submodule add to .gitignored path fails' '
 		hint: Turn this message off by running
 		hint: "git config advice.addIgnoredFile false"
 		EOF
-		# Does not use test_commit due to the ignore
+		# Does not use test_cummit due to the ignore
 		echo "*" > .gitignore &&
 		git add --force .gitignore &&
-		git commit -m"Ignore everything" &&
+		git cummit -m"Ignore everything" &&
 		! git submodule add "$submodurl" submod >actual 2>&1 &&
 		test_cmp expect actual
 	)
@@ -201,7 +201,7 @@ test_expect_success 'submodule add to path with tracked content fails' '
 		cd addtest &&
 		echo "fatal: '\''dir-tracked'\'' already exists in the index" >expect &&
 		mkdir dir-tracked &&
-		test_commit foo dir-tracked/bar &&
+		test_cummit foo dir-tracked/bar &&
 		test_must_fail git submodule add "$submodurl" dir-tracked >actual 2>&1 &&
 		test_cmp expect actual
 	)
@@ -341,7 +341,7 @@ test_expect_success !CYGWIN 'submodule add with \\ in path' '
 	git init sub\\with\\backslash &&
 	touch sub\\with\\backslash/empty.file &&
 	git -C sub\\with\\backslash add empty.file &&
-	git -C sub\\with\\backslash commit -m "Added empty.file" &&
+	git -C sub\\with\\backslash cummit -m "Added empty.file" &&
 
 	# Add that repository as a submodule
 	git init parent &&
@@ -420,7 +420,7 @@ test_expect_success 'status from subdirectory should have the same SHA1' '
 	)
 '
 
-test_expect_success 'setup - fetch commit name from submodule' '
+test_expect_success 'setup - fetch cummit name from submodule' '
 	rev1=$(cd .subrepo && git rev-parse HEAD) &&
 	printf "rev1: %s\n" "$rev1" &&
 	test -n "$rev1"
@@ -529,12 +529,12 @@ test_expect_success 'status "up-to-date" from subdirectory with path' '
 	grep "\\.\\./init" list
 '
 
-test_expect_success 'status should be "modified" after submodule commit' '
+test_expect_success 'status should be "modified" after submodule cummit' '
 	(
 		cd init &&
 		echo b >b &&
 		git add b &&
-		git commit -m "submodule commit 2"
+		git cummit -m "submodule cummit 2"
 	) &&
 
 	rev2=$(cd init && git rev-parse HEAD) &&
@@ -549,9 +549,9 @@ test_expect_success 'the --cached sha1 should be rev1' '
 	grep "^+$rev1" list
 '
 
-test_expect_success 'git diff should report the SHA1 of the new submodule commit' '
+test_expect_success 'git diff should report the SHA1 of the new submodule cummit' '
 	git diff >diff &&
-	grep "^+Subproject commit $rev2" diff
+	grep "^+Subproject cummit $rev2" diff
 '
 
 test_expect_success 'update should checkout rev1' '
@@ -580,10 +580,10 @@ test_expect_success 'apply submodule diff' '
 		cd init &&
 		echo s >s &&
 		git add s &&
-		git commit -m "change subproject"
+		git cummit -m "change subproject"
 	) &&
 	git update-index --add init &&
-	git commit -m "change init" &&
+	git cummit -m "change init" &&
 	git format-patch -1 --stdout >P.diff &&
 	git checkout second &&
 	git apply --index P.diff &&
@@ -634,17 +634,17 @@ test_expect_success 'do not add files from a submodule' '
 test_expect_success 'gracefully add/reset submodule with a trailing slash' '
 
 	git reset --hard &&
-	git commit -m "commit subproject" init &&
+	git cummit -m "cummit subproject" init &&
 	(cd init &&
 	 echo b > a) &&
 	git add init/ &&
 	git diff --exit-code --cached init &&
-	commit=$(cd init &&
-	 git commit -m update a >/dev/null &&
+	cummit=$(cd init &&
+	 git cummit -m update a >/dev/null &&
 	 git rev-parse HEAD) &&
 	git add init/ &&
 	test_must_fail git diff --exit-code --cached init &&
-	test $commit = $(git ls-files --stage |
+	test $cummit = $(git ls-files --stage |
 		sed -n "s/^160000 \([^ ]*\).*/\1/p") &&
 	git reset init/ &&
 	git diff --exit-code --cached init
@@ -657,7 +657,7 @@ test_expect_success 'ls-files gracefully handles trailing slash' '
 
 '
 
-test_expect_success 'moving to a commit without submodule does not leave empty dir' '
+test_expect_success 'moving to a cummit without submodule does not leave empty dir' '
 	rm -rf init &&
 	mkdir init &&
 	git reset --hard &&
@@ -677,7 +677,7 @@ test_expect_success 'add submodules without specifying an explicit path' '
 		git init &&
 		echo r >r &&
 		git add r &&
-		git commit -m "repo commit 1"
+		git cummit -m "repo cummit 1"
 	) &&
 	git clone --bare repo/ bare.git &&
 	(
@@ -724,7 +724,7 @@ test_expect_success 'set up for relative path tests' '
 		(
 			cd sub &&
 			git init &&
-			test_commit foo
+			test_cummit foo
 		) &&
 		git add sub &&
 		git config -f .gitmodules submodule.sub.path sub &&
@@ -888,7 +888,7 @@ test_expect_success '../bar/a/b/c works with relative local path - ../foo/bar.gi
 		cp pristine-.git-config .git/config &&
 		cp pristine-.gitmodules .gitmodules &&
 		mkdir -p a/b/c &&
-		(cd a/b/c && git init && test_commit msg) &&
+		(cd a/b/c && git init && test_cummit msg) &&
 		git config remote.origin.url ../foo/bar.git &&
 		git submodule add ../bar/a/b/c ./a/b/c &&
 		git submodule init &&
@@ -975,7 +975,7 @@ test_expect_success 'recursive relative submodules stay relative' '
 		git init &&
 		>t &&
 		git add t &&
-		git commit -m "initial commit"
+		git cummit -m "initial cummit"
 	) &&
 	mkdir sub3 &&
 	(
@@ -983,9 +983,9 @@ test_expect_success 'recursive relative submodules stay relative' '
 		git init &&
 		>t &&
 		git add t &&
-		git commit -m "initial commit" &&
+		git cummit -m "initial cummit" &&
 		git submodule add ../subsub dirdir/subsub &&
-		git commit -m "add submodule subsub"
+		git cummit -m "add submodule subsub"
 	) &&
 	mkdir super &&
 	(
@@ -993,9 +993,9 @@ test_expect_success 'recursive relative submodules stay relative' '
 		git init &&
 		>t &&
 		git add t &&
-		git commit -m "initial commit" &&
+		git cummit -m "initial cummit" &&
 		git submodule add ../sub3 &&
-		git commit -m "add submodule sub"
+		git cummit -m "add submodule sub"
 	) &&
 	git clone super clone2 &&
 	(
@@ -1036,7 +1036,7 @@ test_expect_success 'submodule add with an existing name fails unless forced' '
 
 test_expect_success 'set up a second submodule' '
 	git submodule add ./init2 example2 &&
-	git commit -m "submodule example2 added"
+	git cummit -m "submodule example2 added"
 '
 
 test_expect_success 'submodule deinit works on repository without submodules' '
@@ -1047,7 +1047,7 @@ test_expect_success 'submodule deinit works on repository without submodules' '
 		git init &&
 		>file &&
 		git add file &&
-		git commit -m "repo should not be empty" &&
+		git cummit -m "repo should not be empty" &&
 		git submodule deinit . &&
 		git submodule deinit --all
 	)
@@ -1203,7 +1203,7 @@ test_expect_success 'submodule with UTF-8 name' '
 		git init &&
 		>sub &&
 		git add sub &&
-		git commit -m "init sub"
+		git cummit -m "init sub"
 	) &&
 	git submodule add ./"$svname" &&
 	git submodule >&2 &&
@@ -1231,7 +1231,7 @@ test_expect_success 'submodule helper list is not confused by common prefixes' '
 		git init &&
 		echo hi >testfile2 &&
 		git add . &&
-		git commit -m "test1"
+		git cummit -m "test1"
 	) &&
 	mkdir -p dir2/b &&
 	(
@@ -1239,11 +1239,11 @@ test_expect_success 'submodule helper list is not confused by common prefixes' '
 		git init &&
 		echo hello >testfile1 &&
 		git add .  &&
-		git commit -m "test2"
+		git cummit -m "test2"
 	) &&
 	git submodule add /dir1/b dir1/b &&
 	git submodule add /dir2/b dir2/b &&
-	git commit -m "first submodule commit" &&
+	git cummit -m "first submodule cummit" &&
 	git submodule--helper list dir1/b | cut -f 2 >actual &&
 	echo "dir1/b" >expect &&
 	test_cmp expect actual
@@ -1251,14 +1251,14 @@ test_expect_success 'submodule helper list is not confused by common prefixes' '
 
 test_expect_success 'setup superproject with submodules' '
 	git init sub1 &&
-	test_commit -C sub1 test &&
-	test_commit -C sub1 test2 &&
+	test_cummit -C sub1 test &&
+	test_cummit -C sub1 test2 &&
 	git init multisuper &&
 	git -C multisuper submodule add ../sub1 sub0 &&
 	git -C multisuper submodule add ../sub1 sub1 &&
 	git -C multisuper submodule add ../sub1 sub2 &&
 	git -C multisuper submodule add ../sub1 sub3 &&
-	git -C multisuper commit -m "add some submodules"
+	git -C multisuper cummit -m "add some submodules"
 '
 
 cat >expect <<-EOF
@@ -1391,7 +1391,7 @@ test_expect_success 'clone and subsequent updates correctly auto-initialize subm
 
 	git -C multisuper submodule add ../sub1 sub4 &&
 	git -C multisuper submodule add ../sub1 sub5 &&
-	git -C multisuper commit -m "add more submodules" &&
+	git -C multisuper cummit -m "add more submodules" &&
 	# obtain the new superproject
 	git -C multisuper_clone pull &&
 	git -C multisuper_clone submodule update --init &&

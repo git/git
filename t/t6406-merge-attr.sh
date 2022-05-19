@@ -17,7 +17,7 @@ test_expect_success setup '
 		echo Initial >$f && git add $f || return 1
 	done &&
 	test_tick &&
-	git commit -m Initial &&
+	git cummit -m Initial &&
 
 	git branch side &&
 	for f in text binary union
@@ -25,7 +25,7 @@ test_expect_success setup '
 		echo Main >>$f && git add $f || return 1
 	done &&
 	test_tick &&
-	git commit -m Main &&
+	git cummit -m Main &&
 
 	git checkout side &&
 	for f in text binary union
@@ -33,7 +33,7 @@ test_expect_success setup '
 		echo Side >>$f && git add $f || return 1
 	done &&
 	test_tick &&
-	git commit -m Side &&
+	git cummit -m Side &&
 
 	git tag anchor &&
 
@@ -169,12 +169,12 @@ test_expect_success 'up-to-date merge without common ancestor' '
 		cd repo1 &&
 		>a &&
 		git add a &&
-		git commit -m initial
+		git cummit -m initial
 	) &&
 	test_tick &&
 	(
 		cd repo2 &&
-		git commit --allow-empty -m initial
+		git cummit --allow-empty -m initial
 	) &&
 	test_tick &&
 	(
@@ -212,14 +212,14 @@ test_expect_success 'binary files with union attribute' '
 	printf "base\0" >bin.txt &&
 	echo "bin.txt merge=union" >.gitattributes &&
 	git add bin.txt .gitattributes &&
-	git commit -m base &&
+	git cummit -m base &&
 
 	printf "one\0" >bin.txt &&
-	git commit -am one &&
+	git cummit -am one &&
 
 	git checkout -b bin-side HEAD^ &&
 	printf "two\0" >bin.txt &&
-	git commit -am two &&
+	git cummit -am two &&
 
 	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
 	then

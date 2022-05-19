@@ -7,7 +7,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./lib-cvs.sh
 
 if ! test_have_prereq NOT_ROOT; then
-	skip_all='When cvs is compiled with CVS_BADROOT commits as root fail'
+	skip_all='When cvs is compiled with CVS_BADROOT cummits as root fail'
 	test_done
 fi
 
@@ -46,7 +46,7 @@ add "O Fortuna" lyrics
 
 These public domain lyrics make an excellent sample text.
 EOF
-	$CVS commit -F message
+	$CVS cummit -F message
 	)
 '
 
@@ -90,7 +90,7 @@ translate to English
 
 My Latin is terrible.
 EOF
-	$CVS commit -F message
+	$CVS cummit -F message
 	)
 '
 
@@ -118,7 +118,7 @@ test_expect_success PERL 'update cvs module' '
 	(cd module-cvs &&
 		echo 1 >tick &&
 		$CVS add tick &&
-		$CVS commit -m 1
+		$CVS cummit -m 1
 	)
 '
 

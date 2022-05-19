@@ -10,10 +10,10 @@ Fixes since v1.6.3.3
  * "git apply --whitespace=fix" did not fix trailing whitespace on an
    incomplete line.
 
- * "git branch" opened too many commit objects unnecessarily.
+ * "git branch" opened too many cummit objects unnecessarily.
 
- * "git checkout -f $commit" with a path that is a file (or a symlink) in
-   the work tree to a commit that has a directory at the path issued an
+ * "git checkout -f $cummit" with a path that is a file (or a symlink) in
+   the work tree to a cummit that has a directory at the path issued an
    unnecessary error message.
 
  * "git diff -c/--cc" was very inefficient in coalescing the removed lines

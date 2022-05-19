@@ -7,7 +7,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-# Note that because of the range-diff's heuristics, test_commit does more
+# Note that because of the range-diff's heuristics, test_cummit does more
 # harm than good.  We need some real history.
 
 test_expect_success 'setup' '
@@ -163,7 +163,7 @@ test_expect_success 'A^! and A^-<n> (unmodified)' '
 
 test_expect_success 'A^{/..} is not mistaken for a range' '
 	test_must_fail git range-diff topic^.. topic^{/..} 2>error &&
-	test_i18ngrep "not a commit range" error
+	test_i18ngrep "not a cummit range" error
 '
 
 test_expect_success 'trivial reordering' '
@@ -177,7 +177,7 @@ test_expect_success 'trivial reordering' '
 	test_cmp expect actual
 '
 
-test_expect_success 'removed a commit' '
+test_expect_success 'removed a cummit' '
 	git range-diff --no-color main topic removed >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid d1) s/5/A/
@@ -188,7 +188,7 @@ test_expect_success 'removed a commit' '
 	test_cmp expect actual
 '
 
-test_expect_success 'added a commit' '
+test_expect_success 'added a cummit' '
 	git range-diff --no-color main topic added >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid a1) s/5/A/
@@ -212,7 +212,7 @@ test_expect_success 'new base, A B C' '
 '
 
 test_expect_success 'new base, B...C' '
-	# this syntax includes the commits from main!
+	# this syntax includes the cummits from main!
 	git range-diff --no-color topic...rebased >actual &&
 	cat >expect <<-EOF &&
 	-:  $(test_oid __) > 1:  $(test_oid b5) unrelated
@@ -224,7 +224,7 @@ test_expect_success 'new base, B...C' '
 	test_cmp expect actual
 '
 
-test_expect_success 'changed commit' '
+test_expect_success 'changed cummit' '
 	git range-diff --no-color topic...changed >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid c1) s/5/A/
@@ -253,7 +253,7 @@ test_expect_success 'changed commit' '
 	test_cmp expect actual
 '
 
-test_expect_success 'changed commit with --no-patch diff option' '
+test_expect_success 'changed cummit with --no-patch diff option' '
 	git range-diff --no-color --no-patch topic...changed >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid c1) s/5/A/
@@ -264,7 +264,7 @@ test_expect_success 'changed commit with --no-patch diff option' '
 	test_cmp expect actual
 '
 
-test_expect_success 'changed commit with --stat diff option' '
+test_expect_success 'changed cummit with --stat diff option' '
 	git range-diff --no-color --stat topic...changed >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid c1) s/5/A/
@@ -279,7 +279,7 @@ test_expect_success 'changed commit with --stat diff option' '
 	test_cmp expect actual
 '
 
-test_expect_success 'changed commit with sm config' '
+test_expect_success 'changed cummit with sm config' '
 	git range-diff --no-color --submodule=log topic...changed >actual &&
 	cat >expect <<-EOF &&
 	1:  $(test_oid t1) = 1:  $(test_oid c1) s/5/A/
@@ -316,7 +316,7 @@ test_expect_success 'renamed file' '
 	    @@ Metadata
 	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
 	    Z
-	    Z ## Commit message ##
+	    Z ## cummit message ##
 	    -    s/4/A/
 	    +    s/4/A/ + rename file
 	    Z
@@ -327,7 +327,7 @@ test_expect_success 'renamed file' '
 	    Z 2
 	3:  $(test_oid t3) ! 3:  $(test_oid n3) s/11/B/
 	    @@ Metadata
-	    Z ## Commit message ##
+	    Z ## cummit message ##
 	    Z    s/11/B/
 	    Z
 	    - ## file ##
@@ -339,7 +339,7 @@ test_expect_success 'renamed file' '
 	    Z 10
 	4:  $(test_oid t4) ! 4:  $(test_oid n4) s/12/B/
 	    @@ Metadata
-	    Z ## Commit message ##
+	    Z ## cummit message ##
 	    Z    s/12/B/
 	    Z
 	    - ## file ##
@@ -360,7 +360,7 @@ test_expect_success 'file with mode only change' '
 	    @@ Metadata
 	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
 	    Z
-	    Z ## Commit message ##
+	    Z ## cummit message ##
 	    -    s/4/A/
 	    +    s/4/A/ + add other-file
 	    Z
@@ -376,7 +376,7 @@ test_expect_success 'file with mode only change' '
 	    @@ Metadata
 	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
 	    Z
-	    Z ## Commit message ##
+	    Z ## cummit message ##
 	    -    s/11/B/
 	    +    s/11/B/ + mode change other-file
 	    Z
@@ -401,7 +401,7 @@ test_expect_success 'file added and later removed' '
 	    @@ Metadata
 	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
 	    Z
-	    Z ## Commit message ##
+	    Z ## cummit message ##
 	    -    s/4/A/
 	    +    s/4/A/ + new-file
 	    Z
@@ -417,7 +417,7 @@ test_expect_success 'file added and later removed' '
 	    @@ Metadata
 	    ZAuthor: Thomas Rast <trast@inf.ethz.ch>
 	    Z
-	    Z ## Commit message ##
+	    Z ## cummit message ##
 	    -    s/11/B/
 	    +    s/11/B/ + remove file
 	    Z
@@ -434,8 +434,8 @@ test_expect_success 'file added and later removed' '
 	test_cmp expect actual
 '
 
-test_expect_success 'no commits on one side' '
-	git commit --amend -m "new message" &&
+test_expect_success 'no cummits on one side' '
+	git cummit --amend -m "new message" &&
 	git range-diff main HEAD@{1} HEAD
 '
 
@@ -445,7 +445,7 @@ test_expect_success 'changed message' '
 	1:  $(test_oid t1) = 1:  $(test_oid m1) s/5/A/
 	2:  $(test_oid t2) ! 2:  $(test_oid m2) s/4/A/
 	    @@ Metadata
-	    Z ## Commit message ##
+	    Z ## cummit message ##
 	    Z    s/4/A/
 	    Z
 	    +    Also a silly comment here!
@@ -464,7 +464,7 @@ test_expect_success 'dual-coloring' '
 	:<YELLOW>1:  $(test_oid c1) = 1:  $(test_oid m1) s/5/A/<RESET>
 	:<RED>2:  $(test_oid c2) <RESET><YELLOW>!<RESET><GREEN> 2:  $(test_oid m2)<RESET><YELLOW> s/4/A/<RESET>
 	:    <REVERSE><CYAN>@@<RESET> <RESET>Metadata<RESET>
-	:      ## Commit message ##<RESET>
+	:      ## cummit message ##<RESET>
 	:         s/4/A/<RESET>
 	:     <RESET>
 	:    <REVERSE><GREEN>+<RESET><BOLD>    Also a silly comment here!<RESET>
@@ -550,11 +550,11 @@ test_expect_success 'range-diff overrides diff.noprefix internally' '
 '
 
 test_expect_success 'basic with modified format.pretty with suffix' '
-	git -c format.pretty="format:commit %H%d%n" range-diff \
+	git -c format.pretty="format:cummit %H%d%n" range-diff \
 		main..topic main..unmodified
 '
 
-test_expect_success 'basic with modified format.pretty without "commit "' '
+test_expect_success 'basic with modified format.pretty without "cummit "' '
 	git -c format.pretty="format:%H%n" range-diff \
 		main..topic main..unmodified
 '
@@ -570,7 +570,7 @@ test_expect_success 'range-diff compares notes by default' '
 	2:  $(test_oid t2) = 2:  $(test_oid u2) s/4/A/
 	3:  $(test_oid t3) = 3:  $(test_oid u3) s/11/B/
 	4:  $(test_oid t4) ! 4:  $(test_oid u4) s/12/B/
-	    @@ Commit message
+	    @@ cummit message
 	    Z
 	    Z
 	    Z ## Notes ##
@@ -612,7 +612,7 @@ test_expect_success 'range-diff with multiple --notes' '
 	2:  $(test_oid t2) = 2:  $(test_oid u2) s/4/A/
 	3:  $(test_oid t3) = 3:  $(test_oid u3) s/11/B/
 	4:  $(test_oid t4) ! 4:  $(test_oid u4) s/12/B/
-	    @@ Commit message
+	    @@ cummit message
 	    Z
 	    Z
 	    Z ## Notes (note1) ##
@@ -678,7 +678,7 @@ test_expect_success 'format-patch --range-diff with --notes' '
 	grep "= 3: .* s/11/B" 0000-* &&
 	grep "! 4: .* s/12/B" 0000-* &&
 	sed s/Z/\ /g >expect <<-EOF &&
-	    @@ Commit message
+	    @@ cummit message
 	    Z
 	    Z
 	    Z ## Notes ##
@@ -688,7 +688,7 @@ test_expect_success 'format-patch --range-diff with --notes' '
 	    Z ## file ##
 	    Z@@ file: A
 	EOF
-	sed "/@@ Commit message/,/@@ file: A/!d" 0000-* >actual &&
+	sed "/@@ cummit message/,/@@ file: A/!d" 0000-* >actual &&
 	test_cmp expect actual
 '
 
@@ -707,7 +707,7 @@ test_expect_success 'format-patch --range-diff with format.notes config' '
 	grep "= 3: .* s/11/B" 0000-* &&
 	grep "! 4: .* s/12/B" 0000-* &&
 	sed s/Z/\ /g >expect <<-EOF &&
-	    @@ Commit message
+	    @@ cummit message
 	    Z
 	    Z
 	    Z ## Notes ##
@@ -717,7 +717,7 @@ test_expect_success 'format-patch --range-diff with format.notes config' '
 	    Z ## file ##
 	    Z@@ file: A
 	EOF
-	sed "/@@ Commit message/,/@@ file: A/!d" 0000-* >actual &&
+	sed "/@@ cummit message/,/@@ file: A/!d" 0000-* >actual &&
 	test_cmp expect actual
 '
 
@@ -738,7 +738,7 @@ test_expect_success 'format-patch --range-diff with multiple notes' '
 	grep "= 3: .* s/11/B" 0000-* &&
 	grep "! 4: .* s/12/B" 0000-* &&
 	sed s/Z/\ /g >expect <<-EOF &&
-	    @@ Commit message
+	    @@ cummit message
 	    Z
 	    Z
 	    Z ## Notes (note1) ##
@@ -753,15 +753,15 @@ test_expect_success 'format-patch --range-diff with multiple notes' '
 	    Z ## file ##
 	    Z@@ file: A
 	EOF
-	sed "/@@ Commit message/,/@@ file: A/!d" 0000-* >actual &&
+	sed "/@@ cummit message/,/@@ file: A/!d" 0000-* >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '--left-only/--right-only' '
 	git switch --orphan left-right &&
-	test_commit first &&
-	test_commit unmatched &&
-	test_commit common &&
+	test_cummit first &&
+	test_cummit unmatched &&
+	test_cummit common &&
 	git switch -C left-right first &&
 	git cherry-pick common &&
 

@@ -22,20 +22,20 @@ test_expect_success 'initialize source svn repo' '
 		cd "$SVN_TREE" &&
 		touch foo &&
 		svn_cmd add foo &&
-		svn_cmd commit -m "initial commit" &&
+		svn_cmd cummit -m "initial cummit" &&
 		svn_cmd cp -m branch "$svnrepo"/trunk "$svnrepo"/branches/branch1 &&
 		svn_cmd switch "$svnrepo"/branches/branch1 &&
 		touch bar &&
 		svn_cmd add bar &&
-		svn_cmd commit -m branch1 &&
+		svn_cmd cummit -m branch1 &&
 		svn_cmd cp -m branch "$svnrepo"/branches/branch1 "$svnrepo"/branches/branch2 &&
 		svn_cmd switch "$svnrepo"/branches/branch2 &&
 		touch baz &&
 		svn_cmd add baz &&
-		svn_cmd commit -m branch2 &&
+		svn_cmd cummit -m branch2 &&
 		svn_cmd switch "$svnrepo"/trunk &&
 		svn_cmd merge --reintegrate "$svnrepo"/branches/branch2 &&
-		svn_cmd commit -m "merge branch2"
+		svn_cmd cummit -m "merge branch2"
 	) &&
 	rm -rf "$SVN_TREE"
 '
@@ -45,7 +45,7 @@ test_expect_success 'clone svn repo' '
 	git svn fetch
 '
 
-test_expect_success 'verify merge commit' 'x=$(git rev-parse HEAD^2) &&
+test_expect_success 'verify merge cummit' 'x=$(git rev-parse HEAD^2) &&
 	y=$(git rev-parse origin/branch2) &&
 	test "x$x" = "x$y"
 '

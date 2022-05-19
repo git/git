@@ -12,18 +12,18 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'prepare repository' '
 	echo Hello >init &&
 	git add init &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	git branch B &&
 	mkdir dir &&
 	echo foo >dir/foo &&
 	git add dir/foo &&
-	git commit -m "File: dir/foo" &&
+	git cummit -m "File: dir/foo" &&
 
 	git checkout B &&
 	echo file dir >dir &&
 	git add dir &&
-	git commit -m "File: dir"
+	git cummit -m "File: dir"
 '
 
 test_expect_success 'Merge with d/f conflicts' '
@@ -39,16 +39,16 @@ test_expect_success 'F/D conflict' '
 	echo FILE >before/one &&
 	echo FILE >after &&
 	git add . &&
-	git commit -m first &&
+	git cummit -m first &&
 
 	rm -f after &&
 	git mv before after &&
-	git commit -m move &&
+	git cummit -m move &&
 
 	git checkout -b para HEAD^ &&
 	echo COMPLETELY ANOTHER FILE >another &&
 	git add . &&
-	git commit -m para &&
+	git cummit -m para &&
 
 	git merge main
 '
@@ -60,14 +60,14 @@ test_expect_success 'setup modify/delete + directory/file conflict' '
 
 	printf "a\nb\nc\nd\ne\nf\ng\nh\n" >letters &&
 	git add letters &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	# Throw in letters.txt for sorting order fun
 	# ("letters.txt" sorts between "letters" and "letters/file")
 	echo i >>letters &&
 	echo "version 2" >letters.txt &&
 	git add letters letters.txt &&
-	git commit -m modified &&
+	git cummit -m modified &&
 
 	git checkout -b delete HEAD^ &&
 	git rm letters &&
@@ -75,7 +75,7 @@ test_expect_success 'setup modify/delete + directory/file conflict' '
 	>letters/file &&
 	echo "version 1" >letters.txt &&
 	git add letters letters.txt &&
-	git commit -m deleted
+	git cummit -m deleted
 '
 
 test_expect_success 'modify/delete + directory/file conflict' '
@@ -135,7 +135,7 @@ test_expect_success 'Simple merge in repo with interesting pathnames' '
 		>foo/bar/baz &&
 		>foo/bar-2/baz &&
 		git add . &&
-		git commit -m initial &&
+		git cummit -m initial &&
 
 		git branch topic &&
 		git branch other &&
@@ -143,12 +143,12 @@ test_expect_success 'Simple merge in repo with interesting pathnames' '
 		git checkout other &&
 		echo other >foo/bar-2/baz &&
 		git add -u &&
-		git commit -m other &&
+		git cummit -m other &&
 
 		git checkout topic &&
 		echo topic >foo/bar/baz &&
 		git add -u &&
-		git commit -m topic &&
+		git cummit -m topic &&
 
 		git merge other &&
 		git ls-files -s >out &&

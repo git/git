@@ -13,13 +13,13 @@ base_dir=$(pwd)
 
 U=$base_dir/UPLOAD_LOG
 
-# create a commit in repo $1 with name $2
-commit_in () {
+# create a cummit in repo $1 with name $2
+cummit_in () {
 	(
 		cd "$1" &&
 		echo "$2" >"$2" &&
 		git add "$2" &&
-		git commit -m "$2"
+		git cummit -m "$2"
 	)
 }
 
@@ -33,12 +33,12 @@ test_objcount () {
 
 test_expect_success 'preparing first repository' '
 	test_create_repo A &&
-	commit_in A file1
+	cummit_in A file1
 '
 
 test_expect_success 'preparing second repository' '
 	git clone A B &&
-	commit_in B file2 &&
+	cummit_in B file2 &&
 	git -C B repack -ad &&
 	git -C B prune
 '
@@ -81,7 +81,7 @@ test_expect_success 'that reference gets used' '
 '
 
 test_expect_success 'updating origin' '
-	commit_in A file3 &&
+	cummit_in A file3 &&
 	git -C A repack -ad &&
 	git -C A prune
 '
@@ -90,7 +90,7 @@ test_expect_success 'pulling changes from origin' '
 	git -C C pull --no-rebase origin
 '
 
-# the 2 local objects are commit and tree from the merge
+# the 2 local objects are cummit and tree from the merge
 test_expect_success 'that alternate to origin gets used' '
 	test_objcount C 2
 '
@@ -99,20 +99,20 @@ test_expect_success 'pulling changes from origin' '
 	git -C D pull --no-rebase origin
 '
 
-# the 5 local objects are expected; file3 blob, commit in A to add it
-# and its tree, and 2 are our tree and the merge commit.
+# the 5 local objects are expected; file3 blob, cummit in A to add it
+# and its tree, and 2 are our tree and the merge cummit.
 test_expect_success 'check objects expected to exist locally' '
 	test_objcount D 5
 '
 
 test_expect_success 'preparing alternate repository #1' '
 	test_create_repo F &&
-	commit_in F file1
+	cummit_in F file1
 '
 
 test_expect_success 'cloning alternate repo #2 and adding changes to repo #1' '
 	git clone F G &&
-	commit_in F file2
+	cummit_in F file2
 '
 
 test_expect_success 'cloning alternate repo #1, using #2 as reference' '
@@ -142,7 +142,7 @@ test_expect_success 'prepare branched repository' '
 		git checkout -b other main^ &&
 		echo other >otherfile &&
 		git add otherfile &&
-		git commit -m other &&
+		git cummit -m other &&
 		git checkout main
 	)
 '
@@ -178,11 +178,11 @@ test_expect_success 'clone using repo pointed at by gitfile as reference' '
 test_expect_success 'clone and dissociate from reference' '
 	git init P &&
 	(
-		cd P && test_commit one
+		cd P && test_cummit one
 	) &&
 	git clone P Q &&
 	(
-		cd Q && test_commit two
+		cd Q && test_cummit two
 	) &&
 	git clone --no-local --reference=P Q R &&
 	git clone --no-local --reference=P --dissociate Q S &&
@@ -196,16 +196,16 @@ test_expect_success 'clone, dissociate from partial reference and repack' '
 	git init P &&
 	(
 		cd P &&
-		test_commit one &&
+		test_cummit one &&
 		git repack &&
-		test_commit two &&
+		test_cummit two &&
 		git repack
 	) &&
 	git clone --bare P Q &&
 	(
 		cd P &&
 		git checkout -b second &&
-		test_commit three &&
+		test_cummit three &&
 		git repack
 	) &&
 	git clone --bare --dissociate --reference=P Q R &&
@@ -216,7 +216,7 @@ test_expect_success 'clone, dissociate from partial reference and repack' '
 test_expect_success 'clone, dissociate from alternates' '
 	rm -fr A B C &&
 	test_create_repo A &&
-	commit_in A file1 &&
+	cummit_in A file1 &&
 	git clone --reference=A A B &&
 	test_line_count = 1 B/.git/objects/info/alternates &&
 	git clone --local --dissociate B C &&
@@ -228,7 +228,7 @@ test_expect_success 'setup repo with garbage in objects/*' '
 	git init S &&
 	(
 		cd S &&
-		test_commit A &&
+		test_cummit A &&
 
 		cd .git/objects &&
 		>.some-hidden-file &&
@@ -283,9 +283,9 @@ test_expect_success SYMLINKS 'setup repo with manually symlinked or unknown file
 	(
 		cd T &&
 		git config gc.auto 0 &&
-		test_commit A &&
+		test_cummit A &&
 		git gc &&
-		test_commit B &&
+		test_cummit B &&
 
 		cd .git/objects &&
 		mv pack packs &&
@@ -328,7 +328,7 @@ test_expect_success SYMLINKS 'clone repo with symlinked or unknown files at obje
 
 	for raw in $(ls T*.raw)
 	do
-		sed -e "s!/../!/Y/!; s![0-9a-f]\{38,\}!Z!" -e "/commit-graph/d" \
+		sed -e "s!/../!/Y/!; s![0-9a-f]\{38,\}!Z!" -e "/cummit-graph/d" \
 		    -e "/multi-pack-index/d" -e "/rev/d" <$raw >$raw.de-sha-1 &&
 		sort $raw.de-sha-1 >$raw.de-sha || return 1
 	done &&

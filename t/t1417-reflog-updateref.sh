@@ -10,9 +10,9 @@ test_expect_success 'setup' '
 	(
 		cd repo &&
 
-		test_commit A &&
-		test_commit B &&
-		test_commit C &&
+		test_cummit A &&
+		test_cummit B &&
+		test_cummit C &&
 
 		cp .git/logs/HEAD HEAD.old &&
 		git reset --hard HEAD~ &&

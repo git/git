@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2007 Kristian Høgsberg <krh@redhat.com>,
  *		 2008 Daniel Barkalow <barkalow@iabervon.org>
- * Based on git-commit.sh by Junio C Hamano and Linus Torvalds
+ * Based on git-cummit.sh by Junio C Hamano and Linus Torvalds
  *
  * Clone a repository into a different directory that does not yet exist.
  */
@@ -525,7 +525,7 @@ static void write_remote_refs(const struct ref *local_refs)
 			die("%s", err.buf);
 	}
 
-	if (initial_ref_transaction_commit(t, &err))
+	if (initial_ref_transaction_cummit(t, &err))
 		die("%s", err.buf);
 
 	strbuf_release(&err);
@@ -619,7 +619,7 @@ static void update_head(const struct ref *our, const struct ref *remote,
 			install_branch_config(0, head, remote_name, our->name);
 		}
 	} else if (our) {
-		struct commit *c = lookup_commit_reference(the_repository,
+		struct cummit *c = lookup_cummit_reference(the_repository,
 							   &our->old_oid);
 		/* --branch specifies a non-branch (i.e. tags), detach HEAD */
 		update_ref(msg, "HEAD", &c->object.oid, NULL, REF_NO_DEREF,
@@ -702,7 +702,7 @@ static int checkout(int submodule_progress, int filter_submodules)
 
 	tree = parse_tree_indirect(&oid);
 	if (!tree)
-		die(_("unable to parse commit %s"), oid_to_hex(&oid));
+		die(_("unable to parse cummit %s"), oid_to_hex(&oid));
 	parse_tree(tree);
 	init_tree_desc(&t, tree->buffer, tree->size);
 	if (unpack_trees(1, &t, &opts) < 0)
@@ -710,7 +710,7 @@ static int checkout(int submodule_progress, int filter_submodules)
 
 	free(head);
 
-	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
+	if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
 		die(_("unable to write new index file"));
 
 	err |= run_hooks_l("post-checkout", oid_to_hex(null_oid()),

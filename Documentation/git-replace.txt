@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git replace' [-f] <object> <replacement>
 'git replace' [-f] --edit <object>
-'git replace' [-f] --graft <commit> [<parent>...]
+'git replace' [-f] --graft <cummit> [<parent>...]
 'git replace' [-f] --convert-graft-file
 'git replace' -d <object>...
 'git replace' [--format=<format>] [-l [<pattern>]]
@@ -29,7 +29,7 @@ This restriction can be bypassed using `-f`.
 Unless `-f` is given, the 'replace' reference must not yet exist.
 
 There is no other restriction on the replaced and replacement objects.
-Merge commits can be replaced by non-merge commits and vice versa.
+Merge cummits can be replaced by non-merge cummits and vice versa.
 
 Replacement references will be used by default by all Git commands
 except those doing reachability traversal (prune, pack transfer and
@@ -38,19 +38,19 @@ fsck).
 It is possible to disable use of replacement references for any
 command using the `--no-replace-objects` option just after 'git'.
 
-For example if commit 'foo' has been replaced by commit 'bar':
+For example if cummit 'foo' has been replaced by cummit 'bar':
 
 ------------------------------------------------
-$ git --no-replace-objects cat-file commit foo
+$ git --no-replace-objects cat-file cummit foo
 ------------------------------------------------
 
-shows information about commit 'foo', while:
+shows information about cummit 'foo', while:
 
 ------------------------------------------------
-$ git cat-file commit foo
+$ git cat-file cummit foo
 ------------------------------------------------
 
-shows information about commit 'bar'.
+shows information about cummit 'bar'.
 
 The `GIT_NO_REPLACE_OBJECTS` environment variable can be set to
 achieve the same effect as the `--no-replace-objects` option.
@@ -83,16 +83,16 @@ OPTIONS
 	cannot be pretty-printed. Note that you may need to configure
 	your editor to cleanly read and write binary data.
 
---graft <commit> [<parent>...]::
-	Create a graft commit. A new commit is created with the same
-	content as <commit> except that its parents will be
-	[<parent>...] instead of <commit>'s parents. A replacement ref
-	is then created to replace <commit> with the newly created
-	commit. Use `--convert-graft-file` to convert a
+--graft <cummit> [<parent>...]::
+	Create a graft cummit. A new cummit is created with the same
+	content as <cummit> except that its parents will be
+	[<parent>...] instead of <cummit>'s parents. A replacement ref
+	is then created to replace <cummit> with the newly created
+	cummit. Use `--convert-graft-file` to convert a
 	`$GIT_DIR/info/grafts` file and use replace refs instead.
 
 --convert-graft-file::
-	Creates graft commits for all entries in `$GIT_DIR/info/grafts`
+	Creates graft cummits for all entries in `$GIT_DIR/info/grafts`
 	and deletes that file upon success. The purpose is to help users
 	with transitioning off of the now-deprecated graft file.
 
@@ -129,18 +129,18 @@ create replacement objects from existing objects. The `--edit` option
 can also be used with 'git replace' to create a replacement object by
 editing an existing object.
 
-If you want to replace many blobs, trees or commits that are part of a
-string of commits, you may just want to create a replacement string of
-commits and then only replace the commit at the tip of the target
-string of commits with the commit at the tip of the replacement string
-of commits.
+If you want to replace many blobs, trees or cummits that are part of a
+string of cummits, you may just want to create a replacement string of
+cummits and then only replace the cummit at the tip of the target
+string of cummits with the cummit at the tip of the replacement string
+of cummits.
 
 BUGS
 ----
 Comparing blobs or trees that have been replaced with those that
 replace them will not work properly. And using `git reset --hard` to
-go back to a replaced commit will move the branch to the replacement
-commit instead of the replaced commit.
+go back to a replaced cummit will move the branch to the replacement
+cummit instead of the replaced cummit.
 
 There may be other problems when using 'git rev-list' related to
 pending objects.
@@ -151,7 +151,7 @@ linkgit:git-hash-object[1]
 linkgit:git-rebase[1]
 linkgit:git-tag[1]
 linkgit:git-branch[1]
-linkgit:git-commit[1]
+linkgit:git-cummit[1]
 linkgit:git-var[1]
 linkgit:git[1]
 https://github.com/newren/git-filter-repo[git-filter-repo]

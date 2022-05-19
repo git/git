@@ -19,16 +19,16 @@ test_expect_success 'setup corrupt repo' '
 	git init bit-error &&
 	(
 		cd bit-error &&
-		test_commit content &&
+		test_cummit content &&
 		corrupt_byte HEAD:content.t 10
 	) &&
 	git init no-bit-error &&
 	(
-		# distinct commit from bit-error, but containing a
+		# distinct cummit from bit-error, but containing a
 		# non-corrupted version of the same blob
 		cd no-bit-error &&
 		test_tick &&
-		test_commit content
+		test_cummit content
 	)
 '
 
@@ -36,7 +36,7 @@ test_expect_success 'setup repo with missing object' '
 	git init missing &&
 	(
 		cd missing &&
-		test_commit content &&
+		test_cummit content &&
 		rm -f "$(obj_to_file HEAD:content.t)"
 	)
 '
@@ -45,7 +45,7 @@ test_expect_success 'setup repo with misnamed object' '
 	git init misnamed &&
 	(
 		cd misnamed &&
-		test_commit content &&
+		test_cummit content &&
 		good=$(obj_to_file HEAD:content.t) &&
 		blob=$(echo corrupt | git hash-object -w --stdin) &&
 		bad=$(obj_to_file $blob) &&
@@ -132,8 +132,8 @@ test_expect_success 'internal tree objects are not "missing"' '
 	(
 		cd missing-empty &&
 		empty_tree=$(git hash-object -t tree /dev/null) &&
-		commit=$(echo foo | git commit-tree $empty_tree) &&
-		git rev-list --objects $commit
+		cummit=$(echo foo | git cummit-tree $empty_tree) &&
+		git rev-list --objects $cummit
 	)
 '
 

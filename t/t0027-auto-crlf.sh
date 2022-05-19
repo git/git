@@ -48,7 +48,7 @@ create_gitattributes () {
 # Create 2 sets of files:
 # The NNO files are "Not NOrmalized in the repo. We use CRLF_mix_LF and store
 #   it under different names for the different test cases, see ${pfx}
-#   Depending on .gitattributes they are normalized at the next commit (or not)
+#   Depending on .gitattributes they are normalized at the next cummit (or not)
 # The MIX files have different contents in the repo.
 #   Depending on its contents, the "new safer autocrlf" may kick in.
 create_NNO_MIX_files () {
@@ -86,7 +86,7 @@ check_warning () {
 	test_cmp "$2".expect "$2".actual
 }
 
-commit_check_warn () {
+cummit_check_warn () {
 	crlf=$1
 	attr=$2
 	lfname=$3
@@ -102,7 +102,7 @@ commit_check_warn () {
 		cp $f $fname &&
 		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
 	done &&
-	git commit -m "core.autocrlf $crlf" &&
+	git cummit -m "core.autocrlf $crlf" &&
 	check_warning "$lfname" ${pfx}_LF.err &&
 	check_warning "$crlfname" ${pfx}_CRLF.err &&
 	check_warning "$lfmixcrlf" ${pfx}_CRLF_mix_LF.err &&
@@ -110,7 +110,7 @@ commit_check_warn () {
 	check_warning "$crlfnul" ${pfx}_CRLF_nul.err
 }
 
-commit_chk_wrnNNO () {
+cummit_chk_wrnNNO () {
 	attr=$1 ; shift
 	aeol=$1 ; shift
 	crlf=$1 ; shift
@@ -120,7 +120,7 @@ commit_chk_wrnNNO () {
 	lfmixcr=$1 ; shift
 	crlfnul=$1 ; shift
 	pfx=NNO_attr_${attr}_aeol_${aeol}_${crlf}
-	#Commit files on top of existing file
+	#cummit files on top of existing file
 	create_gitattributes "$attr" $aeol &&
 	for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
 	do
@@ -130,29 +130,29 @@ commit_chk_wrnNNO () {
 		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
 	done
 
-	test_expect_success "commit NNO files crlf=$crlf attr=$attr LF" '
+	test_expect_success "cummit NNO files crlf=$crlf attr=$attr LF" '
 		check_warning "$lfwarn" ${pfx}_LF.err
 	'
-	test_expect_success "commit NNO files attr=$attr aeol=$aeol crlf=$crlf CRLF" '
+	test_expect_success "cummit NNO files attr=$attr aeol=$aeol crlf=$crlf CRLF" '
 		check_warning "$crlfwarn" ${pfx}_CRLF.err
 	'
 
-	test_expect_success "commit NNO files attr=$attr aeol=$aeol crlf=$crlf CRLF_mix_LF" '
+	test_expect_success "cummit NNO files attr=$attr aeol=$aeol crlf=$crlf CRLF_mix_LF" '
 		check_warning "$lfmixcrlf" ${pfx}_CRLF_mix_LF.err
 	'
 
-	test_expect_success "commit NNO files attr=$attr aeol=$aeol crlf=$crlf LF_mix_cr" '
+	test_expect_success "cummit NNO files attr=$attr aeol=$aeol crlf=$crlf LF_mix_cr" '
 		check_warning "$lfmixcr" ${pfx}_LF_mix_CR.err
 	'
 
-	test_expect_success "commit NNO files attr=$attr aeol=$aeol crlf=$crlf CRLF_nul" '
+	test_expect_success "cummit NNO files attr=$attr aeol=$aeol crlf=$crlf CRLF_nul" '
 		check_warning "$crlfnul" ${pfx}_CRLF_nul.err
 	'
 }
 
-# Commit a file with mixed line endings on top of different files
+# cummit a file with mixed line endings on top of different files
 # in the index. Check for warnings
-commit_MIX_chkwrn () {
+cummit_MIX_chkwrn () {
 	attr=$1 ; shift
 	aeol=$1 ; shift
 	crlf=$1 ; shift
@@ -162,7 +162,7 @@ commit_MIX_chkwrn () {
 	lfmixcr=$1 ; shift
 	crlfnul=$1 ; shift
 	pfx=MIX_attr_${attr}_aeol_${aeol}_${crlf}
-	#Commit file with CLRF_mix_LF on top of existing file
+	#cummit file with CLRF_mix_LF on top of existing file
 	create_gitattributes "$attr" $aeol &&
 	for f in LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul
 	do
@@ -172,22 +172,22 @@ commit_MIX_chkwrn () {
 		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
 	done
 
-	test_expect_success "commit file with mixed EOL onto LF crlf=$crlf attr=$attr" '
+	test_expect_success "cummit file with mixed EOL onto LF crlf=$crlf attr=$attr" '
 		check_warning "$lfwarn" ${pfx}_LF.err
 	'
-	test_expect_success "commit file with mixed EOL onto CLRF attr=$attr aeol=$aeol crlf=$crlf" '
+	test_expect_success "cummit file with mixed EOL onto CLRF attr=$attr aeol=$aeol crlf=$crlf" '
 		check_warning "$crlfwarn" ${pfx}_CRLF.err
 	'
 
-	test_expect_success "commit file with mixed EOL onto CRLF_mix_LF attr=$attr aeol=$aeol crlf=$crlf" '
+	test_expect_success "cummit file with mixed EOL onto CRLF_mix_LF attr=$attr aeol=$aeol crlf=$crlf" '
 		check_warning "$lfmixcrlf" ${pfx}_CRLF_mix_LF.err
 	'
 
-	test_expect_success "commit file with mixed EOL onto LF_mix_cr attr=$attr aeol=$aeol crlf=$crlf " '
+	test_expect_success "cummit file with mixed EOL onto LF_mix_cr attr=$attr aeol=$aeol crlf=$crlf " '
 		check_warning "$lfmixcr" ${pfx}_LF_mix_CR.err
 	'
 
-	test_expect_success "commit file with mixed EOL onto CRLF_nul attr=$attr aeol=$aeol crlf=$crlf" '
+	test_expect_success "cummit file with mixed EOL onto CRLF_nul attr=$attr aeol=$aeol crlf=$crlf" '
 		check_warning "$crlfnul" ${pfx}_CRLF_nul.err
 	'
 }
@@ -372,7 +372,7 @@ test_expect_success 'setup main' '
 	echo >.gitattributes &&
 	git checkout -b main &&
 	git add .gitattributes &&
-	git commit -m "add .gitattributes" . &&
+	git cummit -m "add .gitattributes" . &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\nLINEONE\nLINETWO\nLINETHREE"     >LF &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\r\nLINEONE\r\nLINETWO\r\nLINETHREE" >CRLF &&
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\nLINEONE\r\nLINETWO\nLINETHREE"   >CRLF_mix_LF &&
@@ -382,7 +382,7 @@ test_expect_success 'setup main' '
 	printf "\$Id: 0000000000000000000000000000000000000000 \$\nLINEONEQ\nLINETWO\nLINETHREE" | q_to_nul >LF_nul &&
 	create_NNO_MIX_files &&
 	git -c core.autocrlf=false add NNO_*.txt MIX_*.txt &&
-	git commit -m "mixed line endings" &&
+	git cummit -m "mixed line endings" &&
 	test_tick
 '
 
@@ -408,104 +408,104 @@ else
 fi
 
 #                         attr   LF        CRLF      CRLFmixLF LFmixCR   CRLFNUL
-test_expect_success 'commit files empty attr' '
-	commit_check_warn false ""     ""        ""        ""        ""        "" &&
-	commit_check_warn true  ""     "LF_CRLF" ""        "LF_CRLF" ""        "" &&
-	commit_check_warn input ""     ""        "CRLF_LF" "CRLF_LF" ""        ""
+test_expect_success 'cummit files empty attr' '
+	cummit_check_warn false ""     ""        ""        ""        ""        "" &&
+	cummit_check_warn true  ""     "LF_CRLF" ""        "LF_CRLF" ""        "" &&
+	cummit_check_warn input ""     ""        "CRLF_LF" "CRLF_LF" ""        ""
 '
 
-test_expect_success 'commit files attr=auto' '
-	commit_check_warn false "auto" "$WILC"   "$WICL"   "$WAMIX"  ""        "" &&
-	commit_check_warn true  "auto" "LF_CRLF" ""        "LF_CRLF" ""        "" &&
-	commit_check_warn input "auto" ""        "CRLF_LF" "CRLF_LF" ""        ""
+test_expect_success 'cummit files attr=auto' '
+	cummit_check_warn false "auto" "$WILC"   "$WICL"   "$WAMIX"  ""        "" &&
+	cummit_check_warn true  "auto" "LF_CRLF" ""        "LF_CRLF" ""        "" &&
+	cummit_check_warn input "auto" ""        "CRLF_LF" "CRLF_LF" ""        ""
 '
 
-test_expect_success 'commit files attr=text' '
-	commit_check_warn false "text" "$WILC"   "$WICL"   "$WAMIX"  "$WILC"   "$WICL"   &&
-	commit_check_warn true  "text" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" ""        &&
-	commit_check_warn input "text" ""        "CRLF_LF" "CRLF_LF" ""        "CRLF_LF"
+test_expect_success 'cummit files attr=text' '
+	cummit_check_warn false "text" "$WILC"   "$WICL"   "$WAMIX"  "$WILC"   "$WICL"   &&
+	cummit_check_warn true  "text" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" ""        &&
+	cummit_check_warn input "text" ""        "CRLF_LF" "CRLF_LF" ""        "CRLF_LF"
 '
 
-test_expect_success 'commit files attr=-text' '
-	commit_check_warn false "-text" ""       ""        ""        ""        "" &&
-	commit_check_warn true  "-text" ""       ""        ""        ""        "" &&
-	commit_check_warn input "-text" ""       ""        ""        ""        ""
+test_expect_success 'cummit files attr=-text' '
+	cummit_check_warn false "-text" ""       ""        ""        ""        "" &&
+	cummit_check_warn true  "-text" ""       ""        ""        ""        "" &&
+	cummit_check_warn input "-text" ""       ""        ""        ""        ""
 '
 
-test_expect_success 'commit files attr=lf' '
-	commit_check_warn false "lf"    ""       "CRLF_LF" "CRLF_LF"  ""       "CRLF_LF" &&
-	commit_check_warn true  "lf"    ""       "CRLF_LF" "CRLF_LF"  ""       "CRLF_LF" &&
-	commit_check_warn input "lf"    ""       "CRLF_LF" "CRLF_LF"  ""       "CRLF_LF"
+test_expect_success 'cummit files attr=lf' '
+	cummit_check_warn false "lf"    ""       "CRLF_LF" "CRLF_LF"  ""       "CRLF_LF" &&
+	cummit_check_warn true  "lf"    ""       "CRLF_LF" "CRLF_LF"  ""       "CRLF_LF" &&
+	cummit_check_warn input "lf"    ""       "CRLF_LF" "CRLF_LF"  ""       "CRLF_LF"
 '
 
-test_expect_success 'commit files attr=crlf' '
-	commit_check_warn false "crlf" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" "" &&
-	commit_check_warn true  "crlf" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" "" &&
-	commit_check_warn input "crlf" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" ""
+test_expect_success 'cummit files attr=crlf' '
+	cummit_check_warn false "crlf" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" "" &&
+	cummit_check_warn true  "crlf" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" "" &&
+	cummit_check_warn input "crlf" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" ""
 '
 
-# Commit "CRLFmixLF" on top of these files already in the repo:
+# cummit "CRLFmixLF" on top of these files already in the repo:
 #                                         mixed     mixed     mixed       mixed       mixed
 #                                         onto      onto      onto        onto        onto
 #                 attr                    LF        CRLF      CRLFmixLF   LF_mix_CR   CRLFNUL
-commit_MIX_chkwrn ""      ""      false   ""        ""        ""          ""          ""
-commit_MIX_chkwrn ""      ""      true    "LF_CRLF" ""        ""          "LF_CRLF"   "LF_CRLF"
-commit_MIX_chkwrn ""      ""      input   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
+cummit_MIX_chkwrn ""      ""      false   ""        ""        ""          ""          ""
+cummit_MIX_chkwrn ""      ""      true    "LF_CRLF" ""        ""          "LF_CRLF"   "LF_CRLF"
+cummit_MIX_chkwrn ""      ""      input   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
 
-commit_MIX_chkwrn "auto"  ""      false   "$WAMIX"  ""        ""          "$WAMIX"    "$WAMIX"
-commit_MIX_chkwrn "auto"  ""      true    "LF_CRLF" ""        ""          "LF_CRLF"   "LF_CRLF"
-commit_MIX_chkwrn "auto"  ""      input   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
+cummit_MIX_chkwrn "auto"  ""      false   "$WAMIX"  ""        ""          "$WAMIX"    "$WAMIX"
+cummit_MIX_chkwrn "auto"  ""      true    "LF_CRLF" ""        ""          "LF_CRLF"   "LF_CRLF"
+cummit_MIX_chkwrn "auto"  ""      input   "CRLF_LF" ""        ""          "CRLF_LF"   "CRLF_LF"
 
 #                 attr                    LF        CRLF      CRLFmixLF   LF_mix_CR   CRLFNUL
-commit_chk_wrnNNO ""      ""      false   ""        ""        ""          ""          ""
-commit_chk_wrnNNO ""      ""      true    LF_CRLF   ""        ""          ""          ""
-commit_chk_wrnNNO ""      ""      input   ""        ""        ""          ""          ""
+cummit_chk_wrnNNO ""      ""      false   ""        ""        ""          ""          ""
+cummit_chk_wrnNNO ""      ""      true    LF_CRLF   ""        ""          ""          ""
+cummit_chk_wrnNNO ""      ""      input   ""        ""        ""          ""          ""
 
-commit_chk_wrnNNO "auto"  ""      false   "$WILC"   ""        ""          ""          ""
-commit_chk_wrnNNO "auto"  ""      true    LF_CRLF   ""        ""          ""          ""
-commit_chk_wrnNNO "auto"  ""      input   ""        ""        ""          ""          ""
+cummit_chk_wrnNNO "auto"  ""      false   "$WILC"   ""        ""          ""          ""
+cummit_chk_wrnNNO "auto"  ""      true    LF_CRLF   ""        ""          ""          ""
+cummit_chk_wrnNNO "auto"  ""      input   ""        ""        ""          ""          ""
 for crlf in true false input
 do
-	commit_chk_wrnNNO -text ""      $crlf   ""        ""        ""          ""          ""
-	commit_chk_wrnNNO -text lf      $crlf   ""        ""        ""          ""          ""
-	commit_chk_wrnNNO -text crlf    $crlf   ""        ""        ""          ""          ""
-	commit_chk_wrnNNO ""    lf      $crlf   ""       CRLF_LF    CRLF_LF      ""         CRLF_LF
-	commit_chk_wrnNNO ""    crlf    $crlf   LF_CRLF   ""        LF_CRLF     LF_CRLF     ""
-	commit_chk_wrnNNO auto  lf    	$crlf   ""        ""        ""          ""          ""
-	commit_chk_wrnNNO auto  crlf  	$crlf   LF_CRLF   ""        ""          ""          ""
-	commit_chk_wrnNNO text  lf    	$crlf   ""       CRLF_LF    CRLF_LF     ""          CRLF_LF
-	commit_chk_wrnNNO text  crlf  	$crlf   LF_CRLF   ""        LF_CRLF     LF_CRLF     ""
+	cummit_chk_wrnNNO -text ""      $crlf   ""        ""        ""          ""          ""
+	cummit_chk_wrnNNO -text lf      $crlf   ""        ""        ""          ""          ""
+	cummit_chk_wrnNNO -text crlf    $crlf   ""        ""        ""          ""          ""
+	cummit_chk_wrnNNO ""    lf      $crlf   ""       CRLF_LF    CRLF_LF      ""         CRLF_LF
+	cummit_chk_wrnNNO ""    crlf    $crlf   LF_CRLF   ""        LF_CRLF     LF_CRLF     ""
+	cummit_chk_wrnNNO auto  lf    	$crlf   ""        ""        ""          ""          ""
+	cummit_chk_wrnNNO auto  crlf  	$crlf   LF_CRLF   ""        ""          ""          ""
+	cummit_chk_wrnNNO text  lf    	$crlf   ""       CRLF_LF    CRLF_LF     ""          CRLF_LF
+	cummit_chk_wrnNNO text  crlf  	$crlf   LF_CRLF   ""        LF_CRLF     LF_CRLF     ""
 done
 
-commit_chk_wrnNNO "text"  ""      false   "$WILC"   "$WICL"   "$WAMIX"    "$WILC"     "$WICL"
-commit_chk_wrnNNO "text"  ""      true    LF_CRLF   ""        LF_CRLF     LF_CRLF     ""
-commit_chk_wrnNNO "text"  ""      input   ""        CRLF_LF   CRLF_LF     ""          CRLF_LF
+cummit_chk_wrnNNO "text"  ""      false   "$WILC"   "$WICL"   "$WAMIX"    "$WILC"     "$WICL"
+cummit_chk_wrnNNO "text"  ""      true    LF_CRLF   ""        LF_CRLF     LF_CRLF     ""
+cummit_chk_wrnNNO "text"  ""      input   ""        CRLF_LF   CRLF_LF     ""          CRLF_LF
 
-test_expect_success 'commit NNO and cleanup' '
-	git commit -m "commit files on top of NNO" &&
+test_expect_success 'cummit NNO and cleanup' '
+	git cummit -m "cummit files on top of NNO" &&
 	rm -f *.txt &&
 	git -c core.autocrlf=false reset --hard
 '
 
-test_expect_success 'commit empty gitattribues' '
+test_expect_success 'cummit empty gitattribues' '
 	check_files_in_repo false ""      LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul &&
 	check_files_in_repo true  ""      LF LF   LF          LF_mix_CR CRLF_nul &&
 	check_files_in_repo input ""      LF LF   LF          LF_mix_CR CRLF_nul
 '
 
-test_expect_success 'commit text=auto' '
+test_expect_success 'cummit text=auto' '
 	check_files_in_repo false "auto"  LF LF   LF          LF_mix_CR CRLF_nul &&
 	check_files_in_repo true  "auto"  LF LF   LF          LF_mix_CR CRLF_nul &&
 	check_files_in_repo input "auto"  LF LF   LF          LF_mix_CR CRLF_nul
 '
 
-test_expect_success 'commit text' '
+test_expect_success 'cummit text' '
 	check_files_in_repo false "text"  LF LF   LF          LF_mix_CR LF_nul &&
 	check_files_in_repo true  "text"  LF LF   LF          LF_mix_CR LF_nul &&
 	check_files_in_repo input "text"  LF LF   LF          LF_mix_CR LF_nul
 '
 
-test_expect_success 'commit -text' '
+test_expect_success 'cummit -text' '
 	check_files_in_repo false "-text" LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul &&
 	check_files_in_repo true  "-text" LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul &&
 	check_files_in_repo input "-text" LF CRLF CRLF_mix_LF LF_mix_CR CRLF_nul

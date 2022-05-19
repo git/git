@@ -20,19 +20,19 @@ test_expect_success setup '
 	test_write_lines 1 2 3 4 5 6 7 >one &&
 	cat one >two &&
 	git add one two &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	git branch side &&
 
 	test_tick &&
 	test_write_lines 1 two 3 4 5 six 7 >one &&
 	test_write_lines 1 two 3 4 5 6 7 >two &&
-	git commit -a -m main &&
+	git cummit -a -m main &&
 
 	git checkout side &&
 	test_write_lines 1 2 3 4 five 6 7 >one &&
 	test_write_lines 1 2 3 4 five 6 7 >two &&
-	git commit -a -m side &&
+	git cummit -a -m side &&
 
 	git checkout main
 '
@@ -56,7 +56,7 @@ test_apply_with_3way () {
 	# The corresponding conflicted merge
 	git reset --hard &&
 	git checkout main^0 &&
-	test_must_fail git merge --no-commit side &&
+	test_must_fail git merge --no-cummit side &&
 	git ls-files -s >expect.ls &&
 	print_sanitized_conflicted_diff >expect.diff &&
 
@@ -90,7 +90,7 @@ test_expect_success 'apply with --3way with rerere enabled' '
 	# The corresponding conflicted merge
 	git reset --hard &&
 	git checkout main^0 &&
-	test_must_fail git merge --no-commit side &&
+	test_must_fail git merge --no-cummit side &&
 
 	# Manually resolve and record the resolution
 	test_write_lines 1 two 3 4 five six 7 >one &&
@@ -113,19 +113,19 @@ test_expect_success 'apply -3 with add/add conflict setup' '
 	test_write_lines 1 2 3 4 5 6 7 >three &&
 	test_write_lines 1 2 3 4 5 6 7 >four &&
 	git add three four &&
-	git commit -m "add three and four" &&
+	git cummit -m "add three and four" &&
 
 	git checkout -b another adder^ &&
 	test_write_lines 1 2 3 4 5 6 7 >three &&
 	test_write_lines 1 2 3 four 5 6 7 >four &&
 	git add three four &&
-	git commit -m "add three and four" &&
+	git cummit -m "add three and four" &&
 
 	# Merging another should be similar to applying this patch
 	git diff adder...another >P.diff &&
 
 	git checkout adder^0 &&
-	test_must_fail git merge --no-commit another &&
+	test_must_fail git merge --no-cummit another &&
 	git ls-files -s >expect.ls &&
 	print_sanitized_conflicted_diff >expect.diff
 '
@@ -164,15 +164,15 @@ test_expect_success 'apply -3 with ambiguous repeating file' '
 	git reset --hard &&
 	test_write_lines 1 2 1 2 1 2 1 2 1 2 1 >one_two_repeat &&
 	git add one_two_repeat &&
-	git commit -m "init one" &&
+	git cummit -m "init one" &&
 	test_write_lines 1 2 1 2 1 2 1 2 one 2 1 >one_two_repeat &&
-	git commit -a -m "change one" &&
+	git cummit -a -m "change one" &&
 
 	git diff HEAD~ >Repeat.diff &&
 	git reset --hard HEAD~ &&
 
 	test_write_lines 1 2 1 2 1 2 one 2 1 2 one >one_two_repeat &&
-	git commit -a -m "change surrounding one" &&
+	git cummit -a -m "change surrounding one" &&
 
 	git apply --index --3way Repeat.diff &&
 	test_write_lines 1 2 1 2 1 2 one 2 one 2 one >expect &&
@@ -187,7 +187,7 @@ test_expect_success 'apply with --3way --cached clean apply' '
 	# The corresponding cleanly applied merge
 	git reset --hard &&
 	git checkout main~ &&
-	git merge --no-commit side &&
+	git merge --no-cummit side &&
 	git ls-files -s >expect.ls &&
 
 	# should succeed
@@ -212,7 +212,7 @@ test_expect_success 'apply with --3way --cached and conflicts' '
 	# The corresponding conflicted merge
 	git reset --hard &&
 	git checkout main^0 &&
-	test_must_fail git merge --no-commit side &&
+	test_must_fail git merge --no-cummit side &&
 	git ls-files -s >expect.ls &&
 
 	# should fail to apply
@@ -234,7 +234,7 @@ test_expect_success 'apply binary file patch' '
 	git reset --hard main &&
 	cp "$TEST_DIRECTORY/test-binary-1.png" bin.png &&
 	git add bin.png &&
-	git commit -m "add binary file" &&
+	git cummit -m "add binary file" &&
 
 	cp "$TEST_DIRECTORY/test-binary-2.png" bin.png &&
 
@@ -249,7 +249,7 @@ test_expect_success 'apply binary file patch with 3way' '
 	git reset --hard main &&
 	cp "$TEST_DIRECTORY/test-binary-1.png" bin.png &&
 	git add bin.png &&
-	git commit -m "add binary file" &&
+	git cummit -m "add binary file" &&
 
 	cp "$TEST_DIRECTORY/test-binary-2.png" bin.png &&
 
@@ -264,7 +264,7 @@ test_expect_success 'apply full-index patch with 3way' '
 	git reset --hard main &&
 	cp "$TEST_DIRECTORY/test-binary-1.png" bin.png &&
 	git add bin.png &&
-	git commit -m "add binary file" &&
+	git cummit -m "add binary file" &&
 
 	cp "$TEST_DIRECTORY/test-binary-2.png" bin.png &&
 
@@ -283,7 +283,7 @@ test_expect_success 'apply delete then new patch with 3way' '
 	git reset --hard &&
 	test_write_lines 1 > delnew &&
 	git add delnew &&
-	git commit -m "delnew" &&
+	git cummit -m "delnew" &&
 	rm delnew &&
 	git diff >> delete-then-new.patch &&
 	cat new.patch >> delete-then-new.patch &&

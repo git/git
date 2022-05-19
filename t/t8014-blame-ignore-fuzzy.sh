@@ -300,7 +300,7 @@ last_test=13
 test_expect_success setup '
 	for i in $(test_seq 2 $last_test)
 	do
-		# Append each line in a separate commit to make it easy to
+		# Append each line in a separate cummit to make it easy to
 		# check which original line the blame output relates to.
 
 		line_count=0 &&
@@ -310,7 +310,7 @@ test_expect_success setup '
 			echo "$line" >>"$i" &&
 			git add "$i" &&
 			test_tick &&
-			GIT_AUTHOR_NAME="$line_count" git commit -m "$line_count" || return 1
+			GIT_AUTHOR_NAME="$line_count" git cummit -m "$line_count" || return 1
 		done <"a$i"
 	done &&
 
@@ -322,9 +322,9 @@ test_expect_success setup '
 	done &&
 	test_tick &&
 
-	# Commit the final content all at once so it can all be
-	# referred to with the same commit ID.
-	GIT_AUTHOR_NAME=Final git commit -m Final &&
+	# cummit the final content all at once so it can all be
+	# referred to with the same cummit ID.
+	GIT_AUTHOR_NAME=Final git cummit -m Final &&
 
 	IGNOREME=$(git rev-parse HEAD)
 '
@@ -343,18 +343,18 @@ test_expect_success 'Diff chunks with no suspects' '
 	test_write_lines xy1 A B C xy1 >file &&
 	git add file &&
 	test_tick &&
-	GIT_AUTHOR_NAME=1 git commit -m 1 &&
+	GIT_AUTHOR_NAME=1 git cummit -m 1 &&
 
 	test_write_lines xy2 A B xy2 C xy2 >file &&
 	git add file &&
 	test_tick &&
-	GIT_AUTHOR_NAME=2 git commit -m 2 &&
+	GIT_AUTHOR_NAME=2 git cummit -m 2 &&
 	REV_2=$(git rev-parse HEAD) &&
 
 	test_write_lines xy3 A >file &&
 	git add file &&
 	test_tick &&
-	GIT_AUTHOR_NAME=3 git commit -m 3 &&
+	GIT_AUTHOR_NAME=3 git cummit -m 3 &&
 	REV_3=$(git rev-parse HEAD) &&
 
 	test_write_lines 1 1 >expected &&
@@ -369,23 +369,23 @@ test_expect_success 'position matching' '
 	test_write_lines abc def >file2 &&
 	git add file2 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=1 git commit -m 1 &&
+	GIT_AUTHOR_NAME=1 git cummit -m 1 &&
 
 	test_write_lines abc def abc def >file2 &&
 	git add file2 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=2 git commit -m 2 &&
+	GIT_AUTHOR_NAME=2 git cummit -m 2 &&
 
 	test_write_lines abcx defx abcx defx >file2 &&
 	git add file2 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=3 git commit -m 3 &&
+	GIT_AUTHOR_NAME=3 git cummit -m 3 &&
 	REV_3=$(git rev-parse HEAD) &&
 
 	test_write_lines abcy defy abcx defx >file2 &&
 	git add file2 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=4 git commit -m 4 &&
+	GIT_AUTHOR_NAME=4 git cummit -m 4 &&
 	REV_4=$(git rev-parse HEAD) &&
 
 	test_write_lines 1 1 2 2 >expected &&
@@ -402,28 +402,28 @@ test_expect_success 'preserve order' '
 	test_write_lines bcde >file3 &&
 	git add file3 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=1 git commit -m 1 &&
+	GIT_AUTHOR_NAME=1 git cummit -m 1 &&
 
 	test_write_lines bcde fghij >file3 &&
 	git add file3 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=2 git commit -m 2 &&
+	GIT_AUTHOR_NAME=2 git cummit -m 2 &&
 
 	test_write_lines bcde fghij abcd >file3 &&
 	git add file3 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=3 git commit -m 3 &&
+	GIT_AUTHOR_NAME=3 git cummit -m 3 &&
 
 	test_write_lines abcdx fghijx bcdex >file3 &&
 	git add file3 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=4 git commit -m 4 &&
+	GIT_AUTHOR_NAME=4 git cummit -m 4 &&
 	REV_4=$(git rev-parse HEAD) &&
 
 	test_write_lines abcdx fghijy bcdex >file3 &&
 	git add file3 &&
 	test_tick &&
-	GIT_AUTHOR_NAME=5 git commit -m 5 &&
+	GIT_AUTHOR_NAME=5 git cummit -m 5 &&
 	REV_5=$(git rev-parse HEAD) &&
 
 	test_write_lines 1 2 3 >expected &&

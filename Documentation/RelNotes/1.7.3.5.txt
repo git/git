@@ -12,23 +12,23 @@ Git 1.7.3.5 Release Notes
  * "git status -s" did not quote unprintable characters in paths as
    documented.
 
- * "git am --abort" used to always reset to the commit at the beginning of
-   the last "am" invocation that has stopped, losing any unrelated commits
+ * "git am --abort" used to always reset to the cummit at the beginning of
+   the last "am" invocation that has stopped, losing any unrelated cummits
    that may have been made since then.  Now it refrains from doing so and
    instead issues a warning.
 
  * "git blame" incorrectly reused bogusly cached result of textconv
    filter for files from the working tree.
 
- * "git commit" used to abort after the user edited the log message
-   when the committer information was not correctly set up.  It now
+ * "git cummit" used to abort after the user edited the log message
+   when the cummitter information was not correctly set up.  It now
    aborts before starting the editor.
 
- * "git commit --date=invalid" used to silently ignore the incorrectly
+ * "git cummit --date=invalid" used to silently ignore the incorrectly
    specified date; it is now diagnosed as an error.
 
- * "git rebase --skip" to skip the last commit in a series used to fail
-   to run post-rewrite hook and to copy notes from old commits that have
+ * "git rebase --skip" to skip the last cummit in a series used to fail
+   to run post-rewrite hook and to copy notes from old cummits that have
    successfully been rebased so far.  Now it do (backmerge ef88ad2).
 
  * "gitweb" tried to show a wrong feed logo when none was specified.

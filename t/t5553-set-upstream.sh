@@ -35,11 +35,11 @@ test_expect_success 'setup bare parent fetch' '
 	git remote add upstream parent
 '
 
-test_expect_success 'setup commit on main and other fetch' '
-	test_commit one &&
+test_expect_success 'setup cummit on main and other fetch' '
+	test_cummit one &&
 	git push upstream main &&
 	git checkout -b other &&
-	test_commit two &&
+	test_cummit two &&
 	git push upstream other
 '
 
@@ -110,10 +110,10 @@ test_expect_success 'setup bare parent pull' '
 	git remote add upstream parent
 '
 
-test_expect_success 'setup commit on main and other pull' '
-	test_commit three &&
+test_expect_success 'setup cummit on main and other pull' '
+	test_cummit three &&
 	git push --tags upstream main &&
-	test_commit four &&
+	test_cummit four &&
 	git push upstream other
 '
 

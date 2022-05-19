@@ -8,7 +8,7 @@ test_expect_success setup '
 	>file &&
 	git add . &&
 	test_tick &&
-	git commit -m Initial &&
+	git cummit -m Initial &&
 	git branch b-0 &&
 	git branch b1 &&
 	git branch b/one &&

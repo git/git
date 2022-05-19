@@ -35,7 +35,7 @@ test_expect_success 'blame color by age: new code is different' '
 		void qfunc();
 	EOF
 	git add hello.c &&
-	GIT_AUTHOR_DATE="" git commit -m "new commit" &&
+	GIT_AUTHOR_DATE="" git cummit -m "new cummit" &&
 
 	git -c color.blame.highlightRecent="yellow,1 month ago, cyan" blame --color-by-age hello.c >actual.raw &&
 	test_decode_color <actual.raw >actual &&

@@ -47,12 +47,12 @@ This file was added on branch B_MIXED.  It never existed on trunk.
 
 1.1.2.2
 log
-@A single commit affecting one file on branch B_MIXED and one on trunk.
+@A single cummit affecting one file on branch B_MIXED and one on trunk.
 @
 text
 @a1 3
 
-The same commit added these two lines here on branch B_MIXED, and two
+The same cummit added these two lines here on branch B_MIXED, and two
 similar lines to ./default on trunk.
 @
 

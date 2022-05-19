@@ -32,7 +32,7 @@ submodule via a `gitlink` entry in the tree at `path/to/bar` and an entry
 in its `.gitmodules` file (see linkgit:gitmodules[5]) of the form
 `submodule.foo.path = path/to/bar`.
 
-The `gitlink` entry contains the object name of the commit that the
+The `gitlink` entry contains the object name of the cummit that the
 superproject expects the submodule's working directory to be at.
 
 The section `submodule.foo.*` in the `.gitmodules` file gives additional
@@ -151,14 +151,14 @@ the superproject's `$GIT_DIR/config` file, so the superproject's history
 is not affected. This can be undone using `git submodule init`.
 
  * Deleted submodule: A submodule can be deleted by running
-`git rm <submodule path> && git commit`. This can be undone
+`git rm <submodule path> && git cummit`. This can be undone
 using `git revert`.
 +
 The deletion removes the superproject's tracking data, which are
 both the `gitlink` entry and the section in the `.gitmodules` file.
 The submodule's working directory is removed from the file
 system, but the Git directory is kept around as it to make it
-possible to checkout past commits without requiring fetching
+possible to checkout past cummits without requiring fetching
 from another repository.
 +
 To completely remove a submodule, manually delete
@@ -231,7 +231,7 @@ Workflow for a third party library
   # Occasionally update the submodule to a new version:
   git -C <path> checkout <new version>
   git add <path>
-  git commit -m "update submodule to new version"
+  git cummit -m "update submodule to new version"
 
   # See the list of submodules in a superproject
   git submodule status

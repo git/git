@@ -36,13 +36,13 @@ jobs:
           # - For a forced push, "$base" may be unreachable.
           # - For a "pull_request_target" event, "$head" may be unreachable.
           args=
-          for commit in \
+          for cummit in \
             ${{ steps.setup-tips.outputs.base }} \
             ${{ steps.setup-tips.outputs.head }}
           do
-            case $commit in
+            case $cummit in
             *[^0]*)
-              args="$args $commit"
+              args="$args $cummit"
               ;;
             *)
               # Should not fetch ZERO-OID.
@@ -67,10 +67,10 @@ jobs:
           sudo apt-get update -q &&
           sudo apt-get install -q -y gettext
       - name: Run git-po-helper
-        id: check-commits
+        id: check-cummits
         run: |
           exit_code=0
-          git-po-helper check-commits \
+          git-po-helper check-cummits \
             --github-action-event="${{ github.event_name }}" -- \
             ${{ steps.setup-tips.outputs.base }}..${{ steps.setup-tips.outputs.head }} \
             >git-po-helper.out 2>&1 || exit_code=$?
@@ -94,7 +94,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           repo-token-user-login: 'github-actions[bot]'
           message: >
-            ${{ steps.check-commits.outcome == 'failure' && 'Errors and warnings' || 'Warnings' }}
+            ${{ steps.check-cummits.outcome == 'failure' && 'Errors and warnings' || 'Warnings' }}
             found by [git-po-helper](https://github.com/git-l10n/git-po-helper#readme) in workflow
             [#${{ github.run_number }}](${{ env.GITHUB_SERVER_URL }}/${{ github.repository }}/actions/runs/${{ github.run_id }}):
 

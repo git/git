@@ -32,31 +32,31 @@ Initial setup:
 
 test_expect_success 'setup' '
 	git switch -C primary &&
-	test_commit A file1 &&
-	test_commit B file1 &&
-	test_commit C file2 &&
-	test_commit D file1 &&
-	test_commit E file3 &&
+	test_cummit A file1 &&
+	test_cummit B file1 &&
+	test_cummit C file2 &&
+	test_cummit D file1 &&
+	test_cummit E file3 &&
 	git checkout -b branch1 A &&
-	test_commit F file4 &&
-	test_commit G file1 &&
+	test_cummit F file4 &&
+	test_cummit G file1 &&
 	test_commit H file5 &&
 	git checkout -b branch2 F &&
-	test_commit I file6 &&
+	test_cummit I file6 &&
 	git checkout -b conflict-branch A &&
-	test_commit one conflict &&
-	test_commit two conflict &&
-	test_commit three conflict &&
-	test_commit four conflict &&
+	test_cummit one conflict &&
+	test_cummit two conflict &&
+	test_cummit three conflict &&
+	test_cummit four conflict &&
 	git checkout -b no-conflict-branch A &&
-	test_commit J fileJ &&
-	test_commit K fileK &&
-	test_commit L fileL &&
-	test_commit M fileM &&
+	test_cummit J fileJ &&
+	test_cummit K fileK &&
+	test_cummit L fileL &&
+	test_cummit M fileM &&
 	git checkout -b no-ff-branch A &&
-	test_commit N fileN &&
-	test_commit O fileO &&
-	test_commit P fileP
+	test_cummit N fileN &&
+	test_cummit O fileO &&
+	test_cummit P fileP
 '
 
 # "exec" commands are run with the user shell by default, but this may
@@ -68,7 +68,7 @@ export SHELL
 
 test_expect_success 'rebase --keep-empty' '
 	git checkout -b emptybranch primary &&
-	git commit --allow-empty -m "empty" &&
+	git cummit --allow-empty -m "empty" &&
 	git rebase --keep-empty -i HEAD~2 &&
 	git log --oneline >actual &&
 	test_line_count = 6 actual
@@ -196,7 +196,7 @@ test_expect_success 'no changes are a nop' '
 test_expect_success 'test the [branch] option' '
 	git checkout -b dead-end &&
 	git rm file6 &&
-	git commit -m "stop here" &&
+	git cummit -m "stop here" &&
 	git rebase -i F branch2 &&
 	test "$(git symbolic-ref -q HEAD)" = "refs/heads/branch2" &&
 	test_cmp_rev I branch2 &&
@@ -211,7 +211,7 @@ test_expect_success 'test --onto <branch>' '
 	test_cmp_rev I branch2
 '
 
-test_expect_success 'rebase on top of a non-conflicting commit' '
+test_expect_success 'rebase on top of a non-conflicting cummit' '
 	git checkout branch1 &&
 	git tag original-branch1 &&
 	git rebase -i branch2 &&
@@ -232,7 +232,7 @@ test_expect_success 'reflog for the branch shows correct finish message' '
 	test_cmp expected actual
 '
 
-test_expect_success 'exchange two commits' '
+test_expect_success 'exchange two cummits' '
 	(
 		set_fake_editor &&
 		FAKE_LINES="2 1" git rebase -i HEAD~2
@@ -241,7 +241,7 @@ test_expect_success 'exchange two commits' '
 	test G = $(git cat-file commit HEAD | sed -ne \$p) &&
 	blob1=$(git rev-parse --short HEAD^:file1) &&
 	blob2=$(git rev-parse --short HEAD:file1) &&
-	commit=$(git rev-parse --short HEAD)
+	cummit=$(git rev-parse --short HEAD)
 '
 
 test_expect_success 'stop on conflicting pick' '
@@ -259,7 +259,7 @@ test_expect_success 'stop on conflicting pick' '
 	D
 	=======
 	G
-	>>>>>>> $commit (G)
+	>>>>>>> $cummit (G)
 	EOF
 	git tag new-branch1 &&
 	test_must_fail git rebase -i primary &&
@@ -289,7 +289,7 @@ test_expect_success 'abort' '
 
 test_expect_success 'abort with error when new base cannot be checked out' '
 	git rm --cached file1 &&
-	git commit -m "remove file in base" &&
+	git cummit -m "remove file in base" &&
 	test_must_fail git rebase -i primary > output 2>&1 &&
 	test_i18ngrep "The following untracked working tree files would be overwritten by checkout:" \
 		output &&
@@ -303,7 +303,7 @@ test_expect_success 'retain authorship' '
 	echo A > file7 &&
 	git add file7 &&
 	test_tick &&
-	GIT_AUTHOR_NAME="Twerp Snog" git commit -m "different author" &&
+	GIT_AUTHOR_NAME="Twerp Snog" git cummit -m "different author" &&
 	git tag twerp &&
 	git rebase -i --onto primary HEAD^ &&
 	git show HEAD | grep "^Author: Twerp Snog"
@@ -314,12 +314,12 @@ test_expect_success 'retain authorship w/ conflicts' '
 	test_when_finished "GIT_AUTHOR_NAME=\$oGIT_AUTHOR_NAME" &&
 
 	git reset --hard twerp &&
-	test_commit a conflict a conflict-a &&
+	test_cummit a conflict a conflict-a &&
 	git reset --hard twerp &&
 
 	GIT_AUTHOR_NAME=AttributeMe &&
 	export GIT_AUTHOR_NAME &&
-	test_commit b conflict b conflict-b &&
+	test_cummit b conflict b conflict-b &&
 	GIT_AUTHOR_NAME=$oGIT_AUTHOR_NAME &&
 
 	test_must_fail git rebase -i conflict-a &&
@@ -335,7 +335,7 @@ test_expect_success 'squash' '
 	git reset --hard twerp &&
 	echo B > file7 &&
 	test_tick &&
-	GIT_AUTHOR_NAME="Nitfol" git commit -m "nitfol" file7 &&
+	GIT_AUTHOR_NAME="Nitfol" git cummit -m "nitfol" file7 &&
 	echo "******************************" &&
 	(
 		set_fake_editor &&
@@ -350,7 +350,7 @@ test_expect_success 'retain authorship when squashing' '
 	git show HEAD | grep "^Author: Twerp Snog"
 '
 
-test_expect_success '--continue tries to commit' '
+test_expect_success '--continue tries to cummit' '
 	git reset --hard D &&
 	test_tick &&
 	(
@@ -358,7 +358,7 @@ test_expect_success '--continue tries to commit' '
 		test_must_fail git rebase -i --onto new-branch1 HEAD^ &&
 		echo resolved > file1 &&
 		git add file1 &&
-		FAKE_COMMIT_MESSAGE="chouette!" git rebase --continue
+		FAKE_cummit_MESSAGE="chouette!" git rebase --continue
 	) &&
 	test_cmp_rev HEAD^ new-branch1 &&
 	git show HEAD | grep chouette
@@ -378,7 +378,7 @@ test_expect_success 'multi-squash only fires up editor once' '
 	base=$(git rev-parse HEAD~4) &&
 	(
 		set_fake_editor &&
-		FAKE_COMMIT_AMEND="ONCE" \
+		FAKE_cummit_AMEND="ONCE" \
 			FAKE_LINES="1 squash 2 squash 3 squash 4" \
 			EXPECT_HEADER_COUNT=4 \
 			git rebase -i $base
@@ -392,7 +392,7 @@ test_expect_success 'multi-fixup does not fire up editor' '
 	base=$(git rev-parse HEAD~4) &&
 	(
 		set_fake_editor &&
-		FAKE_COMMIT_AMEND="NEVER" \
+		FAKE_cummit_AMEND="NEVER" \
 			FAKE_LINES="1 fixup 2 fixup 3 fixup 4" \
 			git rebase -i $base
 	) &&
@@ -402,7 +402,7 @@ test_expect_success 'multi-fixup does not fire up editor' '
 	git branch -D multi-fixup
 '
 
-test_expect_success 'commit message used after conflict' '
+test_expect_success 'cummit message used after conflict' '
 	git checkout -b conflict-fixup conflict-branch &&
 	base=$(git rev-parse HEAD~4) &&
 	(
@@ -411,7 +411,7 @@ test_expect_success 'commit message used after conflict' '
 			git rebase -i $base &&
 		echo three > conflict &&
 		git add conflict &&
-		FAKE_COMMIT_AMEND="ONCE" EXPECT_HEADER_COUNT=2 \
+		FAKE_cummit_AMEND="ONCE" EXPECT_HEADER_COUNT=2 \
 			git rebase --continue
 	) &&
 	test $base = $(git rev-parse HEAD^) &&
@@ -420,7 +420,7 @@ test_expect_success 'commit message used after conflict' '
 	git branch -D conflict-fixup
 '
 
-test_expect_success 'commit message retained after conflict' '
+test_expect_success 'cummit message retained after conflict' '
 	git checkout -b conflict-squash conflict-branch &&
 	base=$(git rev-parse HEAD~4) &&
 	(
@@ -429,7 +429,7 @@ test_expect_success 'commit message retained after conflict' '
 			git rebase -i $base &&
 		echo three > conflict &&
 		git add conflict &&
-		FAKE_COMMIT_AMEND="TWICE" EXPECT_HEADER_COUNT=2 \
+		FAKE_cummit_AMEND="TWICE" EXPECT_HEADER_COUNT=2 \
 			git rebase --continue
 	) &&
 	test $base = $(git rev-parse HEAD^) &&
@@ -450,7 +450,7 @@ test_expect_success 'squash and fixup generate correct log messages' '
 	base=$(git rev-parse HEAD~4) &&
 	(
 		set_fake_editor &&
-		FAKE_COMMIT_AMEND="ONCE" \
+		FAKE_cummit_AMEND="ONCE" \
 			FAKE_LINES="1 fixup 2 squash 3 fixup 4" \
 			EXPECT_HEADER_COUNT=4 \
 			git rebase -i $base
@@ -458,9 +458,9 @@ test_expect_success 'squash and fixup generate correct log messages' '
 	git cat-file commit HEAD | sed -e 1,/^\$/d > actual-squash-fixup &&
 	test_cmp expect-squash-fixup actual-squash-fixup &&
 	git cat-file commit HEAD@{2} |
-		grep "^# This is a combination of 3 commits\."  &&
+		grep "^# This is a combination of 3 cummits\."  &&
 	git cat-file commit HEAD@{3} |
-		grep "^# This is a combination of 2 commits\."  &&
+		grep "^# This is a combination of 2 cummits\."  &&
 	git checkout @{-1} &&
 	git branch -D squash-fixup
 '
@@ -470,7 +470,7 @@ test_expect_success 'squash ignores comments' '
 	base=$(git rev-parse HEAD~4) &&
 	(
 		set_fake_editor &&
-		FAKE_COMMIT_AMEND="ONCE" \
+		FAKE_cummit_AMEND="ONCE" \
 			FAKE_LINES="# 1 # squash 2 # squash 3 # squash 4 #" \
 			EXPECT_HEADER_COUNT=4 \
 			git rebase -i $base
@@ -486,7 +486,7 @@ test_expect_success 'squash ignores blank lines' '
 	base=$(git rev-parse HEAD~4) &&
 	(
 		set_fake_editor &&
-		FAKE_COMMIT_AMEND="ONCE" \
+		FAKE_cummit_AMEND="ONCE" \
 			FAKE_LINES="> 1 > squash 2 > squash 3 > squash 4 >" \
 			EXPECT_HEADER_COUNT=4 \
 			git rebase -i $base
@@ -544,11 +544,11 @@ test_expect_success 'interrupted squash works as expected (case 2)' '
 	test $one = $(git rev-parse HEAD~2)
 '
 
-test_expect_success '--continue tries to commit, even for "edit"' '
+test_expect_success '--continue tries to cummit, even for "edit"' '
 	echo unrelated > file7 &&
 	git add file7 &&
 	test_tick &&
-	git commit -m "unrelated change" &&
+	git cummit -m "unrelated change" &&
 	parent=$(git rev-parse HEAD^) &&
 	test_tick &&
 	(
@@ -556,14 +556,14 @@ test_expect_success '--continue tries to commit, even for "edit"' '
 		FAKE_LINES="edit 1" git rebase -i HEAD^ &&
 		echo edited > file7 &&
 		git add file7 &&
-		FAKE_COMMIT_MESSAGE="chouette!" git rebase --continue
+		FAKE_cummit_MESSAGE="chouette!" git rebase --continue
 	) &&
 	test edited = $(git show HEAD:file7) &&
 	git show HEAD | grep chouette &&
 	test $parent = $(git rev-parse HEAD^)
 '
 
-test_expect_success 'aborted --continue does not squash commits after "edit"' '
+test_expect_success 'aborted --continue does not squash cummits after "edit"' '
 	old=$(git rev-parse HEAD) &&
 	test_tick &&
 	(
@@ -571,24 +571,24 @@ test_expect_success 'aborted --continue does not squash commits after "edit"' '
 		FAKE_LINES="edit 1" git rebase -i HEAD^ &&
 		echo "edited again" > file7 &&
 		git add file7 &&
-		test_must_fail env FAKE_COMMIT_MESSAGE=" " git rebase --continue
+		test_must_fail env FAKE_cummit_MESSAGE=" " git rebase --continue
 	) &&
 	test $old = $(git rev-parse HEAD) &&
 	git rebase --abort
 '
 
-test_expect_success 'auto-amend only edited commits after "edit"' '
+test_expect_success 'auto-amend only edited cummits after "edit"' '
 	test_tick &&
 	(
 		set_fake_editor &&
 		FAKE_LINES="edit 1" git rebase -i HEAD^ &&
 		echo "edited again" > file7 &&
 		git add file7 &&
-		FAKE_COMMIT_MESSAGE="edited file7 again" git commit &&
+		FAKE_cummit_MESSAGE="edited file7 again" git cummit &&
 		echo "and again" > file7 &&
 		git add file7 &&
 		test_tick &&
-		test_must_fail env FAKE_COMMIT_MESSAGE="and again" \
+		test_must_fail env FAKE_cummit_MESSAGE="and again" \
 			git rebase --continue
 	) &&
 	git rebase --abort
@@ -618,14 +618,14 @@ test_expect_success 'rebase a detached HEAD' '
 	test $grandparent = $(git rev-parse HEAD~2)
 '
 
-test_expect_success 'rebase a commit violating pre-commit' '
-	test_hook pre-commit <<-\EOF &&
+test_expect_success 'rebase a cummit violating pre-cummit' '
+	test_hook pre-cummit <<-\EOF &&
 	test -z "$(git diff --cached --check)"
 	EOF
 	echo "monde! " >> file1 &&
 	test_tick &&
-	test_must_fail git commit -m doesnt-verify file1 &&
-	git commit -m doesnt-verify --no-verify file1 &&
+	test_must_fail git cummit -m doesnt-verify file1 &&
+	git cummit -m doesnt-verify --no-verify file1 &&
 	test_tick &&
 	(
 		set_fake_editor &&
@@ -642,10 +642,10 @@ test_expect_success 'rebase with a file named HEAD in worktree' '
 		export GIT_AUTHOR_NAME &&
 		>HEAD &&
 		git add HEAD &&
-		git commit -m "Add head" &&
+		git cummit -m "Add head" &&
 		>BODY &&
 		git add BODY &&
-		git commit -m "Add body"
+		git cummit -m "Add body"
 	) &&
 
 	(
@@ -659,7 +659,7 @@ test_expect_success 'rebase with a file named HEAD in worktree' '
 test_expect_success 'do "noop" when there is nothing to cherry-pick' '
 
 	git checkout -b branch4 HEAD &&
-	GIT_EDITOR=: git commit --amend \
+	GIT_EDITOR=: git cummit --amend \
 		--author="Somebody else <somebody@else.com>" &&
 	test $(git rev-parse branch3) != $(git rev-parse branch4) &&
 	git rebase -i branch3 &&
@@ -672,21 +672,21 @@ test_expect_success 'submodule rebase setup' '
 	mkdir sub &&
 	(
 		cd sub && git init && >elif &&
-		git add elif && git commit -m "submodule initial"
+		git add elif && git cummit -m "submodule initial"
 	) &&
 	echo 1 >file1 &&
 	git add file1 sub &&
 	test_tick &&
-	git commit -m "One" &&
+	git cummit -m "One" &&
 	echo 2 >file1 &&
 	test_tick &&
-	git commit -a -m "Two" &&
+	git cummit -a -m "Two" &&
 	(
 		cd sub && echo 3 >elif &&
-		git commit -a -m "submodule second"
+		git cummit -a -m "submodule second"
 	) &&
 	test_tick &&
-	git commit -a -m "Three changes submodule"
+	git cummit -a -m "Three changes submodule"
 '
 
 test_expect_success 'submodule rebase -i' '
@@ -701,11 +701,11 @@ test_expect_success 'submodule conflict setup' '
 	git checkout HEAD^ &&
 	(
 		cd sub && git checkout HEAD^ && echo 4 >elif &&
-		git add elif && git commit -m "submodule conflict"
+		git add elif && git cummit -m "submodule conflict"
 	) &&
 	git add sub &&
 	test_tick &&
-	git commit -m "Conflict in submodule" &&
+	git cummit -m "Conflict in submodule" &&
 	git tag submodule-topic
 '
 
@@ -741,24 +741,24 @@ test_expect_success 'reword' '
 	git checkout -b reword-branch primary &&
 	(
 		set_fake_editor &&
-		FAKE_LINES="1 2 3 reword 4" FAKE_COMMIT_MESSAGE="E changed" \
+		FAKE_LINES="1 2 3 reword 4" FAKE_cummit_MESSAGE="E changed" \
 			git rebase -i A &&
 		git show HEAD | grep "E changed" &&
 		test $(git rev-parse primary) != $(git rev-parse HEAD) &&
 		test_cmp_rev primary^ HEAD^ &&
-		FAKE_LINES="1 2 reword 3 4" FAKE_COMMIT_MESSAGE="D changed" \
+		FAKE_LINES="1 2 reword 3 4" FAKE_cummit_MESSAGE="D changed" \
 			git rebase -i A &&
 		git show HEAD^ | grep "D changed" &&
-		FAKE_LINES="reword 1 2 3 4" FAKE_COMMIT_MESSAGE="B changed" \
+		FAKE_LINES="reword 1 2 3 4" FAKE_cummit_MESSAGE="B changed" \
 			git rebase -i A &&
 		git show HEAD~3 | grep "B changed" &&
-		FAKE_LINES="1 r 2 pick 3 p 4" FAKE_COMMIT_MESSAGE="C changed" \
+		FAKE_LINES="1 r 2 pick 3 p 4" FAKE_cummit_MESSAGE="C changed" \
 			git rebase -i A
 	) &&
 	git show HEAD~2 | grep "C changed"
 '
 
-test_expect_success 'no uncommited changes when rewording the todo list is reloaded' '
+test_expect_success 'no uncummited changes when rewording the todo list is reloaded' '
 	git checkout E &&
 	test_when_finished "git checkout @{-1}" &&
 	(
@@ -768,15 +768,15 @@ test_expect_success 'no uncommited changes when rewording the todo list is reloa
 		set_reword_editor &&
 		FAKE_LINES="reword 1 reword 2" git rebase -i C
 	) &&
-	check_reworded_commits D E
+	check_reworded_cummits D E
 '
 
 test_expect_success 'rebase -i can copy notes' '
 	git config notes.rewrite.rebase true &&
 	git config notes.rewriteRef "refs/notes/*" &&
-	test_commit n1 &&
-	test_commit n2 &&
-	test_commit n3 &&
+	test_cummit n1 &&
+	test_cummit n2 &&
+	test_cummit n3 &&
 	git notes add -m"a note" n3 &&
 	git rebase -i --onto n1 n2 &&
 	test "a note" = "$(git notes show HEAD)"
@@ -811,7 +811,7 @@ test_expect_success 'rebase while detaching HEAD' '
 	test_must_fail git symbolic-ref HEAD
 '
 
-test_tick # Ensure that the rebased commits get a different timestamp.
+test_tick # Ensure that the rebased cummits get a different timestamp.
 test_expect_success 'always cherry-pick with --no-ff' '
 	git checkout no-ff-branch &&
 	git tag original-no-ff-branch &&
@@ -827,20 +827,20 @@ test_expect_success 'always cherry-pick with --no-ff' '
 	test_must_be_empty out
 '
 
-test_expect_success 'set up commits with funny messages' '
+test_expect_success 'set up cummits with funny messages' '
 	git checkout -b funny A &&
 	echo >>file1 &&
 	test_tick &&
-	git commit -a -m "end with slash\\" &&
+	git cummit -a -m "end with slash\\" &&
 	echo >>file1 &&
 	test_tick &&
-	git commit -a -m "something (\000) that looks like octal" &&
+	git cummit -a -m "something (\000) that looks like octal" &&
 	echo >>file1 &&
 	test_tick &&
-	git commit -a -m "something (\n) that looks like a newline" &&
+	git cummit -a -m "something (\n) that looks like a newline" &&
 	echo >>file1 &&
 	test_tick &&
-	git commit -a -m "another commit"
+	git cummit -a -m "another cummit"
 '
 
 test_expect_success 'rebase-i history with funny messages' '
@@ -857,9 +857,9 @@ test_expect_success 'rebase-i history with funny messages' '
 test_expect_success 'prepare for rebase -i --exec' '
 	git checkout primary &&
 	git checkout -b execute &&
-	test_commit one_exec main.txt one_exec &&
-	test_commit two_exec main.txt two_exec &&
-	test_commit three_exec main.txt three_exec
+	test_cummit one_exec main.txt one_exec &&
+	test_cummit two_exec main.txt two_exec &&
+	test_cummit three_exec main.txt three_exec
 '
 
 test_expect_success 'running "git rebase -i --exec git show HEAD"' '
@@ -933,10 +933,10 @@ test_expect_success 'rebase -ix with --autosquash' '
 	git checkout -b autosquash &&
 	echo second >second.txt &&
 	git add second.txt &&
-	git commit -m "fixup! two_exec" &&
+	git cummit -m "fixup! two_exec" &&
 	echo bis >bis.txt &&
 	git add bis.txt &&
-	git commit -m "fixup! two_exec" &&
+	git cummit -m "fixup! two_exec" &&
 	git checkout -b autosquash_actual &&
 	git rebase -i --exec "git show HEAD" --autosquash HEAD~4 >actual &&
 	git checkout autosquash &&
@@ -967,7 +967,7 @@ test_expect_success 'rebase -i --exec without <CMD>' '
 	git checkout primary
 '
 
-test_expect_success 'rebase -i --root re-order and drop commits' '
+test_expect_success 'rebase -i --root re-order and drop cummits' '
 	git checkout E &&
 	(
 		set_fake_editor &&
@@ -980,11 +980,11 @@ test_expect_success 'rebase -i --root re-order and drop commits' '
 	test 0 = $(git cat-file commit HEAD^^^ | grep -c ^parent\ )
 '
 
-test_expect_success 'rebase -i --root retain root commit author and message' '
+test_expect_success 'rebase -i --root retain root cummit author and message' '
 	git checkout A &&
 	echo B >file7 &&
 	git add file7 &&
-	GIT_AUTHOR_NAME="Twerp Snog" git commit -m "different author" &&
+	GIT_AUTHOR_NAME="Twerp Snog" git cummit -m "different author" &&
 	(
 		set_fake_editor &&
 		FAKE_LINES="2" git rebase -i --root
@@ -993,7 +993,7 @@ test_expect_success 'rebase -i --root retain root commit author and message' '
 	git cat-file commit HEAD | grep -q "^different author$"
 '
 
-test_expect_success 'rebase -i --root temporary sentinel commit' '
+test_expect_success 'rebase -i --root temporary sentinel cummit' '
 	git checkout B &&
 	(
 		set_fake_editor &&
@@ -1003,7 +1003,7 @@ test_expect_success 'rebase -i --root temporary sentinel commit' '
 	git rebase --abort
 '
 
-test_expect_success 'rebase -i --root fixup root commit' '
+test_expect_success 'rebase -i --root fixup root cummit' '
 	git checkout B &&
 	(
 		set_fake_editor &&
@@ -1014,24 +1014,24 @@ test_expect_success 'rebase -i --root fixup root commit' '
 	test 0 = $(git cat-file commit HEAD | grep -c ^parent\ )
 '
 
-test_expect_success 'rebase -i --root reword original root commit' '
+test_expect_success 'rebase -i --root reword original root cummit' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout -b reword-original-root-branch primary &&
 	(
 		set_fake_editor &&
-		FAKE_LINES="reword 1 2" FAKE_COMMIT_MESSAGE="A changed" \
+		FAKE_LINES="reword 1 2" FAKE_cummit_MESSAGE="A changed" \
 			git rebase -i --root
 	) &&
 	git show HEAD^ | grep "A changed" &&
 	test -z "$(git show -s --format=%p HEAD^)"
 '
 
-test_expect_success 'rebase -i --root reword new root commit' '
+test_expect_success 'rebase -i --root reword new root cummit' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout -b reword-now-root-branch primary &&
 	(
 		set_fake_editor &&
-		FAKE_LINES="reword 3 1" FAKE_COMMIT_MESSAGE="C changed" \
+		FAKE_LINES="reword 3 1" FAKE_cummit_MESSAGE="C changed" \
 		git rebase -i --root
 	) &&
 	git show HEAD^ | grep "C changed" &&
@@ -1043,7 +1043,7 @@ test_expect_success 'rebase -i --root when root has untracked file conflict' '
 	git checkout -b failing-root-pick A &&
 	echo x >file2 &&
 	git rm file1 &&
-	git commit -m "remove file 1 add file 2" &&
+	git cummit -m "remove file 1 add file 2" &&
 	echo z >file1 &&
 	(
 		set_fake_editor &&
@@ -1061,9 +1061,9 @@ test_expect_success 'rebase -i --root reword root when root has untracked file c
 	(
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="reword 1 2" \
-			FAKE_COMMIT_MESSAGE="Modified A" git rebase -i --root &&
+			FAKE_cummit_MESSAGE="Modified A" git rebase -i --root &&
 		rm file1 &&
-		FAKE_COMMIT_MESSAGE="Reworded A" git rebase --continue
+		FAKE_cummit_MESSAGE="Reworded A" git rebase --continue
 	) &&
 	test "$(git log -1 --format=%B HEAD^)" = "Reworded A" &&
 	test "$(git rev-list --count HEAD)" = 2
@@ -1153,7 +1153,7 @@ test_expect_success 'rebase -i with --strategy and -X' '
 	git reset --hard HEAD^ &&
 	echo five >conflict &&
 	echo Z >file1 &&
-	git commit -a -m "one file conflict" &&
+	git cummit -a -m "one file conflict" &&
 	EDITOR=true git rebase -i --strategy=recursive -Xours conflict-branch &&
 	test $(git show conflict-branch:conflict) = $(cat conflict) &&
 	test $(cat file1) = Z
@@ -1164,10 +1164,10 @@ test_expect_success 'interrupted rebase -i with --strategy and -X' '
 	git reset --hard HEAD^ &&
 	>breakpoint &&
 	git add breakpoint &&
-	git commit -m "breakpoint for interactive mode" &&
+	git cummit -m "breakpoint for interactive mode" &&
 	echo five >conflict &&
 	echo Z >file1 &&
-	git commit -a -m "one file conflict" &&
+	git cummit -a -m "one file conflict" &&
 	(
 		set_fake_editor &&
 		FAKE_LINES="edit 1 2" git rebase -i --strategy=recursive \
@@ -1178,35 +1178,35 @@ test_expect_success 'interrupted rebase -i with --strategy and -X' '
 	test $(cat file1) = Z
 '
 
-test_expect_success 'rebase -i error on commits with \ in message' '
+test_expect_success 'rebase -i error on cummits with \ in message' '
 	current_head=$(git rev-parse HEAD) &&
 	test_when_finished "git rebase --abort; git reset --hard $current_head; rm -f error" &&
-	test_commit TO-REMOVE will-conflict old-content &&
-	test_commit "\temp" will-conflict new-content dummy &&
+	test_cummit TO-REMOVE will-conflict old-content &&
+	test_cummit "\temp" will-conflict new-content dummy &&
 	test_must_fail env EDITOR=true git rebase -i HEAD^ --onto HEAD^^ 2>error &&
 	test_expect_code 1 grep  "	emp" error
 '
 
-test_expect_success 'short commit ID setup' '
+test_expect_success 'short cummit ID setup' '
 	test_when_finished "git checkout primary" &&
 	git checkout --orphan collide &&
 	git rm -rf . &&
 	(
 	unset test_tick &&
-	test_commit collide1 collide &&
-	test_commit --notick collide2 collide &&
-	test_commit --notick collide3 collide
+	test_cummit collide1 collide &&
+	test_cummit --notick collide2 collide &&
+	test_cummit --notick collide3 collide
 	)
 '
 
 if test -n "$GIT_TEST_FIND_COLLIDER"
 then
 	author="$(unset test_tick; test_tick; git var GIT_AUTHOR_IDENT)"
-	committer="$(unset test_tick; test_tick; git var GIT_COMMITTER_IDENT)"
+	cummitter="$(unset test_tick; test_tick; git var GIT_cummitTER_IDENT)"
 	blob="$(git rev-parse collide2:collide)"
 	from="$(git rev-parse collide1^0)"
-	repl="commit refs/heads/collider-&\\n"
-	repl="${repl}author $author\\ncommitter $committer\\n"
+	repl="cummit refs/heads/collider-&\\n"
+	repl="${repl}author $author\\ncummitter $cummitter\\n"
 	repl="${repl}data <<EOF\\ncollide2 &\\nEOF\\n"
 	repl="${repl}from $from\\nM 100644 $blob collide\\n"
 	test_seq 1 32768 | sed "s|.*|$repl|" >script &&
@@ -1221,7 +1221,7 @@ then
 	}
 fi
 
-test_expect_success 'short commit ID collide' '
+test_expect_success 'short cummit ID collide' '
 	test_oid_cache <<-EOF &&
 	# collision-related constants
 	t3404_collision	sha1:6bcd
@@ -1239,7 +1239,7 @@ test_expect_success 'short commit ID collide' '
 		unset test_tick &&
 		test_tick &&
 		set_fake_editor &&
-		FAKE_COMMIT_MESSAGE="collide2 $(test_oid t3404_collider)" \
+		FAKE_cummit_MESSAGE="collide2 $(test_oid t3404_collider)" \
 		FAKE_LINES="reword 1 break 2" git rebase -i HEAD~2 &&
 		test $colliding_id = "$(git rev-parse HEAD | cut -c 1-4)" &&
 		grep "^pick $colliding_id " \
@@ -1275,7 +1275,7 @@ test_expect_success 'todo count' '
 	test_i18ngrep "^# Rebase ..* onto ..* ([0-9]" actual
 '
 
-test_expect_success 'rebase -i commits that overwrite untracked files (pick)' '
+test_expect_success 'rebase -i cummits that overwrite untracked files (pick)' '
 	git checkout --force branch2 &&
 	git clean -f &&
 	(
@@ -1292,7 +1292,7 @@ test_expect_success 'rebase -i commits that overwrite untracked files (pick)' '
 	test_cmp_rev HEAD I
 '
 
-test_expect_success 'rebase -i commits that overwrite untracked files (squash)' '
+test_expect_success 'rebase -i cummits that overwrite untracked files (squash)' '
 	git checkout --force branch2 &&
 	git clean -f &&
 	git tag original-branch2 &&
@@ -1311,7 +1311,7 @@ test_expect_success 'rebase -i commits that overwrite untracked files (squash)' 
 	git reset --hard original-branch2
 '
 
-test_expect_success 'rebase -i commits that overwrite untracked files (no ff)' '
+test_expect_success 'rebase -i cummits that overwrite untracked files (no ff)' '
 	git checkout --force branch2 &&
 	git clean -f &&
 	(
@@ -1329,13 +1329,13 @@ test_expect_success 'rebase -i commits that overwrite untracked files (no ff)' '
 '
 
 test_expect_success 'rebase --continue removes CHERRY_PICK_HEAD' '
-	git checkout -b commit-to-skip &&
+	git checkout -b cummit-to-skip &&
 	for double in X 3 1
 	do
 		test_seq 5 | sed "s/$double/&&/" >seq &&
 		git add seq &&
 		test_tick &&
-		git commit -m seq-$double || return 1
+		git cummit -m seq-$double || return 1
 	done &&
 	git tag seq-onto &&
 	git reset --hard HEAD~2 &&
@@ -1371,28 +1371,28 @@ test_expect_success 'drop' '
 	test A = $(git cat-file commit HEAD^^ | sed -ne \$p)
 '
 
-test_expect_success 'rebase -i respects rebase.missingCommitsCheck = ignore' '
-	test_config rebase.missingCommitsCheck ignore &&
-	rebase_setup_and_clean missing-commit &&
+test_expect_success 'rebase -i respects rebase.missingcummitsCheck = ignore' '
+	test_config rebase.missingcummitsCheck ignore &&
+	rebase_setup_and_clean missing-cummit &&
 	(
 		set_fake_editor &&
 		FAKE_LINES="1 2 3 4" git rebase -i --root 2>actual
 	) &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
 	test_i18ngrep \
-		"Successfully rebased and updated refs/heads/missing-commit" \
+		"Successfully rebased and updated refs/heads/missing-cummit" \
 		actual
 '
 
-test_expect_success 'rebase -i respects rebase.missingCommitsCheck = warn' '
+test_expect_success 'rebase -i respects rebase.missingcummitsCheck = warn' '
 	cat >expect <<-EOF &&
-	Warning: some commits may have been dropped accidentally.
-	Dropped commits (newer to older):
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
-	To avoid this message, use "drop" to explicitly remove a commit.
+	Warning: some cummits may have been dropped accidentally.
+	Dropped cummits (newer to older):
+	 - $(git rev-list --pretty=oneline --abbrev-cummit -1 primary)
+	To avoid this message, use "drop" to explicitly remove a cummit.
 	EOF
-	test_config rebase.missingCommitsCheck warn &&
-	rebase_setup_and_clean missing-commit &&
+	test_config rebase.missingcummitsCheck warn &&
+	rebase_setup_and_clean missing-cummit &&
 	(
 		set_fake_editor &&
 		FAKE_LINES="1 2 3 4" git rebase -i --root 2>actual.2
@@ -1402,22 +1402,22 @@ test_expect_success 'rebase -i respects rebase.missingCommitsCheck = warn' '
 	test D = $(git cat-file commit HEAD | sed -ne \$p)
 '
 
-test_expect_success 'rebase -i respects rebase.missingCommitsCheck = error' '
+test_expect_success 'rebase -i respects rebase.missingcummitsCheck = error' '
 	cat >expect <<-EOF &&
-	Warning: some commits may have been dropped accidentally.
-	Dropped commits (newer to older):
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary~2)
-	To avoid this message, use "drop" to explicitly remove a commit.
+	Warning: some cummits may have been dropped accidentally.
+	Dropped cummits (newer to older):
+	 - $(git rev-list --pretty=oneline --abbrev-cummit -1 primary)
+	 - $(git rev-list --pretty=oneline --abbrev-cummit -1 primary~2)
+	To avoid this message, use "drop" to explicitly remove a cummit.
 
-	Use '\''git config rebase.missingCommitsCheck'\'' to change the level of warnings.
+	Use '\''git config rebase.missingcummitsCheck'\'' to change the level of warnings.
 	The possible behaviours are: ignore, warn, error.
 
 	You can fix this with '\''git rebase --edit-todo'\'' and then run '\''git rebase --continue'\''.
 	Or you can abort the rebase with '\''git rebase --abort'\''.
 	EOF
-	test_config rebase.missingCommitsCheck error &&
-	rebase_setup_and_clean missing-commit &&
+	test_config rebase.missingcummitsCheck error &&
+	rebase_setup_and_clean missing-cummit &&
 	(
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="1 2 4" \
@@ -1432,9 +1432,9 @@ test_expect_success 'rebase -i respects rebase.missingCommitsCheck = error' '
 	test B = $(git cat-file commit HEAD^ | sed -ne \$p)
 '
 
-test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = ignore' '
-	test_config rebase.missingCommitsCheck ignore &&
-	rebase_setup_and_clean missing-commit &&
+test_expect_success 'rebase --edit-todo respects rebase.missingcummitsCheck = ignore' '
+	test_config rebase.missingcummitsCheck ignore &&
+	rebase_setup_and_clean missing-cummit &&
 	(
 		set_fake_editor &&
 		FAKE_LINES="break 1 2 3 4 5" git rebase -i --root &&
@@ -1443,24 +1443,24 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = ig
 	) &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
 	test_i18ngrep \
-		"Successfully rebased and updated refs/heads/missing-commit" \
+		"Successfully rebased and updated refs/heads/missing-cummit" \
 		actual
 '
 
-test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = warn' '
+test_expect_success 'rebase --edit-todo respects rebase.missingcummitsCheck = warn' '
 	cat >expect <<-EOF &&
-	error: invalid line 1: badcmd $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
-	Warning: some commits may have been dropped accidentally.
-	Dropped commits (newer to older):
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
-	To avoid this message, use "drop" to explicitly remove a commit.
+	error: invalid line 1: badcmd $(git rev-list --pretty=oneline --abbrev-cummit -1 primary~4)
+	Warning: some cummits may have been dropped accidentally.
+	Dropped cummits (newer to older):
+	 - $(git rev-list --pretty=oneline --abbrev-cummit -1 primary)
+	 - $(git rev-list --pretty=oneline --abbrev-cummit -1 primary~4)
+	To avoid this message, use "drop" to explicitly remove a cummit.
 	EOF
 	head -n4 expect >expect.2 &&
 	tail -n1 expect >>expect.2 &&
 	tail -n4 expect.2 >expect.3 &&
-	test_config rebase.missingCommitsCheck warn &&
-	rebase_setup_and_clean missing-commit &&
+	test_config rebase.missingcummitsCheck warn &&
+	rebase_setup_and_clean missing-cummit &&
 	(
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="bad 1 2 3 4 5" \
@@ -1477,20 +1477,20 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = wa
 	) &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
 	test_i18ngrep \
-		"Successfully rebased and updated refs/heads/missing-commit" \
+		"Successfully rebased and updated refs/heads/missing-cummit" \
 		actual
 '
 
-test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = error' '
+test_expect_success 'rebase --edit-todo respects rebase.missingcummitsCheck = error' '
 	cat >expect <<-EOF &&
-	error: invalid line 1: badcmd $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
-	Warning: some commits may have been dropped accidentally.
-	Dropped commits (newer to older):
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
-	To avoid this message, use "drop" to explicitly remove a commit.
+	error: invalid line 1: badcmd $(git rev-list --pretty=oneline --abbrev-cummit -1 primary~4)
+	Warning: some cummits may have been dropped accidentally.
+	Dropped cummits (newer to older):
+	 - $(git rev-list --pretty=oneline --abbrev-cummit -1 primary)
+	 - $(git rev-list --pretty=oneline --abbrev-cummit -1 primary~4)
+	To avoid this message, use "drop" to explicitly remove a cummit.
 
-	Use '\''git config rebase.missingCommitsCheck'\'' to change the level of warnings.
+	Use '\''git config rebase.missingcummitsCheck'\'' to change the level of warnings.
 	The possible behaviours are: ignore, warn, error.
 
 	You can fix this with '\''git rebase --edit-todo'\'' and then run '\''git rebase --continue'\''.
@@ -1499,8 +1499,8 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = er
 	tail -n11 expect >expect.2 &&
 	head -n3 expect.2 >expect.3 &&
 	tail -n7 expect.2 >>expect.3 &&
-	test_config rebase.missingCommitsCheck error &&
-	rebase_setup_and_clean missing-commit &&
+	test_config rebase.missingcummitsCheck error &&
+	rebase_setup_and_clean missing-cummit &&
 	(
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="bad 1 2 3 4 5" \
@@ -1524,12 +1524,12 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = er
 	) &&
 	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
 	test_i18ngrep \
-		"Successfully rebased and updated refs/heads/missing-commit" \
+		"Successfully rebased and updated refs/heads/missing-cummit" \
 		actual
 '
 
-test_expect_success 'rebase.missingCommitsCheck = error after resolving conflicts' '
-	test_config rebase.missingCommitsCheck error &&
+test_expect_success 'rebase.missingcummitsCheck = error after resolving conflicts' '
+	test_config rebase.missingcummitsCheck error &&
 	(
 		set_fake_editor &&
 		FAKE_LINES="drop 1 break 2 3 4" git rebase -i A E
@@ -1541,8 +1541,8 @@ test_expect_success 'rebase.missingCommitsCheck = error after resolving conflict
 	git rebase --continue
 '
 
-test_expect_success 'rebase.missingCommitsCheck = error when editing for a second time' '
-	test_config rebase.missingCommitsCheck error &&
+test_expect_success 'rebase.missingcummitsCheck = error when editing for a second time' '
+	test_config rebase.missingcummitsCheck error &&
 	(
 		set_fake_editor &&
 		FAKE_LINES="1 break 2 3" git rebase -i A D &&
@@ -1555,16 +1555,16 @@ test_expect_success 'rebase.missingCommitsCheck = error when editing for a secon
 
 test_expect_success 'respects rebase.abbreviateCommands with fixup, squash and exec' '
 	rebase_setup_and_clean abbrevcmd &&
-	test_commit "first" file1.txt "first line" first &&
-	test_commit "second" file1.txt "another line" second &&
-	test_commit "fixup! first" file2.txt "first line again" first_fixup &&
-	test_commit "squash! second" file1.txt "another line here" second_squash &&
+	test_cummit "first" file1.txt "first line" first &&
+	test_cummit "second" file1.txt "another line" second &&
+	test_cummit "fixup! first" file2.txt "first line again" first_fixup &&
+	test_cummit "squash! second" file1.txt "another line here" second_squash &&
 	cat >expected <<-EOF &&
-	p $(git rev-list --abbrev-commit -1 first) first
-	f $(git rev-list --abbrev-commit -1 first_fixup) fixup! first
+	p $(git rev-list --abbrev-cummit -1 first) first
+	f $(git rev-list --abbrev-cummit -1 first_fixup) fixup! first
 	x git show HEAD
-	p $(git rev-list --abbrev-commit -1 second) second
-	s $(git rev-list --abbrev-commit -1 second_squash) squash! second
+	p $(git rev-list --abbrev-cummit -1 second) second
+	s $(git rev-list --abbrev-cummit -1 second_squash) squash! second
 	x git show HEAD
 	EOF
 	git checkout abbrevcmd &&
@@ -1617,7 +1617,7 @@ test_expect_success 'static check of bad SHA-1' '
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="1 2 edit fakesha 3 4 5 #" \
 			git rebase -i --root 2>actual &&
-			test_i18ngrep "edit XXXXXXX False commit" actual &&
+			test_i18ngrep "edit XXXXXXX False cummit" actual &&
 			test_i18ngrep "You can fix this with .git rebase --edit-todo.." \
 					actual &&
 		FAKE_LINES="1 2 4 5 6" git rebase --edit-todo
@@ -1648,9 +1648,9 @@ test_expect_success 'rebase -i --gpg-sign=<key-id>' '
 	test_i18ngrep "$SQ-S\"S I Gner\"$SQ" err
 '
 
-test_expect_success 'rebase -i --gpg-sign=<key-id> overrides commit.gpgSign' '
+test_expect_success 'rebase -i --gpg-sign=<key-id> overrides cummit.gpgSign' '
 	test_when_finished "test_might_fail git rebase --abort" &&
-	test_config commit.gpgsign true &&
+	test_config cummit.gpgsign true &&
 	(
 		set_fake_editor &&
 		FAKE_LINES="edit 1" git rebase -i --gpg-sign="\"S I Gner\"" \
@@ -1661,7 +1661,7 @@ test_expect_success 'rebase -i --gpg-sign=<key-id> overrides commit.gpgSign' '
 
 test_expect_success 'valid author header after --root swap' '
 	rebase_setup_and_clean author-header no-conflict-branch &&
-	git commit --amend --author="Au ${SQ}thor <author@example.com>" --no-edit &&
+	git cummit --amend --author="Au ${SQ}thor <author@example.com>" --no-edit &&
 	git cat-file commit HEAD | grep ^author >expected &&
 	(
 		set_fake_editor &&
@@ -1673,7 +1673,7 @@ test_expect_success 'valid author header after --root swap' '
 
 test_expect_success 'valid author header when author contains single quote' '
 	rebase_setup_and_clean author-header no-conflict-branch &&
-	git commit --amend --author="Au ${SQ}thor <author@example.com>" --no-edit &&
+	git cummit --amend --author="Au ${SQ}thor <author@example.com>" --no-edit &&
 	git cat-file commit HEAD | grep ^author >expected &&
 	(
 		set_fake_editor &&
@@ -1685,7 +1685,7 @@ test_expect_success 'valid author header when author contains single quote' '
 
 test_expect_success 'post-commit hook is called' '
 	>actual &&
-	test_hook post-commit <<-\EOS &&
+	test_hook post-cummit <<-\EOS &&
 	git rev-parse HEAD >>actual
 	EOS
 	(
@@ -1693,14 +1693,14 @@ test_expect_success 'post-commit hook is called' '
 		FAKE_LINES="edit 4 1 reword 2 fixup 3" git rebase -i A E &&
 		echo x>file3 &&
 		git add file3 &&
-		FAKE_COMMIT_MESSAGE=edited git rebase --continue
+		FAKE_cummit_MESSAGE=edited git rebase --continue
 	) &&
 	git rev-parse HEAD@{5} HEAD@{4} HEAD@{3} HEAD@{2} HEAD@{1} HEAD \
 		>expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'correct error message for partial commit after empty pick' '
+test_expect_success 'correct error message for partial cummit after empty pick' '
 	test_when_finished "git rebase --abort" &&
 	(
 		set_fake_editor &&
@@ -1709,11 +1709,11 @@ test_expect_success 'correct error message for partial commit after empty pick' 
 		test_must_fail git rebase -i A D
 	) &&
 	echo x >file1 &&
-	test_must_fail git commit file1 2>err &&
-	test_i18ngrep "cannot do a partial commit during a rebase." err
+	test_must_fail git cummit file1 2>err &&
+	test_i18ngrep "cannot do a partial cummit during a rebase." err
 '
 
-test_expect_success 'correct error message for commit --amend after empty pick' '
+test_expect_success 'correct error message for cummit --amend after empty pick' '
 	test_when_finished "git rebase --abort" &&
 	(
 		set_fake_editor &&
@@ -1722,7 +1722,7 @@ test_expect_success 'correct error message for commit --amend after empty pick' 
 		test_must_fail git rebase -i A D
 	) &&
 	echo x>file1 &&
-	test_must_fail git commit -a --amend 2>err &&
+	test_must_fail git cummit -a --amend 2>err &&
 	test_i18ngrep "middle of a rebase -- cannot amend." err
 '
 
@@ -1735,10 +1735,10 @@ test_expect_success 'todo has correct onto hash' '
 test_expect_success 'ORIG_HEAD is updated correctly' '
 	test_when_finished "git checkout primary && git branch -D test-orig-head" &&
 	git checkout -b test-orig-head A &&
-	git commit --allow-empty -m A1 &&
-	git commit --allow-empty -m A2 &&
-	git commit --allow-empty -m A3 &&
-	git commit --allow-empty -m A4 &&
+	git cummit --allow-empty -m A1 &&
+	git cummit --allow-empty -m A2 &&
+	git cummit --allow-empty -m A3 &&
+	git cummit --allow-empty -m A4 &&
 	git rebase primary &&
 	test_cmp_rev ORIG_HEAD test-orig-head@{1}
 '

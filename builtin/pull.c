@@ -24,7 +24,7 @@
 #include "tempfile.h"
 #include "lockfile.h"
 #include "wt-status.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 #include "sequencer.h"
 #include "packfile.h"
 
@@ -79,7 +79,7 @@ static char *opt_diffstat;
 static char *opt_log;
 static char *opt_signoff;
 static char *opt_squash;
-static char *opt_commit;
+static char *opt_cummit;
 static char *opt_edit;
 static char *cleanup_arg;
 static char *opt_ff;
@@ -140,19 +140,19 @@ static struct option pull_options[] = {
 		N_("(synonym to --stat)"),
 		PARSE_OPT_NOARG | PARSE_OPT_HIDDEN),
 	OPT_PASSTHRU(0, "log", &opt_log, N_("n"),
-		N_("add (at most <n>) entries from shortlog to merge commit message"),
+		N_("add (at most <n>) entries from shortlog to merge cummit message"),
 		PARSE_OPT_OPTARG),
 	OPT_PASSTHRU(0, "signoff", &opt_signoff, NULL,
 		N_("add a Signed-off-by trailer"),
 		PARSE_OPT_OPTARG),
 	OPT_PASSTHRU(0, "squash", &opt_squash, NULL,
-		N_("create a single commit instead of doing a merge"),
+		N_("create a single cummit instead of doing a merge"),
 		PARSE_OPT_NOARG),
-	OPT_PASSTHRU(0, "commit", &opt_commit, NULL,
-		N_("perform a commit if the merge succeeds (default)"),
+	OPT_PASSTHRU(0, "cummit", &opt_cummit, NULL,
+		N_("perform a cummit if the merge succeeds (default)"),
 		PARSE_OPT_NOARG),
 	OPT_PASSTHRU(0, "edit", &opt_edit, NULL,
-		N_("edit message before committing"),
+		N_("edit message before cummitting"),
 		PARSE_OPT_NOARG),
 	OPT_CLEANUP(&cleanup_arg),
 	OPT_PASSTHRU(0, "ff", &opt_ff, NULL,
@@ -162,7 +162,7 @@ static struct option pull_options[] = {
 		N_("abort if fast-forward is not possible"),
 		PARSE_OPT_NOARG | PARSE_OPT_NONEG),
 	OPT_PASSTHRU(0, "verify", &opt_verify, NULL,
-		N_("control use of pre-merge-commit and commit-msg hooks"),
+		N_("control use of pre-merge-cummit and cummit-msg hooks"),
 		PARSE_OPT_NOARG),
 	OPT_PASSTHRU(0, "verify-signatures", &opt_verify_signatures, NULL,
 		N_("verify that the named commit has a valid GPG signature"),
@@ -177,7 +177,7 @@ static struct option pull_options[] = {
 		N_("option for selected merge strategy"),
 		0),
 	OPT_PASSTHRU('S', "gpg-sign", &opt_gpg_sign, N_("key-id"),
-		N_("GPG sign commit"),
+		N_("GPG sign cummit"),
 		PARSE_OPT_OPTARG),
 	OPT_SET_INT(0, "allow-unrelated-histories",
 		    &opt_allow_unrelated_histories,
@@ -593,14 +593,14 @@ static int pull_into_void(const struct object_id *merge_head,
 		const struct object_id *curr_head)
 {
 	if (opt_verify_signatures) {
-		struct commit *commit;
+		struct cummit *cummit;
 
-		commit = lookup_commit(the_repository, merge_head);
-		if (!commit)
-			die(_("unable to access commit %s"),
+		cummit = lookup_cummit(the_repository, merge_head);
+		if (!cummit)
+			die(_("unable to access cummit %s"),
 			    oid_to_hex(merge_head));
 
-		verify_merge_signature(commit, opt_verbosity,
+		verify_merge_signature(cummit, opt_verbosity,
 				       check_trust_level);
 	}
 
@@ -671,8 +671,8 @@ static int run_merge(void)
 		strvec_push(&args, opt_signoff);
 	if (opt_squash)
 		strvec_push(&args, opt_squash);
-	if (opt_commit)
-		strvec_push(&args, opt_commit);
+	if (opt_cummit)
+		strvec_push(&args, opt_cummit);
 	if (opt_edit)
 		strvec_push(&args, opt_edit);
 	if (cleanup_arg)
@@ -821,25 +821,25 @@ static int get_octopus_merge_base(struct object_id *merge_base,
 		const struct object_id *merge_head,
 		const struct object_id *fork_point)
 {
-	struct commit_list *revs = NULL, *result;
+	struct cummit_list *revs = NULL, *result;
 
-	commit_list_insert(lookup_commit_reference(the_repository, curr_head),
+	cummit_list_insert(lookup_cummit_reference(the_repository, curr_head),
 			   &revs);
-	commit_list_insert(lookup_commit_reference(the_repository, merge_head),
+	cummit_list_insert(lookup_cummit_reference(the_repository, merge_head),
 			   &revs);
 	if (!is_null_oid(fork_point))
-		commit_list_insert(lookup_commit_reference(the_repository, fork_point),
+		cummit_list_insert(lookup_cummit_reference(the_repository, fork_point),
 				   &revs);
 
 	result = get_octopus_merge_bases(revs);
-	free_commit_list(revs);
+	free_cummit_list(revs);
 	reduce_heads_replace(&result);
 
 	if (!result)
 		return 1;
 
 	oidcpy(merge_base, &result->item->object.oid);
-	free_commit_list(result);
+	free_cummit_list(result);
 	return 0;
 }
 
@@ -921,19 +921,19 @@ static int get_can_ff(struct object_id *orig_head,
 		      struct oid_array *merge_heads)
 {
 	int ret;
-	struct commit_list *list = NULL;
-	struct commit *merge_head, *head;
+	struct cummit_list *list = NULL;
+	struct cummit *merge_head, *head;
 	struct object_id *orig_merge_head;
 
 	if (merge_heads->nr > 1)
 		return 0;
 
 	orig_merge_head = &merge_heads->oid[0];
-	head = lookup_commit_reference(the_repository, orig_head);
-	commit_list_insert(head, &list);
-	merge_head = lookup_commit_reference(the_repository, orig_merge_head);
+	head = lookup_cummit_reference(the_repository, orig_head);
+	cummit_list_insert(head, &list);
+	merge_head = lookup_cummit_reference(the_repository, orig_merge_head);
 	ret = repo_is_descendant_of(the_repository, merge_head, list);
-	free_commit_list(list);
+	free_cummit_list(list);
 	return ret;
 }
 
@@ -946,18 +946,18 @@ static int already_up_to_date(struct object_id *orig_head,
 			      struct oid_array *merge_heads)
 {
 	int i;
-	struct commit *ours;
+	struct cummit *ours;
 
-	ours = lookup_commit_reference(the_repository, orig_head);
+	ours = lookup_cummit_reference(the_repository, orig_head);
 	for (i = 0; i < merge_heads->nr; i++) {
-		struct commit_list *list = NULL;
-		struct commit *theirs;
+		struct cummit_list *list = NULL;
+		struct cummit *theirs;
 		int ok;
 
-		theirs = lookup_commit_reference(the_repository, &merge_heads->oid[i]);
-		commit_list_insert(theirs, &list);
+		theirs = lookup_cummit_reference(the_repository, &merge_heads->oid[i]);
+		cummit_list_insert(theirs, &list);
 		ok = repo_is_descendant_of(the_repository, ours, list);
-		free_commit_list(list);
+		free_cummit_list(list);
 		if (!ok)
 			return 0;
 	}
@@ -1049,7 +1049,7 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		if (!opt_autostash)
 			require_clean_work_tree(the_repository,
 				N_("pull with rebase"),
-				_("please commit or stash them."), 1, 0);
+				_("please cummit or stash them."), 1, 0);
 
 		if (get_rebase_fork_point(&rebase_fork_point, repo, *refspecs))
 			oidclr(&rebase_fork_point);
@@ -1070,13 +1070,13 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		 * The fetch involved updating the current branch.
 		 *
 		 * The working tree and the index file are still based on
-		 * orig_head commit, but we are merging into curr_head.
+		 * orig_head cummit, but we are merging into curr_head.
 		 * Update the working tree to match curr_head.
 		 */
 
 		warning(_("fetch updated the current branch head.\n"
 			"fast-forwarding your working tree from\n"
-			"commit %s."), oid_to_hex(&orig_head));
+			"cummit %s."), oid_to_hex(&orig_head));
 
 		if (checkout_fast_forward(the_repository, &orig_head,
 					  &curr_head, 0))

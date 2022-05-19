@@ -30,7 +30,7 @@ Fixes since v1.6.0
 * "git merge" did not resolve a truly trivial merges that can be done
   without content level merges.
 
-* "git svn dcommit" to a repository with URL that has embedded usernames
+* "git svn dcummit" to a repository with URL that has embedded usernames
   did not work correctly.
 
 Contains other various documentation fixes.

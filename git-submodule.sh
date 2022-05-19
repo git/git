@@ -13,7 +13,7 @@ USAGE="[--quiet] [--cached]
    or: $dashless [--quiet] update [--init [--filter=<filter-spec>]] [--remote] [-N|--no-fetch] [-f|--force] [--checkout|--merge|--rebase] [--[no-]recommend-shallow] [--reference <repository>] [--recursive] [--[no-]single-branch] [--] [<path>...]
    or: $dashless [--quiet] set-branch (--default|--branch <branch>) [--] <path>
    or: $dashless [--quiet] set-url [--] <path> <newurl>
-   or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [commit] [--] [<path>...]
+   or: $dashless [--quiet] summary [--cached|--files] [--summary-limit <n>] [cummit] [--] [<path>...]
    or: $dashless [--quiet] foreach [--recursive] <command>
    or: $dashless [--quiet] sync [--recursive] [--] [<path>...]
    or: $dashless [--quiet] absorbgitdirs [--] [<path>...]"
@@ -442,12 +442,12 @@ cmd_set_url() {
 }
 
 #
-# Show commit summary for submodules in index or working tree
+# Show cummit summary for submodules in index or working tree
 #
-# If '--cached' is given, show summary between index and given commit,
-# or between working tree and given commit
+# If '--cached' is given, show summary between index and given cummit,
+# or between working tree and given cummit
 #
-# $@ = [commit (default 'HEAD'),] requested paths (default all)
+# $@ = [cummit (default 'HEAD'),] requested paths (default all)
 #
 cmd_summary() {
 	summary_limit=-1

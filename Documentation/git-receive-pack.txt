@@ -166,24 +166,24 @@ in `pre-receive` hook, after accepting a signed push.
 
 Using this hook, it is easy to generate mails describing the updates
 to the repository.  This example script sends one mail message per
-ref listing the commits pushed to the repository, and logs the push
+ref listing the cummits pushed to the repository, and logs the push
 certificates of signed pushes with good signatures to a logger
 service:
 
 ----
 #!/bin/sh
-# mail out commit update information.
+# mail out cummit update information.
 while read oval nval ref
 do
 	if expr "$oval" : '0*$' >/dev/null
 	then
-		echo "Created a new ref, with the following commits:"
+		echo "Created a new ref, with the following cummits:"
 		git rev-list --pretty "$nval"
 	else
-		echo "New commits:"
+		echo "New cummits:"
 		git rev-list --pretty "$nval" "^$oval"
 	fi |
-	mail -s "Changes to ref $ref" commit-list@mydomain
+	mail -s "Changes to ref $ref" cummit-list@mydomain
 done
 # log signed push certificate, if any
 if test -n "${GIT_PUSH_CERT-}" && test ${GIT_PUSH_CERT_STATUS} = G

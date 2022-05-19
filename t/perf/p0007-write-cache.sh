@@ -7,7 +7,7 @@ test_description="Tests performance of writing the index"
 test_perf_default_repo
 
 test_expect_success "setup repo" '
-	if git rev-parse --verify refs/heads/p0006-ballast^{commit}
+	if git rev-parse --verify refs/heads/p0006-ballast^{cummit}
 	then
 		echo Assuming synthetic repo from many-files.sh &&
 		git config --local core.sparsecheckout 1 &&

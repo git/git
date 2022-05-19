@@ -56,7 +56,7 @@ test_expect_success POSIXPERM 'update-server-info honors core.sharedRepository' 
 	: > a1 &&
 	git add a1 &&
 	test_tick &&
-	git commit -m a1 &&
+	git cummit -m a1 &&
 	umask 0277 &&
 	git update-server-info &&
 	actual="$(ls -l .git/info/refs)" &&
@@ -142,13 +142,13 @@ test_expect_success POSIXPERM 'forced modes' '
 		git init --shared=0660 --template=templates &&
 		>frotz &&
 		git add frotz &&
-		git commit -a -m initial &&
+		git cummit -a -m initial &&
 		git repack
 	) &&
 	# List repository files meant to be protected; note that
-	# COMMIT_EDITMSG does not matter---0mode is not about a
+	# cummit_EDITMSG does not matter---0mode is not about a
 	# repository with a work tree.
-	find new/.git -type f -name COMMIT_EDITMSG -prune -o -print |
+	find new/.git -type f -name cummit_EDITMSG -prune -o -print |
 	xargs ls -ld >actual &&
 
 	# Everything must be unaccessible to others

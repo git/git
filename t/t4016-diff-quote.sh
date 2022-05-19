@@ -29,7 +29,7 @@ test_expect_success setup '
 	echo P1.2 >"$P1.2" &&
 	echo P1.3 >"$P1.3" &&
 	git add . &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git mv "$P0.0" "R$P0.0" &&
 	git mv "$P0.1" "R$P1.0" &&
 	git mv "$P0.2" "R$P2.0" &&

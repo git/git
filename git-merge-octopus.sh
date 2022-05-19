@@ -38,7 +38,7 @@ case "$remotes" in
 	exit 2 ;;
 esac
 
-# MRC is the current "merge reference commit"
+# MRC is the current "merge reference cummit"
 # MRT is the current "merge result tree"
 
 if ! git diff-index --quiet --cached HEAD --
@@ -70,7 +70,7 @@ do
 		eval pretty_name=\${GITHEAD_$SHA1_UP:-$pretty_name}
 	fi
 	common=$(git merge-base --all $SHA1 $MRC) ||
-		die "$(eval_gettext "Unable to find common commit with \$pretty_name")"
+		die "$(eval_gettext "Unable to find common cummit with \$pretty_name")"
 
 	case "$LF$common$LF" in
 	*"$LF$SHA1$LF"*)

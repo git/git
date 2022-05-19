@@ -14,13 +14,13 @@ test_expect_success 'setup' '
 	: > file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	echo 1 > file &&
 	test_tick &&
-	git commit -m second file &&
+	git cummit -m second file &&
 	echo 2 > file &&
 	test_tick &&
-	git commit -m third file &&
+	git cummit -m third file &&
 
 	rm .git/index &&
 
@@ -29,13 +29,13 @@ test_expect_success 'setup' '
 	git submodule add "$(pwd)" sub &&
 	git symbolic-ref HEAD refs/heads/super &&
 	test_tick &&
-	git commit -m super-initial &&
+	git cummit -m super-initial &&
 	echo 1 > super-file &&
 	test_tick &&
-	git commit -m super-first super-file &&
+	git cummit -m super-first super-file &&
 	echo 2 > super-file &&
 	test_tick &&
-	git commit -m super-second super-file
+	git cummit -m super-second super-file
 '
 
 test_expect_success "Ilari's test" '

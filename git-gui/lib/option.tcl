@@ -140,7 +140,7 @@ proc do_options {} {
 		{t user.name {mc "User Name"}}
 		{t user.email {mc "Email Address"}}
 
-		{b merge.summary {mc "Summarize Merge Commits"}}
+		{b merge.summary {mc "Summarize Merge cummits"}}
 		{i-1..5 merge.verbosity {mc "Merge Verbosity"}}
 		{b merge.diffstat {mc "Show Diffstat After Merge"}}
 		{t merge.tool {mc "Use Merge Tool"}}
@@ -155,10 +155,10 @@ proc do_options {} {
 		{i-0..300 gui.blamehistoryctx {mc "Blame History Context Radius (days)"}}
 		{i-1..99 gui.diffcontext {mc "Number of Diff Context Lines"}}
 		{t gui.diffopts {mc "Additional Diff Parameters"}}
-		{i-0..99 gui.commitmsgwidth {mc "Commit Message Text Width"}}
+		{i-0..99 gui.cummitmsgwidth {mc "cummit Message Text Width"}}
 		{t gui.newbranchtemplate {mc "New Branch Name Template"}}
 		{c gui.encoding {mc "Default File Contents Encoding"}}
-		{b gui.warndetachedcommit {mc "Warn before committing to a detached head"}}
+		{b gui.warndetachedcummit {mc "Warn before cummitting to a detached head"}}
 		{s gui.stageuntracked {mc "Staging of untracked files"} {list "yes" "no" "ask"}}
 		{b gui.displayuntracked {mc "Show untracked files"}}
 		{i-1..99 gui.tabsize {mc "Tab spacing"}}

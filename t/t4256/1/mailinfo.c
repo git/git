@@ -768,7 +768,7 @@ static int check_inbody_header(struct mailinfo *mi, const struct strbuf *line)
 	return 0;
 }
 
-static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
+static int handle_cummit_msg(struct mailinfo *mi, struct strbuf *line)
 {
 	assert(!mi->filter_stage);
 
@@ -787,7 +787,7 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 		if (mi->header_stage)
 			return 0;
 	} else
-		/* Only trim the first (blank) line of the commit message
+		/* Only trim the first (blank) line of the cummit message
 		 * when ignoring in-body headers.
 		 */
 		mi->header_stage = 0;
@@ -835,7 +835,7 @@ static void handle_filter(struct mailinfo *mi, struct strbuf *line)
 {
 	switch (mi->filter_stage) {
 	case 0:
-		if (!handle_commit_msg(mi, line))
+		if (!handle_cummit_msg(mi, line))
 			break;
 		mi->filter_stage++;
 		/* fallthrough */

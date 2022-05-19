@@ -30,7 +30,7 @@ Fixes since v1.8.1.2
  * Attempt to "branch --edit-description" an existing branch, while
    being on a detached HEAD, errored out.
 
- * "git cherry-pick" did not replay a root commit to an unborn branch.
+ * "git cherry-pick" did not replay a root cummit to an unborn branch.
 
  * We forgot to close the file descriptor reading from "gpg" output,
    killing "git log --show-signature" on a long history.

@@ -25,7 +25,7 @@ test_expect_success 'setup' '
 	# or even break our tests, disable ctime-checks entirely
 	git config core.trustctime false &&
 	git add file other &&
-	git commit -m "initial import"
+	git cummit -m "initial import"
 '
 
 test_expect_success '--refresh has no racy timestamps to fix' '

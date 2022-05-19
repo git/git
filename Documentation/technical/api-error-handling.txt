@@ -61,7 +61,7 @@ On error, such functions append a message about what went wrong to the
 'err' strbuf.  The message is meant to be complete enough to be passed
 to `die` or `error` as-is.  For example:
 
-	if (ref_transaction_commit(transaction, &err))
+	if (ref_transaction_cummit(transaction, &err))
 		die("%s", err.buf);
 
 The 'err' parameter will be untouched if no error occurred, so multiple
@@ -70,7 +70,7 @@ function calls can be chained:
 	t = ref_transaction_begin(&err);
 	if (!t ||
 	    ref_transaction_update(t, "HEAD", ..., &err) ||
-	    ret_transaction_commit(t, &err))
+	    ret_transaction_cummit(t, &err))
 		die("%s", err.buf);
 
 The 'err' parameter must be a pointer to a valid strbuf.  To silence

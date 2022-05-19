@@ -9,35 +9,35 @@ test_description='git apply should not get confused with type changes.
 
 . ./test-lib.sh
 
-test_expect_success 'setup repository and commits' '
+test_expect_success 'setup repository and cummits' '
 	echo "hello world" > foo &&
 	echo "hi planet" > bar &&
 	git update-index --add foo bar &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git branch initial &&
 	rm -f foo &&
 	test_ln_s_add bar foo &&
-	git commit -m "foo symlinked to bar" &&
+	git cummit -m "foo symlinked to bar" &&
 	git branch foo-symlinked-to-bar &&
 	git rm -f foo &&
 	echo "how far is the sun?" > foo &&
 	git update-index --add foo &&
-	git commit -m "foo back to file" &&
+	git cummit -m "foo back to file" &&
 	git branch foo-back-to-file &&
 	printf "\0" > foo &&
 	git update-index foo &&
-	git commit -m "foo becomes binary" &&
+	git cummit -m "foo becomes binary" &&
 	git branch foo-becomes-binary &&
 	rm -f foo &&
 	git update-index --remove foo &&
 	mkdir foo &&
 	echo "if only I knew" > foo/baz &&
 	git update-index --add foo/baz &&
-	git commit -m "foo becomes a directory" &&
+	git cummit -m "foo becomes a directory" &&
 	git branch "foo-becomes-a-directory" &&
 	echo "hello world" > foo/baz &&
 	git update-index foo/baz &&
-	git commit -m "foo/baz is the original foo" &&
+	git cummit -m "foo/baz is the original foo" &&
 	git branch foo-baz-renamed-from-foo
 	'
 

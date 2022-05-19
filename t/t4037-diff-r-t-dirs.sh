@@ -15,7 +15,7 @@ test_expect_success setup '
 	>ft &&
 	git add . &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	rm -fr dt dr ft fr &&
 	mkdir da ft &&
@@ -26,7 +26,7 @@ test_expect_success setup '
 	git add -u &&
 	git add . &&
 	test_tick &&
-	git commit -m second
+	git cummit -m second
 '
 
 cat >expect <<\EOF

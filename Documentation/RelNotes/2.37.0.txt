@@ -31,17 +31,17 @@ Fixes since v2.36
    reference strings after they are freed.
    (merge 45a14f578e rs/name-rev-fix-free-after-use later to maint).
 
- * "git show <commit1> <commit2>... -- <pathspec>" lost the pathspec
-   when showing the second and subsequent commits, which has been
+ * "git show <cummit1> <cummit2>... -- <pathspec>" lost the pathspec
+   when showing the second and subsequent cummits, which has been
    corrected.
    (merge 5cdb38458e jc/show-pathspec-fix later to maint).
 
  * "git fast-export -- <pathspec>" lost the pathspec when showing the
-   second and subsequent commits, which has been corrected.
+   second and subsequent cummits, which has been corrected.
    (merge d1c25272f5 rs/fast-export-pathspec-fix later to maint).
 
  * "git format-patch <args> -- <pathspec>" lost the pathspec when
-   showing the second and subsequent commits, which has been
+   showing the second and subsequent cummits, which has been
    corrected.
    (merge 91f8f7e46f rs/format-patch-pathspec-fix later to maint).
 
@@ -70,19 +70,19 @@ Fixes since v2.36
    (merge e5f5d7d42e ea/progress-partial-blame later to maint).
 
  * "git rebase --keep-base <upstream> <branch-to-rebase>" computed the
-   commit to rebase onto incorrectly, which has been corrected.
+   cummit to rebase onto incorrectly, which has been corrected.
    (merge 9e5ebe9668 ah/rebase-keep-base-fix later to maint).
 
  * Fix a leak of FILE * in an error codepath.
-   (merge c0befa0c03 kt/commit-graph-plug-fp-leak-on-error later to maint).
+   (merge c0befa0c03 kt/cummit-graph-plug-fp-leak-on-error later to maint).
 
  * Avoid problems from interaction between malloc_check and address
    sanitizer.
    (merge 067109a5e7 pw/test-malloc-with-sanitize-address later to maint).
 
- * The commit summary shown after making a commit is matched to what
+ * The cummit summary shown after making a cummit is matched to what
    is given in "git status" not to use the break-rewrite heuristics.
-   (merge 84792322ed rs/commit-summary-wo-break-rewrite later to maint).
+   (merge 84792322ed rs/cummit-summary-wo-break-rewrite later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge e6b2582da3 cm/reftable-0-length-memset later to maint).

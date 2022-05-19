@@ -5,7 +5,7 @@ test_description='test git worktree repair'
 . ./test-lib.sh
 
 test_expect_success setup '
-	test_commit init
+	test_cummit init
 '
 
 test_expect_success 'skip missing worktree' '
@@ -183,7 +183,7 @@ test_expect_success 'repair multiple gitdir files' '
 test_expect_success 'repair moved main and linked worktrees' '
 	test_when_finished "rm -rf main side mainmoved sidemoved" &&
 	test_create_repo main &&
-	test_commit -C main init &&
+	test_cummit -C main init &&
 	git -C main worktree add --detach ../side &&
 	sed "s,side/\.git$,sidemoved/.git," \
 		main/.git/worktrees/side/gitdir >expect-gitdir &&

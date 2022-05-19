@@ -63,8 +63,8 @@ open STDERR, ">&", $tmpstderr or die "cannot restore STDERR";
 # ident
 like($r->ident("aUthor"), qr/^A U Thor <author\@example.com> [0-9]+ [+-]\d{4}$/,
      "ident scalar: author (type)");
-like($r->ident("cOmmitter"), qr/^C O Mitter <committer\@example.com> [0-9]+ [+-]\d{4}$/,
-     "ident scalar: committer (type)");
+like($r->ident("cummitter"), qr/^C O Mitter <cummitter\@example.com> [0-9]+ [+-]\d{4}$/,
+     "ident scalar: cummitter (type)");
 is($r->ident("invalid"), "invalid", "ident scalar: invalid ident string (no parsing)");
 my ($name, $email, $time_tz) = $r->ident('author');
 is_deeply([$name, $email], ["A U Thor", "author\@example.com"],
@@ -120,10 +120,10 @@ is($r2->wc_path, $abs_repo_dir . "/", "wc_path (2)");
 is($r2->wc_subdir, "directory2/", "wc_subdir initial (2)");
 
 # commands in sub directory
-my $last_commit = $r2->command_oneline(qw(rev-parse --verify HEAD));
-like($last_commit, $oid_re, 'rev-parse returned hash');
-my $dir_commit = $r2->command_oneline('log', '-n1', '--pretty=format:%H', '.');
-isnt($last_commit, $dir_commit, 'log . does not show last commit');
+my $last_cummit = $r2->command_oneline(qw(rev-parse --verify HEAD));
+like($last_cummit, $oid_re, 'rev-parse returned hash');
+my $dir_cummit = $r2->command_oneline('log', '-n1', '--pretty=format:%H', '.');
+isnt($last_cummit, $dir_cummit, 'log . does not show last cummit');
 
 # commands outside working tree
 chdir($abs_repo_dir . '/..');

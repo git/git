@@ -3,7 +3,7 @@
 #include "cache.h"
 #include "repository.h"
 #include "config.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tree.h"
 #include "blob.h"
 #include "tag.h"
@@ -48,7 +48,7 @@ static int name_objects;
 #define ERROR_REACHABLE 02
 #define ERROR_PACK 04
 #define ERROR_REFS 010
-#define ERROR_COMMIT_GRAPH 020
+#define ERROR_cummit_GRAPH 020
 #define ERROR_MULTI_PACK_INDEX 040
 
 static const char *describe_object(const struct object_id *oid)
@@ -297,7 +297,7 @@ static void check_unreachable_object(struct object *obj)
 	/*
 	 * "!USED" means that nothing at all points to it, including
 	 * other unreachable objects. In other words, it's the "tip"
-	 * of some set of unreachable objects, usually a commit that
+	 * of some set of unreachable objects, usually a cummit that
 	 * got dropped.
 	 *
 	 * Such starting points are more interesting than some random
@@ -313,7 +313,7 @@ static void check_unreachable_object(struct object *obj)
 				  describe_object(&obj->oid));
 		if (write_lost_and_found) {
 			char *filename = git_pathdup("lost-found/%s/%s",
-				obj->type == OBJ_COMMIT ? "commit" : "other",
+				obj->type == OBJ_cummit ? "cummit" : "other",
 				describe_object(&obj->oid));
 			FILE *f;
 
@@ -413,12 +413,12 @@ static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 	if (err)
 		goto out;
 
-	if (obj->type == OBJ_COMMIT) {
-		struct commit *commit = (struct commit *) obj;
+	if (obj->type == OBJ_cummit) {
+		struct cummit *cummit = (struct cummit *) obj;
 
-		if (!commit->parents && show_root)
+		if (!cummit->parents && show_root)
 			printf_ln(_("root %s"),
-				  describe_object(&commit->object.oid));
+				  describe_object(&cummit->object.oid));
 	}
 
 	if (obj->type == OBJ_TAG) {
@@ -436,9 +436,9 @@ static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 out:
 	if (obj->type == OBJ_TREE)
 		free_tree_buffer((struct tree *)obj);
-	if (obj->type == OBJ_COMMIT)
-		free_commit_buffer(the_repository->parsed_objects,
-				   (struct commit *)obj);
+	if (obj->type == OBJ_cummit)
+		free_cummit_buffer(the_repository->parsed_objects,
+				   (struct cummit *)obj);
 	return err;
 }
 
@@ -533,8 +533,8 @@ static int fsck_handle_ref(const char *refname, const struct object_id *oid,
 		/* We'll continue with the rest despite the error.. */
 		return 0;
 	}
-	if (obj->type != OBJ_COMMIT && is_branch(refname)) {
-		error(_("%s: not a commit"), refname);
+	if (obj->type != OBJ_cummit && is_branch(refname)) {
+		error(_("%s: not a cummit"), refname);
 		errors_found |= ERROR_REFS;
 	}
 	default_refs++;
@@ -942,17 +942,17 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 	check_connectivity();
 
-	if (the_repository->settings.core_commit_graph) {
-		struct child_process commit_graph_verify = CHILD_PROCESS_INIT;
+	if (the_repository->settings.core_cummit_graph) {
+		struct child_process cummit_graph_verify = CHILD_PROCESS_INIT;
 
 		prepare_alt_odb(the_repository);
 		for (odb = the_repository->objects->odb; odb; odb = odb->next) {
-			child_process_init(&commit_graph_verify);
-			commit_graph_verify.git_cmd = 1;
-			strvec_pushl(&commit_graph_verify.args, "commit-graph",
+			child_process_init(&cummit_graph_verify);
+			cummit_graph_verify.git_cmd = 1;
+			strvec_pushl(&cummit_graph_verify.args, "cummit-graph",
 				     "verify", "--object-dir", odb->path, NULL);
-			if (run_command(&commit_graph_verify))
-				errors_found |= ERROR_COMMIT_GRAPH;
+			if (run_command(&cummit_graph_verify))
+				errors_found |= ERROR_cummit_GRAPH;
 		}
 	}
 

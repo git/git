@@ -11,7 +11,7 @@ test_expect_success 'setup' '
 	mkdir parent &&
 	(cd parent && git init &&
 	 echo one >file && git add file &&
-	 git commit -m one) &&
+	 git cummit -m one) &&
 	git clone --depth=1 --no-local parent shallow-repo
 
 '
@@ -161,7 +161,7 @@ test_expect_success 'chooses correct default initial branch name' '
 
 test_expect_success 'guesses initial branch name correctly' '
 	git init --initial-branch=guess initial-branch &&
-	test_commit -C initial-branch no-spoilers &&
+	test_cummit -C initial-branch no-spoilers &&
 	git -C initial-branch branch abc guess &&
 	git clone initial-branch is-it &&
 	test refs/heads/guess = $(git -C is-it symbolic-ref HEAD) &&

@@ -7,7 +7,7 @@ Removal
  * "git svnimport" was removed in favor of "git svn".  It is still there
    in the source tree (contrib/examples) but unsupported.
 
- * As git-commit and git-status have been rewritten, "git runstatus"
+ * As git-cummit and git-status have been rewritten, "git runstatus"
    helper script lost all its users and has been removed.
 
 
@@ -28,14 +28,14 @@ Deprecation notices
 -------------------
 
  * From v1.6.0, git will by default install dashed form of commands
-   (e.g. "git-commit") outside of users' normal $PATH, and will install
+   (e.g. "git-cummit") outside of users' normal $PATH, and will install
    only selected commands ("git" itself, and "gitk") in $PATH.  This
    implies:
 
-   - Using dashed forms of git commands (e.g. "git-commit") from the
+   - Using dashed forms of git commands (e.g. "git-cummit") from the
      command line has been informally deprecated since early 2006, but
      now it officially is, and will be removed in the future.  Use
-     dash-less forms (e.g. "git commit") instead.
+     dash-less forms (e.g. "git cummit") instead.
 
    - Using dashed forms from your scripts, without first prepending the
      return value from "git --exec-path" to the scripts' PATH, has been
@@ -126,8 +126,8 @@ Updates since v1.5.3
 
  * Example update and post-receive hooks have been improved.
 
- * Any command that wants to take a commit object name can now use
-   ":/string" syntax to name a commit.
+ * Any command that wants to take a cummit object name can now use
+   ":/string" syntax to name a cummit.
 
  * "git reset" is now built-in and its output can be squelched with -q.
 
@@ -149,7 +149,7 @@ Updates since v1.5.3
 
  * "git rebase" now detaches head during its operation, so after a
    successful "git rebase" operation, the reflog entry branch@{1} for
-   the current branch points at the commit before the rebase was
+   the current branch points at the cummit before the rebase was
    started.
 
  * "git rebase -i" also triggers rerere to help your repeated merges.
@@ -164,7 +164,7 @@ Updates since v1.5.3
 
  * "git cherry-pick" made a misguided attempt to repeat the original
    command line in the generated log message, when told to cherry-pick a
-   commit by naming a tag that points at it.  It does not anymore.
+   cummit by naming a tag that points at it.  It does not anymore.
 
  * "git for-each-ref" learned %(xxxdate:<date-format>) syntax to show the
    various date fields in different formats.
@@ -234,18 +234,18 @@ Updates since v1.5.3
    configuration.  The diff output (including the hunk picker)
    are colored with color.diff configuration.
 
- * "git commit --allow-empty" allows you to create a single-parent
-   commit that records the same tree as its parent, overriding the usual
+ * "git cummit --allow-empty" allows you to create a single-parent
+   cummit that records the same tree as its parent, overriding the usual
    safety valve.
 
- * "git commit --amend" can amend a merge that does not change the tree
+ * "git cummit --amend" can amend a merge that does not change the tree
    from its first parent.
 
- * "git commit" used to unconditionally strip comment lines that
+ * "git cummit" used to unconditionally strip comment lines that
    began with '#' and removed excess blank lines.  This behavior has
    been made configurable.
 
- * "git commit" has been rewritten in C.
+ * "git cummit" has been rewritten in C.
 
  * "git stash random-text" does not create a new stash anymore.  It was
    a UI mistake.  Use "git stash save random-text", or "git stash"
@@ -259,13 +259,13 @@ Updates since v1.5.3
  * "git prune --expire <time>" can exempt young loose objects from
    getting pruned.
 
- * "git branch --contains <commit>" can list branches that are
-   descendants of a given commit.
+ * "git branch --contains <cummit>" can list branches that are
+   descendants of a given cummit.
 
  * "git log" learned --early-output option to help interactive GUI
    implementations.
 
- * "git bisect" learned "skip" action to mark untestable commits.
+ * "git bisect" learned "skip" action to mark untestable cummits.
 
  * "git bisect visualize" learned a shorter synonym "git bisect view".
 
@@ -274,7 +274,7 @@ Updates since v1.5.3
    bisect visualize tig").
 
  * "git format-patch" learned "format.numbered" configuration variable
-   to automatically turn --numbered option on when more than one commits
+   to automatically turn --numbered option on when more than one cummits
    are formatted.
 
  * "git ls-files" learned "--exclude-standard" to use the canned set of
@@ -284,7 +284,7 @@ Updates since v1.5.3
    annotation message.
 
  * "git tag -m one -m bar" (multiple -m options) behaves similarly to
-   "git commit"; the parameters to -m options are formatted as separate
+   "git cummit"; the parameters to -m options are formatted as separate
    paragraphs.
 
  * The format "git show" outputs an annotated tag has been updated to
@@ -296,7 +296,7 @@ Updates since v1.5.3
  * "git cvsimport" did not notice errors from underlying "cvsps"
    and produced a corrupt import silently.
 
- * "git cvsexportcommit" learned -w option to specify and switch to the
+ * "git cvsexportcummit" learned -w option to specify and switch to the
    CVS working directory.
 
  * "git checkout" from a subdirectory learned to use "../path" to allow
@@ -315,7 +315,7 @@ Updates since v1.5.3
    .git/config.
 
  * "git svn" learned --use-log-author option, which picks up more
-   descriptive name from From: and Signed-off-by: lines in the commit
+   descriptive name from From: and Signed-off-by: lines in the cummit
    message.
 
  * "git svn" wasted way too much disk to record revision mappings

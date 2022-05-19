@@ -27,7 +27,7 @@ test_expect_success 'set up basic repo' '
 	echo two > subdir/file.txt &&
 	echo three > subdir/file2.txt &&
 	git add . &&
-	git commit -m init &&
+	git cummit -m init &&
 	echo four > index-only.txt &&
 	git add index-only.txt &&
 	echo five > disk-only.txt
@@ -169,7 +169,7 @@ test_expect_success 'relative path when cwd is outside worktree' '
 	test_i18ngrep "relative path syntax can.t be used outside working tree" error
 '
 
-test_expect_success '<commit>:file correctly diagnosed after a pathname' '
+test_expect_success '<cummit>:file correctly diagnosed after a pathname' '
 	test_must_fail git rev-parse file.txt HEAD:file.txt 1>actual 2>error &&
 	test_i18ngrep ! "exists on disk" error &&
 	test_i18ngrep "no such path in the working tree" error &&

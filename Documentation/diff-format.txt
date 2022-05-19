@@ -61,7 +61,7 @@ Possible status letters are:
 - R: renaming of a file
 - T: change in the type of the file (regular file, symbolic link or submodule)
 - U: file is unmerged (you must complete the merge before it can
-  be committed)
+  be cummitted)
 - X: "unknown" change type (most probably a bug, please report it)
 
 Status letters C and R are always followed by a score (denoting the
@@ -88,7 +88,7 @@ diff format for merges
 
 "git-diff-tree", "git-diff-files" and "git-diff --raw"
 can take `-c` or `--cc` option
-to generate diff output also for merge commits.  The output differs
+to generate diff output also for merge cummits.  The output differs
 from the format described above in the following way:
 
 . there is a colon for each parent
@@ -100,7 +100,7 @@ from the format described above in the following way:
 For `-c` and `--cc`, only the destination or final path is shown even
 if the file was renamed on any side of history.  With
 `--combined-all-paths`, the name of the path in each parent is shown
-followed by the name of the path in the merge commit.
+followed by the name of the path in the merge cummit.
 
 Examples for `-c` and `--cc` without `--combined-all-paths`:
 ------------------------------------------------

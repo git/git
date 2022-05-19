@@ -12,10 +12,10 @@ reset_state () {
 
 test_expect_success setup '
 	test_tick &&
-	git commit --allow-empty -m initial &&
+	git cummit --allow-empty -m initial &&
 	git branch side &&
 	test_tick &&
-	git commit --allow-empty -m second &&
+	git cummit --allow-empty -m second &&
 	"$TAR" cf .git-saved.tar .git
 '
 

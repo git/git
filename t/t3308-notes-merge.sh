@@ -8,17 +8,17 @@ test_description='Test merging of notes trees'
 . ./test-lib.sh
 
 test_expect_success setup '
-	test_commit 1st &&
-	test_commit 2nd &&
-	test_commit 3rd &&
-	test_commit 4th &&
-	test_commit 5th &&
-	# Create notes on 4 first commits
+	test_cummit 1st &&
+	test_cummit 2nd &&
+	test_cummit 3rd &&
+	test_cummit 4th &&
+	test_cummit 5th &&
+	# Create notes on 4 first cummits
 	git config core.notesRef refs/notes/x &&
-	git notes add -m "Notes on 1st commit" 1st &&
-	git notes add -m "Notes on 2nd commit" 2nd &&
-	git notes add -m "Notes on 3rd commit" 3rd &&
-	git notes add -m "Notes on 4th commit" 4th &&
+	git notes add -m "Notes on 1st cummit" 1st &&
+	git notes add -m "Notes on 2nd cummit" 2nd &&
+	git notes add -m "Notes on 3rd cummit" 3rd &&
+	git notes add -m "Notes on 4th cummit" 4th &&
 	# Copy notes to remote-notes
 	git fetch . refs/notes/*:refs/remote-notes/origin/* &&
 
@@ -49,11 +49,11 @@ test_expect_success setup '
 	EOF
 '
 
-commit_sha1=$(git rev-parse 1st^{commit})
-commit_sha2=$(git rev-parse 2nd^{commit})
-commit_sha3=$(git rev-parse 3rd^{commit})
-commit_sha4=$(git rev-parse 4th^{commit})
-commit_sha5=$(git rev-parse 5th^{commit})
+cummit_sha1=$(git rev-parse 1st^{cummit})
+cummit_sha2=$(git rev-parse 2nd^{cummit})
+cummit_sha3=$(git rev-parse 3rd^{cummit})
+cummit_sha4=$(git rev-parse 4th^{cummit})
+cummit_sha5=$(git rev-parse 5th^{cummit})
 
 verify_notes () {
 	notes_ref="$1"
@@ -66,26 +66,26 @@ verify_notes () {
 }
 
 cat <<EOF | sort >expect_notes_x
-$(test_oid hash4a) $commit_sha4
-$(test_oid hash3a) $commit_sha3
-$(test_oid hash2a) $commit_sha2
-$(test_oid hash1a) $commit_sha1
+$(test_oid hash4a) $cummit_sha4
+$(test_oid hash3a) $cummit_sha3
+$(test_oid hash2a) $cummit_sha2
+$(test_oid hash1a) $cummit_sha1
 EOF
 
 cat >expect_log_x <<EOF
-$commit_sha5 5th
+$cummit_sha5 5th
 
-$commit_sha4 4th
-Notes on 4th commit
+$cummit_sha4 4th
+Notes on 4th cummit
 
-$commit_sha3 3rd
-Notes on 3rd commit
+$cummit_sha3 3rd
+Notes on 3rd cummit
 
-$commit_sha2 2nd
-Notes on 2nd commit
+$cummit_sha2 2nd
+Notes on 2nd cummit
 
-$commit_sha1 1st
-Notes on 1st commit
+$cummit_sha1 1st
+Notes on 1st cummit
 
 EOF
 
@@ -118,7 +118,7 @@ test_expect_success 'merge non-notes ref into empty notes ref (remote-notes/orig
 	git config core.notesRef refs/notes/v &&
 	git notes merge refs/remote-notes/origin/x &&
 	verify_notes v &&
-	# refs/remote-notes/origin/x and v should point to the same notes commit
+	# refs/remote-notes/origin/x and v should point to the same notes cummit
 	test "$(git rev-parse refs/remote-notes/origin/x)" = "$(git rev-parse refs/notes/v)"
 '
 
@@ -126,7 +126,7 @@ test_expect_success 'merge notes into empty notes ref (x => y)' '
 	git config core.notesRef refs/notes/y &&
 	git notes merge x &&
 	verify_notes y &&
-	# x and y should point to the same notes commit
+	# x and y should point to the same notes cummit
 	test "$(git rev-parse refs/notes/x)" = "$(git rev-parse refs/notes/y)"
 '
 
@@ -137,14 +137,14 @@ test_expect_success 'merge empty notes ref (z => y)' '
 '
 
 test_expect_success 'change notes on other notes ref (y)' '
-	# Not touching notes to 1st commit
+	# Not touching notes to 1st cummit
 	git notes remove 2nd &&
-	git notes append -m "More notes on 3rd commit" 3rd &&
-	git notes add -f -m "New notes on 4th commit" 4th &&
-	git notes add -m "Notes on 5th commit" 5th
+	git notes append -m "More notes on 3rd cummit" 3rd &&
+	git notes add -f -m "New notes on 4th cummit" 4th &&
+	git notes add -m "Notes on 5th cummit" 5th
 '
 
-test_expect_success 'merge previous notes commit (y^ => y) => No-op' '
+test_expect_success 'merge previous notes cummit (y^ => y) => No-op' '
 	pre_state="$(git rev-parse refs/notes/y)" &&
 	git notes merge y^ &&
 	# y should not move
@@ -152,28 +152,28 @@ test_expect_success 'merge previous notes commit (y^ => y) => No-op' '
 '
 
 cat <<EOF | sort >expect_notes_y
-$(test_oid hash5b) $commit_sha5
-$(test_oid hash4b) $commit_sha4
-$(test_oid hash3b) $commit_sha3
-$(test_oid hash1a) $commit_sha1
+$(test_oid hash5b) $cummit_sha5
+$(test_oid hash4b) $cummit_sha4
+$(test_oid hash3b) $cummit_sha3
+$(test_oid hash1a) $cummit_sha1
 EOF
 
 cat >expect_log_y <<EOF
-$commit_sha5 5th
-Notes on 5th commit
+$cummit_sha5 5th
+Notes on 5th cummit
 
-$commit_sha4 4th
-New notes on 4th commit
+$cummit_sha4 4th
+New notes on 4th cummit
 
-$commit_sha3 3rd
-Notes on 3rd commit
+$cummit_sha3 3rd
+Notes on 3rd cummit
 
-More notes on 3rd commit
+More notes on 3rd cummit
 
-$commit_sha2 2nd
+$cummit_sha2 2nd
 
-$commit_sha1 1st
-Notes on 1st commit
+$cummit_sha1 1st
+Notes on 1st cummit
 
 EOF
 
@@ -199,7 +199,7 @@ test_expect_success 'merge changed (y) into original (x) => Fast-forward' '
 	git notes merge y &&
 	verify_notes x &&
 	verify_notes y &&
-	# x and y should point to same the notes commit
+	# x and y should point to same the notes cummit
 	test "$(git rev-parse refs/notes/x)" = "$(git rev-parse refs/notes/y)"
 '
 
@@ -214,104 +214,104 @@ test_expect_success 'merge empty notes ref (z => y)' '
 	git config core.notesRef refs/notes/y &&
 	git notes merge z &&
 	verify_notes y &&
-	# y should no longer point to the same notes commit as x
+	# y should no longer point to the same notes cummit as x
 	test "$(git rev-parse refs/notes/x)" != "$(git rev-parse refs/notes/y)"
 '
 
 cat <<EOF | sort >expect_notes_y
-$(test_oid hash5b) $commit_sha5
-$(test_oid hash4b) $commit_sha4
-$(test_oid hash3b) $commit_sha3
-$(test_oid hash2c) $commit_sha2
-$(test_oid hash1c) $commit_sha1
+$(test_oid hash5b) $cummit_sha5
+$(test_oid hash4b) $cummit_sha4
+$(test_oid hash3b) $cummit_sha3
+$(test_oid hash2c) $cummit_sha2
+$(test_oid hash1c) $cummit_sha1
 EOF
 
 cat >expect_log_y <<EOF
-$commit_sha5 5th
-Notes on 5th commit
+$cummit_sha5 5th
+Notes on 5th cummit
 
-$commit_sha4 4th
-New notes on 4th commit
+$cummit_sha4 4th
+New notes on 4th cummit
 
-$commit_sha3 3rd
-Notes on 3rd commit
+$cummit_sha3 3rd
+Notes on 3rd cummit
 
-More notes on 3rd commit
+More notes on 3rd cummit
 
-$commit_sha2 2nd
-New notes on 2nd commit
+$cummit_sha2 2nd
+New notes on 2nd cummit
 
-$commit_sha1 1st
-Notes on 1st commit
+$cummit_sha1 1st
+Notes on 1st cummit
 
-More notes on 1st commit
+More notes on 1st cummit
 
 EOF
 
 test_expect_success 'change notes on other notes ref (y)' '
-	# Append to 1st commit notes
-	git notes append -m "More notes on 1st commit" 1st &&
-	# Add new notes to 2nd commit
-	git notes add -m "New notes on 2nd commit" 2nd &&
+	# Append to 1st cummit notes
+	git notes append -m "More notes on 1st cummit" 1st &&
+	# Add new notes to 2nd cummit
+	git notes add -m "New notes on 2nd cummit" 2nd &&
 	verify_notes y
 '
 
 cat <<EOF | sort >expect_notes_x
-$(test_oid hash5b) $commit_sha5
-$(test_oid hash4d) $commit_sha4
-$(test_oid hash1a) $commit_sha1
+$(test_oid hash5b) $cummit_sha5
+$(test_oid hash4d) $cummit_sha4
+$(test_oid hash1a) $cummit_sha1
 EOF
 
 cat >expect_log_x <<EOF
-$commit_sha5 5th
-Notes on 5th commit
+$cummit_sha5 5th
+Notes on 5th cummit
 
-$commit_sha4 4th
-New notes on 4th commit
+$cummit_sha4 4th
+New notes on 4th cummit
 
-More notes on 4th commit
+More notes on 4th cummit
 
-$commit_sha3 3rd
+$cummit_sha3 3rd
 
-$commit_sha2 2nd
+$cummit_sha2 2nd
 
-$commit_sha1 1st
-Notes on 1st commit
+$cummit_sha1 1st
+Notes on 1st cummit
 
 EOF
 
 test_expect_success 'change notes on notes ref (x)' '
 	git config core.notesRef refs/notes/x &&
 	git notes remove 3rd &&
-	git notes append -m "More notes on 4th commit" 4th &&
+	git notes append -m "More notes on 4th cummit" 4th &&
 	verify_notes x
 '
 
 cat <<EOF | sort >expect_notes_x
-$(test_oid hash5b) $commit_sha5
-$(test_oid hash4d) $commit_sha4
-$(test_oid hash2c) $commit_sha2
-$(test_oid hash1c) $commit_sha1
+$(test_oid hash5b) $cummit_sha5
+$(test_oid hash4d) $cummit_sha4
+$(test_oid hash2c) $cummit_sha2
+$(test_oid hash1c) $cummit_sha1
 EOF
 
 cat >expect_log_x <<EOF
-$commit_sha5 5th
-Notes on 5th commit
+$cummit_sha5 5th
+Notes on 5th cummit
 
-$commit_sha4 4th
-New notes on 4th commit
+$cummit_sha4 4th
+New notes on 4th cummit
 
-More notes on 4th commit
+More notes on 4th cummit
 
-$commit_sha3 3rd
+$cummit_sha3 3rd
 
-$commit_sha2 2nd
-New notes on 2nd commit
+$cummit_sha2 2nd
+New notes on 2nd cummit
 
-$commit_sha1 1st
-Notes on 1st commit
+$cummit_sha1 1st
+Notes on 1st cummit
 
-More notes on 1st commit
+More notes on 1st cummit
 
 EOF
 
@@ -322,62 +322,62 @@ test_expect_success 'merge y into x => Non-conflicting 3-way merge' '
 '
 
 cat <<EOF | sort >expect_notes_w
-$(test_oid hash3d) $commit_sha3
-$(test_oid hash2c) $commit_sha2
+$(test_oid hash3d) $cummit_sha3
+$(test_oid hash2c) $cummit_sha2
 EOF
 
 cat >expect_log_w <<EOF
-$commit_sha5 5th
+$cummit_sha5 5th
 
-$commit_sha4 4th
+$cummit_sha4 4th
 
-$commit_sha3 3rd
-New notes on 3rd commit
+$cummit_sha3 3rd
+New notes on 3rd cummit
 
-$commit_sha2 2nd
-New notes on 2nd commit
+$cummit_sha2 2nd
+New notes on 2nd cummit
 
-$commit_sha1 1st
+$cummit_sha1 1st
 
 EOF
 
 test_expect_success 'create notes on new, separate notes ref (w)' '
 	git config core.notesRef refs/notes/w &&
-	# Add same note as refs/notes/y on 2nd commit
-	git notes add -m "New notes on 2nd commit" 2nd &&
-	# Add new note on 3rd commit (non-conflicting)
-	git notes add -m "New notes on 3rd commit" 3rd &&
+	# Add same note as refs/notes/y on 2nd cummit
+	git notes add -m "New notes on 2nd cummit" 2nd &&
+	# Add new note on 3rd cummit (non-conflicting)
+	git notes add -m "New notes on 3rd cummit" 3rd &&
 	# Verify state of notes on new, separate notes ref (w)
 	verify_notes w
 '
 
 cat <<EOF | sort >expect_notes_x
-$(test_oid hash5b) $commit_sha5
-$(test_oid hash4d) $commit_sha4
-$(test_oid hash3d) $commit_sha3
-$(test_oid hash2c) $commit_sha2
-$(test_oid hash1c) $commit_sha1
+$(test_oid hash5b) $cummit_sha5
+$(test_oid hash4d) $cummit_sha4
+$(test_oid hash3d) $cummit_sha3
+$(test_oid hash2c) $cummit_sha2
+$(test_oid hash1c) $cummit_sha1
 EOF
 
 cat >expect_log_x <<EOF
-$commit_sha5 5th
-Notes on 5th commit
+$cummit_sha5 5th
+Notes on 5th cummit
 
-$commit_sha4 4th
-New notes on 4th commit
+$cummit_sha4 4th
+New notes on 4th cummit
 
-More notes on 4th commit
+More notes on 4th cummit
 
-$commit_sha3 3rd
-New notes on 3rd commit
+$cummit_sha3 3rd
+New notes on 3rd cummit
 
-$commit_sha2 2nd
-New notes on 2nd commit
+$cummit_sha2 2nd
+New notes on 2nd cummit
 
-$commit_sha1 1st
-Notes on 1st commit
+$cummit_sha1 1st
+Notes on 1st cummit
 
-More notes on 1st commit
+More notes on 1st cummit
 
 EOF
 

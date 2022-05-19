@@ -22,7 +22,7 @@ int cmd_merge_ours(int argc, const char **argv, const char *prefix)
 
 	/*
 	 * The contents of the current index becomes the tree we
-	 * commit.  The index must match HEAD, or this merge cannot go
+	 * cummit.  The index must match HEAD, or this merge cannot go
 	 * through.
 	 */
 	if (read_cache() < 0)

@@ -14,7 +14,7 @@ UI, Workflows & Features
 
  * The userdiff pattern for C# learned the token "record".
 
- * "git rev-list" learns to omit the "commit <object-name>" header
+ * "git rev-list" learns to omit the "cummit <object-name>" header
    lines from the output with the `--no-commit-header` option.
 
  * "git worktree add --lock" learned to record why the worktree is
@@ -84,7 +84,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * Rewrite of "git submodule" in C continues.
 
- * "git checkout" and "git commit" learn to work without unnecessarily
+ * "git checkout" and "git cummit" learn to work without unnecessarily
    expanding sparse indexes.
 
 
@@ -208,9 +208,9 @@ Fixes since v2.32
    and adds to guidelines to do so.
    (merge 46a237f42f ds/gender-neutral-doc later to maint).
 
- * "git commit --allow-empty-message" won't abort the operation upon
+ * "git cummit --allow-empty-message" won't abort the operation upon
    an empty message, but the hint shown in the editor said otherwise.
-   (merge 6f70f00b4f hj/commit-allow-empty-message later to maint).
+   (merge 6f70f00b4f hj/cummit-allow-empty-message later to maint).
 
  * The code that gives an error message in "git multi-pack-index" when
    no subcommand is given tried to print a NULL pointer as a strong,
@@ -261,7 +261,7 @@ Fixes since v2.32
    (merge a0538e5c8b dd/document-log-decorate-default later to maint).
    (merge ce24797d38 mr/cmake later to maint).
    (merge 9eb542f2ee ab/pre-auto-gc-hook-test later to maint).
-   (merge 9fffc38583 bk/doc-commit-typofix later to maint).
+   (merge 9fffc38583 bk/doc-cummit-typofix later to maint).
    (merge 1cf823d8f0 ks/submodule-cleanup later to maint).
    (merge ebbf5d2b70 js/config-mak-windows-pcre-fix later to maint).
    (merge 617480d75b hn/refs-iterator-peel-returns-boolean later to maint).

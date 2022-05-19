@@ -24,7 +24,7 @@ test_expect_success 'Create a repo containing iso8859-1 encoded paths' '
 		ISO8859="$(printf "$ISO8859_ESCAPED")" &&
 		echo content123 >"$ISO8859" &&
 		p4 add "$ISO8859" &&
-		p4 submit -d "test commit"
+		p4 submit -d "test cummit"
 	)
 '
 

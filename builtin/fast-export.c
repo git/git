@@ -9,7 +9,7 @@
 #include "refs.h"
 #include "refspec.h"
 #include "object-store.h"
-#include "commit.h"
+#include "cummit.h"
 #include "object.h"
 #include "tag.h"
 #include "diff.h"
@@ -23,7 +23,7 @@
 #include "quote.h"
 #include "remote.h"
 #include "blob.h"
-#include "commit-slab.h"
+#include "cummit-slab.h"
 
 static const char *fast_export_usage[] = {
 	N_("git fast-export [<rev-list-opts>]"),
@@ -38,7 +38,7 @@ static int fake_missing_tagger;
 static int use_done_feature;
 static int no_data;
 static int full_tree;
-static int reference_excluded_commits;
+static int reference_excluded_cummits;
 static int show_original_ids;
 static int mark_tags;
 static struct string_list extra_refs = STRING_LIST_INIT_NODUP;
@@ -228,7 +228,7 @@ static int get_object_mark(struct object *object)
 	return ptr_to_mark(decoration);
 }
 
-static struct commit *rewrite_commit(struct commit *p)
+static struct cummit *rewrite_cummit(struct cummit *p)
 {
 	for (;;) {
 		if (p->parents && p->parents->next)
@@ -351,7 +351,7 @@ static int depth_first(const void *a_, const void *b_)
 	/*
 	 * Move 'R'ename entries last so that all references of the file
 	 * appear in the output before it is renamed (e.g., when a file
-	 * was copied and renamed in the same commit).
+	 * was copied and renamed in the same cummit).
 	 */
 	return (a->status == 'R') - (b->status == 'R');
 }
@@ -539,10 +539,10 @@ static const char *anonymize_refname(const char *refname)
 }
 
 /*
- * We do not even bother to cache commit messages, as they are unlikely
+ * We do not even bother to cache cummit messages, as they are unlikely
  * to be repeated verbatim, and it is not that interesting when they are.
  */
-static char *anonymize_commit_message(const char *old)
+static char *anonymize_cummit_message(const char *old)
 {
 	static int counter;
 	return xstrfmt("subject %d\n\nbody\n", counter++);
@@ -576,7 +576,7 @@ static void anonymize_ident_line(const char **beg, const char **end)
 	which_buffer %= ARRAY_SIZE(buffers);
 	strbuf_reset(out);
 
-	/* skip "committer", "author", "tagger", etc */
+	/* skip "cummitter", "author", "tagger", etc */
 	end_of_header = strchr(*beg, ' ');
 	if (!end_of_header)
 		BUG("malformed line fed to anonymize_ident_line: %.*s",
@@ -603,49 +603,49 @@ static void anonymize_ident_line(const char **beg, const char **end)
 	*end = out->buf + out->len;
 }
 
-static void handle_commit(struct commit *commit, struct rev_info *rev,
+static void handle_cummit(struct cummit *cummit, struct rev_info *rev,
 			  struct string_list *paths_of_changed_objects)
 {
 	int saved_output_format = rev->diffopt.output_format;
-	const char *commit_buffer;
-	const char *author, *author_end, *committer, *committer_end;
+	const char *cummit_buffer;
+	const char *author, *author_end, *cummitter, *cummitter_end;
 	const char *encoding, *message;
 	char *reencoded = NULL;
-	struct commit_list *p;
+	struct cummit_list *p;
 	const char *refname;
 	int i;
 
 	rev->diffopt.output_format = DIFF_FORMAT_CALLBACK;
 
-	parse_commit_or_die(commit);
-	commit_buffer = get_commit_buffer(commit, NULL);
-	author = strstr(commit_buffer, "\nauthor ");
+	parse_cummit_or_die(cummit);
+	cummit_buffer = get_cummit_buffer(cummit, NULL);
+	author = strstr(cummit_buffer, "\nauthor ");
 	if (!author)
-		die("could not find author in commit %s",
-		    oid_to_hex(&commit->object.oid));
+		die("could not find author in cummit %s",
+		    oid_to_hex(&cummit->object.oid));
 	author++;
 	author_end = strchrnul(author, '\n');
-	committer = strstr(author_end, "\ncommitter ");
-	if (!committer)
-		die("could not find committer in commit %s",
-		    oid_to_hex(&commit->object.oid));
-	committer++;
-	committer_end = strchrnul(committer, '\n');
-	message = strstr(committer_end, "\n\n");
-	encoding = find_encoding(committer_end, message);
+	cummitter = strstr(author_end, "\ncummitter ");
+	if (!cummitter)
+		die("could not find cummitter in cummit %s",
+		    oid_to_hex(&cummit->object.oid));
+	cummitter++;
+	cummitter_end = strchrnul(cummitter, '\n');
+	message = strstr(cummitter_end, "\n\n");
+	encoding = find_encoding(cummitter_end, message);
 	if (message)
 		message += 2;
 
-	if (commit->parents &&
-	    (get_object_mark(&commit->parents->item->object) != 0 ||
-	     reference_excluded_commits) &&
+	if (cummit->parents &&
+	    (get_object_mark(&cummit->parents->item->object) != 0 ||
+	     reference_excluded_cummits) &&
 	    !full_tree) {
-		parse_commit_or_die(commit->parents->item);
-		diff_tree_oid(get_commit_tree_oid(commit->parents->item),
-			      get_commit_tree_oid(commit), "", &rev->diffopt);
+		parse_cummit_or_die(cummit->parents->item);
+		diff_tree_oid(get_cummit_tree_oid(cummit->parents->item),
+			      get_cummit_tree_oid(cummit), "", &rev->diffopt);
 	}
 	else
-		diff_root_tree_oid(get_commit_tree_oid(commit),
+		diff_root_tree_oid(get_cummit_tree_oid(cummit),
 				   "", &rev->diffopt);
 
 	/* Export the referenced blobs, and remember the marks. */
@@ -653,7 +653,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 		if (!S_ISGITLINK(diff_queued_diff.queue[i]->two->mode))
 			export_blob(&diff_queued_diff.queue[i]->two->oid);
 
-	refname = *revision_sources_at(&revision_sources, commit);
+	refname = *revision_sources_at(&revision_sources, cummit);
 	/*
 	 * FIXME: string_list_remove() below for each ref is overall
 	 * O(N^2).  Compared to a history walk and diffing trees, this is
@@ -663,13 +663,13 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	string_list_remove(&extra_refs, refname, 0);
 	if (anonymize) {
 		refname = anonymize_refname(refname);
-		anonymize_ident_line(&committer, &committer_end);
+		anonymize_ident_line(&cummitter, &cummitter_end);
 		anonymize_ident_line(&author, &author_end);
 	}
 
-	mark_next_object(&commit->object);
+	mark_next_object(&cummit->object);
 	if (anonymize) {
-		reencoded = anonymize_commit_message(message);
+		reencoded = anonymize_cummit_message(message);
 	} else if (encoding) {
 		switch(reencode_mode) {
 		case REENCODE_YES:
@@ -678,19 +678,19 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 		case REENCODE_NO:
 			break;
 		case REENCODE_ABORT:
-			die("Encountered commit-specific encoding %s in commit "
+			die("Encountered cummit-specific encoding %s in cummit "
 			    "%s; use --reencode=[yes|no] to handle it",
-			    encoding, oid_to_hex(&commit->object.oid));
+			    encoding, oid_to_hex(&cummit->object.oid));
 		}
 	}
-	if (!commit->parents)
+	if (!cummit->parents)
 		printf("reset %s\n", refname);
-	printf("commit %s\nmark :%"PRIu32"\n", refname, last_idnum);
+	printf("cummit %s\nmark :%"PRIu32"\n", refname, last_idnum);
 	if (show_original_ids)
-		printf("original-oid %s\n", oid_to_hex(&commit->object.oid));
+		printf("original-oid %s\n", oid_to_hex(&cummit->object.oid));
 	printf("%.*s\n%.*s\n",
 	       (int)(author_end - author), author,
-	       (int)(committer_end - committer), committer);
+	       (int)(cummitter_end - cummitter), cummitter);
 	if (!reencoded && encoding)
 		printf("encoding %s\n", encoding);
 	printf("data %u\n%s",
@@ -699,13 +699,13 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 			  ? strlen(message) : 0),
 	       reencoded ? reencoded : message ? message : "");
 	free(reencoded);
-	unuse_commit_buffer(commit, commit_buffer);
+	unuse_cummit_buffer(cummit, cummit_buffer);
 
-	for (i = 0, p = commit->parents; p; p = p->next) {
+	for (i = 0, p = cummit->parents; p; p = p->next) {
 		struct object *obj = &p->item->object;
 		int mark = get_object_mark(obj);
 
-		if (!mark && !reference_excluded_commits)
+		if (!mark && !reference_excluded_cummits)
 			continue;
 		if (i == 0)
 			printf("from ");
@@ -750,7 +750,7 @@ static void handle_tag(const char *name, struct tag *tag)
 	size_t message_size = 0;
 	struct object *tagged;
 	int tagged_mark;
-	struct commit *p;
+	struct cummit *p;
 
 	/* Trees have no identifier in fast-export output, thus we have no way
 	 * to output tags of trees, tags of tags of trees, etc.  Simply omit
@@ -841,8 +841,8 @@ static void handle_tag(const char *name, struct tag *tag)
 		case REWRITE:
 			if (tagged->type == OBJ_TAG && !mark_tags) {
 				die(_("Error: Cannot export nested tags unless --mark-tags is specified."));
-			} else if (tagged->type == OBJ_COMMIT) {
-				p = rewrite_commit((struct commit *)tagged);
+			} else if (tagged->type == OBJ_cummit) {
+				p = rewrite_cummit((struct cummit *)tagged);
 				if (!p) {
 					printf("reset %s\nfrom %s\n\n",
 					       name, oid_to_hex(null_oid()));
@@ -881,11 +881,11 @@ static void handle_tag(const char *name, struct tag *tag)
 	free(buf);
 }
 
-static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
+static struct cummit *get_cummit(struct rev_cmdline_entry *e, char *full_name)
 {
 	switch (e->item->type) {
-	case OBJ_COMMIT:
-		return (struct commit *)e->item;
+	case OBJ_cummit:
+		return (struct cummit *)e->item;
 	case OBJ_TAG: {
 		struct tag *tag = (struct tag *)e->item;
 
@@ -897,7 +897,7 @@ static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
 		}
 		if (!tag)
 			die("Tag %s points nowhere?", e->name);
-		return (struct commit *)tag;
+		return (struct cummit *)tag;
 	}
 	default:
 		return NULL;
@@ -911,7 +911,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 	for (i = 0; i < info->nr; i++) {
 		struct rev_cmdline_entry *e = info->rev + i;
 		struct object_id oid;
-		struct commit *commit;
+		struct cummit *cummit;
 		char *full_name;
 
 		if (e->flags & UNINTERESTING)
@@ -929,35 +929,35 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 			}
 		}
 
-		commit = get_commit(e, full_name);
-		if (!commit) {
+		cummit = get_cummit(e, full_name);
+		if (!cummit) {
 			warning("%s: Unexpected object of type %s, skipping.",
 				e->name,
 				type_name(e->item->type));
 			continue;
 		}
 
-		switch(commit->object.type) {
-		case OBJ_COMMIT:
+		switch(cummit->object.type) {
+		case OBJ_cummit:
 			break;
 		case OBJ_BLOB:
-			export_blob(&commit->object.oid);
+			export_blob(&cummit->object.oid);
 			continue;
 		default: /* OBJ_TAG (nested tags) is already handled */
 			warning("Tag points to object of unexpected type %s, skipping.",
-				type_name(commit->object.type));
+				type_name(cummit->object.type));
 			continue;
 		}
 
 		/*
 		 * Make sure this ref gets properly updated eventually, whether
-		 * through a commit or manually at the end.
+		 * through a cummit or manually at the end.
 		 */
 		if (e->item->type != OBJ_TAG)
-			string_list_append(&extra_refs, full_name)->util = commit;
+			string_list_append(&extra_refs, full_name)->util = cummit;
 
-		if (!*revision_sources_at(&revision_sources, commit))
-			*revision_sources_at(&revision_sources, commit) = full_name;
+		if (!*revision_sources_at(&revision_sources, cummit))
+			*revision_sources_at(&revision_sources, cummit) = full_name;
 	}
 
 	string_list_sort(&extra_refs);
@@ -966,7 +966,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 
 static void handle_tags_and_duplicates(struct string_list *extras)
 {
-	struct commit *commit;
+	struct cummit *cummit;
 	int i;
 
 	for (i = extras->nr - 1; i >= 0; i--) {
@@ -978,12 +978,12 @@ static void handle_tags_and_duplicates(struct string_list *extras)
 		case OBJ_TAG:
 			handle_tag(name, (struct tag *)object);
 			break;
-		case OBJ_COMMIT:
+		case OBJ_cummit:
 			if (anonymize)
 				name = anonymize_refname(name);
-			/* create refs pointing to already seen commits */
-			commit = rewrite_commit((struct commit *)object);
-			if (!commit) {
+			/* create refs pointing to already seen cummits */
+			cummit = rewrite_cummit((struct cummit *)object);
+			if (!cummit) {
 				/*
 				 * Neither this object nor any of its
 				 * ancestors touch any relevant paths, so
@@ -995,27 +995,27 @@ static void handle_tags_and_duplicates(struct string_list *extras)
 				continue;
 			}
 
-			mark = get_object_mark(&commit->object);
+			mark = get_object_mark(&cummit->object);
 			if (!mark) {
 				/*
-				 * Getting here means we have a commit which
+				 * Getting here means we have a cummit which
 				 * was excluded by a negative refspec (e.g.
 				 * fast-export ^HEAD HEAD).  If we are
-				 * referencing excluded commits, set the ref
-				 * to the exact commit.  Otherwise, the user
-				 * wants the branch exported but every commit
+				 * referencing excluded cummits, set the ref
+				 * to the exact cummit.  Otherwise, the user
+				 * wants the branch exported but every cummit
 				 * in its history to be deleted, which basically
 				 * just means deletion of the ref.
 				 */
-				if (!reference_excluded_commits) {
+				if (!reference_excluded_cummits) {
 					/* delete the ref */
 					printf("reset %s\nfrom %s\n\n",
 					       name, oid_to_hex(null_oid()));
 					continue;
 				}
-				/* set ref to commit using oid, not mark */
+				/* set ref to cummit using oid, not mark */
 				printf("reset %s\nfrom %s\n\n", name,
-				       oid_to_hex(&commit->object.oid));
+				       oid_to_hex(&cummit->object.oid));
 				continue;
 			}
 
@@ -1072,7 +1072,7 @@ static void import_marks(char *input_file, int check_exists)
 		char *line_end, *mark_end;
 		struct object_id oid;
 		struct object *object;
-		struct commit *commit;
+		struct cummit *cummit;
 		enum object_type type;
 
 		line_end = strchr(line, '\n');
@@ -1092,15 +1092,15 @@ static void import_marks(char *input_file, int check_exists)
 		if (type < 0)
 			die("object not found: %s", oid_to_hex(&oid));
 
-		if (type != OBJ_COMMIT)
-			/* only commits */
+		if (type != OBJ_cummit)
+			/* only cummits */
 			continue;
 
-		commit = lookup_commit(the_repository, &oid);
-		if (!commit)
-			die("not a commit? can't happen: %s", oid_to_hex(&oid));
+		cummit = lookup_cummit(the_repository, &oid);
+		if (!cummit)
+			die("not a cummit? can't happen: %s", oid_to_hex(&oid));
 
-		object = &commit->object;
+		object = &cummit->object;
 
 		if (object->flags & SHOWN)
 			error("Object %s already has a mark", oid_to_hex(&oid));
@@ -1159,7 +1159,7 @@ static int parse_opt_anonymize_map(const struct option *opt,
 int cmd_fast_export(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
-	struct commit *commit;
+	struct cummit *cummit;
 	char *export_filename = NULL,
 	     *import_filename = NULL,
 	     *import_filename_if_exists = NULL;
@@ -1176,7 +1176,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 			     N_("select handling of tags that tag filtered objects"),
 			     parse_opt_tag_of_filtered_mode),
 		OPT_CALLBACK(0, "reencode", &reencode_mode, N_("mode"),
-			     N_("select handling of commit messages in an alternate encoding"),
+			     N_("select handling of cummit messages in an alternate encoding"),
 			     parse_opt_reencode_mode),
 		OPT_STRING(0, "export-marks", &export_filename, N_("file"),
 			     N_("dump marks to this file")),
@@ -1189,7 +1189,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "fake-missing-tagger", &fake_missing_tagger,
 			 N_("fake a tagger when tags lack one")),
 		OPT_BOOL(0, "full-tree", &full_tree,
-			 N_("output full tree for each commit")),
+			 N_("output full tree for each cummit")),
 		OPT_BOOL(0, "use-done-feature", &use_done_feature,
 			     N_("use the done feature to terminate the stream")),
 		OPT_BOOL(0, "no-data", &no_data, N_("skip output of blob data")),
@@ -1200,9 +1200,9 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 			       N_("convert <from> to <to> in anonymized output"),
 			       PARSE_OPT_NONEG, parse_opt_anonymize_map),
 		OPT_BOOL(0, "reference-excluded-parents",
-			 &reference_excluded_commits, N_("reference parents which are not in fast-export stream by object id")),
+			 &reference_excluded_cummits, N_("reference parents which are not in fast-export stream by object id")),
 		OPT_BOOL(0, "show-original-ids", &show_original_ids,
-			    N_("show original object ids of blobs/commits")),
+			    N_("show original object ids of blobs/cummits")),
 		OPT_BOOL(0, "mark-tags", &mark_tags,
 			    N_("label tags with mark ids")),
 
@@ -1262,8 +1262,8 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 	revs.diffopt.format_callback_data = &paths_of_changed_objects;
 	revs.diffopt.flags.recursive = 1;
 	revs.diffopt.no_free = 1;
-	while ((commit = get_revision(&revs)))
-		handle_commit(commit, &revs, &paths_of_changed_objects);
+	while ((cummit = get_revision(&revs)))
+		handle_cummit(cummit, &revs, &paths_of_changed_objects);
 
 	handle_tags_and_duplicates(&extra_refs);
 	handle_tags_and_duplicates(&tag_refs);

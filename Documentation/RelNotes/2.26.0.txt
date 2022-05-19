@@ -149,8 +149,8 @@ Performance, Internal Implementation, Development Support etc.
 Fixes since v2.25
 -----------------
 
- * "git commit" gives output similar to "git status" when there is
-   nothing to commit, but without honoring the advise.statusHints
+ * "git cummit" gives output similar to "git status" when there is
+   nothing to cummit, but without honoring the advise.statusHints
    configuration variable, which has been corrected.
 
  * has_object_file() said "no" given an object registered to the
@@ -180,7 +180,7 @@ Fixes since v2.25
    corrected.
 
  * Rendering by "git log --graph" of ancestry lines leading to a merge
-   commit were made suboptimal to waste vertical space a bit with a
+   cummit were made suboptimal to waste vertical space a bit with a
    recent update, which has been corrected.
 
  * Work around test breakages caused by custom regex engine used in
@@ -228,14 +228,14 @@ Fixes since v2.25
 
  * Unhelpful warning messages during documentation build have been squelched.
 
- * "git rebase -i" identifies existing commits in its todo file with
+ * "git rebase -i" identifies existing cummits in its todo file with
    their abbreviated object name, which could become ambiguous as it
-   goes to create new commits, and has a mechanism to avoid ambiguity
+   goes to create new cummits, and has a mechanism to avoid ambiguity
    in the main part of its execution.  A few other cases however were
    not covered by the protection against ambiguity, which has been
    corrected.
 
- * Allow the rebase.missingCommitsCheck configuration to kick in when
+ * Allow the rebase.missingcummitsCheck configuration to kick in when
    "rebase --edit-todo" and "rebase --continue" restarts the procedure.
    (merge 5a5445d878 ag/edit-todo-drop-check later to maint).
 
@@ -254,10 +254,10 @@ Fixes since v2.25
    input, but it is an input error.
 
 
- * The code to compute the commit-graph has been taught to use a more
+ * The code to compute the cummit-graph has been taught to use a more
    robust way to tell if two object directories refer to the same
    thing.
-   (merge a7df60cac8 tb/commit-graph-object-dir later to maint).
+   (merge a7df60cac8 tb/cummit-graph-object-dir later to maint).
 
  * "git remote rename X Y" needs to adjust configuration variables
    (e.g. branch.<name>.remote) whose value used to be X to Y.
@@ -293,8 +293,8 @@ Fixes since v2.25
    worktree.  This has been corrected.
    (merge b5cabb4a96 es/do-not-let-rebase-switch-to-protected-branch later to maint).
 
- * "git describe" in a repository with multiple root commits sometimes
-   gave up looking for the best tag to describe a given commit with
+ * "git describe" in a repository with multiple root cummits sometimes
+   gave up looking for the best tag to describe a given cummit with
    too early, which has been adjusted.
 
  * "git merge signed-tag" while lacking the public key started to say
@@ -335,7 +335,7 @@ Fixes since v2.25
    (merge 27f182b3fc rs/blame-typefix-for-fingerprint later to maint).
    (merge 3c29e21eb0 ma/test-cleanup later to maint).
    (merge 240fc04f81 ag/rebase-remove-redundant-code later to maint).
-   (merge d68ce906c7 rs/commit-graph-code-simplification later to maint).
+   (merge d68ce906c7 rs/cummit-graph-code-simplification later to maint).
    (merge a51d9e8f07 rj/t1050-use-test-path-is-file later to maint).
    (merge fd0bc17557 kk/complete-diff-color-moved later to maint).
    (merge 65bf820d0e en/test-cleanup later to maint).

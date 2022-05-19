@@ -23,7 +23,7 @@ Fixes since v1.5.3.4
  * "git-add -i" did not handle single line hunks correctly.
 
  * "git-rebase -i" and "git-stash apply" failed if external diff
-   drivers were used for one or more files in a commit.  They now
+   drivers were used for one or more files in a cummit.  They now
    avoid calling the external diff drivers.
 
  * "git-log --follow" did not work unless diff generation (e.g. -p)
@@ -32,9 +32,9 @@ Fixes since v1.5.3.4
  * "git-log --follow -B" did not work at all.  Fixed.
 
  * "git-log -M -B" did not correctly handle cases of very large files
-   being renamed and replaced by very small files in the same commit.
+   being renamed and replaced by very small files in the same cummit.
 
- * "git-log" printed extra newlines between commits when a diff
+ * "git-log" printed extra newlines between cummits when a diff
    was generated internally (e.g. -S or --follow) but not displayed.
 
  * "git-push" error message is more helpful when pushing to a
@@ -48,7 +48,7 @@ Fixes since v1.5.3.4
 
  * "git-instaweb" no longer fails on Mac OS X.
 
- * "git-cvsexportcommit" didn't always create new parent directories
+ * "git-cvsexportcummit" didn't always create new parent directories
    before trying to create new child directories.  Fixed.
 
  * "git-fetch" printed a scary (but bogus) error message while

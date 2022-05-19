@@ -6,7 +6,7 @@
 #include "xdiff-interface.h"
 #include "diff.h"
 #include "diffcore.h"
-#include "commit.h"
+#include "cummit.h"
 #include "quote.h"
 #include "help.h"
 
@@ -868,7 +868,7 @@ static struct {
 	size_t len;
 } header_field[] = {
 	{ "author ", 7 },
-	{ "committer ", 10 },
+	{ "cummitter ", 10 },
 	{ "reflog ", 7 },
 };
 
@@ -952,7 +952,7 @@ static int match_one_pattern(struct grep_pat *p,
 
 		switch (p->field) {
 		case GREP_HEADER_AUTHOR:
-		case GREP_HEADER_COMMITTER:
+		case GREP_HEADER_cummitTER:
 			strip_timestamp(bol, &eol);
 			break;
 		default:

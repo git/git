@@ -102,7 +102,7 @@ test_expect_success 'precious-objects blocks destructive repack' '
 '
 
 test_expect_success 'other repacks are OK' '
-	test_commit foo &&
+	test_cummit foo &&
 	git repack
 '
 

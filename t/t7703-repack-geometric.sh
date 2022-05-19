@@ -26,7 +26,7 @@ test_expect_success '--geometric with one pack' '
 	(
 		cd geometric &&
 
-		test_commit "base" &&
+		test_cummit "base" &&
 		git repack -d &&
 
 		git repack --geometric 2 >out &&
@@ -42,9 +42,9 @@ test_expect_success '--geometric with an intact progression' '
 		cd geometric &&
 
 		# These packs already form a geometric progression.
-		test_commit_bulk --start=1 1 && # 3 objects
-		test_commit_bulk --start=2 2 && # 6 objects
-		test_commit_bulk --start=4 4 && # 12 objects
+		test_cummit_bulk --start=1 1 && # 3 objects
+		test_cummit_bulk --start=2 2 && # 6 objects
+		test_cummit_bulk --start=4 4 && # 12 objects
 
 		find $objdir/pack -name "*.pack" | sort >expect &&
 		git repack --geometric 2 -d &&
@@ -61,11 +61,11 @@ test_expect_success '--geometric with loose objects' '
 		cd geometric &&
 
 		# These packs already form a geometric progression.
-		test_commit_bulk --start=1 1 && # 3 objects
-		test_commit_bulk --start=2 2 && # 6 objects
+		test_cummit_bulk --start=1 1 && # 3 objects
+		test_cummit_bulk --start=2 2 && # 6 objects
 		# The loose objects are packed together, breaking the
 		# progression.
-		test_commit loose && # 3 objects
+		test_cummit loose && # 3 objects
 
 		find $objdir/pack -name "*.pack" | sort >before &&
 		git repack --geometric 2 -d &&
@@ -91,11 +91,11 @@ test_expect_success '--geometric with small-pack rollup' '
 	(
 		cd geometric &&
 
-		test_commit_bulk --start=1 1 && # 3 objects
-		test_commit_bulk --start=2 1 && # 3 objects
+		test_cummit_bulk --start=1 1 && # 3 objects
+		test_cummit_bulk --start=2 1 && # 3 objects
 		find $objdir/pack -name "*.pack" | sort >small &&
-		test_commit_bulk --start=3 4 && # 12 objects
-		test_commit_bulk --start=7 8 && # 24 objects
+		test_cummit_bulk --start=3 4 && # 12 objects
+		test_cummit_bulk --start=7 8 && # 24 objects
 		find $objdir/pack -name "*.pack" | sort >before &&
 
 		git repack --geometric 2 -d &&
@@ -116,10 +116,10 @@ test_expect_success '--geometric with small- and large-pack rollup' '
 		cd geometric &&
 
 		# size(small1) + size(small2) > size(medium) / 2
-		test_commit_bulk --start=1 1 && # 3 objects
-		test_commit_bulk --start=2 1 && # 3 objects
-		test_commit_bulk --start=2 3 && # 7 objects
-		test_commit_bulk --start=6 9 && # 27 objects &&
+		test_cummit_bulk --start=1 1 && # 3 objects
+		test_cummit_bulk --start=2 1 && # 3 objects
+		test_cummit_bulk --start=2 3 && # 7 objects
+		test_cummit_bulk --start=6 9 && # 27 objects &&
 
 		find $objdir/pack -name "*.pack" | sort >before &&
 
@@ -141,8 +141,8 @@ test_expect_success '--geometric ignores kept packs' '
 	(
 		cd geometric &&
 
-		test_commit kept && # 3 objects
-		test_commit pack && # 3 objects
+		test_cummit kept && # 3 objects
+		test_cummit pack && # 3 objects
 
 		KEPT=$(git pack-objects --revs $objdir/pack/pack <<-EOF
 		refs/tags/kept
@@ -187,10 +187,10 @@ test_expect_success '--geometric chooses largest MIDX preferred pack' '
 		cd geometric &&
 
 		# These packs already form a geometric progression.
-		test_commit_bulk --start=1 1 && # 3 objects
-		test_commit_bulk --start=2 2 && # 6 objects
+		test_cummit_bulk --start=1 1 && # 3 objects
+		test_cummit_bulk --start=2 2 && # 6 objects
 		ls $objdir/pack/pack-*.idx >before &&
-		test_commit_bulk --start=4 4 && # 12 objects
+		test_cummit_bulk --start=4 4 && # 12 objects
 		ls $objdir/pack/pack-*.idx >after &&
 
 		git repack --geometric 2 -dbm &&

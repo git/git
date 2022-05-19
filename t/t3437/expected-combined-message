@@ -1,9 +1,9 @@
-# This is a combination of 4 commits.
-# This is the 1st commit message:
+# This is a combination of 4 cummits.
+# This is the 1st cummit message:
 
 B
 
-# This is the commit message #2:
+# This is the cummit message #2:
 
 # amend! B
 
@@ -12,10 +12,10 @@ new subject
 new
 body
 
-# The commit message #3 will be skipped:
+# The cummit message #3 will be skipped:
 
 # A2
 
-# This is the commit message #4:
+# This is the cummit message #4:
 
 A3

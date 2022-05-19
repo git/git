@@ -41,9 +41,9 @@ UI, Workflows & Features
    password used to unlock a certificate that has successfully been
    used.
 
- * "git commit --fixup=<commit>", which was to tweak the changes made
+ * "git cummit --fixup=<cummit>", which was to tweak the changes made
    to the contents while keeping the original log message intact,
-   learned "--fixup=(amend|reword):<commit>", that can be used to
+   learned "--fixup=(amend|reword):<cummit>", that can be used to
    tweak both the message and the contents, and only the message,
    respectively.
 
@@ -52,7 +52,7 @@ UI, Workflows & Features
  * "git format-patch -v<n>" learned to allow a reroll count that is
    not an integer.
 
- * "git commit" learned "--trailer <key>[=<value>]" option; together
+ * "git cummit" learned "--trailer <key>[=<value>]" option; together
    with the interpret-trailers command, this will make it easier to
    support custom trailers.
 
@@ -241,8 +241,8 @@ Fixes since v2.31
 
  * A new configuration variable has been introduced to allow choosing
    which version of the generation number gets used in the
-   commit-graph file.
-   (merge 702110aac6 ds/commit-graph-generation-config later to maint).
+   cummit-graph file.
+   (merge 702110aac6 ds/cummit-graph-generation-config later to maint).
 
  * Perf test update to work better in secondary worktrees.
    (merge 36e834abc1 jk/perf-in-worktrees later to maint).
@@ -255,7 +255,7 @@ Fixes since v2.31
    (merge 75555676ad bc/clone-bare-with-conflicting-config later to maint).
 
  * When "git checkout" removes a path that does not exist in the
-   commit it is checking out, it wasn't careful enough not to follow
+   cummit it is checking out, it wasn't careful enough not to follow
    symbolic links, which has been corrected.
    (merge fab78a0c3d mt/checkout-remove-nofollow later to maint).
 

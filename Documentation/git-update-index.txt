@@ -99,7 +99,7 @@ OPTIONS
 	(e.g. cifs).
 +
 Git will fail (gracefully) in case it needs to modify this file
-in the index e.g. when merging in a commit;
+in the index e.g. when merging in a cummit;
 thus, in case the assumed-untracked file is changed upstream,
 you will need to handle the situation manually.
 
@@ -127,7 +127,7 @@ you will need to handle the situation manually.
 -g::
 --again::
 	Runs 'git update-index' itself on the paths whose index
-	entries are different from those from the `HEAD` commit.
+	entries are different from those from the `HEAD` cummit.
 
 --unresolve::
 	Restores the 'unmerged' or 'needs updating' state of a
@@ -421,7 +421,7 @@ However, these commands will sometimes write these files anyway in
 important cases such as conflicts during a merge or rebase.  Git
 commands will also avoid treating the lack of such files as an
 intentional deletion; for example `git add -u` will not not stage a
-deletion for these files and `git commit -a` will not make a commit
+deletion for these files and `git cummit -a` will not make a cummit
 deleting them either.
 
 Although this bit looks similar to assume-unchanged bit, its goal is
@@ -432,7 +432,7 @@ stat'ing the file that it has changed, it is free to record the
 changes).  skip-worktree tells Git to ignore the absence of the file,
 avoid updating it when possible with commands that normally update
 much of the working directory (e.g. `checkout`, `switch`, `pull`,
-etc.), and not have its absence be recorded in commits.  Note that in
+etc.), and not have its absence be recorded in cummits.  Note that in
 sparse checkouts (setup by `git sparse-checkout` or by configuring
 core.sparseCheckout to true), if a file is marked as skip-worktree in
 the index but is found in the working tree, Git will clear the
@@ -498,7 +498,7 @@ the index.
 Before 2.17, the untracked cache had a bug where replacing a directory
 with a symlink to another directory could cause it to incorrectly show
 files tracked by git as untracked. See the "status: add a failing test
-showing a core.untrackedCache bug" commit to git.git. A workaround for
+showing a core.untrackedCache bug" cummit to git.git. A workaround for
 that is (and this might work for other undiscovered bugs in the
 future):
 

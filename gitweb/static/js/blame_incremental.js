@@ -31,20 +31,20 @@
 
 var projectUrl; // partial query + separator ('?' or ';')
 
-// 'commits' is an associative map. It maps SHA1s to Commit objects.
-var commits = {};
+// 'cummits' is an associative map. It maps SHA1s to cummit objects.
+var cummits = {};
 
 /**
- * constructor for Commit objects, used in 'blame'
- * @class Represents a blamed commit
- * @param {String} sha1: SHA-1 identifier of a commit
+ * constructor for cummit objects, used in 'blame'
+ * @class Represents a blamed cummit
+ * @param {String} sha1: SHA-1 identifier of a cummit
  */
-function Commit(sha1) {
-	if (this instanceof Commit) {
+function cummit(sha1) {
+	if (this instanceof cummit) {
 		this.sha1 = sha1;
 		this.nprevious = 0; /* number of 'previous', effective parents */
 	} else {
-		return new Commit(sha1);
+		return new cummit(sha1);
 	}
 }
 
@@ -245,11 +245,11 @@ function findColorNo(tr_prev, tr_next) {
 /* coloring rows like 'blame' after 'blame_data' finishes */
 
 /**
- * returns true if given row element (tr) is first in commit group
+ * returns true if given row element (tr) is first in cummit group
  * to be used only after 'blame_data' finishes (after processing)
  *
  * @param {HTMLElement} tr: table row
- * @returns {Boolean} true if TR is first in commit group
+ * @returns {Boolean} true if TR is first in cummit group
  */
 function isStartOfGroup(tr) {
 	return tr.firstChild.className === 'sha1';
@@ -257,7 +257,7 @@ function isStartOfGroup(tr) {
 
 /**
  * change colors to use zebra coloring (2 colors) instead of 3 colors
- * concatenate neighbor commit groups belonging to the same commit
+ * concatenate neighbor cummit groups belonging to the same cummit
  *
  * @globals colorRe
  */
@@ -302,13 +302,13 @@ function fixColorsAndGroups() {
  * Function called for each blame entry, as soon as it finishes.
  * It updates page via DOM manipulation, adding sha1 info, etc.
  *
- * @param {Commit} commit: blamed commit
+ * @param {cummit} cummit: blamed cummit
  * @param {Object} group: object representing group of lines,
- *                        which blame the same commit (blame entry)
+ *                        which blame the same cummit (blame entry)
  *
  * @globals blamedLines
  */
-function handleLine(commit, group) {
+function handleLine(cummit, group) {
 	/*
 	   This is the structure of the HTML fragment we are working
 	   with:
@@ -322,20 +322,20 @@ function handleLine(commit, group) {
 
 	var resline = group.resline;
 
-	// format date and time string only once per commit
-	if (!commit.info) {
+	// format date and time string only once per cummit
+	if (!cummit.info) {
 		/* e.g. 'Kay Sievers, 2005-08-07 21:49:46 +0200' */
-		commit.info = commit.author + ', ' +
-			formatDateISOLocal(commit.authorTime, commit.authorTimezone);
+		cummit.info = cummit.author + ', ' +
+			formatDateISOLocal(cummit.authorTime, cummit.authorTimezone);
 	}
 
-	// color depends on group of lines, not only on blamed commit
+	// color depends on group of lines, not only on blamed cummit
 	var colorNo = findColorNo(
 		document.getElementById('l'+(resline-1)),
 		document.getElementById('l'+(resline+group.numlines))
 	);
 
-	// loop over lines in commit group
+	// loop over lines in cummit group
 	for (var i = 0; i < group.numlines; i++, resline++) {
 		var tr = document.getElementById('l'+resline);
 		if (!tr) {
@@ -357,32 +357,32 @@ function handleLine(commit, group) {
 		if (colorNo !== null) {
 			tr_class = 'color'+colorNo;
 		}
-		if (commit.boundary) {
+		if (cummit.boundary) {
 			tr_class += ' boundary';
 		}
-		if (commit.nprevious === 0) {
+		if (cummit.nprevious === 0) {
 			tr_class += ' no-previous';
-		} else if (commit.nprevious > 1) {
+		} else if (cummit.nprevious > 1) {
 			tr_class += ' multiple-previous';
 		}
 		tr.className = tr_class;
 
 		/* <td class="sha1" title="?" rowspan="?"><a href="?">?</a></td> */
 		if (i === 0) {
-			td_sha1.title = commit.info;
+			td_sha1.title = cummit.info;
 			td_sha1.rowSpan = group.numlines;
 
-			a_sha1.href = projectUrl + 'a=commit;h=' + commit.sha1;
+			a_sha1.href = projectUrl + 'a=commit;h=' + cummit.sha1;
 			if (a_sha1.firstChild) {
-				a_sha1.firstChild.data = commit.sha1.substr(0, 8);
+				a_sha1.firstChild.data = cummit.sha1.substr(0, 8);
 			} else {
 				a_sha1.appendChild(
-					document.createTextNode(commit.sha1.substr(0, 8)));
+					document.createTextNode(cummit.sha1.substr(0, 8)));
 			}
 			if (group.numlines >= 2) {
 				var fragment = document.createDocumentFragment();
 				var br   = document.createElement("br");
-				var match = commit.author.match(/\b([A-Z])\B/g);
+				var match = cummit.author.match(/\b([A-Z])\B/g);
 				if (match) {
 					var text = document.createTextNode(
 							match.join(''));
@@ -402,12 +402,12 @@ function handleLine(commit, group) {
 		}
 
 		/* <td class="linenr"><a class="linenr" href="?">123</a></td> */
-		var linenr_commit =
-			('previous' in commit ? commit.previous : commit.sha1);
+		var linenr_cummit =
+			('previous' in cummit ? cummit.previous : cummit.sha1);
 		var linenr_filename =
-			('file_parent' in commit ? commit.file_parent : commit.filename);
+			('file_parent' in cummit ? cummit.file_parent : cummit.filename);
 		a_linenr.href = projectUrl + 'a=blame_incremental' +
-			';hb=' + linenr_commit +
+			';hb=' + linenr_cummit +
 			';f='  + encodeURIComponent(linenr_filename) +
 			'#l' + (group.srcline + i);
 
@@ -427,7 +427,7 @@ var infoRe = /^([a-z-]+) ?(.*)/;
 var endRe  = /^END ?([^ ]*) ?(.*)/;
 /**@-*/
 
-var curCommit = new Commit();
+var curcummit = new cummit();
 var curGroup  = {};
 
 /**
@@ -437,7 +437,7 @@ var curGroup  = {};
  *
  * @param {String[]} lines: new complete lines from blamedata server
  *
- * @globals commits, curCommit, curGroup, t_interval_server, cmds_server
+ * @globals cummits, curcummit, curGroup, t_interval_server, cmds_server
  * @globals sha1Re, infoRe, endRe
  */
 function processBlameLines(lines) {
@@ -451,12 +451,12 @@ function processBlameLines(lines) {
 			var resline  = parseInt(match[3], 10);
 			var numlines = parseInt(match[4], 10);
 
-			var c = commits[sha1];
+			var c = cummits[sha1];
 			if (!c) {
-				c = new Commit(sha1);
-				commits[sha1] = c;
+				c = new cummit(sha1);
+				cummits[sha1] = c;
 			}
-			curCommit = c;
+			curcummit = c;
 
 			curGroup.srcline = srcline;
 			curGroup.resline = resline;
@@ -467,31 +467,31 @@ function processBlameLines(lines) {
 			var data = match[2];
 			switch (info) {
 			case 'filename':
-				curCommit.filename = unquote(data);
+				curcummit.filename = unquote(data);
 				// 'filename' information terminates the entry
-				handleLine(curCommit, curGroup);
+				handleLine(curcummit, curGroup);
 				updateProgressInfo();
 				break;
 			case 'author':
-				curCommit.author = data;
+				curcummit.author = data;
 				break;
 			case 'author-time':
-				curCommit.authorTime = parseInt(data, 10);
+				curcummit.authorTime = parseInt(data, 10);
 				break;
 			case 'author-tz':
-				curCommit.authorTimezone = data;
+				curcummit.authorTimezone = data;
 				break;
 			case 'previous':
-				curCommit.nprevious++;
+				curcummit.nprevious++;
 				// store only first 'previous' header
-				if (!('previous' in curCommit)) {
+				if (!('previous' in curcummit)) {
 					var parts = data.split(' ', 2);
-					curCommit.previous    = parts[0];
-					curCommit.file_parent = unquote(parts[1]);
+					curcummit.previous    = parts[0];
+					curcummit.file_parent = unquote(parts[1]);
 				}
 				break;
 			case 'boundary':
-				curCommit.boundary = true;
+				curcummit.boundary = true;
 				break;
 			} // end switch
 
@@ -532,7 +532,7 @@ function processData(unprocessed, nextReadPos) {
  * @param {XMLHttpRequest} xhr: XMLHttpRequest object
  * @param {Number} [xhr.pollTimer] ID of the timeout to clear
  *
- * @globals commits
+ * @globals cummits
  */
 function handleError(xhr) {
 	errorInfo('Server error: ' +
@@ -542,7 +542,7 @@ function handleError(xhr) {
 		clearTimeout(xhr.pollTimer);
 		delete xhr.pollTimer;
 	}
-	commits = {}; // free memory
+	cummits = {}; // free memory
 }
 
 /**
@@ -551,7 +551,7 @@ function handleError(xhr) {
  * @param {XMLHttpRequest} xhr: XMLHttpRequest object
  * @param {Number} [xhr.pollTimer] ID of the timeout to clear
  *
- * @globals commits
+ * @globals cummits
  */
 function responseLoaded(xhr) {
 	if (typeof xhr.pollTimer === "number") {
@@ -561,7 +561,7 @@ function responseLoaded(xhr) {
 
 	fixColorsAndGroups();
 	writeTimeInterval();
-	commits = {}; // free memory
+	cummits = {}; // free memory
 }
 
 /**

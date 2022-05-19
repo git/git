@@ -9,8 +9,8 @@
 static char const * const for_each_ref_usage[] = {
 	N_("git for-each-ref [<options>] [<pattern>]"),
 	N_("git for-each-ref [--points-at <object>]"),
-	N_("git for-each-ref [--merged [<commit>]] [--no-merged [<commit>]]"),
-	N_("git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"),
+	N_("git for-each-ref [--merged [<cummit>]] [--no-merged [<cummit>]]"),
+	N_("git for-each-ref [--contains [<cummit>]] [--no-contains [<cummit>]]"),
 	NULL
 };
 
@@ -46,8 +46,8 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 			     parse_opt_object_name),
 		OPT_MERGED(&filter, N_("print only refs that are merged")),
 		OPT_NO_MERGED(&filter, N_("print only refs that are not merged")),
-		OPT_CONTAINS(&filter.with_commit, N_("print only refs which contain the commit")),
-		OPT_NO_CONTAINS(&filter.no_commit, N_("print only refs which don't contain the commit")),
+		OPT_CONTAINS(&filter.with_cummit, N_("print only refs which contain the cummit")),
+		OPT_NO_CONTAINS(&filter.no_cummit, N_("print only refs which don't contain the cummit")),
 		OPT_BOOL(0, "ignore-case", &icase, N_("sorting and filtering are case insensitive")),
 		OPT_END(),
 	};
@@ -94,8 +94,8 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	strbuf_release(&err);
 	strbuf_release(&output);
 	ref_array_clear(&array);
-	free_commit_list(filter.with_commit);
-	free_commit_list(filter.no_commit);
+	free_cummit_list(filter.with_cummit);
+	free_cummit_list(filter.no_cummit);
 	ref_sorting_release(sorting);
 	return 0;
 }

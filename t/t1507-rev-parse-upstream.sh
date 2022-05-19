@@ -10,14 +10,14 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success 'setup' '
 
-	test_commit 1 &&
+	test_cummit 1 &&
 	git checkout -b side &&
-	test_commit 2 &&
+	test_cummit 2 &&
 	git checkout main &&
 	git clone . clone &&
-	test_commit 3 &&
+	test_cummit 3 &&
 	(cd clone &&
-	 test_commit 4 &&
+	 test_cummit 4 &&
 	 git branch --track my-side origin/side &&
 	 git branch --track local-main main &&
 	 git branch --track fun@ny origin/side &&
@@ -31,7 +31,7 @@ test_expect_success 'setup' '
 	)
 '
 
-commit_subject () {
+cummit_subject () {
 	(cd clone &&
 	 git show -s --pretty=tformat:%s "$@")
 }
@@ -89,15 +89,15 @@ test_expect_success 'refs/heads/my-side@{upstream} does not resolve to my-side{u
 	test_must_fail git -C clone rev-parse --symbolic-full-name refs/heads/my-side@{upstream}
 '
 
-test_expect_success 'my-side@{u} resolves to correct commit' '
+test_expect_success 'my-side@{u} resolves to correct cummit' '
 	git checkout side &&
-	test_commit 5 &&
+	test_cummit 5 &&
 	(cd clone && git fetch) &&
 	echo 2 >expect &&
-	commit_subject my-side >actual &&
+	cummit_subject my-side >actual &&
 	test_cmp expect actual &&
 	echo 5 >expect &&
-	commit_subject my-side@{u} >actual
+	cummit_subject my-side@{u} >actual
 '
 
 test_expect_success 'not-tracking@{u} fails' '
@@ -107,12 +107,12 @@ test_expect_success 'not-tracking@{u} fails' '
 '
 
 test_expect_success '<branch>@{u}@{1} resolves correctly' '
-	test_commit 6 &&
+	test_cummit 6 &&
 	(cd clone && git fetch) &&
 	echo 5 >expect &&
-	commit_subject my-side@{u}@{1} >actual &&
+	cummit_subject my-side@{u}@{1} >actual &&
 	test_cmp expect actual &&
-	commit_subject my-side@{U}@{1} >actual &&
+	cummit_subject my-side@{U}@{1} >actual &&
 	test_cmp expect actual
 '
 
@@ -224,10 +224,10 @@ test_expect_success '@{u} works when tracking a local branch' '
 '
 
 test_expect_success 'log -g other@{u}' '
-	commit=$(git rev-parse HEAD) &&
+	cummit=$(git rev-parse HEAD) &&
 	cat >expect <<-EOF &&
-	commit $commit
-	Reflog: main@{0} (C O Mitter <committer@example.com>)
+	cummit $cummit
+	Reflog: main@{0} (C O Mitter <cummitter@example.com>)
 	Reflog message: branch: Created from HEAD
 	Author: A U Thor <author@example.com>
 	Date:   Thu Apr 7 15:15:13 2005 -0700
@@ -239,10 +239,10 @@ test_expect_success 'log -g other@{u}' '
 '
 
 test_expect_success 'log -g other@{u}@{now}' '
-	commit=$(git rev-parse HEAD) &&
+	cummit=$(git rev-parse HEAD) &&
 	cat >expect <<-EOF &&
-	commit $commit
-	Reflog: main@{Thu Apr 7 15:17:13 2005 -0700} (C O Mitter <committer@example.com>)
+	cummit $cummit
+	Reflog: main@{Thu Apr 7 15:17:13 2005 -0700} (C O Mitter <cummitter@example.com>)
 	Reflog message: branch: Created from HEAD
 	Author: A U Thor <author@example.com>
 	Date:   Thu Apr 7 15:15:13 2005 -0700
@@ -256,7 +256,7 @@ test_expect_success 'log -g other@{u}@{now}' '
 test_expect_success '@{reflog}-parsing does not look beyond colon' '
 	echo content >@{yesterday} &&
 	git add @{yesterday} &&
-	git commit -m "funny reflog file" &&
+	git cummit -m "funny reflog file" &&
 	git hash-object @{yesterday} >expect &&
 	git rev-parse HEAD:@{yesterday} >actual
 '
@@ -264,7 +264,7 @@ test_expect_success '@{reflog}-parsing does not look beyond colon' '
 test_expect_success '@{upstream}-parsing does not look beyond colon' '
 	echo content >@{upstream} &&
 	git add @{upstream} &&
-	git commit -m "funny upstream file" &&
+	git cummit -m "funny upstream file" &&
 	git hash-object @{upstream} >expect &&
 	git rev-parse HEAD:@{upstream} >actual
 '

@@ -68,7 +68,7 @@ extern struct notes_tree {
  * 1. The '--ref' option to 'git notes', if given
  * 2. The $GIT_NOTES_REF environment variable, if set
  * 3. The value of the core.notesRef config variable, if set
- * 4. GIT_NOTES_DEFAULT_REF (i.e. "refs/notes/commits")
+ * 4. GIT_NOTES_DEFAULT_REF (i.e. "refs/notes/cummits")
  */
 const char *default_notes_ref(void);
 
@@ -91,7 +91,7 @@ const char *default_notes_ref(void);
  * Initialize the given notes_tree with the notes tree structure at the given
  * ref. If given ref is NULL, the value of the $GIT_NOTES_REF environment
  * variable is used, and if that is missing, the default notes ref is used
- * ("refs/notes/commits").
+ * ("refs/notes/cummits").
  *
  * If you need to re-initialize a notes_tree structure (e.g. when switching from
  * one notes ref to another), you must first de-initialize the notes_tree
@@ -226,7 +226,7 @@ int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
  *
  * IMPORTANT: Changes made to the given notes_tree are not persistent until
  * this function has returned zero. Please also remember to create a
- * corresponding commit object, and update the appropriate notes ref.
+ * corresponding cummit object, and update the appropriate notes ref.
  */
 int write_notes_tree(struct notes_tree *t, struct object_id *result);
 

@@ -104,14 +104,14 @@ the paths that have disappeared from the filesystem. However,
 depending on the use case, there are several ways that can be
 done.
 
-Using ``git commit -a''
+Using ``git cummit -a''
 ~~~~~~~~~~~~~~~~~~~~~~~
-If you intend that your next commit should record all modifications
+If you intend that your next cummit should record all modifications
 of tracked files in the working tree and record all removals of
 files that have been removed from the working tree with `rm`
-(as opposed to `git rm`), use `git commit -a`, as it will
+(as opposed to `git rm`), use `git cummit -a`, as it will
 automatically notice and record all removals.  You can also have a
-similar effect without committing by using `git add -u`.
+similar effect without cummitting by using `git add -u`.
 
 Using ``git add -A''
 ~~~~~~~~~~~~~~~~~~~~
@@ -142,7 +142,7 @@ Other ways
 ~~~~~~~~~~
 If all you really want to do is to remove from the index the files
 that are no longer present in the working tree (perhaps because
-your working tree is dirty so that you cannot use `git commit -a`),
+your working tree is dirty so that you cannot use `git cummit -a`),
 use the following command:
 
 ----------------
@@ -168,7 +168,7 @@ Ignored files are deemed expendable and won't stop a submodule's work
 tree from being removed.
 
 If you only want to remove the local checkout of a submodule from your
-work tree without committing the removal, use linkgit:git-submodule[1] `deinit`
+work tree without cummitting the removal, use linkgit:git-submodule[1] `deinit`
 instead. Also see linkgit:gitsubmodules[7] for details on submodule removal.
 
 EXAMPLES
@@ -189,7 +189,7 @@ of files and subdirectories under the `Documentation/` directory.
 BUGS
 ----
 Each time a superproject update removes a populated submodule
-(e.g. when switching between commits before and after the removal) a
+(e.g. when switching between cummits before and after the removal) a
 stale submodule checkout will remain in the old location. Removing the
 old directory is only safe when it uses a gitfile, as otherwise the
 history of the submodule will be deleted too. This step will be

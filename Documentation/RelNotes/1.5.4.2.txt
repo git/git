@@ -17,19 +17,19 @@ Fixes since v1.5.4
    a message that began with "Merge...".
 
  * "git status" suggests "git rm --cached" for unstaging the
-   earlier "git add" before the initial commit.
+   earlier "git add" before the initial cummit.
 
- * "git status" output was incorrect during a partial commit.
+ * "git status" output was incorrect during a partial cummit.
 
  * "git bisect" refused to start when the HEAD was detached.
 
- * "git bisect" allowed a wildcard character in the commit
+ * "git bisect" allowed a wildcard character in the cummit
    message expanded while writing its log file.
 
  * Manual pages were not formatted correctly with docbook xsl
    1.72; added a workaround.
 
- * "git-commit -C $tag" used to work but rewrite in C done in
+ * "git-cummit -C $tag" used to work but rewrite in C done in
    1.5.4 broke it.  This was fixed in 1.5.4.1.
 
  * An entry in the .gitattributes file that names a pattern in a

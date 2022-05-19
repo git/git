@@ -18,9 +18,9 @@
 # checkout                    | çıkış yapım/yapmak          #
 # chunk                       | iri parça                   #
 # clone                       | klon(lamak)                 #
-# commit (ad)                 | işleme                      #
-# commit (eyl.)               | işlemek                     #
-# commitish                   | işlememsi                   #
+# cummit (ad)                 | işleme                      #
+# cummit (eyl.)               | işlemek                     #
+# cummitish                   | işlememsi                   #
 # conflict                    | çakışma                     #
 # dangling object             | sallanan nesne              #
 # detached HEAD               | ayrık HEAD                  #
@@ -839,7 +839,7 @@ msgid "Cherry-picking is not possible because you have unmerged files."
 msgstr "Seç-al yapılamaz; birleştirmesi tamamlanmamış dosyalarınız var."
 
 #: advice.c:183
-msgid "Committing is not possible because you have unmerged files."
+msgid "cummitting is not possible because you have unmerged files."
 msgstr "İşleme yapılamaz; birleştirmesi tamamlanmamış dosyalarınız var."
 
 #: advice.c:185
@@ -862,7 +862,7 @@ msgstr "%s yapılamıyor; birleştirmesi tamamlanmamış dosyalarınız var."
 #: advice.c:199
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
-"as appropriate to mark resolution and make a commit."
+"as appropriate to mark resolution and make a cummit."
 msgstr ""
 "Onları çalışma ağacında onarın, ardından hazırlığı bitirmek için uygun\n"
 "görüldüğü biçimde 'git add/rm <dosya>' yaptıktan sonra işleyin."
@@ -876,7 +876,7 @@ msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "Birleştirmenizi sonuçlandırmadınız (MERGE_HEAD mevcut)."
 
 #: advice.c:214
-msgid "Please, commit your changes before merging."
+msgid "Please, cummit your changes before merging."
 msgstr "Birleştirme öncesinde değişikliklerinizi işleyin."
 
 #: advice.c:215
@@ -915,10 +915,10 @@ msgid ""
 "Note: switching to '%s'.\n"
 "\n"
 "You are in 'detached HEAD' state. You can look around, make experimental\n"
-"changes and commit them, and you can discard any commits you make in this\n"
+"changes and cummit them, and you can discard any cummits you make in this\n"
 "state without impacting any branches by switching back to a branch.\n"
 "\n"
-"If you want to create a new branch to retain commits you create, you may\n"
+"If you want to create a new branch to retain cummits you create, you may\n"
 "do so (now or later) by using -c with the switch command. Example:\n"
 "\n"
 "  git switch -c <new-branch-name>\n"
@@ -975,8 +975,8 @@ msgstr "tanımlanamayan boşluk yok sayma seçeneği '%s'"
 #: builtin/add.c:515 builtin/add.c:527 builtin/branch.c:755
 #: builtin/checkout.c:472 builtin/checkout.c:475 builtin/checkout.c:1663
 #: builtin/checkout.c:1773 builtin/checkout.c:1776 builtin/clone.c:921
-#: builtin/commit.c:359 builtin/commit.c:362 builtin/commit.c:1200
-#: builtin/commit.c:1256 builtin/commit.c:1273 builtin/describe.c:593
+#: builtin/cummit.c:359 builtin/cummit.c:362 builtin/cummit.c:1200
+#: builtin/cummit.c:1256 builtin/cummit.c:1273 builtin/describe.c:593
 #: builtin/diff-tree.c:155 builtin/difftool.c:733 builtin/fast-export.c:1245
 #: builtin/fetch.c:2141 builtin/fetch.c:2162 builtin/fetch.c:2167
 #: builtin/help.c:602 builtin/index-pack.c:1858 builtin/init-db.c:560
@@ -1705,7 +1705,7 @@ msgid "prepend prefix to each pathname in the archive"
 msgstr "öneki arşivdeki tüm yol adlarının başına ekle"
 
 #: archive.c:554 archive.c:557 builtin/blame.c:881 builtin/blame.c:885
-#: builtin/blame.c:886 builtin/commit-tree.c:115 builtin/config.c:135
+#: builtin/blame.c:886 builtin/cummit-tree.c:115 builtin/config.c:135
 #: builtin/fast-export.c:1181 builtin/fast-export.c:1183
 #: builtin/fast-export.c:1187 builtin/grep.c:936 builtin/hash-object.c:104
 #: builtin/ls-files.c:654 builtin/ls-files.c:657 builtin/notes.c:410
@@ -1761,7 +1761,7 @@ msgstr "Beklenmedik seçenek --remote"
 
 #: archive.c:580 fetch-pack.c:300 revision.c:2914 builtin/add.c:530
 #: builtin/add.c:562 builtin/checkout.c:1782 builtin/clone.c:1099
-#: builtin/clone.c:1102 builtin/commit.c:371 builtin/fast-export.c:1230
+#: builtin/clone.c:1102 builtin/cummit.c:371 builtin/fast-export.c:1230
 #: builtin/index-pack.c:1854 builtin/log.c:2140 builtin/reset.c:442
 #: builtin/reset.c:500 builtin/rm.c:281 builtin/stash.c:1708
 #: builtin/worktree.c:580 builtin/worktree.c:781 http-fetch.c:144
@@ -1814,7 +1814,7 @@ msgstr "Daha fazla ikili arama yapılamıyor!\n"
 
 #: bisect.c:765
 #, c-format
-msgid "Not a valid commit name %s"
+msgid "Not a valid cummit name %s"
 msgstr "Geçerli bir işleme adı değil: %s"
 
 #: bisect.c:790
@@ -1839,7 +1839,7 @@ msgstr ""
 #, c-format
 msgid ""
 "The merge base %s is %s.\n"
-"This means the first '%s' commit is between %s and [%s].\n"
+"This means the first '%s' cummit is between %s and [%s].\n"
 msgstr ""
 "Birleştirme temeli %s, %s.\n"
 "Bu demek oluyor ki ilk '%s' işlemesi %s ve [%s] arasında.\n"
@@ -1859,7 +1859,7 @@ msgstr ""
 #, c-format
 msgid ""
 "the merge base between %s and [%s] must be skipped.\n"
-"So we cannot be sure the first %s commit is between %s and %s.\n"
+"So we cannot be sure the first %s cummit is between %s and %s.\n"
 "We continue anyway."
 msgstr ""
 "%s ve [%s] arasındaki birleştirme temeli atlanmalı.\n"
@@ -1898,7 +1898,7 @@ msgstr "%s hem %s hem %s idi\n"
 #: bisect.c:1065
 #, c-format
 msgid ""
-"No testable commit found.\n"
+"No testable cummit found.\n"
 "Maybe you started with bad path arguments?\n"
 msgstr ""
 "Sınanabilir bir işleme bulunamadı.\n"
@@ -1926,17 +1926,17 @@ msgid "--contents and --reverse do not blend well."
 msgstr "--contents ve --reverse birlikte pek iyi gitmiyor."
 
 #: blame.c:2787
-msgid "cannot use --contents with final commit object name"
+msgid "cannot use --contents with final cummit object name"
 msgstr "--contents son işleme nesnesi adı ile kullanılamıyor"
 
 #: blame.c:2808
-msgid "--reverse and --first-parent together require specified latest commit"
+msgid "--reverse and --first-parent together require specified latest cummit"
 msgstr ""
 "--reverse ve --first-parent birlikte en son işlemenin belirtilmesini "
 "gerektiriyor"
 
 #: blame.c:2817 bundle.c:231 midx.c:1058 ref-filter.c:2371 remote.c:2157
-#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/commit.c:1118
+#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/cummit.c:1118
 #: builtin/log.c:437 builtin/log.c:1055 builtin/log.c:1663 builtin/log.c:2096
 #: builtin/log.c:2387 builtin/merge.c:431 builtin/pack-objects.c:3381
 #: builtin/pack-objects.c:3781 builtin/pack-objects.c:3796
@@ -2171,13 +2171,13 @@ msgid "unrecognized header: %s%s (%d)"
 msgstr "tanımlanamayan üstbilgi: %s%s (%d)"
 
 #: bundle.c:145 rerere.c:464 rerere.c:675 sequencer.c:2616 sequencer.c:3402
-#: builtin/commit.c:865
+#: builtin/cummit.c:865
 #, c-format
 msgid "could not open '%s'"
 msgstr "'%s' açılamadı"
 
 #: bundle.c:203
-msgid "Repository lacks these prerequisite commits:"
+msgid "Repository lacks these prerequisite cummits:"
 msgstr "Depo aşağıdaki önkoşul işlemelere iye değil:"
 
 #: bundle.c:206
@@ -2271,274 +2271,274 @@ msgstr "en son iri parçanın numarası sıfır olmayan %<PRIx32>"
 msgid "invalid color value: %.*s"
 msgstr "geçersiz renk değeri: %.*s"
 
-#: commit-graph.c:204 midx.c:52
+#: cummit-graph.c:204 midx.c:52
 msgid "invalid hash version"
 msgstr "geçersiz sağlama sürümü"
 
-#: commit-graph.c:262
-msgid "commit-graph file is too small"
-msgstr "commit-graph dosyası pek küçük"
+#: cummit-graph.c:262
+msgid "cummit-graph file is too small"
+msgstr "cummit-graph dosyası pek küçük"
 
-#: commit-graph.c:355
+#: cummit-graph.c:355
 #, c-format
-msgid "commit-graph signature %X does not match signature %X"
-msgstr "commit-graph imzası %X, %X ile eşleşmiyor"
+msgid "cummit-graph signature %X does not match signature %X"
+msgstr "cummit-graph imzası %X, %X ile eşleşmiyor"
 
-#: commit-graph.c:362
+#: cummit-graph.c:362
 #, c-format
-msgid "commit-graph version %X does not match version %X"
-msgstr "commit-graph sürümü %x, %X ile eşleşmiyor"
+msgid "cummit-graph version %X does not match version %X"
+msgstr "cummit-graph sürümü %x, %X ile eşleşmiyor"
 
-#: commit-graph.c:369
+#: cummit-graph.c:369
 #, c-format
-msgid "commit-graph hash version %X does not match version %X"
-msgstr "commit-graph sağlama sürümü %X, %X ile eşleşmiyor"
+msgid "cummit-graph hash version %X does not match version %X"
+msgstr "cummit-graph sağlama sürümü %X, %X ile eşleşmiyor"
 
-#: commit-graph.c:386
+#: cummit-graph.c:386
 #, c-format
-msgid "commit-graph file is too small to hold %u chunks"
-msgstr "commit-graph dosyası %u iri parça tutmak için pek küçük"
+msgid "cummit-graph file is too small to hold %u chunks"
+msgstr "cummit-graph dosyası %u iri parça tutmak için pek küçük"
 
-#: commit-graph.c:485
-msgid "commit-graph has no base graphs chunk"
-msgstr "commit-graph temel grafiği iri parçasına iye değil"
+#: cummit-graph.c:485
+msgid "cummit-graph has no base graphs chunk"
+msgstr "cummit-graph temel grafiği iri parçasına iye değil"
 
-#: commit-graph.c:495
-msgid "commit-graph chain does not match"
-msgstr "commit-graph zinciri eşleşmiyor"
+#: cummit-graph.c:495
+msgid "cummit-graph chain does not match"
+msgstr "cummit-graph zinciri eşleşmiyor"
 
-#: commit-graph.c:543
+#: cummit-graph.c:543
 #, c-format
-msgid "invalid commit-graph chain: line '%s' not a hash"
-msgstr "geçersiz commit-graph zinciri: '%s'. satır bir sağlama değil"
+msgid "invalid cummit-graph chain: line '%s' not a hash"
+msgstr "geçersiz cummit-graph zinciri: '%s'. satır bir sağlama değil"
 
-#: commit-graph.c:567
-msgid "unable to find all commit-graph files"
-msgstr "tüm commit-graph dosyaları bulunamıyor"
+#: cummit-graph.c:567
+msgid "unable to find all cummit-graph files"
+msgstr "tüm cummit-graph dosyaları bulunamıyor"
 
-#: commit-graph.c:752 commit-graph.c:789
-msgid "invalid commit position. commit-graph is likely corrupt"
-msgstr "geçersiz işleme konumu, commit-graph büyük olasılıkla hasar görmüş"
+#: cummit-graph.c:752 cummit-graph.c:789
+msgid "invalid cummit position. cummit-graph is likely corrupt"
+msgstr "geçersiz işleme konumu, cummit-graph büyük olasılıkla hasar görmüş"
 
-#: commit-graph.c:773
+#: cummit-graph.c:773
 #, c-format
-msgid "could not find commit %s"
+msgid "could not find cummit %s"
 msgstr "%s işlemesi bulunamadı"
 
-#: commit-graph.c:806
-msgid "commit-graph requires overflow generation data but has none"
-msgstr "commit-graph, taşım oluşturma verisi gerektiriyor; ancak hiç yok"
+#: cummit-graph.c:806
+msgid "cummit-graph requires overflow generation data but has none"
+msgstr "cummit-graph, taşım oluşturma verisi gerektiriyor; ancak hiç yok"
 
-#: commit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
+#: cummit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
 #: builtin/clone.c:705
 #, c-format
-msgid "unable to parse commit %s"
+msgid "unable to parse cummit %s"
 msgstr "%s işlemesi ayrıştırılamıyor"
 
-#: commit-graph.c:1373 builtin/pack-objects.c:3078
+#: cummit-graph.c:1373 builtin/pack-objects.c:3078
 #, c-format
 msgid "unable to get type of object %s"
 msgstr "%s nesnesinin türü alınamıyor"
 
-#: commit-graph.c:1404
-msgid "Loading known commits in commit graph"
+#: cummit-graph.c:1404
+msgid "Loading known cummits in cummit graph"
 msgstr "İşleme grafiğindeki bilinen işlemeler yükleniyor"
 
-#: commit-graph.c:1421
-msgid "Expanding reachable commits in commit graph"
+#: cummit-graph.c:1421
+msgid "Expanding reachable cummits in cummit graph"
 msgstr "İşleme grafiğindeki ulaşılabilir işlemeler genişletiliyor"
 
-#: commit-graph.c:1441
-msgid "Clearing commit marks in commit graph"
+#: cummit-graph.c:1441
+msgid "Clearing cummit marks in cummit graph"
 msgstr "İşleme grafiğindeki işleme imleri temizleniyor"
 
-#: commit-graph.c:1460
-msgid "Computing commit graph topological levels"
+#: cummit-graph.c:1460
+msgid "Computing cummit graph topological levels"
 msgstr "İşleme grafiği ilingesel düzeyleri hesaplanıyor"
 
-#: commit-graph.c:1513
-msgid "Computing commit graph generation numbers"
+#: cummit-graph.c:1513
+msgid "Computing cummit graph generation numbers"
 msgstr "İşleme grafiği kuşak sayıları hesaplanıyor"
 
-#: commit-graph.c:1598
-msgid "Computing commit changed paths Bloom filters"
+#: cummit-graph.c:1598
+msgid "Computing cummit changed paths Bloom filters"
 msgstr ""
 "Geçerli işlemelerdeki değiştirilmiş yollar için Bloom süzgeci hesaplanıyor"
 
-#: commit-graph.c:1675
-msgid "Collecting referenced commits"
+#: cummit-graph.c:1675
+msgid "Collecting referenced cummits"
 msgstr "Başvurulmuş işlemeler toplanıyor"
 
-#: commit-graph.c:1701
+#: cummit-graph.c:1701
 #, c-format
-msgid "Finding commits for commit graph in %<PRIuMAX> pack"
-msgid_plural "Finding commits for commit graph in %<PRIuMAX> packs"
+msgid "Finding cummits for cummit graph in %<PRIuMAX> pack"
+msgid_plural "Finding cummits for cummit graph in %<PRIuMAX> packs"
 msgstr[0] "%<PRIuMAX> pakette işleme grafiği için işlemeler bulunuyor"
 msgstr[1] "%<PRIuMAX> pakette işleme grafiği için işlemeler bulunuyor"
 
-#: commit-graph.c:1714
+#: cummit-graph.c:1714
 #, c-format
 msgid "error adding pack %s"
 msgstr "%s paketi eklenirken hata"
 
-#: commit-graph.c:1718
+#: cummit-graph.c:1718
 #, c-format
 msgid "error opening index for %s"
 msgstr "%s için indeks açılırken hata"
 
-#: commit-graph.c:1756
-msgid "Finding commits for commit graph among packed objects"
+#: cummit-graph.c:1756
+msgid "Finding cummits for cummit graph among packed objects"
 msgstr "Paketlenmiş nesneler arasından işleme grafiği için işlemeler bulunuyor"
 
-#: commit-graph.c:1774
-msgid "Finding extra edges in commit graph"
+#: cummit-graph.c:1774
+msgid "Finding extra edges in cummit graph"
 msgstr "İşleme grafiğindeki ek sınırlar bulunuyor"
 
-#: commit-graph.c:1823
+#: cummit-graph.c:1823
 msgid "failed to write correct number of base graph ids"
 msgstr "temel grafiği numaralarının doğru sayısı yazılamadı"
 
-#: commit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
+#: cummit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
 #, c-format
 msgid "unable to create leading directories of %s"
 msgstr "%s öncü dizinleri oluşturulamıyor"
 
-#: commit-graph.c:1868
+#: cummit-graph.c:1868
 msgid "unable to create temporary graph layer"
 msgstr "geçici grafik katmanı oluşturulamıyor"
 
-#: commit-graph.c:1873
+#: cummit-graph.c:1873
 #, c-format
 msgid "unable to adjust shared permissions for '%s'"
 msgstr "'%s' için paylaşılan izinler ayarlanamıyor"
 
-#: commit-graph.c:1930
+#: cummit-graph.c:1930
 #, c-format
-msgid "Writing out commit graph in %d pass"
-msgid_plural "Writing out commit graph in %d passes"
+msgid "Writing out cummit graph in %d pass"
+msgid_plural "Writing out cummit graph in %d passes"
 msgstr[0] "İşleme grafiği %d geçişte yazılıyor"
 msgstr[1] "İşleme grafiği %d geçişte yazılıyor"
 
-#: commit-graph.c:1967
-msgid "unable to open commit-graph chain file"
-msgstr "commit-graph zincir dosyası açılamıyor"
+#: cummit-graph.c:1967
+msgid "unable to open cummit-graph chain file"
+msgstr "cummit-graph zincir dosyası açılamıyor"
 
-#: commit-graph.c:1983
-msgid "failed to rename base commit-graph file"
-msgstr "temel commit-graph dosyası yeniden adlandırılamadı"
+#: cummit-graph.c:1983
+msgid "failed to rename base cummit-graph file"
+msgstr "temel cummit-graph dosyası yeniden adlandırılamadı"
 
-#: commit-graph.c:2004
-msgid "failed to rename temporary commit-graph file"
-msgstr "geçici commit-graph dosyası yeniden adlandırılamadı"
+#: cummit-graph.c:2004
+msgid "failed to rename temporary cummit-graph file"
+msgstr "geçici cummit-graph dosyası yeniden adlandırılamadı"
 
-#: commit-graph.c:2137
-msgid "Scanning merged commits"
+#: cummit-graph.c:2137
+msgid "Scanning merged cummits"
 msgstr "Birleştirilen işlemeler taranıyor"
 
-#: commit-graph.c:2181
-msgid "Merging commit-graph"
-msgstr "commit-graph birleştiriliyor"
+#: cummit-graph.c:2181
+msgid "Merging cummit-graph"
+msgstr "cummit-graph birleştiriliyor"
 
-#: commit-graph.c:2289
-msgid "attempting to write a commit-graph, but 'core.commitGraph' is disabled"
+#: cummit-graph.c:2289
+msgid "attempting to write a cummit-graph, but 'core.cummitGraph' is disabled"
 msgstr ""
-"bir commit-graph yazılmaya çalışılıyor; ancak 'core.commitGraph' devre dışı"
+"bir cummit-graph yazılmaya çalışılıyor; ancak 'core.cummitGraph' devre dışı"
 
-#: commit-graph.c:2396
-msgid "too many commits to write graph"
+#: cummit-graph.c:2396
+msgid "too many cummits to write graph"
 msgstr "grafik yazımı için çok fazla işleme"
 
-#: commit-graph.c:2494
-msgid "the commit-graph file has incorrect checksum and is likely corrupt"
+#: cummit-graph.c:2494
+msgid "the cummit-graph file has incorrect checksum and is likely corrupt"
 msgstr ""
-"commit-graph dosyasının sağlama toplamı yanlış ve büyük olasılıkla hasar "
+"cummit-graph dosyasının sağlama toplamı yanlış ve büyük olasılıkla hasar "
 "görmüş"
 
-#: commit-graph.c:2504
+#: cummit-graph.c:2504
 #, c-format
-msgid "commit-graph has incorrect OID order: %s then %s"
-msgstr "commit-graph hatalı nesne tanımlayıcı sırasına iye: %s, sonra %s"
+msgid "cummit-graph has incorrect OID order: %s then %s"
+msgstr "cummit-graph hatalı nesne tanımlayıcı sırasına iye: %s, sonra %s"
 
-#: commit-graph.c:2514 commit-graph.c:2529
+#: cummit-graph.c:2514 cummit-graph.c:2529
 #, c-format
-msgid "commit-graph has incorrect fanout value: fanout[%d] = %u != %u"
-msgstr "commit-graph hatalı fanout değerine iye: fanout[%d] = %u != %u"
+msgid "cummit-graph has incorrect fanout value: fanout[%d] = %u != %u"
+msgstr "cummit-graph hatalı fanout değerine iye: fanout[%d] = %u != %u"
 
-#: commit-graph.c:2521
+#: cummit-graph.c:2521
 #, c-format
-msgid "failed to parse commit %s from commit-graph"
-msgstr "%s işlemesi commit-graph'tan ayrıştırılamadı"
+msgid "failed to parse cummit %s from cummit-graph"
+msgstr "%s işlemesi cummit-graph'tan ayrıştırılamadı"
 
-#: commit-graph.c:2539
-msgid "Verifying commits in commit graph"
+#: cummit-graph.c:2539
+msgid "Verifying cummits in cummit graph"
 msgstr "İşleme grafiğindeki işlemeler doğrulanıyor"
 
-#: commit-graph.c:2554
+#: cummit-graph.c:2554
 #, c-format
-msgid "failed to parse commit %s from object database for commit-graph"
+msgid "failed to parse cummit %s from object database for cummit-graph"
 msgstr ""
-"%s işlemesi commit-graph için olan nesne veritabanından ayrıştırılamadı"
+"%s işlemesi cummit-graph için olan nesne veritabanından ayrıştırılamadı"
 
-#: commit-graph.c:2561
+#: cummit-graph.c:2561
 #, c-format
-msgid "root tree OID for commit %s in commit-graph is %s != %s"
+msgid "root tree OID for cummit %s in cummit-graph is %s != %s"
 msgstr ""
-"commit-graph'teki %s işlemesi için olan kök ağaç nesne tanımlayıcısı %s != %s"
+"cummit-graph'teki %s işlemesi için olan kök ağaç nesne tanımlayıcısı %s != %s"
 
-#: commit-graph.c:2571
+#: cummit-graph.c:2571
 #, c-format
-msgid "commit-graph parent list for commit %s is too long"
-msgstr "%s işlemesi için olan commit-graph üst öge listesi çok uzun"
+msgid "cummit-graph parent list for cummit %s is too long"
+msgstr "%s işlemesi için olan cummit-graph üst öge listesi çok uzun"
 
-#: commit-graph.c:2580
+#: cummit-graph.c:2580
 #, c-format
-msgid "commit-graph parent for %s is %s != %s"
-msgstr "%s için olan commit-graph üst ögesi %s != %s"
+msgid "cummit-graph parent for %s is %s != %s"
+msgstr "%s için olan cummit-graph üst ögesi %s != %s"
 
-#: commit-graph.c:2594
+#: cummit-graph.c:2594
 #, c-format
-msgid "commit-graph parent list for commit %s terminates early"
-msgstr "%s işlemesi için olan commit-graph üst öge listesi erkenden sonlanıyor"
+msgid "cummit-graph parent list for cummit %s terminates early"
+msgstr "%s işlemesi için olan cummit-graph üst öge listesi erkenden sonlanıyor"
 
-#: commit-graph.c:2599
+#: cummit-graph.c:2599
 #, c-format
 msgid ""
-"commit-graph has generation number zero for commit %s, but non-zero elsewhere"
+"cummit-graph has generation number zero for cummit %s, but non-zero elsewhere"
 msgstr ""
-"%s işlemesi için commit-graph kuşak sayısı sıfır; ancak başka yerlerde "
+"%s işlemesi için cummit-graph kuşak sayısı sıfır; ancak başka yerlerde "
 "sıfırdan farklı"
 
-#: commit-graph.c:2603
+#: cummit-graph.c:2603
 #, c-format
 msgid ""
-"commit-graph has non-zero generation number for commit %s, but zero elsewhere"
+"cummit-graph has non-zero generation number for cummit %s, but zero elsewhere"
 msgstr ""
-"%s işlemesi için commit-graph kuşak sayısı sıfırdan farklı; ancak başka "
+"%s işlemesi için cummit-graph kuşak sayısı sıfırdan farklı; ancak başka "
 "yerlerde sıfır"
 
-#: commit-graph.c:2620
+#: cummit-graph.c:2620
 #, c-format
-msgid "commit-graph generation for commit %s is %<PRIuMAX> < %<PRIuMAX>"
-msgstr "%s işlemesi için commit-graph kuşağı %<PRIuMAX> < %<PRIuMAX>"
+msgid "cummit-graph generation for cummit %s is %<PRIuMAX> < %<PRIuMAX>"
+msgstr "%s işlemesi için cummit-graph kuşağı %<PRIuMAX> < %<PRIuMAX>"
 
-#: commit-graph.c:2626
+#: cummit-graph.c:2626
 #, c-format
-msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
+msgid "cummit date for cummit %s in cummit-graph is %<PRIuMAX> != %<PRIuMAX>"
 msgstr ""
-"%s işlemesi için commit-graph içindeki işleme tarihi %<PRIuMAX> != %<PRIuMAX>"
+"%s işlemesi için cummit-graph içindeki işleme tarihi %<PRIuMAX> != %<PRIuMAX>"
 
-#: commit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
+#: cummit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
 #: builtin/am.c:450 builtin/am.c:1449 builtin/am.c:2124 builtin/replace.c:456
 #, c-format
 msgid "could not parse %s"
 msgstr "%s ayrıştırılamadı"
 
-#: commit.c:56
+#: cummit.c:56
 #, c-format
-msgid "%s %s is not a commit!"
+msgid "%s %s is not a cummit!"
 msgstr "%s %s bir işleme değil!"
 
-#: commit.c:197
+#: cummit.c:197
 msgid ""
 "Support for <GIT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
@@ -2558,36 +2558,36 @@ msgstr ""
 "\"git config advice.graftFileDeprecated false\"\n"
 "kullanarak bu iletiyi kapatabilirsiniz."
 
-#: commit.c:1252
+#: cummit.c:1252
 #, c-format
-msgid "Commit %s has an untrusted GPG signature, allegedly by %s."
+msgid "cummit %s has an untrusted GPG signature, allegedly by %s."
 msgstr ""
 "%s işlemesinin güvenilmeyen bir GPG imzası var, iddiaya göre %s tarafından."
 
-#: commit.c:1256
+#: cummit.c:1256
 #, c-format
-msgid "Commit %s has a bad GPG signature allegedly by %s."
+msgid "cummit %s has a bad GPG signature allegedly by %s."
 msgstr "%s işlemesinin hatalı bir GPG imzası var, iddiaya göre %s tarafından."
 
-#: commit.c:1259
+#: cummit.c:1259
 #, c-format
-msgid "Commit %s does not have a GPG signature."
+msgid "cummit %s does not have a GPG signature."
 msgstr "%s işlemesinin bir GPG imzası yok."
 
-#: commit.c:1262
+#: cummit.c:1262
 #, c-format
-msgid "Commit %s has a good GPG signature by %s\n"
+msgid "cummit %s has a good GPG signature by %s\n"
 msgstr "%s işlemesinin %s tarafından sağlanan düzgün bir GPG imzası var\n"
 
-#: commit.c:1516
+#: cummit.c:1516
 msgid ""
-"Warning: commit message did not conform to UTF-8.\n"
+"Warning: cummit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
-"variable i18n.commitencoding to the encoding your project uses.\n"
+"variable i18n.cummitencoding to the encoding your project uses.\n"
 msgstr ""
 "Uyarı: İşleme iletisi UTF-8'e uymuyor.\n"
 "İletiyi düzelttikten sonra bunu değiştirmek isteyebilir veya\n"
-"i18n.commitencoding yapılandırma değişkenini projenizin kullandığı\n"
+"i18n.cummitencoding yapılandırma değişkenini projenizin kullandığı\n"
 "kodlama ile değiştirmek isteyebilirsiniz.\n"
 
 #: compat/obstack.c:406 compat/obstack.c:408
@@ -3434,7 +3434,7 @@ msgid "--merge-base does not work with ranges"
 msgstr "--merge-base erimlerle çalışmaz"
 
 #: diff-lib.c:563
-msgid "--merge-base only works with commits"
+msgid "--merge-base only works with cummits"
 msgstr "--merge-base yalnızca işlemelerle çalışır"
 
 #: diff-lib.c:580
@@ -4255,7 +4255,7 @@ msgstr "%s %d %s alındı"
 
 #: fetch-pack.c:470
 #, c-format
-msgid "invalid commit %s"
+msgid "invalid cummit %s"
 msgstr "geçersiz işleme %s"
 
 #: fetch-pack.c:501
@@ -4341,7 +4341,7 @@ msgid "Server does not support this repository's object format"
 msgstr "Sunucu bu deponun nesne türünü desteklemiyor"
 
 #: fetch-pack.c:1142
-msgid "no common commits"
+msgid "no common cummits"
 msgstr "ortak işleme yok"
 
 #: fetch-pack.c:1151 fetch-pack.c:1506 builtin/clone.c:1166
@@ -4777,7 +4777,7 @@ msgid "Author identity unknown\n"
 msgstr "Yazar kimliği bilinmiyor\n"
 
 #: ident.c:357
-msgid "Committer identity unknown\n"
+msgid "cummitter identity unknown\n"
 msgstr "İşleyici kimliği bilinmiyor\n"
 
 #: ident.c:363
@@ -4835,7 +4835,7 @@ msgstr "boş tanımlayıcı adına (<%s> için) izin verilmiyor"
 msgid "name consists only of disallowed characters: %s"
 msgstr "ad yalnızca izin verilmeyen karakterlerden oluşuyor: %s"
 
-#: ident.c:455 builtin/commit.c:649
+#: ident.c:455 builtin/cummit.c:649
 #, c-format
 msgid "invalid date format: %s"
 msgstr "geçersiz tarih biçimi: %s"
@@ -4899,7 +4899,7 @@ msgstr ""
 
 #: list-objects.c:415
 #, c-format
-msgid "unable to load root tree for commit %s"
+msgid "unable to load root tree for cummit %s"
 msgstr "%s işlemesi için kök ağacı yüklenemiyor"
 
 #: lockfile.c:152
@@ -4908,7 +4908,7 @@ msgid ""
 "Unable to create '%s.lock': %s.\n"
 "\n"
 "Another git process seems to be running in this repository, e.g.\n"
-"an editor opened by 'git commit'. Please make sure all processes\n"
+"an editor opened by 'git cummit'. Please make sure all processes\n"
 "are terminated then try again. If it still fails, a git process\n"
 "may have crashed in this repository earlier:\n"
 "remove the file manually to continue."
@@ -4916,7 +4916,7 @@ msgstr ""
 "'%s.lock' oluşturulamıyor: %s.\n"
 "\n"
 "Bu depoda başka bir git işlemi çalışıyor gibi görünüyor, örneğin\n"
-"'git commit' kullanılarak açılmış bir düzenleyici. Lütfen tüm işlemlerin\n"
+"'git cummit' kullanılarak açılmış bir düzenleyici. Lütfen tüm işlemlerin\n"
 "sonlandırıldığından emin olun ve yeniden deneyin. Eğer hâlâ başarısız\n"
 "oluyorsa bir git işlemi bu depo içinde daha önceden çakılmış olabilir:\n"
 "Sürdürmek için dosyayı el ile kaldırın."
@@ -4951,12 +4951,12 @@ msgstr "%s altmodülü birleştirilemedi (çıkış yapılmadı)"
 
 #: merge-ort.c:1639 merge-recursive.c:1221
 #, c-format
-msgid "Failed to merge submodule %s (commits not present)"
+msgid "Failed to merge submodule %s (cummits not present)"
 msgstr "%s altmodülü birleştirilemedi (işlemeler mevcut değil)"
 
 #: merge-ort.c:1648 merge-recursive.c:1228
 #, c-format
-msgid "Failed to merge submodule %s (commits don't follow merge-base)"
+msgid "Failed to merge submodule %s (cummits don't follow merge-base)"
 msgstr "%s altmodülü birleştirilemedi (işlemeler merge-base'i takip etmiyor)"
 
 #: merge-ort.c:1658 merge-ort.c:1666
@@ -5216,7 +5216,7 @@ msgid "Already up to date."
 msgstr "Tümü güncel."
 
 #: merge-recursive.c:353
-msgid "(bad commit)\n"
+msgid "(bad cummit)\n"
 msgstr "(hatalı işleme)\n"
 
 #: merge-recursive.c:381
@@ -5276,7 +5276,7 @@ msgstr "şununla ne yapılacağı bilinmiyor: %06o %s '%s'"
 
 #: merge-recursive.c:1236 merge-recursive.c:1249
 #, c-format
-msgid "Fast-forwarding submodule %s to the following commit:"
+msgid "Fast-forwarding submodule %s to the following cummit:"
 msgstr "%s altmodülü şu işlemeye ileri sarılıyor:"
 
 #: merge-recursive.c:1239 merge-recursive.c:1252
@@ -5286,7 +5286,7 @@ msgstr "%s altmodülü ileri sarılıyor"
 
 #: merge-recursive.c:1276
 #, c-format
-msgid "Failed to merge submodule %s (merge following commits not found)"
+msgid "Failed to merge submodule %s (merge following cummits not found)"
 msgstr ""
 "%s altmodülü birleştirilemedi (işlemeleri takip eden birleştirme bulunamadı)"
 
@@ -5489,7 +5489,7 @@ msgstr[0] "%u ortak ata bulundu:"
 msgstr[1] "%u ortak ata bulundu:"
 
 #: merge-recursive.c:3651
-msgid "merge returned no commit"
+msgid "merge returned no cummit"
 msgstr "birleştirme herhangi bir işleme döndürmedi"
 
 #: merge-recursive.c:3823
@@ -5747,12 +5747,12 @@ msgstr "lazy_name iş parçacığı ucu birleştirilemiyor: %s"
 #, c-format
 msgid ""
 "You have not concluded your previous notes merge (%s exists).\n"
-"Please, use 'git notes merge --commit' or 'git notes merge --abort' to "
-"commit/abort the previous merge before you start a new notes merge."
+"Please, use 'git notes merge --cummit' or 'git notes merge --abort' to "
+"cummit/abort the previous merge before you start a new notes merge."
 msgstr ""
 "Bir önceki not birleştirmenizi sonuçlandırmadınız (%s var).\n"
 "Lütfen başka bir not birleştirmesine başlamadan önce 'git notes merge --"
-"commit' veya 'git notes merge --abort' kullanarak bir önceki birleştirmeyi "
+"cummit' veya 'git notes merge --abort' kullanarak bir önceki birleştirmeyi "
 "işleyin/durdurun."
 
 #: notes-merge.c:283
@@ -5761,7 +5761,7 @@ msgid "You have not concluded your notes merge (%s exists)."
 msgstr "Notlar birleştirmenizi sonuçlandırmadınız (%s var)."
 
 #: notes-utils.c:46
-msgid "Cannot commit uninitialized/unreferenced notes tree"
+msgid "Cannot cummit uninitialized/unreferenced notes tree"
 msgstr "İlklendirilmemiş/Başvurulmamış not ağacı işlenemiyor"
 
 #: notes-utils.c:105
@@ -5972,7 +5972,7 @@ msgid "cannot read object for %s"
 msgstr "%s için nesne okunamıyor"
 
 #: object-file.c:2151
-msgid "corrupt commit"
+msgid "corrupt cummit"
 msgstr "hasar görmüş işleme"
 
 #: object-file.c:2159
@@ -6048,14 +6048,14 @@ msgstr "%s içeriği açılamıyor"
 msgid "%s [bad object]"
 msgstr "%s [hatalı nesne]"
 
-#. TRANSLATORS: This is a line of ambiguous commit
+#. TRANSLATORS: This is a line of ambiguous cummit
 #. object output. E.g.:
 #. *
-#.    "deadbeef commit 2021-01-01 - Some Commit Message"
+#.    "deadbeef cummit 2021-01-01 - Some cummit Message"
 #.
 #: object-name.c:407
 #, c-format
-msgid "%s commit %s - %s"
+msgid "%s cummit %s - %s"
 msgstr "%s %s işlemesi - %s"
 
 #. TRANSLATORS: This is a line of ambiguous
@@ -6324,7 +6324,7 @@ msgstr "ofset %s için paket indeksinin başlangıcından önce (hasarlı indeks
 msgid "offset beyond end of pack index for %s (truncated index?)"
 msgstr "ofset %s için paket indeksinin sonundan ötede (kırpılmış index?)"
 
-#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/commit-graph.c:175
+#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/cummit-graph.c:175
 #, c-format
 msgid "option `%s' expects a numerical value"
 msgstr "'%s' seçeneği sayısal bir değer bekliyor"
@@ -6646,16 +6646,16 @@ msgstr "'log' çıktısı okunamadı"
 
 #: range-diff.c:98 sequencer.c:5575
 #, c-format
-msgid "could not parse commit '%s'"
+msgid "could not parse cummit '%s'"
 msgstr "'%s' işlemesi ayrıştırılamadı"
 
 #: range-diff.c:109
 #, c-format
 msgid ""
-"could not parse first line of `log` output: did not start with 'commit ': "
+"could not parse first line of `log` output: did not start with 'cummit ': "
 "'%s'"
 msgstr ""
-"'log' çıktısının ilk satırı ayrıştırılamadı: 'commit ' ile başlamıyor: '%s'"
+"'log' çıktısının ilk satırı ayrıştırılamadı: 'cummit ' ile başlamıyor: '%s'"
 
 #: range-diff.c:132
 #, c-format
@@ -6688,7 +6688,7 @@ msgstr ""
 
 #: read-cache.c:780 builtin/submodule--helper.c:3359
 #, c-format
-msgid "'%s' does not have a commit checked out"
+msgid "'%s' does not have a cummit checked out"
 msgstr "'%s' çıkışı yapılmış bir işlemeye iye değil"
 
 #: read-cache.c:832
@@ -6784,7 +6784,7 @@ msgstr "'%s' için sırasız hazırlama alanı girdileri"
 #: read-cache.c:2096 read-cache.c:2402 rerere.c:549 rerere.c:583 rerere.c:1096
 #: submodule.c:1831 builtin/add.c:586 builtin/check-ignore.c:183
 #: builtin/checkout.c:532 builtin/checkout.c:724 builtin/clean.c:1016
-#: builtin/commit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
+#: builtin/cummit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
 #: builtin/mv.c:148 builtin/reset.c:506 builtin/rm.c:293
 #: builtin/submodule--helper.c:335 builtin/submodule--helper.c:3319
 msgid "index file corrupt"
@@ -6891,32 +6891,32 @@ msgstr ""
 #: rebase-interactive.c:33
 #, c-format
 msgid ""
-"unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
+"unrecognized setting %s for option rebase.missingcummitsCheck. Ignoring."
 msgstr ""
-"rebase.missingCommitsCheck seçeneği için tanımlanamayan %s ayarı. Yok "
+"rebase.missingcummitsCheck seçeneği için tanımlanamayan %s ayarı. Yok "
 "sayılıyor."
 
 #: rebase-interactive.c:42
 msgid ""
 "\n"
 "Commands:\n"
-"p, pick <commit> = use commit\n"
-"r, reword <commit> = use commit, but edit the commit message\n"
-"e, edit <commit> = use commit, but stop for amending\n"
-"s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup [-C | -c] <commit> = like \"squash\" but keep only the previous\n"
-"                   commit's log message, unless -C is used, in which case\n"
-"                   keep only this commit's message; -c is same as -C but\n"
+"p, pick <cummit> = use cummit\n"
+"r, reword <cummit> = use cummit, but edit the cummit message\n"
+"e, edit <cummit> = use cummit, but stop for amending\n"
+"s, squash <cummit> = use cummit, but meld into previous cummit\n"
+"f, fixup [-C | -c] <cummit> = like \"squash\" but keep only the previous\n"
+"                   cummit's log message, unless -C is used, in which case\n"
+"                   keep only this cummit's message; -c is same as -C but\n"
 "                   opens the editor\n"
 "x, exec <command> = run command (the rest of the line) using shell\n"
 "b, break = stop here (continue rebase later with 'git rebase --continue')\n"
-"d, drop <commit> = remove commit\n"
+"d, drop <cummit> = remove cummit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified); use -c <commit> to reword the commit message\n"
+"m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+".       create a merge cummit using the original merge cummit's\n"
+".       message (or the oneline, if no original merge cummit was\n"
+".       specified); use -c <cummit> to reword the cummit message\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
@@ -6953,7 +6953,7 @@ msgstr[1] "%s ögesini %s üzerine yeniden temellendir (%d komut)"
 #: rebase-interactive.c:75
 msgid ""
 "\n"
-"Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
+"Do not remove any line. Use 'drop' explicitly to remove a cummit.\n"
 msgstr ""
 "\n"
 "Hiçbir satırı kaldırmayın. Bir işlemeyi kaldırmak için 'drop'u açıkça "
@@ -6962,7 +6962,7 @@ msgstr ""
 #: rebase-interactive.c:78
 msgid ""
 "\n"
-"If you remove a line here THAT COMMIT WILL BE LOST.\n"
+"If you remove a line here THAT cummit WILL BE LOST.\n"
 msgstr ""
 "\n"
 "Buradaki bir satırı kaldırırsanız İŞLEME KAYBOLUR.\n"
@@ -7007,8 +7007,8 @@ msgstr "'%s' yazılamadı."
 #: rebase-interactive.c:196
 #, c-format
 msgid ""
-"Warning: some commits may have been dropped accidentally.\n"
-"Dropped commits (newer to older):\n"
+"Warning: some cummits may have been dropped accidentally.\n"
+"Dropped cummits (newer to older):\n"
 msgstr ""
 "Uyarı: Bazı işlemeler yanlışlıkla bırakılmış olabilir.\n"
 "Bırakılan işlemeler: (yeniden eskiye):\n"
@@ -7016,16 +7016,16 @@ msgstr ""
 #: rebase-interactive.c:203
 #, c-format
 msgid ""
-"To avoid this message, use \"drop\" to explicitly remove a commit.\n"
+"To avoid this message, use \"drop\" to explicitly remove a cummit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
+"Use 'git config rebase.missingcummitsCheck' to change the level of "
 "warnings.\n"
 "The possible behaviours are: ignore, warn, error.\n"
 "\n"
 msgstr ""
 "Bu iletiden kaçınmak için, bir işlemeyi kaldırırken açıkça \"drop\" "
 "kullanın.\n"
-"Uyarıların düzeyini değiştirmek için 'git config rebase.missingCommitsCheck' "
+"Uyarıların düzeyini değiştirmek için 'git config rebase.missingcummitsCheck' "
 "kullanın.\n"
 "Kullanılabilir davranışlar: ignore, warn, error.\n"
 "\n"
@@ -7268,7 +7268,7 @@ msgstr "hatalı oluşturulmuş nesne adı %s"
 
 #: ref-filter.c:2746
 #, c-format
-msgid "option `%s' must point to a commit"
+msgid "option `%s' must point to a cummit"
 msgstr "'%s' bir işlemeye işaret etmeli"
 
 #: reflog.c:407
@@ -7476,7 +7476,7 @@ msgstr ""
 #: remote.c:1231
 #, c-format
 msgid ""
-"The <src> part of the refspec is a commit object.\n"
+"The <src> part of the refspec is a cummit object.\n"
 "Did you mean to create a new branch by pushing to\n"
 "'%s:refs/heads/%s'?"
 msgstr ""
@@ -7605,7 +7605,7 @@ msgstr "Dalınız '%s' ile güncel.\n"
 
 #: remote.c:2246
 #, c-format
-msgid "Your branch and '%s' refer to different commits.\n"
+msgid "Your branch and '%s' refer to different cummits.\n"
 msgstr "Sizin dalınız ve '%s' başka işlemelere başvuruyor.\n"
 
 #: remote.c:2249
@@ -7615,20 +7615,20 @@ msgstr "  (ayrıntılar için \"%s\" kullanın)\n"
 
 #: remote.c:2253
 #, c-format
-msgid "Your branch is ahead of '%s' by %d commit.\n"
-msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
+msgid "Your branch is ahead of '%s' by %d cummit.\n"
+msgid_plural "Your branch is ahead of '%s' by %d cummits.\n"
 msgstr[0] "Dalınız '%s' dalından %d işleme ileride.\n"
 msgstr[1] "Dalınız '%s' dalından %d işleme ileride.\n"
 
 #: remote.c:2259
-msgid "  (use \"git push\" to publish your local commits)\n"
+msgid "  (use \"git push\" to publish your local cummits)\n"
 msgstr "  (yerel işlemelerinizi yayımlamak için \"git push\" kullanın)\n"
 
 #: remote.c:2262
 #, c-format
-msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
+msgid "Your branch is behind '%s' by %d cummit, and can be fast-forwarded.\n"
 msgid_plural ""
-"Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
+"Your branch is behind '%s' by %d cummits, and can be fast-forwarded.\n"
 msgstr[0] "Dalınız '%s' dalından %d işleme geride ve ileri sarılabilir.\n"
 msgstr[1] "Dalınız '%s' dalından %d işleme geride ve ileri sarılabilir.\n"
 
@@ -7640,10 +7640,10 @@ msgstr "  (yerel dalınızı güncellemek için \"git pull\" kullanın)\n"
 #, c-format
 msgid ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commit each, respectively.\n"
+"and have %d and %d different cummit each, respectively.\n"
 msgid_plural ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commits each, respectively.\n"
+"and have %d and %d different cummits each, respectively.\n"
 msgstr[0] ""
 "Sizin dalınız ve '%s' birbirinden uzaklaşmış ve sırasıyla\n"
 "her birinde %d ve %d işleme var.\n"
@@ -7787,7 +7787,7 @@ msgstr "geçerli dalınız bozuk gibi görünüyor"
 
 #: revision.c:2715
 #, c-format
-msgid "your current branch '%s' does not have any commits yet"
+msgid "your current branch '%s' does not have any cummits yet"
 msgstr "geçerli dalınız '%s' içinde henüz bir işleme yok"
 
 #: revision.c:2901
@@ -7855,7 +7855,7 @@ msgstr "alıcı uç itme seçeneklerini desteklemiyor"
 
 #: sequencer.c:197
 #, c-format
-msgid "invalid commit message cleanup mode '%s'"
+msgid "invalid cummit message cleanup mode '%s'"
 msgstr "geçersiz işleme iletisi temizleme kipi '%s'"
 
 #: sequencer.c:325
@@ -7899,7 +7899,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git cherry-pick --continue\".\n"
-"You can instead skip this commit with \"git cherry-pick --skip\".\n"
+"You can instead skip this cummit with \"git cherry-pick --skip\".\n"
 "To abort and get back to the state before \"git cherry-pick\",\n"
 "run \"git cherry-pick --abort\"."
 msgstr ""
@@ -7915,7 +7915,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git revert --continue\".\n"
-"You can instead skip this commit with \"git revert --skip\".\n"
+"You can instead skip this cummit with \"git revert --skip\".\n"
 "To abort and get back to the state before \"git revert\",\n"
 "run \"git revert --abort\"."
 msgstr ""
@@ -7949,7 +7949,7 @@ msgid "failed to finalize '%s'"
 msgstr "'%s' tamamlanamadı"
 
 #: sequencer.c:473 sequencer.c:1930 sequencer.c:3112 sequencer.c:3547
-#: sequencer.c:3675 builtin/am.c:290 builtin/commit.c:837 builtin/merge.c:1154
+#: sequencer.c:3675 builtin/am.c:290 builtin/cummit.c:837 builtin/merge.c:1154
 #, c-format
 msgid "could not read '%s'"
 msgstr "'%s' okunamadı"
@@ -7960,7 +7960,7 @@ msgid "your local changes would be overwritten by %s."
 msgstr "%s ile yerel değişikliklerinizin üzerine yazılacaktır."
 
 #: sequencer.c:503
-msgid "commit your changes or stash them to proceed."
+msgid "cummit your changes or stash them to proceed."
 msgstr "İlerlemek için değişikliklerinizi işleyin veya zulalayın."
 
 #: sequencer.c:535
@@ -7986,7 +7986,7 @@ msgid "unable to update cache tree"
 msgstr "önbellek ağacı güncellenemiyor"
 
 #: sequencer.c:713
-msgid "could not resolve HEAD commit"
+msgid "could not resolve HEAD cummit"
 msgstr "HEAD işlemesi çözülemedi"
 
 #: sequencer.c:793
@@ -8038,13 +8038,13 @@ msgstr "'GIT_AUTHOR_DATE' eksik"
 #, c-format
 msgid ""
 "you have staged changes in your working tree\n"
-"If these changes are meant to be squashed into the previous commit, run:\n"
+"If these changes are meant to be squashed into the previous cummit, run:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
-"If they are meant to go into a new commit, run:\n"
+"If they are meant to go into a new cummit, run:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
@@ -8054,19 +8054,19 @@ msgstr ""
 "Eğer bu değişikliklerin bir önceki işlemeye eklenmesi\n"
 "gerekiyorsa şu komutu çalıştırın:\n"
 "\n"
-"\tgit commit --amend %s\n"
+"\tgit cummit --amend %s\n"
 "\n"
 "Yeni bir işleme yapmak istiyorsanız şu komutu çalıştırın:\n"
 "\n"
-"\tgit commit %s\n"
+"\tgit cummit %s\n"
 "\n"
 "Her iki durumda da işiniz bittikten sonra şu komut ile sürdürün:\n"
 "\n"
 "\tgit rebase --continue\n"
 
 #: sequencer.c:1225
-msgid "'prepare-commit-msg' hook failed"
-msgstr "'prepare-commit-msg' başarısız oldu"
+msgid "'prepare-cummit-msg' hook failed"
+msgstr "'prepare-cummit-msg' başarısız oldu"
 
 #: sequencer.c:1231
 msgid ""
@@ -8078,9 +8078,9 @@ msgid ""
 "\n"
 "    git config --global --edit\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Adınız ve e-posta adresiniz kullanıcı adınız ve makine adı temel alınarak\n"
 "kendiliğinden yapılandırıldı. Lütfen doğru olup olmadığını denetleyin.\n"
@@ -8092,7 +8092,7 @@ msgstr ""
 "\n"
 "Bundan sonra bu işleme için kullanılan kimliği düzeltmek isteyebilirsiniz:\n"
 "\n"
-"\tgit commit --amend --reset-author\n"
+"\tgit cummit --amend --reset-author\n"
 
 #: sequencer.c:1244
 msgid ""
@@ -8103,9 +8103,9 @@ msgid ""
 "    git config --global user.name \"Your Name\"\n"
 "    git config --global user.email you@example.com\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Adınız ve e-posta adresiniz kullanıcı adınız ve makine adı temel alınarak\n"
 "kendiliğinden yapılandırıldı. Lütfen doğru olup olmadığını denetleyin.\n"
@@ -8116,18 +8116,18 @@ msgstr ""
 "\n"
 "Bundan sonra bu işleme için kullanılan kimliği düzeltmek isteyebilirsiniz:\n"
 "\n"
-"\tgit commit --amend --reset-author\n"
+"\tgit cummit --amend --reset-author\n"
 
 #: sequencer.c:1287
-msgid "couldn't look up newly created commit"
+msgid "couldn't look up newly created cummit"
 msgstr "yeni yapılan işleme aranamadı"
 
 #: sequencer.c:1289
-msgid "could not parse newly created commit"
+msgid "could not parse newly created cummit"
 msgstr "yeni yapılan işleme ayrıştırılamadı"
 
 #: sequencer.c:1336
-msgid "unable to resolve HEAD after creating commit"
+msgid "unable to resolve HEAD after creating cummit"
 msgstr "HEAD, işleme yapıldıktan sonra çözülemiyor"
 
 #: sequencer.c:1338
@@ -8135,7 +8135,7 @@ msgid "detached HEAD"
 msgstr "ayrık HEAD"
 
 #: sequencer.c:1342
-msgid " (root-commit)"
+msgid " (root-cummit)"
 msgstr " (kök işleme)"
 
 #: sequencer.c:1363
@@ -8144,15 +8144,15 @@ msgstr "HEAD ayrıştırılamadı"
 
 #: sequencer.c:1365
 #, c-format
-msgid "HEAD %s is not a commit!"
+msgid "HEAD %s is not a cummit!"
 msgstr "HEAD %s bir işleme değil"
 
-#: sequencer.c:1369 sequencer.c:1447 builtin/commit.c:1707
-msgid "could not parse HEAD commit"
+#: sequencer.c:1369 sequencer.c:1447 builtin/cummit.c:1707
+msgid "could not parse HEAD cummit"
 msgstr "HEAD işlemesi ayrıştırılamadı"
 
 #: sequencer.c:1425 sequencer.c:2310
-msgid "unable to parse commit author"
+msgid "unable to parse cummit author"
 msgstr "işleme yazarı ayrıştırılamıyor"
 
 #: sequencer.c:1436 builtin/am.c:1644 builtin/merge.c:710
@@ -8161,7 +8161,7 @@ msgstr "git write-tree bir ağaca yazamadı"
 
 #: sequencer.c:1469 sequencer.c:1589
 #, c-format
-msgid "unable to read commit message from '%s'"
+msgid "unable to read cummit message from '%s'"
 msgstr "'%s' konumundan işleme iletisi okunamıyor"
 
 #: sequencer.c:1500 sequencer.c:1532
@@ -8173,9 +8173,9 @@ msgstr "geçersiz yazar kimliği '%s'"
 msgid "corrupt author: missing date information"
 msgstr "hasar görmüş yazar: tarih bilgisi eksik"
 
-#: sequencer.c:1545 builtin/am.c:1671 builtin/commit.c:1821 builtin/merge.c:921
+#: sequencer.c:1545 builtin/am.c:1671 builtin/cummit.c:1821 builtin/merge.c:921
 #: builtin/merge.c:946 t/helper/test-fast-rebase.c:78
-msgid "failed to write commit object"
+msgid "failed to write cummit object"
 msgstr "işleme nesnesi yazılamadı"
 
 #: sequencer.c:1572 sequencer.c:4496 t/helper/test-fast-rebase.c:199
@@ -8186,12 +8186,12 @@ msgstr "%s güncellenemedi"
 
 #: sequencer.c:1621
 #, c-format
-msgid "could not parse commit %s"
+msgid "could not parse cummit %s"
 msgstr "%s işlemesi ayrıştırılamadı"
 
 #: sequencer.c:1626
 #, c-format
-msgid "could not parse parent commit %s"
+msgid "could not parse parent cummit %s"
 msgstr "üst işleme %s ayrıştırılamadı"
 
 #: sequencer.c:1709 sequencer.c:1990
@@ -8200,26 +8200,26 @@ msgid "unknown command: %d"
 msgstr "bilinmeyen komut: %d"
 
 #: sequencer.c:1751
-msgid "This is the 1st commit message:"
+msgid "This is the 1st cummit message:"
 msgstr "Birinci işleme iletisi bu:"
 
 #: sequencer.c:1752
 #, c-format
-msgid "This is the commit message #%d:"
+msgid "This is the cummit message #%d:"
 msgstr "İşleme iletisi #%d bu:"
 
 #: sequencer.c:1753
-msgid "The 1st commit message will be skipped:"
+msgid "The 1st cummit message will be skipped:"
 msgstr "Birinci işlemenin iletisi atlanacak:"
 
 #: sequencer.c:1754
 #, c-format
-msgid "The commit message #%d will be skipped:"
+msgid "The cummit message #%d will be skipped:"
 msgstr "İşleme iletisi #%d atlanacak:"
 
 #: sequencer.c:1755
 #, c-format
-msgid "This is a combination of %d commits."
+msgid "This is a combination of %d cummits."
 msgstr "Bu %d işlemenin bir birleşimi."
 
 #: sequencer.c:1902 sequencer.c:1959
@@ -8236,12 +8236,12 @@ msgid "could not read HEAD"
 msgstr "HEAD okunamadı"
 
 #: sequencer.c:1953
-msgid "could not read HEAD's commit message"
+msgid "could not read HEAD's cummit message"
 msgstr "HEAD'in işleme iletisi okunamadı"
 
 #: sequencer.c:1977
 #, c-format
-msgid "could not read commit message of %s"
+msgid "could not read cummit message of %s"
 msgstr "%s işleme iletisi okunamadı"
 
 #: sequencer.c:2087
@@ -8249,29 +8249,29 @@ msgid "your index file is unmerged."
 msgstr "indeks dosyanız birleştirilmemiş"
 
 #: sequencer.c:2094
-msgid "cannot fixup root commit"
+msgid "cannot fixup root cummit"
 msgstr "kök işleme düzeltilemiyor"
 
 #: sequencer.c:2113
 #, c-format
-msgid "commit %s is a merge but no -m option was given."
+msgid "cummit %s is a merge but no -m option was given."
 msgstr "%s işlemesi bir birleştirme; ancak bir -m seçeneği verilmedi."
 
 #: sequencer.c:2121 sequencer.c:2129
 #, c-format
-msgid "commit %s does not have parent %d"
+msgid "cummit %s does not have parent %d"
 msgstr "%s işlemesinin %d diye bir üst ögesi yok"
 
 #: sequencer.c:2135
 #, c-format
-msgid "cannot get commit message for %s"
+msgid "cannot get cummit message for %s"
 msgstr "%s işlemesinin iletisi alınamıyor"
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
 #: sequencer.c:2154
 #, c-format
-msgid "%s: cannot parse parent commit %s"
+msgid "%s: cannot parse parent cummit %s"
 msgstr "%s: üst işleme %s ayrıştırılamıyor"
 
 #: sequencer.c:2220
@@ -8326,7 +8326,7 @@ msgstr "geçersiz satır %d: %.*s"
 
 #: sequencer.c:2572
 #, c-format
-msgid "cannot '%s' without a previous commit"
+msgid "cannot '%s' without a previous cummit"
 msgstr "öncesinde bir işleme olmadan '%s' yapılamıyor"
 
 #: sequencer.c:2620 builtin/rebase.c:185
@@ -8352,7 +8352,7 @@ msgid "unusable instruction sheet: '%s'"
 msgstr "kullanılabilir olmayan yönerge tablosu: '%s'"
 
 #: sequencer.c:2714
-msgid "no commits parsed."
+msgid "no cummits parsed."
 msgstr "Hiçbir işleme ayrıştırılmadı."
 
 #: sequencer.c:2725
@@ -8373,7 +8373,7 @@ msgid "malformed options sheet: '%s'"
 msgstr "hatalı oluşturulmuş seçenekler tablosu: '%s'"
 
 #: sequencer.c:3029 sequencer.c:4875
-msgid "empty commit set passed"
+msgid "empty cummit set passed"
 msgstr "boş işleme seti aktarıldı"
 
 #: sequencer.c:3046
@@ -8448,7 +8448,7 @@ msgid "no cherry-pick in progress"
 msgstr "süren bir seç-al yok"
 
 #: sequencer.c:3256
-msgid "failed to skip the commit"
+msgid "failed to skip the cummit"
 msgstr "işleme atlanamadı"
 
 #: sequencer.c:3263
@@ -8458,7 +8458,7 @@ msgstr "atlanacak bir şey yok"
 #: sequencer.c:3266
 #, c-format
 msgid ""
-"have you committed already?\n"
+"have you cummitted already?\n"
 "try \"git %s --continue\""
 msgstr ""
 "İşlemeyi yaptınız mı?\n"
@@ -8476,9 +8476,9 @@ msgstr "'%s', '%s' konumuna kopyalanamıyor"
 #: sequencer.c:3453
 #, c-format
 msgid ""
-"You can amend the commit now, with\n"
+"You can amend the cummit now, with\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
@@ -8486,7 +8486,7 @@ msgid ""
 msgstr ""
 "İşlemeyi şimdi şu komutla değiştirebilirsiniz:\n"
 "\n"
-"\tgit commit --amend %s\n"
+"\tgit cummit --amend %s\n"
 "\n"
 "Değişikliklerinizden memnunsanız şu komutla sürdürün:\n"
 "\n"
@@ -8536,7 +8536,7 @@ msgstr "ve indekse ve/veya çalışma ağacına değişiklikler yapıldı\n"
 msgid ""
 "execution succeeded: %s\n"
 "but left changes to the index and/or the working tree\n"
-"Commit or stash your changes, and then run\n"
+"cummit or stash your changes, and then run\n"
 "\n"
 "  git rebase --continue\n"
 "\n"
@@ -8554,7 +8554,7 @@ msgid "illegal label name: '%.*s'"
 msgstr "izin verilmeyen etiket adı: '%.*s'"
 
 #: sequencer.c:3655
-msgid "writing fake root commit"
+msgid "writing fake root cummit"
 msgstr "sahte kök işlemesi yazılıyor"
 
 #: sequencer.c:3660
@@ -8586,7 +8586,7 @@ msgstr "ahtapot birleştirmesi bir [yeni kök]ün üzerinde çalıştırılamaz"
 
 #: sequencer.c:3869
 #, c-format
-msgid "could not get commit message of '%s'"
+msgid "could not get cummit message of '%s'"
 msgstr "'%s' işlemesinin işleme iletisi alınamadı"
 
 #: sequencer.c:4013
@@ -8723,7 +8723,7 @@ msgid "cannot rebase: You have unstaged changes."
 msgstr "Yeniden temellendirilemiyor: Hazırlanmamış değişiklikleriniz var."
 
 #: sequencer.c:4624
-msgid "cannot amend non-existing commit"
+msgid "cannot amend non-existing cummit"
 msgstr "var olmayan işleme değiştirilemiyor"
 
 #: sequencer.c:4626
@@ -8739,7 +8739,7 @@ msgstr "geçersiz içerik: '%s'"
 #: sequencer.c:4631
 msgid ""
 "\n"
-"You have uncommitted changes in your working tree. Please, commit them\n"
+"You have uncummitted changes in your working tree. Please, cummit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 "\n"
@@ -8756,7 +8756,7 @@ msgid "could not remove CHERRY_PICK_HEAD"
 msgstr "CHERRY_PICK_HEAD kaldırılamadı"
 
 #: sequencer.c:4732
-msgid "could not commit staged changes."
+msgid "could not cummit staged changes."
 msgstr "Hazırlanmış değişiklikler işlenemedi."
 
 #: sequencer.c:4852
@@ -8770,16 +8770,16 @@ msgid "%s: bad revision"
 msgstr "%s hatalı revizyon"
 
 #: sequencer.c:4891
-msgid "can't revert as initial commit"
+msgid "can't revert as initial cummit"
 msgstr "ilk işleme geri alınamaz"
 
 #: sequencer.c:5162 sequencer.c:5391
 #, c-format
-msgid "skipped previously applied commit %s"
+msgid "skipped previously applied cummit %s"
 msgstr "daha önce uygulanan %s işlemesi atlandı"
 
 #: sequencer.c:5232 sequencer.c:5407
-msgid "use --reapply-cherry-picks to include skipped commits"
+msgid "use --reapply-cherry-picks to include skipped cummits"
 msgstr "atlanan işlemeleri içermek için --reapply-cherry-picks kullanın"
 
 #: sequencer.c:5378
@@ -9112,7 +9112,7 @@ msgstr "hatalı --ignore-submodules argümanı: %s"
 #: submodule.c:866
 #, c-format
 msgid ""
-"Submodule in commit %s at path: '%s' collides with a submodule named the "
+"Submodule in cummit %s at path: '%s' collides with a submodule named the "
 "same. Skipping it."
 msgstr ""
 "%s işlemesinde '%s' yolunda bulunan altmodül, aynı adlı bir altmodülle "
@@ -9120,16 +9120,16 @@ msgstr ""
 
 #: submodule.c:987
 #, c-format
-msgid "submodule entry '%s' (%s) is a %s, not a commit"
+msgid "submodule entry '%s' (%s) is a %s, not a cummit"
 msgstr "altmodül girdisi '%s' (%s) bir %s, işleme değil"
 
 #: submodule.c:1069
 #, c-format
 msgid ""
-"Could not run 'git rev-list <commits> --not --remotes -n 1' command in "
+"Could not run 'git rev-list <cummits> --not --remotes -n 1' command in "
 "submodule %s"
 msgstr ""
-"'%s' altmodülünde 'git rev-list <commits> --not --remotes -n 1' "
+"'%s' altmodülünde 'git rev-list <cummits> --not --remotes -n 1' "
 "çalıştırılamadı"
 
 #: submodule.c:1192
@@ -9163,12 +9163,12 @@ msgstr "'%s' altmodülüne erişilemedi\n"
 
 #: submodule.c:1618
 #, c-format
-msgid "Could not access submodule '%s' at commit %s\n"
+msgid "Could not access submodule '%s' at cummit %s\n"
 msgstr "'%s' altmodülüne %s işlemesinde erişilemedi\n"
 
 #: submodule.c:1629
 #, c-format
-msgid "Fetching submodule %s%s at commit %s\n"
+msgid "Fetching submodule %s%s at cummit %s\n"
 msgstr "%s%s altmodülü %s işlemesinde getiriliyor\n"
 
 #: submodule.c:1849
@@ -9638,7 +9638,7 @@ msgstr "ağaç dosyası çok kısa"
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by checkout:\n"
-"%%sPlease commit your changes or stash them before you switch branches."
+"%%sPlease cummit your changes or stash them before you switch branches."
 msgstr ""
 "Çıkış ile aşağıdaki dosyalardaki yerel değişikliklerin üzerine yazılacak:\n"
 "%%sLütfen dal değiştirmeden önce değişikliklerinizi işleyin veya zulalayın."
@@ -9656,7 +9656,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
-"%%sPlease commit your changes or stash them before you merge."
+"%%sPlease cummit your changes or stash them before you merge."
 msgstr ""
 "Birleştirme ile aşağıdaki dosyalardaki yerel değişikliklerin üzerine "
 "yazılacak:\n"
@@ -9676,7 +9676,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by %s:\n"
-"%%sPlease commit your changes or stash them before you %s."
+"%%sPlease cummit your changes or stash them before you %s."
 msgstr ""
 "%s ile aşağıdaki dosyalardaki yerel değişikliklerin üzerine yazılacak:\n"
 "%%sLütfen %s yapmadan önce değişikliklerinizi işleyin veya zulalayın."
@@ -10109,19 +10109,19 @@ msgid "  (use \"git rm <file>...\" to mark resolution)"
 msgstr "  (hazırlığı bitirmek için \"git rm <dosya>...\" kullanın)"
 
 #: wt-status.c:211 wt-status.c:1140
-msgid "Changes to be committed:"
+msgid "Changes to be cummitted:"
 msgstr "İşlenecek değişiklikler:"
 
 #: wt-status.c:234 wt-status.c:1149
-msgid "Changes not staged for commit:"
+msgid "Changes not staged for cummit:"
 msgstr "İşleme için hazırlanmamış değişiklikler:"
 
 #: wt-status.c:238
-msgid "  (use \"git add <file>...\" to update what will be committed)"
+msgid "  (use \"git add <file>...\" to update what will be cummitted)"
 msgstr "  (işlenecekleri güncellemek için \"git add <dosya>...\" kullanın)"
 
 #: wt-status.c:240
-msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
+msgid "  (use \"git add/rm <file>...\" to update what will be cummitted)"
 msgstr "  (işlenecekleri güncellemek için \"git add/rm <dosya>...\" kullanın)"
 
 #: wt-status.c:241
@@ -10132,12 +10132,12 @@ msgstr ""
 "kullanın)"
 
 #: wt-status.c:243
-msgid "  (commit or discard the untracked or modified content in submodules)"
+msgid "  (cummit or discard the untracked or modified content in submodules)"
 msgstr "  (altmodüllerdeki izlenmeyen/değiştirilen içeriği gönder veya at)"
 
 #: wt-status.c:254
 #, c-format
-msgid "  (use \"git %s <file>...\" to include in what will be committed)"
+msgid "  (use \"git %s <file>...\" to include in what will be cummitted)"
 msgstr "  (işlenecekler arasına koymak için \"git %s <dosya>...\" kullanın)"
 
 #: wt-status.c:266
@@ -10201,7 +10201,7 @@ msgid "unmerged:"
 msgstr "birleştirilmedi:"
 
 #: wt-status.c:382
-msgid "new commits, "
+msgid "new cummits, "
 msgstr "yeni işlemeler, "
 
 #: wt-status.c:384
@@ -10224,7 +10224,7 @@ msgid "Submodules changed but not updated:"
 msgstr "Değiştirilen; ancak güncellenmeyen altmodüller:"
 
 #: wt-status.c:1006
-msgid "Submodule changes to be committed:"
+msgid "Submodule changes to be cummitted:"
 msgstr "İşlenecek altmodül değişiklikleri:"
 
 #: wt-status.c:1088
@@ -10251,8 +10251,8 @@ msgid "You have unmerged paths."
 msgstr "Birleştirilmemiş yollarınız var."
 
 #: wt-status.c:1213
-msgid "  (fix conflicts and run \"git commit\")"
-msgstr "  (çakışmaları onar ve \"git commit\" çalıştır)"
+msgid "  (fix conflicts and run \"git cummit\")"
+msgstr "  (çakışmaları onar ve \"git cummit\" çalıştır)"
 
 #: wt-status.c:1215
 msgid "  (use \"git merge --abort\" to abort the merge)"
@@ -10263,8 +10263,8 @@ msgid "All conflicts fixed but you are still merging."
 msgstr "Tüm çakışmalar onarıldı; ancak siz hâlâ birleştiriyorsunuz."
 
 #: wt-status.c:1222
-msgid "  (use \"git commit\" to conclude merge)"
-msgstr "  (birleştirmeyi sonuçlandırmak için \"git commit\" kullanın)"
+msgid "  (use \"git cummit\" to conclude merge)"
+msgstr "  (birleştirmeyi sonuçlandırmak için \"git cummit\" kullanın)"
 
 #: wt-status.c:1233
 msgid "You are in the middle of an am session."
@@ -10284,7 +10284,7 @@ msgstr "  (bu yamayı atlamak için \"git am --skip\" kullanın"
 
 #: wt-status.c:1246
 msgid ""
-"  (use \"git am --allow-empty\" to record this patch as an empty commit)"
+"  (use \"git am --allow-empty\" to record this patch as an empty cummit)"
 msgstr ""
 "  (yamayı boş işleme kaydı olarak yazmak için \"git am --allow-empty\" "
 "kullanın)"
@@ -10356,13 +10356,13 @@ msgstr "  (tüm çakışmalar onarıldı: \"git rebase --continue\" çalıştır
 #: wt-status.c:1458
 #, c-format
 msgid ""
-"You are currently splitting a commit while rebasing branch '%s' on '%s'."
+"You are currently splitting a cummit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Şu anda '%s' dalını '%s' üzerine yeniden temellendirirken bir işlemeyi "
 "parçalara bölüyorsunuz."
 
 #: wt-status.c:1463
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a cummit during a rebase."
 msgstr ""
 "Şu anda yeniden temellendirme sırasında bir işlemeyi parçalara bölüyorsunuz."
 
@@ -10373,18 +10373,18 @@ msgstr ""
 
 #: wt-status.c:1470
 #, c-format
-msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
+msgid "You are currently editing a cummit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Şu anda '%s' dalını '%s' üzerine yeniden temellendirirken bir işlemeyi "
 "düzenliyorsunuz."
 
 #: wt-status.c:1475
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a cummit during a rebase."
 msgstr "Şu anda yeniden temellendirme sırasında bir işlemeyi düzenliyorsunuz."
 
 #: wt-status.c:1478
-msgid "  (use \"git commit --amend\" to amend the current commit)"
-msgstr "  (geçerli işlemeyi değiştirmek için \"git commit --amend\" kullanın)"
+msgid "  (use \"git cummit --amend\" to amend the current cummit)"
+msgstr "  (geçerli işlemeyi değiştirmek için \"git cummit --amend\" kullanın)"
 
 #: wt-status.c:1480
 msgid ""
@@ -10398,7 +10398,7 @@ msgstr "Seç-al şu anda sürmekte."
 
 #: wt-status.c:1494
 #, c-format
-msgid "You are currently cherry-picking commit %s."
+msgid "You are currently cherry-picking cummit %s."
 msgstr "Şu anda %s işlemesini seç-al yapıyorsunuz."
 
 #: wt-status.c:1501
@@ -10427,7 +10427,7 @@ msgstr "Geriye al şu anda sürmekte."
 
 #: wt-status.c:1524
 #, c-format
-msgid "You are currently reverting commit %s."
+msgid "You are currently reverting cummit %s."
 msgstr "Şu anda %s işlemesini geri alıyorsunuz."
 
 #: wt-status.c:1530
@@ -10497,11 +10497,11 @@ msgid "Not currently on any branch."
 msgstr "Şu anda bir dal üzerinde değil."
 
 #: wt-status.c:1851
-msgid "Initial commit"
+msgid "Initial cummit"
 msgstr "İlk işleme"
 
 #: wt-status.c:1852
-msgid "No commits yet"
+msgid "No cummits yet"
 msgstr "Henüz bir işleme yok"
 
 #: wt-status.c:1866
@@ -10538,20 +10538,20 @@ msgstr "Değişiklik yok"
 
 #: wt-status.c:1891
 #, c-format
-msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
+msgid "no changes added to cummit (use \"git add\" and/or \"git cummit -a\")\n"
 msgstr ""
-"İşlemeye eklenen değişiklik yok (\"git add\" ve/veya \"git commit -a\" "
+"İşlemeye eklenen değişiklik yok (\"git add\" ve/veya \"git cummit -a\" "
 "kullanın)\n"
 
 #: wt-status.c:1895
 #, c-format
-msgid "no changes added to commit\n"
+msgid "no changes added to cummit\n"
 msgstr "İşlemeye eklenen değişiklik yok\n"
 
 #: wt-status.c:1899
 #, c-format
 msgid ""
-"nothing added to commit but untracked files present (use \"git add\" to "
+"nothing added to cummit but untracked files present (use \"git add\" to "
 "track)\n"
 msgstr ""
 "işlemeye bir şey eklenmedi; ancak izlenmeyen dosyalar var (izlemek için "
@@ -10559,34 +10559,34 @@ msgstr ""
 
 #: wt-status.c:1903
 #, c-format
-msgid "nothing added to commit but untracked files present\n"
+msgid "nothing added to cummit but untracked files present\n"
 msgstr "işlemeye bir şey eklenmedi; ancak izlenmeyen dosyalar var\n"
 
 #: wt-status.c:1907
 #, c-format
-msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
+msgid "nothing to cummit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
 "İşlenecek bir şey yok (dosyalar oluşturun/kopyalayın ve izlemek için \"git "
 "add\" kullanın)\n"
 
 #: wt-status.c:1911 wt-status.c:1917
 #, c-format
-msgid "nothing to commit\n"
+msgid "nothing to cummit\n"
 msgstr "İşlenecek bir şey yok\n"
 
 #: wt-status.c:1914
 #, c-format
-msgid "nothing to commit (use -u to show untracked files)\n"
+msgid "nothing to cummit (use -u to show untracked files)\n"
 msgstr ""
 "İşlenecek bir şey yok (izlenmeyen dosyaları göstermek için -u kullanın)\n"
 
 #: wt-status.c:1919
 #, c-format
-msgid "nothing to commit, working tree clean\n"
+msgid "nothing to cummit, working tree clean\n"
 msgstr "İşlenecek bir şey yok, çalışma ağacı temiz\n"
 
 #: wt-status.c:2024
-msgid "No commits yet on "
+msgid "No cummits yet on "
 msgstr "Şurada henüz bir işleme yok: "
 
 #: wt-status.c:2028
@@ -10612,12 +10612,12 @@ msgid "cannot %s: You have unstaged changes."
 msgstr "%s yapılamıyor: Hazırlanmamış değişiklikleriniz var."
 
 #: wt-status.c:2611
-msgid "additionally, your index contains uncommitted changes."
+msgid "additionally, your index contains uncummitted changes."
 msgstr "Ek olarak, indeksiniz işlenmemiş değişiklikler içeriyor."
 
 #: wt-status.c:2613
 #, c-format
-msgid "cannot %s: Your index contains uncommitted changes."
+msgid "cannot %s: Your index contains uncummitted changes."
 msgstr "%s yapılamıyor: İndeksiniz işlenmemiş değişiklikler içeriyor."
 
 #: compat/simple-ipc/ipc-unix-socket.c:205
@@ -10665,7 +10665,7 @@ msgstr "%cx '%s' chmod yapılamıyor"
 msgid "unexpected diff status %c"
 msgstr "beklenmedik diff durumu %c"
 
-#: builtin/add.c:110 builtin/commit.c:299
+#: builtin/add.c:110 builtin/cummit.c:299
 msgid "updating files failed"
 msgstr "dosyaları güncelleme başarısız"
 
@@ -10716,7 +10716,7 @@ msgstr ""
 msgid "dry run"
 msgstr "sınama turu"
 
-#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/commit.c:1483
+#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/cummit.c:1483
 #: builtin/count-objects.c:98 builtin/fsck.c:789 builtin/log.c:2338
 #: builtin/mv.c:123 builtin/read-tree.c:120
 msgid "be verbose"
@@ -10839,7 +10839,7 @@ msgstr "dosya ekleme başarısız"
 msgid "--chmod param '%s' must be either -x or +x"
 msgstr "--chmod param '%s' ya -x ya da +x olmalıdır"
 
-#: builtin/add.c:555 builtin/checkout.c:1770 builtin/commit.c:365
+#: builtin/add.c:555 builtin/checkout.c:1770 builtin/cummit.c:365
 #: builtin/reset.c:436 builtin/rm.c:275 builtin/stash.c:1702
 #, c-format
 msgid "'%s' and pathspec arguments cannot be used together"
@@ -10929,7 +10929,7 @@ msgstr "Eğer bu yamayı atlamayı yeğliyorsanız \"%s --skip\" çalıştırın
 
 #: builtin/am.c:1160
 #, c-format
-msgid "To record the empty patch as an empty commit, run \"%s --allow-empty\"."
+msgid "To record the empty patch as an empty cummit, run \"%s --allow-empty\"."
 msgstr ""
 "Boş yamayı boş işleme kaydı olarak yazmak için \"%s --allow-empty\" "
 "çalıştırın."
@@ -10949,7 +10949,7 @@ msgstr ""
 
 #: builtin/am.c:1345
 #, c-format
-msgid "missing author line in commit %s"
+msgid "missing author line in cummit %s"
 msgstr "%s işlemesinde yazar satırı eksik"
 
 #: builtin/am.c:1348
@@ -10993,7 +10993,7 @@ msgid "cannot resume: %s does not exist."
 msgstr "sürdürülemiyor: %s yok."
 
 #: builtin/am.c:1726
-msgid "Commit Body is:"
+msgid "cummit Body is:"
 msgstr "İşleme gövdesi:"
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
@@ -11006,7 +11006,7 @@ msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "
 msgstr ""
 "Uygula? [y]evet/[n]hayır/düz[e]nle/[v]yamayı görüntüle/tümünü k[a]bul et: "
 
-#: builtin/am.c:1782 builtin/commit.c:410
+#: builtin/am.c:1782 builtin/cummit.c:410
 msgid "unable to write index file"
 msgstr "indeks dosyası yazılamıyor"
 
@@ -11022,7 +11022,7 @@ msgstr "Atlanıyor: %.*s"
 
 #: builtin/am.c:1833
 #, c-format
-msgid "Creating an empty commit: %.*s"
+msgid "Creating an empty cummit: %.*s"
 msgstr "Boş bir işleme oluşturuluyor: %.*s"
 
 #: builtin/am.c:1837
@@ -11049,7 +11049,7 @@ msgstr ""
 "Başarısız olan yamayı görmek için 'git am --show-current-patch=diff' kullanın"
 
 #: builtin/am.c:1921
-msgid "No changes - recorded it as an empty commit."
+msgid "No changes - recorded it as an empty cummit."
 msgstr "Değişiklik yok -- boş bir işleme olarak kayıt yazıldı."
 
 #: builtin/am.c:1923
@@ -11124,7 +11124,7 @@ msgid "be quiet"
 msgstr "sessiz ol"
 
 #: builtin/am.c:2337
-msgid "add a Signed-off-by trailer to the commit message"
+msgid "add a Signed-off-by trailer to the cummit message"
 msgstr "işleme iletisine bir Signed-off-by satırı ekle"
 
 #: builtin/am.c:2340
@@ -11166,7 +11166,7 @@ msgstr "git-mailinfo içerisinden geçir"
 msgid "pass it through git-apply"
 msgstr "git-apply aracılığıyla geçir"
 
-#: builtin/am.c:2376 builtin/commit.c:1514 builtin/fmt-merge-msg.c:18
+#: builtin/am.c:2376 builtin/cummit.c:1514 builtin/fmt-merge-msg.c:18
 #: builtin/fmt-merge-msg.c:21 builtin/grep.c:920 builtin/merge.c:263
 #: builtin/pull.c:142 builtin/pull.c:204 builtin/pull.c:221
 #: builtin/rebase.c:1074 builtin/repack.c:657 builtin/repack.c:661
@@ -11216,25 +11216,25 @@ msgid "show the patch being applied"
 msgstr "uygulanmakta olan yamayı göster"
 
 #: builtin/am.c:2411
-msgid "record the empty patch as an empty commit"
+msgid "record the empty patch as an empty cummit"
 msgstr "boş yamayı bir boş işleme olarak kayıt yaz"
 
 #: builtin/am.c:2415
-msgid "lie about committer date"
+msgid "lie about cummitter date"
 msgstr "işleyici tarihi hakkında yalan söyle"
 
 #: builtin/am.c:2417
 msgid "use current timestamp for author date"
 msgstr "yazar tarihi için geçerli zaman damgasını kullan"
 
-#: builtin/am.c:2419 builtin/commit-tree.c:118 builtin/commit.c:1642
+#: builtin/am.c:2419 builtin/cummit-tree.c:118 builtin/cummit.c:1642
 #: builtin/merge.c:302 builtin/pull.c:179 builtin/rebase.c:1127
 #: builtin/revert.c:117 builtin/tag.c:461
 msgid "key-id"
 msgstr "key-id"
 
 #: builtin/am.c:2420 builtin/rebase.c:1128
-msgid "GPG-sign commits"
+msgid "GPG-sign cummits"
 msgstr "GPG imzalı işlemeler"
 
 #: builtin/am.c:2423
@@ -11310,7 +11310,7 @@ msgid "git archive: expected a flush"
 msgstr "git archive: Floş bekleniyordu"
 
 #: builtin/bisect--helper.c:24
-msgid "git bisect--helper --bisect-reset [<commit>]"
+msgid "git bisect--helper --bisect-reset [<cummit>]"
 msgstr "git bisect--helper --bisect-reset [<işleme>]"
 
 #: builtin/bisect--helper.c:26
@@ -11384,13 +11384,13 @@ msgstr "İkili arama yapılmıyor.\n"
 
 #: builtin/bisect--helper.c:218
 #, c-format
-msgid "'%s' is not a valid commit"
+msgid "'%s' is not a valid cummit"
 msgstr "'%s' geçerli bir işleme değil"
 
 #: builtin/bisect--helper.c:227
 #, c-format
 msgid ""
-"could not check out original HEAD '%s'. Try 'git bisect reset <commit>'."
+"could not check out original HEAD '%s'. Try 'git bisect reset <cummit>'."
 msgstr ""
 "Orijinal HEAD '%s' çıkışı yapılamadı. 'git bisect reset <işleme>' deneyin."
 
@@ -11436,7 +11436,7 @@ msgstr ""
 
 #: builtin/bisect--helper.c:365
 #, c-format
-msgid "bisecting only with a %s commit"
+msgid "bisecting only with a %s cummit"
 msgstr "yalnızca bir %s işlemesi ile ikili arama yapılıyor"
 
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -11542,7 +11542,7 @@ msgstr "Hatalı revizyon girdisi: %s"
 
 #: builtin/bisect--helper.c:904
 #, c-format
-msgid "Bad rev input (not a commit): %s"
+msgid "Bad rev input (not a cummit): %s"
 msgstr "Hatalı revizyon girdisi (bir işleme değil): %s"
 
 #: builtin/bisect--helper.c:936
@@ -11600,7 +11600,7 @@ msgstr "ikili arama başarılı"
 
 #: builtin/bisect--helper.c:1218
 #, c-format
-msgid "bisect found first bad commit"
+msgid "bisect found first bad cummit"
 msgstr "ikili arama ilk hatalı işlemeyi buldu"
 
 #: builtin/bisect--helper.c:1221
@@ -11629,7 +11629,7 @@ msgid "start the bisect session"
 msgstr "ikili arama oturumunu başlat"
 
 #: builtin/bisect--helper.c:1261
-msgid "find the next bisection commit"
+msgid "find the next bisection cummit"
 msgstr "bir sonraki ikili arama işlemesini bul"
 
 #: builtin/bisect--helper.c:1263
@@ -11645,7 +11645,7 @@ msgid "replay the bisection process from the given file"
 msgstr "verilen dosyadan ikili arama işlemini yeniden oynat"
 
 #: builtin/bisect--helper.c:1269
-msgid "skip some commits for checkout"
+msgid "skip some cummits for checkout"
 msgstr "çıkış için birkaç işlemeyi atla"
 
 #: builtin/bisect--helper.c:1271
@@ -11661,7 +11661,7 @@ msgid "no log for BISECT_WRITE"
 msgstr "BISECT_WRITE için günlük yok"
 
 #: builtin/bisect--helper.c:1290
-msgid "--bisect-reset requires either no argument or a commit"
+msgid "--bisect-reset requires either no argument or a cummit"
 msgstr "--bisect-reset bir argüman veya işleme gerektirmiyor"
 
 #: builtin/bisect--helper.c:1295
@@ -11707,11 +11707,11 @@ msgid "show blame entries as we find them, incrementally"
 msgstr "genel bakış girdilerini biz buldukça artan biçimde göster"
 
 #: builtin/blame.c:865
-msgid "do not show object names of boundary commits (Default: off)"
+msgid "do not show object names of boundary cummits (Default: off)"
 msgstr "sınır işlemeleri için nesne adlarını gösterme (Öntanımlı: Kapalı)"
 
 #: builtin/blame.c:866
-msgid "do not treat root commits as boundaries (Default: off)"
+msgid "do not treat root cummits as boundaries (Default: off)"
 msgstr "kök işlemelerini sınır olarak değerlendirme (Öntanımlı: Kapalı)"
 
 #: builtin/blame.c:867
@@ -11719,7 +11719,7 @@ msgid "show work cost statistics"
 msgstr "iş maliyet istatistiklerini göster"
 
 #: builtin/blame.c:868 builtin/checkout.c:1554 builtin/clone.c:98
-#: builtin/commit-graph.c:75 builtin/commit-graph.c:228 builtin/fetch.c:181
+#: builtin/cummit-graph.c:75 builtin/cummit-graph.c:228 builtin/fetch.c:181
 #: builtin/merge.c:301 builtin/multi-pack-index.c:103
 #: builtin/multi-pack-index.c:154 builtin/multi-pack-index.c:180
 #: builtin/multi-pack-index.c:208 builtin/pull.c:120 builtin/push.c:566
@@ -11744,7 +11744,7 @@ msgid "show in a format designed for machine consumption"
 msgstr "makine işlemesi için tasarlanmış bir biçimde göster"
 
 #: builtin/blame.c:873
-msgid "show porcelain format with per-line commit information"
+msgid "show porcelain format with per-line cummit information"
 msgstr "okunabilir biçimde her satır için işleme bilgisi ile göster"
 
 #: builtin/blame.c:874
@@ -11756,7 +11756,7 @@ msgid "show raw timestamp (Default: off)"
 msgstr "ham zaman damgasını göster (Öntanımlı: Kapalı)"
 
 #: builtin/blame.c:876
-msgid "show long commit SHA1 (Default: off)"
+msgid "show long cummit SHA1 (Default: off)"
 msgstr "uzun işleme SHA1'ini göster (Öntanımlı: Kapalı)"
 
 #: builtin/blame.c:877
@@ -11907,7 +11907,7 @@ msgstr ""
 
 #: builtin/branch.c:183
 #, c-format
-msgid "Couldn't look up commit object for '%s'"
+msgid "Couldn't look up cummit object for '%s'"
 msgstr "'%s' için işleme nesnesi aranamadı"
 
 #: builtin/branch.c:187
@@ -11928,7 +11928,7 @@ msgid "cannot use -a with -d"
 msgstr "-a, -d ile kullanılamıyor"
 
 #: builtin/branch.c:242
-msgid "Couldn't look up commit object for HEAD"
+msgid "Couldn't look up cummit object for HEAD"
 msgstr "HEAD için işleme nesnesi aranamadı."
 
 #: builtin/branch.c:259
@@ -12076,11 +12076,11 @@ msgid "act on remote-tracking branches"
 msgstr "uzak izleme dallarında iş yap"
 
 #: builtin/branch.c:666 builtin/branch.c:668
-msgid "print only branches that contain the commit"
+msgid "print only branches that contain the cummit"
 msgstr "yalnızca işlemeyi içeren dalları yazdır"
 
 #: builtin/branch.c:667 builtin/branch.c:669
-msgid "print only branches that don't contain the commit"
+msgid "print only branches that don't contain the cummit"
 msgstr "yalnızca işlemeyi içermeyen dalları yazdır"
 
 #: builtin/branch.c:672
@@ -12200,7 +12200,7 @@ msgstr "birden çok dalın açıklaması düzenlenemiyor"
 
 #: builtin/branch.c:814
 #, c-format
-msgid "No commit on branch '%s' yet."
+msgid "No cummit on branch '%s' yet."
 msgstr "'%s' dalında henüz bir işleme yok."
 
 #: builtin/branch.c:817
@@ -12502,8 +12502,8 @@ msgid "Emit [broken] object attributes"
 msgstr "[Hatalı] nesne özniteliklerini yay"
 
 #: builtin/cat-file.c:842
-msgid "show object type (one of 'blob', 'tree', 'commit', 'tag', ...)"
-msgstr "nesne türünü göster (türler: 'blob', 'tree', 'commit', 'tag', ...)"
+msgid "show object type (one of 'blob', 'tree', 'cummit', 'tag', ...)"
+msgstr "nesne türünü göster (türler: 'blob', 'tree', 'cummit', 'tag', ...)"
 
 #: builtin/cat-file.c:843
 msgid "show object size"
@@ -12916,12 +12916,12 @@ msgstr " ... ve %d daha.\n"
 #: builtin/checkout.c:1023
 #, c-format
 msgid ""
-"Warning: you are leaving %d commit behind, not connected to\n"
+"Warning: you are leaving %d cummit behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"Warning: you are leaving %d commits behind, not connected to\n"
+"Warning: you are leaving %d cummits behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
@@ -13045,12 +13045,12 @@ msgstr "bir dal bekleniyordu, '%s' alındı"
 
 #: builtin/checkout.c:1420
 #, c-format
-msgid "a branch is expected, got commit '%s'"
+msgid "a branch is expected, got cummit '%s'"
 msgstr "bir dal bekleniyordu, '%s' işlemesi alındı"
 
 #: builtin/checkout.c:1429
 msgid ""
-"If you want to detach HEAD at the commit, try again with the --detach option."
+"If you want to detach HEAD at the cummit, try again with the --detach option."
 msgstr ""
 "HEAD'i işlemede ayırmak istiyorsanız --detach seçeneğiyle yeniden deneyin."
 
@@ -13120,11 +13120,11 @@ msgstr "'%s', <başlama-noktası> alamaz"
 
 #: builtin/checkout.c:1505
 #, c-format
-msgid "Cannot switch branch to a non-commit '%s'"
+msgid "Cannot switch branch to a non-cummit '%s'"
 msgstr "Dal, işleme olmayan '%s' ögesine değiştirilemez"
 
 #: builtin/checkout.c:1512
-msgid "missing branch or commit argument"
+msgid "missing branch or cummit argument"
 msgstr "dal veya işleme argümanı eksik"
 
 #: builtin/checkout.c:1555
@@ -13140,7 +13140,7 @@ msgid "conflict style (merge, diff3, or zdiff3)"
 msgstr "çakışma stili (birleştirme, diff3 veya zdiff3)"
 
 #: builtin/checkout.c:1569 builtin/worktree.c:560
-msgid "detach HEAD at named commit"
+msgid "detach HEAD at named cummit"
 msgstr "adı verilen işlemede HEAD'i ayır"
 
 #: builtin/checkout.c:1574
@@ -13201,7 +13201,7 @@ msgstr "geçersiz yol belirtimi"
 
 #: builtin/checkout.c:1760
 #, c-format
-msgid "'%s' is not a commit and a branch '%s' cannot be created from it"
+msgid "'%s' is not a cummit and a branch '%s' cannot be created from it"
 msgstr "'%s' bir işleme değil ve ondan bir '%s' dalı oluşturulamaz"
 
 #: builtin/checkout.c:1764
@@ -13864,222 +13864,222 @@ msgstr "sütunlar arasındaki dolgu boşluğu"
 msgid "--command must be the first argument"
 msgstr "--command ilk argüman olmalı"
 
-#: builtin/commit-graph.c:13
+#: builtin/cummit-graph.c:13
 msgid ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
+"git cummit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
 msgstr ""
-"git commit-graph verify [--object-dir <nsndzn>] [--shallow] [--[no-]progress]"
+"git cummit-graph verify [--object-dir <nsndzn>] [--shallow] [--[no-]progress]"
 
-#: builtin/commit-graph.c:16
+#: builtin/cummit-graph.c:16
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--"
-"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
+"git cummit-graph write [--object-dir <objdir>] [--append] [--"
+"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-cummits] [--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
 msgstr ""
-"git commit-graph write [--object-dir <nsndzn>] [--append] [--"
-"split[=<strateji>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
+"git cummit-graph write [--object-dir <nsndzn>] [--append] [--"
+"split[=<strateji>]] [--reachable|--stdin-packs|--stdin-cummits] [--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] <bölme-seçenekleri>"
 
-#: builtin/commit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
+#: builtin/cummit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
 msgid "dir"
 msgstr "dizin"
 
-#: builtin/commit-graph.c:52
+#: builtin/cummit-graph.c:52
 msgid "the object directory to store the graph"
 msgstr "Grafiğin depolanacağı nesne dizini"
 
-#: builtin/commit-graph.c:73
-msgid "if the commit-graph is split, only verify the tip file"
-msgstr "commit-graph parçalara bölünmüşse yalnızca uç dosyayı doğrula"
+#: builtin/cummit-graph.c:73
+msgid "if the cummit-graph is split, only verify the tip file"
+msgstr "cummit-graph parçalara bölünmüşse yalnızca uç dosyayı doğrula"
 
-#: builtin/commit-graph.c:100
+#: builtin/cummit-graph.c:100
 #, c-format
-msgid "Could not open commit-graph '%s'"
-msgstr "commit-graph '%s' açılamadı"
+msgid "Could not open cummit-graph '%s'"
+msgstr "cummit-graph '%s' açılamadı"
 
-#: builtin/commit-graph.c:137
+#: builtin/cummit-graph.c:137
 #, c-format
 msgid "unrecognized --split argument, %s"
 msgstr "tanımlanamayan --split argümanı, %s"
 
-#: builtin/commit-graph.c:150
+#: builtin/cummit-graph.c:150
 #, c-format
 msgid "unexpected non-hex object ID: %s"
 msgstr "beklenmedik onaltılık olmayan nesne kimliği: %s"
 
-#: builtin/commit-graph.c:155
+#: builtin/cummit-graph.c:155
 #, c-format
 msgid "invalid object: %s"
 msgstr "geçersiz nesne: %s"
 
-#: builtin/commit-graph.c:205
+#: builtin/cummit-graph.c:205
 msgid "start walk at all refs"
 msgstr "tüm başvurularda gezinmeyi başlat"
 
-#: builtin/commit-graph.c:207
-msgid "scan pack-indexes listed by stdin for commits"
+#: builtin/cummit-graph.c:207
+msgid "scan pack-indexes listed by stdin for cummits"
 msgstr "stdin tarafından listelenen paket indekslerini tara"
 
-#: builtin/commit-graph.c:209
-msgid "start walk at commits listed by stdin"
+#: builtin/cummit-graph.c:209
+msgid "start walk at cummits listed by stdin"
 msgstr "stdin tarafından listelenen tüm işlemelerde gezinmeyi başlat"
 
-#: builtin/commit-graph.c:211
-msgid "include all commits already in the commit-graph file"
-msgstr "halihazırda commit-graph dosyasında bulunan tüm işlemeleri içer"
+#: builtin/cummit-graph.c:211
+msgid "include all cummits already in the cummit-graph file"
+msgstr "halihazırda cummit-graph dosyasında bulunan tüm işlemeleri içer"
 
-#: builtin/commit-graph.c:213
+#: builtin/cummit-graph.c:213
 msgid "enable computation for changed paths"
 msgstr "değiştirilen yollar için hesaplamayı etkinleştir"
 
-#: builtin/commit-graph.c:215
-msgid "allow writing an incremental commit-graph file"
-msgstr "artan bir commit-graph dosyasının yazımına izin ver"
+#: builtin/cummit-graph.c:215
+msgid "allow writing an incremental cummit-graph file"
+msgstr "artan bir cummit-graph dosyasının yazımına izin ver"
 
-#: builtin/commit-graph.c:219
-msgid "maximum number of commits in a non-base split commit-graph"
+#: builtin/cummit-graph.c:219
+msgid "maximum number of cummits in a non-base split cummit-graph"
 msgstr ""
-"bir temel olmayan parçalara bölünmüş commit-graph içinde en çok olabilecek "
+"bir temel olmayan parçalara bölünmüş cummit-graph içinde en çok olabilecek "
 "işleme sayısı"
 
-#: builtin/commit-graph.c:221
-msgid "maximum ratio between two levels of a split commit-graph"
+#: builtin/cummit-graph.c:221
+msgid "maximum ratio between two levels of a split cummit-graph"
 msgstr ""
-"bölünmüş bir commit-graph'ın iki düzeyi arasında olabilecek en büyük oran"
+"bölünmüş bir cummit-graph'ın iki düzeyi arasında olabilecek en büyük oran"
 
-#: builtin/commit-graph.c:223
+#: builtin/cummit-graph.c:223
 msgid "only expire files older than a given date-time"
 msgstr "yalnızca verilen bir tarihten daha eski dosyaların hükmünü kaldır"
 
-#: builtin/commit-graph.c:225
+#: builtin/cummit-graph.c:225
 msgid "maximum number of changed-path Bloom filters to compute"
 msgstr "Hesaplanacak en çok değiştirilen yollar için Bloom süzgeçleri sayısı"
 
-#: builtin/commit-graph.c:251
-msgid "use at most one of --reachable, --stdin-commits, or --stdin-packs"
+#: builtin/cummit-graph.c:251
+msgid "use at most one of --reachable, --stdin-cummits, or --stdin-packs"
 msgstr ""
-"--reachable, --stdin-commits veya --stdin-packs'ten en çok birini kullan"
+"--reachable, --stdin-cummits veya --stdin-packs'ten en çok birini kullan"
 
-#: builtin/commit-graph.c:282
-msgid "Collecting commits from input"
+#: builtin/cummit-graph.c:282
+msgid "Collecting cummits from input"
 msgstr "Girdiden işlemeler toplanıyor"
 
-#: builtin/commit-graph.c:328 builtin/multi-pack-index.c:259
+#: builtin/cummit-graph.c:328 builtin/multi-pack-index.c:259
 #, c-format
 msgid "unrecognized subcommand: %s"
 msgstr "tanımlanamayan altkomut: %s"
 
-#: builtin/commit-tree.c:18
+#: builtin/cummit-tree.c:18
 msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
+"git cummit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
 "<file>)...] <tree>"
 msgstr ""
-"git commit-tree [(-p <üst-öge>)...] [-S[<değer-no>]] [(-m <ileti>)...] [(-F "
+"git cummit-tree [(-p <üst-öge>)...] [-S[<değer-no>]] [(-m <ileti>)...] [(-F "
 "<dosya>)...] <ağaç>"
 
-#: builtin/commit-tree.c:31
+#: builtin/cummit-tree.c:31
 #, c-format
 msgid "duplicate parent %s ignored"
 msgstr "yinelenmiş üst öge %s yok sayıldı"
 
-#: builtin/commit-tree.c:56 builtin/commit-tree.c:134 builtin/log.c:590
+#: builtin/cummit-tree.c:56 builtin/cummit-tree.c:134 builtin/log.c:590
 #, c-format
 msgid "not a valid object name %s"
 msgstr "%s geçerli bir nesne adı değil"
 
-#: builtin/commit-tree.c:94
+#: builtin/cummit-tree.c:94
 #, c-format
-msgid "git commit-tree: failed to read '%s'"
-msgstr "git commit-tree: '%s' okunamadı"
+msgid "git cummit-tree: failed to read '%s'"
+msgstr "git cummit-tree: '%s' okunamadı"
 
-#: builtin/commit-tree.c:96
+#: builtin/cummit-tree.c:96
 #, c-format
-msgid "git commit-tree: failed to close '%s'"
-msgstr "git commit-tree: '%s' kapatılamadı"
+msgid "git cummit-tree: failed to close '%s'"
+msgstr "git cummit-tree: '%s' kapatılamadı"
 
-#: builtin/commit-tree.c:109
+#: builtin/cummit-tree.c:109
 msgid "parent"
 msgstr "üst öge"
 
-#: builtin/commit-tree.c:110
-msgid "id of a parent commit object"
+#: builtin/cummit-tree.c:110
+msgid "id of a parent cummit object"
 msgstr "bir üst işleme ögesinin no'su"
 
-#: builtin/commit-tree.c:112 builtin/commit.c:1626 builtin/merge.c:284
+#: builtin/cummit-tree.c:112 builtin/cummit.c:1626 builtin/merge.c:284
 #: builtin/notes.c:407 builtin/notes.c:573 builtin/stash.c:1666
 #: builtin/tag.c:455
 msgid "message"
 msgstr "ileti"
 
-#: builtin/commit-tree.c:113 builtin/commit.c:1626
-msgid "commit message"
+#: builtin/cummit-tree.c:113 builtin/cummit.c:1626
+msgid "cummit message"
 msgstr "işleme iletisi"
 
-#: builtin/commit-tree.c:116
-msgid "read commit log message from file"
+#: builtin/cummit-tree.c:116
+msgid "read cummit log message from file"
 msgstr "işleme günlük iletisini dosyadan oku"
 
-#: builtin/commit-tree.c:119 builtin/commit.c:1643 builtin/merge.c:303
+#: builtin/cummit-tree.c:119 builtin/cummit.c:1643 builtin/merge.c:303
 #: builtin/pull.c:180 builtin/revert.c:118
-msgid "GPG sign commit"
+msgid "GPG sign cummit"
 msgstr "işlemeyi GPG ile imzala"
 
-#: builtin/commit-tree.c:131
+#: builtin/cummit-tree.c:131
 msgid "must give exactly one tree"
 msgstr "bir tam ağaç vermeli"
 
-#: builtin/commit-tree.c:138
-msgid "git commit-tree: failed to read"
-msgstr "git commit-tree: okunamadı"
+#: builtin/cummit-tree.c:138
+msgid "git cummit-tree: failed to read"
+msgstr "git cummit-tree: okunamadı"
 
-#: builtin/commit.c:43
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<seçenekler>] [--] <yol-blrtç>..."
+#: builtin/cummit.c:43
+msgid "git cummit [<options>] [--] <pathspec>..."
+msgstr "git cummit [<seçenekler>] [--] <yol-blrtç>..."
 
-#: builtin/commit.c:48
+#: builtin/cummit.c:48
 msgid "git status [<options>] [--] <pathspec>..."
 msgstr "git status [<seçenekler>] [--] <yol-blrtç>..."
 
-#: builtin/commit.c:53
+#: builtin/cummit.c:53
 msgid ""
-"You asked to amend the most recent commit, but doing so would make\n"
+"You asked to amend the most recent cummit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
-"remove the commit entirely with \"git reset HEAD^\".\n"
+"remove the cummit entirely with \"git reset HEAD^\".\n"
 msgstr ""
 "En son yapılan işlemeyi değiştirmek istediniz; ancak bu onu\n"
 "boş yapacaktır. Komutunuzu --allow-empty ile yineleyebilir veya\n"
 "işlemeyi \"git reset HEAD^\" ile tümüyle kaldırabilirsiniz.\n"
 
-#: builtin/commit.c:58
+#: builtin/cummit.c:58
 msgid ""
 "The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
-"If you wish to commit it anyway, use:\n"
+"If you wish to cummit it anyway, use:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 msgstr ""
 "Bir önceki seç-al büyük olasılıkla çakışma çözümünden dolayı şu anda boş.\n"
 "Yine de göndermek isterseniz şunu kullanın:\n"
 "\n"
-"\tgit commit --allow-empty\n"
+"\tgit cummit --allow-empty\n"
 "\n"
 
-#: builtin/commit.c:65
+#: builtin/cummit.c:65
 msgid "Otherwise, please use 'git rebase --skip'\n"
 msgstr "Aksi durumda, lütfen 'git rebase --skip' kullanın.\n"
 
-#: builtin/commit.c:68
+#: builtin/cummit.c:68
 msgid "Otherwise, please use 'git cherry-pick --skip'\n"
 msgstr "Aksi durumda, lütfen 'git cherry-pick --skip' kullanın.\n"
 
-#: builtin/commit.c:71
+#: builtin/cummit.c:71
 msgid ""
 "and then use:\n"
 "\n"
 "    git cherry-pick --continue\n"
 "\n"
-"to resume cherry-picking the remaining commits.\n"
-"If you wish to skip this commit, use:\n"
+"to resume cherry-picking the remaining cummits.\n"
+"If you wish to skip this cummit, use:\n"
 "\n"
 "    git cherry-pick --skip\n"
 "\n"
@@ -14094,154 +14094,154 @@ msgstr ""
 "\tgit cherry-pick --skip\n"
 "\n"
 
-#: builtin/commit.c:326
+#: builtin/cummit.c:326
 msgid "failed to unpack HEAD tree object"
 msgstr "HEAD ağaç nesnesi açılamadı"
 
-#: builtin/commit.c:376
+#: builtin/cummit.c:376
 msgid "No paths with --include/--only does not make sense."
 msgstr "--include/--only içermeyen yollar bir anlam ifade etmiyor."
 
-#: builtin/commit.c:388
+#: builtin/cummit.c:388
 msgid "unable to create temporary index"
 msgstr "geçici indeks oluşturulamıyor"
 
-#: builtin/commit.c:397
+#: builtin/cummit.c:397
 msgid "interactive add failed"
 msgstr "etkileşimli ekleme başarısız"
 
-#: builtin/commit.c:412
+#: builtin/cummit.c:412
 msgid "unable to update temporary index"
 msgstr "geçici indeks güncellenemiyor"
 
-#: builtin/commit.c:414
+#: builtin/cummit.c:414
 msgid "Failed to update main cache tree"
 msgstr "Ana önbellek ağacı güncellenemedi"
 
-#: builtin/commit.c:439 builtin/commit.c:462 builtin/commit.c:510
+#: builtin/cummit.c:439 builtin/cummit.c:462 builtin/cummit.c:510
 msgid "unable to write new_index file"
 msgstr "new_index dosyası yazılamıyor"
 
-#: builtin/commit.c:491
-msgid "cannot do a partial commit during a merge."
+#: builtin/cummit.c:491
+msgid "cannot do a partial cummit during a merge."
 msgstr "Bir birleştirme sırasında kısmi işleme yapılamaz."
 
-#: builtin/commit.c:493
-msgid "cannot do a partial commit during a cherry-pick."
+#: builtin/cummit.c:493
+msgid "cannot do a partial cummit during a cherry-pick."
 msgstr "Bir seç-al sırasında kısmi işleme yapılamaz."
 
-#: builtin/commit.c:495
-msgid "cannot do a partial commit during a rebase."
+#: builtin/cummit.c:495
+msgid "cannot do a partial cummit during a rebase."
 msgstr "Bir yeniden temellendirme sırasında kısmi işleme yapılamaz."
 
-#: builtin/commit.c:503
+#: builtin/cummit.c:503
 msgid "cannot read the index"
 msgstr "indeks okunamıyor"
 
-#: builtin/commit.c:522
+#: builtin/cummit.c:522
 msgid "unable to write temporary index file"
 msgstr "geçici indeks dosyası yazılamıyor"
 
-#: builtin/commit.c:620
+#: builtin/cummit.c:620
 #, c-format
-msgid "commit '%s' lacks author header"
+msgid "cummit '%s' lacks author header"
 msgstr "'%s' işlemesinde yazar üstbilgisi yok"
 
-#: builtin/commit.c:622
+#: builtin/cummit.c:622
 #, c-format
-msgid "commit '%s' has malformed author line"
+msgid "cummit '%s' has malformed author line"
 msgstr "'%s' işlemesindeki yazar satırı hatalı oluşturulmuş"
 
-#: builtin/commit.c:641
+#: builtin/cummit.c:641
 msgid "malformed --author parameter"
 msgstr "hatalı oluşturulmuş --author parametresi"
 
-#: builtin/commit.c:694
+#: builtin/cummit.c:694
 msgid ""
 "unable to select a comment character that is not used\n"
-"in the current commit message"
+"in the current cummit message"
 msgstr ""
 "mevcut işleme iletisinde kullanılmayan bir yorum\n"
 "karakteri seçilemiyor"
 
-#: builtin/commit.c:750 builtin/commit.c:784 builtin/commit.c:1170
+#: builtin/cummit.c:750 builtin/cummit.c:784 builtin/cummit.c:1170
 #, c-format
-msgid "could not lookup commit %s"
+msgid "could not lookup cummit %s"
 msgstr "%s işlemesi aranamadı"
 
-#: builtin/commit.c:762 builtin/shortlog.c:417
+#: builtin/cummit.c:762 builtin/shortlog.c:417
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr "(günlük iletisi standart girdi'den okunuyor)\n"
 
-#: builtin/commit.c:764
+#: builtin/cummit.c:764
 msgid "could not read log from standard input"
 msgstr "günlük standart girdi'den okunamadı"
 
-#: builtin/commit.c:768
+#: builtin/cummit.c:768
 #, c-format
 msgid "could not read log file '%s'"
 msgstr "günlük dosyası '%s' okunamadı"
 
-#: builtin/commit.c:805
+#: builtin/cummit.c:805
 #, c-format
 msgid "options '%s' and '%s:%s' cannot be used together"
 msgstr "'%s' ve '%s:%s' seçenekleri birlikte kullanılamaz"
 
-#: builtin/commit.c:817 builtin/commit.c:833
+#: builtin/cummit.c:817 builtin/cummit.c:833
 msgid "could not read SQUASH_MSG"
 msgstr "SQUASH_MSG okunamadı"
 
-#: builtin/commit.c:824
+#: builtin/cummit.c:824
 msgid "could not read MERGE_MSG"
 msgstr "MERGE_MSG okunamadı"
 
-#: builtin/commit.c:884
-msgid "could not write commit template"
+#: builtin/cummit.c:884
+msgid "could not write cummit template"
 msgstr "işleme şablonu yazılamadı"
 
-#: builtin/commit.c:897
+#: builtin/cummit.c:897
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be ignored.\n"
 msgstr ""
 "Lütfen değişiklikleriniz için bir işleme iletisi girin. '%c' ile başlayan\n"
 "satırlar yok sayılacaktır.\n"
 
-#: builtin/commit.c:899
+#: builtin/cummit.c:899
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be ignored, and an empty message aborts the commit.\n"
+"Please enter the cummit message for your changes. Lines starting\n"
+"with '%c' will be ignored, and an empty message aborts the cummit.\n"
 msgstr ""
 "Lütfen değişiklikleriniz için bir işleme iletisi girin. '%c' ile başlayan\n"
 "satırlar yok sayılacaktır. Boş bir ileti işlemeyi iptal eder.\n"
 
-#: builtin/commit.c:903
+#: builtin/cummit.c:903
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
 msgstr ""
 "Lütfen değişiklikleriniz için bir işleme iletisi girin. '%c' ile başlayan\n"
 "satırlar tutulacaktır; isterseniz onları kaldırabilirsiniz.\n"
 
-#: builtin/commit.c:907
+#: builtin/cummit.c:907
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
-"An empty message aborts the commit.\n"
+"An empty message aborts the cummit.\n"
 msgstr ""
 "Lütfen değişiklikleriniz için bir işleme iletisi girin. '%c' ile başlayan\n"
 "satırlar tutulacaktır; isterseniz onları kaldırabilirsiniz.\n"
 "Boş bir ileti işlemeyi iptal eder.\n"
 
-#: builtin/commit.c:919
+#: builtin/cummit.c:919
 msgid ""
 "\n"
-"It looks like you may be committing a merge.\n"
+"It looks like you may be cummitting a merge.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d MERGE_HEAD\n"
 "and try again.\n"
@@ -14252,10 +14252,10 @@ msgstr ""
 "\tgit update-ref -d MERGE_HEAD\n"
 "ve yeniden deneyin.\n"
 
-#: builtin/commit.c:924
+#: builtin/cummit.c:924
 msgid ""
 "\n"
-"It looks like you may be committing a cherry-pick.\n"
+"It looks like you may be cummitting a cherry-pick.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "and try again.\n"
@@ -14266,152 +14266,152 @@ msgstr ""
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "ve yeniden deneyin.\n"
 
-#: builtin/commit.c:951
+#: builtin/cummit.c:951
 #, c-format
 msgid "%sAuthor:    %.*s <%.*s>"
 msgstr "%sYazar:     %.*s <%.*s>"
 
-#: builtin/commit.c:959
+#: builtin/cummit.c:959
 #, c-format
 msgid "%sDate:      %s"
 msgstr "%sTarih:     %s"
 
-#: builtin/commit.c:966
+#: builtin/cummit.c:966
 #, c-format
-msgid "%sCommitter: %.*s <%.*s>"
+msgid "%scummitter: %.*s <%.*s>"
 msgstr "%sİşleyici:  %.*s <%.*s>"
 
-#: builtin/commit.c:984
+#: builtin/cummit.c:984
 msgid "Cannot read index"
 msgstr "İndeks okunamıyor"
 
-#: builtin/commit.c:1029
+#: builtin/cummit.c:1029
 msgid "unable to pass trailers to --trailers"
 msgstr "--trailers'a artbilgiler geçirilemiyor"
 
-#: builtin/commit.c:1069
+#: builtin/cummit.c:1069
 msgid "Error building trees"
 msgstr "Ağaçlar yapılırken hata"
 
-#: builtin/commit.c:1083 builtin/tag.c:317
+#: builtin/cummit.c:1083 builtin/tag.c:317
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr "Lütfen iletiyi -m veya -F seçeneğini kullanarak destekleyin.\n"
 
-#: builtin/commit.c:1128
+#: builtin/cummit.c:1128
 #, c-format
 msgid "--author '%s' is not 'Name <email>' and matches no existing author"
 msgstr ""
 "--author '%s', 'Ad <e-posta>' biçiminde değil ve mevcut bir yazarla "
 "eşleşmiyor"
 
-#: builtin/commit.c:1142
+#: builtin/cummit.c:1142
 #, c-format
 msgid "Invalid ignored mode '%s'"
 msgstr "Geçersiz yok sayılanları göster kipi '%s'"
 
-#: builtin/commit.c:1160 builtin/commit.c:1450
+#: builtin/cummit.c:1160 builtin/cummit.c:1450
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr "Geçersiz izlenmeyen dosyaları göster kipi '%s'"
 
-#: builtin/commit.c:1231
+#: builtin/cummit.c:1231
 msgid "You are in the middle of a merge -- cannot reword."
 msgstr "Bir birleştirmenin tam ortasındasınız -- ileti değiştirilemiyor."
 
-#: builtin/commit.c:1233
+#: builtin/cummit.c:1233
 msgid "You are in the middle of a cherry-pick -- cannot reword."
 msgstr "Bir seç-al'ın tam ortasındasınız -- ileti değiştirilemiyor."
 
-#: builtin/commit.c:1236
+#: builtin/cummit.c:1236
 #, c-format
 msgid "reword option of '%s' and path '%s' cannot be used together"
 msgstr ""
 "'%s' ögesinin yeniden yazım seçeneği ve '%s' yolu birlikte kullanılamaz"
 
-#: builtin/commit.c:1238
+#: builtin/cummit.c:1238
 #, c-format
 msgid "reword option of '%s' and '%s' cannot be used together"
 msgstr "'%s' ögesinin yeniden yazım seçeneği ve '%s' birlikte kullanılamaz"
 
-#: builtin/commit.c:1263
+#: builtin/cummit.c:1263
 msgid "You have nothing to amend."
 msgstr "Değiştirecek bir şeyiniz yok."
 
-#: builtin/commit.c:1266
+#: builtin/cummit.c:1266
 msgid "You are in the middle of a merge -- cannot amend."
 msgstr "Bir birleştirmenin tam ortasındasınız -- değiştirme yapılamıyor."
 
-#: builtin/commit.c:1268
+#: builtin/cummit.c:1268
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Bir seç-al'ın tam ortasındasınız -- değiştirme yapılamıyor."
 
-#: builtin/commit.c:1270
+#: builtin/cummit.c:1270
 msgid "You are in the middle of a rebase -- cannot amend."
 msgstr ""
 "Bir yeniden temellendirmenin tam ortasındasınız -- değiştirme yapılamıyor."
 
-#: builtin/commit.c:1290
+#: builtin/cummit.c:1290
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr ""
 "--reset-author yalnızca -C, -c veya --amend ile birlikte kullanılabilir."
 
-#: builtin/commit.c:1337
+#: builtin/cummit.c:1337
 #, c-format
 msgid "unknown option: --fixup=%s:%s"
 msgstr "bilinmeyen seçenek: --fixup=%s:%s"
 
-#: builtin/commit.c:1354
+#: builtin/cummit.c:1354
 #, c-format
 msgid "paths '%s ...' with -a does not make sense"
 msgstr "'%s ...' yolları -a ile bir anlam ifade etmiyor"
 
-#: builtin/commit.c:1485 builtin/commit.c:1654
+#: builtin/cummit.c:1485 builtin/cummit.c:1654
 msgid "show status concisely"
 msgstr "durumu kısaca göster"
 
-#: builtin/commit.c:1487 builtin/commit.c:1656
+#: builtin/cummit.c:1487 builtin/cummit.c:1656
 msgid "show branch information"
 msgstr "dal bilgisini göster"
 
-#: builtin/commit.c:1489
+#: builtin/cummit.c:1489
 msgid "show stash information"
 msgstr "zula bilgisini göster"
 
-#: builtin/commit.c:1491 builtin/commit.c:1658
+#: builtin/cummit.c:1491 builtin/cummit.c:1658
 msgid "compute full ahead/behind values"
 msgstr "tam önünde/arkasında değerlerini hesapla"
 
-#: builtin/commit.c:1493
+#: builtin/cummit.c:1493
 msgid "version"
 msgstr "sürüm"
 
-#: builtin/commit.c:1493 builtin/commit.c:1660 builtin/push.c:551
+#: builtin/cummit.c:1493 builtin/cummit.c:1660 builtin/push.c:551
 #: builtin/worktree.c:765
 msgid "machine-readable output"
 msgstr "makine tarafından okunabilir çıktı"
 
-#: builtin/commit.c:1496 builtin/commit.c:1662
+#: builtin/cummit.c:1496 builtin/cummit.c:1662
 msgid "show status in long format (default)"
 msgstr "durumu uzun biçimde göster (öntanımlı)"
 
-#: builtin/commit.c:1499 builtin/commit.c:1665
+#: builtin/cummit.c:1499 builtin/cummit.c:1665
 msgid "terminate entries with NUL"
 msgstr "girdileri NUL ile sonlandır"
 
-#: builtin/commit.c:1501 builtin/commit.c:1505 builtin/commit.c:1668
+#: builtin/cummit.c:1501 builtin/cummit.c:1505 builtin/cummit.c:1668
 #: builtin/fast-export.c:1172 builtin/fast-export.c:1175
 #: builtin/fast-export.c:1178 builtin/rebase.c:1139 parse-options.h:368
 msgid "mode"
 msgstr "kip"
 
-#: builtin/commit.c:1502 builtin/commit.c:1668
+#: builtin/cummit.c:1502 builtin/cummit.c:1668
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
 "izlenmeyen dosyaları göster, ist. bağlı kipler: all, normal, no (Öntanım.: "
 "all)"
 
-#: builtin/commit.c:1506
+#: builtin/cummit.c:1506
 msgid ""
 "show ignored files, optional modes: traditional, matching, no. (Default: "
 "traditional)"
@@ -14419,11 +14419,11 @@ msgstr ""
 "yok sayılan dosyaları göster, isteğe bağlı kipler: traditional (geleneksel) "
 "matching (eşleşen), no (hayır) (Öntanımlı: traditional)."
 
-#: builtin/commit.c:1508 parse-options.h:197
+#: builtin/cummit.c:1508 parse-options.h:197
 msgid "when"
 msgstr "ne zaman"
 
-#: builtin/commit.c:1509
+#: builtin/cummit.c:1509
 msgid ""
 "ignore changes to submodules, optional when: all, dirty, untracked. "
 "(Default: all)"
@@ -14431,198 +14431,198 @@ msgstr ""
 "altmodüllere olan değişiklikleri yok say, isteğe bağlı ne zaman: all "
 "(hepsi), dirty (kirli), untracked (izlenmeyen) (Öntanımlı: all)."
 
-#: builtin/commit.c:1511
+#: builtin/cummit.c:1511
 msgid "list untracked files in columns"
 msgstr "izlenmeyen dosyaları sütunlarla göster"
 
-#: builtin/commit.c:1512
+#: builtin/cummit.c:1512
 msgid "do not detect renames"
 msgstr "yeniden adlandırmaları algılama"
 
-#: builtin/commit.c:1514
+#: builtin/cummit.c:1514
 msgid "detect renames, optionally set similarity index"
 msgstr ""
 "yeniden adlandırmaları algıla, isteğe bağlı olarak benzerlik indeksi ayarla"
 
-#: builtin/commit.c:1537
+#: builtin/cummit.c:1537
 msgid "Unsupported combination of ignored and untracked-files arguments"
 msgstr ""
 "Yok sayılan ve izlenmeyen dosyalar argümanlarının desteklenmeyen birlikte "
 "kullanımı"
 
-#: builtin/commit.c:1619
-msgid "suppress summary after successful commit"
+#: builtin/cummit.c:1619
+msgid "suppress summary after successful cummit"
 msgstr "başarılı işlemenin ardından özeti gizle"
 
-#: builtin/commit.c:1620
-msgid "show diff in commit message template"
+#: builtin/cummit.c:1620
+msgid "show diff in cummit message template"
 msgstr "diff'i işleme iletisi şablonunda göster"
 
-#: builtin/commit.c:1622
-msgid "Commit message options"
+#: builtin/cummit.c:1622
+msgid "cummit message options"
 msgstr "İşleme iletisi seçenekleri"
 
-#: builtin/commit.c:1623 builtin/merge.c:288 builtin/tag.c:457
+#: builtin/cummit.c:1623 builtin/merge.c:288 builtin/tag.c:457
 msgid "read message from file"
 msgstr "iletiyi dosyadan oku"
 
-#: builtin/commit.c:1624
+#: builtin/cummit.c:1624
 msgid "author"
 msgstr "yazar"
 
-#: builtin/commit.c:1624
-msgid "override author for commit"
+#: builtin/cummit.c:1624
+msgid "override author for cummit"
 msgstr "işleme yazarını geçersiz kıl"
 
-#: builtin/commit.c:1625 builtin/gc.c:551
+#: builtin/cummit.c:1625 builtin/gc.c:551
 msgid "date"
 msgstr "tarih"
 
-#: builtin/commit.c:1625
-msgid "override date for commit"
+#: builtin/cummit.c:1625
+msgid "override date for cummit"
 msgstr "işleme tarihini geçersiz kıl"
 
-#: builtin/commit.c:1627 builtin/commit.c:1628 builtin/commit.c:1634
+#: builtin/cummit.c:1627 builtin/cummit.c:1628 builtin/cummit.c:1634
 #: parse-options.h:360 ref-filter.h:89
-msgid "commit"
+msgid "cummit"
 msgstr "işleme"
 
-#: builtin/commit.c:1627
-msgid "reuse and edit message from specified commit"
+#: builtin/cummit.c:1627
+msgid "reuse and edit message from specified cummit"
 msgstr "belirtilen işlemenin iletisini düzenle ve yeniden kullan"
 
-#: builtin/commit.c:1628
-msgid "reuse message from specified commit"
+#: builtin/cummit.c:1628
+msgid "reuse message from specified cummit"
 msgstr "belirtilen işlemenin iletisini yeniden kullan"
 
 #. TRANSLATORS: Leave "[(amend|reword):]" as-is,
-#. and only translate <commit>.
+#. and only translate <cummit>.
 #.
-#: builtin/commit.c:1633
-msgid "[(amend|reword):]commit"
+#: builtin/cummit.c:1633
+msgid "[(amend|reword):]cummit"
 msgstr "[(amend|reword):]işleme"
 
-#: builtin/commit.c:1633
+#: builtin/cummit.c:1633
 msgid ""
-"use autosquash formatted message to fixup or amend/reword specified commit"
+"use autosquash formatted message to fixup or amend/reword specified cummit"
 msgstr ""
 "belirtilen işlemeyi değiştirmek/iletiyi yeniden yazmak için kendiliğinden "
 "tıkıştırma tarafından biçimlendirilen iletiyi kullan"
 
-#: builtin/commit.c:1634
-msgid "use autosquash formatted message to squash specified commit"
+#: builtin/cummit.c:1634
+msgid "use autosquash formatted message to squash specified cummit"
 msgstr ""
 "belirtilen işlemeyi tıkıştırmak için kendiliğinden tıkıştırma tarafından "
 "biçimlendirilen iletiyi kullan"
 
-#: builtin/commit.c:1635
-msgid "the commit is authored by me now (used with -C/-c/--amend)"
+#: builtin/cummit.c:1635
+msgid "the cummit is authored by me now (used with -C/-c/--amend)"
 msgstr ""
 "işlemenin yazarı şu andan itibaren benim (-C/-c/--amend ile kullanıldı)"
 
-#: builtin/commit.c:1636 builtin/interpret-trailers.c:111
+#: builtin/cummit.c:1636 builtin/interpret-trailers.c:111
 msgid "trailer"
 msgstr "artbilgi"
 
-#: builtin/commit.c:1636
+#: builtin/cummit.c:1636
 msgid "add custom trailer(s)"
 msgstr "özel artbilgiler ekle"
 
-#: builtin/commit.c:1637 builtin/log.c:1788 builtin/merge.c:306
+#: builtin/cummit.c:1637 builtin/log.c:1788 builtin/merge.c:306
 #: builtin/pull.c:146 builtin/revert.c:110
 msgid "add a Signed-off-by trailer"
 msgstr "bir Signed-off-by artbilgisi ekle"
 
-#: builtin/commit.c:1638
+#: builtin/cummit.c:1638
 msgid "use specified template file"
 msgstr "belirtilen şablon dosyasını kullan"
 
-#: builtin/commit.c:1639
-msgid "force edit of commit"
+#: builtin/cummit.c:1639
+msgid "force edit of cummit"
 msgstr "işlemeyi zorla düzenle"
 
-#: builtin/commit.c:1641
-msgid "include status in commit message template"
+#: builtin/cummit.c:1641
+msgid "include status in cummit message template"
 msgstr "işleme iletisi şablonunda durumu içer"
 
-#: builtin/commit.c:1646
-msgid "Commit contents options"
+#: builtin/cummit.c:1646
+msgid "cummit contents options"
 msgstr "İşleme içeriği seçenekleri"
 
-#: builtin/commit.c:1647
-msgid "commit all changed files"
+#: builtin/cummit.c:1647
+msgid "cummit all changed files"
 msgstr "değiştirilen tüm dosyaları gönder"
 
-#: builtin/commit.c:1648
-msgid "add specified files to index for commit"
+#: builtin/cummit.c:1648
+msgid "add specified files to index for cummit"
 msgstr "belirtilen dosyaları işleme için indekse ekle"
 
-#: builtin/commit.c:1649
+#: builtin/cummit.c:1649
 msgid "interactively add files"
 msgstr "dosyaları etkileşimli olarak ekle"
 
-#: builtin/commit.c:1650
+#: builtin/cummit.c:1650
 msgid "interactively add changes"
 msgstr "değişiklikleri etkileşimli olarak ekle"
 
-#: builtin/commit.c:1651
-msgid "commit only specified files"
+#: builtin/cummit.c:1651
+msgid "cummit only specified files"
 msgstr "yalnızca belirtilen dosyaları gönder"
 
-#: builtin/commit.c:1652
-msgid "bypass pre-commit and commit-msg hooks"
-msgstr "pre-commit ve commit-msg kancalarını atla"
+#: builtin/cummit.c:1652
+msgid "bypass pre-cummit and cummit-msg hooks"
+msgstr "pre-cummit ve cummit-msg kancalarını atla"
 
-#: builtin/commit.c:1653
-msgid "show what would be committed"
+#: builtin/cummit.c:1653
+msgid "show what would be cummitted"
 msgstr "neyin işleneceğini göster"
 
-#: builtin/commit.c:1666
-msgid "amend previous commit"
+#: builtin/cummit.c:1666
+msgid "amend previous cummit"
 msgstr "önceki işlemeyi değiştir"
 
-#: builtin/commit.c:1667
+#: builtin/cummit.c:1667
 msgid "bypass post-rewrite hook"
 msgstr "post-rewrite kancasını atla"
 
-#: builtin/commit.c:1674
+#: builtin/cummit.c:1674
 msgid "ok to record an empty change"
 msgstr "boş bir değişikliğin kaydı yazılabilir"
 
-#: builtin/commit.c:1676
+#: builtin/cummit.c:1676
 msgid "ok to record a change with an empty message"
 msgstr "boş iletili bir değişikliğin kaydı yazılabilir"
 
-#: builtin/commit.c:1752
+#: builtin/cummit.c:1752
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "Hasar görmüş MERGE_HEAD dosyası (%s)"
 
-#: builtin/commit.c:1759
+#: builtin/cummit.c:1759
 msgid "could not read MERGE_MODE"
 msgstr "MERGE_MODE okunamadı"
 
-#: builtin/commit.c:1780
+#: builtin/cummit.c:1780
 #, c-format
-msgid "could not read commit message: %s"
+msgid "could not read cummit message: %s"
 msgstr "işleme iletisi okunamadı: %s"
 
-#: builtin/commit.c:1787
+#: builtin/cummit.c:1787
 #, c-format
-msgid "Aborting commit due to empty commit message.\n"
+msgid "Aborting cummit due to empty cummit message.\n"
 msgstr "İşleme iletisinin boş bırakılmasından ötürü iptal ediliyor.\n"
 
-#: builtin/commit.c:1792
+#: builtin/cummit.c:1792
 #, c-format
-msgid "Aborting commit; you did not edit the message.\n"
+msgid "Aborting cummit; you did not edit the message.\n"
 msgstr "İşleme iptal ediliyor; iletiyi düzenlenmedi.\n"
 
-#: builtin/commit.c:1803
+#: builtin/cummit.c:1803
 #, c-format
-msgid "Aborting commit due to empty commit message body.\n"
+msgid "Aborting cummit due to empty cummit message body.\n"
 msgstr "İşleme iletisi gövdesinin boş bırakılmasından ötürü iptal ediliyor.\n"
 
-#: builtin/commit.c:1839
+#: builtin/cummit.c:1839
 msgid ""
 "repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -14998,7 +14998,7 @@ msgid "unable to get credential storage lock in %d ms"
 msgstr "kimlik depo kilidi %d ms içinde alınamadı"
 
 #: builtin/describe.c:26
-msgid "git describe [<options>] [<commit-ish>...]"
+msgid "git describe [<options>] [<cummit-ish>...]"
 msgstr "git describe [<seçenekler>] [<işlememsi>...]"
 
 #: builtin/describe.c:27
@@ -15063,7 +15063,7 @@ msgstr ""
 
 #: builtin/describe.c:458
 #, c-format
-msgid "traversed %lu commits\n"
+msgid "traversed %lu cummits\n"
 msgstr "%lu işleme katedildi\n"
 
 #: builtin/describe.c:461
@@ -15087,11 +15087,11 @@ msgstr "%s geçerli bir nesne adı değil"
 
 #: builtin/describe.c:540
 #, c-format
-msgid "%s is neither a commit nor blob"
+msgid "%s is neither a cummit nor blob"
 msgstr "%s ne bir işleme ne de ikili nesne"
 
 #: builtin/describe.c:554
-msgid "find the tag that comes after the commit"
+msgid "find the tag that comes after the cummit"
 msgstr "işlemenin ardından gelen etiketi bul"
 
 #: builtin/describe.c:555
@@ -15131,7 +15131,7 @@ msgid "do not consider tags matching <pattern>"
 msgstr "<dizgi> ile eşleşen etiketleri dikkate alma"
 
 #: builtin/describe.c:570 builtin/name-rev.c:595
-msgid "show abbreviated commit object as fallback"
+msgid "show abbreviated cummit object as fallback"
 msgstr "kısaltılmış işleme nesnesini geri çekilinecek nesne olarak göster"
 
 #: builtin/describe.c:571 builtin/describe.c:574
@@ -15152,11 +15152,11 @@ msgstr "Hiçbir ad bulunamadı, hiçbir şey betimlenemiyor."
 
 #: builtin/describe.c:673 builtin/describe.c:675
 #, c-format
-msgid "option '%s' and commit-ishes cannot be used together"
+msgid "option '%s' and cummit-ishes cannot be used together"
 msgstr "'%s' seçeneği ve işlememsiler birlikte kullanılamaz"
 
 #: builtin/diff-tree.c:157
-msgid "--merge-base only works with two commits"
+msgid "--merge-base only works with two cummits"
 msgstr "--merge-base yalnızca iki işleme ile kullanılabilir"
 
 #: builtin/diff.c:92
@@ -15199,7 +15199,7 @@ msgid "%s...%s: multiple merge bases, using %s"
 msgstr "%s...%s: çoklu birleştirme temelleri, %s kullanılıyor"
 
 #: builtin/difftool.c:31
-msgid "git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"
+msgid "git difftool [<options>] [<cummit> [<cummit>]] [--] [<path>...]"
 msgstr "git difftool [<seçenekler>] [<işleme> [<işleme>]] [--] [<yol>...]"
 
 #: builtin/difftool.c:287
@@ -15360,7 +15360,7 @@ msgid "select handling of tags that tag filtered objects"
 msgstr "nesnelerce süzülen etiketlerin nasıl ele alınacağını seçin"
 
 #: builtin/fast-export.c:1179
-msgid "select handling of commit messages in an alternate encoding"
+msgid "select handling of cummit messages in an alternate encoding"
 msgstr ""
 "başka bir kodlamaya iye işleme iletilerinin nasıl ele alınacağını seçin"
 
@@ -15381,7 +15381,7 @@ msgid "fake a tagger when tags lack one"
 msgstr "etiketlerin bir etiketleyicisi yoksa varmış gibi davran"
 
 #: builtin/fast-export.c:1192
-msgid "output full tree for each commit"
+msgid "output full tree for each cummit"
 msgstr "her işleme için tüm ağacın çıktısını ver"
 
 #: builtin/fast-export.c:1194
@@ -15417,7 +15417,7 @@ msgid "reference parents which are not in fast-export stream by object id"
 msgstr "'fast-export' akışında olmayan üst ögelere nesne numarası ile başvur"
 
 #: builtin/fast-export.c:1205
-msgid "show original object ids of blobs/commits"
+msgid "show original object ids of blobs/cummits"
 msgstr "ikili nesnelerin/işlemelerin orijinal nesne numaralarını göster"
 
 #: builtin/fast-export.c:1207
@@ -15568,7 +15568,7 @@ msgid "convert to a complete repository"
 msgstr "tam bir depoya dönüştür"
 
 #: builtin/fetch.c:194
-msgid "re-fetch without negotiating common commits"
+msgid "re-fetch without negotiating common cummits"
 msgstr "ortak işlemeleri pazarlık etmeden yeniden getir"
 
 #: builtin/fetch.c:197
@@ -15614,7 +15614,7 @@ msgid "check for forced-updates on all updated branches"
 msgstr "tüm güncellenmiş dalları zorlanmış güncellemeler için denetle"
 
 #: builtin/fetch.c:224
-msgid "write the commit-graph after fetching"
+msgid "write the cummit-graph after fetching"
 msgstr "getirdikten sonra işleme grafiğini yaz"
 
 #: builtin/fetch.c:226
@@ -15918,11 +15918,11 @@ msgid "git for-each-ref [--points-at <object>]"
 msgstr "git for-each-ref [--points-at <nesne>]"
 
 #: builtin/for-each-ref.c:12
-msgid "git for-each-ref [--merged [<commit>]] [--no-merged [<commit>]]"
+msgid "git for-each-ref [--merged [<cummit>]] [--no-merged [<cummit>]]"
 msgstr "git for-each-ref [--merged [<işleme>]] [--no-merged [<işleme>]]"
 
 #: builtin/for-each-ref.c:13
-msgid "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
+msgid "git for-each-ref [--contains [<cummit>]] [--no-contains [<cummit>]]"
 msgstr "git for-each-ref [--contains [<işleme>]] [--no-contains [<işleme>]]"
 
 #: builtin/for-each-ref.c:31
@@ -15962,11 +15962,11 @@ msgid "print only refs that are not merged"
 msgstr "yalnızca birleştirilmemiş başvuruları yazdır"
 
 #: builtin/for-each-ref.c:49
-msgid "print only refs which contain the commit"
+msgid "print only refs which contain the cummit"
 msgstr "yalnızca işlemeyi içeren başvuruları yazdır"
 
 #: builtin/for-each-ref.c:50
-msgid "print only refs which don't contain the commit"
+msgid "print only refs which don't contain the cummit"
 msgstr "yalnızca işlemeyi içermeyen başvuruları yazdır"
 
 #: builtin/for-each-repo.c:9
@@ -16094,7 +16094,7 @@ msgstr "%s: geçersiz sha1 işaretçisi %s"
 
 #: builtin/fsck.c:537
 #, c-format
-msgid "%s: not a commit"
+msgid "%s: not a cummit"
 msgstr "%s: bir işleme değil"
 
 #: builtin/fsck.c:591
@@ -16459,8 +16459,8 @@ msgid "unrecognized --schedule argument '%s'"
 msgstr "tanımlanamayan --schedule argümanı, %s"
 
 #: builtin/gc.c:870
-msgid "failed to write commit-graph"
-msgstr "commit-graph yazılamadı"
+msgid "failed to write cummit-graph"
+msgstr "cummit-graph yazılamadı"
 
 #: builtin/gc.c:906
 msgid "failed to prefetch remotes"
@@ -17676,7 +17676,7 @@ msgstr "iki çıktı dizini?"
 
 #: builtin/log.c:1536 builtin/log.c:2369 builtin/log.c:2371 builtin/log.c:2383
 #, c-format
-msgid "unknown commit %s"
+msgid "unknown cummit %s"
 msgstr "bilinmeyen işleme %s"
 
 #: builtin/log.c:1547 builtin/replace.c:58 builtin/replace.c:207
@@ -17691,9 +17691,9 @@ msgstr "kesin birleştirme temeli bulunamadı"
 
 #: builtin/log.c:1566
 msgid ""
-"failed to get upstream, if you want to record base commit automatically,\n"
+"failed to get upstream, if you want to record base cummit automatically,\n"
 "please use git branch --set-upstream-to to track a remote branch.\n"
-"Or you could specify base commit by --base=<base-commit-id> manually"
+"Or you could specify base cummit by --base=<base-cummit-id> manually"
 msgstr ""
 "Üstkaynak alınamadı; taban işlemesinin kaydını kendiliğinden yazmak\n"
 "istiyorsanız lütfen git branch --set-upstream-to kullanarak bir uzak dalı\n"
@@ -17705,11 +17705,11 @@ msgid "failed to find exact merge base"
 msgstr "kesin birleştirme temeli bulunamadı"
 
 #: builtin/log.c:1606
-msgid "base commit should be the ancestor of revision list"
+msgid "base cummit should be the ancestor of revision list"
 msgstr "taban işlemesi revizyon listesinin atası olmalı"
 
 #: builtin/log.c:1616
-msgid "base commit shouldn't be in revision list"
+msgid "base cummit shouldn't be in revision list"
 msgstr "taban işlemesi revizyon listesinde olmamalı"
 
 #: builtin/log.c:1674
@@ -17802,7 +17802,7 @@ msgid "output all-zero hash in From header"
 msgstr "From başlığında tümü sıfırdan oluşan sağlama çıktısı ver"
 
 #: builtin/log.c:1823
-msgid "don't include a patch matching a commit upstream"
+msgid "don't include a patch matching a cummit upstream"
 msgstr "üstkaynaktaki bir işleme ile eşleşen bir yamayı içerme"
 
 #: builtin/log.c:1825
@@ -17838,7 +17838,7 @@ msgid "ident"
 msgstr "tanımlayıcı"
 
 #: builtin/log.c:1833
-msgid "set From address to <ident> (or committer ident if absent)"
+msgid "set From address to <ident> (or cummitter ident if absent)"
 msgstr ""
 "From adresini <tanımlayıcı> olarak ayarla (veya yoksa işleyici tanımlayıcısı)"
 
@@ -17875,7 +17875,7 @@ msgid "add a signature"
 msgstr "imza ekle"
 
 #: builtin/log.c:1849
-msgid "base-commit"
+msgid "base-cummit"
 msgstr "taban işleme"
 
 #: builtin/log.c:1850
@@ -18213,12 +18213,12 @@ msgid "keep non patch brackets in subject"
 msgstr "yama olmayan ayraçları konuda tut"
 
 #: builtin/mailinfo.c:62
-msgid "copy Message-ID to the end of commit message"
+msgid "copy Message-ID to the end of cummit message"
 msgstr "Message-ID'yi işleme iletisinin sonuna kopyala"
 
 #: builtin/mailinfo.c:64
-msgid "re-code metadata to i18n.commitEncoding"
-msgstr "üstveriyi i18n.commitEncoding olarak yeniden kodla"
+msgid "re-code metadata to i18n.cummitEncoding"
+msgstr "üstveriyi i18n.cummitEncoding olarak yeniden kodla"
 
 #: builtin/mailinfo.c:67
 msgid "disable charset re-coding of metadata"
@@ -18258,23 +18258,23 @@ msgid "empty mbox: '%s'"
 msgstr "boş mbox: '%s'"
 
 #: builtin/merge-base.c:32
-msgid "git merge-base [-a | --all] <commit> <commit>..."
+msgid "git merge-base [-a | --all] <cummit> <cummit>..."
 msgstr "git merge-base [-a | --all] <işleme> <işleme>..."
 
 #: builtin/merge-base.c:33
-msgid "git merge-base [-a | --all] --octopus <commit>..."
+msgid "git merge-base [-a | --all] --octopus <cummit>..."
 msgstr "git merge-base [-a | --all] --octopus <işleme>..."
 
 #: builtin/merge-base.c:34
-msgid "git merge-base --independent <commit>..."
+msgid "git merge-base --independent <cummit>..."
 msgstr "git merge-base --independent <işleme>..."
 
 #: builtin/merge-base.c:35
-msgid "git merge-base --is-ancestor <commit> <commit>"
+msgid "git merge-base --is-ancestor <cummit> <cummit>"
 msgstr "git merge-base --is-ancestor <işleme> <işleme>"
 
 #: builtin/merge-base.c:36
-msgid "git merge-base --fork-point <ref> [<commit>]"
+msgid "git merge-base --fork-point <ref> [<cummit>]"
 msgstr "git merge-base --fork-point <başvuru> [<işleme>]"
 
 #: builtin/merge-base.c:144
@@ -18294,7 +18294,7 @@ msgid "is the first one ancestor of the other?"
 msgstr "ilki diğerlerinin atası mı?"
 
 #: builtin/merge-base.c:152
-msgid "find where <commit> forked from reflog of <ref>"
+msgid "find where <cummit> forked from reflog of <ref>"
 msgstr "<işleme>'nin nerede <başvuru>'nun günlüğünden çatallandığını bul"
 
 #: builtin/merge-file.c:9
@@ -18373,7 +18373,7 @@ msgid "Merging %s with %s\n"
 msgstr "%s, %s ile birleştiriliyor\n"
 
 #: builtin/merge.c:59
-msgid "git merge [<options>] [<commit>...]"
+msgid "git merge [<options>] [<cummit>...]"
 msgstr "git merge [<seçenekler>] [<işleme>...]"
 
 #: builtin/merge.c:125
@@ -18413,20 +18413,20 @@ msgid "(synonym to --stat)"
 msgstr "(--stat eşanlamlısı)"
 
 #: builtin/merge.c:264 builtin/pull.c:143
-msgid "add (at most <n>) entries from shortlog to merge commit message"
+msgid "add (at most <n>) entries from shortlog to merge cummit message"
 msgstr ""
 "kısa günlükten birleştirme işlemesi iletisine girdiler (en çok <n>) ekle"
 
 #: builtin/merge.c:267 builtin/pull.c:149
-msgid "create a single commit instead of doing a merge"
+msgid "create a single cummit instead of doing a merge"
 msgstr "birleştirme yerine tek bir işleme oluştur"
 
 #: builtin/merge.c:269 builtin/pull.c:152
-msgid "perform a commit if the merge succeeds (default)"
+msgid "perform a cummit if the merge succeeds (default)"
 msgstr "birleştirme başarılı olursa bir işleme gerçekleştir (öntanımlı)"
 
 #: builtin/merge.c:271 builtin/pull.c:155
-msgid "edit message before committing"
+msgid "edit message before cummitting"
 msgstr "göndermeden önce iletiyi düzenle"
 
 #: builtin/merge.c:273
@@ -18459,7 +18459,7 @@ msgid "option for selected merge strategy"
 msgstr "seçili birleştirme stratejisi için seçenekler"
 
 #: builtin/merge.c:285
-msgid "merge commit message (for a non-fast-forward merge)"
+msgid "merge cummit message (for a non-fast-forward merge)"
 msgstr ""
 "birleştirme işlemesi iletisi (ileri sarım olmayan bir birleştirme için)"
 
@@ -18484,8 +18484,8 @@ msgid "allow merging unrelated histories"
 msgstr "birbiriyle ilişkisi olmayan geçmişlerin birleştirilmesine izin ver"
 
 #: builtin/merge.c:307
-msgid "bypass pre-merge-commit and commit-msg hooks"
-msgstr "pre-merge-commit ve commit-msg kancalarını atla"
+msgid "bypass pre-merge-cummit and cummit-msg hooks"
+msgstr "pre-merge-cummit ve cummit-msg kancalarını atla"
 
 #: builtin/merge.c:323
 msgid "could not run stash."
@@ -18510,7 +18510,7 @@ msgstr "Tümü güncel (tıkıştırılacak bir şey yok)."
 
 #: builtin/merge.c:417
 #, c-format
-msgid "Squash commit -- not updating HEAD\n"
+msgid "Squash cummit -- not updating HEAD\n"
 msgstr "Tıkıştırma işlemesi -- HEAD güncellenmiyor\n"
 
 #: builtin/merge.c:467
@@ -18520,7 +18520,7 @@ msgstr "Birleştirme iletisi yok -- HEAD güncellenmiyor\n"
 
 #: builtin/merge.c:517
 #, c-format
-msgid "'%s' does not point to a commit"
+msgid "'%s' does not point to a cummit"
 msgstr "'%s' bir işlemeye işaret etmiyor"
 
 #: builtin/merge.c:605
@@ -18549,12 +18549,12 @@ msgstr "Şu konumdan okunamadı: '%s'"
 
 #: builtin/merge.c:825
 #, c-format
-msgid "Not committing merge; use 'git commit' to complete the merge.\n"
-msgstr "Birleştirme işlenmiyor, tamamlamak için 'git commit' kullanın.\n"
+msgid "Not cummitting merge; use 'git cummit' to complete the merge.\n"
+msgstr "Birleştirme işlenmiyor, tamamlamak için 'git cummit' kullanın.\n"
 
 #: builtin/merge.c:831
 msgid ""
-"Please enter a commit message to explain why this merge is necessary,\n"
+"Please enter a cummit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
 "\n"
 msgstr ""
@@ -18563,20 +18563,20 @@ msgstr ""
 "\n"
 
 #: builtin/merge.c:836
-msgid "An empty message aborts the commit.\n"
+msgid "An empty message aborts the cummit.\n"
 msgstr "Boş bir ileti işlemeyi iptal eder.\n"
 
 #: builtin/merge.c:839
 #, c-format
 msgid ""
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
-"the commit.\n"
+"the cummit.\n"
 msgstr ""
 "'%c' ile başlayan satırlar yok sayılacaktır. Boş bir ileti işlemeyi\n"
 "iptal eder.\n"
 
 #: builtin/merge.c:900
-msgid "Empty commit message."
+msgid "Empty cummit message."
 msgstr "Boş işleme iletisi."
 
 #: builtin/merge.c:915
@@ -18586,7 +18586,7 @@ msgstr "Harika.\n"
 
 #: builtin/merge.c:976
 #, c-format
-msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
+msgid "Automatic merge failed; fix conflicts and then cummit the result.\n"
 msgstr "Otomatik birleştirme başarısız; çakışmaları çözün ve sonucu işleyin.\n"
 
 #: builtin/merge.c:1015
@@ -18643,7 +18643,7 @@ msgstr "İlerlemekte olan bir birleştirme yok (MERGE_HEAD eksik)."
 #: builtin/merge.c:1385
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Birleştirmenizi sonuçlandırmadınız (MERGE_HEAD mevcut).\n"
 "Lütfen birleştirmeden önce değişikliklerinizi işleyin."
@@ -18651,7 +18651,7 @@ msgstr ""
 #: builtin/merge.c:1392
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Seç-al'ınızı sonuçlandırmadınız (CHERRY_PICK_HEAD mevcut).\n"
 "Lütfen birleştirmeden önce değişikliklerinizi işleyin."
@@ -18661,15 +18661,15 @@ msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
 msgstr "Seç-al'ınızı sonuçlandırmadınız (CHERRY_PICK_HEAD mevcut)."
 
 #: builtin/merge.c:1427
-msgid "No commit specified and merge.defaultToUpstream not set."
+msgid "No cummit specified and merge.defaultToUpstream not set."
 msgstr "Belirtilen bir işleme yok ve merge.defaultToUpstream ayarlanmamış."
 
 #: builtin/merge.c:1444
-msgid "Squash commit into empty head not supported yet"
+msgid "Squash cummit into empty head not supported yet"
 msgstr "İşlemeyi boş dal ucuna tıkıştırma henüz desteklenmiyor"
 
 #: builtin/merge.c:1446
-msgid "Non-fast-forward commit does not make sense into an empty head"
+msgid "Non-fast-forward cummit does not make sense into an empty head"
 msgstr ""
 "İleri sarım olmayan işlemeyi boş dal ucuna yapmak bir anlam ifade etmiyor"
 
@@ -18679,7 +18679,7 @@ msgid "%s - not something we can merge"
 msgstr "%s - birleştirebileceğimiz bir şey değil"
 
 #: builtin/merge.c:1453
-msgid "Can merge only exactly one commit into empty head"
+msgid "Can merge only exactly one cummit into empty head"
 msgstr "Boş dal ucuna tam olarak yalnızca bir işleme birleştirilebilir"
 
 #: builtin/merge.c:1540
@@ -18728,7 +18728,7 @@ msgstr "El ile çözümü hazırlamak için %s stratejisi kullanılıyor.\n"
 
 #: builtin/merge.c:1753
 #, c-format
-msgid "Automatic merge went well; stopped before committing as requested\n"
+msgid "Automatic merge went well; stopped before cummitting as requested\n"
 msgstr ""
 "Otomatik birleştirme iyi geçti; istendiği üzere gönderme öncesinde durdu.\n"
 
@@ -18822,7 +18822,7 @@ msgid "write multi-pack index containing only given indexes"
 msgstr "yalnızca verilen indeksleri içeren çoklu paket indekslerini yaz"
 
 #: builtin/multi-pack-index.c:107
-msgid "refs snapshot for selecting bitmap commits"
+msgid "refs snapshot for selecting bitmap cummits"
 msgstr "biteşlem işlemeleri seçmek için başvuruların anlık görüntüsünü al"
 
 #: builtin/multi-pack-index.c:206
@@ -18932,7 +18932,7 @@ msgid "renaming '%s' failed"
 msgstr "'%s' yeniden adlandırılamadı"
 
 #: builtin/name-rev.c:524
-msgid "git name-rev [<options>] <commit>..."
+msgid "git name-rev [<options>] <cummit>..."
 msgstr "git name-rev [<seçenekler>] <işleme>..."
 
 #: builtin/name-rev.c:525
@@ -18948,7 +18948,7 @@ msgid "print only ref-based names (no object names)"
 msgstr "yalnızca başvuru tabanlı adları yazdır (nesne adı yok)"
 
 #: builtin/name-rev.c:584
-msgid "only use tags to name the commits"
+msgid "only use tags to name the cummits"
 msgstr "işlemeleri adlandırmak için yalnızca etiketleri kullan"
 
 #: builtin/name-rev.c:586
@@ -18960,7 +18960,7 @@ msgid "ignore refs matching <pattern>"
 msgstr "<dizgi> ile eşleşen başvuruları yok say"
 
 #: builtin/name-rev.c:590
-msgid "list all commits reachable from all refs"
+msgid "list all cummits reachable from all refs"
 msgstr "tüm başvurulardan ulaşılabilir olan tüm işlemeleri listele"
 
 #: builtin/name-rev.c:591
@@ -19062,8 +19062,8 @@ msgid "git notes merge [<options>] <notes-ref>"
 msgstr "git notes merge [<seçenekler>] <not-bşvr>"
 
 #: builtin/notes.c:76
-msgid "git notes merge --commit [<options>]"
-msgstr "git notes merge --commit [<seçenekler>]"
+msgid "git notes merge --cummit [<options>]"
+msgstr "git notes merge --cummit [<seçenekler>]"
 
 #: builtin/notes.c:77
 msgid "git notes merge --abort [<options>]"
@@ -19248,11 +19248,11 @@ msgid "failed to read ref NOTES_MERGE_PARTIAL"
 msgstr "NOTES_MERGE_PARTIAL başvurusu okunamadı"
 
 #: builtin/notes.c:722
-msgid "could not find commit from NOTES_MERGE_PARTIAL."
+msgid "could not find cummit from NOTES_MERGE_PARTIAL."
 msgstr "işleme, NOTES_MERGE_PARTIAL ögesinden bulunamadı."
 
 #: builtin/notes.c:724
-msgid "could not parse commit from NOTES_MERGE_PARTIAL."
+msgid "could not parse cummit from NOTES_MERGE_PARTIAL."
 msgstr "işleme, NOTES_MERGE_PARTIAL ögesinden ayrıştırılamadı"
 
 #: builtin/notes.c:737
@@ -19285,11 +19285,11 @@ msgstr ""
 "birlik olmuş/cat_sort_uniq)"
 
 #: builtin/notes.c:788
-msgid "Committing unmerged notes"
+msgid "cummitting unmerged notes"
 msgstr "Birleştirilmemiş notlar işleniyor"
 
 #: builtin/notes.c:790
-msgid "finalize notes merge by committing unmerged notes"
+msgid "finalize notes merge by cummitting unmerged notes"
 msgstr "birleştirilmemiş notları işleyerek not birleştirmesini tamamla"
 
 #: builtin/notes.c:792
@@ -19301,8 +19301,8 @@ msgid "abort notes merge"
 msgstr "not birleştirmesini iptal et"
 
 #: builtin/notes.c:805
-msgid "cannot mix --commit, --abort or -s/--strategy"
-msgstr "--commit, --abort veya -s/--strategy karıştırılamıyor"
+msgid "cannot mix --cummit, --abort or -s/--strategy"
+msgstr "--cummit, --abort veya -s/--strategy karıştırılamıyor"
 
 #: builtin/notes.c:810
 msgid "must specify a notes ref to merge"
@@ -19326,12 +19326,12 @@ msgstr "geçerli not başvurusuna bağlantı depolanamadı (%s)"
 #: builtin/notes.c:880
 #, c-format
 msgid ""
-"Automatic notes merge failed. Fix conflicts in %s and commit the result with "
-"'git notes merge --commit', or abort the merge with 'git notes merge --"
+"Automatic notes merge failed. Fix conflicts in %s and cummit the result with "
+"'git notes merge --cummit', or abort the merge with 'git notes merge --"
 "abort'.\n"
 msgstr ""
 "Kendiliğinden not birleştirmesi başarısız oldu. %s içindeki çakışmaları "
-"çözün ve sonucu 'git notes merge --commit' ile işleyin. Birleştirmeyi iptal "
+"çözün ve sonucu 'git notes merge --cummit' ile işleyin. Birleştirmeyi iptal "
 "etmek isterseniz 'git notes merge --abort' kullanarak bunu yapabilirsiniz.\n"
 
 #: builtin/notes.c:899 builtin/tag.c:595
@@ -19704,7 +19704,7 @@ msgid "pack compression level"
 msgstr "paket sıkıştırma düzeyi"
 
 #: builtin/pack-objects.c:3972
-msgid "do not hide commits by grafts"
+msgid "do not hide cummits by grafts"
 msgstr "aşılarla gelen işlemeleri gizleme"
 
 #: builtin/pack-objects.c:3974
@@ -19858,8 +19858,8 @@ msgid "allow fast-forward"
 msgstr "ileri sarıma izin ver"
 
 #: builtin/pull.c:165
-msgid "control use of pre-merge-commit and commit-msg hooks"
-msgstr "pre-merge-commit ve commit-msg kancalarının kullanımını denetle"
+msgid "control use of pre-merge-cummit and cummit-msg hooks"
+msgstr "pre-merge-cummit ve cummit-msg kancalarının kullanımını denetle"
 
 #: builtin/pull.c:171 parse-options.h:371
 msgid "automatically stash/stash pop before and after"
@@ -19956,7 +19956,7 @@ msgstr ""
 
 #: builtin/pull.c:600
 #, c-format
-msgid "unable to access commit %s"
+msgid "unable to access cummit %s"
 msgstr "%s işlemesine erişilemedi"
 
 #: builtin/pull.c:908
@@ -20001,7 +20001,7 @@ msgid "pull with rebase"
 msgstr "yeniden temellendirme ile çekim"
 
 #: builtin/pull.c:1052
-msgid "please commit or stash them."
+msgid "please cummit or stash them."
 msgstr "Lütfen onları işleyin veya zulalayın."
 
 #: builtin/pull.c:1077
@@ -20009,7 +20009,7 @@ msgstr "Lütfen onları işleyin veya zulalayın."
 msgid ""
 "fetch updated the current branch head.\n"
 "fast-forwarding your working tree from\n"
-"commit %s."
+"cummit %s."
 msgstr ""
 "Getirme geçerli dal ucunu güncelledi.\n"
 "Çalışma ağacınız %s işlemesinden\n"
@@ -20197,8 +20197,8 @@ msgstr "Güncellemeler reddedildi; çünkü etiket uzak konumda halihazırda var
 
 #: builtin/push.c:280
 msgid ""
-"You cannot update a remote ref that points at a non-commit object,\n"
-"or update a remote ref to make it point at a non-commit object,\n"
+"You cannot update a remote ref that points at a non-cummit object,\n"
+"or update a remote ref to make it point at a non-cummit object,\n"
 "without using the '--force' option.\n"
 msgstr ""
 "İşleme olmayan bir nesneye işaret eden uzak başvuruyu güncelleyemez\n"
@@ -20378,7 +20378,7 @@ msgstr "yalnızca ikinci erimle ilişkili çıktıyı yay"
 
 #: builtin/range-diff.c:60 builtin/range-diff.c:64
 #, c-format
-msgid "not a commit range: '%s'"
+msgid "not a cummit range: '%s'"
 msgstr "bir işleme erimi değil: '%s'"
 
 #: builtin/range-diff.c:74
@@ -20386,7 +20386,7 @@ msgid "single arg format must be symmetric range"
 msgstr "tekli argüman biçimi simetrik erim olmalı"
 
 #: builtin/range-diff.c:89
-msgid "need two commit ranges"
+msgid "need two cummit ranges"
 msgstr "iki işleme erimi gerekli"
 
 #: builtin/read-tree.c:41
@@ -20500,7 +20500,7 @@ msgid "could not generate todo list"
 msgstr "yapılacaklar listesi oluşturulamadı"
 
 #: builtin/rebase.c:332
-msgid "a base commit must be provided with --upstream or --onto"
+msgid "a base cummit must be provided with --upstream or --onto"
 msgstr "bir taban işlemesi --upstream veya --onto ile sağlanmalıdır"
 
 #: builtin/rebase.c:391
@@ -20527,7 +20527,7 @@ msgstr "geçersiz allow_rerere_autoupdate yok sayılıyor: '%s'"
 msgid ""
 "Resolve all conflicts manually, mark them as resolved with\n"
 "\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
+"You can instead skip this cummit: run \"git rebase --skip\".\n"
 "To abort and get back to the state before \"git rebase\", run \"git rebase --"
 "abort\"."
 msgstr ""
@@ -20632,11 +20632,11 @@ msgid "do not show diffstat of what changed upstream"
 msgstr "üstkaynakta nelerin değiştiğini gösteren diffstat gösterme"
 
 #: builtin/rebase.c:1066
-msgid "add a Signed-off-by trailer to each commit"
+msgid "add a Signed-off-by trailer to each cummit"
 msgstr "her işlemeye bir Signed-off-by artbilgisi ekle"
 
 #: builtin/rebase.c:1069
-msgid "make committer date match author date"
+msgid "make cummitter date match author date"
 msgstr "işleyici tarihi ile yazar tarihini aynı yap"
 
 #: builtin/rebase.c:1071
@@ -20656,7 +20656,7 @@ msgid "ignore changes in whitespace"
 msgstr "boşluk değişikliklerini yok say"
 
 #: builtin/rebase.c:1081 builtin/rebase.c:1084
-msgid "cherry-pick all commits, even if unchanged"
+msgid "cherry-pick all cummits, even if unchanged"
 msgstr "değiştirilmemiş olsa bile tüm işlemeleri seç-al yap"
 
 #: builtin/rebase.c:1086
@@ -20694,7 +20694,7 @@ msgid "use merging strategies to rebase"
 msgstr "yeniden temellendirmek için birleştirme stratejilerini kullan"
 
 #: builtin/rebase.c:1109
-msgid "let the user edit the list of commits to rebase"
+msgid "let the user edit the list of cummits to rebase"
 msgstr ""
 "yeniden temellendirilecek işlemelerin listesini kullanıcının düzenlemesine "
 "izin ver"
@@ -20706,23 +20706,23 @@ msgstr ""
 "oluşturmaya çalış"
 
 #: builtin/rebase.c:1118
-msgid "how to handle commits that become empty"
+msgid "how to handle cummits that become empty"
 msgstr "boşalan işlemelerin nasıl ele alınacağı"
 
 #: builtin/rebase.c:1121
-msgid "keep commits which start empty"
+msgid "keep cummits which start empty"
 msgstr "boş başlayan işlemeleri tut"
 
 #: builtin/rebase.c:1125
-msgid "move commits that begin with squash!/fixup! under -i"
+msgid "move cummits that begin with squash!/fixup! under -i"
 msgstr "-i altındaki squash!/fixup! ile başlayan işlemeleri taşı"
 
 #: builtin/rebase.c:1132
-msgid "add exec lines after each commit of the editable list"
+msgid "add exec lines after each cummit of the editable list"
 msgstr "düzenlenebilir listenin her işlemesinden sonra exec satırları ekle"
 
 #: builtin/rebase.c:1136
-msgid "allow rebasing commits with empty messages"
+msgid "allow rebasing cummits with empty messages"
 msgstr "boş iletili işlemelerin yeniden temellendirilmesine izin ver"
 
 #: builtin/rebase.c:1140
@@ -20746,7 +20746,7 @@ msgid "pass the argument through to the merge strategy"
 msgstr "argümanı birleştirme stratejisine aktar"
 
 #: builtin/rebase.c:1151
-msgid "rebase all reachable commits up to the root(s)"
+msgid "rebase all reachable cummits up to the root(s)"
 msgstr "ulaşılabilir tüm işlemeleri kök(ler)e kadar yeniden temellendir"
 
 #: builtin/rebase.c:1154
@@ -20849,7 +20849,7 @@ msgid "invalid upstream '%s'"
 msgstr "geçersiz üstkaynak '%s'"
 
 #: builtin/rebase.c:1571
-msgid "Could not create new root commit"
+msgid "Could not create new root cummit"
 msgstr "Yeni kök işleme oluşturulamadı"
 
 #: builtin/rebase.c:1597
@@ -20864,12 +20864,12 @@ msgstr "'%s': tam olarak bir birleştirme temeli gerekiyor"
 
 #: builtin/rebase.c:1609
 #, c-format
-msgid "Does not point to a valid commit '%s'"
+msgid "Does not point to a valid cummit '%s'"
 msgstr "'%s' geçerli bir işlemeye işaret etmiyor"
 
 #: builtin/rebase.c:1636
 #, c-format
-msgid "no such branch/commit '%s'"
+msgid "no such branch/cummit '%s'"
 msgstr "böyle bir dal/işleme yok: '%s'"
 
 #: builtin/rebase.c:1647 builtin/submodule--helper.c:43
@@ -20883,7 +20883,7 @@ msgid "Could not resolve HEAD to a revision"
 msgstr "HEAD bir revizyona çözülemedi"
 
 #: builtin/rebase.c:1679
-msgid "Please commit or stash them."
+msgid "Please cummit or stash them."
 msgstr "Lütfen onları işleyin veya zulalayın."
 
 #: builtin/rebase.c:1714
@@ -21063,7 +21063,7 @@ msgstr ""
 "dalın geçerli ucundan erişilemeyen ve <zaman>'dan daha eski girdileri buda"
 
 #: builtin/reflog.c:258
-msgid "prune any reflog entries that point to broken commits"
+msgid "prune any reflog entries that point to broken cummits"
 msgstr "hatalı işlemelere işaret eden tüm başvuru günlüğü girdilerini buda"
 
 #: builtin/reflog.c:259
@@ -21787,7 +21787,7 @@ msgid "git replace [-f] --edit <object>"
 msgstr "git replace [-f] --edit <nesne>"
 
 #: builtin/replace.c:24
-msgid "git replace [-f] --graft <commit> [<parent>...]"
+msgid "git replace [-f] --graft <cummit> [<parent>...]"
 msgstr "git replace [-f] --graft <işleme> [<üst-öge>...]"
 
 #: builtin/replace.c:26
@@ -21893,23 +21893,23 @@ msgstr "yeni nesne eskisiyle aynı: '%s'"
 
 #: builtin/replace.c:383
 #, c-format
-msgid "could not parse %s as a commit"
+msgid "could not parse %s as a cummit"
 msgstr "%s, bir işleme olarak ayrıştırılamadı"
 
 #: builtin/replace.c:415
 #, c-format
-msgid "bad mergetag in commit '%s'"
+msgid "bad mergetag in cummit '%s'"
 msgstr "'%s' işlemesinde hatalı birleştirme etiketi"
 
 #: builtin/replace.c:417
 #, c-format
-msgid "malformed mergetag in commit '%s'"
+msgid "malformed mergetag in cummit '%s'"
 msgstr "'%s' işlemesinde hatalı oluşturulmuş birleştirme etiketi"
 
 #: builtin/replace.c:429
 #, c-format
 msgid ""
-"original commit '%s' contains mergetag '%s' that is discarded; use --edit "
+"original cummit '%s' contains mergetag '%s' that is discarded; use --edit "
 "instead of --graft"
 msgstr ""
 "'%s' orijinal işlemesi atılmış olan '%s' birleştirme etiketini içeriyor; --"
@@ -21917,16 +21917,16 @@ msgstr ""
 
 #: builtin/replace.c:468
 #, c-format
-msgid "the original commit '%s' has a gpg signature"
+msgid "the original cummit '%s' has a gpg signature"
 msgstr "'%s' orijinal işlemesinin bir gpg imzası var"
 
 #: builtin/replace.c:469
-msgid "the signature will be removed in the replacement commit!"
+msgid "the signature will be removed in the replacement cummit!"
 msgstr "imza, yerine geçecek işlemede kaldırılacak"
 
 #: builtin/replace.c:479
 #, c-format
-msgid "could not write replacement commit for: '%s'"
+msgid "could not write replacement cummit for: '%s'"
 msgstr "şunun yerine geçecek işleme yazılamadı: '%s'"
 
 #: builtin/replace.c:487
@@ -21936,7 +21936,7 @@ msgstr "'%s' için aşı gereksiz"
 
 #: builtin/replace.c:491
 #, c-format
-msgid "new commit is the same as the old one: '%s'"
+msgid "new cummit is the same as the old one: '%s'"
 msgstr "yeni işleme eskisiyle aynı: '%s'"
 
 #: builtin/replace.c:526
@@ -21961,7 +21961,7 @@ msgid "edit existing object"
 msgstr "geçerli nesneyi düzenle"
 
 #: builtin/replace.c:550
-msgid "change a commit's parents"
+msgid "change a cummit's parents"
 msgstr "bir işlemenin üst ögelerini değiştir"
 
 #: builtin/replace.c:551
@@ -22035,7 +22035,7 @@ msgstr "'%s' için diff oluşturulamıyor"
 
 #: builtin/reset.c:33
 msgid ""
-"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
+"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"
 msgstr ""
 "git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<işleme>]"
 
@@ -22271,7 +22271,7 @@ msgid "unknown mode for --show-object-format: %s"
 msgstr "--show-object-format için bilinmeyen kip: %s"
 
 #: builtin/revert.c:24
-msgid "git revert [<options>] <commit-ish>..."
+msgid "git revert [<options>] <cummit-ish>..."
 msgstr "git revert [<seçenekler>] <işlememsi>..."
 
 #: builtin/revert.c:25
@@ -22279,7 +22279,7 @@ msgid "git revert <subcommand>"
 msgstr "git revert <altkomut>"
 
 #: builtin/revert.c:30
-msgid "git cherry-pick [<options>] <commit-ish>..."
+msgid "git cherry-pick [<options>] <cummit-ish>..."
 msgstr "git cherry-pick [<seçenekler>] <işlememsi>..."
 
 #: builtin/revert.c:31
@@ -22309,15 +22309,15 @@ msgid "cancel revert or cherry-pick sequence"
 msgstr "geri al veya seç-al dizisini iptal et"
 
 #: builtin/revert.c:105
-msgid "skip current commit and continue"
+msgid "skip current cummit and continue"
 msgstr "geçerli işlemeyi atla ve sürdür"
 
 #: builtin/revert.c:107
-msgid "don't automatically commit"
+msgid "don't automatically cummit"
 msgstr "kendiliğinden gönderme"
 
 #: builtin/revert.c:108
-msgid "edit the commit message"
+msgid "edit the cummit message"
 msgstr "işleme iletisini düzenle"
 
 #: builtin/revert.c:111
@@ -22337,19 +22337,19 @@ msgid "option for merge strategy"
 msgstr "birleştirme stratejisi için seçenek"
 
 #: builtin/revert.c:125
-msgid "append commit name"
+msgid "append cummit name"
 msgstr "işleme adını iliştir"
 
 #: builtin/revert.c:127
-msgid "preserve initially empty commits"
+msgid "preserve initially empty cummits"
 msgstr "başlangıçta boş olan işlemeleri koru"
 
 #: builtin/revert.c:128
-msgid "allow commits with empty messages"
+msgid "allow cummits with empty messages"
 msgstr "boş iletili işlemelere izin ver"
 
 #: builtin/revert.c:129
-msgid "keep redundant, empty commits"
+msgid "keep redundant, empty cummits"
 msgstr "gereksiz, boş işlemeleri tut"
 
 #: builtin/revert.c:241
@@ -22496,15 +22496,15 @@ msgid "unknown group type: %s"
 msgstr "bilinmeyen grup türü: %s"
 
 #: builtin/shortlog.c:351
-msgid "group by committer rather than author"
+msgid "group by cummitter rather than author"
 msgstr "yazar yerine işleyici ile grupla"
 
 #: builtin/shortlog.c:354
-msgid "sort output according to the number of commits per author"
+msgid "sort output according to the number of cummits per author"
 msgstr "çıktıyı yazar başına olan işleme sayısına göre sırala"
 
 #: builtin/shortlog.c:356
-msgid "suppress commit descriptions, only provides commit count"
+msgid "suppress cummit descriptions, only provides cummit count"
 msgstr "işleme açıklamalarını gizle, yalnızca işleme sayısını ver"
 
 #: builtin/shortlog.c:358
@@ -22572,7 +22572,7 @@ msgid "color '*!+-' corresponding to the branch"
 msgstr "'*!+-'i dala göre renklendir"
 
 #: builtin/show-branch.c:651
-msgid "show <n> more commits after the common ancestor"
+msgid "show <n> more cummits after the common ancestor"
 msgstr "ortak atadan sonra <n> işleme daha göster"
 
 #: builtin/show-branch.c:653
@@ -22588,7 +22588,7 @@ msgid "include the current branch"
 msgstr "geçerli dalı içer"
 
 #: builtin/show-branch.c:658
-msgid "name commits with their object names"
+msgid "name cummits with their object names"
 msgstr "işlemeleri kendi nesne adlarıyla adlandır"
 
 #: builtin/show-branch.c:660
@@ -22600,11 +22600,11 @@ msgid "show refs unreachable from any other ref"
 msgstr "başka başvurudan erişilemeyen başvuruları göster"
 
 #: builtin/show-branch.c:664
-msgid "show commits in topological order"
+msgid "show cummits in topological order"
 msgstr "işlemeleri ilingesel sırada göster"
 
 #: builtin/show-branch.c:667
-msgid "show only commits not on the first branch"
+msgid "show only cummits not on the first branch"
 msgstr "yalnızca birinci dalda olmayan işlemeleri göster"
 
 #: builtin/show-branch.c:669
@@ -22657,7 +22657,7 @@ msgstr "'%s' geçerli bir başvuru değil."
 
 #: builtin/show-branch.c:838
 #, c-format
-msgid "cannot find commit %s (%s)"
+msgid "cannot find cummit %s (%s)"
 msgstr "%s işlemesi bulunamıyor (%s)"
 
 #: builtin/show-index.c:21
@@ -22914,7 +22914,7 @@ msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
 msgstr "git stash apply [--index] [-q|--quiet] [<zula>]"
 
 #: builtin/stash.c:75
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
+msgid "git stash store [-m|--message <message>] [-q|--quiet] <cummit>"
 msgstr "git stash store [-m|--message <ileti>] [-q|--quiet] <işleme>"
 
 #: builtin/stash.c:80
@@ -22937,7 +22937,7 @@ msgstr ""
 
 #: builtin/stash.c:130
 #, c-format
-msgid "'%s' is not a stash-like commit"
+msgid "'%s' is not a stash-like cummit"
 msgstr "'%s' zulaya benzer bir işleme değil"
 
 #: builtin/stash.c:150
@@ -23053,7 +23053,7 @@ msgid "stash message"
 msgstr "zula iletisi"
 
 #: builtin/stash.c:958
-msgid "\"git stash store\" requires one <commit> argument"
+msgid "\"git stash store\" requires one <cummit> argument"
 msgstr "\"git stash store\" bir <işleme> argümanı gerektirir"
 
 #: builtin/stash.c:1143
@@ -23065,7 +23065,7 @@ msgid "No changes selected"
 msgstr "Değişiklik seçilmedi"
 
 #: builtin/stash.c:1304
-msgid "You do not have the initial commit yet"
+msgid "You do not have the initial cummit yet"
 msgstr "Henüz ilk işleme yapılmamış"
 
 #: builtin/stash.c:1331
@@ -23272,7 +23272,7 @@ msgstr "altmodül durum çıktısını gizle"
 
 #: builtin/submodule--helper.c:875
 msgid ""
-"use commit stored in the index instead of the one stored in the submodule "
+"use cummit stored in the index instead of the one stored in the submodule "
 "HEAD"
 msgstr ""
 "altmodül HEAD'i içinde depolanan işleme yerine indekste depolanan işlemeyi "
@@ -23312,11 +23312,11 @@ msgid "unexpected mode %o\n"
 msgstr "beklenmedik kip %o\n"
 
 #: builtin/submodule--helper.c:1288
-msgid "use the commit stored in the index instead of the submodule HEAD"
+msgid "use the cummit stored in the index instead of the submodule HEAD"
 msgstr "altmodül HEAD'i içindeki işleme ile indekstekini karşılaştırmak için"
 
 #: builtin/submodule--helper.c:1290
-msgid "compare the commit in the index with that in the submodule HEAD"
+msgid "compare the cummit in the index with that in the submodule HEAD"
 msgstr "indeksteki işlemeyi altmodül HEAD'inde olan ile karşılaştır"
 
 #: builtin/submodule--helper.c:1292
@@ -23328,7 +23328,7 @@ msgid "limit the summary size"
 msgstr "özet boyutunu sınırla"
 
 #: builtin/submodule--helper.c:1299
-msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
+msgid "git submodule--helper summary [<options>] [<cummit>] [--] [<path>]"
 msgstr "git submodule--helper summary [<seçenekler>] [<işleme>] [--] [<yol>]"
 
 #: builtin/submodule--helper.c:1323
@@ -23594,7 +23594,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Fetched in submodule path '%s', but it did not contain %s. Direct fetching "
-"of that commit failed."
+"of that cummit failed."
 msgstr ""
 "'%s' altmodül yolunda getirme yapıldı; ancak %s içermiyor. Bu işlemenin "
 "doğrudan getirilmesi başarısız oldu."
@@ -23934,9 +23934,9 @@ msgstr "git tag -d <etiket-adı>..."
 
 #: builtin/tag.c:29
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
+"git tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--"
 "points-at <object>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] "
+"        [--format=<format>] [--merged <cummit>] [--no-merged <cummit>] "
 "[<pattern>...]"
 msgstr ""
 "git tag -l [-n[<sayı>]] [--contains <işleme>] [--no-contains <işleme>]\n"
@@ -24072,11 +24072,11 @@ msgid "show tag list in columns"
 msgstr "etiket listesini sütunlarla göster"
 
 #: builtin/tag.c:468 builtin/tag.c:470
-msgid "print only tags that contain the commit"
+msgid "print only tags that contain the cummit"
 msgstr "yalnızca işlemeyi içeren etiketleri yazdır"
 
 #: builtin/tag.c:469 builtin/tag.c:471
-msgid "print only tags that don't contain the commit"
+msgid "print only tags that don't contain the cummit"
 msgstr "yalnızca işleme içermeyen etiketleri yazdır"
 
 #: builtin/tag.c:472
@@ -24422,15 +24422,15 @@ msgstr "eğer <dizin> bir Git dizini değilse <dizin>/.git/ deneme"
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "aktarımı <n> saniye hareketsizlikten sonra kes"
 
-#: builtin/verify-commit.c:19
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] <işleme>..."
+#: builtin/verify-cummit.c:19
+msgid "git verify-cummit [-v | --verbose] <cummit>..."
+msgstr "git verify-cummit [-v | --verbose] <işleme>..."
 
-#: builtin/verify-commit.c:68
-msgid "print commit contents"
+#: builtin/verify-cummit.c:68
+msgid "print cummit contents"
 msgstr "işleme içeriğini yazdır"
 
-#: builtin/verify-commit.c:69 builtin/verify-tag.c:37
+#: builtin/verify-cummit.c:69 builtin/verify-tag.c:37
 msgid "print raw gpg status output"
 msgstr "ham gpg durum çıktısını yazdır"
 
@@ -24455,7 +24455,7 @@ msgid "print tag contents"
 msgstr "etiket içeriğini yazdır"
 
 #: builtin/worktree.c:19
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
+msgid "git worktree add [<options>] <path> [<cummit-ish>]"
 msgstr "git worktree add [<seçenekler>] <yol> [<işlememsi>]"
 
 #: builtin/worktree.c:20
@@ -24908,11 +24908,11 @@ msgstr "revizyonlar hazırlanırken hata"
 
 #: t/helper/test-reach.c:154
 #, c-format
-msgid "commit %s is not marked reachable"
+msgid "cummit %s is not marked reachable"
 msgstr "%s işlemesi ulaşılabilir olarak imlenmedi"
 
 #: t/helper/test-reach.c:164
-msgid "too many commits marked reachable"
+msgid "too many cummits marked reachable"
 msgstr "çok fazla işleme ulaşılabilir olarak imlenmiş"
 
 #: t/helper/test-serve-v2.c:7
@@ -25433,7 +25433,7 @@ msgid "Apply a series of patches from a mailbox"
 msgstr "Bir posta kutusundan bir dizi yama uygula"
 
 #: command-list.h:52
-msgid "Annotate file lines with commit information"
+msgid "Annotate file lines with cummit information"
 msgstr "İşleme bilgisini dosya içi açıklama olarak ekle"
 
 #: command-list.h:53
@@ -25449,7 +25449,7 @@ msgid "Create an archive of files from a named tree"
 msgstr "Ad verilmiş ağaçtan bir dosyalar arşivi oluştur"
 
 #: command-list.h:56
-msgid "Use binary search to find the commit that introduced a bug"
+msgid "Use binary search to find the cummit that introduced a bug"
 msgstr "Hatalara neden olan işlemeyi bulmada ikili arama kullan"
 
 #: command-list.h:57
@@ -25497,16 +25497,16 @@ msgid "Copy files from the index to the working tree"
 msgstr "Dosyaları indeksten çalışma ağacına kopyala"
 
 #: command-list.h:68
-msgid "Find commits yet to be applied to upstream"
+msgid "Find cummits yet to be applied to upstream"
 msgstr "Henüz üstkaynağa uygulanmayan işlemeleri bul"
 
 #: command-list.h:69
-msgid "Apply the changes introduced by some existing commits"
+msgid "Apply the changes introduced by some existing cummits"
 msgstr "Mevcut bazı işlemelerin getirdiği değişiklikleri uygula"
 
 #: command-list.h:70
-msgid "Graphical alternative to git-commit"
-msgstr "git-commit için grafik tabanlı alternatif"
+msgid "Graphical alternative to git-cummit"
+msgstr "git-cummit için grafik tabanlı alternatif"
 
 #: command-list.h:71
 msgid "Remove untracked files from the working tree"
@@ -25525,11 +25525,11 @@ msgid "Record changes to the repository"
 msgstr "Değişikliklerin kaydını depoya yaz"
 
 #: command-list.h:75
-msgid "Write and verify Git commit-graph files"
-msgstr "Git commit-graph dosyalarını doğrula ve yaz"
+msgid "Write and verify Git cummit-graph files"
+msgstr "Git cummit-graph dosyalarını doğrula ve yaz"
 
 #: command-list.h:76
-msgid "Create a new commit object"
+msgid "Create a new cummit object"
 msgstr "Yeni bir işleme nesnesi oluştur"
 
 #: command-list.h:77
@@ -25553,7 +25553,7 @@ msgid "Helper to store credentials on disk"
 msgstr "Yetkileri diskte saklamak için yardımcı"
 
 #: command-list.h:82
-msgid "Export a single commit to a CVS checkout"
+msgid "Export a single cummit to a CVS checkout"
 msgstr "Bir CVS çıkışına tek bir işlemeyi dışa aktar"
 
 #: command-list.h:83
@@ -25573,7 +25573,7 @@ msgid "Give an object a human readable name based on an available ref"
 msgstr "Uygun bir başvuruyu temel alıp nesneye okunabilir ad ver"
 
 #: command-list.h:87
-msgid "Show changes between commits, commit and working tree, etc"
+msgid "Show changes between cummits, cummit and working tree, etc"
 msgstr "İşlemeler, işleme ve ağaçlar vb. arası değişiklikler"
 
 #: command-list.h:88
@@ -25614,7 +25614,7 @@ msgid "Rewrite branches"
 msgstr "Dalları yeniden yaz"
 
 #: command-list.h:97
-msgid "Produce a merge commit message"
+msgid "Produce a merge cummit message"
 msgstr "Bir birleştirme işlemesi iletisi oluştur"
 
 #: command-list.h:98
@@ -25638,7 +25638,7 @@ msgid "Cleanup unnecessary files and optimize the local repository"
 msgstr "Gereksiz dosyaları temizle ve yerel depoyu eniyile"
 
 #: command-list.h:103
-msgid "Extract commit ID from an archive created using git-archive"
+msgid "Extract cummit ID from an archive created using git-archive"
 msgstr "İşleme iletisini bir git-archive arşivinden çıkartıp al"
 
 #: command-list.h:104
@@ -25690,11 +25690,11 @@ msgid "Instantly browse your working repository in gitweb"
 msgstr "gitweb'deki çalışma deposuna anında göz at"
 
 #: command-list.h:116
-msgid "Add or parse structured information in commit messages"
+msgid "Add or parse structured information in cummit messages"
 msgstr "İşleme iletilerine düzenli bilgi ekle veya ayrıştır"
 
 #: command-list.h:117
-msgid "Show commit logs"
+msgid "Show cummit logs"
 msgstr "İşleme günlüklerini göster"
 
 #: command-list.h:118
@@ -25814,7 +25814,7 @@ msgid "Applies a quilt patchset onto the current branch"
 msgstr "Geçerli dala bir \"Quilt\" yama seti uygula"
 
 #: command-list.h:147
-msgid "Compare two commit ranges (e.g. two versions of a branch)"
+msgid "Compare two cummit ranges (e.g. two versions of a branch)"
 msgstr "İki işleme erimini karşılaştır (bir dalın iki sürümü)"
 
 #: command-list.h:148
@@ -25822,7 +25822,7 @@ msgid "Reads tree information into the index"
 msgstr "Ağaç bilgisini indekse okur"
 
 #: command-list.h:149
-msgid "Reapply commits on top of another base tip"
+msgid "Reapply cummits on top of another base tip"
 msgstr "İşlemeleri başka bir temel ucu üzerine uygula"
 
 #: command-list.h:150
@@ -25862,7 +25862,7 @@ msgid "Restore working tree files"
 msgstr "Çalışma ağacı dosyalarını eski durumuna getir"
 
 #: command-list.h:159
-msgid "Lists commit objects in reverse chronological order"
+msgid "Lists cummit objects in reverse chronological order"
 msgstr "İşleme nesnelerini ters kronolojik sırada listele"
 
 #: command-list.h:160
@@ -25870,7 +25870,7 @@ msgid "Pick out and massage parameters"
 msgstr "Parametreleri al ve üzerinde çalış"
 
 #: command-list.h:161
-msgid "Revert some existing commits"
+msgid "Revert some existing cummits"
 msgstr "Bazı var olan işlemeleri geri al"
 
 #: command-list.h:162
@@ -25906,7 +25906,7 @@ msgid "Show various types of objects"
 msgstr "Çeşitli türlerden nesneleri göster"
 
 #: command-list.h:170
-msgid "Show branches and their commits"
+msgid "Show branches and their cummits"
 msgstr "Dalları ve onların işlemelerini göster"
 
 #: command-list.h:171
@@ -25991,7 +25991,7 @@ msgid "Show a Git logical variable"
 msgstr "Bir mantıksal Git değişkeni göster"
 
 #: command-list.h:191
-msgid "Check the GPG signature of commits"
+msgid "Check the GPG signature of cummits"
 msgstr "İşlemelerin GPG imzasını denetle"
 
 #: command-list.h:192
@@ -26003,7 +26003,7 @@ msgid "Check the GPG signature of tags"
 msgstr "Etiketlerin GPG imzasını doğrula"
 
 #: command-list.h:194
-msgid "Show logs with difference each commit introduces"
+msgid "Show logs with difference each cummit introduces"
 msgstr "Günlükleri her işlemenin sunduğu değişikliklerle göster"
 
 #: command-list.h:195
@@ -26063,7 +26063,7 @@ msgid "The Git repository browser"
 msgstr "Git depo tarayıcısı"
 
 #: command-list.h:209
-msgid "Map author/committer names and/or E-Mail addresses"
+msgid "Map author/cummitter names and/or E-Mail addresses"
 msgstr "Yazar/İşleyici adlarını ve/veya e-posta adreslerini eşlemle"
 
 #: command-list.h:210
@@ -26124,7 +26124,7 @@ msgstr "Bir ahtapot birleştirmesi yapılmamalı."
 
 #: git-merge-octopus.sh:73
 #, sh-format
-msgid "Unable to find common commit with $pretty_name"
+msgid "Unable to find common cummit with $pretty_name"
 msgstr "$pretty_name ile olan ortak işleme bulunamıyor"
 
 #: git-merge-octopus.sh:77
@@ -26172,11 +26172,11 @@ msgstr "$action yapılamıyor: Hazırlanmamış değişiklikleriniz var."
 
 #: git-sh-setup.sh:226
 #, sh-format
-msgid "Cannot $action: Your index contains uncommitted changes."
+msgid "Cannot $action: Your index contains uncummitted changes."
 msgstr "$action yapılamıyor: İndeksinizde işlenmemiş değişiklikleriniz var."
 
 #: git-sh-setup.sh:228
-msgid "Additionally, your index contains uncommitted changes."
+msgid "Additionally, your index contains uncummitted changes."
 msgstr "Ek olarak, indeksinizde işlenmemiş değişiklikleriniz var."
 
 #: git-sh-setup.sh:348
@@ -26605,7 +26605,7 @@ msgstr "uyarı: sendmail satırı tanımlanamadı: %s\n"
 #: git-send-email.perl:747
 #, perl-format
 msgid ""
-"File '%s' exists but it could also be the range of commits\n"
+"File '%s' exists but it could also be the range of cummits\n"
 "to produce patches for.  Please disambiguate by...\n"
 "\n"
 "    * Saying \"./%s\" if you mean a file; or\n"
@@ -26735,7 +26735,7 @@ msgstr "CA yolu \"%s\" mevcut değil"
 #: git-send-email.perl:1565
 msgid ""
 "    The Cc list above has been expanded by additional\n"
-"    addresses found in the patch commit message. By default\n"
+"    addresses found in the patch cummit message. By default\n"
 "    send-email prompts before sending whenever this occurs.\n"
 "    This behavior is controlled by the sendemail.confirm\n"
 "    configuration setting.\n"

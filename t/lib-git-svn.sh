@@ -54,7 +54,7 @@ poke() {
 }
 
 # We need this, because we should pass empty configuration directory to
-# the 'svn commit' to avoid automated property changes and other stuff
+# the 'svn cummit' to avoid automated property changes and other stuff
 # that could be set from user's configuration files in ~/.subversion.
 svn_cmd () {
 	[ -d "$svnconf" ] || mkdir "$svnconf"

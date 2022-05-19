@@ -63,8 +63,8 @@ test_cmp_exclude_clean () {
 }
 
 # Check that the contents of two files are equal and that their rot13 version
-# is equal to the committed content.
-test_cmp_committed_rot13 () {
+# is equal to the cummitted content.
+test_cmp_cummitted_rot13 () {
 	test_cmp "$1" "$2" &&
 	rot13.sh <"$1" >expected &&
 	git cat-file blob :"$2" >actual &&
@@ -127,7 +127,7 @@ test_expect_success expanded_in_repo '
 	$Id:NoSpaceAtFront $
 	$Id:NoSpaceAtEitherEnd$
 	$Id: NoTerminatingSymbol
-	$Id: Foreign Commit With Spaces $
+	$Id: Foreign cummit With Spaces $
 	EOF
 
 	{
@@ -136,7 +136,7 @@ test_expect_success expanded_in_repo '
 	} >expanded-keywords &&
 	cat expanded-keywords >expanded-keywords-crlf &&
 	git add expanded-keywords expanded-keywords-crlf &&
-	git commit -m "File with keywords expanded" &&
+	git cummit -m "File with keywords expanded" &&
 	id=$(git rev-parse --verify :expanded-keywords) &&
 
 	cat >expected-output.0 <<-EOF &&
@@ -148,7 +148,7 @@ test_expect_success expanded_in_repo '
 	\$Id: $id \$
 	\$Id: $id \$
 	\$Id: NoTerminatingSymbol
-	\$Id: Foreign Commit With Spaces \$
+	\$Id: Foreign cummit With Spaces \$
 	EOF
 	{
 		cat expected-output.0 &&
@@ -187,7 +187,7 @@ test_expect_success 'filter shell-escaped filenames' '
 	echo some test text >"$normal" &&
 	echo some test text >"$special" &&
 	git add "$normal" "$special" &&
-	git commit -q -m "add files" &&
+	git cummit -q -m "add files" &&
 	echo "name* filter=argc" >.gitattributes &&
 
 	# delete the files and check them out again, using a smudge filter
@@ -357,8 +357,8 @@ test_expect_success 'disable filter with empty override' '
 test_expect_success 'diff does not reuse worktree files that need cleaning' '
 	test_config filter.counter.clean "echo . >>count; sed s/^/clean:/" &&
 	echo "file filter=counter" >.gitattributes &&
-	test_commit one file &&
-	test_commit two file &&
+	test_cummit one file &&
+	test_cummit two file &&
 
 	>count &&
 	git diff-tree -p HEAD &&
@@ -376,7 +376,7 @@ test_expect_success PERL 'required process filter should filter data' '
 
 		echo "*.r filter=protocol" >.gitattributes &&
 		git add . &&
-		git commit -m "test commit 1" &&
+		git cummit -m "test cummit 1" &&
 		git branch empty-branch &&
 
 		cp "$TEST_ROOT/test.o" test.r &&
@@ -405,7 +405,7 @@ test_expect_success PERL 'required process filter should filter data' '
 		EOF
 		test_cmp_count expected.log debug.log &&
 
-		git commit -m "test commit 2" &&
+		git cummit -m "test cummit 2" &&
 		MAIN=$(git rev-parse --verify main) &&
 		META="ref=refs/heads/main treeish=$MAIN" &&
 		rm -f test2.r "testsubdir/test3 '\''sq'\'',\$x=.r" &&
@@ -444,9 +444,9 @@ test_expect_success PERL 'required process filter should filter data' '
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
 
-		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test.r &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test2.o" test2.r &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test3 '\''sq'\'',\$x=.o" "testsubdir/test3 '\''sq'\'',\$x=.r"
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test.r &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test2.o" test2.r &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test3 '\''sq'\'',\$x=.o" "testsubdir/test3 '\''sq'\'',\$x=.r"
 	)
 '
 
@@ -468,7 +468,7 @@ test_expect_success PERL 'required process filter should filter data for various
 
 		cp "$TEST_ROOT/test.o" test5.r &&
 		git add test5.r &&
-		git commit -m "test commit 3" &&
+		git cummit -m "test cummit 3" &&
 		git checkout empty-branch &&
 		filter_git rebase --onto empty-branch main^^ main &&
 		MAIN2=$(git rev-parse --verify main) &&
@@ -682,7 +682,7 @@ test_expect_success PERL 'required process filter should process multiple packet
 
 		for FILE in *.file
 		do
-			test_cmp_committed_rot13 "$TEST_ROOT/$FILE" $FILE || return 1
+			test_cmp_cummitted_rot13 "$TEST_ROOT/$FILE" $FILE || return 1
 		done
 	)
 '
@@ -750,8 +750,8 @@ test_expect_success PERL 'process filter should restart after unexpected write f
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
 
-		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test.r &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test2.o" test2.r &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test.r &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test2.o" test2.r &&
 
 		# Smudge failed
 		! test_cmp smudge-write-fail.o smudge-write-fail.r &&
@@ -798,8 +798,8 @@ test_expect_success PERL 'process filter should not be restarted if it signals a
 		EOF
 		test_cmp_exclude_clean expected.log debug.log &&
 
-		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test.r &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test2.o" test2.r &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test.r &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test2.o" test2.r &&
 		test_cmp error.o error.r
 	)
 '
@@ -880,7 +880,7 @@ test_expect_success PERL 'delayed checkout in process filter' '
 		cp "$TEST_ROOT/test.o" test-delay20.a &&
 		cp "$TEST_ROOT/test.o" test-delay10.b &&
 		git add . &&
-		git commit -m "test commit"
+		git cummit -m "test cummit"
 	) &&
 
 	S=$(test_file_size "$TEST_ROOT/test.o") &&
@@ -918,11 +918,11 @@ test_expect_success PERL 'delayed checkout in process filter' '
 
 	(
 		cd repo-cloned &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test.a &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay10.a &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay11.a &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay20.a &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay10.b &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test.a &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test-delay10.a &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test-delay11.a &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test-delay20.a &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test-delay10.b &&
 
 		rm *.a *.b &&
 		filter_git checkout . &&
@@ -932,11 +932,11 @@ test_expect_success PERL 'delayed checkout in process filter' '
 		test_cmp_count a.exp.filtered a.log &&
 		test_cmp_count b.exp.filtered b.log &&
 
-		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test.a &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay10.a &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay11.a &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay20.a &&
-		test_cmp_committed_rot13 "$TEST_ROOT/test.o" test-delay10.b
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test.a &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test-delay10.a &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test-delay11.a &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test-delay20.a &&
+		test_cmp_cummitted_rot13 "$TEST_ROOT/test.o" test-delay10.b
 	)
 '
 
@@ -952,7 +952,7 @@ test_expect_success PERL 'missing file in delayed checkout' '
 		echo "*.a filter=bug" >.gitattributes &&
 		cp "$TEST_ROOT/test.o" missing-delay.a &&
 		git add . &&
-		git commit -m "test commit"
+		git cummit -m "test cummit"
 	) &&
 
 	rm -rf repo-cloned &&
@@ -973,7 +973,7 @@ test_expect_success PERL 'invalid file in delayed checkout' '
 		cp "$TEST_ROOT/test.o" invalid-delay.a &&
 		cp "$TEST_ROOT/test.o" unfiltered &&
 		git add . &&
-		git commit -m "test commit"
+		git cummit -m "test cummit"
 	) &&
 
 	rm -rf repo-cloned &&
@@ -1014,7 +1014,7 @@ do
 			EOF
 
 			git update-index --index-info <objs &&
-			git commit -m "test commit"
+			git cummit -m "test cummit"
 		) &&
 
 		git clone $mode-collision $mode-collision-cloned &&
@@ -1052,9 +1052,9 @@ test_expect_success PERL,SYMLINKS,CASE_INSENSITIVE_FS \
 		symlink_oid=$(printf "%s" "$PWD/target-dir" | git -C a hash-object -w --stdin) &&
 		echo "120000 blob $symlink_oid	b" >objs &&
 		git -C a update-index --index-info <objs &&
-		git -C a commit -m sub &&
+		git -C a cummit -m sub &&
 		git submodule add ./a &&
-		git commit -m super &&
+		git cummit -m super &&
 
 		git checkout --recurse-submodules . &&
 		grep "IN: smudge A/B/y .* \\[DELAYED\\]" delayed.log &&
@@ -1072,7 +1072,7 @@ test_expect_success PERL 'setup for progress tests' '
 		echo "*.a filter=delay" >.gitattributes &&
 		touch test-delay10.a &&
 		git add . &&
-		git commit -m files
+		git cummit -m files
 	)
 '
 

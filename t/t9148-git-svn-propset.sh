@@ -42,7 +42,7 @@ set_props () {
 			shift;shift;
 		done &&
 		echo hello >> "$file" &&
-		git commit -m "testing propset" "$file")
+		git cummit -m "testing propset" "$file")
 }
 
 confirm_props () {
@@ -58,11 +58,11 @@ confirm_props () {
 
 
 #The current implementation has a restriction:
-#svn propset will be taken as a delta for svn dcommit only
+#svn propset will be taken as a delta for svn dcummit only
 #if the file content is also modified
 test_expect_success 'add props top level' '
 	set_props "." "foo" "svn:keywords" "FreeBSD=%H" &&
-	git svn dcommit &&
+	git svn dcummit &&
 	svn_cmd co "$svnrepo" svn_project &&
 	confirm_props "." "foo" "svn:keywords" "FreeBSD=%H" &&
 	rm -rf svn_project
@@ -71,7 +71,7 @@ test_expect_success 'add props top level' '
 test_expect_success 'add multiple props' '
 	set_props "." "foo" \
 		"svn:keywords" "FreeBSD=%H" fbsd:nokeywords yes &&
-	git svn dcommit &&
+	git svn dcummit &&
 	svn_cmd co "$svnrepo" svn_project &&
 	confirm_props "." "foo" \
 		"svn:keywords" "FreeBSD=%H" fbsd:nokeywords yes &&
@@ -80,7 +80,7 @@ test_expect_success 'add multiple props' '
 
 test_expect_success 'add props subdir' '
 	set_props "." "$foo_subdir2" svn:keywords "FreeBSD=%H" &&
-	git svn dcommit &&
+	git svn dcummit &&
 	svn_cmd co "$svnrepo" svn_project &&
 	confirm_props "." "$foo_subdir2" "svn:keywords" "FreeBSD=%H" &&
 	rm -rf svn_project
@@ -89,7 +89,7 @@ test_expect_success 'add props subdir' '
 test_expect_success 'add props relative' '
 	set_props "subdir/subdir2" "../foo_subdir" \
 		svn:keywords "FreeBSD=%H" &&
-	git svn dcommit &&
+	git svn dcummit &&
 	svn_cmd co "$svnrepo" svn_project &&
 	confirm_props "subdir/subdir2" "../foo_subdir" \
 		svn:keywords "FreeBSD=%H" &&

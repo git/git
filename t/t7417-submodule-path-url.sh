@@ -8,10 +8,10 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success 'create submodule with dash in path' '
 	git init upstream &&
-	git -C upstream commit --allow-empty -m base &&
+	git -C upstream cummit --allow-empty -m base &&
 	git submodule add ./upstream sub &&
 	git mv sub ./-sub &&
-	git commit -m submodule
+	git cummit -m submodule
 '
 
 test_expect_success 'clone rejects unprotected dash' '
@@ -38,8 +38,8 @@ test_expect_success MINGW 'submodule paths disallows trailing spaces' '
 	git -C super ls-tree $tree >tree &&
 	sed "s/sub/sub /" <tree >tree.new &&
 	tree=$(git -C super mktree <tree.new) &&
-	commit=$(echo with space | git -C super commit-tree $tree) &&
-	git -C super update-ref refs/heads/main $commit &&
+	cummit=$(echo with space | git -C super cummit-tree $tree) &&
+	git -C super update-ref refs/heads/main $cummit &&
 
 	test_must_fail git clone --recurse-submodules super dst 2>err &&
 	test_i18ngrep "sub " err

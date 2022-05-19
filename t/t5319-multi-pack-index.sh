@@ -74,28 +74,28 @@ generate_objects () {
 	git update-index --add file_$iii deep_delta_$iii wide_delta_$iii
 }
 
-commit_and_list_objects () {
+cummit_and_list_objects () {
 	{
 		echo 101 &&
 		test-tool genrandom 100 8192;
 	} >file_101 &&
 	git update-index --add file_101 &&
 	tree=$(git write-tree) &&
-	commit=$(git commit-tree $tree -p HEAD</dev/null) &&
+	cummit=$(git cummit-tree $tree -p HEAD</dev/null) &&
 	{
 		echo $tree &&
 		git ls-tree $tree | sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"
 	} >obj-list &&
-	git reset --hard $commit
+	git reset --hard $cummit
 }
 
 test_expect_success 'create objects' '
-	test_commit initial &&
+	test_cummit initial &&
 	for i in $(test_seq 1 5)
 	do
 		generate_objects $i || return 1
 	done &&
-	commit_and_list_objects
+	cummit_and_list_objects
 '
 
 test_expect_success 'write midx with one v1 pack' '
@@ -157,7 +157,7 @@ test_expect_success 'add more objects' '
 	do
 		generate_objects $i || return 1
 	done &&
-	commit_and_list_objects
+	cummit_and_list_objects
 '
 
 test_expect_success 'write midx with two packs' '
@@ -202,7 +202,7 @@ test_expect_success 'add more packs' '
 	for j in $(test_seq 11 20)
 	do
 		generate_objects $j &&
-		commit_and_list_objects &&
+		cummit_and_list_objects &&
 		git pack-objects --index-version=2 $objdir/pack/test-pack <obj-list || return 1
 	done
 '
@@ -224,7 +224,7 @@ test_expect_success 'multi-pack-index *.rev cleanup with --object-dir' '
 
 	(
 		cd repo &&
-		test_commit base &&
+		test_cummit base &&
 		git repack -d
 	) &&
 
@@ -249,7 +249,7 @@ test_expect_success 'warn on improper hash version' '
 	(
 		cd sha1 &&
 		git config core.multiPackIndex true &&
-		test_commit 1 &&
+		test_cummit 1 &&
 		git repack -a &&
 		git multi-pack-index write &&
 		mv .git/objects/pack/multi-pack-index ../mpi-sha1
@@ -258,7 +258,7 @@ test_expect_success 'warn on improper hash version' '
 	(
 		cd sha256 &&
 		git config core.multiPackIndex true &&
-		test_commit 1 &&
+		test_cummit 1 &&
 		git repack -a &&
 		git multi-pack-index write &&
 		mv .git/objects/pack/multi-pack-index ../mpi-sha256
@@ -326,7 +326,7 @@ test_expect_success 'preferred packs must be non-empty' '
 	(
 		cd preferred.git &&
 
-		test_commit base &&
+		test_cummit base &&
 		git repack -ad &&
 
 		empty="$(git pack-objects $objdir/pack/pack </dev/null)" &&
@@ -520,10 +520,10 @@ test_expect_success 'repack preserves multi-pack-index when creating packs' '
 		packdir=.git/objects/pack &&
 		midx=$packdir/multi-pack-index &&
 
-		test_commit 1 &&
+		test_cummit 1 &&
 		pack1=$(git pack-objects --all $packdir/pack) &&
 		touch $packdir/pack-$pack1.keep &&
-		test_commit 2 &&
+		test_cummit 2 &&
 		pack2=$(git pack-objects --revs $packdir/pack) &&
 		touch $packdir/pack-$pack2.keep &&
 
@@ -534,9 +534,9 @@ test_expect_success 'repack preserves multi-pack-index when creating packs' '
 		HEAD
 		^HEAD~1
 		EOF
-		test_commit 3 &&
+		test_cummit 3 &&
 		pack3=$(git pack-objects --revs $packdir/pack <pack-input) &&
-		test_commit 4 &&
+		test_cummit 4 &&
 		pack4=$(git pack-objects --revs $packdir/pack <pack-input) &&
 
 		GIT_TEST_MULTI_PACK_INDEX=0 git -c core.multiPackIndex repack -ad &&
@@ -571,7 +571,7 @@ compare_results_with_midx "with alternate (local midx)"
 
 test_expect_success 'multi-pack-index in an alternate' '
 	mv .git/objects/pack/* alt.git/objects/pack &&
-	test_commit add_local_objects &&
+	test_cummit add_local_objects &&
 	git repack --local &&
 	git multi-pack-index write &&
 	midx_read_expect 1 3 4 $objdir &&
@@ -598,7 +598,7 @@ test_expect_success 'force some 64-bit offsets with pack-objects' '
 	do
 		generate_objects 11 || return 1
 	done &&
-	commit_and_list_objects &&
+	cummit_and_list_objects &&
 	pack64=$(git pack-objects --index-version=2,0x40 objects64/pack/test-64 <obj-list) &&
 	idx64=objects64/pack/test-64-$pack64.idx &&
 	chmod u+w $idx64 &&
@@ -640,7 +640,7 @@ test_expect_success 'setup expire tests' '
 		git update-index --add large_file.txt &&
 		for i in $(test_seq 1 20)
 		do
-			test_commit $i || exit 1
+			test_cummit $i || exit 1
 		done &&
 		git branch A HEAD &&
 		git branch B HEAD~8 &&
@@ -893,7 +893,7 @@ test_expect_success 'load reverse index when missing .idx, .pack' '
 
 		git config core.multiPackIndex true &&
 
-		test_commit base &&
+		test_cummit base &&
 		git repack -ad &&
 		git multi-pack-index write &&
 

@@ -105,9 +105,9 @@ test_expect_success 'setup repo' '
 	sed s/33/11/ <3-old >1-old &&
 	sed s/33/00/ <3-old >0-old &&
 	git add [0-3]-old &&
-	git commit -m base &&
+	git cummit -m base &&
 	git rm [0-3]-old &&
-	git commit -m delete &&
+	git cummit -m delete &&
 	git checkout -b rename HEAD^ &&
 	cp 3-old 3-new &&
 	sed 1,1s/./x/ <2-old >2-new &&
@@ -115,7 +115,7 @@ test_expect_success 'setup repo' '
 	sed 1,3s/./x/ <0-old >0-new &&
 	git add [0-3]-new &&
 	git rm [0-3]-old &&
-	git commit -m rename &&
+	git cummit -m rename &&
 	get_expected_stages 0 &&
 	get_expected_stages 1 &&
 	get_expected_stages 2 &&

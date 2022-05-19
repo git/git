@@ -38,10 +38,10 @@ index b0b5d8f..461c47e 100644
 +	return scissors_dashes_seen == 03;
 +}
 +
- static int handle_commit_msg(struct strbuf *line)
+ static int handle_cummit_msg(struct strbuf *line)
  {
  	static int still_looking = 1;
-@@ -723,10 +751,17 @@ static int handle_commit_msg(struct strbuf *line)
+@@ -723,10 +751,17 @@ static int handle_cummit_msg(struct strbuf *line)
  		strbuf_ltrim(line);
  		if (!line->len)
  			return 0;

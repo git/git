@@ -37,7 +37,7 @@ Fixes since v1.6.3.1
    the first hunk that adds a line at the top was split into two and
    both halves are marked to be used.
 
- * "git blame path" misbehaved at the commit where path became file
+ * "git blame path" misbehaved at the cummit where path became file
    from a directory with some files in it.
 
  * "git for-each-ref" had a segfaulting bug when dealing with a tag object

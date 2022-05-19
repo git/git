@@ -5,7 +5,7 @@ test_description='handling of common mistakes people may make with submodules'
 
 test_expect_success 'create embedded repository' '
 	git init embed &&
-	test_commit -C embed one
+	test_cummit -C embed one
 '
 
 test_expect_success 'git-add on embedded repository warns' '
@@ -23,7 +23,7 @@ test_expect_success '--no-warn-embedded-repo suppresses warning' '
 test_expect_success 'no warning when updating entry' '
 	test_when_finished "git rm --cached -f embed" &&
 	git add embed &&
-	git -C embed commit --allow-empty -m two &&
+	git -C embed cummit --allow-empty -m two &&
 	git add embed 2>stderr &&
 	test_i18ngrep ! warning stderr
 '

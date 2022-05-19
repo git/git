@@ -23,7 +23,7 @@ Configuration
 What should I put in `user.name`?::
 	You should put your personal name, generally a form using a given name
 	and family name.  For example, the current maintainer of Git uses "Junio
-	C Hamano".  This will be the name portion that is stored in every commit
+	C Hamano".  This will be the name portion that is stored in every cummit
 	you make.
 +
 This configuration doesn't have any effect on authenticating to remote services;
@@ -139,9 +139,9 @@ $ echo url=https://author@git.example.org | git credential reject
 How do I use multiple accounts with the same hosting provider using HTTP?::
 	Usually the easiest way to distinguish between these accounts is to use
 	the username in the URL.  For example, if you have the accounts `author`
-	and `committer` on `git.example.org`, you can use the URLs
+	and `cummitter` on `git.example.org`, you can use the URLs
 	https://author@git.example.org/org1/project1.git and
-	https://committer@git.example.org/org2/project2.git.  This way, when you
+	https://cummitter@git.example.org/org2/project2.git.  This way, when you
 	use a credential helper, it will automatically try to look up the
 	correct credentials for your account.  If you already have a remote set
 	up, you can change the URL with something like `git remote set-url
@@ -154,8 +154,8 @@ How do I use multiple accounts with the same hosting provider using SSH?::
 	identifies a user.  Therefore, to use multiple accounts, it's necessary
 	to create a key pair for each account.  If you're using a reasonably
 	modern OpenSSH version, you can create a new key pair with something
-	like `ssh-keygen -t ed25519 -f ~/.ssh/id_committer`.  You can then
-	register the public key (in this case, `~/.ssh/id_committer.pub`; note
+	like `ssh-keygen -t ed25519 -f ~/.ssh/id_cummitter`.  You can then
+	register the public key (in this case, `~/.ssh/id_cummitter.pub`; note
 	the `.pub`) with the hosting provider.
 +
 Most hosting providers use a single SSH account for pushing; that is, all users
@@ -172,38 +172,38 @@ Host example_author
 	# This is the key pair registered for author with git.example.org.
 	IdentityFile ~/.ssh/id_author
 	IdentitiesOnly yes
-# This is the account for committer on git.example.org.
-Host example_committer
+# This is the account for cummitter on git.example.org.
+Host example_cummitter
 	HostName git.example.org
 	User git
-	# This is the key pair registered for committer with git.example.org.
-	IdentityFile ~/.ssh/id_committer
+	# This is the key pair registered for cummitter with git.example.org.
+	IdentityFile ~/.ssh/id_cummitter
 	IdentitiesOnly yes
 ----
 +
 Then, you can adjust your push URL to use `git@example_author` or
-`git@example_committer` instead of `git@example.org` (e.g., `git remote set-url
+`git@example_cummitter` instead of `git@example.org` (e.g., `git remote set-url
 git@example_author:org1/project1.git`).
 
 Common Issues
 -------------
 
-[[last-commit-amend]]
-I've made a mistake in the last commit.  How do I change it?::
+[[last-cummit-amend]]
+I've made a mistake in the last cummit.  How do I change it?::
 	You can make the appropriate change to your working tree, run `git add
 	<file>` or `git rm <file>`, as appropriate, to stage it, and then `git
-	commit --amend`.  Your change will be included in the commit, and you'll
-	be prompted to edit the commit message again; if you wish to use the
+	cummit --amend`.  Your change will be included in the cummit, and you'll
+	be prompted to edit the cummit message again; if you wish to use the
 	original message verbatim, you can use the `--no-edit` option to `git
-	commit` in addition, or just save and quit when your editor opens.
+	cummit` in addition, or just save and quit when your editor opens.
 
 [[undo-previous-change]]
 I've made a change with a bug and it's been included in the main branch.  How should I undo it?::
 	The usual way to deal with this is to use `git revert`.  This preserves
 	the history that the original change was made and was a valuable
-	contribution, but also introduces a new commit that undoes those changes
-	because the original had a problem.  The commit message of the revert
-	indicates the commit which was reverted and is usually edited to include
+	contribution, but also introduces a new cummit that undoes those changes
+	because the original had a problem.  The cummit message of the revert
+	indicates the cummit which was reverted and is usually edited to include
 	an explanation as to why the revert was made.
 
 [[ignore-tracked-files]]
@@ -221,7 +221,7 @@ purpose and shouldn't be used this way.
 If your goal is to modify a configuration file, it can often be helpful to have
 a file checked into the repository which is a template or set of defaults which
 can then be copied alongside and modified as appropriate.  This second, modified
-file is usually ignored to prevent accidentally committing it.
+file is usually ignored to prevent accidentally cummitting it.
 
 [[files-in-gitignore-are-tracked]]
 I asked Git to ignore various files, yet they are still tracked::
@@ -248,21 +248,21 @@ Merging and Rebasing
 What kinds of problems can occur when merging long-lived branches with squash merges?::
 	In general, there are a variety of problems that can occur when using squash
 	merges to merge two branches multiple times.  These can include seeing extra
-	commits in `git log` output, with a GUI, or when using the `...` notation to
+	cummits in `git log` output, with a GUI, or when using the `...` notation to
 	express a range, as well as the possibility of needing to re-resolve conflicts
 	again and again.
 +
 When Git does a normal merge between two branches, it considers exactly three
-points: the two branches and a third commit, called the _merge base_, which is
-usually the common ancestor of the commits.  The result of the merge is the sum
+points: the two branches and a third cummit, called the _merge base_, which is
+usually the common ancestor of the cummits.  The result of the merge is the sum
 of the changes between the merge base and each head.  When you merge two
-branches with a regular merge commit, this results in a new commit which will
+branches with a regular merge cummit, this results in a new cummit which will
 end up as a merge base when they're merged again, because there is now a new
 common ancestor.  Git doesn't have to consider changes that occurred before the
 merge base, so you don't have to re-resolve any conflicts you resolved before.
 +
-When you perform a squash merge, a merge commit isn't created; instead, the
-changes from one side are applied as a regular commit to the other side.  This
+When you perform a squash merge, a merge cummit isn't created; instead, the
+changes from one side are applied as a regular cummit to the other side.  This
 means that the merge base for these branches won't have changed, and so when Git
 goes to perform its next merge, it considers all of the changes that it
 considered the last time plus the new changes.  That means any conflicts may
@@ -271,7 +271,7 @@ diff`, `git log`, or a GUI will result in showing all of the changes since the
 original merge base.
 +
 As a consequence, if you want to merge two long-lived branches repeatedly, it's
-best to always use a regular merge commit.
+best to always use a regular merge cummit.
 
 [[merge-two-revert-one]]
 If I make a change on two branches but revert it on one, why does the merge of those branches include the change?::
@@ -279,7 +279,7 @@ If I make a change on two branches but revert it on one, why does the merge of t
 	strategy, which does a fancy three-way merge.  In such a case, when Git
 	performs the merge, it considers exactly three points: the two heads and a
 	third point, called the _merge base_, which is usually the common ancestor of
-	those commits.  Git does not consider the history or the individual commits
+	those cummits.  Git does not consider the history or the individual cummits
 	that have happened on those branches at all.
 +
 As a result, if both sides have a change and one side has reverted that change,
@@ -289,7 +289,7 @@ adopts the change.
 +
 If this is a problem for you, you can do a rebase instead, rebasing the branch
 with the revert onto the other branch.  A rebase in this scenario will revert
-the change, because a rebase applies each individual commit, including the
+the change, because a rebase applies each individual cummit, including the
 revert.  Note that rebases rewrite history, so you should avoid rebasing
 published branches unless you're sure you're comfortable with that.  See the
 NOTES section in linkgit:git-rebase[1] for more details.
@@ -304,17 +304,17 @@ How do I use hooks to prevent users from making certain changes?::
 	continuous integration (CI) system.  These are the locations in which
 	policy can be enforced effectively.
 +
-It's common to try to use `pre-commit` hooks (or, for commit messages,
-`commit-msg` hooks) to check these things, which is great if you're working as a
+It's common to try to use `pre-cummit` hooks (or, for cummit messages,
+`cummit-msg` hooks) to check these things, which is great if you're working as a
 solo developer and want the tooling to help you.  However, using hooks on a
 developer machine is not effective as a policy control because a user can bypass
 these hooks with `--no-verify` without being noticed (among various other ways).
 Git assumes that the user is in control of their local repositories and doesn't
 try to prevent this or tattle on the user.
 +
-In addition, some advanced users find `pre-commit` hooks to be an impediment to
-workflows that use temporary commits to stage work in progress or that create
-fixup commits, so it's better to push these kinds of checks to the server
+In addition, some advanced users find `pre-cummit` hooks to be an impediment to
+workflows that use temporary cummits to stage work in progress or that create
+fixup cummits, so it's better to push these kinds of checks to the server
 anyway.
 
 Cross-Platform Issues
@@ -378,7 +378,7 @@ do this with commands like the following (assuming two files `AFile.txt` and
 +
 ----
 $ git rm --cached AFile.txt
-$ git commit -m 'Remove files conflicting in case'
+$ git cummit -m 'Remove files conflicting in case'
 $ git checkout .
 ----
 +
@@ -389,7 +389,7 @@ this problem from occurring again; such a convention can be checked using a
 +
 It is also possible for perpetually modified files to occur on any platform if a
 smudge or clean filter is in use on your system but a file was previously
-committed without running the smudge or clean filter.  To fix this, run the
+cummitted without running the smudge or clean filter.  To fix this, run the
 following on an otherwise clean working tree:
 +
 ----
@@ -402,7 +402,7 @@ What's the recommended way to store files in Git?::
 	settings that work better than others.  In general, we recommend that
 	text files be stored in UTF-8 without a byte-order mark (BOM) with LF
 	(Unix-style) endings.  We also recommend the use of UTF-8 (again,
-	without BOM) in commit messages.  These are the settings that work best
+	without BOM) in cummit messages.  These are the settings that work best
 	across platforms and with tools such as `git diff` and `git merge`.
 +
 Additionally, if you have a choice between storage formats that are text based

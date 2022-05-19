@@ -1,7 +1,7 @@
 #ifndef BLOOM_H
 #define BLOOM_H
 
-struct commit;
+struct cummit;
 struct repository;
 
 struct bloom_filter_settings {
@@ -30,10 +30,10 @@ struct bloom_filter_settings {
 	uint32_t bits_per_entry;
 
 	/*
-	 * The maximum number of changed paths per commit
+	 * The maximum number of changed paths per cummit
 	 * before declaring a Bloom filter to be too-large.
 	 *
-	 * Not written to the commit-graph file.
+	 * Not written to the cummit-graph file.
 	 */
 	uint32_t max_changed_paths;
 };
@@ -61,7 +61,7 @@ struct bloom_filter {
  * against a bloom_filter. The number of hashes is
  * given by the Bloom filter settings and is the same
  * for all Bloom filters and keys interacting with
- * the loaded version of the commit graph file and
+ * the loaded version of the cummit graph file and
  * the Bloom data chunks.
  */
 struct bloom_key {
@@ -97,7 +97,7 @@ enum bloom_filter_computed {
 };
 
 struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
-						 struct commit *c,
+						 struct cummit *c,
 						 int compute_if_not_present,
 						 const struct bloom_filter_settings *settings,
 						 enum bloom_filter_computed *computed);

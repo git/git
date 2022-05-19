@@ -872,7 +872,7 @@ static int module_status(int argc, const char **argv, const char *prefix)
 
 	struct option module_status_options[] = {
 		OPT__QUIET(&quiet, N_("suppress submodule status output")),
-		OPT_BIT(0, "cached", &info.flags, N_("use commit stored in the index instead of the one stored in the submodule HEAD"), OPT_CACHED),
+		OPT_BIT(0, "cached", &info.flags, N_("use cummit stored in the index instead of the one stored in the submodule HEAD"), OPT_CACHED),
 		OPT_BIT(0, "recursive", &info.flags, N_("recurse into nested submodules"), OPT_RECURSIVE),
 		OPT_END()
 	};
@@ -947,8 +947,8 @@ enum diff_cmd {
 	DIFF_FILES
 };
 
-static char *verify_submodule_committish(const char *sm_path,
-					 const char *committish)
+static char *verify_submodule_cummittish(const char *sm_path,
+					 const char *cummittish)
 {
 	struct child_process cp_rev_parse = CHILD_PROCESS_INIT;
 	struct strbuf result = STRBUF_INIT;
@@ -957,7 +957,7 @@ static char *verify_submodule_committish(const char *sm_path,
 	cp_rev_parse.dir = sm_path;
 	prepare_submodule_repo_env(&cp_rev_parse.env_array);
 	strvec_pushl(&cp_rev_parse.args, "rev-parse", "-q", "--short", NULL);
-	strvec_pushf(&cp_rev_parse.args, "%s^0", committish);
+	strvec_pushf(&cp_rev_parse.args, "%s^0", cummittish);
 	strvec_push(&cp_rev_parse.args, "--");
 
 	if (capture_command(&cp_rev_parse, &result, 0))
@@ -968,7 +968,7 @@ static char *verify_submodule_committish(const char *sm_path,
 }
 
 static void print_submodule_summary(struct summary_cb *info, char *errmsg,
-				    int total_commits, const char *displaypath,
+				    int total_cummits, const char *displaypath,
 				    const char *src_abbrev, const char *dst_abbrev,
 				    struct module_cb *p)
 {
@@ -984,14 +984,14 @@ static void print_submodule_summary(struct summary_cb *info, char *errmsg,
 			displaypath, src_abbrev, dst_abbrev);
 	}
 
-	if (total_commits < 0)
+	if (total_cummits < 0)
 		printf(":\n");
 	else
-		printf(" (%d):\n", total_commits);
+		printf(" (%d):\n", total_cummits);
 
 	if (errmsg) {
 		printf(_("%s"), errmsg);
-	} else if (total_commits > 0) {
+	} else if (total_cummits > 0) {
 		struct child_process cp_log = CHILD_PROCESS_INIT;
 
 		cp_log.git_cmd = 1;
@@ -1026,7 +1026,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 	char *displaypath, *src_abbrev = NULL, *dst_abbrev;
 	int missing_src = 0, missing_dst = 0;
 	char *errmsg = NULL;
-	int total_commits = -1;
+	int total_cummits = -1;
 
 	if (!info->cached && oideq(&p->oid_dst, null_oid())) {
 		if (S_ISGITLINK(p->mod_dst)) {
@@ -1050,7 +1050,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 
 	if (S_ISGITLINK(p->mod_src)) {
 		if (p->status != 'D')
-			src_abbrev = verify_submodule_committish(p->sm_path,
+			src_abbrev = verify_submodule_cummittish(p->sm_path,
 								 oid_to_hex(&p->oid_src));
 		if (!src_abbrev) {
 			missing_src = 1;
@@ -1073,7 +1073,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 	}
 
 	if (S_ISGITLINK(p->mod_dst)) {
-		dst_abbrev = verify_submodule_committish(p->sm_path,
+		dst_abbrev = verify_submodule_cummittish(p->sm_path,
 							 oid_to_hex(&p->oid_dst));
 		if (!dst_abbrev) {
 			missing_dst = 1;
@@ -1116,7 +1116,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 		prepare_submodule_repo_env(&cp_rev_list.env_array);
 
 		if (!capture_command(&cp_rev_list, &sb_rev_list, 0))
-			total_commits = atoi(sb_rev_list.buf);
+			total_cummits = atoi(sb_rev_list.buf);
 
 		strbuf_release(&sb_rev_list);
 	} else {
@@ -1127,11 +1127,11 @@ static void generate_submodule_summary(struct summary_cb *info,
 		if (S_ISGITLINK(p->mod_dst)) {
 			struct strbuf errmsg_str = STRBUF_INIT;
 			if (missing_src && missing_dst) {
-				strbuf_addf(&errmsg_str, "  Warn: %s doesn't contain commits %s and %s\n",
+				strbuf_addf(&errmsg_str, "  Warn: %s doesn't contain cummits %s and %s\n",
 					    displaypath, oid_to_hex(&p->oid_src),
 					    oid_to_hex(&p->oid_dst));
 			} else {
-				strbuf_addf(&errmsg_str, "  Warn: %s doesn't contain commit %s\n",
+				strbuf_addf(&errmsg_str, "  Warn: %s doesn't contain cummit %s\n",
 					    displaypath, missing_src ?
 					    oid_to_hex(&p->oid_src) :
 					    oid_to_hex(&p->oid_dst));
@@ -1140,7 +1140,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 		}
 	}
 
-	print_submodule_summary(info, errmsg, total_commits,
+	print_submodule_summary(info, errmsg, total_cummits,
 				displaypath, src_abbrev,
 				dst_abbrev, p);
 
@@ -1285,9 +1285,9 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 
 	struct option module_summary_options[] = {
 		OPT_BOOL(0, "cached", &cached,
-			 N_("use the commit stored in the index instead of the submodule HEAD")),
+			 N_("use the cummit stored in the index instead of the submodule HEAD")),
 		OPT_BOOL(0, "files", &files,
-			 N_("compare the commit in the index with that in the submodule HEAD")),
+			 N_("compare the cummit in the index with that in the submodule HEAD")),
 		OPT_BOOL(0, "for-status", &for_status,
 			 N_("skip submodules with 'ignore_config' value set to 'all'")),
 		OPT_INTEGER('n', "summary-limit", &summary_limit,
@@ -1296,7 +1296,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 	};
 
 	const char *const git_submodule_helper_usage[] = {
-		N_("git submodule--helper summary [<options>] [<commit>] [--] [<path>]"),
+		N_("git submodule--helper summary [<options>] [<cummit>] [--] [<path>]"),
 		NULL
 	};
 
@@ -1312,7 +1312,7 @@ static int module_summary(int argc, const char **argv, const char *prefix)
 			argc--;
 		}
 	} else if (!argc || !strcmp(argv[0], "HEAD")) {
-		/* before the first commit: compare with an empty tree */
+		/* before the first cummit: compare with an empty tree */
 		oidcpy(&head_oid, the_hash_algo->empty_tree);
 		if (argc) {
 			argv++;
@@ -2444,7 +2444,7 @@ static int run_update_procedure(struct update_data *ud)
 		if (!is_tip_reachable(ud->sm_path, &ud->oid) &&
 		    fetch_in_submodule(ud->sm_path, ud->depth, ud->quiet, &ud->oid))
 			die(_("Fetched in submodule path '%s', but it did not "
-			      "contain %s. Direct fetching of that commit failed."),
+			      "contain %s. Direct fetching of that cummit failed."),
 			    ud->displaypath, oid_to_hex(&ud->oid));
 	}
 
@@ -3348,14 +3348,14 @@ static void die_on_index_match(const char *path, int force)
 	clear_pathspec(&ps);
 }
 
-static void die_on_repo_without_commits(const char *path)
+static void die_on_repo_without_cummits(const char *path)
 {
 	struct strbuf sb = STRBUF_INIT;
 	strbuf_addstr(&sb, path);
 	if (is_nonbare_repository_dir(&sb)) {
 		struct object_id oid;
 		if (resolve_gitlink_ref(path, "HEAD", &oid) < 0)
-			die(_("'%s' does not have a commit checked out"), path);
+			die(_("'%s' does not have a cummit checked out"), path);
 	}
 	strbuf_release(&sb);
 }
@@ -3433,7 +3433,7 @@ static int module_add(int argc, const char **argv, const char *prefix)
 	strip_dir_trailing_slashes(add_data.sm_path);
 
 	die_on_index_match(add_data.sm_path, force);
-	die_on_repo_without_commits(add_data.sm_path);
+	die_on_repo_without_cummits(add_data.sm_path);
 
 	if (!force) {
 		int exit_code = -1;

@@ -757,7 +757,7 @@ msgid "Cherry-picking is not possible because you have unmerged files."
 msgstr "無法揀選，因為您有未合併的檔案。"
 
 #: advice.c:183
-msgid "Committing is not possible because you have unmerged files."
+msgid "cummitting is not possible because you have unmerged files."
 msgstr "無法提交，因為您有未合併的檔案。"
 
 #: advice.c:185
@@ -780,7 +780,7 @@ msgstr "無法 %s，因為您有未合併的檔案。"
 #: advice.c:199
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
-"as appropriate to mark resolution and make a commit."
+"as appropriate to mark resolution and make a cummit."
 msgstr ""
 "請在工作區改正檔案，然後酌情使用 'git add/rm <檔案>' 指令標記\n"
 "解決方案並提交。"
@@ -794,7 +794,7 @@ msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "您尚未結束您的合併（存在 MERGE_HEAD）。"
 
 #: advice.c:214
-msgid "Please, commit your changes before merging."
+msgid "Please, cummit your changes before merging."
 msgstr "請在合併前先提交您的修改。"
 
 #: advice.c:215
@@ -832,10 +832,10 @@ msgid ""
 "Note: switching to '%s'.\n"
 "\n"
 "You are in 'detached HEAD' state. You can look around, make experimental\n"
-"changes and commit them, and you can discard any commits you make in this\n"
+"changes and cummit them, and you can discard any cummits you make in this\n"
 "state without impacting any branches by switching back to a branch.\n"
 "\n"
-"If you want to create a new branch to retain commits you create, you may\n"
+"If you want to create a new branch to retain cummits you create, you may\n"
 "do so (now or later) by using -c with the switch command. Example:\n"
 "\n"
 "  git switch -c <new-branch-name>\n"
@@ -891,8 +891,8 @@ msgstr "無法識別的空白字元忽略選項 '%s'"
 #: builtin/add.c:515 builtin/add.c:527 builtin/branch.c:755
 #: builtin/checkout.c:472 builtin/checkout.c:475 builtin/checkout.c:1663
 #: builtin/checkout.c:1773 builtin/checkout.c:1776 builtin/clone.c:921
-#: builtin/commit.c:359 builtin/commit.c:362 builtin/commit.c:1200
-#: builtin/commit.c:1256 builtin/commit.c:1273 builtin/describe.c:593
+#: builtin/cummit.c:359 builtin/cummit.c:362 builtin/cummit.c:1200
+#: builtin/cummit.c:1256 builtin/cummit.c:1273 builtin/describe.c:593
 #: builtin/diff-tree.c:155 builtin/difftool.c:733 builtin/fast-export.c:1245
 #: builtin/fetch.c:2141 builtin/fetch.c:2162 builtin/fetch.c:2167
 #: builtin/help.c:602 builtin/index-pack.c:1858 builtin/init-db.c:560
@@ -1608,7 +1608,7 @@ msgid "prepend prefix to each pathname in the archive"
 msgstr "為歸檔中每個路徑名加上前綴"
 
 #: archive.c:554 archive.c:557 builtin/blame.c:881 builtin/blame.c:885
-#: builtin/blame.c:886 builtin/commit-tree.c:115 builtin/config.c:135
+#: builtin/blame.c:886 builtin/cummit-tree.c:115 builtin/config.c:135
 #: builtin/fast-export.c:1181 builtin/fast-export.c:1183
 #: builtin/fast-export.c:1187 builtin/grep.c:936 builtin/hash-object.c:104
 #: builtin/ls-files.c:654 builtin/ls-files.c:657 builtin/notes.c:410
@@ -1664,7 +1664,7 @@ msgstr "未知參數 --remote"
 
 #: archive.c:580 fetch-pack.c:300 revision.c:2914 builtin/add.c:530
 #: builtin/add.c:562 builtin/checkout.c:1782 builtin/clone.c:1099
-#: builtin/clone.c:1102 builtin/commit.c:371 builtin/fast-export.c:1230
+#: builtin/clone.c:1102 builtin/cummit.c:371 builtin/fast-export.c:1230
 #: builtin/index-pack.c:1854 builtin/log.c:2140 builtin/reset.c:442
 #: builtin/reset.c:500 builtin/rm.c:281 builtin/stash.c:1708
 #: builtin/worktree.c:580 builtin/worktree.c:781 http-fetch.c:144
@@ -1717,7 +1717,7 @@ msgstr "我們無法進行更多的二分搜尋！\n"
 
 #: bisect.c:765
 #, c-format
-msgid "Not a valid commit name %s"
+msgid "Not a valid cummit name %s"
 msgstr "不是一個有效的提交名 %s"
 
 #: bisect.c:790
@@ -1742,7 +1742,7 @@ msgstr ""
 #, c-format
 msgid ""
 "The merge base %s is %s.\n"
-"This means the first '%s' commit is between %s and [%s].\n"
+"This means the first '%s' cummit is between %s and [%s].\n"
 msgstr ""
 "合併基礎 %s 是 %s。\n"
 "這意味著第一個 '%s' 提交位於 %s 和 [%s] 之間。\n"
@@ -1762,7 +1762,7 @@ msgstr ""
 #, c-format
 msgid ""
 "the merge base between %s and [%s] must be skipped.\n"
-"So we cannot be sure the first %s commit is between %s and %s.\n"
+"So we cannot be sure the first %s cummit is between %s and %s.\n"
 "We continue anyway."
 msgstr ""
 "介於 %s 和 [%s] 的合併基礎一定被忽略了。\n"
@@ -1801,7 +1801,7 @@ msgstr "%s 同時為 %s 和 %s\n"
 #: bisect.c:1065
 #, c-format
 msgid ""
-"No testable commit found.\n"
+"No testable cummit found.\n"
 "Maybe you started with bad path arguments?\n"
 msgstr ""
 "沒找到能夠測試的提交。\n"
@@ -1827,15 +1827,15 @@ msgid "--contents and --reverse do not blend well."
 msgstr "--contents 和 --reverse 不能混用。"
 
 #: blame.c:2787
-msgid "cannot use --contents with final commit object name"
+msgid "cannot use --contents with final cummit object name"
 msgstr "不能將 --contents 和最終的提交物件名共用"
 
 #: blame.c:2808
-msgid "--reverse and --first-parent together require specified latest commit"
+msgid "--reverse and --first-parent together require specified latest cummit"
 msgstr "--reverse 和 --first-parent 共用，需要指定最新的提交"
 
 #: blame.c:2817 bundle.c:231 midx.c:1058 ref-filter.c:2371 remote.c:2157
-#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/commit.c:1118
+#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/cummit.c:1118
 #: builtin/log.c:437 builtin/log.c:1055 builtin/log.c:1663 builtin/log.c:2096
 #: builtin/log.c:2387 builtin/merge.c:431 builtin/pack-objects.c:3381
 #: builtin/pack-objects.c:3781 builtin/pack-objects.c:3796
@@ -2060,13 +2060,13 @@ msgid "unrecognized header: %s%s (%d)"
 msgstr "無法識別的包頭：%s%s (%d)"
 
 #: bundle.c:145 rerere.c:464 rerere.c:675 sequencer.c:2616 sequencer.c:3402
-#: builtin/commit.c:865
+#: builtin/cummit.c:865
 #, c-format
 msgid "could not open '%s'"
 msgstr "不能開啟 '%s'"
 
 #: bundle.c:203
-msgid "Repository lacks these prerequisite commits:"
+msgid "Repository lacks these prerequisite cummits:"
 msgstr "版本庫中缺少這些必備的提交："
 
 #: bundle.c:206
@@ -2158,261 +2158,261 @@ msgstr "最終區塊有非零 ID %<PRIx32>"
 msgid "invalid color value: %.*s"
 msgstr "無效的顏色值：%.*s"
 
-#: commit-graph.c:204 midx.c:52
+#: cummit-graph.c:204 midx.c:52
 msgid "invalid hash version"
 msgstr "無效的雜湊版本"
 
-#: commit-graph.c:262
-msgid "commit-graph file is too small"
+#: cummit-graph.c:262
+msgid "cummit-graph file is too small"
 msgstr "提交圖形檔案太小"
 
-#: commit-graph.c:355
+#: cummit-graph.c:355
 #, c-format
-msgid "commit-graph signature %X does not match signature %X"
+msgid "cummit-graph signature %X does not match signature %X"
 msgstr "提交圖形簽名 %X 和簽名 %X 不符合"
 
-#: commit-graph.c:362
+#: cummit-graph.c:362
 #, c-format
-msgid "commit-graph version %X does not match version %X"
+msgid "cummit-graph version %X does not match version %X"
 msgstr "提交圖形版本 %X 和版本 %X 不符合"
 
-#: commit-graph.c:369
+#: cummit-graph.c:369
 #, c-format
-msgid "commit-graph hash version %X does not match version %X"
+msgid "cummit-graph hash version %X does not match version %X"
 msgstr "提交圖形雜湊版本 %X 和版本 %X 不符合"
 
-#: commit-graph.c:386
+#: cummit-graph.c:386
 #, c-format
-msgid "commit-graph file is too small to hold %u chunks"
-msgstr "commit-graph 檔案不夠放置 %u 個區塊"
+msgid "cummit-graph file is too small to hold %u chunks"
+msgstr "cummit-graph 檔案不夠放置 %u 個區塊"
 
-#: commit-graph.c:485
-msgid "commit-graph has no base graphs chunk"
+#: cummit-graph.c:485
+msgid "cummit-graph has no base graphs chunk"
 msgstr "提交圖形沒有基礎圖形區塊"
 
-#: commit-graph.c:495
-msgid "commit-graph chain does not match"
+#: cummit-graph.c:495
+msgid "cummit-graph chain does not match"
 msgstr "提交圖形鏈不符合"
 
-#: commit-graph.c:543
+#: cummit-graph.c:543
 #, c-format
-msgid "invalid commit-graph chain: line '%s' not a hash"
+msgid "invalid cummit-graph chain: line '%s' not a hash"
 msgstr "無效的提交圖形鏈：行 '%s' 不是一個雜湊值"
 
-#: commit-graph.c:567
-msgid "unable to find all commit-graph files"
+#: cummit-graph.c:567
+msgid "unable to find all cummit-graph files"
 msgstr "無法找到所有提交圖形檔案"
 
-#: commit-graph.c:752 commit-graph.c:789
-msgid "invalid commit position. commit-graph is likely corrupt"
+#: cummit-graph.c:752 cummit-graph.c:789
+msgid "invalid cummit position. cummit-graph is likely corrupt"
 msgstr "無效的提交位置。提交圖形可能已損壞"
 
-#: commit-graph.c:773
+#: cummit-graph.c:773
 #, c-format
-msgid "could not find commit %s"
+msgid "could not find cummit %s"
 msgstr "無法找到提交 %s"
 
-#: commit-graph.c:806
-msgid "commit-graph requires overflow generation data but has none"
+#: cummit-graph.c:806
+msgid "cummit-graph requires overflow generation data but has none"
 msgstr "提交圖需要比目前更多的世代資料，但沒有相關資料"
 
-#: commit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
+#: cummit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
 #: builtin/clone.c:705
 #, c-format
-msgid "unable to parse commit %s"
+msgid "unable to parse cummit %s"
 msgstr "不能解析提交 %s"
 
-#: commit-graph.c:1373 builtin/pack-objects.c:3078
+#: cummit-graph.c:1373 builtin/pack-objects.c:3078
 #, c-format
 msgid "unable to get type of object %s"
 msgstr "無法獲得物件 %s 類型"
 
-#: commit-graph.c:1404
-msgid "Loading known commits in commit graph"
+#: cummit-graph.c:1404
+msgid "Loading known cummits in cummit graph"
 msgstr "正在載入提交圖中的已知提交"
 
-#: commit-graph.c:1421
-msgid "Expanding reachable commits in commit graph"
+#: cummit-graph.c:1421
+msgid "Expanding reachable cummits in cummit graph"
 msgstr "正在展開提交圖中的可以取得的提交"
 
-#: commit-graph.c:1441
-msgid "Clearing commit marks in commit graph"
+#: cummit-graph.c:1441
+msgid "Clearing cummit marks in cummit graph"
 msgstr "正在清除提交圖中的提交標記"
 
-#: commit-graph.c:1460
-msgid "Computing commit graph topological levels"
+#: cummit-graph.c:1460
+msgid "Computing cummit graph topological levels"
 msgstr "正在計算提交圖拓樸級別"
 
-#: commit-graph.c:1513
-msgid "Computing commit graph generation numbers"
+#: cummit-graph.c:1513
+msgid "Computing cummit graph generation numbers"
 msgstr "正在計算提交圖世代數字"
 
-#: commit-graph.c:1598
-msgid "Computing commit changed paths Bloom filters"
+#: cummit-graph.c:1598
+msgid "Computing cummit changed paths Bloom filters"
 msgstr "正在計算提交變更路徑的布隆過濾器"
 
-#: commit-graph.c:1675
-msgid "Collecting referenced commits"
+#: cummit-graph.c:1675
+msgid "Collecting referenced cummits"
 msgstr "正在收集引用提交"
 
-#: commit-graph.c:1701
+#: cummit-graph.c:1701
 #, c-format
-msgid "Finding commits for commit graph in %<PRIuMAX> pack"
-msgid_plural "Finding commits for commit graph in %<PRIuMAX> packs"
+msgid "Finding cummits for cummit graph in %<PRIuMAX> pack"
+msgid_plural "Finding cummits for cummit graph in %<PRIuMAX> packs"
 msgstr[0] "正在從 %<PRIuMAX> 個包中尋找提交圖的提交"
 
-#: commit-graph.c:1714
+#: cummit-graph.c:1714
 #, c-format
 msgid "error adding pack %s"
 msgstr "新增包 %s 發生錯誤"
 
-#: commit-graph.c:1718
+#: cummit-graph.c:1718
 #, c-format
 msgid "error opening index for %s"
 msgstr "為 %s 開啟索引發生錯誤"
 
-#: commit-graph.c:1756
-msgid "Finding commits for commit graph among packed objects"
+#: cummit-graph.c:1756
+msgid "Finding cummits for cummit graph among packed objects"
 msgstr "正在打包物件中尋找提交圖的提交"
 
-#: commit-graph.c:1774
-msgid "Finding extra edges in commit graph"
+#: cummit-graph.c:1774
+msgid "Finding extra edges in cummit graph"
 msgstr "正在尋找提交圖中額外的邊"
 
-#: commit-graph.c:1823
+#: cummit-graph.c:1823
 msgid "failed to write correct number of base graph ids"
 msgstr "無法寫入正確數量的基礎圖形 ID"
 
-#: commit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
+#: cummit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
 #, c-format
 msgid "unable to create leading directories of %s"
 msgstr "不能為 %s 建立先導目錄"
 
-#: commit-graph.c:1868
+#: cummit-graph.c:1868
 msgid "unable to create temporary graph layer"
 msgstr "無法建立暫時的圖形層"
 
-#: commit-graph.c:1873
+#: cummit-graph.c:1873
 #, c-format
 msgid "unable to adjust shared permissions for '%s'"
 msgstr "無法調整「%s」的共用權限"
 
-#: commit-graph.c:1930
+#: cummit-graph.c:1930
 #, c-format
-msgid "Writing out commit graph in %d pass"
-msgid_plural "Writing out commit graph in %d passes"
+msgid "Writing out cummit graph in %d pass"
+msgid_plural "Writing out cummit graph in %d passes"
 msgstr[0] "正在用 %d 步寫出提交圖"
 
-#: commit-graph.c:1967
-msgid "unable to open commit-graph chain file"
+#: cummit-graph.c:1967
+msgid "unable to open cummit-graph chain file"
 msgstr "無法開啟提交圖形鏈檔案"
 
-#: commit-graph.c:1983
-msgid "failed to rename base commit-graph file"
+#: cummit-graph.c:1983
+msgid "failed to rename base cummit-graph file"
 msgstr "無法重新命名基礎提交圖形檔案"
 
-#: commit-graph.c:2004
-msgid "failed to rename temporary commit-graph file"
+#: cummit-graph.c:2004
+msgid "failed to rename temporary cummit-graph file"
 msgstr "無法重新命名暫時提交圖形檔案"
 
-#: commit-graph.c:2137
-msgid "Scanning merged commits"
+#: cummit-graph.c:2137
+msgid "Scanning merged cummits"
 msgstr "正在掃描合併提交"
 
-#: commit-graph.c:2181
-msgid "Merging commit-graph"
+#: cummit-graph.c:2181
+msgid "Merging cummit-graph"
 msgstr "正在合併提交圖形"
 
-#: commit-graph.c:2289
-msgid "attempting to write a commit-graph, but 'core.commitGraph' is disabled"
-msgstr "嘗試寫入提交圖形，但 “core.commitGraph” 已被停用"
+#: cummit-graph.c:2289
+msgid "attempting to write a cummit-graph, but 'core.cummitGraph' is disabled"
+msgstr "嘗試寫入提交圖形，但 “core.cummitGraph” 已被停用"
 
-#: commit-graph.c:2396
-msgid "too many commits to write graph"
+#: cummit-graph.c:2396
+msgid "too many cummits to write graph"
 msgstr "提交太多不能畫圖"
 
-#: commit-graph.c:2494
-msgid "the commit-graph file has incorrect checksum and is likely corrupt"
+#: cummit-graph.c:2494
+msgid "the cummit-graph file has incorrect checksum and is likely corrupt"
 msgstr "提交圖檔案的總和檢查碼錯誤，可能已經損壞"
 
-#: commit-graph.c:2504
+#: cummit-graph.c:2504
 #, c-format
-msgid "commit-graph has incorrect OID order: %s then %s"
+msgid "cummit-graph has incorrect OID order: %s then %s"
 msgstr "提交圖形的物件 ID 順序不正確：%s 然後 %s"
 
-#: commit-graph.c:2514 commit-graph.c:2529
+#: cummit-graph.c:2514 cummit-graph.c:2529
 #, c-format
-msgid "commit-graph has incorrect fanout value: fanout[%d] = %u != %u"
+msgid "cummit-graph has incorrect fanout value: fanout[%d] = %u != %u"
 msgstr "提交圖形有不正確的扇出值：fanout[%d] = %u != %u"
 
-#: commit-graph.c:2521
+#: cummit-graph.c:2521
 #, c-format
-msgid "failed to parse commit %s from commit-graph"
+msgid "failed to parse cummit %s from cummit-graph"
 msgstr "無法從提交圖形中解析提交 %s"
 
-#: commit-graph.c:2539
-msgid "Verifying commits in commit graph"
+#: cummit-graph.c:2539
+msgid "Verifying cummits in cummit graph"
 msgstr "正在驗證提交圖中的提交"
 
-#: commit-graph.c:2554
+#: cummit-graph.c:2554
 #, c-format
-msgid "failed to parse commit %s from object database for commit-graph"
+msgid "failed to parse cummit %s from object database for cummit-graph"
 msgstr "無法從提交圖形的物件庫中解析提交 %s"
 
-#: commit-graph.c:2561
+#: cummit-graph.c:2561
 #, c-format
-msgid "root tree OID for commit %s in commit-graph is %s != %s"
+msgid "root tree OID for cummit %s in cummit-graph is %s != %s"
 msgstr "提交圖形中的提交 %s 的根樹狀物件 ID 是 %s != %s"
 
-#: commit-graph.c:2571
+#: cummit-graph.c:2571
 #, c-format
-msgid "commit-graph parent list for commit %s is too long"
+msgid "cummit-graph parent list for cummit %s is too long"
 msgstr "提交 %s 的提交圖形父提交列表太長了"
 
-#: commit-graph.c:2580
+#: cummit-graph.c:2580
 #, c-format
-msgid "commit-graph parent for %s is %s != %s"
+msgid "cummit-graph parent for %s is %s != %s"
 msgstr "%s 的提交圖形父提交是 %s != %s"
 
-#: commit-graph.c:2594
+#: cummit-graph.c:2594
 #, c-format
-msgid "commit-graph parent list for commit %s terminates early"
+msgid "cummit-graph parent list for cummit %s terminates early"
 msgstr "提交 %s 的提交圖形父提交列表過早終止"
 
-#: commit-graph.c:2599
+#: cummit-graph.c:2599
 #, c-format
 msgid ""
-"commit-graph has generation number zero for commit %s, but non-zero elsewhere"
+"cummit-graph has generation number zero for cummit %s, but non-zero elsewhere"
 msgstr "提交圖形中提交 %s 的世代號是零，但其它地方非零"
 
-#: commit-graph.c:2603
+#: cummit-graph.c:2603
 #, c-format
 msgid ""
-"commit-graph has non-zero generation number for commit %s, but zero elsewhere"
+"cummit-graph has non-zero generation number for cummit %s, but zero elsewhere"
 msgstr "提交圖形中提交 %s 的世代號非零，但其它地方是零"
 
-#: commit-graph.c:2620
+#: cummit-graph.c:2620
 #, c-format
-msgid "commit-graph generation for commit %s is %<PRIuMAX> < %<PRIuMAX>"
+msgid "cummit-graph generation for cummit %s is %<PRIuMAX> < %<PRIuMAX>"
 msgstr "提交 %s 的提交圖形處於 %<PRIuMAX> < %<PRIuMAX> 世代"
 
-#: commit-graph.c:2626
+#: cummit-graph.c:2626
 #, c-format
-msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
+msgid "cummit date for cummit %s in cummit-graph is %<PRIuMAX> != %<PRIuMAX>"
 msgstr "提交圖形中提交 %s 的提交日期是 %<PRIuMAX> != %<PRIuMAX>"
 
-#: commit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
+#: cummit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
 #: builtin/am.c:450 builtin/am.c:1449 builtin/am.c:2124 builtin/replace.c:456
 #, c-format
 msgid "could not parse %s"
 msgstr "不能解析 %s"
 
-#: commit.c:56
+#: cummit.c:56
 #, c-format
-msgid "%s %s is not a commit!"
+msgid "%s %s is not a cummit!"
 msgstr "%s %s 不是一個提交！"
 
-#: commit.c:197
+#: cummit.c:197
 msgid ""
 "Support for <GIT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
@@ -2432,34 +2432,34 @@ msgstr ""
 "設定 \"git config advice.graftFileDeprecated false\"\n"
 "可關閉本消息"
 
-#: commit.c:1252
+#: cummit.c:1252
 #, c-format
-msgid "Commit %s has an untrusted GPG signature, allegedly by %s."
+msgid "cummit %s has an untrusted GPG signature, allegedly by %s."
 msgstr "提交 %s 有一個非可信的聲稱來自 %s 的 GPG 簽名。"
 
-#: commit.c:1256
+#: cummit.c:1256
 #, c-format
-msgid "Commit %s has a bad GPG signature allegedly by %s."
+msgid "cummit %s has a bad GPG signature allegedly by %s."
 msgstr "提交 %s 有一個錯誤的聲稱來自 %s 的 GPG 簽名。"
 
-#: commit.c:1259
+#: cummit.c:1259
 #, c-format
-msgid "Commit %s does not have a GPG signature."
+msgid "cummit %s does not have a GPG signature."
 msgstr "提交 %s 沒有 GPG 簽名。"
 
-#: commit.c:1262
+#: cummit.c:1262
 #, c-format
-msgid "Commit %s has a good GPG signature by %s\n"
+msgid "cummit %s has a good GPG signature by %s\n"
 msgstr "提交 %s 有一個來自 %s 的好的 GPG 簽名。\n"
 
-#: commit.c:1516
+#: cummit.c:1516
 msgid ""
-"Warning: commit message did not conform to UTF-8.\n"
+"Warning: cummit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
-"variable i18n.commitencoding to the encoding your project uses.\n"
+"variable i18n.cummitencoding to the encoding your project uses.\n"
 msgstr ""
 "警告：提交說明不符合 UTF-8 字元編碼。\n"
-"您可以透過修補提交來改正提交說明，或者將設定變數 i18n.commitencoding\n"
+"您可以透過修補提交來改正提交說明，或者將設定變數 i18n.cummitencoding\n"
 "設定為您項目所用的字元編碼。\n"
 
 #: compat/obstack.c:406 compat/obstack.c:408
@@ -3282,7 +3282,7 @@ msgid "--merge-base does not work with ranges"
 msgstr "--merge-base 跟範圍無法搭配運作"
 
 #: diff-lib.c:563
-msgid "--merge-base only works with commits"
+msgid "--merge-base only works with cummits"
 msgstr "--merge-base 只能跟提交搭配才能運作"
 
 #: diff-lib.c:580
@@ -4078,7 +4078,7 @@ msgstr "得到 %s %d %s"
 
 #: fetch-pack.c:470
 #, c-format
-msgid "invalid commit %s"
+msgid "invalid cummit %s"
 msgstr "無效提交 %s"
 
 #: fetch-pack.c:501
@@ -4164,7 +4164,7 @@ msgid "Server does not support this repository's object format"
 msgstr "伺服器不支援此版本庫的物件格式"
 
 #: fetch-pack.c:1142
-msgid "no common commits"
+msgid "no common cummits"
 msgstr "沒有共同的提交"
 
 #: fetch-pack.c:1151 fetch-pack.c:1506 builtin/clone.c:1166
@@ -4584,7 +4584,7 @@ msgid "Author identity unknown\n"
 msgstr "作者身分未知\n"
 
 #: ident.c:357
-msgid "Committer identity unknown\n"
+msgid "cummitter identity unknown\n"
 msgstr "提交者身分未知\n"
 
 #: ident.c:363
@@ -4641,7 +4641,7 @@ msgstr "不允許空的姓名（對於 <%s>）"
 msgid "name consists only of disallowed characters: %s"
 msgstr "姓名中僅包含停用字元：%s"
 
-#: ident.c:455 builtin/commit.c:649
+#: ident.c:455 builtin/cummit.c:649
 #, c-format
 msgid "invalid date format: %s"
 msgstr "無效的日期格式：%s"
@@ -4703,7 +4703,7 @@ msgstr "樹 %2$s 中的條目 '%1$s' 具有資料物件的屬性，但不是一�
 
 #: list-objects.c:415
 #, c-format
-msgid "unable to load root tree for commit %s"
+msgid "unable to load root tree for cummit %s"
 msgstr "無法為提交 %s 載入根樹"
 
 #: lockfile.c:152
@@ -4712,7 +4712,7 @@ msgid ""
 "Unable to create '%s.lock': %s.\n"
 "\n"
 "Another git process seems to be running in this repository, e.g.\n"
-"an editor opened by 'git commit'. Please make sure all processes\n"
+"an editor opened by 'git cummit'. Please make sure all processes\n"
 "are terminated then try again. If it still fails, a git process\n"
 "may have crashed in this repository earlier:\n"
 "remove the file manually to continue."
@@ -4720,7 +4720,7 @@ msgstr ""
 "無法建立 '%s.lock'：%s。\n"
 "\n"
 "這個版本庫似乎有另一個 git 處理程序在執行，\n"
-"例如「git commit」命令開啟的編輯器。\n"
+"例如「git cummit」命令開啟的編輯器。\n"
 "請確認所有處理程序都已經終止後再重試一次。如果錯誤沒有消失，\n"
 "有可能是之前在這個版本庫執行的 git 處理程序當掉了。\n"
 "如果是這樣，請自行刪除這個檔案再繼續。"
@@ -4755,12 +4755,12 @@ msgstr "無法合併子模組 %s （沒有簽出）"
 
 #: merge-ort.c:1639 merge-recursive.c:1221
 #, c-format
-msgid "Failed to merge submodule %s (commits not present)"
+msgid "Failed to merge submodule %s (cummits not present)"
 msgstr "無法合併子模組 %s（提交不存在）"
 
 #: merge-ort.c:1648 merge-recursive.c:1228
 #, c-format
-msgid "Failed to merge submodule %s (commits don't follow merge-base)"
+msgid "Failed to merge submodule %s (cummits don't follow merge-base)"
 msgstr "無法合併子模組 %s （提交未跟隨合併基礎）"
 
 #: merge-ort.c:1658 merge-ort.c:1666
@@ -5004,7 +5004,7 @@ msgid "Already up to date."
 msgstr "已經是最新的。"
 
 #: merge-recursive.c:353
-msgid "(bad commit)\n"
+msgid "(bad cummit)\n"
 msgstr "（壞提交）\n"
 
 #: merge-recursive.c:381
@@ -5063,7 +5063,7 @@ msgstr "不知道如何處理 %06o %s '%s'"
 
 #: merge-recursive.c:1236 merge-recursive.c:1249
 #, c-format
-msgid "Fast-forwarding submodule %s to the following commit:"
+msgid "Fast-forwarding submodule %s to the following cummit:"
 msgstr "子模組 %s 快轉到如下提交："
 
 #: merge-recursive.c:1239 merge-recursive.c:1252
@@ -5073,7 +5073,7 @@ msgstr "快轉子模組 %s"
 
 #: merge-recursive.c:1276
 #, c-format
-msgid "Failed to merge submodule %s (merge following commits not found)"
+msgid "Failed to merge submodule %s (merge following cummits not found)"
 msgstr "無法合併子模組 %s （沒發現合併跟隨的提交）"
 
 #: merge-recursive.c:1280
@@ -5266,7 +5266,7 @@ msgid_plural "found %u common ancestors:"
 msgstr[0] "發現 %u 個共同祖先："
 
 #: merge-recursive.c:3651
-msgid "merge returned no commit"
+msgid "merge returned no cummit"
 msgstr "合併未返回提交"
 
 #: merge-recursive.c:3823
@@ -5524,11 +5524,11 @@ msgstr "不能加入 lazy_name 執行緒：%s"
 #, c-format
 msgid ""
 "You have not concluded your previous notes merge (%s exists).\n"
-"Please, use 'git notes merge --commit' or 'git notes merge --abort' to "
-"commit/abort the previous merge before you start a new notes merge."
+"Please, use 'git notes merge --cummit' or 'git notes merge --abort' to "
+"cummit/abort the previous merge before you start a new notes merge."
 msgstr ""
 "您的前一次備註合併尚未結束（存在 %s）。\n"
-"在開始一個新的備註合併之前，請使用 'git notes merge --commit' 或者 'git "
+"在開始一個新的備註合併之前，請使用 'git notes merge --cummit' 或者 'git "
 "notes merge --abort' 來提交/終止前一次合併。"
 
 #: notes-merge.c:283
@@ -5537,7 +5537,7 @@ msgid "You have not concluded your notes merge (%s exists)."
 msgstr "您尚未結束備註合併（存在 %s）。"
 
 #: notes-utils.c:46
-msgid "Cannot commit uninitialized/unreferenced notes tree"
+msgid "Cannot cummit uninitialized/unreferenced notes tree"
 msgstr "不能提交未初始化/未引用的註解樹"
 
 #: notes-utils.c:105
@@ -5747,7 +5747,7 @@ msgid "cannot read object for %s"
 msgstr "不能讀取物件 %s"
 
 #: object-file.c:2151
-msgid "corrupt commit"
+msgid "corrupt cummit"
 msgstr "損壞的提交"
 
 #: object-file.c:2159
@@ -5823,14 +5823,14 @@ msgstr "無法解壓縮 %s 的內容"
 msgid "%s [bad object]"
 msgstr "%s [無效物件]"
 
-#. TRANSLATORS: This is a line of ambiguous commit
+#. TRANSLATORS: This is a line of ambiguous cummit
 #. object output. E.g.:
 #. *
-#. "deadbeef commit 2021-01-01 - Some Commit Message"
+#. "deadbeef cummit 2021-01-01 - Some cummit Message"
 #.
 #: object-name.c:407
 #, c-format
-msgid "%s commit %s - %s"
+msgid "%s cummit %s - %s"
 msgstr "%s 提交 %s - %s"
 
 #. TRANSLATORS: This is a line of ambiguous
@@ -6098,7 +6098,7 @@ msgstr "位移量在 %s 的包索引開始之前（損壞的索引？）"
 msgid "offset beyond end of pack index for %s (truncated index?)"
 msgstr "位移量越過了 %s 的包索引的結尾（被截斷的索引？）"
 
-#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/commit-graph.c:175
+#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/cummit-graph.c:175
 #, c-format
 msgid "option `%s' expects a numerical value"
 msgstr "選項 `%s' 期望一個數字值"
@@ -6419,15 +6419,15 @@ msgstr "不能讀取 `log` 的輸出"
 
 #: range-diff.c:98 sequencer.c:5575
 #, c-format
-msgid "could not parse commit '%s'"
+msgid "could not parse cummit '%s'"
 msgstr "不能解析提交 '%s'"
 
 #: range-diff.c:109
 #, c-format
 msgid ""
-"could not parse first line of `log` output: did not start with 'commit ': "
+"could not parse first line of `log` output: did not start with 'cummit ': "
 "'%s'"
-msgstr "無法解析第一行「log」輸出：開頭不是「commit」：「%s」"
+msgstr "無法解析第一行「log」輸出：開頭不是「cummit」：「%s」"
 
 #: range-diff.c:132
 #, c-format
@@ -6459,7 +6459,7 @@ msgstr "%s：只能新增一般檔案、符號連結或 git 目錄"
 
 #: read-cache.c:780 builtin/submodule--helper.c:3359
 #, c-format
-msgid "'%s' does not have a commit checked out"
+msgid "'%s' does not have a cummit checked out"
 msgstr "'%s' 沒有簽出一個提交"
 
 #: read-cache.c:832
@@ -6556,7 +6556,7 @@ msgstr "'%s' 的未排序暫存條目"
 #: read-cache.c:2096 read-cache.c:2402 rerere.c:549 rerere.c:583 rerere.c:1096
 #: submodule.c:1831 builtin/add.c:586 builtin/check-ignore.c:183
 #: builtin/checkout.c:532 builtin/checkout.c:724 builtin/clean.c:1016
-#: builtin/commit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
+#: builtin/cummit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
 #: builtin/mv.c:148 builtin/reset.c:506 builtin/rm.c:293
 #: builtin/submodule--helper.c:335 builtin/submodule--helper.c:3319
 msgid "index file corrupt"
@@ -6662,30 +6662,30 @@ msgstr ""
 #: rebase-interactive.c:33
 #, c-format
 msgid ""
-"unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
-msgstr "選項 rebase.missingCommitsCheck 的值 %s 無法識別。已忽略。"
+"unrecognized setting %s for option rebase.missingcummitsCheck. Ignoring."
+msgstr "選項 rebase.missingcummitsCheck 的值 %s 無法識別。已忽略。"
 
 #: rebase-interactive.c:42
 msgid ""
 "\n"
 "Commands:\n"
-"p, pick <commit> = use commit\n"
-"r, reword <commit> = use commit, but edit the commit message\n"
-"e, edit <commit> = use commit, but stop for amending\n"
-"s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup [-C | -c] <commit> = like \"squash\" but keep only the previous\n"
-"                   commit's log message, unless -C is used, in which case\n"
-"                   keep only this commit's message; -c is same as -C but\n"
+"p, pick <cummit> = use cummit\n"
+"r, reword <cummit> = use cummit, but edit the cummit message\n"
+"e, edit <cummit> = use cummit, but stop for amending\n"
+"s, squash <cummit> = use cummit, but meld into previous cummit\n"
+"f, fixup [-C | -c] <cummit> = like \"squash\" but keep only the previous\n"
+"                   cummit's log message, unless -C is used, in which case\n"
+"                   keep only this cummit's message; -c is same as -C but\n"
 "                   opens the editor\n"
 "x, exec <command> = run command (the rest of the line) using shell\n"
 "b, break = stop here (continue rebase later with 'git rebase --continue')\n"
-"d, drop <commit> = remove commit\n"
+"d, drop <cummit> = remove cummit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified); use -c <commit> to reword the commit message\n"
+"m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+".       create a merge cummit using the original merge cummit's\n"
+".       message (or the oneline, if no original merge cummit was\n"
+".       specified); use -c <cummit> to reword the cummit message\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
@@ -6703,10 +6703,10 @@ msgstr ""
 "d, drop <提交> = 移除提交\n"
 "l, label <標籤> = 為目前 HEAD 打上指定名字標籤\n"
 "t, reset <標籤> = 重設 HEAD 到指定標籤\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
+"m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
 ".       建立一個合併提交，並使用原始的合併提交說明（如果沒有指定\n"
 ".       原始提交，使用備註部分的 oneline 作為提交說明）。使用\n"
-".       -c <commit> 可以編輯提交說明。\n"
+".       -c <cummit> 可以編輯提交說明。\n"
 "\n"
 "可以對這些行重新排序，會從上至下執行。\n"
 
@@ -6719,7 +6719,7 @@ msgstr[0] "重定基底 %s 到 %s（%d 個提交）"
 #: rebase-interactive.c:75
 msgid ""
 "\n"
-"Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
+"Do not remove any line. Use 'drop' explicitly to remove a cummit.\n"
 msgstr ""
 "\n"
 "不要刪除任意一行。使用 'drop' 顯式地刪除一個提交。\n"
@@ -6727,7 +6727,7 @@ msgstr ""
 #: rebase-interactive.c:78
 msgid ""
 "\n"
-"If you remove a line here THAT COMMIT WILL BE LOST.\n"
+"If you remove a line here THAT cummit WILL BE LOST.\n"
 msgstr ""
 "\n"
 "如果您在這裡刪除一行，對應的提交將會遺失。\n"
@@ -6771,8 +6771,8 @@ msgstr "不能寫入 '%s'。"
 #: rebase-interactive.c:196
 #, c-format
 msgid ""
-"Warning: some commits may have been dropped accidentally.\n"
-"Dropped commits (newer to older):\n"
+"Warning: some cummits may have been dropped accidentally.\n"
+"Dropped cummits (newer to older):\n"
 msgstr ""
 "警告：一些提交可能被意外捨棄。\n"
 "捨棄的提交（從新到舊）：\n"
@@ -6780,16 +6780,16 @@ msgstr ""
 #: rebase-interactive.c:203
 #, c-format
 msgid ""
-"To avoid this message, use \"drop\" to explicitly remove a commit.\n"
+"To avoid this message, use \"drop\" to explicitly remove a cummit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
+"Use 'git config rebase.missingcummitsCheck' to change the level of "
 "warnings.\n"
 "The possible behaviours are: ignore, warn, error.\n"
 "\n"
 msgstr ""
 "為避免這條訊息，使用 \"drop\" 指令顯式地刪除一個提交。\n"
 "\n"
-"使用 'git config rebase.missingCommitsCheck' 來修改警告級別。\n"
+"使用 'git config rebase.missingcummitsCheck' 來修改警告級別。\n"
 "可選值有：ignore、warn、error。\n"
 "\n"
 
@@ -7030,7 +7030,7 @@ msgstr "格式錯誤的物件名 %s"
 
 #: ref-filter.c:2746
 #, c-format
-msgid "option `%s' must point to a commit"
+msgid "option `%s' must point to a cummit"
 msgstr "選項 `%s' 必須指向一個提交"
 
 #: reflog.c:407
@@ -7234,7 +7234,7 @@ msgstr ""
 #: remote.c:1231
 #, c-format
 msgid ""
-"The <src> part of the refspec is a commit object.\n"
+"The <src> part of the refspec is a cummit object.\n"
 "Did you mean to create a new branch by pushing to\n"
 "'%s:refs/heads/%s'?"
 msgstr ""
@@ -7363,7 +7363,7 @@ msgstr "您的分支與上游分支 '%s' 一致。\n"
 
 #: remote.c:2246
 #, c-format
-msgid "Your branch and '%s' refer to different commits.\n"
+msgid "Your branch and '%s' refer to different cummits.\n"
 msgstr "您的分支和 '%s' 指向不同的提交。\n"
 
 #: remote.c:2249
@@ -7373,19 +7373,19 @@ msgstr "  （使用 \"%s\" 檢視詳情）\n"
 
 #: remote.c:2253
 #, c-format
-msgid "Your branch is ahead of '%s' by %d commit.\n"
-msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
+msgid "Your branch is ahead of '%s' by %d cummit.\n"
+msgid_plural "Your branch is ahead of '%s' by %d cummits.\n"
 msgstr[0] "您的分支領先 '%s' 共 %d 個提交。\n"
 
 #: remote.c:2259
-msgid "  (use \"git push\" to publish your local commits)\n"
+msgid "  (use \"git push\" to publish your local cummits)\n"
 msgstr "  （使用 \"git push\" 來發布您的本機提交）\n"
 
 #: remote.c:2262
 #, c-format
-msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
+msgid "Your branch is behind '%s' by %d cummit, and can be fast-forwarded.\n"
 msgid_plural ""
-"Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
+"Your branch is behind '%s' by %d cummits, and can be fast-forwarded.\n"
 msgstr[0] "您的分支落後 '%s' 共 %d 個提交，並且可以快轉。\n"
 
 #  譯者：請維持前導空格
@@ -7397,10 +7397,10 @@ msgstr "  （使用 \"git pull\" 來更新您的本機分支）\n"
 #, c-format
 msgid ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commit each, respectively.\n"
+"and have %d and %d different cummit each, respectively.\n"
 msgid_plural ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commits each, respectively.\n"
+"and have %d and %d different cummits each, respectively.\n"
 msgstr[0] ""
 "您的分支和 '%s' 出現了偏離，\n"
 "並且分別有 %d 和 %d 處不同的提交。\n"
@@ -7542,7 +7542,7 @@ msgstr "您的目前分支好像被損壞"
 
 #: revision.c:2715
 #, c-format
-msgid "your current branch '%s' does not have any commits yet"
+msgid "your current branch '%s' does not have any cummits yet"
 msgstr "您的目前分支 '%s' 尚無任何提交"
 
 #: revision.c:2901
@@ -7608,7 +7608,7 @@ msgstr "接收端不支援推送選項"
 
 #: sequencer.c:197
 #, c-format
-msgid "invalid commit message cleanup mode '%s'"
+msgid "invalid cummit message cleanup mode '%s'"
 msgstr "無效的提交說明清理模式 '%s'"
 
 #: sequencer.c:325
@@ -7652,7 +7652,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git cherry-pick --continue\".\n"
-"You can instead skip this commit with \"git cherry-pick --skip\".\n"
+"You can instead skip this cummit with \"git cherry-pick --skip\".\n"
 "To abort and get back to the state before \"git cherry-pick\",\n"
 "run \"git cherry-pick --abort\"."
 msgstr ""
@@ -7668,7 +7668,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git revert --continue\".\n"
-"You can instead skip this commit with \"git revert --skip\".\n"
+"You can instead skip this cummit with \"git revert --skip\".\n"
 "To abort and get back to the state before \"git revert\",\n"
 "run \"git revert --abort\"."
 msgstr ""
@@ -7702,7 +7702,7 @@ msgid "failed to finalize '%s'"
 msgstr "無法完成 '%s'"
 
 #: sequencer.c:473 sequencer.c:1930 sequencer.c:3112 sequencer.c:3547
-#: sequencer.c:3675 builtin/am.c:290 builtin/commit.c:837 builtin/merge.c:1154
+#: sequencer.c:3675 builtin/am.c:290 builtin/cummit.c:837 builtin/merge.c:1154
 #, c-format
 msgid "could not read '%s'"
 msgstr "不能讀取 '%s'"
@@ -7713,7 +7713,7 @@ msgid "your local changes would be overwritten by %s."
 msgstr "您的本機修改將被%s覆蓋。"
 
 #: sequencer.c:503
-msgid "commit your changes or stash them to proceed."
+msgid "cummit your changes or stash them to proceed."
 msgstr "提交您的修改或儲藏後再繼續。"
 
 #: sequencer.c:535
@@ -7739,7 +7739,7 @@ msgid "unable to update cache tree"
 msgstr "不能更新快取樹"
 
 #: sequencer.c:713
-msgid "could not resolve HEAD commit"
+msgid "could not resolve HEAD cummit"
 msgstr "不能解析 HEAD 提交"
 
 #: sequencer.c:793
@@ -7791,13 +7791,13 @@ msgstr "缺少 'GIT_AUTHOR_DATE'"
 #, c-format
 msgid ""
 "you have staged changes in your working tree\n"
-"If these changes are meant to be squashed into the previous commit, run:\n"
+"If these changes are meant to be squashed into the previous cummit, run:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
-"If they are meant to go into a new commit, run:\n"
+"If they are meant to go into a new cummit, run:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
@@ -7806,19 +7806,19 @@ msgstr ""
 "您的工作區中存在已暫存的修改\n"
 "如果這些修改需要被併入前一個提交，執行：\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "如果這些修改要形成一個新提交，執行：\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "無論哪種情況，當您完成提交，繼續執行：\n"
 "\n"
 "  git rebase --continue\n"
 
 #: sequencer.c:1225
-msgid "'prepare-commit-msg' hook failed"
-msgstr "'prepare-commit-msg' 掛鉤失敗"
+msgid "'prepare-cummit-msg' hook failed"
+msgstr "'prepare-cummit-msg' 掛鉤失敗"
 
 #: sequencer.c:1231
 msgid ""
@@ -7830,9 +7830,9 @@ msgid ""
 "\n"
 "    git config --global --edit\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "您的姓名和信件位址皆根據您的使用者名稱和主機名稱自動設定。\n"
 "請檢查是否正確。您可以自行設定，這樣便不會再出現這個提示訊息。\n"
@@ -7842,7 +7842,7 @@ msgstr ""
 "\n"
 "設定完畢後，您可以使用下述指令，修正這個提交的提交者身份：\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1244
 msgid ""
@@ -7853,9 +7853,9 @@ msgid ""
 "    git config --global user.name \"Your Name\"\n"
 "    git config --global user.email you@example.com\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "您的姓名和信件位址皆根據您的使用者名稱和主機名稱自動設定。\n"
 "請檢查是否正確。您可以自行設定，這樣便不會再出現這個提示訊息：\n"
@@ -7865,18 +7865,18 @@ msgstr ""
 "\n"
 "設定完畢後，您可以使用下述指令，修正這個提交使用的提交者身份：\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1287
-msgid "couldn't look up newly created commit"
+msgid "couldn't look up newly created cummit"
 msgstr "無法找到新建立的提交"
 
 #: sequencer.c:1289
-msgid "could not parse newly created commit"
+msgid "could not parse newly created cummit"
 msgstr "不能解析新建立的提交"
 
 #: sequencer.c:1336
-msgid "unable to resolve HEAD after creating commit"
+msgid "unable to resolve HEAD after creating cummit"
 msgstr "建立提交後，不能解析 HEAD"
 
 #: sequencer.c:1338
@@ -7885,7 +7885,7 @@ msgstr "分離 HEAD"
 
 #  譯者：中文字串拼接，可刪除前導空格
 #: sequencer.c:1342
-msgid " (root-commit)"
+msgid " (root-cummit)"
 msgstr " (根提交)"
 
 #: sequencer.c:1363
@@ -7894,15 +7894,15 @@ msgstr "不能解析 HEAD"
 
 #: sequencer.c:1365
 #, c-format
-msgid "HEAD %s is not a commit!"
+msgid "HEAD %s is not a cummit!"
 msgstr "HEAD %s 不是一個提交！"
 
-#: sequencer.c:1369 sequencer.c:1447 builtin/commit.c:1707
-msgid "could not parse HEAD commit"
+#: sequencer.c:1369 sequencer.c:1447 builtin/cummit.c:1707
+msgid "could not parse HEAD cummit"
 msgstr "不能解析 HEAD 提交"
 
 #: sequencer.c:1425 sequencer.c:2310
-msgid "unable to parse commit author"
+msgid "unable to parse cummit author"
 msgstr "不能解析提交作者"
 
 #: sequencer.c:1436 builtin/am.c:1644 builtin/merge.c:710
@@ -7911,7 +7911,7 @@ msgstr "git write-tree 無法寫入樹狀物件"
 
 #: sequencer.c:1469 sequencer.c:1589
 #, c-format
-msgid "unable to read commit message from '%s'"
+msgid "unable to read cummit message from '%s'"
 msgstr "不能從 '%s' 讀取提交說明"
 
 #: sequencer.c:1500 sequencer.c:1532
@@ -7923,9 +7923,9 @@ msgstr "無效的作者身分 '%s'"
 msgid "corrupt author: missing date information"
 msgstr "作者資訊損壞：缺少日期資訊"
 
-#: sequencer.c:1545 builtin/am.c:1671 builtin/commit.c:1821 builtin/merge.c:921
+#: sequencer.c:1545 builtin/am.c:1671 builtin/cummit.c:1821 builtin/merge.c:921
 #: builtin/merge.c:946 t/helper/test-fast-rebase.c:78
-msgid "failed to write commit object"
+msgid "failed to write cummit object"
 msgstr "寫提交物件失敗"
 
 #: sequencer.c:1572 sequencer.c:4496 t/helper/test-fast-rebase.c:199
@@ -7936,12 +7936,12 @@ msgstr "不能更新 %s"
 
 #: sequencer.c:1621
 #, c-format
-msgid "could not parse commit %s"
+msgid "could not parse cummit %s"
 msgstr "不能解析提交 %s"
 
 #: sequencer.c:1626
 #, c-format
-msgid "could not parse parent commit %s"
+msgid "could not parse parent cummit %s"
 msgstr "不能解析父提交 %s"
 
 #: sequencer.c:1709 sequencer.c:1990
@@ -7950,26 +7950,26 @@ msgid "unknown command: %d"
 msgstr "未知指令：%d"
 
 #: sequencer.c:1751
-msgid "This is the 1st commit message:"
+msgid "This is the 1st cummit message:"
 msgstr "這是第一個提交說明："
 
 #: sequencer.c:1752
 #, c-format
-msgid "This is the commit message #%d:"
+msgid "This is the cummit message #%d:"
 msgstr "這是提交說明 #%d："
 
 #: sequencer.c:1753
-msgid "The 1st commit message will be skipped:"
+msgid "The 1st cummit message will be skipped:"
 msgstr "略過第 1 個提交說明："
 
 #: sequencer.c:1754
 #, c-format
-msgid "The commit message #%d will be skipped:"
+msgid "The cummit message #%d will be skipped:"
 msgstr "略過第 %d 個提交說明："
 
 #: sequencer.c:1755
 #, c-format
-msgid "This is a combination of %d commits."
+msgid "This is a combination of %d cummits."
 msgstr "這是整合 %d 個提交的集合提交。"
 
 #: sequencer.c:1902 sequencer.c:1959
@@ -7986,12 +7986,12 @@ msgid "could not read HEAD"
 msgstr "不能讀取 HEAD"
 
 #: sequencer.c:1953
-msgid "could not read HEAD's commit message"
+msgid "could not read HEAD's cummit message"
 msgstr "不能讀取 HEAD 的提交說明"
 
 #: sequencer.c:1977
 #, c-format
-msgid "could not read commit message of %s"
+msgid "could not read cummit message of %s"
 msgstr "不能讀取 %s 的提交說明"
 
 #: sequencer.c:2087
@@ -7999,29 +7999,29 @@ msgid "your index file is unmerged."
 msgstr "您的索引檔案未完成合併。"
 
 #: sequencer.c:2094
-msgid "cannot fixup root commit"
+msgid "cannot fixup root cummit"
 msgstr "不能修復根提交"
 
 #: sequencer.c:2113
 #, c-format
-msgid "commit %s is a merge but no -m option was given."
+msgid "cummit %s is a merge but no -m option was given."
 msgstr "提交 %s 是一個合併提交但未提供 -m 選項。"
 
 #: sequencer.c:2121 sequencer.c:2129
 #, c-format
-msgid "commit %s does not have parent %d"
+msgid "cummit %s does not have parent %d"
 msgstr "提交 %s 沒有第 %d 個父提交"
 
 #: sequencer.c:2135
 #, c-format
-msgid "cannot get commit message for %s"
+msgid "cannot get cummit message for %s"
 msgstr "不能得到 %s 的提交說明"
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
 #: sequencer.c:2154
 #, c-format
-msgid "%s: cannot parse parent commit %s"
+msgid "%s: cannot parse parent cummit %s"
 msgstr "%s：不能解析父提交 %s"
 
 #: sequencer.c:2220
@@ -8076,7 +8076,7 @@ msgstr "無效行 %d：%.*s"
 
 #: sequencer.c:2572
 #, c-format
-msgid "cannot '%s' without a previous commit"
+msgid "cannot '%s' without a previous cummit"
 msgstr "沒有父提交的情況下不能 '%s'"
 
 #: sequencer.c:2620 builtin/rebase.c:185
@@ -8102,7 +8102,7 @@ msgid "unusable instruction sheet: '%s'"
 msgstr "不可用的指令清單：'%s'"
 
 #: sequencer.c:2714
-msgid "no commits parsed."
+msgid "no cummits parsed."
 msgstr "沒有解析提交。"
 
 #: sequencer.c:2725
@@ -8123,7 +8123,7 @@ msgid "malformed options sheet: '%s'"
 msgstr "格式錯誤的選項清單：'%s'"
 
 #: sequencer.c:3029 sequencer.c:4875
-msgid "empty commit set passed"
+msgid "empty cummit set passed"
 msgstr "提供了空的提交集"
 
 #: sequencer.c:3046
@@ -8198,7 +8198,7 @@ msgid "no cherry-pick in progress"
 msgstr "沒有正在進行的揀選"
 
 #: sequencer.c:3256
-msgid "failed to skip the commit"
+msgid "failed to skip the cummit"
 msgstr "無法略過這個提交"
 
 #: sequencer.c:3263
@@ -8208,7 +8208,7 @@ msgstr "沒有要略過的"
 #: sequencer.c:3266
 #, c-format
 msgid ""
-"have you committed already?\n"
+"have you cummitted already?\n"
 "try \"git %s --continue\""
 msgstr ""
 "您已經提交了嗎？\n"
@@ -8226,9 +8226,9 @@ msgstr "無法複製 '%s' 至 '%s'"
 #: sequencer.c:3453
 #, c-format
 msgid ""
-"You can amend the commit now, with\n"
+"You can amend the cummit now, with\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
@@ -8236,7 +8236,7 @@ msgid ""
 msgstr ""
 "您現在可以修補這個提交，使用\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "當您對變更感到滿意，執行\n"
 "\n"
@@ -8287,7 +8287,7 @@ msgstr "並且修改索引和/或工作區\n"
 msgid ""
 "execution succeeded: %s\n"
 "but left changes to the index and/or the working tree\n"
-"Commit or stash your changes, and then run\n"
+"cummit or stash your changes, and then run\n"
 "\n"
 "  git rebase --continue\n"
 "\n"
@@ -8305,7 +8305,7 @@ msgid "illegal label name: '%.*s'"
 msgstr "非法的標籤名稱：'%.*s'"
 
 #: sequencer.c:3655
-msgid "writing fake root commit"
+msgid "writing fake root cummit"
 msgstr "寫偽根提交"
 
 #: sequencer.c:3660
@@ -8337,7 +8337,7 @@ msgstr "章魚合並不能在一個新的根提交上執行"
 
 #: sequencer.c:3869
 #, c-format
-msgid "could not get commit message of '%s'"
+msgid "could not get cummit message of '%s'"
 msgstr "不能取得 '%s' 的提交說明"
 
 #: sequencer.c:4013
@@ -8473,7 +8473,7 @@ msgid "cannot rebase: You have unstaged changes."
 msgstr "不能重定基底：您有未暫存的變更。"
 
 #: sequencer.c:4624
-msgid "cannot amend non-existing commit"
+msgid "cannot amend non-existing cummit"
 msgstr "不能修補不存在的提交"
 
 #: sequencer.c:4626
@@ -8489,7 +8489,7 @@ msgstr "無效內容：'%s'"
 #: sequencer.c:4631
 msgid ""
 "\n"
-"You have uncommitted changes in your working tree. Please, commit them\n"
+"You have uncummitted changes in your working tree. Please, cummit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 "\n"
@@ -8505,7 +8505,7 @@ msgid "could not remove CHERRY_PICK_HEAD"
 msgstr "不能刪除 CHERRY_PICK_HEAD"
 
 #: sequencer.c:4732
-msgid "could not commit staged changes."
+msgid "could not cummit staged changes."
 msgstr "不能提交暫存的修改。"
 
 #: sequencer.c:4852
@@ -8519,16 +8519,16 @@ msgid "%s: bad revision"
 msgstr "%s：錯誤的版本"
 
 #: sequencer.c:4891
-msgid "can't revert as initial commit"
+msgid "can't revert as initial cummit"
 msgstr "不能作為初始提交還原提交"
 
 #: sequencer.c:5162 sequencer.c:5391
 #, c-format
-msgid "skipped previously applied commit %s"
+msgid "skipped previously applied cummit %s"
 msgstr "已略過先前套用的 %s 提交"
 
 #: sequencer.c:5232 sequencer.c:5407
-msgid "use --reapply-cherry-picks to include skipped commits"
+msgid "use --reapply-cherry-picks to include skipped cummits"
 msgstr "使用 --reapply-cherry-picks 以包含略過提交"
 
 #: sequencer.c:5378
@@ -8852,19 +8852,19 @@ msgstr "無效 --ignore-submodules 參數：%s"
 #: submodule.c:866
 #, c-format
 msgid ""
-"Submodule in commit %s at path: '%s' collides with a submodule named the "
+"Submodule in cummit %s at path: '%s' collides with a submodule named the "
 "same. Skipping it."
 msgstr "%s 提交位於路徑：'%s' 的子模組與同名的子模組衝突。略過。"
 
 #: submodule.c:987
 #, c-format
-msgid "submodule entry '%s' (%s) is a %s, not a commit"
+msgid "submodule entry '%s' (%s) is a %s, not a cummit"
 msgstr "子模組條目 '%s'（%s）是一個 %s，不是一個提交"
 
 #: submodule.c:1069
 #, c-format
 msgid ""
-"Could not run 'git rev-list <commits> --not --remotes -n 1' command in "
+"Could not run 'git rev-list <cummits> --not --remotes -n 1' command in "
 "submodule %s"
 msgstr "無法在 %s 子模組執行 'git rev-list <提交> --not --remotes -n 1' 命令"
 
@@ -8899,12 +8899,12 @@ msgstr "無法存取子模組 '%s'\n"
 
 #: submodule.c:1618
 #, c-format
-msgid "Could not access submodule '%s' at commit %s\n"
+msgid "Could not access submodule '%s' at cummit %s\n"
 msgstr "無法存取 %2$s 提交的子模組「%1$s」\n"
 
 #: submodule.c:1629
 #, c-format
-msgid "Fetching submodule %s%s at commit %s\n"
+msgid "Fetching submodule %s%s at cummit %s\n"
 msgstr "正在抓取 %3$s 提交的 %1$s%2$s 子模組\n"
 
 #: submodule.c:1849
@@ -9369,7 +9369,7 @@ msgstr "太短的樹檔案"
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by checkout:\n"
-"%%sPlease commit your changes or stash them before you switch branches."
+"%%sPlease cummit your changes or stash them before you switch branches."
 msgstr ""
 "您對下列檔案的本機修改將被簽出動作覆蓋：\n"
 "%%s請在切換分支前提交或儲藏您的修改。"
@@ -9387,7 +9387,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
-"%%sPlease commit your changes or stash them before you merge."
+"%%sPlease cummit your changes or stash them before you merge."
 msgstr ""
 "您對下列檔案的本機修改將被合併動作覆蓋：\n"
 "%%s請在合併前提交或儲藏您的修改。"
@@ -9405,7 +9405,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by %s:\n"
-"%%sPlease commit your changes or stash them before you %s."
+"%%sPlease cummit your changes or stash them before you %s."
 msgstr ""
 "您對下列檔案的本機修改將被 %s 覆蓋：\n"
 "%%s請在 %s 之前提交或儲藏您的修改。"
@@ -9831,21 +9831,21 @@ msgid "  (use \"git rm <file>...\" to mark resolution)"
 msgstr "  （使用 \"git rm <檔案>...\" 標記解決方案）"
 
 #: wt-status.c:211 wt-status.c:1140
-msgid "Changes to be committed:"
+msgid "Changes to be cummitted:"
 msgstr "要提交的變更："
 
 #: wt-status.c:234 wt-status.c:1149
-msgid "Changes not staged for commit:"
+msgid "Changes not staged for cummit:"
 msgstr "尚未暫存以備提交的變更："
 
 #  譯者：請維持前導空格
 #: wt-status.c:238
-msgid "  (use \"git add <file>...\" to update what will be committed)"
+msgid "  (use \"git add <file>...\" to update what will be cummitted)"
 msgstr "  （使用 \"git add <檔案>...\" 更新要提交的內容）"
 
 #  譯者：請維持前導空格
 #: wt-status.c:240
-msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
+msgid "  (use \"git add/rm <file>...\" to update what will be cummitted)"
 msgstr "  （使用 \"git add/rm <檔案>...\" 更新要提交的內容）"
 
 #  譯者：請維持前導空格
@@ -9856,13 +9856,13 @@ msgstr "  （使用 \"git restore <檔案>...\" 捨棄工作區的改動）"
 
 #  譯者：請維持前導空格
 #: wt-status.c:243
-msgid "  (commit or discard the untracked or modified content in submodules)"
+msgid "  (cummit or discard the untracked or modified content in submodules)"
 msgstr "  （提交或捨棄子模組中未追蹤或修改的內容）"
 
 #  譯者：請維持前導空格
 #: wt-status.c:254
 #, c-format
-msgid "  (use \"git %s <file>...\" to include in what will be committed)"
+msgid "  (use \"git %s <file>...\" to include in what will be cummitted)"
 msgstr "  （使用 \"git %s <檔案>...\" 以包含要提交的內容）"
 
 #: wt-status.c:266
@@ -9927,7 +9927,7 @@ msgstr "未合併："
 
 #  譯者：末尾兩個位元組可能被刪減，如果翻譯為中文標點會出現半個漢字
 #: wt-status.c:382
-msgid "new commits, "
+msgid "new cummits, "
 msgstr "新提交, "
 
 #  譯者：末尾兩個位元組可能被刪減，如果翻譯為中文標點會出現半個漢字
@@ -9951,7 +9951,7 @@ msgid "Submodules changed but not updated:"
 msgstr "子模組已修改但尚未更新："
 
 #: wt-status.c:1006
-msgid "Submodule changes to be committed:"
+msgid "Submodule changes to be cummitted:"
 msgstr "要提交的子模組變更："
 
 #: wt-status.c:1088
@@ -9979,8 +9979,8 @@ msgstr "您有尚未合併的路徑。"
 
 #  譯者：請維持前導空格
 #: wt-status.c:1213
-msgid "  (fix conflicts and run \"git commit\")"
-msgstr "  （解決衝突並執行 \"git commit\"）"
+msgid "  (fix conflicts and run \"git cummit\")"
+msgstr "  （解決衝突並執行 \"git cummit\"）"
 
 #  譯者：請維持前導空格
 #: wt-status.c:1215
@@ -9993,8 +9993,8 @@ msgstr "所有衝突已解決但您仍處於合併中。"
 
 #  譯者：請維持前導空格
 #: wt-status.c:1222
-msgid "  (use \"git commit\" to conclude merge)"
-msgstr "  （使用 \"git commit\" 結束合併）"
+msgid "  (use \"git cummit\" to conclude merge)"
+msgstr "  （使用 \"git cummit\" 結束合併）"
 
 #: wt-status.c:1233
 msgid "You are in the middle of an am session."
@@ -10017,7 +10017,7 @@ msgstr "  （使用 \"git am --skip\" 略過此修補檔）"
 #  譯者：請維持前導空格
 #: wt-status.c:1246
 msgid ""
-"  (use \"git am --allow-empty\" to record this patch as an empty commit)"
+"  (use \"git am --allow-empty\" to record this patch as an empty cummit)"
 msgstr "  （使用 \"git am --allow-empty\" 將目前修補檔錄製為空白提交）"
 
 #  譯者：請維持前導空格
@@ -10091,11 +10091,11 @@ msgstr "  （所有衝突已解決：執行 \"git rebase --continue\"）"
 #: wt-status.c:1458
 #, c-format
 msgid ""
-"You are currently splitting a commit while rebasing branch '%s' on '%s'."
+"You are currently splitting a cummit while rebasing branch '%s' on '%s'."
 msgstr "您在執行將分支 '%s' 重定基底到 '%s' 的動作時分割提交。"
 
 #: wt-status.c:1463
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a cummit during a rebase."
 msgstr "您在執行重定基底動作時分割提交。"
 
 #  譯者：請維持前導空格
@@ -10105,17 +10105,17 @@ msgstr "  （一旦您工作目錄提交乾淨後，執行 \"git rebase --contin
 
 #: wt-status.c:1470
 #, c-format
-msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
+msgid "You are currently editing a cummit while rebasing branch '%s' on '%s'."
 msgstr "您在執行將分支 '%s' 重定基底到 '%s' 的動作時編輯提交。"
 
 #: wt-status.c:1475
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a cummit during a rebase."
 msgstr "您在執行重定基底動作時編輯提交。"
 
 #  譯者：請維持前導空格
 #: wt-status.c:1478
-msgid "  (use \"git commit --amend\" to amend the current commit)"
-msgstr "  （使用 \"git commit --amend\" 修補目前提交）"
+msgid "  (use \"git cummit --amend\" to amend the current cummit)"
+msgstr "  （使用 \"git cummit --amend\" 修補目前提交）"
 
 #  譯者：請維持前導空格
 #: wt-status.c:1480
@@ -10129,7 +10129,7 @@ msgstr "揀選動作正在進行中。"
 
 #: wt-status.c:1494
 #, c-format
-msgid "You are currently cherry-picking commit %s."
+msgid "You are currently cherry-picking cummit %s."
 msgstr "您在執行揀選提交 %s 的動作。"
 
 #  譯者：請維持前導空格
@@ -10163,7 +10163,7 @@ msgstr "還原動作正在進行中。"
 
 #: wt-status.c:1524
 #, c-format
-msgid "You are currently reverting commit %s."
+msgid "You are currently reverting cummit %s."
 msgstr "您在執行反轉提交 %s 的動作。"
 
 #  譯者：請維持前導空格
@@ -10239,11 +10239,11 @@ msgid "Not currently on any branch."
 msgstr "目前不在任何分支上。"
 
 #: wt-status.c:1851
-msgid "Initial commit"
+msgid "Initial cummit"
 msgstr "初始提交"
 
 #: wt-status.c:1852
-msgid "No commits yet"
+msgid "No cummits yet"
 msgstr "尚無提交"
 
 #: wt-status.c:1866
@@ -10280,51 +10280,51 @@ msgstr "沒有修改"
 
 #: wt-status.c:1891
 #, c-format
-msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
-msgstr "修改尚未加入提交（使用 \"git add\" 和/或 \"git commit -a\"）\n"
+msgid "no changes added to cummit (use \"git add\" and/or \"git cummit -a\")\n"
+msgstr "修改尚未加入提交（使用 \"git add\" 和/或 \"git cummit -a\"）\n"
 
 #: wt-status.c:1895
 #, c-format
-msgid "no changes added to commit\n"
+msgid "no changes added to cummit\n"
 msgstr "修改尚未加入提交\n"
 
 #: wt-status.c:1899
 #, c-format
 msgid ""
-"nothing added to commit but untracked files present (use \"git add\" to "
+"nothing added to cummit but untracked files present (use \"git add\" to "
 "track)\n"
 msgstr "提交為空，但是存在尚未追蹤的檔案（使用 \"git add\" 建立追蹤）\n"
 
 #: wt-status.c:1903
 #, c-format
-msgid "nothing added to commit but untracked files present\n"
+msgid "nothing added to cummit but untracked files present\n"
 msgstr "提交為空，但是存在尚未追蹤的檔案\n"
 
 #  譯者：中文字串拼接，可刪除前導空格
 #: wt-status.c:1907
 #, c-format
-msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
+msgid "nothing to cummit (create/copy files and use \"git add\" to track)\n"
 msgstr "無檔案要提交（建立/複製檔案並使用 \"git add\" 建立追蹤）\n"
 
 #: wt-status.c:1911 wt-status.c:1917
 #, c-format
-msgid "nothing to commit\n"
+msgid "nothing to cummit\n"
 msgstr "無檔案要提交\n"
 
 #  譯者：中文字串拼接，可刪除前導空格
 #: wt-status.c:1914
 #, c-format
-msgid "nothing to commit (use -u to show untracked files)\n"
+msgid "nothing to cummit (use -u to show untracked files)\n"
 msgstr "無檔案要提交（使用 -u 顯示未追蹤的檔案）\n"
 
 #  譯者：中文字串拼接，可刪除前導空格
 #: wt-status.c:1919
 #, c-format
-msgid "nothing to commit, working tree clean\n"
+msgid "nothing to cummit, working tree clean\n"
 msgstr "沒有要提交的檔案，工作區為乾淨狀態\n"
 
 #: wt-status.c:2024
-msgid "No commits yet on "
+msgid "No cummits yet on "
 msgstr "尚無提交在 "
 
 #: wt-status.c:2028
@@ -10351,12 +10351,12 @@ msgid "cannot %s: You have unstaged changes."
 msgstr "不能%s：您有未暫存的變更。"
 
 #: wt-status.c:2611
-msgid "additionally, your index contains uncommitted changes."
+msgid "additionally, your index contains uncummitted changes."
 msgstr "另外，您的索引中包含未提交的變更。"
 
 #: wt-status.c:2613
 #, c-format
-msgid "cannot %s: Your index contains uncommitted changes."
+msgid "cannot %s: Your index contains uncummitted changes."
 msgstr "不能%s：您的索引中包含未提交的變更。"
 
 #: compat/simple-ipc/ipc-unix-socket.c:205
@@ -10404,7 +10404,7 @@ msgstr "無法 chmod %cx ‘%s’"
 msgid "unexpected diff status %c"
 msgstr "意外的差異狀態 %c"
 
-#: builtin/add.c:110 builtin/commit.c:299
+#: builtin/add.c:110 builtin/cummit.c:299
 msgid "updating files failed"
 msgstr "更新檔案失敗"
 
@@ -10453,7 +10453,7 @@ msgstr "下列路徑根據您的一個 .gitignore 檔案而被忽略：\n"
 msgid "dry run"
 msgstr "測試執行"
 
-#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/commit.c:1483
+#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/cummit.c:1483
 #: builtin/count-objects.c:98 builtin/fsck.c:789 builtin/log.c:2338
 #: builtin/mv.c:123 builtin/read-tree.c:120
 msgid "be verbose"
@@ -10572,7 +10572,7 @@ msgstr "新增檔案失敗"
 msgid "--chmod param '%s' must be either -x or +x"
 msgstr "參數 --chmod 取值 '%s' 必須是 -x 或 +x"
 
-#: builtin/add.c:555 builtin/checkout.c:1770 builtin/commit.c:365
+#: builtin/add.c:555 builtin/checkout.c:1770 builtin/cummit.c:365
 #: builtin/reset.c:436 builtin/rm.c:275 builtin/stash.c:1702
 #, c-format
 msgid "'%s' and pathspec arguments cannot be used together"
@@ -10662,7 +10662,7 @@ msgstr "如果您想要略過這一修補檔，則執行 \"%s --skip\"。"
 
 #: builtin/am.c:1160
 #, c-format
-msgid "To record the empty patch as an empty commit, run \"%s --allow-empty\"."
+msgid "To record the empty patch as an empty cummit, run \"%s --allow-empty\"."
 msgstr "若要將空白修補檔錄製為空白提交，請執行「%s --allow-empty」。"
 
 #: builtin/am.c:1162
@@ -10676,7 +10676,7 @@ msgstr "修補檔使用 format=flowed 格式傳送，行尾的空格可能會遺
 
 #: builtin/am.c:1345
 #, c-format
-msgid "missing author line in commit %s"
+msgid "missing author line in cummit %s"
 msgstr "在提交 %s 中缺少作者行"
 
 #: builtin/am.c:1348
@@ -10718,7 +10718,7 @@ msgid "cannot resume: %s does not exist."
 msgstr "無法繼續：%s 不存在。"
 
 #: builtin/am.c:1726
-msgid "Commit Body is:"
+msgid "cummit Body is:"
 msgstr "提交內容為："
 
 #  譯者：請維持句尾空格
@@ -10731,7 +10731,7 @@ msgstr "提交內容為："
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "
 msgstr "套用？是[y]/否[n]/編輯[e]/檢視修補檔[v]/全部接受[a]： "
 
-#: builtin/am.c:1782 builtin/commit.c:410
+#: builtin/am.c:1782 builtin/cummit.c:410
 msgid "unable to write index file"
 msgstr "無法寫入索引檔案"
 
@@ -10747,7 +10747,7 @@ msgstr "略過：%.*s"
 
 #: builtin/am.c:1833
 #, c-format
-msgid "Creating an empty commit: %.*s"
+msgid "Creating an empty cummit: %.*s"
 msgstr "建立空白提交：%.*s"
 
 #: builtin/am.c:1837
@@ -10773,7 +10773,7 @@ msgid "Use 'git am --show-current-patch=diff' to see the failed patch"
 msgstr "用 'git am --show-current-patch=diff' 命令檢視失敗的修補檔"
 
 #: builtin/am.c:1921
-msgid "No changes - recorded it as an empty commit."
+msgid "No changes - recorded it as an empty cummit."
 msgstr "沒有變更 － 將其錄製為空白提交。"
 
 #: builtin/am.c:1923
@@ -10844,7 +10844,7 @@ msgid "be quiet"
 msgstr "靜默模式"
 
 #: builtin/am.c:2337
-msgid "add a Signed-off-by trailer to the commit message"
+msgid "add a Signed-off-by trailer to the cummit message"
 msgstr "在提交說明結尾加入 Signed-off-by"
 
 #: builtin/am.c:2340
@@ -10885,7 +10885,7 @@ msgstr "透過 git-mailinfo 傳遞"
 msgid "pass it through git-apply"
 msgstr "傳遞給 git-apply"
 
-#: builtin/am.c:2376 builtin/commit.c:1514 builtin/fmt-merge-msg.c:18
+#: builtin/am.c:2376 builtin/cummit.c:1514 builtin/fmt-merge-msg.c:18
 #: builtin/fmt-merge-msg.c:21 builtin/grep.c:920 builtin/merge.c:263
 #: builtin/pull.c:142 builtin/pull.c:204 builtin/pull.c:221
 #: builtin/rebase.c:1074 builtin/repack.c:657 builtin/repack.c:661
@@ -10935,25 +10935,25 @@ msgid "show the patch being applied"
 msgstr "顯示正在套用的修補檔"
 
 #: builtin/am.c:2411
-msgid "record the empty patch as an empty commit"
+msgid "record the empty patch as an empty cummit"
 msgstr "將空白修補檔錄製為空白提交"
 
 #: builtin/am.c:2415
-msgid "lie about committer date"
+msgid "lie about cummitter date"
 msgstr "將作者日期作為提交日期"
 
 #: builtin/am.c:2417
 msgid "use current timestamp for author date"
 msgstr "用目前時間作為作者日期"
 
-#: builtin/am.c:2419 builtin/commit-tree.c:118 builtin/commit.c:1642
+#: builtin/am.c:2419 builtin/cummit-tree.c:118 builtin/cummit.c:1642
 #: builtin/merge.c:302 builtin/pull.c:179 builtin/rebase.c:1127
 #: builtin/revert.c:117 builtin/tag.c:461
 msgid "key-id"
 msgstr "key-id"
 
 #: builtin/am.c:2420 builtin/rebase.c:1128
-msgid "GPG-sign commits"
+msgid "GPG-sign cummits"
 msgstr "使用 GPG 簽名提交"
 
 #: builtin/am.c:2423
@@ -11028,7 +11028,7 @@ msgid "git archive: expected a flush"
 msgstr "git archive：應有一個 flush 包"
 
 #: builtin/bisect--helper.c:24
-msgid "git bisect--helper --bisect-reset [<commit>]"
+msgid "git bisect--helper --bisect-reset [<cummit>]"
 msgstr "git bisect--helper --bisect-reset [<提交>]"
 
 #: builtin/bisect--helper.c:26
@@ -11101,13 +11101,13 @@ msgstr "我們沒有在二分搜尋。\n"
 
 #: builtin/bisect--helper.c:218
 #, c-format
-msgid "'%s' is not a valid commit"
+msgid "'%s' is not a valid cummit"
 msgstr "'%s' 不是一個有效的提交"
 
 #: builtin/bisect--helper.c:227
 #, c-format
 msgid ""
-"could not check out original HEAD '%s'. Try 'git bisect reset <commit>'."
+"could not check out original HEAD '%s'. Try 'git bisect reset <cummit>'."
 msgstr "不能簽出原始 HEAD '%s'。嘗試 'git bisect reset <提交>'。"
 
 #: builtin/bisect--helper.c:271
@@ -11152,7 +11152,7 @@ msgstr ""
 
 #: builtin/bisect--helper.c:365
 #, c-format
-msgid "bisecting only with a %s commit"
+msgid "bisecting only with a %s cummit"
 msgstr "在只有一個 %s 提交的情況下二分搜尋"
 
 #  譯者：請維持句尾空格
@@ -11258,7 +11258,7 @@ msgstr "<修訂版> 輸入格式錯誤：%s"
 
 #: builtin/bisect--helper.c:904
 #, c-format
-msgid "Bad rev input (not a commit): %s"
+msgid "Bad rev input (not a cummit): %s"
 msgstr "修訂版輸入有誤（不是提交）：%s"
 
 #: builtin/bisect--helper.c:936
@@ -11315,7 +11315,7 @@ msgstr "二分搜尋執行成功"
 
 #: builtin/bisect--helper.c:1218
 #, c-format
-msgid "bisect found first bad commit"
+msgid "bisect found first bad cummit"
 msgstr "二分搜尋發現到第一個有問題的提交"
 
 #: builtin/bisect--helper.c:1221
@@ -11343,7 +11343,7 @@ msgid "start the bisect session"
 msgstr "啟動二分搜尋過程"
 
 #: builtin/bisect--helper.c:1261
-msgid "find the next bisection commit"
+msgid "find the next bisection cummit"
 msgstr "尋找下一個二分搜尋提交"
 
 #: builtin/bisect--helper.c:1263
@@ -11359,7 +11359,7 @@ msgid "replay the bisection process from the given file"
 msgstr "從指定檔案重放二分搜尋過程"
 
 #: builtin/bisect--helper.c:1269
-msgid "skip some commits for checkout"
+msgid "skip some cummits for checkout"
 msgstr "略過要簽出的部分提交"
 
 #: builtin/bisect--helper.c:1271
@@ -11375,7 +11375,7 @@ msgid "no log for BISECT_WRITE"
 msgstr "BISECT_WRITE 無日誌"
 
 #: builtin/bisect--helper.c:1290
-msgid "--bisect-reset requires either no argument or a commit"
+msgid "--bisect-reset requires either no argument or a cummit"
 msgstr "--bisect-reset 無需參數或者需要一個提交"
 
 #: builtin/bisect--helper.c:1295
@@ -11421,11 +11421,11 @@ msgid "show blame entries as we find them, incrementally"
 msgstr "增量式顯示發現的 blame 條目"
 
 #: builtin/blame.c:865
-msgid "do not show object names of boundary commits (Default: off)"
+msgid "do not show object names of boundary cummits (Default: off)"
 msgstr "不要顯示邊界提交的物件名稱（預設值: off）"
 
 #: builtin/blame.c:866
-msgid "do not treat root commits as boundaries (Default: off)"
+msgid "do not treat root cummits as boundaries (Default: off)"
 msgstr "不將根提交看作邊界（預設值：off）"
 
 #: builtin/blame.c:867
@@ -11433,7 +11433,7 @@ msgid "show work cost statistics"
 msgstr "顯示工作量統計"
 
 #: builtin/blame.c:868 builtin/checkout.c:1554 builtin/clone.c:98
-#: builtin/commit-graph.c:75 builtin/commit-graph.c:228 builtin/fetch.c:181
+#: builtin/cummit-graph.c:75 builtin/cummit-graph.c:228 builtin/fetch.c:181
 #: builtin/merge.c:301 builtin/multi-pack-index.c:103
 #: builtin/multi-pack-index.c:154 builtin/multi-pack-index.c:180
 #: builtin/multi-pack-index.c:208 builtin/pull.c:120 builtin/push.c:566
@@ -11458,7 +11458,7 @@ msgid "show in a format designed for machine consumption"
 msgstr "顯示成適合機器讀取的格式"
 
 #: builtin/blame.c:873
-msgid "show porcelain format with per-line commit information"
+msgid "show porcelain format with per-line cummit information"
 msgstr "顯示每一列適合機器的提交說明"
 
 #: builtin/blame.c:874
@@ -11470,7 +11470,7 @@ msgid "show raw timestamp (Default: off)"
 msgstr "顯示原始時間戳（預設值：off）"
 
 #: builtin/blame.c:876
-msgid "show long commit SHA1 (Default: off)"
+msgid "show long cummit SHA1 (Default: off)"
 msgstr "顯示較長的 SHA1 提交編號（預設值：off）"
 
 #: builtin/blame.c:877
@@ -11619,7 +11619,7 @@ msgstr ""
 
 #: builtin/branch.c:183
 #, c-format
-msgid "Couldn't look up commit object for '%s'"
+msgid "Couldn't look up cummit object for '%s'"
 msgstr "無法查詢 '%s' 指向的提交物件"
 
 #: builtin/branch.c:187
@@ -11640,7 +11640,7 @@ msgid "cannot use -a with -d"
 msgstr "不能將 -a 和 -d 同時使用"
 
 #: builtin/branch.c:242
-msgid "Couldn't look up commit object for HEAD"
+msgid "Couldn't look up cummit object for HEAD"
 msgstr "無法查詢 HEAD 指向的提交物件"
 
 #: builtin/branch.c:259
@@ -11788,11 +11788,11 @@ msgid "act on remote-tracking branches"
 msgstr "作用於遠端追蹤分支"
 
 #: builtin/branch.c:666 builtin/branch.c:668
-msgid "print only branches that contain the commit"
+msgid "print only branches that contain the cummit"
 msgstr "只列印包含該提交的分支"
 
 #: builtin/branch.c:667 builtin/branch.c:669
-msgid "print only branches that don't contain the commit"
+msgid "print only branches that don't contain the cummit"
 msgstr "只列印不包含該提交的分支"
 
 #: builtin/branch.c:672
@@ -11911,7 +11911,7 @@ msgstr "不能為一個以上的分支編輯描述"
 
 #: builtin/branch.c:814
 #, c-format
-msgid "No commit on branch '%s' yet."
+msgid "No cummit on branch '%s' yet."
 msgstr "分支 '%s' 尚無提交。"
 
 #: builtin/branch.c:817
@@ -12208,8 +12208,8 @@ msgid "Emit [broken] object attributes"
 msgstr "輸出 [損壞的] 物件屬性"
 
 #: builtin/cat-file.c:842
-msgid "show object type (one of 'blob', 'tree', 'commit', 'tag', ...)"
-msgstr "顯示物件類型（可以是 “blob”、“tree”、“commit”、“tag” 等其中一個）"
+msgid "show object type (one of 'blob', 'tree', 'cummit', 'tag', ...)"
+msgstr "顯示物件類型（可以是 “blob”、“tree”、“cummit”、“tag” 等其中一個）"
 
 #: builtin/cat-file.c:843
 msgid "show object size"
@@ -12616,12 +12616,12 @@ msgstr " ... 及其它 %d 個。\n"
 #: builtin/checkout.c:1023
 #, c-format
 msgid ""
-"Warning: you are leaving %d commit behind, not connected to\n"
+"Warning: you are leaving %d cummit behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"Warning: you are leaving %d commits behind, not connected to\n"
+"Warning: you are leaving %d cummits behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
@@ -12732,12 +12732,12 @@ msgstr "期望一個分支，得到 '%s'"
 
 #: builtin/checkout.c:1420
 #, c-format
-msgid "a branch is expected, got commit '%s'"
+msgid "a branch is expected, got cummit '%s'"
 msgstr "期望一個分支，得到提交 '%s'"
 
 #: builtin/checkout.c:1429
 msgid ""
-"If you want to detach HEAD at the commit, try again with the --detach option."
+"If you want to detach HEAD at the cummit, try again with the --detach option."
 msgstr "若您想要分離提交的 HEAD，請傳入 --detach 選項重試。"
 
 #: builtin/checkout.c:1442
@@ -12806,11 +12806,11 @@ msgstr "'%s' 不帶 <起始點>"
 
 #: builtin/checkout.c:1505
 #, c-format
-msgid "Cannot switch branch to a non-commit '%s'"
+msgid "Cannot switch branch to a non-cummit '%s'"
 msgstr "不能切換分支到一個非提交 '%s'"
 
 #: builtin/checkout.c:1512
-msgid "missing branch or commit argument"
+msgid "missing branch or cummit argument"
 msgstr "缺少分支或提交參數"
 
 #: builtin/checkout.c:1555
@@ -12826,7 +12826,7 @@ msgid "conflict style (merge, diff3, or zdiff3)"
 msgstr "衝突輸出風格（merge、diff3 或 zdiff3）"
 
 #: builtin/checkout.c:1569 builtin/worktree.c:560
-msgid "detach HEAD at named commit"
+msgid "detach HEAD at named cummit"
 msgstr "HEAD 從指定的提交分離"
 
 #: builtin/checkout.c:1574
@@ -12886,7 +12886,7 @@ msgstr "無效的路徑規格"
 
 #: builtin/checkout.c:1760
 #, c-format
-msgid "'%s' is not a commit and a branch '%s' cannot be created from it"
+msgid "'%s' is not a cummit and a branch '%s' cannot be created from it"
 msgstr "'%s' 不是一個提交，不能基於它建立分支 '%s'"
 
 #: builtin/checkout.c:1764
@@ -13540,218 +13540,218 @@ msgstr "兩直行之間的填充空間"
 msgid "--command must be the first argument"
 msgstr "--command 必須是第一個參數"
 
-#: builtin/commit-graph.c:13
+#: builtin/cummit-graph.c:13
 msgid ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
+"git cummit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
 msgstr ""
-"git commit-graph verify [--object-dir <物件目錄>] [--shallow] [--"
+"git cummit-graph verify [--object-dir <物件目錄>] [--shallow] [--"
 "[no-]progress]"
 
-#: builtin/commit-graph.c:16
+#: builtin/cummit-graph.c:16
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--"
-"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
+"git cummit-graph write [--object-dir <objdir>] [--append] [--"
+"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-cummits] [--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
 msgstr ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--"
-"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
+"git cummit-graph write [--object-dir <objdir>] [--append] [--"
+"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-cummits] [--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
 
-#: builtin/commit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
+#: builtin/cummit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
 msgid "dir"
 msgstr "目錄"
 
-#: builtin/commit-graph.c:52
+#: builtin/cummit-graph.c:52
 msgid "the object directory to store the graph"
 msgstr "儲存圖形的物件目錄"
 
-#: builtin/commit-graph.c:73
-msgid "if the commit-graph is split, only verify the tip file"
+#: builtin/cummit-graph.c:73
+msgid "if the cummit-graph is split, only verify the tip file"
 msgstr "如果提交圖形被分割，只驗證頭一個檔案"
 
-#: builtin/commit-graph.c:100
+#: builtin/cummit-graph.c:100
 #, c-format
-msgid "Could not open commit-graph '%s'"
+msgid "Could not open cummit-graph '%s'"
 msgstr "無法開啟提交圖形 '%s'"
 
-#: builtin/commit-graph.c:137
+#: builtin/cummit-graph.c:137
 #, c-format
 msgid "unrecognized --split argument, %s"
 msgstr "無法識別的 --split 參數，%s"
 
-#: builtin/commit-graph.c:150
+#: builtin/cummit-graph.c:150
 #, c-format
 msgid "unexpected non-hex object ID: %s"
 msgstr "非期望的非十六進位物件 ID：%s"
 
-#: builtin/commit-graph.c:155
+#: builtin/cummit-graph.c:155
 #, c-format
 msgid "invalid object: %s"
 msgstr "物件無效：%s"
 
-#: builtin/commit-graph.c:205
+#: builtin/cummit-graph.c:205
 msgid "start walk at all refs"
 msgstr "開始遍歷所有引用"
 
-#: builtin/commit-graph.c:207
-msgid "scan pack-indexes listed by stdin for commits"
+#: builtin/cummit-graph.c:207
+msgid "scan pack-indexes listed by stdin for cummits"
 msgstr "從標準輸入中的包索引檔案列表中掃描提交"
 
-#: builtin/commit-graph.c:209
-msgid "start walk at commits listed by stdin"
+#: builtin/cummit-graph.c:209
+msgid "start walk at cummits listed by stdin"
 msgstr "從標準輸入中的提交開始掃描"
 
-#: builtin/commit-graph.c:211
-msgid "include all commits already in the commit-graph file"
-msgstr "包含 commit-graph 檔案中已有所有提交"
+#: builtin/cummit-graph.c:211
+msgid "include all cummits already in the cummit-graph file"
+msgstr "包含 cummit-graph 檔案中已有所有提交"
 
-#: builtin/commit-graph.c:213
+#: builtin/cummit-graph.c:213
 msgid "enable computation for changed paths"
 msgstr "啟用已變更路徑的計算"
 
-#: builtin/commit-graph.c:215
-msgid "allow writing an incremental commit-graph file"
+#: builtin/cummit-graph.c:215
+msgid "allow writing an incremental cummit-graph file"
 msgstr "允許寫一個增量提交圖形檔案"
 
-#: builtin/commit-graph.c:219
-msgid "maximum number of commits in a non-base split commit-graph"
+#: builtin/cummit-graph.c:219
+msgid "maximum number of cummits in a non-base split cummit-graph"
 msgstr "在非基本分割提交圖形中的最大提交數"
 
-#: builtin/commit-graph.c:221
-msgid "maximum ratio between two levels of a split commit-graph"
+#: builtin/cummit-graph.c:221
+msgid "maximum ratio between two levels of a split cummit-graph"
 msgstr "一個分割提交圖形的兩個級別之間的最大比率"
 
-#: builtin/commit-graph.c:223
+#: builtin/cummit-graph.c:223
 msgid "only expire files older than a given date-time"
 msgstr "只將舊於指定日期與時間的檔案設為過期"
 
-#: builtin/commit-graph.c:225
+#: builtin/cummit-graph.c:225
 msgid "maximum number of changed-path Bloom filters to compute"
 msgstr "變更路徑的布隆過濾器要計算的最大量"
 
-#: builtin/commit-graph.c:251
-msgid "use at most one of --reachable, --stdin-commits, or --stdin-packs"
-msgstr "不能同時使用 --reachable、--stdin-commits 或 --stdin-packs"
+#: builtin/cummit-graph.c:251
+msgid "use at most one of --reachable, --stdin-cummits, or --stdin-packs"
+msgstr "不能同時使用 --reachable、--stdin-cummits 或 --stdin-packs"
 
-#: builtin/commit-graph.c:282
-msgid "Collecting commits from input"
+#: builtin/cummit-graph.c:282
+msgid "Collecting cummits from input"
 msgstr "正在從輸入收集提交"
 
-#: builtin/commit-graph.c:328 builtin/multi-pack-index.c:259
+#: builtin/cummit-graph.c:328 builtin/multi-pack-index.c:259
 #, c-format
 msgid "unrecognized subcommand: %s"
 msgstr "未識別的子指令：%s"
 
-#: builtin/commit-tree.c:18
+#: builtin/cummit-tree.c:18
 msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
+"git cummit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
 "<file>)...] <tree>"
 msgstr ""
-"git commit-tree [(-p <父提交>)...] [-S[<keyid>]] [(-m <消息>)...] [(-F <檔案"
+"git cummit-tree [(-p <父提交>)...] [-S[<keyid>]] [(-m <消息>)...] [(-F <檔案"
 ">)...] <樹>"
 
-#: builtin/commit-tree.c:31
+#: builtin/cummit-tree.c:31
 #, c-format
 msgid "duplicate parent %s ignored"
 msgstr "忽略重複的父提交 %s"
 
-#: builtin/commit-tree.c:56 builtin/commit-tree.c:134 builtin/log.c:590
+#: builtin/cummit-tree.c:56 builtin/cummit-tree.c:134 builtin/log.c:590
 #, c-format
 msgid "not a valid object name %s"
 msgstr "不是一個有效的物件名 %s"
 
-#: builtin/commit-tree.c:94
+#: builtin/cummit-tree.c:94
 #, c-format
-msgid "git commit-tree: failed to read '%s'"
-msgstr "git commit-tree：無法讀取 '%s'"
+msgid "git cummit-tree: failed to read '%s'"
+msgstr "git cummit-tree：無法讀取 '%s'"
 
-#: builtin/commit-tree.c:96
+#: builtin/cummit-tree.c:96
 #, c-format
-msgid "git commit-tree: failed to close '%s'"
-msgstr "git commit-tree：無法關閉 '%s'"
+msgid "git cummit-tree: failed to close '%s'"
+msgstr "git cummit-tree：無法關閉 '%s'"
 
-#: builtin/commit-tree.c:109
+#: builtin/cummit-tree.c:109
 msgid "parent"
 msgstr "父提交"
 
-#: builtin/commit-tree.c:110
-msgid "id of a parent commit object"
+#: builtin/cummit-tree.c:110
+msgid "id of a parent cummit object"
 msgstr "父提交物件 ID"
 
-#: builtin/commit-tree.c:112 builtin/commit.c:1626 builtin/merge.c:284
+#: builtin/cummit-tree.c:112 builtin/cummit.c:1626 builtin/merge.c:284
 #: builtin/notes.c:407 builtin/notes.c:573 builtin/stash.c:1666
 #: builtin/tag.c:455
 msgid "message"
 msgstr "訊息"
 
-#: builtin/commit-tree.c:113 builtin/commit.c:1626
-msgid "commit message"
+#: builtin/cummit-tree.c:113 builtin/cummit.c:1626
+msgid "cummit message"
 msgstr "提交說明"
 
-#: builtin/commit-tree.c:116
-msgid "read commit log message from file"
+#: builtin/cummit-tree.c:116
+msgid "read cummit log message from file"
 msgstr "從檔案中讀取提交說明"
 
-#: builtin/commit-tree.c:119 builtin/commit.c:1643 builtin/merge.c:303
+#: builtin/cummit-tree.c:119 builtin/cummit.c:1643 builtin/merge.c:303
 #: builtin/pull.c:180 builtin/revert.c:118
-msgid "GPG sign commit"
+msgid "GPG sign cummit"
 msgstr "GPG 提交簽名"
 
-#: builtin/commit-tree.c:131
+#: builtin/cummit-tree.c:131
 msgid "must give exactly one tree"
 msgstr "必須精確地提供一個樹"
 
-#: builtin/commit-tree.c:138
-msgid "git commit-tree: failed to read"
-msgstr "git commit-tree：讀取失敗"
+#: builtin/cummit-tree.c:138
+msgid "git cummit-tree: failed to read"
+msgstr "git cummit-tree：讀取失敗"
 
-#: builtin/commit.c:43
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<選項>] [--] <路徑規格>..."
+#: builtin/cummit.c:43
+msgid "git cummit [<options>] [--] <pathspec>..."
+msgstr "git cummit [<選項>] [--] <路徑規格>..."
 
-#: builtin/commit.c:48
+#: builtin/cummit.c:48
 msgid "git status [<options>] [--] <pathspec>..."
 msgstr "git status [<選項>] [--] <路徑規格>..."
 
-#: builtin/commit.c:53
+#: builtin/cummit.c:53
 msgid ""
-"You asked to amend the most recent commit, but doing so would make\n"
+"You asked to amend the most recent cummit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
-"remove the commit entirely with \"git reset HEAD^\".\n"
+"remove the cummit entirely with \"git reset HEAD^\".\n"
 msgstr ""
 "您要修補最近的提交，但這麼做會讓它成為空提交。您可以重複您的指令並帶上\n"
 "--allow-empty 選項，或者您可用指令 \"git reset HEAD^\" 整個刪除該提交。\n"
 
-#: builtin/commit.c:58
+#: builtin/cummit.c:58
 msgid ""
 "The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
-"If you wish to commit it anyway, use:\n"
+"If you wish to cummit it anyway, use:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 msgstr ""
 "之前的揀選動作現在是一個空提交，可能是由衝突解決導致的。如果您無論如何\n"
 "也要提交，使用指令：\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 
-#: builtin/commit.c:65
+#: builtin/cummit.c:65
 msgid "Otherwise, please use 'git rebase --skip'\n"
 msgstr "否則，請使用 'git rebase --skip'\n"
 
-#: builtin/commit.c:68
+#: builtin/cummit.c:68
 msgid "Otherwise, please use 'git cherry-pick --skip'\n"
 msgstr "否則，請使用 'git cherry-pick --skip'\n"
 
-#: builtin/commit.c:71
+#: builtin/cummit.c:71
 msgid ""
 "and then use:\n"
 "\n"
 "    git cherry-pick --continue\n"
 "\n"
-"to resume cherry-picking the remaining commits.\n"
-"If you wish to skip this commit, use:\n"
+"to resume cherry-picking the remaining cummits.\n"
+"If you wish to skip this cummit, use:\n"
 "\n"
 "    git cherry-pick --skip\n"
 "\n"
@@ -13765,152 +13765,152 @@ msgstr ""
 "    git cherry-pick --skip\n"
 "\n"
 
-#: builtin/commit.c:326
+#: builtin/cummit.c:326
 msgid "failed to unpack HEAD tree object"
 msgstr "解包 HEAD 樹狀物件失敗"
 
-#: builtin/commit.c:376
+#: builtin/cummit.c:376
 msgid "No paths with --include/--only does not make sense."
 msgstr "參數 --include/--only 不跟路徑沒有意義。"
 
-#: builtin/commit.c:388
+#: builtin/cummit.c:388
 msgid "unable to create temporary index"
 msgstr "不能建立暫時索引"
 
-#: builtin/commit.c:397
+#: builtin/cummit.c:397
 msgid "interactive add failed"
 msgstr "互動式新增失敗"
 
-#: builtin/commit.c:412
+#: builtin/cummit.c:412
 msgid "unable to update temporary index"
 msgstr "無法更新暫時索引"
 
-#: builtin/commit.c:414
+#: builtin/cummit.c:414
 msgid "Failed to update main cache tree"
 msgstr "不能更新樹的主快取"
 
-#: builtin/commit.c:439 builtin/commit.c:462 builtin/commit.c:510
+#: builtin/cummit.c:439 builtin/cummit.c:462 builtin/cummit.c:510
 msgid "unable to write new_index file"
 msgstr "無法寫 new_index 檔案"
 
-#: builtin/commit.c:491
-msgid "cannot do a partial commit during a merge."
+#: builtin/cummit.c:491
+msgid "cannot do a partial cummit during a merge."
 msgstr "在合併過程中不能做部分提交。"
 
-#: builtin/commit.c:493
-msgid "cannot do a partial commit during a cherry-pick."
+#: builtin/cummit.c:493
+msgid "cannot do a partial cummit during a cherry-pick."
 msgstr "在揀選過程中不能做部分提交。"
 
-#: builtin/commit.c:495
-msgid "cannot do a partial commit during a rebase."
+#: builtin/cummit.c:495
+msgid "cannot do a partial cummit during a rebase."
 msgstr "在重定基底過程中不能做部分提交。"
 
-#: builtin/commit.c:503
+#: builtin/cummit.c:503
 msgid "cannot read the index"
 msgstr "無法讀取索引"
 
-#: builtin/commit.c:522
+#: builtin/cummit.c:522
 msgid "unable to write temporary index file"
 msgstr "無法寫暫時索引檔案"
 
-#: builtin/commit.c:620
+#: builtin/cummit.c:620
 #, c-format
-msgid "commit '%s' lacks author header"
+msgid "cummit '%s' lacks author header"
 msgstr "提交 '%s' 缺少作者訊息"
 
-#: builtin/commit.c:622
+#: builtin/cummit.c:622
 #, c-format
-msgid "commit '%s' has malformed author line"
+msgid "cummit '%s' has malformed author line"
 msgstr "提交 '%s' 有格式錯誤的作者訊息"
 
-#: builtin/commit.c:641
+#: builtin/cummit.c:641
 msgid "malformed --author parameter"
 msgstr "格式錯誤的 --author 參數"
 
-#: builtin/commit.c:694
+#: builtin/cummit.c:694
 msgid ""
 "unable to select a comment character that is not used\n"
-"in the current commit message"
+"in the current cummit message"
 msgstr "無法選擇一個未被目前提交說明使用的備註字元"
 
-#: builtin/commit.c:750 builtin/commit.c:784 builtin/commit.c:1170
+#: builtin/cummit.c:750 builtin/cummit.c:784 builtin/cummit.c:1170
 #, c-format
-msgid "could not lookup commit %s"
+msgid "could not lookup cummit %s"
 msgstr "不能查詢提交 %s"
 
-#: builtin/commit.c:762 builtin/shortlog.c:417
+#: builtin/cummit.c:762 builtin/shortlog.c:417
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr "（正從標準輸入中讀取日誌訊息）\n"
 
-#: builtin/commit.c:764
+#: builtin/cummit.c:764
 msgid "could not read log from standard input"
 msgstr "不能從標準輸入中讀取日誌訊息"
 
-#: builtin/commit.c:768
+#: builtin/cummit.c:768
 #, c-format
 msgid "could not read log file '%s'"
 msgstr "不能讀取日誌檔案 '%s'"
 
-#: builtin/commit.c:805
+#: builtin/cummit.c:805
 #, c-format
 msgid "options '%s' and '%s:%s' cannot be used together"
 msgstr "「%s」和「%s:%s」選項不得同時使用"
 
-#: builtin/commit.c:817 builtin/commit.c:833
+#: builtin/cummit.c:817 builtin/cummit.c:833
 msgid "could not read SQUASH_MSG"
 msgstr "不能讀取 SQUASH_MSG"
 
-#: builtin/commit.c:824
+#: builtin/cummit.c:824
 msgid "could not read MERGE_MSG"
 msgstr "不能讀取 MERGE_MSG"
 
-#: builtin/commit.c:884
-msgid "could not write commit template"
+#: builtin/cummit.c:884
+msgid "could not write cummit template"
 msgstr "不能寫提交範本"
 
-#: builtin/commit.c:897
+#: builtin/cummit.c:897
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be ignored.\n"
 msgstr ""
 "請輸入描述您變更的提交訊息。\n"
 "開頭是「%c」的行皆會忽略。\n"
 
-#: builtin/commit.c:899
+#: builtin/cummit.c:899
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be ignored, and an empty message aborts the commit.\n"
+"Please enter the cummit message for your changes. Lines starting\n"
+"with '%c' will be ignored, and an empty message aborts the cummit.\n"
 msgstr ""
 "請輸入描述您變更的提交訊息。開頭是「%c」\n"
 "的行皆會忽略。提交訊息空白則取消本次提交作業。\n"
 
-#: builtin/commit.c:903
+#: builtin/cummit.c:903
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
 msgstr ""
 "請輸入描述您變更的提交訊息。會保留開頭是「%c」\n"
 "的行，但也可以自己移除掉這些行。\n"
 
-#: builtin/commit.c:907
+#: builtin/cummit.c:907
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
-"An empty message aborts the commit.\n"
+"An empty message aborts the cummit.\n"
 msgstr ""
 "請輸入描述您變更的提交訊息。會保留開頭是\n"
 "「%c」的行，但也可以自己移除掉這些行。\n"
 "提交訊息空白則取消本次提交作業。\n"
 
-#: builtin/commit.c:919
+#: builtin/cummit.c:919
 msgid ""
 "\n"
-"It looks like you may be committing a merge.\n"
+"It looks like you may be cummitting a merge.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d MERGE_HEAD\n"
 "and try again.\n"
@@ -13921,10 +13921,10 @@ msgstr ""
 "\tgit update-ref -d MERGE_HEAD\n"
 "後重試。\n"
 
-#: builtin/commit.c:924
+#: builtin/cummit.c:924
 msgid ""
 "\n"
-"It looks like you may be committing a cherry-pick.\n"
+"It looks like you may be cummitting a cherry-pick.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "and try again.\n"
@@ -13936,147 +13936,147 @@ msgstr ""
 "後重試。\n"
 
 #  譯者：為保證在輸出中對齊，注意調整句中空格！
-#: builtin/commit.c:951
+#: builtin/cummit.c:951
 #, c-format
 msgid "%sAuthor:    %.*s <%.*s>"
 msgstr "%s作者：  %.*s <%.*s>"
 
 #  譯者：為保證在輸出中對齊，注意調整句中空格！
-#: builtin/commit.c:959
+#: builtin/cummit.c:959
 #, c-format
 msgid "%sDate:      %s"
 msgstr "%s日期：  %s"
 
 #  譯者：為保證在輸出中對齊，注意調整句中空格！
-#: builtin/commit.c:966
+#: builtin/cummit.c:966
 #, c-format
-msgid "%sCommitter: %.*s <%.*s>"
+msgid "%scummitter: %.*s <%.*s>"
 msgstr "%s提交者：%.*s <%.*s>"
 
-#: builtin/commit.c:984
+#: builtin/cummit.c:984
 msgid "Cannot read index"
 msgstr "無法讀取索引"
 
-#: builtin/commit.c:1029
+#: builtin/cummit.c:1029
 msgid "unable to pass trailers to --trailers"
 msgstr "無法將尾部署名傳遞至 --trailers"
 
-#: builtin/commit.c:1069
+#: builtin/cummit.c:1069
 msgid "Error building trees"
 msgstr "無法建立樹狀物件"
 
-#: builtin/commit.c:1083 builtin/tag.c:317
+#: builtin/cummit.c:1083 builtin/tag.c:317
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr "請使用 -m 或 -F 選項提供提交說明。\n"
 
-#: builtin/commit.c:1128
+#: builtin/cummit.c:1128
 #, c-format
 msgid "--author '%s' is not 'Name <email>' and matches no existing author"
 msgstr "--author '%s' 不是 '姓名 <信箱>' 格式，且未能在現有作者中找到符合"
 
-#: builtin/commit.c:1142
+#: builtin/cummit.c:1142
 #, c-format
 msgid "Invalid ignored mode '%s'"
 msgstr "無效的忽略模式 '%s'"
 
-#: builtin/commit.c:1160 builtin/commit.c:1450
+#: builtin/cummit.c:1160 builtin/cummit.c:1450
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr "無效的未追蹤檔案參數 '%s'"
 
-#: builtin/commit.c:1231
+#: builtin/cummit.c:1231
 msgid "You are in the middle of a merge -- cannot reword."
 msgstr "正在合併中——不能重新輸入。"
 
-#: builtin/commit.c:1233
+#: builtin/cummit.c:1233
 msgid "You are in the middle of a cherry-pick -- cannot reword."
 msgstr "正在揀選中——不能重新輸入。"
 
-#: builtin/commit.c:1236
+#: builtin/cummit.c:1236
 #, c-format
 msgid "reword option of '%s' and path '%s' cannot be used together"
 msgstr "「%s」的改寫選項和「%s」路徑不得同時使用"
 
-#: builtin/commit.c:1238
+#: builtin/cummit.c:1238
 #, c-format
 msgid "reword option of '%s' and '%s' cannot be used together"
 msgstr "「%s」的改寫選項和「%s」不得同時使用"
 
-#: builtin/commit.c:1263
+#: builtin/cummit.c:1263
 msgid "You have nothing to amend."
 msgstr "您沒有可修補的提交。"
 
-#: builtin/commit.c:1266
+#: builtin/cummit.c:1266
 msgid "You are in the middle of a merge -- cannot amend."
 msgstr "您正處於一個合併過程中 -- 無法修補提交。"
 
-#: builtin/commit.c:1268
+#: builtin/cummit.c:1268
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "您正處於一個揀選過程中 -- 無法修補提交。"
 
-#: builtin/commit.c:1270
+#: builtin/cummit.c:1270
 msgid "You are in the middle of a rebase -- cannot amend."
 msgstr "您正處於重定基底的過程中 -- 無法修訂。"
 
-#: builtin/commit.c:1290
+#: builtin/cummit.c:1290
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "--reset-author 只能和 -C、-c 或 --amend 同時使用。"
 
-#: builtin/commit.c:1337
+#: builtin/cummit.c:1337
 #, c-format
 msgid "unknown option: --fixup=%s:%s"
 msgstr "未知選項：--fixup=%s:%s"
 
-#: builtin/commit.c:1354
+#: builtin/cummit.c:1354
 #, c-format
 msgid "paths '%s ...' with -a does not make sense"
 msgstr "路徑 '%s ...' 和 -a 選項同時使用沒有意義"
 
-#: builtin/commit.c:1485 builtin/commit.c:1654
+#: builtin/cummit.c:1485 builtin/cummit.c:1654
 msgid "show status concisely"
 msgstr "以簡潔的格式顯示狀態"
 
-#: builtin/commit.c:1487 builtin/commit.c:1656
+#: builtin/cummit.c:1487 builtin/cummit.c:1656
 msgid "show branch information"
 msgstr "顯示分支訊息"
 
-#: builtin/commit.c:1489
+#: builtin/cummit.c:1489
 msgid "show stash information"
 msgstr "顯示儲藏區訊息"
 
-#: builtin/commit.c:1491 builtin/commit.c:1658
+#: builtin/cummit.c:1491 builtin/cummit.c:1658
 msgid "compute full ahead/behind values"
 msgstr "計算完整的領先/落後值"
 
-#: builtin/commit.c:1493
+#: builtin/cummit.c:1493
 msgid "version"
 msgstr "版本"
 
-#: builtin/commit.c:1493 builtin/commit.c:1660 builtin/push.c:551
+#: builtin/cummit.c:1493 builtin/cummit.c:1660 builtin/push.c:551
 #: builtin/worktree.c:765
 msgid "machine-readable output"
 msgstr "機器可讀的輸出"
 
-#: builtin/commit.c:1496 builtin/commit.c:1662
+#: builtin/cummit.c:1496 builtin/cummit.c:1662
 msgid "show status in long format (default)"
 msgstr "以長格式顯示狀態（預設）"
 
-#: builtin/commit.c:1499 builtin/commit.c:1665
+#: builtin/cummit.c:1499 builtin/cummit.c:1665
 msgid "terminate entries with NUL"
 msgstr "條目以 NUL 字元結尾"
 
-#: builtin/commit.c:1501 builtin/commit.c:1505 builtin/commit.c:1668
+#: builtin/cummit.c:1501 builtin/cummit.c:1505 builtin/cummit.c:1668
 #: builtin/fast-export.c:1172 builtin/fast-export.c:1175
 #: builtin/fast-export.c:1178 builtin/rebase.c:1139 parse-options.h:368
 msgid "mode"
 msgstr "模式"
 
-#: builtin/commit.c:1502 builtin/commit.c:1668
+#: builtin/cummit.c:1502 builtin/cummit.c:1668
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr "顯示未追蹤的檔案，「模式」的可選參數：all、normal、no。（預設值：all）"
 
-#: builtin/commit.c:1506
+#: builtin/cummit.c:1506
 msgid ""
 "show ignored files, optional modes: traditional, matching, no. (Default: "
 "traditional)"
@@ -14084,201 +14084,201 @@ msgstr ""
 "顯示已忽略的檔案，可選模式：traditional、matching、no。（預設值："
 "traditional）"
 
-#: builtin/commit.c:1508 parse-options.h:197
+#: builtin/cummit.c:1508 parse-options.h:197
 msgid "when"
 msgstr "何時"
 
-#: builtin/commit.c:1509
+#: builtin/cummit.c:1509
 msgid ""
 "ignore changes to submodules, optional when: all, dirty, untracked. "
 "(Default: all)"
 msgstr ""
 "忽略子模組的更改，「何時」的可選參數：all、dirty、untracked。（預設值：all）"
 
-#: builtin/commit.c:1511
+#: builtin/cummit.c:1511
 msgid "list untracked files in columns"
 msgstr "以列的方式顯示未追蹤的檔案"
 
-#: builtin/commit.c:1512
+#: builtin/cummit.c:1512
 msgid "do not detect renames"
 msgstr "不檢測重新命名"
 
-#: builtin/commit.c:1514
+#: builtin/cummit.c:1514
 msgid "detect renames, optionally set similarity index"
 msgstr "檢測重新命名，可以設定索引相似度"
 
-#: builtin/commit.c:1537
+#: builtin/cummit.c:1537
 msgid "Unsupported combination of ignored and untracked-files arguments"
 msgstr "不支援已忽略和未追蹤檔案參數的組合"
 
-#: builtin/commit.c:1619
-msgid "suppress summary after successful commit"
+#: builtin/cummit.c:1619
+msgid "suppress summary after successful cummit"
 msgstr "提交成功後不顯示概述訊息"
 
-#: builtin/commit.c:1620
-msgid "show diff in commit message template"
+#: builtin/cummit.c:1620
+msgid "show diff in cummit message template"
 msgstr "在提交說明範本裡顯示差異"
 
-#: builtin/commit.c:1622
-msgid "Commit message options"
+#: builtin/cummit.c:1622
+msgid "cummit message options"
 msgstr "提交說明選項"
 
-#: builtin/commit.c:1623 builtin/merge.c:288 builtin/tag.c:457
+#: builtin/cummit.c:1623 builtin/merge.c:288 builtin/tag.c:457
 msgid "read message from file"
 msgstr "從檔案中讀取提交說明"
 
-#: builtin/commit.c:1624
+#: builtin/cummit.c:1624
 msgid "author"
 msgstr "作者"
 
-#: builtin/commit.c:1624
-msgid "override author for commit"
+#: builtin/cummit.c:1624
+msgid "override author for cummit"
 msgstr "提交時覆蓋作者"
 
-#: builtin/commit.c:1625 builtin/gc.c:551
+#: builtin/cummit.c:1625 builtin/gc.c:551
 msgid "date"
 msgstr "日期"
 
-#: builtin/commit.c:1625
-msgid "override date for commit"
+#: builtin/cummit.c:1625
+msgid "override date for cummit"
 msgstr "提交時覆蓋日期"
 
-#: builtin/commit.c:1627 builtin/commit.c:1628 builtin/commit.c:1634
+#: builtin/cummit.c:1627 builtin/cummit.c:1628 builtin/cummit.c:1634
 #: parse-options.h:360 ref-filter.h:89
-msgid "commit"
+msgid "cummit"
 msgstr "提交"
 
-#: builtin/commit.c:1627
-msgid "reuse and edit message from specified commit"
+#: builtin/cummit.c:1627
+msgid "reuse and edit message from specified cummit"
 msgstr "重用並編輯指定提交的提交說明"
 
-#: builtin/commit.c:1628
-msgid "reuse message from specified commit"
+#: builtin/cummit.c:1628
+msgid "reuse message from specified cummit"
 msgstr "重用指定提交的提交說明"
 
 #. TRANSLATORS: Leave "[(amend|reword):]" as-is,
-#. and only translate <commit>.
+#. and only translate <cummit>.
 #.
-#: builtin/commit.c:1633
-msgid "[(amend|reword):]commit"
-msgstr "[(amend|reword):]commit"
+#: builtin/cummit.c:1633
+msgid "[(amend|reword):]cummit"
+msgstr "[(amend|reword):]cummit"
 
-#: builtin/commit.c:1633
+#: builtin/cummit.c:1633
 msgid ""
-"use autosquash formatted message to fixup or amend/reword specified commit"
+"use autosquash formatted message to fixup or amend/reword specified cummit"
 msgstr "使用 autosquash 格式化後的說明來 fixup 或是 amend/reword 指定提交"
 
-#: builtin/commit.c:1634
-msgid "use autosquash formatted message to squash specified commit"
+#: builtin/cummit.c:1634
+msgid "use autosquash formatted message to squash specified cummit"
 msgstr "使用 autosquash 格式的提交說明用以壓縮至指定的提交"
 
-#: builtin/commit.c:1635
-msgid "the commit is authored by me now (used with -C/-c/--amend)"
+#: builtin/cummit.c:1635
+msgid "the cummit is authored by me now (used with -C/-c/--amend)"
 msgstr "現在將該提交的作者改為我（和 -C/-c/--amend 參數共用）"
 
-#: builtin/commit.c:1636 builtin/interpret-trailers.c:111
+#: builtin/cummit.c:1636 builtin/interpret-trailers.c:111
 msgid "trailer"
 msgstr "尾部署名"
 
-#: builtin/commit.c:1636
+#: builtin/cummit.c:1636
 msgid "add custom trailer(s)"
 msgstr "加入自訂尾部署名"
 
-#: builtin/commit.c:1637 builtin/log.c:1788 builtin/merge.c:306
+#: builtin/cummit.c:1637 builtin/log.c:1788 builtin/merge.c:306
 #: builtin/pull.c:146 builtin/revert.c:110
 msgid "add a Signed-off-by trailer"
 msgstr "在結尾加入 Signed-off-by"
 
-#: builtin/commit.c:1638
+#: builtin/cummit.c:1638
 msgid "use specified template file"
 msgstr "使用指定的範本檔案"
 
-#: builtin/commit.c:1639
-msgid "force edit of commit"
+#: builtin/cummit.c:1639
+msgid "force edit of cummit"
 msgstr "強制編輯提交"
 
-#: builtin/commit.c:1641
-msgid "include status in commit message template"
+#: builtin/cummit.c:1641
+msgid "include status in cummit message template"
 msgstr "在提交說明範本裡包含狀態訊息"
 
-#: builtin/commit.c:1646
-msgid "Commit contents options"
+#: builtin/cummit.c:1646
+msgid "cummit contents options"
 msgstr "提交內容選項"
 
-#: builtin/commit.c:1647
-msgid "commit all changed files"
+#: builtin/cummit.c:1647
+msgid "cummit all changed files"
 msgstr "提交所有改動的檔案"
 
-#: builtin/commit.c:1648
-msgid "add specified files to index for commit"
+#: builtin/cummit.c:1648
+msgid "add specified files to index for cummit"
 msgstr "新增指定的檔案到索引區等待提交"
 
-#: builtin/commit.c:1649
+#: builtin/cummit.c:1649
 msgid "interactively add files"
 msgstr "互動式新增檔案"
 
-#: builtin/commit.c:1650
+#: builtin/cummit.c:1650
 msgid "interactively add changes"
 msgstr "互動式新增變更"
 
-#: builtin/commit.c:1651
-msgid "commit only specified files"
+#: builtin/cummit.c:1651
+msgid "cummit only specified files"
 msgstr "只提交指定的檔案"
 
-#: builtin/commit.c:1652
-msgid "bypass pre-commit and commit-msg hooks"
-msgstr "繞過 pre-commit 和 commit-msg 掛鉤"
+#: builtin/cummit.c:1652
+msgid "bypass pre-cummit and cummit-msg hooks"
+msgstr "繞過 pre-cummit 和 cummit-msg 掛鉤"
 
-#: builtin/commit.c:1653
-msgid "show what would be committed"
+#: builtin/cummit.c:1653
+msgid "show what would be cummitted"
 msgstr "顯示將要提交的內容"
 
-#: builtin/commit.c:1666
-msgid "amend previous commit"
+#: builtin/cummit.c:1666
+msgid "amend previous cummit"
 msgstr "修改先前的提交"
 
-#: builtin/commit.c:1667
+#: builtin/cummit.c:1667
 msgid "bypass post-rewrite hook"
 msgstr "繞過 post-rewrite 掛鉤"
 
-#: builtin/commit.c:1674
+#: builtin/cummit.c:1674
 msgid "ok to record an empty change"
 msgstr "允許一個空提交"
 
-#: builtin/commit.c:1676
+#: builtin/cummit.c:1676
 msgid "ok to record a change with an empty message"
 msgstr "允許空的提交說明"
 
-#: builtin/commit.c:1752
+#: builtin/cummit.c:1752
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "損壞的 MERGE_HEAD 檔案（%s）"
 
-#: builtin/commit.c:1759
+#: builtin/cummit.c:1759
 msgid "could not read MERGE_MODE"
 msgstr "不能讀取 MERGE_MODE"
 
-#: builtin/commit.c:1780
+#: builtin/cummit.c:1780
 #, c-format
-msgid "could not read commit message: %s"
+msgid "could not read cummit message: %s"
 msgstr "不能讀取提交說明：%s"
 
-#: builtin/commit.c:1787
+#: builtin/cummit.c:1787
 #, c-format
-msgid "Aborting commit due to empty commit message.\n"
+msgid "Aborting cummit due to empty cummit message.\n"
 msgstr "終止提交因為提交說明為空。\n"
 
-#: builtin/commit.c:1792
+#: builtin/cummit.c:1792
 #, c-format
-msgid "Aborting commit; you did not edit the message.\n"
+msgid "Aborting cummit; you did not edit the message.\n"
 msgstr "終止提交；您未更改來自範本的提交說明。\n"
 
-#: builtin/commit.c:1803
+#: builtin/cummit.c:1803
 #, c-format
-msgid "Aborting commit due to empty commit message body.\n"
+msgid "Aborting cummit due to empty cummit message body.\n"
 msgstr "提交說明內文空白，中止提交作業。\n"
 
-#: builtin/commit.c:1839
+#: builtin/cummit.c:1839
 msgid ""
 "repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -14648,7 +14648,7 @@ msgid "unable to get credential storage lock in %d ms"
 msgstr "無法在 %d 毫秒內取得憑證儲存空間的鎖"
 
 #: builtin/describe.c:26
-msgid "git describe [<options>] [<commit-ish>...]"
+msgid "git describe [<options>] [<cummit-ish>...]"
 msgstr "git describe [<選項>] [<提交號>...]"
 
 #: builtin/describe.c:27
@@ -14712,7 +14712,7 @@ msgstr ""
 
 #: builtin/describe.c:458
 #, c-format
-msgid "traversed %lu commits\n"
+msgid "traversed %lu cummits\n"
 msgstr "已遍歷 %lu 個提交\n"
 
 #: builtin/describe.c:461
@@ -14736,11 +14736,11 @@ msgstr "不是一個有效的物件名 %s"
 
 #: builtin/describe.c:540
 #, c-format
-msgid "%s is neither a commit nor blob"
+msgid "%s is neither a cummit nor blob"
 msgstr "%s 既不是提交也不是資料物件"
 
 #: builtin/describe.c:554
-msgid "find the tag that comes after the commit"
+msgid "find the tag that comes after the cummit"
 msgstr "尋找該提交之後的標籤"
 
 #: builtin/describe.c:555
@@ -14780,7 +14780,7 @@ msgid "do not consider tags matching <pattern>"
 msgstr "不考慮符合 <模式> 的標籤"
 
 #: builtin/describe.c:570 builtin/name-rev.c:595
-msgid "show abbreviated commit object as fallback"
+msgid "show abbreviated cummit object as fallback"
 msgstr "顯示簡寫的提交號作為後備"
 
 #: builtin/describe.c:571 builtin/describe.c:574
@@ -14801,11 +14801,11 @@ msgstr "沒有發現名稱，無法描述任何東西。"
 
 #: builtin/describe.c:673 builtin/describe.c:675
 #, c-format
-msgid "option '%s' and commit-ishes cannot be used together"
+msgid "option '%s' and cummit-ishes cannot be used together"
 msgstr "「%s」選項和提交號不得同時使用"
 
 #: builtin/diff-tree.c:157
-msgid "--merge-base only works with two commits"
+msgid "--merge-base only works with two cummits"
 msgstr "--merge-base 只對 2 個以上的提交有用"
 
 #: builtin/diff.c:92
@@ -14848,7 +14848,7 @@ msgid "%s...%s: multiple merge bases, using %s"
 msgstr "%s...%s：多個合併基底，使用 %s"
 
 #: builtin/difftool.c:31
-msgid "git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"
+msgid "git difftool [<options>] [<cummit> [<cummit>]] [--] [<path>...]"
 msgstr "git difftool [<選項>] [<提交> [<提交>]] [--] [<路徑>...]"
 
 #: builtin/difftool.c:287
@@ -15000,7 +15000,7 @@ msgid "select handling of tags that tag filtered objects"
 msgstr "選擇當標籤指向被過濾物件時該標籤的處理方式"
 
 #: builtin/fast-export.c:1179
-msgid "select handling of commit messages in an alternate encoding"
+msgid "select handling of cummit messages in an alternate encoding"
 msgstr "選擇使用備用編碼處理提交說明"
 
 #: builtin/fast-export.c:1182
@@ -15020,7 +15020,7 @@ msgid "fake a tagger when tags lack one"
 msgstr "當標籤缺少標記者欄位時假裝有一個"
 
 #: builtin/fast-export.c:1192
-msgid "output full tree for each commit"
+msgid "output full tree for each cummit"
 msgstr "每次提交都輸出整棵樹"
 
 #: builtin/fast-export.c:1194
@@ -15056,7 +15056,7 @@ msgid "reference parents which are not in fast-export stream by object id"
 msgstr "依物件 ID 引用不在 fast-export 串流中的父物件"
 
 #: builtin/fast-export.c:1205
-msgid "show original object ids of blobs/commits"
+msgid "show original object ids of blobs/cummits"
 msgstr "顯示資料物件及提交的原始物件 ID"
 
 #: builtin/fast-export.c:1207
@@ -15204,7 +15204,7 @@ msgid "convert to a complete repository"
 msgstr "轉換為一個完整的版本庫"
 
 #: builtin/fetch.c:194
-msgid "re-fetch without negotiating common commits"
+msgid "re-fetch without negotiating common cummits"
 msgstr "重新抓取而不協商共同提交"
 
 #: builtin/fetch.c:197
@@ -15246,7 +15246,7 @@ msgid "check for forced-updates on all updated branches"
 msgstr "在所有更新分支上檢查強制更新"
 
 #: builtin/fetch.c:224
-msgid "write the commit-graph after fetching"
+msgid "write the cummit-graph after fetching"
 msgstr "抓取後寫入分支圖"
 
 #: builtin/fetch.c:226
@@ -15544,11 +15544,11 @@ msgid "git for-each-ref [--points-at <object>]"
 msgstr "git for-each-ref [--points-at <物件>]"
 
 #: builtin/for-each-ref.c:12
-msgid "git for-each-ref [--merged [<commit>]] [--no-merged [<commit>]]"
+msgid "git for-each-ref [--merged [<cummit>]] [--no-merged [<cummit>]]"
 msgstr "git for-each-ref [--merged [<提交>]] [--no-merged [<提交>]]"
 
 #: builtin/for-each-ref.c:13
-msgid "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
+msgid "git for-each-ref [--contains [<cummit>]] [--no-contains [<cummit>]]"
 msgstr "git for-each-ref [--contains [<提交>]] [--no-contains [<提交>]]"
 
 #: builtin/for-each-ref.c:31
@@ -15588,11 +15588,11 @@ msgid "print only refs that are not merged"
 msgstr "只列印沒有合併的引用"
 
 #: builtin/for-each-ref.c:49
-msgid "print only refs which contain the commit"
+msgid "print only refs which contain the cummit"
 msgstr "只列印包含該提交的引用"
 
 #: builtin/for-each-ref.c:50
-msgid "print only refs which don't contain the commit"
+msgid "print only refs which don't contain the cummit"
 msgstr "只列印不包含該提交的引用"
 
 #: builtin/for-each-repo.c:9
@@ -15720,7 +15720,7 @@ msgstr "%s：無效的 sha1 指標 %s"
 
 #: builtin/fsck.c:537
 #, c-format
-msgid "%s: not a commit"
+msgid "%s: not a cummit"
 msgstr "%s：不是一個提交"
 
 #: builtin/fsck.c:591
@@ -16081,7 +16081,7 @@ msgid "unrecognized --schedule argument '%s'"
 msgstr "無法識別的 --schedule 引數 '%s'"
 
 #: builtin/gc.c:870
-msgid "failed to write commit-graph"
+msgid "failed to write cummit-graph"
 msgstr "無法寫入提交圖形"
 
 #: builtin/gc.c:906
@@ -17284,7 +17284,7 @@ msgstr "兩個輸出目錄？"
 
 #: builtin/log.c:1536 builtin/log.c:2369 builtin/log.c:2371 builtin/log.c:2383
 #, c-format
-msgid "unknown commit %s"
+msgid "unknown cummit %s"
 msgstr "未知提交 %s"
 
 #: builtin/log.c:1547 builtin/replace.c:58 builtin/replace.c:207
@@ -17299,9 +17299,9 @@ msgstr "不能找到準確的合併基礎"
 
 #: builtin/log.c:1566
 msgid ""
-"failed to get upstream, if you want to record base commit automatically,\n"
+"failed to get upstream, if you want to record base cummit automatically,\n"
 "please use git branch --set-upstream-to to track a remote branch.\n"
-"Or you could specify base commit by --base=<base-commit-id> manually"
+"Or you could specify base cummit by --base=<base-cummit-id> manually"
 msgstr ""
 "無法得到上游位址，如果你想自動記錄基礎提交，請使用指令\n"
 "git branch --set-upstream-to 來追蹤一個遠端分支。或者你可以透過\n"
@@ -17312,11 +17312,11 @@ msgid "failed to find exact merge base"
 msgstr "無法找到準確的合併基礎"
 
 #: builtin/log.c:1606
-msgid "base commit should be the ancestor of revision list"
+msgid "base cummit should be the ancestor of revision list"
 msgstr "基礎提交應該是版本列表的祖先"
 
 #: builtin/log.c:1616
-msgid "base commit shouldn't be in revision list"
+msgid "base cummit shouldn't be in revision list"
 msgstr "基礎提交不應該出現在版本列表中"
 
 #: builtin/log.c:1674
@@ -17409,7 +17409,7 @@ msgid "output all-zero hash in From header"
 msgstr "在 From 標頭訊息中輸出全為零的雜湊值"
 
 #: builtin/log.c:1823
-msgid "don't include a patch matching a commit upstream"
+msgid "don't include a patch matching a cummit upstream"
 msgstr "不包含已在上游提交中的修補檔"
 
 #: builtin/log.c:1825
@@ -17445,7 +17445,7 @@ msgid "ident"
 msgstr "標記"
 
 #: builtin/log.c:1833
-msgid "set From address to <ident> (or committer ident if absent)"
+msgid "set From address to <ident> (or cummitter ident if absent)"
 msgstr "將 From 位址設定為 <標記>（如若不提供，則用提交者 ID 做為位址）"
 
 #: builtin/log.c:1835
@@ -17481,7 +17481,7 @@ msgid "add a signature"
 msgstr "新增一個簽名"
 
 #: builtin/log.c:1849
-msgid "base-commit"
+msgid "base-cummit"
 msgstr "基礎提交"
 
 #: builtin/log.c:1850
@@ -17818,12 +17818,12 @@ msgid "keep non patch brackets in subject"
 msgstr "保留主旨中不是 PATCH 的方括號"
 
 #: builtin/mailinfo.c:62
-msgid "copy Message-ID to the end of commit message"
+msgid "copy Message-ID to the end of cummit message"
 msgstr "複製 Message-ID 至提交說明末尾"
 
 #: builtin/mailinfo.c:64
-msgid "re-code metadata to i18n.commitEncoding"
-msgstr "重新將中介資料編碼為 i18n.commitEncoding 的設定值"
+msgid "re-code metadata to i18n.cummitEncoding"
+msgstr "重新將中介資料編碼為 i18n.cummitEncoding 的設定值"
 
 #: builtin/mailinfo.c:67
 msgid "disable charset re-coding of metadata"
@@ -17863,23 +17863,23 @@ msgid "empty mbox: '%s'"
 msgstr "空的 mbox：'%s'"
 
 #: builtin/merge-base.c:32
-msgid "git merge-base [-a | --all] <commit> <commit>..."
+msgid "git merge-base [-a | --all] <cummit> <cummit>..."
 msgstr "git merge-base [-a | --all] <提交> <提交>..."
 
 #: builtin/merge-base.c:33
-msgid "git merge-base [-a | --all] --octopus <commit>..."
+msgid "git merge-base [-a | --all] --octopus <cummit>..."
 msgstr "git merge-base [-a | --all] --octopus <提交>..."
 
 #: builtin/merge-base.c:34
-msgid "git merge-base --independent <commit>..."
+msgid "git merge-base --independent <cummit>..."
 msgstr "git merge-base --independent <提交>..."
 
 #: builtin/merge-base.c:35
-msgid "git merge-base --is-ancestor <commit> <commit>"
+msgid "git merge-base --is-ancestor <cummit> <cummit>"
 msgstr "git merge-base --is-ancestor <提交> <提交>"
 
 #: builtin/merge-base.c:36
-msgid "git merge-base --fork-point <ref> [<commit>]"
+msgid "git merge-base --fork-point <ref> [<cummit>]"
 msgstr "git merge-base --fork-point <引用> [<提交>]"
 
 #: builtin/merge-base.c:144
@@ -17899,7 +17899,7 @@ msgid "is the first one ancestor of the other?"
 msgstr "第一個是其他的祖先提交嗎？"
 
 #: builtin/merge-base.c:152
-msgid "find where <commit> forked from reflog of <ref>"
+msgid "find where <cummit> forked from reflog of <ref>"
 msgstr "根據 <引用> 的引用日誌尋找 <提交> 的衍生處"
 
 #: builtin/merge-file.c:9
@@ -17977,7 +17977,7 @@ msgid "Merging %s with %s\n"
 msgstr "合併 %s 和 %s\n"
 
 #: builtin/merge.c:59
-msgid "git merge [<options>] [<commit>...]"
+msgid "git merge [<options>] [<cummit>...]"
 msgstr "git merge [<選項>] [<提交>...]"
 
 #: builtin/merge.c:125
@@ -18017,19 +18017,19 @@ msgid "(synonym to --stat)"
 msgstr "（和 --stat 同義）"
 
 #: builtin/merge.c:264 builtin/pull.c:143
-msgid "add (at most <n>) entries from shortlog to merge commit message"
+msgid "add (at most <n>) entries from shortlog to merge cummit message"
 msgstr "在合併提交說明中新增（最多 <n> 條）精簡提交記錄"
 
 #: builtin/merge.c:267 builtin/pull.c:149
-msgid "create a single commit instead of doing a merge"
+msgid "create a single cummit instead of doing a merge"
 msgstr "建立一個單獨的提交而不是做一次合併"
 
 #: builtin/merge.c:269 builtin/pull.c:152
-msgid "perform a commit if the merge succeeds (default)"
+msgid "perform a cummit if the merge succeeds (default)"
 msgstr "如果合併成功，執行一次提交（預設）"
 
 #: builtin/merge.c:271 builtin/pull.c:155
-msgid "edit message before committing"
+msgid "edit message before cummitting"
 msgstr "在提交前編輯提交說明"
 
 #: builtin/merge.c:273
@@ -18062,7 +18062,7 @@ msgid "option for selected merge strategy"
 msgstr "所選的合併策略的選項"
 
 #: builtin/merge.c:285
-msgid "merge commit message (for a non-fast-forward merge)"
+msgid "merge cummit message (for a non-fast-forward merge)"
 msgstr "合併的提交說明（針對非快轉式合併）"
 
 #: builtin/merge.c:291
@@ -18087,8 +18087,8 @@ msgid "allow merging unrelated histories"
 msgstr "允許合並不相關的歷史"
 
 #: builtin/merge.c:307
-msgid "bypass pre-merge-commit and commit-msg hooks"
-msgstr "繞過 pre-merge-commit 和 commit-msg 掛鉤"
+msgid "bypass pre-merge-cummit and cummit-msg hooks"
+msgstr "繞過 pre-merge-cummit 和 cummit-msg 掛鉤"
 
 #: builtin/merge.c:323
 msgid "could not run stash."
@@ -18114,7 +18114,7 @@ msgstr "已經是最新的。（無需壓縮 (squash)）"
 
 #: builtin/merge.c:417
 #, c-format
-msgid "Squash commit -- not updating HEAD\n"
+msgid "Squash cummit -- not updating HEAD\n"
 msgstr "壓縮提交 -- 未更新 HEAD\n"
 
 #: builtin/merge.c:467
@@ -18124,7 +18124,7 @@ msgstr "無合併訊息 -- 未更新 HEAD\n"
 
 #: builtin/merge.c:517
 #, c-format
-msgid "'%s' does not point to a commit"
+msgid "'%s' does not point to a cummit"
 msgstr "'%s' 沒有指向一個提交"
 
 #: builtin/merge.c:605
@@ -18153,12 +18153,12 @@ msgstr "不能從 '%s' 讀取"
 
 #: builtin/merge.c:825
 #, c-format
-msgid "Not committing merge; use 'git commit' to complete the merge.\n"
-msgstr "未提交合並，使用 'git commit' 完成此次合併。\n"
+msgid "Not cummitting merge; use 'git cummit' to complete the merge.\n"
+msgstr "未提交合並，使用 'git cummit' 完成此次合併。\n"
 
 #: builtin/merge.c:831
 msgid ""
-"Please enter a commit message to explain why this merge is necessary,\n"
+"Please enter a cummit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
 "\n"
 msgstr ""
@@ -18167,18 +18167,18 @@ msgstr ""
 "\n"
 
 #: builtin/merge.c:836
-msgid "An empty message aborts the commit.\n"
+msgid "An empty message aborts the cummit.\n"
 msgstr "空的提交說明會終止提交。\n"
 
 #: builtin/merge.c:839
 #, c-format
 msgid ""
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
-"the commit.\n"
+"the cummit.\n"
 msgstr "以 '%c' 開始的行將被忽略，而空的提交說明將終止提交。\n"
 
 #: builtin/merge.c:900
-msgid "Empty commit message."
+msgid "Empty cummit message."
 msgstr "空提交說明。"
 
 #: builtin/merge.c:915
@@ -18188,7 +18188,7 @@ msgstr "太棒了。\n"
 
 #: builtin/merge.c:976
 #, c-format
-msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
+msgid "Automatic merge failed; fix conflicts and then cummit the result.\n"
 msgstr "自動合併失敗，修正衝突然後提交修正的結果。\n"
 
 #: builtin/merge.c:1015
@@ -18245,7 +18245,7 @@ msgstr "沒有進行中的合併（MERGE_HEAD 遺失）。"
 #: builtin/merge.c:1385
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "您尚未結束您的合併（存在 MERGE_HEAD）。\n"
 "請在合併前先提交您的修改。"
@@ -18253,7 +18253,7 @@ msgstr ""
 #: builtin/merge.c:1392
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "您尚未結束您的揀選（存在 CHERRY_PICK_HEAD）。\n"
 "請在合併前先提交您的修改。"
@@ -18263,15 +18263,15 @@ msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
 msgstr "您尚未結束您的揀選（存在 CHERRY_PICK_HEAD）。"
 
 #: builtin/merge.c:1427
-msgid "No commit specified and merge.defaultToUpstream not set."
+msgid "No cummit specified and merge.defaultToUpstream not set."
 msgstr "未指定提交並且 merge.defaultToUpstream 未設定。"
 
 #: builtin/merge.c:1444
-msgid "Squash commit into empty head not supported yet"
+msgid "Squash cummit into empty head not supported yet"
 msgstr "尚不支援到空分支的壓縮提交"
 
 #: builtin/merge.c:1446
-msgid "Non-fast-forward commit does not make sense into an empty head"
+msgid "Non-fast-forward cummit does not make sense into an empty head"
 msgstr "到空分支的非快轉式提交沒有意義"
 
 #: builtin/merge.c:1451
@@ -18280,7 +18280,7 @@ msgid "%s - not something we can merge"
 msgstr "%s - 不能被合併"
 
 #: builtin/merge.c:1453
-msgid "Can merge only exactly one commit into empty head"
+msgid "Can merge only exactly one cummit into empty head"
 msgstr "只能將一個提交合並到空分支上"
 
 #: builtin/merge.c:1540
@@ -18329,7 +18329,7 @@ msgstr "使用 %s 策略，準備自行解決。\n"
 
 #: builtin/merge.c:1753
 #, c-format
-msgid "Automatic merge went well; stopped before committing as requested\n"
+msgid "Automatic merge went well; stopped before cummitting as requested\n"
 msgstr "自動合併進展順利，按要求在提交前停止\n"
 
 #: builtin/mktag.c:27
@@ -18422,7 +18422,7 @@ msgid "write multi-pack index containing only given indexes"
 msgstr "寫入只包含指定索引的多包索引"
 
 #: builtin/multi-pack-index.c:107
-msgid "refs snapshot for selecting bitmap commits"
+msgid "refs snapshot for selecting bitmap cummits"
 msgstr "用來選取位圖提交的引用快照"
 
 #: builtin/multi-pack-index.c:206
@@ -18528,7 +18528,7 @@ msgid "renaming '%s' failed"
 msgstr "重新命名 '%s' 失敗"
 
 #: builtin/name-rev.c:524
-msgid "git name-rev [<options>] <commit>..."
+msgid "git name-rev [<options>] <cummit>..."
 msgstr "git name-rev [<選項>] <提交>..."
 
 #: builtin/name-rev.c:525
@@ -18544,7 +18544,7 @@ msgid "print only ref-based names (no object names)"
 msgstr "只輸出基於引用的名稱 (沒有物件名稱)"
 
 #: builtin/name-rev.c:584
-msgid "only use tags to name the commits"
+msgid "only use tags to name the cummits"
 msgstr "只使用標籤來命名提交"
 
 #: builtin/name-rev.c:586
@@ -18556,7 +18556,7 @@ msgid "ignore refs matching <pattern>"
 msgstr "忽略和 <模式> 相符合的引用"
 
 #: builtin/name-rev.c:590
-msgid "list all commits reachable from all refs"
+msgid "list all cummits reachable from all refs"
 msgstr "列出可以從所有引用存取的提交"
 
 #: builtin/name-rev.c:591
@@ -18657,8 +18657,8 @@ msgid "git notes merge [<options>] <notes-ref>"
 msgstr "git notes merge [<選項>] <註解引用>"
 
 #: builtin/notes.c:76
-msgid "git notes merge --commit [<options>]"
-msgstr "git notes merge --commit [<選項>]"
+msgid "git notes merge --cummit [<options>]"
+msgstr "git notes merge --cummit [<選項>]"
 
 #: builtin/notes.c:77
 msgid "git notes merge --abort [<options>]"
@@ -18839,11 +18839,11 @@ msgid "failed to read ref NOTES_MERGE_PARTIAL"
 msgstr "讀取引用 NOTES_MERGE_PARTIAL 失敗"
 
 #: builtin/notes.c:722
-msgid "could not find commit from NOTES_MERGE_PARTIAL."
+msgid "could not find cummit from NOTES_MERGE_PARTIAL."
 msgstr "無法從 NOTES_MERGE_PARTIAL 中找到提交。"
 
 #: builtin/notes.c:724
-msgid "could not parse commit from NOTES_MERGE_PARTIAL."
+msgid "could not parse cummit from NOTES_MERGE_PARTIAL."
 msgstr "無法從 NOTES_MERGE_PARTIAL 中解析提交。"
 
 #: builtin/notes.c:737
@@ -18874,11 +18874,11 @@ msgid ""
 msgstr "使用指定的策略解決註解衝突 (manual/ours/theirs/union/cat_sort_uniq)"
 
 #: builtin/notes.c:788
-msgid "Committing unmerged notes"
+msgid "cummitting unmerged notes"
 msgstr "提交未合併的註解"
 
 #: builtin/notes.c:790
-msgid "finalize notes merge by committing unmerged notes"
+msgid "finalize notes merge by cummitting unmerged notes"
 msgstr "透過提交未合併的註解來完成註解合併"
 
 #: builtin/notes.c:792
@@ -18890,8 +18890,8 @@ msgid "abort notes merge"
 msgstr "中止註解合併"
 
 #: builtin/notes.c:805
-msgid "cannot mix --commit, --abort or -s/--strategy"
-msgstr "不能混用 --commit、--abort 或 -s/--strategy"
+msgid "cannot mix --cummit, --abort or -s/--strategy"
+msgstr "不能混用 --cummit、--abort 或 -s/--strategy"
 
 #: builtin/notes.c:810
 msgid "must specify a notes ref to merge"
@@ -18915,11 +18915,11 @@ msgstr "無法儲存連結到目前的註解引用（%s）"
 #: builtin/notes.c:880
 #, c-format
 msgid ""
-"Automatic notes merge failed. Fix conflicts in %s and commit the result with "
-"'git notes merge --commit', or abort the merge with 'git notes merge --"
+"Automatic notes merge failed. Fix conflicts in %s and cummit the result with "
+"'git notes merge --cummit', or abort the merge with 'git notes merge --"
 "abort'.\n"
 msgstr ""
-"自動合併說明失敗。修改 %s 中的衝突並且使用指令 'git notes merge --commit' 提"
+"自動合併說明失敗。修改 %s 中的衝突並且使用指令 'git notes merge --cummit' 提"
 "交結果，或者使用指令 'git notes merge --abort' 終止合併。\n"
 
 #: builtin/notes.c:899 builtin/tag.c:595
@@ -19284,7 +19284,7 @@ msgid "pack compression level"
 msgstr "打包壓縮級別"
 
 #: builtin/pack-objects.c:3972
-msgid "do not hide commits by grafts"
+msgid "do not hide cummits by grafts"
 msgstr "顯示被移植隱藏的提交"
 
 #: builtin/pack-objects.c:3974
@@ -19433,8 +19433,8 @@ msgid "allow fast-forward"
 msgstr "允許快轉式"
 
 #: builtin/pull.c:165
-msgid "control use of pre-merge-commit and commit-msg hooks"
-msgstr "控制 pre-merge-commit 和 commit-msg 掛鉤的使用"
+msgid "control use of pre-merge-cummit and cummit-msg hooks"
+msgstr "控制 pre-merge-cummit 和 cummit-msg 掛鉤的使用"
 
 #: builtin/pull.c:171 parse-options.h:371
 msgid "automatically stash/stash pop before and after"
@@ -19525,7 +19525,7 @@ msgstr ""
 
 #: builtin/pull.c:600
 #, c-format
-msgid "unable to access commit %s"
+msgid "unable to access cummit %s"
 msgstr "無法存取提交 %s"
 
 #: builtin/pull.c:908
@@ -19570,7 +19570,7 @@ msgid "pull with rebase"
 msgstr "重定基底式拉取"
 
 #: builtin/pull.c:1052
-msgid "please commit or stash them."
+msgid "please cummit or stash them."
 msgstr "請提交或儲藏它們。"
 
 #: builtin/pull.c:1077
@@ -19578,7 +19578,7 @@ msgstr "請提交或儲藏它們。"
 msgid ""
 "fetch updated the current branch head.\n"
 "fast-forwarding your working tree from\n"
-"commit %s."
+"cummit %s."
 msgstr ""
 "fetch 更新了目前的分支。快轉您的工作區\n"
 "至提交 %s。"
@@ -19752,8 +19752,8 @@ msgstr "更新被拒絕，因為該標籤在遠端已經存在。"
 
 #: builtin/push.c:280
 msgid ""
-"You cannot update a remote ref that points at a non-commit object,\n"
-"or update a remote ref to make it point at a non-commit object,\n"
+"You cannot update a remote ref that points at a non-cummit object,\n"
+"or update a remote ref to make it point at a non-cummit object,\n"
 "without using the '--force' option.\n"
 msgstr ""
 "如果不使用 '--force' 參數，您不能更新一個指向非提交物件的遠端引用，\n"
@@ -19929,7 +19929,7 @@ msgstr "只發出跟第二個範圍相關的輸出"
 
 #: builtin/range-diff.c:60 builtin/range-diff.c:64
 #, c-format
-msgid "not a commit range: '%s'"
+msgid "not a cummit range: '%s'"
 msgstr "不是提交範圍：「%s」"
 
 #: builtin/range-diff.c:74
@@ -19937,7 +19937,7 @@ msgid "single arg format must be symmetric range"
 msgstr "單個參數格式必須是對稱範圍（即包含...）"
 
 #: builtin/range-diff.c:89
-msgid "need two commit ranges"
+msgid "need two cummit ranges"
 msgstr "需要兩個提交範圍"
 
 #: builtin/read-tree.c:41
@@ -20050,7 +20050,7 @@ msgid "could not generate todo list"
 msgstr "無法生成待辦列表"
 
 #: builtin/rebase.c:332
-msgid "a base commit must be provided with --upstream or --onto"
+msgid "a base cummit must be provided with --upstream or --onto"
 msgstr "使用 --upstream 或 --onto 必須提供一個基礎提交"
 
 #: builtin/rebase.c:391
@@ -20077,7 +20077,7 @@ msgstr "忽略無效的 allow_rerere_autoupdate：'%s'"
 msgid ""
 "Resolve all conflicts manually, mark them as resolved with\n"
 "\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
+"You can instead skip this cummit: run \"git rebase --skip\".\n"
 "To abort and get back to the state before \"git rebase\", run \"git rebase --"
 "abort\"."
 msgstr ""
@@ -20179,11 +20179,11 @@ msgid "do not show diffstat of what changed upstream"
 msgstr "不顯示上游變化的差異統計"
 
 #: builtin/rebase.c:1066
-msgid "add a Signed-off-by trailer to each commit"
+msgid "add a Signed-off-by trailer to each cummit"
 msgstr "在每個提交結尾加入 Signed-off-by"
 
 #: builtin/rebase.c:1069
-msgid "make committer date match author date"
+msgid "make cummitter date match author date"
 msgstr "使提交日期與製作日期相符合"
 
 #: builtin/rebase.c:1071
@@ -20203,7 +20203,7 @@ msgid "ignore changes in whitespace"
 msgstr "忽略空白字元中的變更"
 
 #: builtin/rebase.c:1081 builtin/rebase.c:1084
-msgid "cherry-pick all commits, even if unchanged"
+msgid "cherry-pick all cummits, even if unchanged"
 msgstr "揀選所有提交，即使未修改"
 
 #: builtin/rebase.c:1086
@@ -20240,7 +20240,7 @@ msgid "use merging strategies to rebase"
 msgstr "使用合併策略進行重定基底"
 
 #: builtin/rebase.c:1109
-msgid "let the user edit the list of commits to rebase"
+msgid "let the user edit the list of cummits to rebase"
 msgstr "讓使用者編輯要重定基底的提交列表"
 
 #: builtin/rebase.c:1113
@@ -20248,23 +20248,23 @@ msgid "(DEPRECATED) try to recreate merges instead of ignoring them"
 msgstr "（已棄用）嘗試重建合併提交而非忽略它們"
 
 #: builtin/rebase.c:1118
-msgid "how to handle commits that become empty"
+msgid "how to handle cummits that become empty"
 msgstr "處理空白提交的方式"
 
 #: builtin/rebase.c:1121
-msgid "keep commits which start empty"
+msgid "keep cummits which start empty"
 msgstr "保留開頭是空白的提交"
 
 #: builtin/rebase.c:1125
-msgid "move commits that begin with squash!/fixup! under -i"
+msgid "move cummits that begin with squash!/fixup! under -i"
 msgstr "在 -i 互動模式下，移動以 squash!/fixup! 開頭的提交"
 
 #: builtin/rebase.c:1132
-msgid "add exec lines after each commit of the editable list"
+msgid "add exec lines after each cummit of the editable list"
 msgstr "可編輯列表的每一個提交下面增加一行 exec"
 
 #: builtin/rebase.c:1136
-msgid "allow rebasing commits with empty messages"
+msgid "allow rebasing cummits with empty messages"
 msgstr "允許針對空提交說明的提交重定基底"
 
 #: builtin/rebase.c:1140
@@ -20288,7 +20288,7 @@ msgid "pass the argument through to the merge strategy"
 msgstr "將參數傳遞給合併策略"
 
 #: builtin/rebase.c:1151
-msgid "rebase all reachable commits up to the root(s)"
+msgid "rebase all reachable cummits up to the root(s)"
 msgstr "將所有可以取得的提交重定基底到根提交"
 
 #: builtin/rebase.c:1154
@@ -20387,7 +20387,7 @@ msgid "invalid upstream '%s'"
 msgstr "無效的上游 '%s'"
 
 #: builtin/rebase.c:1571
-msgid "Could not create new root commit"
+msgid "Could not create new root cummit"
 msgstr "不能建立新的根提交"
 
 #: builtin/rebase.c:1597
@@ -20402,12 +20402,12 @@ msgstr "'%s'：只需要一個合併基礎"
 
 #: builtin/rebase.c:1609
 #, c-format
-msgid "Does not point to a valid commit '%s'"
+msgid "Does not point to a valid cummit '%s'"
 msgstr "沒有指向一個有效的提交 '%s'"
 
 #: builtin/rebase.c:1636
 #, c-format
-msgid "no such branch/commit '%s'"
+msgid "no such branch/cummit '%s'"
 msgstr "沒有此分支/提交 '%s'"
 
 #: builtin/rebase.c:1647 builtin/submodule--helper.c:43
@@ -20421,7 +20421,7 @@ msgid "Could not resolve HEAD to a revision"
 msgstr "無法將 HEAD 解析為一個版本"
 
 #: builtin/rebase.c:1679
-msgid "Please commit or stash them."
+msgid "Please cummit or stash them."
 msgstr "請提交或儲藏修改。"
 
 #: builtin/rebase.c:1714
@@ -20592,7 +20592,7 @@ msgid ""
 msgstr "剪除早於 <time> 且不能從分支目前開頭到達的項目"
 
 #: builtin/reflog.c:258
-msgid "prune any reflog entries that point to broken commits"
+msgid "prune any reflog entries that point to broken cummits"
 msgstr "剪除任何指向損壞提交的引用日誌項目"
 
 #: builtin/reflog.c:259
@@ -21302,7 +21302,7 @@ msgid "git replace [-f] --edit <object>"
 msgstr "git replace [-f] --edit <物件>"
 
 #: builtin/replace.c:24
-msgid "git replace [-f] --graft <commit> [<parent>...]"
+msgid "git replace [-f] --graft <cummit> [<parent>...]"
 msgstr "git replace [-f] --graft <提交> [<父提交>...]"
 
 #: builtin/replace.c:26
@@ -21408,38 +21408,38 @@ msgstr "新物件和舊物件相同：'%s'"
 
 #: builtin/replace.c:383
 #, c-format
-msgid "could not parse %s as a commit"
+msgid "could not parse %s as a cummit"
 msgstr "無法將 %s 解析為一個提交"
 
 #: builtin/replace.c:415
 #, c-format
-msgid "bad mergetag in commit '%s'"
+msgid "bad mergetag in cummit '%s'"
 msgstr "提交 '%s' 中含有損壞的合併標籤"
 
 #: builtin/replace.c:417
 #, c-format
-msgid "malformed mergetag in commit '%s'"
+msgid "malformed mergetag in cummit '%s'"
 msgstr "提交 '%s' 中含有格式錯誤的合併標籤"
 
 #: builtin/replace.c:429
 #, c-format
 msgid ""
-"original commit '%s' contains mergetag '%s' that is discarded; use --edit "
+"original cummit '%s' contains mergetag '%s' that is discarded; use --edit "
 "instead of --graft"
 msgstr "原始提交 '%s' 包含已經捨棄的合併標籤 '%s'，使用 --edit 代替 --graft"
 
 #: builtin/replace.c:468
 #, c-format
-msgid "the original commit '%s' has a gpg signature"
+msgid "the original cummit '%s' has a gpg signature"
 msgstr "原始提交 '%s' 中有一個 gpg 簽名"
 
 #: builtin/replace.c:469
-msgid "the signature will be removed in the replacement commit!"
+msgid "the signature will be removed in the replacement cummit!"
 msgstr "在取代的提交中簽名將被移除！"
 
 #: builtin/replace.c:479
 #, c-format
-msgid "could not write replacement commit for: '%s'"
+msgid "could not write replacement cummit for: '%s'"
 msgstr "不能為 '%s' 寫取代提交"
 
 #: builtin/replace.c:487
@@ -21449,7 +21449,7 @@ msgstr "對 '%s' 移植沒有必要"
 
 #: builtin/replace.c:491
 #, c-format
-msgid "new commit is the same as the old one: '%s'"
+msgid "new cummit is the same as the old one: '%s'"
 msgstr "新提交和舊的一樣：'%s'"
 
 #: builtin/replace.c:526
@@ -21474,7 +21474,7 @@ msgid "edit existing object"
 msgstr "編輯現存的物件"
 
 #: builtin/replace.c:550
-msgid "change a commit's parents"
+msgid "change a cummit's parents"
 msgstr "修改一個提交的父提交"
 
 #: builtin/replace.c:551
@@ -21548,7 +21548,7 @@ msgstr "無法為 '%s' 生成差異"
 
 #: builtin/reset.c:33
 msgid ""
-"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
+"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"
 msgstr "git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<提交>]"
 
 #: builtin/reset.c:34
@@ -21782,7 +21782,7 @@ msgid "unknown mode for --show-object-format: %s"
 msgstr "--show-object-format 的模式未知：%s"
 
 #: builtin/revert.c:24
-msgid "git revert [<options>] <commit-ish>..."
+msgid "git revert [<options>] <cummit-ish>..."
 msgstr "git revert [<選項>] <提交號>..."
 
 #: builtin/revert.c:25
@@ -21790,7 +21790,7 @@ msgid "git revert <subcommand>"
 msgstr "git revert <子指令>"
 
 #: builtin/revert.c:30
-msgid "git cherry-pick [<options>] <commit-ish>..."
+msgid "git cherry-pick [<options>] <cummit-ish>..."
 msgstr "git cherry-pick [<選項>] <提交號>..."
 
 #: builtin/revert.c:31
@@ -21820,15 +21820,15 @@ msgid "cancel revert or cherry-pick sequence"
 msgstr "取消反轉或揀選動作"
 
 #: builtin/revert.c:105
-msgid "skip current commit and continue"
+msgid "skip current cummit and continue"
 msgstr "略過目前提交並繼續"
 
 #: builtin/revert.c:107
-msgid "don't automatically commit"
+msgid "don't automatically cummit"
 msgstr "不要自動提交"
 
 #: builtin/revert.c:108
-msgid "edit the commit message"
+msgid "edit the cummit message"
 msgstr "編輯提交說明"
 
 #: builtin/revert.c:111
@@ -21848,19 +21848,19 @@ msgid "option for merge strategy"
 msgstr "合併策略的選項"
 
 #: builtin/revert.c:125
-msgid "append commit name"
+msgid "append cummit name"
 msgstr "追加提交名稱"
 
 #: builtin/revert.c:127
-msgid "preserve initially empty commits"
+msgid "preserve initially empty cummits"
 msgstr "保留初始化的空提交"
 
 #: builtin/revert.c:128
-msgid "allow commits with empty messages"
+msgid "allow cummits with empty messages"
 msgstr "允許提交說明為空"
 
 #: builtin/revert.c:129
-msgid "keep redundant, empty commits"
+msgid "keep redundant, empty cummits"
 msgstr "保持多餘的、空的提交"
 
 #: builtin/revert.c:241
@@ -21998,15 +21998,15 @@ msgid "unknown group type: %s"
 msgstr "未知群組類型：%s"
 
 #: builtin/shortlog.c:351
-msgid "group by committer rather than author"
+msgid "group by cummitter rather than author"
 msgstr "依提交者而非作者分組"
 
 #: builtin/shortlog.c:354
-msgid "sort output according to the number of commits per author"
+msgid "sort output according to the number of cummits per author"
 msgstr "根據每個作者的提交數量排序"
 
 #: builtin/shortlog.c:356
-msgid "suppress commit descriptions, only provides commit count"
+msgid "suppress cummit descriptions, only provides cummit count"
 msgstr "隱藏提交說明，只提供提交數量"
 
 #: builtin/shortlog.c:358
@@ -22074,7 +22074,7 @@ msgid "color '*!+-' corresponding to the branch"
 msgstr "著色 '*!+-' 到相應的分支"
 
 #: builtin/show-branch.c:651
-msgid "show <n> more commits after the common ancestor"
+msgid "show <n> more cummits after the common ancestor"
 msgstr "顯示共同祖先後的 <n> 個提交"
 
 #: builtin/show-branch.c:653
@@ -22090,7 +22090,7 @@ msgid "include the current branch"
 msgstr "包括目前分支"
 
 #: builtin/show-branch.c:658
-msgid "name commits with their object names"
+msgid "name cummits with their object names"
 msgstr "以物件名字命名提交"
 
 #: builtin/show-branch.c:660
@@ -22102,11 +22102,11 @@ msgid "show refs unreachable from any other ref"
 msgstr "顯示沒有任何引用的的引用"
 
 #: builtin/show-branch.c:664
-msgid "show commits in topological order"
+msgid "show cummits in topological order"
 msgstr "以拓撲順序顯示提交"
 
 #: builtin/show-branch.c:667
-msgid "show only commits not on the first branch"
+msgid "show only cummits not on the first branch"
 msgstr "只顯示不在第一個分支上的提交"
 
 #: builtin/show-branch.c:669
@@ -22157,7 +22157,7 @@ msgstr "'%s' 不是一個有效的引用。"
 
 #: builtin/show-branch.c:838
 #, c-format
-msgid "cannot find commit %s (%s)"
+msgid "cannot find cummit %s (%s)"
 msgstr "不能找到提交 %s（%s）"
 
 #: builtin/show-index.c:21
@@ -22405,7 +22405,7 @@ msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
 msgstr "git stash apply [--index] [-q|--quiet] [<stash>]"
 
 #: builtin/stash.c:75
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
+msgid "git stash store [-m|--message <message>] [-q|--quiet] <cummit>"
 msgstr "git stash store [-m|--message <消息>] [-q|--quiet] <提交>"
 
 #: builtin/stash.c:80
@@ -22428,7 +22428,7 @@ msgstr ""
 
 #: builtin/stash.c:130
 #, c-format
-msgid "'%s' is not a stash-like commit"
+msgid "'%s' is not a stash-like cummit"
 msgstr "'%s' 不像是一個儲藏提交"
 
 #: builtin/stash.c:150
@@ -22543,7 +22543,7 @@ msgid "stash message"
 msgstr "儲藏說明"
 
 #: builtin/stash.c:958
-msgid "\"git stash store\" requires one <commit> argument"
+msgid "\"git stash store\" requires one <cummit> argument"
 msgstr "\"git stash store\" 需要一個 <提交> 參數"
 
 #: builtin/stash.c:1143
@@ -22555,7 +22555,7 @@ msgid "No changes selected"
 msgstr "沒有選擇變更"
 
 #: builtin/stash.c:1304
-msgid "You do not have the initial commit yet"
+msgid "You do not have the initial cummit yet"
 msgstr "您尚未建立初始提交"
 
 #: builtin/stash.c:1331
@@ -22760,7 +22760,7 @@ msgstr "隱藏子模組的狀態輸出"
 
 #: builtin/submodule--helper.c:875
 msgid ""
-"use commit stored in the index instead of the one stored in the submodule "
+"use cummit stored in the index instead of the one stored in the submodule "
 "HEAD"
 msgstr "使用儲存在索引中的提交，而非儲存在子模組 HEAD 中的提交"
 
@@ -22798,11 +22798,11 @@ msgid "unexpected mode %o\n"
 msgstr "非預期的模式 %o\n"
 
 #: builtin/submodule--helper.c:1288
-msgid "use the commit stored in the index instead of the submodule HEAD"
+msgid "use the cummit stored in the index instead of the submodule HEAD"
 msgstr "使用儲存在索引中的提交而非子模組 HEAD"
 
 #: builtin/submodule--helper.c:1290
-msgid "compare the commit in the index with that in the submodule HEAD"
+msgid "compare the cummit in the index with that in the submodule HEAD"
 msgstr "比較索引中提交與子模組 HEAD 提交的差異"
 
 #: builtin/submodule--helper.c:1292
@@ -22814,7 +22814,7 @@ msgid "limit the summary size"
 msgstr "限制摘要大小"
 
 #: builtin/submodule--helper.c:1299
-msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
+msgid "git submodule--helper summary [<options>] [<cummit>] [--] [<path>]"
 msgstr "git submodule--helper summary [<選項>] [<提交>] [--] [<路徑>]"
 
 #: builtin/submodule--helper.c:1323
@@ -23076,7 +23076,7 @@ msgstr "無法在子模組路徑 「%s」中取得。嘗試直接取得 %s："
 #, c-format
 msgid ""
 "Fetched in submodule path '%s', but it did not contain %s. Direct fetching "
-"of that commit failed."
+"of that cummit failed."
 msgstr "已經取得「%s」子模組路徑，這個路徑卻未包含「%s」。直接取得該提交失敗。"
 
 #: builtin/submodule--helper.c:2481
@@ -23411,9 +23411,9 @@ msgstr "git tag -d <標籤名>..."
 
 #: builtin/tag.c:29
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
+"git tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--"
 "points-at <object>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] "
+"        [--format=<format>] [--merged <cummit>] [--no-merged <cummit>] "
 "[<pattern>...]"
 msgstr ""
 "git tag -l [-n[<數字>]] [--contains <提交>] [--no-contains <提交>] [--points-"
@@ -23548,11 +23548,11 @@ msgid "show tag list in columns"
 msgstr "以列的方式顯示標籤列表"
 
 #: builtin/tag.c:468 builtin/tag.c:470
-msgid "print only tags that contain the commit"
+msgid "print only tags that contain the cummit"
 msgstr "只列印包含該提交的標籤"
 
 #: builtin/tag.c:469 builtin/tag.c:471
-msgid "print only tags that don't contain the commit"
+msgid "print only tags that don't contain the cummit"
 msgstr "只列印不包含該提交的標籤"
 
 #: builtin/tag.c:472
@@ -23889,15 +23889,15 @@ msgstr "如果 <目錄> 不是一個 Git 目錄，不要嘗試 <目錄>/.git/"
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "不活動 <n> 秒鐘後終止傳輸"
 
-#: builtin/verify-commit.c:19
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] <提交>..."
+#: builtin/verify-cummit.c:19
+msgid "git verify-cummit [-v | --verbose] <cummit>..."
+msgstr "git verify-cummit [-v | --verbose] <提交>..."
 
-#: builtin/verify-commit.c:68
-msgid "print commit contents"
+#: builtin/verify-cummit.c:68
+msgid "print cummit contents"
 msgstr "列印提交內容"
 
-#: builtin/verify-commit.c:69 builtin/verify-tag.c:37
+#: builtin/verify-cummit.c:69 builtin/verify-tag.c:37
 msgid "print raw gpg status output"
 msgstr "列印原始 gpg 狀態輸出"
 
@@ -23922,7 +23922,7 @@ msgid "print tag contents"
 msgstr "列印標籤內容"
 
 #: builtin/worktree.c:19
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
+msgid "git worktree add [<options>] <path> [<cummit-ish>]"
 msgstr "git worktree add [<選項>] <路徑> [<提交>]"
 
 #: builtin/worktree.c:20
@@ -24371,11 +24371,11 @@ msgstr "準備修訂版本時發生錯誤"
 
 #: t/helper/test-reach.c:154
 #, c-format
-msgid "commit %s is not marked reachable"
+msgid "cummit %s is not marked reachable"
 msgstr "提交 %s 沒有標記為可以取得"
 
 #: t/helper/test-reach.c:164
-msgid "too many commits marked reachable"
+msgid "too many cummits marked reachable"
 msgstr "太多提交標記為可以取得"
 
 #: t/helper/test-serve-v2.c:7
@@ -24890,7 +24890,7 @@ msgid "Apply a series of patches from a mailbox"
 msgstr "套用信箱格式的系列修補檔"
 
 #: command-list.h:52
-msgid "Annotate file lines with commit information"
+msgid "Annotate file lines with cummit information"
 msgstr "使用提交說明備註檔案行"
 
 #: command-list.h:53
@@ -24906,7 +24906,7 @@ msgid "Create an archive of files from a named tree"
 msgstr "基於命名過的樹建立檔案封存"
 
 #: command-list.h:56
-msgid "Use binary search to find the commit that introduced a bug"
+msgid "Use binary search to find the cummit that introduced a bug"
 msgstr "透過二分搜尋定位引入 bug 的提交"
 
 #: command-list.h:57
@@ -24954,16 +24954,16 @@ msgid "Copy files from the index to the working tree"
 msgstr "從索引複製檔案到工作區"
 
 #: command-list.h:68
-msgid "Find commits yet to be applied to upstream"
+msgid "Find cummits yet to be applied to upstream"
 msgstr "尋找尚未套用到上游的提交"
 
 #: command-list.h:69
-msgid "Apply the changes introduced by some existing commits"
+msgid "Apply the changes introduced by some existing cummits"
 msgstr "套用一些現存提交引入的修改"
 
 #: command-list.h:70
-msgid "Graphical alternative to git-commit"
-msgstr "git-commit 的圖形替代介面"
+msgid "Graphical alternative to git-cummit"
+msgstr "git-cummit 的圖形替代介面"
 
 #: command-list.h:71
 msgid "Remove untracked files from the working tree"
@@ -24982,11 +24982,11 @@ msgid "Record changes to the repository"
 msgstr "記錄變更到版本庫"
 
 #: command-list.h:75
-msgid "Write and verify Git commit-graph files"
+msgid "Write and verify Git cummit-graph files"
 msgstr "寫入和驗證 Git 提交圖檔案"
 
 #: command-list.h:76
-msgid "Create a new commit object"
+msgid "Create a new cummit object"
 msgstr "建立一個新的提交物件"
 
 #: command-list.h:77
@@ -25010,7 +25010,7 @@ msgid "Helper to store credentials on disk"
 msgstr "在磁碟儲存密碼的協助工具"
 
 #: command-list.h:82
-msgid "Export a single commit to a CVS checkout"
+msgid "Export a single cummit to a CVS checkout"
 msgstr "將一個提交匯出到 CVS 簽出中"
 
 #: command-list.h:83
@@ -25030,7 +25030,7 @@ msgid "Give an object a human readable name based on an available ref"
 msgstr "基於一個現存的引用為一個物件起一個可讀的名稱"
 
 #: command-list.h:87
-msgid "Show changes between commits, commit and working tree, etc"
+msgid "Show changes between cummits, cummit and working tree, etc"
 msgstr "顯示提交之間、提交和工作區之間等的差異"
 
 #: command-list.h:88
@@ -25070,7 +25070,7 @@ msgid "Rewrite branches"
 msgstr "重寫分支"
 
 #: command-list.h:97
-msgid "Produce a merge commit message"
+msgid "Produce a merge cummit message"
 msgstr "生成一個合併提交說明"
 
 #: command-list.h:98
@@ -25094,7 +25094,7 @@ msgid "Cleanup unnecessary files and optimize the local repository"
 msgstr "清除不必要的檔案和最佳化本機版本庫"
 
 #: command-list.h:103
-msgid "Extract commit ID from an archive created using git-archive"
+msgid "Extract cummit ID from an archive created using git-archive"
 msgstr "從 git-archive 建立的歸檔檔案中擷取提交 ID"
 
 #: command-list.h:104
@@ -25146,11 +25146,11 @@ msgid "Instantly browse your working repository in gitweb"
 msgstr "在 gitweb 中即時瀏覽您的工作版本庫"
 
 #: command-list.h:116
-msgid "Add or parse structured information in commit messages"
+msgid "Add or parse structured information in cummit messages"
 msgstr "新增或解析提交說明中的結構化訊息"
 
 #: command-list.h:117
-msgid "Show commit logs"
+msgid "Show cummit logs"
 msgstr "顯示提交日誌"
 
 #: command-list.h:118
@@ -25271,7 +25271,7 @@ msgid "Applies a quilt patchset onto the current branch"
 msgstr "將一個 quilt 修補檔集合套用到目前分支"
 
 #: command-list.h:147
-msgid "Compare two commit ranges (e.g. two versions of a branch)"
+msgid "Compare two cummit ranges (e.g. two versions of a branch)"
 msgstr "比較兩個提交範圍（如一個分支的兩個版本）"
 
 #: command-list.h:148
@@ -25279,7 +25279,7 @@ msgid "Reads tree information into the index"
 msgstr "將樹訊息讀取到索引"
 
 #: command-list.h:149
-msgid "Reapply commits on top of another base tip"
+msgid "Reapply cummits on top of another base tip"
 msgstr "在另一個分支上重新套用提交"
 
 #: command-list.h:150
@@ -25319,7 +25319,7 @@ msgid "Restore working tree files"
 msgstr "復原工作區檔案"
 
 #: command-list.h:159
-msgid "Lists commit objects in reverse chronological order"
+msgid "Lists cummit objects in reverse chronological order"
 msgstr "按時間順序列出提交物件"
 
 #: command-list.h:160
@@ -25327,7 +25327,7 @@ msgid "Pick out and massage parameters"
 msgstr "選出並處理參數"
 
 #: command-list.h:161
-msgid "Revert some existing commits"
+msgid "Revert some existing cummits"
 msgstr "還原一些現存提交"
 
 #: command-list.h:162
@@ -25363,7 +25363,7 @@ msgid "Show various types of objects"
 msgstr "顯示各種類型的物件"
 
 #: command-list.h:170
-msgid "Show branches and their commits"
+msgid "Show branches and their cummits"
 msgstr "顯示分支和提交"
 
 #: command-list.h:171
@@ -25448,7 +25448,7 @@ msgid "Show a Git logical variable"
 msgstr "顯示 Git 邏輯變數"
 
 #: command-list.h:191
-msgid "Check the GPG signature of commits"
+msgid "Check the GPG signature of cummits"
 msgstr "檢查 GPG 提交簽名"
 
 #: command-list.h:192
@@ -25460,7 +25460,7 @@ msgid "Check the GPG signature of tags"
 msgstr "檢查標籤的 GPG 簽名"
 
 #: command-list.h:194
-msgid "Show logs with difference each commit introduces"
+msgid "Show logs with difference each cummit introduces"
 msgstr "顯示每一個提交引入的差異日誌"
 
 #: command-list.h:195
@@ -25520,7 +25520,7 @@ msgid "The Git repository browser"
 msgstr "Git 版本庫瀏覽器"
 
 #: command-list.h:209
-msgid "Map author/committer names and/or E-Mail addresses"
+msgid "Map author/cummitter names and/or E-Mail addresses"
 msgstr "映射作者或提交者的名稱和（或）電子信箱地址"
 
 #: command-list.h:210
@@ -25579,7 +25579,7 @@ msgstr "不應該執行章魚式合併。"
 
 #: git-merge-octopus.sh:73
 #, sh-format
-msgid "Unable to find common commit with $pretty_name"
+msgid "Unable to find common cummit with $pretty_name"
 msgstr "無法找到和 $pretty_name 的基礎提交"
 
 #: git-merge-octopus.sh:77
@@ -25627,11 +25627,11 @@ msgstr "不能 $action：您有未暫存的變更。"
 
 #: git-sh-setup.sh:226
 #, sh-format
-msgid "Cannot $action: Your index contains uncommitted changes."
+msgid "Cannot $action: Your index contains uncummitted changes."
 msgstr "不能 $action：您的索引中包含未提交的變更。"
 
 #: git-sh-setup.sh:228
-msgid "Additionally, your index contains uncommitted changes."
+msgid "Additionally, your index contains uncummitted changes."
 msgstr "而且您的索引中包含未提交的變更。"
 
 #: git-sh-setup.sh:348
@@ -26043,7 +26043,7 @@ msgstr "警告：不能識別的 sendmail 行：%s\n"
 #: git-send-email.perl:747
 #, perl-format
 msgid ""
-"File '%s' exists but it could also be the range of commits\n"
+"File '%s' exists but it could also be the range of cummits\n"
 "to produce patches for.  Please disambiguate by...\n"
 "\n"
 "    * Saying \"./%s\" if you mean a file; or\n"
@@ -26168,7 +26168,7 @@ msgstr "CA 路徑 \"%s\" 不存在"
 #: git-send-email.perl:1565
 msgid ""
 "    The Cc list above has been expanded by additional\n"
-"    addresses found in the patch commit message. By default\n"
+"    addresses found in the patch cummit message. By default\n"
 "    send-email prompts before sending whenever this occurs.\n"
 "    This behavior is controlled by the sendemail.confirm\n"
 "    configuration setting.\n"
@@ -26459,8 +26459,8 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid "read from stdin"
 #~ msgstr "從標準輸入讀取"
 
-#~ msgid "git notes merge --commit [-v | -q]"
-#~ msgstr "git notes merge --commit [-v | -q]"
+#~ msgid "git notes merge --cummit [-v | -q]"
+#~ msgstr "git notes merge --cummit [-v | -q]"
 
 #~ msgid "git notes merge --abort [-v | -q]"
 #~ msgstr "git notes merge --abort [-v | -q]"
@@ -26780,10 +26780,10 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid "--long is incompatible with --abbrev=0"
 #~ msgstr "--long 與 --abbrev=0 不相容"
 
-#~ msgid "--dirty is incompatible with commit-ishes"
+#~ msgid "--dirty is incompatible with cummit-ishes"
 #~ msgstr "--dirty 與提交號不相容"
 
-#~ msgid "--broken is incompatible with commit-ishes"
+#~ msgid "--broken is incompatible with cummit-ishes"
 #~ msgstr "--broken 與提交號不相容"
 
 #~ msgid "--stdin and --merge-base are mutually exclusive"
@@ -26835,8 +26835,8 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid "You cannot combine --squash with --no-ff."
 #~ msgstr "您不能將 --squash 和 --no-ff 組合使用。"
 
-#~ msgid "You cannot combine --squash with --commit."
-#~ msgstr "您不能將 --squash 和 --commit 組合使用。"
+#~ msgid "You cannot combine --squash with --cummit."
+#~ msgstr "您不能將 --squash 和 --cummit 組合使用。"
 
 #~ msgid "--keep-unreachable and --unpack-unreachable are incompatible"
 #~ msgstr "--keep-unreachable 和 --unpack-unreachable 不相容"
@@ -26965,10 +26965,10 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid ""
 #~ "after resolving the conflicts, mark the corrected paths\n"
 #~ "with 'git add <paths>' or 'git rm <paths>'\n"
-#~ "and commit the result with 'git commit'"
+#~ "and cummit the result with 'git cummit'"
 #~ msgstr ""
 #~ "衝突解決完畢後，用 'git add <路徑>' 或 'git rm <路徑>'\n"
-#~ "對修正後的檔案做標記，然後用 'git commit' 提交"
+#~ "對修正後的檔案做標記，然後用 'git cummit' 提交"
 
 #~ msgid "open /dev/null or dup failed"
 #~ msgstr "不能開啟或者複製 /dev/null"
@@ -26995,8 +26995,8 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid "couldn't create a new file at '%s'"
 #~ msgstr "不要在「%s」建立新檔案"
 
-#~ msgid "git commit-tree: failed to open '%s'"
-#~ msgstr "git commit-tree：無法開啟 '%s'"
+#~ msgid "git cummit-tree: failed to open '%s'"
+#~ msgstr "git cummit-tree：無法開啟 '%s'"
 
 #~ msgid "cannot open packfile '%s'"
 #~ msgstr "無法開啟 packfile '%s'"
@@ -27016,31 +27016,31 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid "git rebase--interactive [<options>]"
 #~ msgstr "git rebase--interactive [<選項>]"
 
-#~ msgid "rebase merge commits"
+#~ msgid "rebase merge cummits"
 #~ msgstr "對合併提交重定基底"
 
 #~ msgid "keep original branch points of cousins"
 #~ msgstr "保持兄弟提交的原始分支點"
 
-#~ msgid "move commits that begin with squash!/fixup!"
+#~ msgid "move cummits that begin with squash!/fixup!"
 #~ msgstr "移動以 squash!/fixup! 開頭的提交"
 
-#~ msgid "sign commits"
+#~ msgid "sign cummits"
 #~ msgstr "簽名提交"
 
 #~ msgid "continue rebase"
 #~ msgstr "繼續重定基底"
 
-#~ msgid "skip commit"
+#~ msgid "skip cummit"
 #~ msgstr "略過提交"
 
 #~ msgid "edit the todo list"
 #~ msgstr "重定基底待辦列表"
 
-#~ msgid "shorten commit ids in the todo list"
+#~ msgid "shorten cummit ids in the todo list"
 #~ msgstr "縮短待辦列表中的提交號"
 
-#~ msgid "expand commit ids in the todo list"
+#~ msgid "expand cummit ids in the todo list"
 #~ msgstr "擴展待辦列表中的提交號"
 
 #~ msgid "check the todo list"
@@ -27067,7 +27067,7 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid "squash onto"
 #~ msgstr "squash onto"
 
-#~ msgid "the upstream commit"
+#~ msgid "the upstream cummit"
 #~ msgstr "上游提交"
 
 #~ msgid "head-name"
@@ -27088,7 +27088,7 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid "switch-to"
 #~ msgstr "切換到"
 
-#~ msgid "the branch or commit to checkout"
+#~ msgid "the branch or cummit to checkout"
 #~ msgstr "要簽出的分支或提交"
 
 #~ msgid "onto-name"
@@ -27148,7 +27148,7 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid "running $command"
 #~ msgstr "執行 $command"
 
-#~ msgid "'$sm_path' does not have a commit checked out"
+#~ msgid "'$sm_path' does not have a cummit checked out"
 #~ msgstr "'$sm_path' 沒有簽出的提交"
 
 #~ msgid "Submodule path '$displaypath': '$command $sha1'"
@@ -27175,20 +27175,20 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid ""
 #~ "\n"
 #~ "Commands:\n"
-#~ "p, pick <commit> = use commit\n"
-#~ "r, reword <commit> = use commit, but edit the commit message\n"
-#~ "e, edit <commit> = use commit, but stop for amending\n"
-#~ "s, squash <commit> = use commit, but meld into previous commit\n"
-#~ "f, fixup <commit> = like \"squash\", but discard this commit's log "
+#~ "p, pick <cummit> = use cummit\n"
+#~ "r, reword <cummit> = use cummit, but edit the cummit message\n"
+#~ "e, edit <cummit> = use cummit, but stop for amending\n"
+#~ "s, squash <cummit> = use cummit, but meld into previous cummit\n"
+#~ "f, fixup <cummit> = like \"squash\", but discard this cummit's log "
 #~ "message\n"
-#~ "x, exec <commit> = run command (the rest of the line) using shell\n"
-#~ "d, drop <commit> = remove commit\n"
+#~ "x, exec <cummit> = run command (the rest of the line) using shell\n"
+#~ "d, drop <cummit> = remove cummit\n"
 #~ "l, label <label> = label current HEAD with a name\n"
 #~ "t, reset <label> = reset HEAD to a label\n"
-#~ "m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-#~ ".       create a merge commit using the original merge commit's\n"
-#~ ".       message (or the oneline, if no original merge commit was\n"
-#~ ".       specified). Use -c <commit> to reword the commit message.\n"
+#~ "m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+#~ ".       create a merge cummit using the original merge cummit's\n"
+#~ ".       message (or the oneline, if no original merge cummit was\n"
+#~ ".       specified). Use -c <cummit> to reword the cummit message.\n"
 #~ "\n"
 #~ "These lines can be re-ordered; they are executed from top to bottom.\n"
 #~ msgstr ""
@@ -27211,9 +27211,9 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ "可以對這些行重新排序，將從上至下執行。\n"
 
 #~ msgid ""
-#~ "You can amend the commit now, with\n"
+#~ "You can amend the cummit now, with\n"
 #~ "\n"
-#~ "\tgit commit --amend $gpg_sign_opt_quoted\n"
+#~ "\tgit cummit --amend $gpg_sign_opt_quoted\n"
 #~ "\n"
 #~ "Once you are satisfied with your changes, run\n"
 #~ "\n"
@@ -27221,19 +27221,19 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgstr ""
 #~ "您現在可以修補這個提交，使用\n"
 #~ "\n"
-#~ "\tgit commit --amend $gpg_sign_opt_quoted\n"
+#~ "\tgit cummit --amend $gpg_sign_opt_quoted\n"
 #~ "\n"
 #~ "當您對變更感到滿意，執行\n"
 #~ "\n"
 #~ "\tgit rebase --continue"
 
-#~ msgid "$sha1: not a commit that can be picked"
+#~ msgid "$sha1: not a cummit that can be picked"
 #~ msgstr "$sha1：不是一個可以被揀選的提交"
 
-#~ msgid "Invalid commit name: $sha1"
+#~ msgid "Invalid cummit name: $sha1"
 #~ msgstr "無效的提交名：$sha1"
 
-#~ msgid "Cannot write current commit's replacement sha1"
+#~ msgid "Cannot write current cummit's replacement sha1"
 #~ msgstr "不能寫入目前提交的替代 sha1"
 
 #~ msgid "Fast-forward to $sha1"
@@ -27254,42 +27254,42 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid "Could not pick $sha1"
 #~ msgstr "不能揀選 $sha1"
 
-#~ msgid "This is the commit message #${n}:"
+#~ msgid "This is the cummit message #${n}:"
 #~ msgstr "這是提交說明 #${n}："
 
-#~ msgid "The commit message #${n} will be skipped:"
+#~ msgid "The cummit message #${n} will be skipped:"
 #~ msgstr "提交說明 #${n} 將被略過："
 
-#~ msgid "This is a combination of $count commit."
-#~ msgid_plural "This is a combination of $count commits."
+#~ msgid "This is a combination of $count cummit."
+#~ msgid_plural "This is a combination of $count cummits."
 #~ msgstr[0] "這是一個 $count 個提交的組合。"
 
 #~ msgid "Cannot write $fixup_msg"
 #~ msgstr "不能寫入 $fixup_msg"
 
-#~ msgid "This is a combination of 2 commits."
+#~ msgid "This is a combination of 2 cummits."
 #~ msgstr "這是一個 2 個提交的組合。"
 
 #~ msgid "Could not apply $sha1... $rest"
 #~ msgstr "不能套用 $sha1... $rest"
 
 #~ msgid ""
-#~ "Could not amend commit after successfully picking $sha1... $rest\n"
-#~ "This is most likely due to an empty commit message, or the pre-commit "
+#~ "Could not amend cummit after successfully picking $sha1... $rest\n"
+#~ "This is most likely due to an empty cummit message, or the pre-cummit "
 #~ "hook\n"
 #~ "failed. If the pre-commit hook failed, you may need to resolve the issue "
 #~ "before\n"
-#~ "you are able to reword the commit."
+#~ "you are able to reword the cummit."
 #~ msgstr ""
 #~ "不能在成功揀選 $sha1... $rest 之後修補提交\n"
-#~ "這通常是因為空的提交說明，或者 pre-commit 掛鉤執行失敗。如果是 pre-"
-#~ "commit\n"
+#~ "這通常是因為空的提交說明，或者 pre-cummit 掛鉤執行失敗。如果是 pre-"
+#~ "cummit\n"
 #~ "掛鉤執行失敗，你可能需要在重寫提交說明前解決這個問題。"
 
 #~ msgid "Stopped at $sha1_abbrev... $rest"
 #~ msgstr "停止在 $sha1_abbrev... $rest"
 
-#~ msgid "Cannot '$squash_style' without a previous commit"
+#~ msgid "Cannot '$squash_style' without a previous cummit"
 #~ msgstr "沒有父提交的情況下不能 '$squash_style'"
 
 #~ msgid "Executing: $rest"
@@ -27314,7 +27314,7 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid ""
 #~ "Execution succeeded: $rest\n"
 #~ "but left changes to the index and/or the working tree\n"
-#~ "Commit or stash your changes, and then run\n"
+#~ "cummit or stash your changes, and then run\n"
 #~ "\n"
 #~ "\tgit rebase --continue"
 #~ msgstr ""
@@ -27338,13 +27338,13 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid ""
 #~ "You have staged changes in your working tree.\n"
 #~ "If these changes are meant to be\n"
-#~ "squashed into the previous commit, run:\n"
+#~ "squashed into the previous cummit, run:\n"
 #~ "\n"
-#~ "  git commit --amend $gpg_sign_opt_quoted\n"
+#~ "  git cummit --amend $gpg_sign_opt_quoted\n"
 #~ "\n"
-#~ "If they are meant to go into a new commit, run:\n"
+#~ "If they are meant to go into a new cummit, run:\n"
 #~ "\n"
-#~ "  git commit $gpg_sign_opt_quoted\n"
+#~ "  git cummit $gpg_sign_opt_quoted\n"
 #~ "\n"
 #~ "In both cases, once you're done, continue with:\n"
 #~ "\n"
@@ -27352,26 +27352,26 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgstr ""
 #~ "您已暫存了工作區的修改。如果這些修改要壓縮到前一個提交，執行：\n"
 #~ "\n"
-#~ "  git commit --amend $gpg_sign_opt_quoted\n"
+#~ "  git cummit --amend $gpg_sign_opt_quoted\n"
 #~ "\n"
 #~ "如果這些變更要形成一個新提交，執行：\n"
 #~ "\n"
-#~ "  git commit $gpg_sign_opt_quoted\n"
+#~ "  git cummit $gpg_sign_opt_quoted\n"
 #~ "\n"
 #~ "無論哪種情況，當您完成提交，繼續執行：\n"
 #~ "\n"
 #~ "  git rebase --continue\n"
 
-#~ msgid "Error trying to find the author identity to amend commit"
+#~ msgid "Error trying to find the author identity to amend cummit"
 #~ msgstr "在修補提交中尋找作者訊息時遇到錯誤"
 
 #~ msgid ""
-#~ "You have uncommitted changes in your working tree. Please commit them\n"
+#~ "You have uncummitted changes in your working tree. Please cummit them\n"
 #~ "first and then run 'git rebase --continue' again."
 #~ msgstr ""
 #~ "您的工作區中有未提交的變更。請先提交然後再次執行 'git rebase --continue'。"
 
-#~ msgid "Could not commit staged changes."
+#~ msgid "Could not cummit staged changes."
 #~ msgstr "不能提交暫存的修改。"
 
 #~ msgid "Could not execute editor"
@@ -27393,10 +27393,10 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid_plural "Rebase $shortrevisions onto $shortonto ($todocount commands)"
 #~ msgstr[0] "重定基底 $shortrevisions 到 $shortonto（$todocount 個提交）"
 
-#~ msgid "Note that empty commits are commented out"
+#~ msgid "Note that empty cummits are commented out"
 #~ msgstr "注意空提交已被備註掉"
 
-#~ msgid "Could not init rewritten commits"
+#~ msgid "Could not init rewritten cummits"
 #~ msgstr "不能對重寫提交進行初始化"
 
 #~ msgid "Cannot rebase: You have unstaged changes."
@@ -27405,10 +27405,10 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid "Cannot pull with rebase: You have unstaged changes."
 #~ msgstr "無法透過重定基底方式拉取：您有未暫存的變更。"
 
-#~ msgid "Cannot rebase: Your index contains uncommitted changes."
+#~ msgid "Cannot rebase: Your index contains uncummitted changes."
 #~ msgstr "不能重定基底：您的索引中包含未提交的變更。"
 
-#~ msgid "Cannot pull with rebase: Your index contains uncommitted changes."
+#~ msgid "Cannot pull with rebase: Your index contains uncummitted changes."
 #~ msgstr "無法透過重定基底方式拉取：您的索引中包含未提交的變更。"
 
 #~ msgid "unable to write stateless separator packet"
@@ -27457,19 +27457,19 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgid "%s: patch contains a line longer than 998 characters"
 #~ msgstr "%s：修補檔包含一個超過 998 字元的行"
 
-#~ msgid "repository contains replace objects; skipping commit-graph"
+#~ msgid "repository contains replace objects; skipping cummit-graph"
 #~ msgstr "版本庫有取代物件；跳過提交圖形"
 
-#~ msgid "repository contains (deprecated) grafts; skipping commit-graph"
+#~ msgid "repository contains (deprecated) grafts; skipping cummit-graph"
 #~ msgstr "版本庫有（廢棄的）移植項目；跳過提交圖形"
 
-#~ msgid "repository is shallow; skipping commit-graph"
+#~ msgid "repository is shallow; skipping cummit-graph"
 #~ msgstr "版本庫是淺複製；忽略提交圖形"
 
-#~ msgid "commit-graph improper chunk offset %08x%08x"
+#~ msgid "cummit-graph improper chunk offset %08x%08x"
 #~ msgstr "提交圖形不正確的區塊位移 %08x%08x"
 
-#~ msgid "commit-graph chunk id %08x appears multiple times"
+#~ msgid "cummit-graph chunk id %08x appears multiple times"
 #~ msgstr "提交圖形區塊 id %08x 出現了多次"
 
 #~ msgid "invalid chunk offset (too large)"
@@ -27504,7 +27504,7 @@ msgstr "您真的要傳送 %s？[y|N]： "
 #~ msgstr "在一個二分尋找狀態中檢查和設定術語"
 
 #~ msgid ""
-#~ "verify the next bisection state then checkout the next bisection commit"
+#~ "verify the next bisection state then checkout the next bisection cummit"
 #~ msgstr "驗證下一個二分尋找狀態後，檢出下一個二分尋找提交"
 
 #~ msgid "--bisect-write requires either 4 or 5 arguments"

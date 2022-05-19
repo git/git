@@ -9,7 +9,7 @@
 #include "run-command.h"
 #include "hook.h"
 #include "exec-cmd.h"
-#include "commit.h"
+#include "cummit.h"
 #include "object.h"
 #include "remote.h"
 #include "connect.h"
@@ -27,7 +27,7 @@
 #include "packfile.h"
 #include "object-store.h"
 #include "protocol.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 #include "worktree.h"
 #include "shallow.h"
 
@@ -1319,7 +1319,7 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 		return -1;
 	}
 
-	commit_shallow_file(the_repository, &shallow_lock);
+	cummit_shallow_file(the_repository, &shallow_lock);
 
 	/*
 	 * Make sure setup_alternate_shallow() for the next ref does
@@ -1533,21 +1533,21 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 	    !is_null_oid(old_oid) &&
 	    starts_with(name, "refs/heads/")) {
 		struct object *old_object, *new_object;
-		struct commit *old_commit, *new_commit;
+		struct cummit *old_cummit, *new_cummit;
 
 		old_object = parse_object(the_repository, old_oid);
 		new_object = parse_object(the_repository, new_oid);
 
 		if (!old_object || !new_object ||
-		    old_object->type != OBJ_COMMIT ||
-		    new_object->type != OBJ_COMMIT) {
+		    old_object->type != OBJ_cummit ||
+		    new_object->type != OBJ_cummit) {
 			error("bad sha1 objects for %s", name);
 			ret = "bad ref";
 			goto out;
 		}
-		old_commit = (struct commit *)old_object;
-		new_commit = (struct commit *)new_object;
-		if (!in_merge_bases(old_commit, new_commit)) {
+		old_cummit = (struct cummit *)old_object;
+		new_cummit = (struct cummit *)new_object;
+		if (!in_merge_bases(old_cummit, new_cummit)) {
 			rp_error("denying non-fast-forward %s"
 				 " (you should pull first)", name);
 			ret = "non-fast-forward";
@@ -1848,7 +1848,7 @@ static void execute_commands_non_atomic(struct command *commands,
 		cmd->error_string = update(cmd, si);
 
 		if (!cmd->error_string
-		    && ref_transaction_commit(transaction, &err)) {
+		    && ref_transaction_cummit(transaction, &err)) {
 			rp_error("%s", err.buf);
 			strbuf_reset(&err);
 			cmd->error_string = "failed to update ref";
@@ -1883,7 +1883,7 @@ static void execute_commands_atomic(struct command *commands,
 			goto failure;
 	}
 
-	if (ref_transaction_commit(transaction, &err)) {
+	if (ref_transaction_cummit(transaction, &err)) {
 		rp_error("%s", err.buf);
 		reported_error = "atomic transaction failed";
 		goto failure;
@@ -2308,7 +2308,7 @@ static void prepare_shallow_update(struct shallow_info *si)
 	int i, j, k, bitmap_size = DIV_ROUND_UP(si->ref->nr, 32);
 
 	ALLOC_ARRAY(si->used_shallow, si->shallow->nr);
-	assign_shallow_commits_to_refs(si, si->used_shallow, NULL);
+	assign_shallow_cummits_to_refs(si, si->used_shallow, NULL);
 
 	CALLOC_ARRAY(si->need_reachability_test, si->shallow->nr);
 	CALLOC_ARRAY(si->reachable, si->shallow->nr);
@@ -2372,7 +2372,7 @@ static void update_shallow_info(struct command *commands,
 	}
 
 	ALLOC_ARRAY(ref_status, ref->nr);
-	assign_shallow_commits_to_refs(si, NULL, ref_status);
+	assign_shallow_cummits_to_refs(si, NULL, ref_status);
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (is_null_oid(&cmd->new_oid))
 			continue;

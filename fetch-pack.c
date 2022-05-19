@@ -4,7 +4,7 @@
 #include "lockfile.h"
 #include "refs.h"
 #include "pkt-line.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "exec-cmd.h"
 #include "pack.h"
@@ -23,8 +23,8 @@
 #include "fetch-negotiator.h"
 #include "fsck.h"
 #include "shallow.h"
-#include "commit-reach.h"
-#include "commit-graph.h"
+#include "cummit-reach.h"
+#include "cummit-graph.h"
 #include "sigchain.h"
 
 static int transfer_unpack_limit = -1;
@@ -115,16 +115,16 @@ static void for_each_cached_alternate(struct fetch_negotiator *negotiator,
 		cb(negotiator, cache.items[i]);
 }
 
-static struct commit *deref_without_lazy_fetch(const struct object_id *oid,
+static struct cummit *deref_without_lazy_fetch(const struct object_id *oid,
 					       int mark_tags_complete)
 {
 	enum object_type type;
 	struct object_info info = { .typep = &type };
-	struct commit *commit;
+	struct cummit *cummit;
 
-	commit = lookup_commit_in_graph(the_repository, oid);
-	if (commit)
-		return commit;
+	cummit = lookup_cummit_in_graph(the_repository, oid);
+	if (cummit)
+		return cummit;
 
 	while (1) {
 		if (oid_object_info_extended(the_repository, oid, &info,
@@ -144,11 +144,11 @@ static struct commit *deref_without_lazy_fetch(const struct object_id *oid,
 		}
 	}
 
-	if (type == OBJ_COMMIT) {
-		struct commit *commit = lookup_commit(the_repository, oid);
-		if (!commit || repo_parse_commit(the_repository, commit))
+	if (type == OBJ_cummit) {
+		struct cummit *cummit = lookup_cummit(the_repository, oid);
+		if (!cummit || repo_parse_cummit(the_repository, cummit))
 			return NULL;
-		return commit;
+		return cummit;
 	}
 
 	return NULL;
@@ -157,7 +157,7 @@ static struct commit *deref_without_lazy_fetch(const struct object_id *oid,
 static int rev_list_insert_ref(struct fetch_negotiator *negotiator,
 			       const struct object_id *oid)
 {
-	struct commit *c = deref_without_lazy_fetch(oid, 0);
+	struct cummit *c = deref_without_lazy_fetch(oid, 0);
 
 	if (c)
 		negotiator->add_tip(negotiator, c);
@@ -364,7 +364,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 	}
 
 	if (is_repository_shallow(the_repository))
-		write_shallow_commits(&req_buf, 1, NULL);
+		write_shallow_cummits(&req_buf, 1, NULL);
 	if (args->depth > 0)
 		packet_buf_write(&req_buf, "deepen %d", args->depth);
 	if (args->deepen_since) {
@@ -461,14 +461,14 @@ static int find_common(struct fetch_negotiator *negotiator,
 				case ACK_common:
 				case ACK_ready:
 				case ACK_continue: {
-					struct commit *commit =
-						lookup_commit(the_repository,
+					struct cummit *cummit =
+						lookup_cummit(the_repository,
 							      result_oid);
 					int was_common;
 
-					if (!commit)
-						die(_("invalid commit %s"), oid_to_hex(result_oid));
-					was_common = negotiator->ack(negotiator, commit);
+					if (!cummit)
+						die(_("invalid cummit %s"), oid_to_hex(result_oid));
+					was_common = negotiator->ack(negotiator, cummit);
 					if (args->stateless_rpc
 					 && ack == ACK_common
 					 && !was_common) {
@@ -536,15 +536,15 @@ done:
 	return count ? retval : 0;
 }
 
-static struct commit_list *complete;
+static struct cummit_list *complete;
 
 static int mark_complete(const struct object_id *oid)
 {
-	struct commit *commit = deref_without_lazy_fetch(oid, 1);
+	struct cummit *cummit = deref_without_lazy_fetch(oid, 1);
 
-	if (commit && !(commit->object.flags & COMPLETE)) {
-		commit->object.flags |= COMPLETE;
-		commit_list_insert(commit, &complete);
+	if (cummit && !(cummit->object.flags & COMPLETE)) {
+		cummit->object.flags |= COMPLETE;
+		cummit_list_insert(cummit, &complete);
 	}
 	return 0;
 }
@@ -555,13 +555,13 @@ static int mark_complete_oid(const char *refname, const struct object_id *oid,
 	return mark_complete(oid);
 }
 
-static void mark_recent_complete_commits(struct fetch_pack_args *args,
+static void mark_recent_complete_cummits(struct fetch_pack_args *args,
 					 timestamp_t cutoff)
 {
 	while (complete && cutoff <= complete->item->date) {
 		print_verbose(args, _("Marking %s as complete"),
 			      oid_to_hex(&complete->item->object.oid));
-		pop_most_recent_commit(&complete, COMPLETE);
+		pop_most_recent_cummit(&complete, COMPLETE);
 	}
 }
 
@@ -679,32 +679,32 @@ struct loose_object_iter {
 };
 
 /*
- * Mark recent commits available locally and reachable from a local ref as
+ * Mark recent cummits available locally and reachable from a local ref as
  * COMPLETE.
  *
  * The cutoff time for recency is determined by this heuristic: it is the
- * earliest commit time of the objects in refs that are commits and that we know
- * the commit time of.
+ * earliest cummit time of the objects in refs that are cummits and that we know
+ * the cummit time of.
  */
 static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 					 struct fetch_pack_args *args,
 					 struct ref **refs)
 {
 	struct ref *ref;
-	int old_save_commit_buffer = save_commit_buffer;
+	int old_save_cummit_buffer = save_cummit_buffer;
 	timestamp_t cutoff = 0;
 
 	if (args->refetch)
 		return;
 
-	save_commit_buffer = 0;
+	save_cummit_buffer = 0;
 
 	trace2_region_enter("fetch-pack", "parse_remote_refs_and_find_cutoff", NULL);
 	for (ref = *refs; ref; ref = ref->next) {
-		struct commit *commit;
+		struct cummit *cummit;
 
-		commit = lookup_commit_in_graph(the_repository, &ref->old_oid);
-		if (!commit) {
+		cummit = lookup_cummit_in_graph(the_repository, &ref->old_oid);
+		if (!cummit) {
 			struct object *o;
 
 			if (!has_object_file_with_flags(&ref->old_oid,
@@ -712,10 +712,10 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 						OBJECT_INFO_SKIP_FETCH_OBJECT))
 				continue;
 			o = parse_object(the_repository, &ref->old_oid);
-			if (!o || o->type != OBJ_COMMIT)
+			if (!o || o->type != OBJ_cummit)
 				continue;
 
-			commit = (struct commit *)o;
+			cummit = (struct cummit *)o;
 		}
 
 		/*
@@ -723,8 +723,8 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 		 * in sync with the other side at some time after
 		 * that (it is OK if we guess wrong here).
 		 */
-		if (!cutoff || cutoff < commit->date)
-			cutoff = commit->date;
+		if (!cutoff || cutoff < cummit->date)
+			cutoff = cummit->date;
 	}
 	trace2_region_leave("fetch-pack", "parse_remote_refs_and_find_cutoff", NULL);
 
@@ -736,9 +736,9 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 	if (!args->deepen) {
 		for_each_rawref(mark_complete_oid, NULL);
 		for_each_cached_alternate(NULL, mark_alternate_complete);
-		commit_list_sort_by_date(&complete);
+		cummit_list_sort_by_date(&complete);
 		if (cutoff)
-			mark_recent_complete_commits(args, cutoff);
+			mark_recent_complete_cummits(args, cutoff);
 	}
 	trace2_region_leave("fetch-pack", "mark_complete_local_refs", NULL);
 
@@ -748,7 +748,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 	 */
 	trace2_region_enter("fetch-pack", "mark_common_remote_refs", NULL);
 	for (ref = *refs; ref; ref = ref->next) {
-		struct commit *c = deref_without_lazy_fetch(&ref->old_oid, 0);
+		struct cummit *c = deref_without_lazy_fetch(&ref->old_oid, 0);
 
 		if (!c || !(c->object.flags & COMPLETE))
 			continue;
@@ -757,7 +757,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 	}
 	trace2_region_leave("fetch-pack", "mark_common_remote_refs", NULL);
 
-	save_commit_buffer = old_save_commit_buffer;
+	save_cummit_buffer = old_save_cummit_buffer;
 }
 
 /*
@@ -1137,9 +1137,9 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (find_common(negotiator, args, fd, &oid, ref) < 0)
 		if (!args->keep_pack)
 			/* When cloning, it is not unusual to have
-			 * no common commit.
+			 * no common cummit.
 			 */
-			warning(_("no common commits"));
+			warning(_("no common cummits"));
 
 	if (args->stateless_rpc)
 		packet_flush(fd[1]);
@@ -1168,7 +1168,7 @@ static void add_shallow_requests(struct strbuf *req_buf,
 				 const struct fetch_pack_args *args)
 {
 	if (is_repository_shallow(the_repository))
-		write_shallow_commits(req_buf, 1, NULL);
+		write_shallow_cummits(req_buf, 1, NULL);
 	if (args->depth > 0)
 		packet_buf_write(req_buf, "deepen %d", args->depth);
 	if (args->deepen_since) {
@@ -1341,7 +1341,7 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 	/* add wants */
 	add_wants(wants, &req_buf);
 
-	/* Add all of the common commits we've found in previous rounds */
+	/* Add all of the common cummits we've found in previous rounds */
 	add_common(&req_buf, common);
 
 	haves_added = add_haves(negotiator, &req_buf, haves_to_send);
@@ -1400,10 +1400,10 @@ static int process_ack(struct fetch_negotiator *negotiator,
 
 		if (skip_prefix(reader->line, "ACK ", &arg)) {
 			if (!get_oid_hex(arg, common_oid)) {
-				struct commit *commit;
-				commit = lookup_commit(the_repository, common_oid);
+				struct cummit *cummit;
+				cummit = lookup_cummit(the_repository, common_oid);
 				if (negotiator)
-					negotiator->ack(negotiator, commit);
+					negotiator->ack(negotiator, cummit);
 			}
 			return 1;
 		}
@@ -1867,7 +1867,7 @@ static void update_shallow(struct fetch_pack_args *args,
 			unlink_or_warn(git_path_shallow(the_repository));
 			rollback_shallow_file(the_repository, &shallow_lock);
 		} else
-			commit_shallow_file(the_repository, &shallow_lock);
+			cummit_shallow_file(the_repository, &shallow_lock);
 		alternate_shallow_file = NULL;
 		return;
 	}
@@ -1891,7 +1891,7 @@ static void update_shallow(struct fetch_pack_args *args,
 			setup_alternate_shallow(&shallow_lock,
 						&alternate_shallow_file,
 						&extra);
-			commit_shallow_file(the_repository, &shallow_lock);
+			cummit_shallow_file(the_repository, &shallow_lock);
 			alternate_shallow_file = NULL;
 		}
 		oid_array_clear(&extra);
@@ -1917,7 +1917,7 @@ static void update_shallow(struct fetch_pack_args *args,
 		 */
 		struct oid_array extra = OID_ARRAY_INIT;
 		struct object_id *oid = si->shallow->oid;
-		assign_shallow_commits_to_refs(si, NULL, NULL);
+		assign_shallow_cummits_to_refs(si, NULL, NULL);
 		if (!si->nr_ours && !si->nr_theirs) {
 			oid_array_clear(&ref);
 			return;
@@ -1929,7 +1929,7 @@ static void update_shallow(struct fetch_pack_args *args,
 		setup_alternate_shallow(&shallow_lock,
 					&alternate_shallow_file,
 					&extra);
-		commit_shallow_file(the_repository, &shallow_lock);
+		cummit_shallow_file(the_repository, &shallow_lock);
 		oid_array_clear(&extra);
 		oid_array_clear(&ref);
 		alternate_shallow_file = NULL;
@@ -1941,7 +1941,7 @@ static void update_shallow(struct fetch_pack_args *args,
 	 * without updating .git/shallow
 	 */
 	CALLOC_ARRAY(status, nr_sought);
-	assign_shallow_commits_to_refs(si, NULL, status);
+	assign_shallow_cummits_to_refs(si, NULL, status);
 	if (si->nr_ours || si->nr_theirs) {
 		for (i = 0; i < nr_sought; i++)
 			if (status[i])
@@ -2043,7 +2043,7 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 			   const struct string_list *server_options,
 			   int stateless_rpc,
 			   int fd[],
-			   struct oidset *acked_commits)
+			   struct oidset *acked_cummits)
 {
 	struct fetch_negotiator negotiator;
 	struct packet_reader reader;
@@ -2090,20 +2090,20 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 		process_section_header(&reader, "acknowledgments", 0);
 		while (process_ack(&negotiator, &reader, &common_oid,
 				   &received_ready)) {
-			struct commit *commit = lookup_commit(the_repository,
+			struct cummit *cummit = lookup_cummit(the_repository,
 							      &common_oid);
-			if (commit) {
+			if (cummit) {
 				timestamp_t generation;
 
-				parse_commit_or_die(commit);
-				commit->object.flags |= COMMON;
-				generation = commit_graph_generation(commit);
+				parse_cummit_or_die(cummit);
+				cummit->object.flags |= COMMON;
+				generation = cummit_graph_generation(cummit);
 				if (generation < min_generation)
 					min_generation = generation;
 			}
 			in_vain = 0;
 			seen_ack = 1;
-			oidset_insert(acked_commits, &common_oid);
+			oidset_insert(acked_cummits, &common_oid);
 		}
 		if (received_ready)
 			die(_("unexpected 'ready' from remote"));
@@ -2114,7 +2114,7 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 						 min_generation))
 			last_iteration = 1;
 	}
-	clear_common_flag(acked_commits);
+	clear_common_flag(acked_cummits);
 	strbuf_release(&req_buf);
 }
 

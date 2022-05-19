@@ -13,12 +13,12 @@ Fixes since v1.7.11.3
    necessary permission bits when the user wanted to have group
    writability (e.g. by setting "umask 002").
 
- * "commit --amend" used to refuse amending a commit with an empty log
+ * "cummit --amend" used to refuse amending a cummit with an empty log
    message, with or without "--allow-empty-message".
 
- * "git commit --amend --only --" was meant to allow "Clever" people to
-   rewrite the commit message without making any change even when they
-   have already changes for the next commit added to their index, but
+ * "git cummit --amend --only --" was meant to allow "Clever" people to
+   rewrite the cummit message without making any change even when they
+   have already changes for the next cummit added to their index, but
    it never worked as advertised since it was introduced in 1.3.0 era.
 
  * Even though the index can record pathnames longer than 1<<12 bytes,
@@ -37,7 +37,7 @@ Fixes since v1.7.11.3
    incorrectly read from the standard input.
 
  * We did not have test to make sure "git rebase" without extra options
-   filters out an empty commit in the original history.
+   filters out an empty cummit in the original history.
 
  * "git fast-export" produced an input stream for fast-import without
    properly quoting pathnames when they contain SPs in them.

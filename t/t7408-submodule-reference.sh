@@ -23,7 +23,7 @@ test_expect_success 'preparing first repository' '
 		cd A &&
 		echo first >file1 &&
 		git add file1 &&
-		git commit -m A-initial
+		git cummit -m A-initial
 	)
 '
 
@@ -33,7 +33,7 @@ test_expect_success 'preparing second repository' '
 		cd B &&
 		echo second >file2 &&
 		git add file2 &&
-		git commit -m B-addition &&
+		git cummit -m B-addition &&
 		git repack -a -d &&
 		git prune
 	)
@@ -45,7 +45,7 @@ test_expect_success 'preparing superproject' '
 		cd super &&
 		echo file >file &&
 		git add file &&
-		git commit -m B-super-initial
+		git cummit -m B-super-initial
 	)
 '
 
@@ -53,7 +53,7 @@ test_expect_success 'submodule add --reference uses alternates' '
 	(
 		cd super &&
 		git submodule add --reference ../B "file://$base_dir/A" sub &&
-		git commit -m B-super-added &&
+		git cummit -m B-super-added &&
 		git repack -ad
 	) &&
 	test_alternate_is_used super/.git/modules/sub/objects/info/alternates super/sub
@@ -63,7 +63,7 @@ test_expect_success 'submodule add --reference with --dissociate does not use al
 	(
 		cd super &&
 		git submodule add --reference ../B --dissociate "file://$base_dir/A" sub-dissociate &&
-		git commit -m B-super-added &&
+		git cummit -m B-super-added &&
 		git repack -ad
 	) &&
 	test_path_is_missing super/.git/modules/sub-dissociate/objects/info/alternates
@@ -148,9 +148,9 @@ test_expect_success 'preparing second superproject with a nested submodule plus 
 		cd supersuper &&
 		echo "I am super super." >file &&
 		git add file &&
-		git commit -m B-super-super-initial &&
+		git cummit -m B-super-super-initial &&
 		git submodule add "file://$base_dir/super" subwithsub &&
-		git commit -m B-super-super-added &&
+		git cummit -m B-super-super-added &&
 		git submodule update --init --recursive &&
 		git repack -ad
 	) &&

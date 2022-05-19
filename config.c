@@ -1330,12 +1330,12 @@ static const struct fsync_component_name {
 	{ "loose-object", FSYNC_COMPONENT_LOOSE_OBJECT },
 	{ "pack", FSYNC_COMPONENT_PACK },
 	{ "pack-metadata", FSYNC_COMPONENT_PACK_METADATA },
-	{ "commit-graph", FSYNC_COMPONENT_COMMIT_GRAPH },
+	{ "cummit-graph", FSYNC_COMPONENT_cummit_GRAPH },
 	{ "index", FSYNC_COMPONENT_INDEX },
 	{ "objects", FSYNC_COMPONENTS_OBJECTS },
 	{ "reference", FSYNC_COMPONENT_REFERENCE },
 	{ "derived-metadata", FSYNC_COMPONENTS_DERIVED_METADATA },
-	{ "committed", FSYNC_COMPONENTS_COMMITTED },
+	{ "cummitted", FSYNC_COMPONENTS_cummitTED },
 	{ "added", FSYNC_COMPONENTS_ADDED },
 	{ "all", FSYNC_COMPONENTS_ALL },
 };
@@ -1762,8 +1762,8 @@ static int git_default_sparse_config(const char *var, const char *value)
 
 static int git_default_i18n_config(const char *var, const char *value)
 {
-	if (!strcmp(var, "i18n.commitencoding"))
-		return git_config_string(&git_commit_encoding, var, value);
+	if (!strcmp(var, "i18n.cummitencoding"))
+		return git_config_string(&git_cummit_encoding, var, value);
 
 	if (!strcmp(var, "i18n.logoutputencoding"))
 		return git_config_string(&git_log_output_encoding, var, value);
@@ -1852,7 +1852,7 @@ int git_default_config(const char *var, const char *value, void *cb)
 
 	if (starts_with(var, "user.") ||
 	    starts_with(var, "author.") ||
-	    starts_with(var, "committer."))
+	    starts_with(var, "cummitter."))
 		return git_ident_config(var, value, cb);
 
 	if (starts_with(var, "i18n."))
@@ -3365,7 +3365,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		contents = NULL;
 	}
 
-	if (commit_lock_file(&lock) < 0) {
+	if (cummit_lock_file(&lock) < 0) {
 		error_errno(_("could not write config file %s"), config_filename);
 		ret = CONFIG_NO_WRITE;
 		goto out_free;
@@ -3524,7 +3524,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 		if (ret)
 			goto out;
 		/* no config file means nothing to rename, no error */
-		goto commit_and_out;
+		goto cummit_and_out;
 	}
 
 	if (fstat(fileno(config_file), &st) == -1) {
@@ -3628,8 +3628,8 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 
 	fclose(config_file);
 	config_file = NULL;
-commit_and_out:
-	if (commit_lock_file(&lock) < 0)
+cummit_and_out:
+	if (cummit_lock_file(&lock) < 0)
 		ret = error_errno(_("could not write config file %s"),
 				  config_filename);
 out:

@@ -10,15 +10,15 @@ test_expect_success setup '
 	test_write_lines 1 2 3 4 5 6 7 8 9 >file &&
 	git add file &&
 	cp file elif &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	sed -e "s/1/one/" -e "s/9/nine/" >file <elif &&
-	git commit -a -m ours &&
+	git cummit -a -m ours &&
 
 	git checkout -b side HEAD^ &&
 
 	sed -e "s/9/nueve/" >file <elif &&
-	git commit -a -m theirs &&
+	git cummit -a -m theirs &&
 
 	git checkout main^0
 '
@@ -78,14 +78,14 @@ test_expect_success SYMLINKS 'symlink with -Xours/-Xtheirs' '
 	git checkout -b two main &&
 	ln -s target-zero link &&
 	git add link &&
-	git commit -m "add link pointing to zero" &&
+	git cummit -m "add link pointing to zero" &&
 
 	ln -f -s target-two link &&
-	git commit -m "add link pointing to two" link &&
+	git cummit -m "add link pointing to two" link &&
 
 	git checkout -b one HEAD^ &&
 	ln -f -s target-one link &&
-	git commit -m "add link pointing to one" link &&
+	git cummit -m "add link pointing to one" link &&
 
 	# we expect symbolic links not to resolve automatically, of course
 	git checkout one^0 &&

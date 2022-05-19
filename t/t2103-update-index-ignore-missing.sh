@@ -34,12 +34,12 @@ test_expect_success basics '
 		cd xyzzy &&
 		>file &&
 		git add file &&
-		git commit -m "sub initial"
+		git cummit -m "sub initial"
 	) &&
 	git add xyzzy &&
 
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag initial
 '
 
@@ -80,7 +80,7 @@ test_expect_success '--ignore-submodules --refresh (2)' '
 	test_tick &&
 	(
 		cd xyzzy &&
-		git commit -m "sub second" --allow-empty
+		git cummit -m "sub second" --allow-empty
 	) &&
 	test_must_fail git update-index --refresh &&
 	test_must_fail git update-index --ignore-missing --refresh &&

@@ -109,14 +109,14 @@ static int debug_transaction_abort(struct ref_store *refs,
 	return res;
 }
 
-static int debug_initial_transaction_commit(struct ref_store *refs,
+static int debug_initial_transaction_cummit(struct ref_store *refs,
 					    struct ref_transaction *transaction,
 					    struct strbuf *err)
 {
 	struct debug_ref_store *drefs = (struct debug_ref_store *)refs;
 	int res;
 	transaction->ref_store = drefs->refs;
-	res = drefs->refs->be->initial_transaction_commit(drefs->refs,
+	res = drefs->refs->be->initial_transaction_cummit(drefs->refs,
 							  transaction, err);
 	return res;
 }
@@ -298,7 +298,7 @@ struct debug_reflog {
 
 static int debug_print_reflog_ent(struct object_id *old_oid,
 				  struct object_id *new_oid,
-				  const char *committer, timestamp_t timestamp,
+				  const char *cummitter, timestamp_t timestamp,
 				  int tz, const char *msg, void *cb_data)
 {
 	struct debug_reflog *dbg = (struct debug_reflog *)cb_data;
@@ -311,11 +311,11 @@ static int debug_print_reflog_ent(struct object_id *old_oid,
 	if (new_oid)
 		oid_to_hex_r(n, new_oid);
 
-	ret = dbg->fn(old_oid, new_oid, committer, timestamp, tz, msg,
+	ret = dbg->fn(old_oid, new_oid, cummitter, timestamp, tz, msg,
 		      dbg->cb_data);
 	trace_printf_key(&trace_refs,
 			 "reflog_ent %s (ret %d): %s -> %s, %s %ld \"%.*s\"\n",
-			 dbg->refname, ret, o, n, committer,
+			 dbg->refname, ret, o, n, cummitter,
 			 (long int)timestamp, (int)(msgend - msg), msg);
 	return ret;
 }
@@ -451,7 +451,7 @@ struct ref_storage_be refs_be_debug = {
 	.transaction_prepare = debug_transaction_prepare,
 	.transaction_finish = debug_transaction_finish,
 	.transaction_abort = debug_transaction_abort,
-	.initial_transaction_commit = debug_initial_transaction_commit,
+	.initial_transaction_cummit = debug_initial_transaction_cummit,
 
 	.pack_refs = debug_pack_refs,
 	.create_symref = debug_create_symref,

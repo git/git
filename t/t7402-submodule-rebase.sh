@@ -12,15 +12,15 @@ test_expect_success setup '
 	echo file > file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git clone . submodule &&
 	git add submodule &&
 	test_tick &&
-	git commit -m submodule &&
+	git cummit -m submodule &&
 	echo second line >> file &&
 	(cd submodule && git pull) &&
 	test_tick &&
-	git commit -m file-and-submodule -a &&
+	git cummit -m file-and-submodule -a &&
 	git branch added-submodule
 
 '
@@ -30,14 +30,14 @@ test_expect_success 'rebase with a dirty submodule' '
 	(cd submodule &&
 	 echo 3rd line >> file &&
 	 test_tick &&
-	 git commit -m fork -a) &&
+	 git cummit -m fork -a) &&
 	echo unrelated >> file2 &&
 	git add file2 &&
 	test_tick &&
-	git commit -m unrelated file2 &&
+	git cummit -m unrelated file2 &&
 	echo other line >> file &&
 	test_tick &&
-	git commit -m update file &&
+	git cummit -m update file &&
 	CURRENT=$(cd submodule && git rev-parse HEAD) &&
 	EXPECTED=$(git rev-parse HEAD~2:submodule) &&
 	GIT_TRACE=1 git rebase --onto HEAD~2 HEAD^ &&
@@ -67,10 +67,10 @@ test_expect_success 'rebase with dirty file and submodule fails' '
 
 	echo yet another line >> file &&
 	test_tick &&
-	git commit -m next file &&
+	git cummit -m next file &&
 	echo rewrite > file &&
 	test_tick &&
-	git commit -m rewrite file &&
+	git cummit -m rewrite file &&
 	echo dirty > file &&
 	test_must_fail git rebase --onto HEAD~2 HEAD^
 
@@ -95,14 +95,14 @@ test_expect_success 'rebasing submodule that should conflict' '
 	git checkout added-submodule &&
 	git add submodule &&
 	test_tick &&
-	git commit -m third &&
+	git cummit -m third &&
 	(
 		cd submodule &&
-		git commit --allow-empty -m extra
+		git cummit --allow-empty -m extra
 	) &&
 	git add submodule &&
 	test_tick &&
-	git commit -m fourth &&
+	git cummit -m fourth &&
 
 	test_must_fail git rebase --onto HEAD^^ HEAD^ HEAD^0 &&
 	git ls-files -s submodule >actual &&

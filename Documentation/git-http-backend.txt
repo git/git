@@ -109,7 +109,7 @@ RewriteRule ^/git/ - [E=AUTHREQUIRED:yes]
 
 	AuthType Basic
 	AuthName "Git Access"
-	Require group committers
+	Require group cummitters
 	Satisfy Any
 	...
 </LocationMatch>
@@ -123,7 +123,7 @@ like:
 <LocationMatch "^/git/.*/git-receive-pack$">
 	AuthType Basic
 	AuthName "Git Access"
-	Require group committers
+	Require group cummitters
 	...
 </LocationMatch>
 ----------------------------------------------------------------
@@ -144,7 +144,7 @@ directive around the repository, or one of its parent directories:
 <Location /git/private>
 	AuthType Basic
 	AuthName "Private Git Access"
-	Require group committers
+	Require group cummitters
 	...
 </Location>
 ----------------------------------------------------------------
@@ -288,8 +288,8 @@ be more selective about which headers they'll pass, in which case they
 need to be configured explicitly (see the mention of `Git-Protocol` in
 the Apache config from the earlier EXAMPLES section).
 
-The backend process sets GIT_COMMITTER_NAME to '$REMOTE_USER' and
-GIT_COMMITTER_EMAIL to '$\{REMOTE_USER}@http.$\{REMOTE_ADDR\}',
+The backend process sets GIT_cummitTER_NAME to '$REMOTE_USER' and
+GIT_cummitTER_EMAIL to '$\{REMOTE_USER}@http.$\{REMOTE_ADDR\}',
 ensuring that any reflogs created by 'git-receive-pack' contain some
 identifying information of the remote user who performed the push.
 

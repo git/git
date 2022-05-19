@@ -23,8 +23,8 @@ if len(argv) < 2:
     exit(1)
 
 branch_ref = 'refs/heads/import-zips'
-committer_name = 'Z Ip Creator'
-committer_email = 'zip@example.com'
+cummitter_name = 'Z Ip Creator'
+cummitter_email = 'zip@example.com'
 
 fast_import = popen('git fast-import --quiet', 'w')
 def printlines(list):
@@ -32,7 +32,7 @@ def printlines(list):
         fast_import.write(str + "\n")
 
 for zipfile in argv[1:]:
-    commit_time = 0
+    cummit_time = 0
     next_mark = 1
     common_prefix = None
     mark = dict()
@@ -43,8 +43,8 @@ for zipfile in argv[1:]:
             continue
         info = zip.getinfo(name)
 
-        if commit_time < info.date_time:
-            commit_time = info.date_time
+        if cummit_time < info.date_time:
+            cummit_time = info.date_time
         if common_prefix == None:
             common_prefix = name[:name.rfind('/') + 1]
         else:
@@ -59,10 +59,10 @@ for zipfile in argv[1:]:
                     'data ' + str(info.file_size)))
         fast_import.write(zip.read(name) + "\n")
 
-    committer = committer_name + ' <' + committer_email + '> %d +0000' % \
-        mktime(commit_time + (0, 0, 0))
+    cummitter = cummitter_name + ' <' + cummitter_email + '> %d +0000' % \
+        mktime(cummit_time + (0, 0, 0))
 
-    printlines(('commit ' + branch_ref, 'committer ' + committer, \
+    printlines(('cummit ' + branch_ref, 'cummitter ' + cummitter, \
         'data <<EOM', 'Imported from ' + zipfile + '.', 'EOM', \
         '', 'deleteall'))
 
@@ -71,7 +71,7 @@ for zipfile in argv[1:]:
             name[len(common_prefix):] + "\n")
 
     printlines(('',  'tag ' + path.basename(zipfile), \
-        'from ' + branch_ref, 'tagger ' + committer, \
+        'from ' + branch_ref, 'tagger ' + cummitter, \
         'data <<EOM', 'Package ' + zipfile, 'EOM', ''))
 
 if fast_import.close():

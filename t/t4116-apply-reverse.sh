@@ -17,13 +17,13 @@ test_expect_success setup '
 	perl -pe "y/ijk/\\000\\001\\002/" <file1 >file2 &&
 
 	git add file1 file2 &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag initial &&
 
 	test_write_lines a b c g h i J K L m o n p q >file1 &&
 	perl -pe "y/mon/\\000\\001\\002/" <file1 >file2 &&
 
-	git commit -a -m second &&
+	git cummit -a -m second &&
 	git tag second &&
 
 	git diff --binary initial second >patch

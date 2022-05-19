@@ -8,7 +8,7 @@ start_git_daemon
 
 test_expect_success 'create git-accessible repo' '
 	bare="$GIT_DAEMON_DOCUMENT_ROOT_PATH/repo.git" &&
-	test_commit one &&
+	test_cummit one &&
 	git --bare init "$bare" &&
 	git push "$bare" HEAD &&
 	>"$bare/git-daemon-export-ok" &&

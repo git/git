@@ -79,7 +79,7 @@ method _select {} {
 }
 
 method _delete {} {
-	if {[catch {set check_cmt [$w_check commit_or_die]}]} {
+	if {[catch {set check_cmt [$w_check cummit_or_die]}]} {
 		return
 	}
 

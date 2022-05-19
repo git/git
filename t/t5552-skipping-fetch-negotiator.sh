@@ -41,14 +41,14 @@ trace_fetch () {
 	  "$server" "$@"
 }
 
-test_expect_success 'commits with no parents are sent regardless of skip distance' '
+test_expect_success 'cummits with no parents are sent regardless of skip distance' '
 	git init server &&
-	test_commit -C server to_fetch &&
+	test_cummit -C server to_fetch &&
 
 	git init client &&
 	for i in $(test_seq 7)
 	do
-		test_commit -C client c$i || return 1
+		test_cummit -C client c$i || return 1
 	done &&
 
 	# We send: "c7" (skip 1) "c5" (skip 2) "c2" (skip 4). After that, since
@@ -63,15 +63,15 @@ test_expect_success 'commits with no parents are sent regardless of skip distanc
 test_expect_success 'when two skips collide, favor the larger one' '
 	rm -rf server client trace &&
 	git init server &&
-	test_commit -C server to_fetch &&
+	test_cummit -C server to_fetch &&
 
 	git init client &&
 	for i in $(test_seq 11)
 	do
-		test_commit -C client c$i || return 1
+		test_cummit -C client c$i || return 1
 	done &&
 	git -C client checkout c5 &&
-	test_commit -C client c5side &&
+	test_cummit -C client c5side &&
 
 	# Before reaching c5, we send "c5side" (skip 1) and "c11" (skip 1) "c9"
 	# (skip 2) "c6" (skip 4). The larger skip (skip 4) takes precedence, so
@@ -83,22 +83,22 @@ test_expect_success 'when two skips collide, favor the larger one' '
 	have_not_sent c10 c8 c7 c5 c4 c3 c2
 '
 
-test_expect_success 'use ref advertisement to filter out commits' '
+test_expect_success 'use ref advertisement to filter out cummits' '
 	rm -rf server client trace &&
 	git init server &&
-	test_commit -C server c1 &&
-	test_commit -C server c2 &&
-	test_commit -C server c3 &&
+	test_cummit -C server c1 &&
+	test_cummit -C server c2 &&
+	test_cummit -C server c3 &&
 	git -C server tag -d c1 c2 c3 &&
 
 	git clone server client &&
-	test_commit -C client c4 &&
-	test_commit -C client c5 &&
+	test_cummit -C client c4 &&
+	test_cummit -C client c5 &&
 	git -C client checkout c4^^ &&
-	test_commit -C client c2side &&
+	test_cummit -C client c2side &&
 
 	git -C server checkout --orphan anotherbranch &&
-	test_commit -C server to_fetch &&
+	test_cummit -C server to_fetch &&
 
 	# The server advertising "c3" (as "refs/heads/main") means that we do
 	# not need to send any ancestors of "c3", but we still need to send "c3"
@@ -119,25 +119,25 @@ test_expect_success 'use ref advertisement to filter out commits' '
 test_expect_success 'handle clock skew' '
 	rm -rf server client trace &&
 	git init server &&
-	test_commit -C server to_fetch &&
+	test_cummit -C server to_fetch &&
 
 	git init client &&
 
-	# 2 regular commits
+	# 2 regular cummits
 	test_tick=2000000000 &&
-	test_commit -C client c1 &&
-	test_commit -C client c2 &&
+	test_cummit -C client c1 &&
+	test_cummit -C client c2 &&
 
-	# 4 old commits
+	# 4 old cummits
 	test_tick=1000000000 &&
 	git -C client checkout c1 &&
-	test_commit -C client old1 &&
-	test_commit -C client old2 &&
-	test_commit -C client old3 &&
-	test_commit -C client old4 &&
+	test_cummit -C client old1 &&
+	test_cummit -C client old2 &&
+	test_cummit -C client old3 &&
+	test_cummit -C client old4 &&
 
 	# "c2" and "c1" are popped first, then "old4" to "old1". "old1" would
-	# normally be skipped, but is treated as a commit without a parent here
+	# normally be skipped, but is treated as a cummit without a parent here
 	# and sent, because (due to clock skew) its only parent has already been
 	# popped off the priority queue.
 	test_config -C client fetch.negotiationalgorithm skipping &&
@@ -146,31 +146,31 @@ test_expect_success 'handle clock skew' '
 	have_not_sent old3
 '
 
-test_expect_success 'do not send "have" with ancestors of commits that server ACKed' '
+test_expect_success 'do not send "have" with ancestors of cummits that server ACKed' '
 	rm -rf server client trace &&
 	git init server &&
-	test_commit -C server to_fetch &&
+	test_cummit -C server to_fetch &&
 
 	git init client &&
 	for i in $(test_seq 8)
 	do
 		git -C client checkout --orphan b$i &&
-		test_commit -C client b$i.c0 || return 1
+		test_cummit -C client b$i.c0 || return 1
 	done &&
 	for j in $(test_seq 19)
 	do
 		for i in $(test_seq 8)
 		do
 			git -C client checkout b$i &&
-			test_commit -C client b$i.c$j || return 1
+			test_cummit -C client b$i.c$j || return 1
 		done
 	done &&
 
-	# Copy this branch over to the server and add a commit on it so that it
+	# Copy this branch over to the server and add a cummit on it so that it
 	# is reachable but not advertised.
 	git -C server fetch --no-tags "$(pwd)/client" b1:refs/heads/b1 &&
 	git -C server checkout b1 &&
-	test_commit -C server commit-on-b1 &&
+	test_cummit -C server cummit-on-b1 &&
 
 	test_config -C client fetch.negotiationalgorithm skipping &&
 
@@ -187,7 +187,7 @@ test_expect_success 'do not send "have" with ancestors of commits that server AC
 	grep "  fetch" trace &&
 
 	# fetch-pack sends 2 requests each containing 16 "have" lines before
-	# processing the first response. In these 2 requests, 4 commits from
+	# processing the first response. In these 2 requests, 4 cummits from
 	# each branch are sent. Just check the first branch.
 	have_sent b1.c19 b1.c17 b1.c14 b1.c9 &&
 	have_not_sent b1.c18 b1.c16 b1.c15 b1.c13 b1.c12 b1.c11 b1.c10 &&
@@ -197,7 +197,7 @@ test_expect_success 'do not send "have" with ancestors of commits that server AC
 	grep "fetch< ACK $(git -C client rev-parse b1.c19) common" trace &&
 	grep "fetch< ACK $(git -C client rev-parse b1.c17) common" trace &&
 
-	# fetch-pack should thus not send any more commits in the b1 branch, but
+	# fetch-pack should thus not send any more cummits in the b1 branch, but
 	# should still send the others (in this test, just check b2).
 	for i in $(test_seq 0 8)
 	do

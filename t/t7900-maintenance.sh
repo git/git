@@ -4,7 +4,7 @@ test_description='git maintenance builtin'
 
 . ./test-lib.sh
 
-GIT_TEST_COMMIT_GRAPH=0
+GIT_TEST_cummit_GRAPH=0
 GIT_TEST_MULTI_PACK_INDEX=0
 
 test_lazy_prereq XMLLINT '
@@ -53,78 +53,78 @@ test_expect_success 'run [--auto|--quiet]' '
 '
 
 test_expect_success 'maintenance.auto config option' '
-	GIT_TRACE2_EVENT="$(pwd)/default" git commit --quiet --allow-empty -m 1 &&
+	GIT_TRACE2_EVENT="$(pwd)/default" git cummit --quiet --allow-empty -m 1 &&
 	test_subcommand git maintenance run --auto --quiet <default &&
 	GIT_TRACE2_EVENT="$(pwd)/true" \
 		git -c maintenance.auto=true \
-		commit --quiet --allow-empty -m 2 &&
+		cummit --quiet --allow-empty -m 2 &&
 	test_subcommand git maintenance run --auto --quiet  <true &&
 	GIT_TRACE2_EVENT="$(pwd)/false" \
 		git -c maintenance.auto=false \
-		commit --quiet --allow-empty -m 3 &&
+		cummit --quiet --allow-empty -m 3 &&
 	test_subcommand ! git maintenance run --auto --quiet  <false
 '
 
 test_expect_success 'maintenance.<task>.enabled' '
 	git config maintenance.gc.enabled false &&
-	git config maintenance.commit-graph.enabled true &&
+	git config maintenance.cummit-graph.enabled true &&
 	GIT_TRACE2_EVENT="$(pwd)/run-config.txt" git maintenance run 2>err &&
 	test_subcommand ! git gc --quiet <run-config.txt &&
-	test_subcommand git commit-graph write --split --reachable --no-progress <run-config.txt
+	test_subcommand git cummit-graph write --split --reachable --no-progress <run-config.txt
 '
 
 test_expect_success 'run --task=<task>' '
-	GIT_TRACE2_EVENT="$(pwd)/run-commit-graph.txt" \
-		git maintenance run --task=commit-graph 2>/dev/null &&
+	GIT_TRACE2_EVENT="$(pwd)/run-cummit-graph.txt" \
+		git maintenance run --task=cummit-graph 2>/dev/null &&
 	GIT_TRACE2_EVENT="$(pwd)/run-gc.txt" \
 		git maintenance run --task=gc 2>/dev/null &&
-	GIT_TRACE2_EVENT="$(pwd)/run-commit-graph.txt" \
-		git maintenance run --task=commit-graph 2>/dev/null &&
+	GIT_TRACE2_EVENT="$(pwd)/run-cummit-graph.txt" \
+		git maintenance run --task=cummit-graph 2>/dev/null &&
 	GIT_TRACE2_EVENT="$(pwd)/run-both.txt" \
-		git maintenance run --task=commit-graph --task=gc 2>/dev/null &&
-	test_subcommand ! git gc --quiet <run-commit-graph.txt &&
+		git maintenance run --task=cummit-graph --task=gc 2>/dev/null &&
+	test_subcommand ! git gc --quiet <run-cummit-graph.txt &&
 	test_subcommand git gc --quiet <run-gc.txt &&
 	test_subcommand git gc --quiet <run-both.txt &&
-	test_subcommand git commit-graph write --split --reachable --no-progress <run-commit-graph.txt &&
-	test_subcommand ! git commit-graph write --split --reachable --no-progress <run-gc.txt &&
-	test_subcommand git commit-graph write --split --reachable --no-progress <run-both.txt
+	test_subcommand git cummit-graph write --split --reachable --no-progress <run-cummit-graph.txt &&
+	test_subcommand ! git cummit-graph write --split --reachable --no-progress <run-gc.txt &&
+	test_subcommand git cummit-graph write --split --reachable --no-progress <run-both.txt
 '
 
-test_expect_success 'core.commitGraph=false prevents write process' '
-	GIT_TRACE2_EVENT="$(pwd)/no-commit-graph.txt" \
-		git -c core.commitGraph=false maintenance run \
-		--task=commit-graph 2>/dev/null &&
-	test_subcommand ! git commit-graph write --split --reachable --no-progress \
-		<no-commit-graph.txt
+test_expect_success 'core.cummitGraph=false prevents write process' '
+	GIT_TRACE2_EVENT="$(pwd)/no-cummit-graph.txt" \
+		git -c core.cummitGraph=false maintenance run \
+		--task=cummit-graph 2>/dev/null &&
+	test_subcommand ! git cummit-graph write --split --reachable --no-progress \
+		<no-cummit-graph.txt
 '
 
-test_expect_success 'commit-graph auto condition' '
-	COMMAND="maintenance run --task=commit-graph --auto --quiet" &&
+test_expect_success 'cummit-graph auto condition' '
+	COMMAND="maintenance run --task=cummit-graph --auto --quiet" &&
 
 	GIT_TRACE2_EVENT="$(pwd)/cg-no.txt" \
-		git -c maintenance.commit-graph.auto=1 $COMMAND &&
+		git -c maintenance.cummit-graph.auto=1 $COMMAND &&
 	GIT_TRACE2_EVENT="$(pwd)/cg-negative-means-yes.txt" \
-		git -c maintenance.commit-graph.auto="-1" $COMMAND &&
+		git -c maintenance.cummit-graph.auto="-1" $COMMAND &&
 
-	test_commit first &&
+	test_cummit first &&
 
 	GIT_TRACE2_EVENT="$(pwd)/cg-zero-means-no.txt" \
-		git -c maintenance.commit-graph.auto=0 $COMMAND &&
+		git -c maintenance.cummit-graph.auto=0 $COMMAND &&
 	GIT_TRACE2_EVENT="$(pwd)/cg-one-satisfied.txt" \
-		git -c maintenance.commit-graph.auto=1 $COMMAND &&
+		git -c maintenance.cummit-graph.auto=1 $COMMAND &&
 
-	git commit --allow-empty -m "second" &&
-	git commit --allow-empty -m "third" &&
+	git cummit --allow-empty -m "second" &&
+	git cummit --allow-empty -m "third" &&
 
 	GIT_TRACE2_EVENT="$(pwd)/cg-two-satisfied.txt" \
-		git -c maintenance.commit-graph.auto=2 $COMMAND &&
+		git -c maintenance.cummit-graph.auto=2 $COMMAND &&
 
-	COMMIT_GRAPH_WRITE="git commit-graph write --split --reachable --no-progress" &&
-	test_subcommand ! $COMMIT_GRAPH_WRITE <cg-no.txt &&
-	test_subcommand $COMMIT_GRAPH_WRITE <cg-negative-means-yes.txt &&
-	test_subcommand ! $COMMIT_GRAPH_WRITE <cg-zero-means-no.txt &&
-	test_subcommand $COMMIT_GRAPH_WRITE <cg-one-satisfied.txt &&
-	test_subcommand $COMMIT_GRAPH_WRITE <cg-two-satisfied.txt
+	cummit_GRAPH_WRITE="git cummit-graph write --split --reachable --no-progress" &&
+	test_subcommand ! $cummit_GRAPH_WRITE <cg-no.txt &&
+	test_subcommand $cummit_GRAPH_WRITE <cg-negative-means-yes.txt &&
+	test_subcommand ! $cummit_GRAPH_WRITE <cg-zero-means-no.txt &&
+	test_subcommand $cummit_GRAPH_WRITE <cg-one-satisfied.txt &&
+	test_subcommand $cummit_GRAPH_WRITE <cg-two-satisfied.txt
 '
 
 test_expect_success 'run --task=bogus' '
@@ -149,8 +149,8 @@ test_expect_success 'prefetch multiple remotes' '
 	git remote add remote2 "file://$(pwd)/clone2" &&
 	git -C clone1 switch -c one &&
 	git -C clone2 switch -c two &&
-	test_commit -C clone1 one &&
-	test_commit -C clone2 two &&
+	test_cummit -C clone1 one &&
+	test_cummit -C clone2 two &&
 	GIT_TRACE2_EVENT="$(pwd)/run-prefetch.txt" git maintenance run --task=prefetch 2>/dev/null &&
 	fetchargs="--prefetch --prune --no-tags --no-write-fetch-head --recurse-submodules=no --quiet" &&
 	test_subcommand git fetch remote1 $fetchargs <run-prefetch.txt &&
@@ -197,11 +197,11 @@ test_expect_success 'loose-objects task' '
 	# Repack everything so we know the state of the object dir
 	git repack -adk &&
 
-	# Hack to stop maintenance from running during "git commit"
+	# Hack to stop maintenance from running during "git cummit"
 	echo in use >.git/objects/maintenance.lock &&
 
-	# Assuming that "git commit" creates at least one loose object
-	test_commit create-loose-object &&
+	# Assuming that "git cummit" creates at least one loose object
+	test_cummit create-loose-object &&
 	rm .git/objects/maintenance.lock &&
 
 	ls .git/objects >obj-dir-before &&
@@ -258,7 +258,7 @@ test_expect_success 'incremental-repack task' '
 	packDir=.git/objects/pack &&
 	for i in $(test_seq 1 5)
 	do
-		test_commit $i || return 1
+		test_cummit $i || return 1
 	done &&
 
 	# Create three disjoint pack-files with size BIG, small, small.
@@ -312,7 +312,7 @@ test_expect_success EXPENSIVE 'incremental-repack 2g limit' '
 		return 1
 	done &&
 	git add big &&
-	git commit -qm "Add big file (1)" &&
+	git cummit -qm "Add big file (1)" &&
 
 	# ensure any possible loose objects are in a pack-file
 	git maintenance run --task=loose-objects &&
@@ -324,7 +324,7 @@ test_expect_success EXPENSIVE 'incremental-repack 2g limit' '
 		return 1
 	done &&
 	git add big &&
-	git commit -qm "Add big file (2)" &&
+	git cummit -qm "Add big file (2)" &&
 
 	# ensure any possible loose objects are in a pack-file
 	git maintenance run --task=loose-objects &&
@@ -337,14 +337,14 @@ test_expect_success EXPENSIVE 'incremental-repack 2g limit' '
 '
 
 run_incremental_repack_and_verify () {
-	test_commit A &&
+	test_cummit A &&
 	git repack -adk &&
 	git multi-pack-index write &&
 	GIT_TRACE2_EVENT="$(pwd)/midx-init.txt" git \
 		-c maintenance.incremental-repack.auto=1 \
 		maintenance run --auto --task=incremental-repack 2>/dev/null &&
 	test_subcommand ! git multi-pack-index write --no-progress <midx-init.txt &&
-	test_commit B &&
+	test_cummit B &&
 	git pack-objects --revs .git/objects/pack/pack <<-\EOF &&
 	HEAD
 	^HEAD~1
@@ -353,7 +353,7 @@ run_incremental_repack_and_verify () {
 		-c maintenance.incremental-repack.auto=2 \
 		maintenance run --auto --task=incremental-repack 2>/dev/null &&
 	test_subcommand ! git multi-pack-index write --no-progress <trace-A &&
-	test_commit C &&
+	test_cummit C &&
 	git pack-objects --revs .git/objects/pack/pack <<-\EOF &&
 	HEAD
 	^HEAD~1
@@ -407,35 +407,35 @@ test_expect_success 'invalid --schedule value' '
 test_expect_success '--schedule inheritance weekly -> daily -> hourly' '
 	git config maintenance.loose-objects.enabled true &&
 	git config maintenance.loose-objects.schedule hourly &&
-	git config maintenance.commit-graph.enabled true &&
-	git config maintenance.commit-graph.schedule daily &&
+	git config maintenance.cummit-graph.enabled true &&
+	git config maintenance.cummit-graph.schedule daily &&
 	git config maintenance.incremental-repack.enabled true &&
 	git config maintenance.incremental-repack.schedule weekly &&
 
 	GIT_TRACE2_EVENT="$(pwd)/hourly.txt" \
 		git maintenance run --schedule=hourly 2>/dev/null &&
 	test_subcommand git prune-packed --quiet <hourly.txt &&
-	test_subcommand ! git commit-graph write --split --reachable \
+	test_subcommand ! git cummit-graph write --split --reachable \
 		--no-progress <hourly.txt &&
 	test_subcommand ! git multi-pack-index write --no-progress <hourly.txt &&
 
 	GIT_TRACE2_EVENT="$(pwd)/daily.txt" \
 		git maintenance run --schedule=daily 2>/dev/null &&
 	test_subcommand git prune-packed --quiet <daily.txt &&
-	test_subcommand git commit-graph write --split --reachable \
+	test_subcommand git cummit-graph write --split --reachable \
 		--no-progress <daily.txt &&
 	test_subcommand ! git multi-pack-index write --no-progress <daily.txt &&
 
 	GIT_TRACE2_EVENT="$(pwd)/weekly.txt" \
 		git maintenance run --schedule=weekly 2>/dev/null &&
 	test_subcommand git prune-packed --quiet <weekly.txt &&
-	test_subcommand git commit-graph write --split --reachable \
+	test_subcommand git cummit-graph write --split --reachable \
 		--no-progress <weekly.txt &&
 	test_subcommand git multi-pack-index write --no-progress <weekly.txt
 '
 
 test_expect_success 'maintenance.strategy inheritance' '
-	for task in commit-graph loose-objects incremental-repack
+	for task in cummit-graph loose-objects incremental-repack
 	do
 		git config --unset maintenance.$task.schedule || return 1
 	done &&
@@ -450,7 +450,7 @@ test_expect_success 'maintenance.strategy inheritance' '
 	GIT_TRACE2_EVENT="$(pwd)/incremental-weekly.txt" \
 		git maintenance run --schedule=weekly --quiet &&
 
-	test_subcommand git commit-graph write --split --reachable \
+	test_subcommand git cummit-graph write --split --reachable \
 		--no-progress <incremental-hourly.txt &&
 	test_subcommand ! git prune-packed --quiet <incremental-hourly.txt &&
 	test_subcommand ! git multi-pack-index write --no-progress \
@@ -458,7 +458,7 @@ test_expect_success 'maintenance.strategy inheritance' '
 	test_subcommand ! git pack-refs --all --prune \
 		<incremental-hourly.txt &&
 
-	test_subcommand git commit-graph write --split --reachable \
+	test_subcommand git cummit-graph write --split --reachable \
 		--no-progress <incremental-daily.txt &&
 	test_subcommand git prune-packed --quiet <incremental-daily.txt &&
 	test_subcommand git multi-pack-index write --no-progress \
@@ -466,7 +466,7 @@ test_expect_success 'maintenance.strategy inheritance' '
 	test_subcommand ! git pack-refs --all --prune \
 		<incremental-daily.txt &&
 
-	test_subcommand git commit-graph write --split --reachable \
+	test_subcommand git cummit-graph write --split --reachable \
 		--no-progress <incremental-weekly.txt &&
 	test_subcommand git prune-packed --quiet <incremental-weekly.txt &&
 	test_subcommand git multi-pack-index write --no-progress \
@@ -475,7 +475,7 @@ test_expect_success 'maintenance.strategy inheritance' '
 		<incremental-weekly.txt &&
 
 	# Modify defaults
-	git config maintenance.commit-graph.schedule daily &&
+	git config maintenance.cummit-graph.schedule daily &&
 	git config maintenance.loose-objects.schedule hourly &&
 	git config maintenance.incremental-repack.enabled false &&
 
@@ -484,13 +484,13 @@ test_expect_success 'maintenance.strategy inheritance' '
 	GIT_TRACE2_EVENT="$(pwd)/modified-daily.txt" \
 		git maintenance run --schedule=daily --quiet &&
 
-	test_subcommand ! git commit-graph write --split --reachable \
+	test_subcommand ! git cummit-graph write --split --reachable \
 		--no-progress <modified-hourly.txt &&
 	test_subcommand git prune-packed --quiet <modified-hourly.txt &&
 	test_subcommand ! git multi-pack-index write --no-progress \
 		<modified-hourly.txt &&
 
-	test_subcommand git commit-graph write --split --reachable \
+	test_subcommand git cummit-graph write --split --reachable \
 		--no-progress <modified-daily.txt &&
 	test_subcommand git prune-packed --quiet <modified-daily.txt &&
 	test_subcommand ! git multi-pack-index write --no-progress \

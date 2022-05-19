@@ -6,7 +6,7 @@
 # within a git working tree.
 #
 # To save permissions/ownership data, place this script in your .git/hooks
-# directory and enable a `pre-commit` hook with the following lines:
+# directory and enable a `pre-cummit` hook with the following lines:
 #      #!/bin/sh
 #     SUBDIRECTORY_OK=1 . git-sh-setup
 #     $GIT_DIR/hooks/setgitperms.perl -r
@@ -96,7 +96,7 @@ elsif ($read_mode) {
     # Handle merge conflicts in the .gitperms file
     if (-e "$gitdir/MERGE_MSG") {
 	if (`grep ====== $gitmeta`) {
-	    # Conflict not resolved -- abort the commit
+	    # Conflict not resolved -- abort the cummit
 	    print "PERMISSIONS/OWNERSHIP CONFLICT\n";
 	    print "    Resolve the conflict in the $gitmeta file and then run\n";
 	    print "    `.git/hooks/setgitperms.perl --write` to reconcile.\n";
@@ -174,7 +174,7 @@ elsif ($read_mode) {
 
     # diff the temporary metadata file to see if anything has changed
     # If no metadata has changed, don't overwrite the real file
-    # This is just so `git commit -a` doesn't try to commit a bogus update
+    # This is just so `git cummit -a` doesn't try to cummit a bogus update
     unless ($stdout) {
 	if (! -e $gitmeta) {
 	    rename "$gitmeta.tmp", $gitmeta;

@@ -22,11 +22,11 @@ Gitweb provides a web interface to Git repositories.  Its features include:
 * Viewing the revision log of branches, history of files and directories,
   see what was changed when, by who.
 * Viewing the blame/annotation details of any file (if enabled).
-* Generating RSS and Atom feeds of commits, for any branch.
+* Generating RSS and Atom feeds of cummits, for any branch.
   The feeds are auto-discoverable in modern web browsers.
 * Viewing everything that was changed in a revision, and step through
   revisions one at a time, viewing the history of the repository.
-* Finding commits which commit messages matches given search term.
+* Finding cummits which cummit messages matches given search term.
 
 See http://repo.or.cz/w/git.git/tree/HEAD:/gitweb/[] for gitweb source code,
 browsed using gitweb itself.
@@ -357,20 +357,20 @@ blame::
 blame_incremental::
 	Shows the blame (also called annotation) information for a file. On a
 	per line basis it shows the revision in which that line was last changed
-	and the user that committed the change.  The incremental version (which
+	and the user that cummitted the change.  The incremental version (which
 	if configured is used automatically when JavaScript is enabled) uses
 	Ajax to incrementally add blame info to the contents of given file.
 +
 This action is disabled by default for performance reasons.
 
-commit::
-commitdiff::
-	Shows information about a specific commit in a repository.  The 'commit'
-	view shows information about commit in more detail, the 'commitdiff'
-	action shows changeset for given commit.
+cummit::
+cummitdiff::
+	Shows information about a specific cummit in a repository.  The 'cummit'
+	view shows information about cummit in more detail, the 'cummitdiff'
+	action shows changeset for given cummit.
 
 patch::
-	Returns the commit in plain text mail format, suitable for applying with
+	Returns the cummit in plain text mail format, suitable for applying with
 	linkgit:git-am[1].
 
 tag::
@@ -378,10 +378,10 @@ tag::
 
 log::
 shortlog::
-	Shows log information (commit message or just commit subject) for a
+	Shows log information (cummit message or just cummit subject) for a
 	given branch (starting from given revision).
 +
-The 'shortlog' view is more compact; it shows one commit per line.
+The 'shortlog' view is more compact; it shows one cummit per line.
 
 history::
 	Shows history of the file or directory in a given repository path,

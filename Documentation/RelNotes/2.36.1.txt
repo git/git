@@ -15,15 +15,15 @@ Fixes since v2.36
  * Regression fix for 2.36 where "git name-rev" started to sometimes
    reference strings after they are freed.
 
- * "git show <commit1> <commit2>... -- <pathspec>" lost the pathspec
-   when showing the second and subsequent commits, which has been
+ * "git show <cummit1> <cummit2>... -- <pathspec>" lost the pathspec
+   when showing the second and subsequent cummits, which has been
    corrected.
 
  * "git fast-export -- <pathspec>" lost the pathspec when showing the
-   second and subsequent commits, which has been corrected.
+   second and subsequent cummits, which has been corrected.
 
  * "git format-patch <args> -- <pathspec>" lost the pathspec when
-   showing the second and subsequent commits, which has been
+   showing the second and subsequent cummits, which has been
    corrected.
 
  * Get rid of a bogus and over-eager coccinelle rule.

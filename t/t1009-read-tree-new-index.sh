@@ -11,7 +11,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success setup '
 	echo one >a &&
 	git add a &&
-	git commit -m initial
+	git cummit -m initial
 '
 
 test_expect_success 'non-existent index file' '

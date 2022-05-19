@@ -1,24 +1,24 @@
 #!/bin/sh
 
-test_description='Test commit notes organized in subtrees'
+test_description='Test cummit notes organized in subtrees'
 
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-number_of_commits=100
+number_of_cummits=100
 
-start_note_commit () {
+start_note_cummit () {
 	test_tick &&
 	cat <<INPUT_END
-commit refs/notes/commits
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
+cummit refs/notes/cummits
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
 notes
-COMMIT
+cummit
 
-from refs/notes/commits^0
+from refs/notes/cummits^0
 deleteall
 INPUT_END
 
@@ -26,32 +26,32 @@ INPUT_END
 
 verify_notes () {
 	git log | grep "^    " > output &&
-	i=$number_of_commits &&
+	i=$number_of_cummits &&
 	while [ $i -gt 0 ]; do
-		echo "    commit #$i" &&
-		echo "    note for commit #$i" &&
+		echo "    cummit #$i" &&
+		echo "    note for cummit #$i" &&
 		i=$(($i-1)) || return 1
 	done > expect &&
 	test_cmp expect output
 }
 
-test_expect_success "setup: create $number_of_commits commits" '
+test_expect_success "setup: create $number_of_cummits cummits" '
 
 	(
 		nr=0 &&
-		while [ $nr -lt $number_of_commits ]; do
+		while [ $nr -lt $number_of_cummits ]; do
 			nr=$(($nr+1)) &&
 			test_tick &&
 			cat <<INPUT_END || return 1
-commit refs/heads/main
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-commit #$nr
-COMMIT
+cummit refs/heads/main
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+cummit #$nr
+cummit
 
 M 644 inline file
 data <<EOF
-file in commit #$nr
+file in cummit #$nr
 EOF
 
 INPUT_END
@@ -59,11 +59,11 @@ INPUT_END
 		done &&
 		test_tick &&
 		cat <<INPUT_END
-commit refs/notes/commits
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
+cummit refs/notes/cummits
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
 no notes
-COMMIT
+cummit
 
 deleteall
 
@@ -71,20 +71,20 @@ INPUT_END
 
 	) |
 	git fast-import --quiet &&
-	git config core.notesRef refs/notes/commits
+	git config core.notesRef refs/notes/cummits
 '
 
 test_sha1_based () {
 	(
-		start_note_commit &&
-		nr=$number_of_commits &&
+		start_note_cummit &&
+		nr=$number_of_cummits &&
 		git rev-list refs/heads/main >out &&
 		while read sha1; do
 			note_path=$(echo "$sha1" | sed "$1")
 			cat <<INPUT_END &&
 M 100644 inline $note_path
 data <<EOF
-note for commit #$nr
+note for cummit #$nr
 EOF
 
 INPUT_END
@@ -106,8 +106,8 @@ test_expect_success 'verify notes in 2/2/2/34-fanout' 'verify_notes'
 
 test_same_notes () {
 	(
-		start_note_commit &&
-		nr=$number_of_commits &&
+		start_note_cummit &&
+		nr=$number_of_cummits &&
 		git rev-list refs/heads/main |
 		while read sha1; do
 			first_note_path=$(echo "$sha1" | sed "$1")
@@ -115,12 +115,12 @@ test_same_notes () {
 			cat <<INPUT_END &&
 M 100644 inline $second_note_path
 data <<EOF
-note for commit #$nr
+note for cummit #$nr
 EOF
 
 M 100644 inline $first_note_path
 data <<EOF
-note for commit #$nr
+note for cummit #$nr
 EOF
 
 INPUT_END
@@ -145,8 +145,8 @@ test_expect_success 'verify same notes in 2/2/2/34-fanout and 2/2/36-fanout' 've
 
 test_concatenated_notes () {
 	(
-		start_note_commit &&
-		nr=$number_of_commits &&
+		start_note_cummit &&
+		nr=$number_of_cummits &&
 		git rev-list refs/heads/main |
 		while read sha1; do
 			first_note_path=$(echo "$sha1" | sed "$1")
@@ -154,12 +154,12 @@ test_concatenated_notes () {
 			cat <<INPUT_END &&
 M 100644 inline $second_note_path
 data <<EOF
-second note for commit #$nr
+second note for cummit #$nr
 EOF
 
 M 100644 inline $first_note_path
 data <<EOF
-first note for commit #$nr
+first note for cummit #$nr
 EOF
 
 INPUT_END
@@ -172,12 +172,12 @@ INPUT_END
 
 verify_concatenated_notes () {
 	git log | grep "^    " > output &&
-	i=$number_of_commits &&
+	i=$number_of_cummits &&
 	while [ $i -gt 0 ]; do
-		echo "    commit #$i" &&
-		echo "    first note for commit #$i" &&
+		echo "    cummit #$i" &&
+		echo "    first note for cummit #$i" &&
 		echo "    " &&
-		echo "    second note for commit #$i" &&
+		echo "    second note for cummit #$i" &&
 		i=$(($i-1)) || return 1
 	done > expect &&
 	test_cmp expect output

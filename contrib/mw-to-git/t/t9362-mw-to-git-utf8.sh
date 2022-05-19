@@ -97,7 +97,7 @@ test_expect_success 'Git push works with a wiki with accents' '
 		cd mw_dir_6 &&
 		echo "A wild Pîkächû appears on the wiki" >Pîkächû.mw &&
 		git add Pîkächû.mw &&
-		git commit -m "A new page appears" &&
+		git cummit -m "A new page appears" &&
 		git push
 	) &&
 	wiki_getallpage ref_page_6 &&
@@ -130,7 +130,7 @@ test_expect_success 'character $ in file name (git -> mw) ' '
 		cd mw_dir_9 &&
 		echo "this file is called File_\$_foo.mw" >File_\$_foo.mw &&
 		git add . &&
-		git commit -am "file File_\$_foo.mw" &&
+		git cummit -am "file File_\$_foo.mw" &&
 		git pull &&
 		git push
 	) &&
@@ -147,7 +147,7 @@ test_expect_failure 'capital at the beginning of file names' '
 		echo "my new file foo" >foo.mw &&
 		echo "my new file Foo... Finger crossed" >Foo.mw &&
 		git add . &&
-		git commit -am "file foo.mw" &&
+		git cummit -am "file foo.mw" &&
 		git pull &&
 		git push
 	) &&
@@ -183,7 +183,7 @@ test_expect_success 'Push page with title containing ":" other than namespace se
 		cd mw_dir_11 &&
 		echo content >NotANameSpace:Page.mw &&
 		git add NotANameSpace:Page.mw &&
-		git commit -m "add page with colon" &&
+		git cummit -m "add page with colon" &&
 		git push
 	) &&
 	wiki_page_exist NotANameSpace:Page
@@ -215,7 +215,7 @@ test_expect_failure 'test of correct formatting for file name beginning with spe
 		echo "my new file {char_1" >\{char_1.mw &&
 		echo "my new file [char_2" >\[char_2.mw &&
 		git add . &&
-		git commit -am "committing some exotic file name..." &&
+		git cummit -am "cummitting some exotic file name..." &&
 		git push &&
 		git pull
 	) &&
@@ -234,7 +234,7 @@ test_expect_success 'test of correct formatting for file name from git to mw' '
 		echo "my new file char{_1" >Char\{_1.mw &&
 		echo "my new file char[_2" >Char\[_2.mw &&
 		git add . &&
-		git commit -m "committing some exotic file name..." &&
+		git cummit -m "cummitting some exotic file name..." &&
 		git push
 	) &&
 	wiki_getallpage ref_page_14 &&
@@ -260,7 +260,7 @@ test_expect_success 'git push with /' '
 	(
 		cd mw_dir_16 &&
 		git add %2Ffo%2Fo.mw &&
-		git commit -m " %2Ffo%2Fo added" &&
+		git cummit -m " %2Ffo%2Fo added" &&
 		git push
 	) &&
 	wiki_page_exist \/fo\/o &&
@@ -285,7 +285,7 @@ test_expect_success 'git push with \' '
 	(
 		cd mw_dir_18 &&
 		git add \\ko\\o.mw &&
-		git commit -m " \\ko\\o added" &&
+		git cummit -m " \\ko\\o added" &&
 		git push
 	) &&
 	wiki_page_exist \\ko\\o &&
@@ -309,7 +309,7 @@ test_expect_success 'git push with \ in format control' '
 	(
 		cd mw_dir_20 &&
 		git add \\fo\\o.mw &&
-		git commit -m " \\fo\\o added" &&
+		git cummit -m " \\fo\\o added" &&
 		git push
 	) &&
 	wiki_page_exist \\fo\\o &&
@@ -335,7 +335,7 @@ test_expect_success 'fast-import meta-characters in page name (git -> mw) ' '
 		cd mw_dir_22 &&
 		echo "this file is called \"file\"_\\_foo.mw" >\"file\"_\\_foo &&
 		git add . &&
-		git commit -am "file \"file\"_\\_foo" &&
+		git cummit -am "file \"file\"_\\_foo" &&
 		git pull &&
 		git push
 	) &&

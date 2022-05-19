@@ -18,11 +18,11 @@ other refs in the same run of receive-pack may still be allowed.
 
 We are run after the objects have been uploaded, but before the
 ref is actually modified.  We take advantage of that fact when we
-look for "new" commits and tags (the new objects won't show up in
+look for "new" cummits and tags (the new objects won't show up in
 `rev-list --all`).
 
 This script loads and parses the content of the config file
-"users/$this_user.acl" from the $acl_branch commit of $acl_git ODB.
+"users/$this_user.acl" from the $acl_branch cummit of $acl_git ODB.
 The acl file is a git-config style file, but uses a slightly more
 restricted syntax as the Perl parser contained within this script
 is not nearly as permissive as git-config.
@@ -30,16 +30,16 @@ is not nearly as permissive as git-config.
 Example:
 
   [user]
-    committer = John Doe <john.doe@example.com>
-    committer = John R. Doe <john.doe@example.com>
+    cummitter = John Doe <john.doe@example.com>
+    cummitter = John R. Doe <john.doe@example.com>
 
   [repository "acls"]
     allow = heads/master
     allow = CDUR for heads/jd/
     allow = C    for ^tags/v\\d+$
 
-For all new commit or tag objects the committer (or tagger) line
-within the object must exactly match one of the user.committer
+For all new cummit or tag objects the cummitter (or tagger) line
+within the object must exactly match one of the user.cummitter
 values listed in the acl file ("HEAD:users/$this_user.acl").
 
 For a branch to be modified an allow line within the matching
@@ -53,8 +53,8 @@ The opcode abbreviations are:
 
   C: create new ref
   D: delete existing ref
-  U: fast-forward existing ref (no commit loss)
-  R: rewind/rebase existing ref (commit loss)
+  U: fast-forward existing ref (no cummit loss)
+  R: rewind/rebase existing ref (cummit loss)
 
 if no opcodes are listed before the "for" keyword then "U" (for
 fast-forward update only) is assumed as this is the most common
@@ -72,17 +72,17 @@ matches (2nd allow line above); all other refnames are strict
 equality matches (1st allow line).
 
 Anything pushed to "heads/" (ok, really "refs/heads/") must be
-a commit.  Tags are not permitted here.
+a cummit.  Tags are not permitted here.
 
 Anything pushed to "tags/" (err, really "refs/tags/") must be an
-annotated tag.  Commits, blobs, trees, etc. are not permitted here.
+annotated tag.  cummits, blobs, trees, etc. are not permitted here.
 Annotated tag signatures aren't checked, nor are they required.
 
-The special subrepository of 'info/new-commit-check' can
-be created and used to allow users to push new commits and
+The special subrepository of 'info/new-cummit-check' can
+be created and used to allow users to push new cummits and
 tags from another local repository to this one, even if they
-aren't the committer/tagger of those objects.  In a nut shell
-the info/new-commit-check directory is a Git repository whose
+aren't the cummitter/tagger of those objects.  In a nut shell
+the info/new-cummit-check directory is a Git repository whose
 objects/info/alternates file lists this repository and all other
 possible sources, and whose refs subdirectory contains symlinks
 to this repository's refs subdirectory, and to all other possible
@@ -93,14 +93,14 @@ correctly.
 =cut
 
 my $git_dir = $ENV{GIT_DIR};
-my $new_commit_check = "$git_dir/info/new-commit-check";
+my $new_cummit_check = "$git_dir/info/new-cummit-check";
 my $ref = $ARGV[0];
 my $old = $ARGV[1];
 my $new = $ARGV[2];
 my $new_type;
 my ($this_user) = getpwuid $<; # REAL_USER_ID
 my $repository_name;
-my %user_committer;
+my %user_cummitter;
 my @allow_rules;
 my @path_rules;
 my %diff_cache;
@@ -156,21 +156,21 @@ sub parse_config ($$$$) {
 	close I;
 }
 
-sub all_new_committers () {
+sub all_new_cummitters () {
 	local $ENV{GIT_DIR} = $git_dir;
-	$ENV{GIT_DIR} = $new_commit_check if -d $new_commit_check;
+	$ENV{GIT_DIR} = $new_cummit_check if -d $new_cummit_check;
 
-	info "Getting committers of new commits.";
+	info "Getting cummitters of new cummits.";
 	my %used;
 	open(T,'-|','git','rev-list','--pretty=raw',$new,'--not','--all');
 	while (<T>) {
-		next unless s/^committer //;
+		next unless s/^cummitter //;
 		chop;
 		s/>.*$/>/;
 		info "Found $_." unless $used{$_}++;
 	}
 	close T;
-	info "No new commits." unless %used;
+	info "No new cummits." unless %used;
 	keys %used;
 }
 
@@ -209,13 +209,13 @@ sub all_new_taggers () {
 	keys %used;
 }
 
-sub check_committers (@) {
+sub check_cummitters (@) {
 	my @bad;
-	foreach (@_) { push @bad, $_ unless $user_committer{$_}; }
+	foreach (@_) { push @bad, $_ unless $user_cummitter{$_}; }
 	if (@bad) {
 		print STDERR "\n";
 		print STDERR "You are not $_.\n" foreach (sort @bad);
-		deny "You cannot push changes not committed by you.";
+		deny "You cannot push changes not cummitted by you.";
 	}
 }
 
@@ -280,16 +280,16 @@ $op = 'U' if ($op eq 'R'
 
 # Load the user's ACL file. Expand groups (user.memberof) one level.
 {
-	my %data = ('user.committer' => []);
+	my %data = ('user.cummitter' => []);
 	parse_config(\%data,$acl_git,$acl_branch,"external/$repository_name.acl");
 
 	%data = (
-		'user.committer' => $data{'user.committer'},
+		'user.cummitter' => $data{'user.cummitter'},
 		'user.memberof' => [],
 	);
 	parse_config(\%data,$acl_git,$acl_branch,"users/$this_user.acl");
 
-	%user_committer = map {$_ => $_} @{$data{'user.committer'}};
+	%user_cummitter = map {$_ => $_} @{$data{'user.cummitter'}};
 	my $rule_key = "repository.$repository_name.allow";
 	my $rules = $data{$rule_key} || [];
 
@@ -342,13 +342,13 @@ if ($op ne 'D') {
 	$new_type = git_value('cat-file','-t',$new);
 
 	if ($ref =~ m,^heads/,) {
-		deny "$ref must be a commit." unless $new_type eq 'commit';
+		deny "$ref must be a cummit." unless $new_type eq 'cummit';
 	} elsif ($ref =~ m,^tags/,) {
 		deny "$ref must be an annotated tag." unless $new_type eq 'tag';
 	}
 
-	check_committers (all_new_committers);
-	check_committers (all_new_taggers) if $new_type eq 'tag';
+	check_cummitters (all_new_cummitters);
+	check_cummitters (all_new_taggers) if $new_type eq 'tag';
 }
 
 info "$this_user wants $op for $ref";

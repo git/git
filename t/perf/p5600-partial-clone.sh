@@ -27,11 +27,11 @@ test_perf 'fsck' '
 	git -C bare.git fsck
 '
 
-test_perf 'count commits' '
+test_perf 'count cummits' '
 	git -C bare.git rev-list --all --count
 '
 
-test_perf 'count non-promisor commits' '
+test_perf 'count non-promisor cummits' '
 	git -C bare.git rev-list --all --count --exclude-promisor-objects
 '
 

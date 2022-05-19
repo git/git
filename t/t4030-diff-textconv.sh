@@ -26,8 +26,8 @@ EOF
 chmod +x hexdump
 
 test_expect_success 'setup binary file with history' '
-	test_commit --printf one file "\\0\\n" &&
-	test_commit --printf --append two file "\\01\\n"
+	test_cummit --printf one file "\\0\\n" &&
+	test_cummit --printf --append two file "\\01\\n"
 '
 
 test_expect_success 'file is considered binary by porcelain' '
@@ -54,7 +54,7 @@ test_expect_success 'diff produces text' '
 	test_cmp expect.text actual
 '
 
-test_expect_success 'show commit produces text' '
+test_expect_success 'show cummit produces text' '
 	git show HEAD >diff &&
 	find_diff <diff >actual &&
 	test_cmp expect.text actual
@@ -164,7 +164,7 @@ EOF
 test_expect_success 'textconv does not act on symlinks' '
 	rm -f file &&
 	test_ln_s_add frotz file &&
-	git commit -m typechange &&
+	git cummit -m typechange &&
 	git show >diff &&
 	find_diff <diff >actual &&
 	test_cmp expect.typechange actual

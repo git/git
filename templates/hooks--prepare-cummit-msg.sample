@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# An example hook script to prepare the cummit log message.
+# Called by "git cummit" with the name of the file that has the
+# cummit message, followed by the description of the cummit
+# message's source.  The hook's purpose is to edit the cummit
+# message file.  If the hook fails with a non-zero status,
+# the cummit is aborted.
+#
+# To enable this hook, rename this file to "prepare-cummit-msg".
+
+# This hook includes three examples. The first one removes the
+# "# Please enter the cummit message..." help message.
+#
+# The second includes the output of "git diff --name-status -r"
+# into the message, just before the "git status" output.  It is
+# commented because it doesn't cope with --amend or with squashed
+# cummits.
+#
+# The third example adds a Signed-off-by line to the message, that can
+# still be edited.  This is rarely a good idea.
+
+cummit_MSG_FILE=$1
+cummit_SOURCE=$2
+SHA1=$3
+
+@PERL_PATH@ -i.bak -ne 'print unless(m/^. Please enter the cummit message/..m/^#$/)' "$cummit_MSG_FILE"
+
+# case "$cummit_SOURCE,$SHA1" in
+#  ,|template,)
+#    @PERL_PATH@ -i.bak -pe '
+#       print "\n" . `git diff --cached --name-status -r`
+# 	 if /^#/ && $first++ == 0' "$cummit_MSG_FILE" ;;
+#  *) ;;
+# esac
+
+# SOB=$(git var GIT_cummitTER_IDENT | sed -n 's/^\(.*>\).*$/Signed-off-by: \1/p')
+# git interpret-trailers --in-place --trailer "$SOB" "$cummit_MSG_FILE"
+# if test -z "$cummit_SOURCE"
+# then
+#   @PERL_PATH@ -i.bak -pe 'print "\n" if !$first_line++' "$cummit_MSG_FILE"
+# fi

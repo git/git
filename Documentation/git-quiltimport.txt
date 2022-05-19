@@ -34,7 +34,7 @@ OPTIONS
 -n::
 --dry-run::
 	Walk through the patches in the series and warn
-	if we cannot find all of the necessary information to commit
+	if we cannot find all of the necessary information to cummit
 	a patch.  At the time of this writing only missing author
 	information is warned about.
 

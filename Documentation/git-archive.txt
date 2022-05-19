@@ -22,12 +22,12 @@ output.  If <prefix> is specified it is
 prepended to the filenames in the archive.
 
 'git archive' behaves differently when given a tree ID versus when
-given a commit ID or tag ID.  In the first case the current time is
+given a cummit ID or tag ID.  In the first case the current time is
 used as the modification time of each file in the archive.  In the latter
-case the commit time as recorded in the referenced commit object is
-used instead.  Additionally the commit ID is stored in a global
+case the cummit time as recorded in the referenced cummit object is
+used instead.  Additionally the cummit ID is stored in a global
 extended pax header if the tar format is used; it can be extracted
-using 'git get-tar-commit-id'. In ZIP files it is stored as a file
+using 'git get-tar-cummit-id'. In ZIP files it is stored as a file
 comment.
 
 OPTIONS
@@ -81,7 +81,7 @@ OPTIONS
 	'git-upload-archive' on the remote side.
 
 <tree-ish>::
-	The tree or commit to produce an archive for.
+	The tree or cummit to produce an archive for.
 
 <path>::
 	Without an optional path parameter, all files and subdirectories
@@ -152,7 +152,7 @@ export-subst::
 
 Note that attributes are by default taken from the `.gitattributes` files
 in the tree that is being archived.  If you want to tweak the way the
-output is generated after the fact (e.g. you committed without adding an
+output is generated after the fact (e.g. you cummitted without adding an
 appropriate export-ignore in its `.gitattributes`), adjust the checked out
 `.gitattributes` file as necessary and use `--worktree-attributes`
 option.  Alternatively you can keep necessary attributes that should apply
@@ -163,7 +163,7 @@ EXAMPLES
 `git archive --format=tar --prefix=junk/ HEAD | (cd /var/tmp/ && tar xf -)`::
 
 	Create a tar archive that contains the contents of the
-	latest commit on the current branch, and extract it in the
+	latest cummit on the current branch, and extract it in the
 	`/var/tmp/junk` directory.
 
 `git archive --format=tar --prefix=git-1.4.0/ v1.4.0 | gzip >git-1.4.0.tar.gz`::
@@ -191,7 +191,7 @@ EXAMPLES
 `git archive -o latest.zip HEAD`::
 
 	Create a Zip archive that contains the contents of the latest
-	commit on the current branch. Note that the output format is
+	cummit on the current branch. Note that the output format is
 	inferred by the extension of the output file.
 
 `git config tar.tar.xz.command "xz -c"`::

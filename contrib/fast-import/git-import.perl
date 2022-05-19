@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # Performs an initial import of a directory. This is the equivalent
-# of doing 'git init; git add .; git commit'. It's a little slower,
+# of doing 'git init; git add .; git cummit'. It's a little slower,
 # but is meant to be a simple fast-import example.
 
 use strict;
@@ -21,8 +21,8 @@ open(my $fi, '|-', qw(git fast-import --date-format=now))
   or die "unable to spawn fast-import: $!";
 
 print $fi <<EOF;
-commit refs/heads/$branch
-committer $username <$email> now
+cummit refs/heads/$branch
+cummitter $username <$email> now
 data <<MSGEOF
 $message
 MSGEOF

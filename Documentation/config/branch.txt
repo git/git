@@ -83,7 +83,7 @@ branch.<name>.rebase::
 	branch-specific manner.
 +
 When `merges` (or just 'm'), pass the `--rebase-merges` option to 'git rebase'
-so that the local merge commits are included in the rebase (see
+so that the local merge cummits are included in the rebase (see
 linkgit:git-rebase[1] for details).
 +
 When the value is `interactive` (or just 'i'), the rebase is run in interactive

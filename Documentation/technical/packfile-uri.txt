@@ -67,7 +67,7 @@ need for protocol changes, so only a small-scoped design is included here to
 form the MVP. For example, the following can be done:
 
  * On the server, more sophisticated means of excluding objects (e.g. by
-   specifying a commit to represent that commit and all objects that it
+   specifying a cummit to represent that cummit and all objects that it
    references).
  * On the client, resumption of clone. If a clone is interrupted, information
    could be recorded in the repository's config and a "clone-resume" command

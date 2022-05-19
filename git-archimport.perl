@@ -15,7 +15,7 @@
 Imports a project from one or more Arch repositories. It will follow branches
 and repositories within the namespaces defined by the <archive/branch>
 parameters supplied. If it cannot find the remote branch a merge comes from
-it will just import it as a regular commit. If it can find it, it will mark it
+it will just import it as a regular cummit. If it can find it, it will mark it
 as a merge whenever possible.
 
 See man (1) git-archimport for more details.
@@ -120,7 +120,7 @@ my %stats  = (			# Track which strategy we used to import:
 );
 
 my %rptags = ();                # my reverse private tags
-                                # to map a SHA1 to a commitid
+                                # to map a SHA1 to a cummitid
 my $TLA = $ENV{'ARCH_CLIENT'} || 'tla';
 
 sub do_abrowse {
@@ -175,7 +175,7 @@ sub do_abrowse {
                 $lastseen = 'id';
             } elsif (s/^\s{10}//) {
                 # 10 leading spaces or more
-                # indicate commit metadata
+                # indicate cummit metadata
 
                 # date
                 if ($lastseen eq 'id' && m/^(\d{4}-\d\d-\d\d \d\d:\d\d:\d\d)/){
@@ -353,13 +353,13 @@ sub process_patchset_accurate {
     # Apply the import/changeset/merge into the working tree
     my $dir = sync_to_ps($ps);
     # read the new log entry:
-    my @commitlog = safe_pipe_capture($TLA,'cat-log','-d',$dir,$ps->{id});
+    my @cummitlog = safe_pipe_capture($TLA,'cat-log','-d',$dir,$ps->{id});
     die "Error in cat-log: $!" if $?;
-    chomp @commitlog;
+    chomp @cummitlog;
 
     # grab variables we want from the log, new fields get added to $ps:
     # (author, date, email, summary, message body ...)
-    parselog($ps, \@commitlog);
+    parselog($ps, \@cummitlog);
 
     if ($ps->{id} =~ /--base-0$/ && $ps->{id} ne $psets[0]{id}) {
         # this should work when importing continuations
@@ -457,10 +457,10 @@ sub process_patchset_fast {
     # about the pset, resolve parents, etc
     #
 
-    my @commitlog = safe_pipe_capture($TLA,'cat-archive-log',$ps->{id});
+    my @cummitlog = safe_pipe_capture($TLA,'cat-archive-log',$ps->{id});
     die "Error in cat-archive-log: $!" if $?;
 
-    parselog($ps,\@commitlog);
+    parselog($ps,\@cummitlog);
 
     # imports don't give us good info
     # on added files. Shame on them
@@ -540,12 +540,12 @@ foreach my $ps (@psets) {
     #
     if (my $dirty = `git-diff-files`) {
         die "Unclean tree when about to process $ps->{id} " .
-            " - did we fail to commit cleanly before?\n$dirty";
+            " - did we fail to cummit cleanly before?\n$dirty";
     }
     die $! if $?;
 
     #
-    # skip commits already in repo
+    # skip cummits already in repo
     #
     if (ptag($ps->{id})) {
       $opt_v && print " * Skipping already imported: $ps->{id}\n";
@@ -583,17 +583,17 @@ foreach my $ps (@psets) {
     }
 
     #
-    # Commit, tag and clean state
+    # cummit, tag and clean state
     #
     $ENV{TZ}                  = 'GMT';
     $ENV{GIT_AUTHOR_NAME}     = $ps->{author};
     $ENV{GIT_AUTHOR_EMAIL}    = $ps->{email};
     $ENV{GIT_AUTHOR_DATE}     = $ps->{date};
-    $ENV{GIT_COMMITTER_NAME}  = $ps->{author};
-    $ENV{GIT_COMMITTER_EMAIL} = $ps->{email};
-    $ENV{GIT_COMMITTER_DATE}  = $ps->{date};
+    $ENV{GIT_cummitTER_NAME}  = $ps->{author};
+    $ENV{GIT_cummitTER_EMAIL} = $ps->{email};
+    $ENV{GIT_cummitTER_DATE}  = $ps->{date};
 
-    my $pid = open2(*READER, *WRITER,'git-commit-tree',$tree,@par)
+    my $pid = open2(*READER, *WRITER,'git-cummit-tree',$tree,@par)
         or die $!;
     print WRITER $ps->{summary},"\n\n";
 
@@ -606,31 +606,31 @@ foreach my $ps (@psets) {
     print WRITER 'git-archimport-id: ',$ps->{id},"\n";
 
     close WRITER;
-    my $commitid = <READER>;    # read
-    chomp $commitid;
+    my $cummitid = <READER>;    # read
+    chomp $cummitid;
     close READER;
     waitpid $pid,0;             # close;
 
-    if (length $commitid != 40) {
-        die "Something went wrong with the commit! $! $commitid";
+    if (length $cummitid != 40) {
+        die "Something went wrong with the cummit! $! $cummitid";
     }
     #
     # Update the branch
     #
     open  HEAD, ">","$git_dir/refs/heads/$ps->{branch}";
-    print HEAD $commitid;
+    print HEAD $cummitid;
     close HEAD;
     system('git-update-ref', 'HEAD', "$ps->{branch}");
 
     # tag accordingly
-    ptag($ps->{id}, $commitid); # private tag
+    ptag($ps->{id}, $cummitid); # private tag
     if ($opt_T || $ps->{type} eq 't' || $ps->{type} eq 'i') {
-        tag($ps->{id}, $commitid);
+        tag($ps->{id}, $cummitid);
     }
-    print " * Committed $ps->{id}\n";
+    print " * cummitted $ps->{id}\n";
     print "   + tree   $tree\n";
-    print "   + commit $commitid\n";
-    $opt_v && print "   + commit date is  $ps->{date} \n";
+    print "   + cummit $cummitid\n";
+    $opt_v && print "   + cummit date is  $ps->{date} \n";
     $opt_v && print "   + parents:  ",join(' ',@par),"\n";
 }
 
@@ -750,7 +750,7 @@ sub apply_cset {
 		'--exclude', '{arch}',
 		"$tmp/changeset/new-files-archive/",'./');
 
-    # deleted files are hinted from the commitlog processing
+    # deleted files are hinted from the cummitlog processing
 
     rmtree("$tmp/changeset");
 }
@@ -842,7 +842,7 @@ sub parselog {
 	$ps->{summary} = join(' ', @{$ps->{summary}});
     }
     elsif (@$log == 0) {
-	$ps->{summary} = 'empty commit message';
+	$ps->{summary} = 'empty cummit message';
     } else {
 	$ps->{summary} = $log->[0] . '...';
     }
@@ -871,7 +871,7 @@ sub parselog {
 
 # write/read a tag
 sub tag {
-    my ($tag, $commit) = @_;
+    my ($tag, $cummit) = @_;
 
     if ($opt_o) {
         $tag =~ s|/|--|g;
@@ -881,30 +881,30 @@ sub tag {
         $tag = git_branchname ($tag) . '--' . $patchname;
     }
 
-    if ($commit) {
+    if ($cummit) {
         open(C,">","$git_dir/refs/tags/$tag")
             or die "Cannot create tag $tag: $!\n";
-        print C "$commit\n"
+        print C "$cummit\n"
             or die "Cannot write tag $tag: $!\n";
         close(C)
             or die "Cannot write tag $tag: $!\n";
-        print " * Created tag '$tag' on '$commit'\n" if $opt_v;
+        print " * Created tag '$tag' on '$cummit'\n" if $opt_v;
     } else {                    # read
         open(C,"<","$git_dir/refs/tags/$tag")
             or die "Cannot read tag $tag: $!\n";
-        $commit = <C>;
-        chomp $commit;
-        die "Error reading tag $tag: $!\n" unless length $commit == 40;
+        $cummit = <C>;
+        chomp $cummit;
+        die "Error reading tag $tag: $!\n" unless length $cummit == 40;
         close(C)
             or die "Cannot read tag $tag: $!\n";
-        return $commit;
+        return $cummit;
     }
 }
 
 # write/read a private tag
 # reads fail softly if the tag isn't there
 sub ptag {
-    my ($tag, $commit) = @_;
+    my ($tag, $cummit) = @_;
 
     # don't use subdirs for tags yet, it could screw up other porcelains
     $tag =~ s|/|,|g;
@@ -913,14 +913,14 @@ sub ptag {
     my $tag_branch_dir = dirname($tag_file);
     mkpath($tag_branch_dir) unless (-d $tag_branch_dir);
 
-    if ($commit) {              # write
+    if ($cummit) {              # write
         open(C,">",$tag_file)
             or die "Cannot create tag $tag: $!\n";
-        print C "$commit\n"
+        print C "$cummit\n"
             or die "Cannot write tag $tag: $!\n";
         close(C)
             or die "Cannot write tag $tag: $!\n";
-	$rptags{$commit} = $tag
+	$rptags{$cummit} = $tag
 	    unless $tag =~ m/--base-0$/;
     } else {                    # read
         # if the tag isn't there, return 0
@@ -929,15 +929,15 @@ sub ptag {
         }
         open(C,"<",$tag_file)
             or die "Cannot read tag $tag: $!\n";
-        $commit = <C>;
-        chomp $commit;
-        die "Error reading tag $tag: $!\n" unless length $commit == 40;
+        $cummit = <C>;
+        chomp $cummit;
+        die "Error reading tag $tag: $!\n" unless length $cummit == 40;
         close(C)
             or die "Cannot read tag $tag: $!\n";
-	unless (defined $rptags{$commit}) {
-	    $rptags{$commit} = $tag;
+	unless (defined $rptags{$cummit}) {
+	    $rptags{$cummit} = $tag;
 	}
-        return $commit;
+        return $cummit;
     }
 }
 
@@ -955,7 +955,7 @@ sub find_parents {
                   # merged patches between the base
                   # of the merge and the current head
 
-    my @parents;  # parents found for this commit
+    my @parents;  # parents found for this cummit
 
     # simple loop to split the merges
     # per branch
@@ -971,7 +971,7 @@ sub find_parents {
     # foreach branch find a merge base and walk it to the
     # head where we are, collecting the merged patchsets that
     # Arch has recorded. Keep that in @have
-    # Compare that with the commits on the other branch
+    # Compare that with the cummits on the other branch
     # between merge-base and the tip of the branch (@need)
     # and see if we have a series of consecutive patches
     # starting from the merge base. The tip of the series
@@ -1002,7 +1002,7 @@ sub find_parents {
 	}
 	my %ancestorshave;
 	foreach my $par (@ancestors) {
-	    $par = commitid2pset($par);
+	    $par = cummitid2pset($par);
 	    if (defined $par->{merges}) {
 		foreach my $merge (@{$par->{merges}}) {
 		    $ancestorshave{$merge}=1;
@@ -1021,10 +1021,10 @@ sub find_parents {
 	my @needraw = `git-rev-list --topo-order $otherbranchtip ^$mergebase`;
 	my @need;
 	foreach my $needps (@needraw) { 	# get the psets
-	    $needps = commitid2pset($needps);
+	    $needps = cummitid2pset($needps);
 	    # git-rev-list will also
-	    # list commits merged in via earlier
-	    # merges. we are only interested in commits
+	    # list cummits merged in via earlier
+	    # merges. we are only interested in cummits
 	    # from the branch we're looking at
 	    if ($branch eq $needps->{branch}) {
 		push @need, $needps->{id};
@@ -1035,9 +1035,9 @@ sub find_parents {
 	# print Dumper(\@need);
 
 	my $newparent;
-	while (my $needed_commit = pop @need) {
-	    if ($have{$needed_commit}) {
-		$newparent = $needed_commit;
+	while (my $needed_cummit = pop @need) {
+	    if ($have{$needed_cummit}) {
+		$newparent = $needed_cummit;
 	    } else {
 		last; # break out of the while
 	    }
@@ -1081,11 +1081,11 @@ sub git_rev_parse {
 }
 
 # resolve a SHA1 to a known patchset
-sub commitid2pset {
-    my $commitid = shift;
-    chomp $commitid;
-    my $name = $rptags{$commitid}
-	|| die "Cannot find reverse tag mapping for $commitid";
+sub cummitid2pset {
+    my $cummitid = shift;
+    chomp $cummitid;
+    my $name = $rptags{$cummitid}
+	|| die "Cannot find reverse tag mapping for $cummitid";
     $name =~ s|,|/|;
     my $ps   = $psets{$name}
 	|| (print Dumper(sort keys %psets)) && die "Cannot find patchset for $name";

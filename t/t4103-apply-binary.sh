@@ -23,7 +23,7 @@ test_expect_success 'setup' '
 	cat file1 >file4 &&
 
 	git update-index --add --remove file1 file2 file4 &&
-	git commit -m "Initial Version" 2>/dev/null &&
+	git cummit -m "Initial Version" 2>/dev/null &&
 
 	git checkout -b binary &&
 	perl -pe "y/x/\000/" <file1 >file3 &&
@@ -32,7 +32,7 @@ test_expect_success 'setup' '
 	perl -pe "y/\000/v/" <file3 >file1 &&
 	rm -f file2 &&
 	git update-index --add --remove file1 file2 file3 file4 &&
-	git commit -m "Second Version" &&
+	git cummit -m "Second Version" &&
 
 	git diff-tree -p main binary >B.diff &&
 	git diff-tree -p -C main binary >C.diff &&

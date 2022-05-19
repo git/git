@@ -65,7 +65,7 @@ task:
 +
 --
 * `gc`: disabled.
-* `commit-graph`: hourly.
+* `cummit-graph`: hourly.
 * `prefetch`: hourly.
 * `loose-objects`: daily.
 * `incremental-repack`: daily.
@@ -83,12 +83,12 @@ unregister::
 TASKS
 -----
 
-commit-graph::
-	The `commit-graph` job updates the `commit-graph` files incrementally,
+cummit-graph::
+	The `cummit-graph` job updates the `cummit-graph` files incrementally,
 	then verifies that the written data is correct. The incremental
 	write is safe to run alongside concurrent Git processes since it
 	will not expire `.graph` files that were in the previous
-	`commit-graph-chain` file. They will be deleted by a later run based
+	`cummit-graph-chain` file. They will be deleted by a later run based
 	on the expiration delay.
 
 prefetch::

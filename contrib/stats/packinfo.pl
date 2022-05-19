@@ -25,7 +25,7 @@
 # the trees of objects are output along with the stats.  This looks
 # like:
 #
-#   0 commit 031321c6...      803      803
+#   0 cummit 031321c6...      803      803
 #
 #   0   blob 03156f21...     1767     1767
 #   1    blob f52a9d7f...       10     1777
@@ -87,7 +87,7 @@ my %sizes;
 my @roots;
 my %paths;
 my %types;
-my @commits;
+my @cummits;
 my %names;
 my %depths;
 my @depths;
@@ -97,7 +97,7 @@ while (<STDIN>) {
     next unless ($sha1 =~ /^[0-9a-f]{40}$/);
     $depths{$sha1} = $depth || 0;
     push(@depths, $depth || 0);
-    push(@commits, $sha1) if ($type eq 'commit');
+    push(@cummits, $sha1) if ($type eq 'cummit');
     push(@roots, $sha1) unless $parent;
     $parents{$sha1} = $parent;
     $types{$sha1} = $type;
@@ -115,9 +115,9 @@ if ($filenames && ($tree || $dump)) {
     }
     close NAMES;
 
-    for my $commit (@commits) {
-        my $name = $names{$commit};
-        open(TREE, "git ls-tree -t -r $commit|");
+    for my $cummit (@cummits) {
+        my $name = $names{$cummit};
+        open(TREE, "git ls-tree -t -r $cummit|");
         print STDERR "Plumbing tree $name\n";
         while (<TREE>) {
             if (/^(\S+)\s+(\S+)\s+(\S+)\s+(.*)$/) {

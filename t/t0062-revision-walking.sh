@@ -19,10 +19,10 @@ EOF
 test_expect_success 'setup' '
 	echo a > a &&
 	git add a &&
-	git commit -m "add a" &&
+	git cummit -m "add a" &&
 	echo b > b &&
 	git add b &&
-	git commit -m "add b"
+	git cummit -m "add b"
 '
 
 test_expect_success 'revision walking can be done twice' '

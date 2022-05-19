@@ -15,11 +15,11 @@ test_expect_success \
     'test_write_lines a b c d e f g h i >text &&
      echo side >side &&
      git update-index --add text side &&
-     A=$(echo A | git commit-tree $(git write-tree)) &&
+     A=$(echo A | git cummit-tree $(git write-tree)) &&
 
      echo m >>text &&
      git update-index text &&
-     B=$(echo B | git commit-tree $(git write-tree) -p $A) &&
+     B=$(echo B | git cummit-tree $(git write-tree) -p $A) &&
      git update-ref HEAD $B
     '
 
@@ -39,11 +39,11 @@ test_expect_success \
       echo q >>text &&
       git read-tree $B &&
       git update-index text &&
-      git update-ref HEAD $(echo C | git commit-tree $(git write-tree) -p $B) &&
+      git update-ref HEAD $(echo C | git cummit-tree $(git write-tree) -p $B) &&
       rm .git/objects/info/alternates &&
 
-      git --git-dir=../.git cat-file commit $B |
-      git hash-object -t commit -w --stdin &&
+      git --git-dir=../.git cat-file cummit $B |
+      git hash-object -t cummit -w --stdin &&
 
       git --git-dir=../.git cat-file tree "$B^{tree}" |
       git hash-object -t tree -w --stdin

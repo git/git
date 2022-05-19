@@ -101,7 +101,7 @@ test_expect_success 'setup' '
     echo "subdir/*.c crlf" >> .gitattributes &&
     echo "subdir/file.h crlf" >> .gitattributes &&
     git add .gitattributes textfile.c binfile.bin mixedUp.c subdir/* &&
-    git commit -q -m "First Commit" &&
+    git cummit -q -m "First cummit" &&
     git clone -q --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
     GIT_DIR="$SERVERDIR" git config --bool gitcvs.enabled true &&
     GIT_DIR="$SERVERDIR" git config gitcvs.logfile "$SERVERDIR/gitcvs.log"
@@ -175,7 +175,7 @@ test_expect_success 'updating' '
     echo "hi" >subdir/newfile.c &&
     echo "hello" >>binfile.bin &&
     git add subdir/newfile.bin subdir/file.h subdir/newfile.c binfile.bin &&
-    git commit -q -m "Add and change some files" &&
+    git cummit -q -m "Add and change some files" &&
     git push gitcvs.git >/dev/null &&
     (cd cvswork &&
     GIT_CONFIG="$git_config" cvs -Q update
@@ -220,7 +220,7 @@ test_expect_success 'setup multi-line files' '
       echo "line 3" &&
       echo "line 4" ) | q_to_nul > multilineTxt.c &&
     git add multilineTxt.c &&
-    git commit -q -m "multiline files" &&
+    git cummit -q -m "multiline files" &&
     git push gitcvs.git >/dev/null
 '
 
@@ -342,7 +342,7 @@ test_expect_success 'update/merge full other copy (guess)' '
     sed "s/3/replaced_3/" < multilineTxt.c > ml.temp &&
     mv ml.temp multilineTxt.c &&
     git add multilineTxt.c &&
-    git commit -q -m "modify multiline file" >> "${WORKDIR}/marked.log" &&
+    git cummit -q -m "modify multiline file" >> "${WORKDIR}/marked.log" &&
     git push gitcvs.git >/dev/null &&
     (cd cvswork2 &&
     sed "s/1/replaced_1/" < multilineTxt.c > ml.temp &&

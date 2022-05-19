@@ -21,13 +21,13 @@
  */
 
 static const char * const revert_usage[] = {
-	N_("git revert [<options>] <commit-ish>..."),
+	N_("git revert [<options>] <cummit-ish>..."),
 	N_("git revert <subcommand>"),
 	NULL
 };
 
 static const char * const cherry_pick_usage[] = {
-	N_("git cherry-pick [<options>] <commit-ish>..."),
+	N_("git cherry-pick [<options>] <cummit-ish>..."),
 	N_("git cherry-pick <subcommand>"),
 	NULL
 };
@@ -102,10 +102,10 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 		OPT_CMDMODE(0, "quit", &cmd, N_("end revert or cherry-pick sequence"), 'q'),
 		OPT_CMDMODE(0, "continue", &cmd, N_("resume revert or cherry-pick sequence"), 'c'),
 		OPT_CMDMODE(0, "abort", &cmd, N_("cancel revert or cherry-pick sequence"), 'a'),
-		OPT_CMDMODE(0, "skip", &cmd, N_("skip current commit and continue"), 's'),
+		OPT_CMDMODE(0, "skip", &cmd, N_("skip current cummit and continue"), 's'),
 		OPT_CLEANUP(&cleanup_arg),
-		OPT_BOOL('n', "no-commit", &opts->no_commit, N_("don't automatically commit")),
-		OPT_BOOL('e', "edit", &opts->edit, N_("edit the commit message")),
+		OPT_BOOL('n', "no-cummit", &opts->no_cummit, N_("don't automatically cummit")),
+		OPT_BOOL('e', "edit", &opts->edit, N_("edit the cummit message")),
 		OPT_NOOP_NOARG('r', NULL),
 		OPT_BOOL('s', "signoff", &opts->signoff, N_("add a Signed-off-by trailer")),
 		OPT_CALLBACK('m', "mainline", opts, N_("parent-number"),
@@ -115,18 +115,18 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 		OPT_CALLBACK('X', "strategy-option", &opts, N_("option"),
 			N_("option for merge strategy"), option_parse_x),
 		{ OPTION_STRING, 'S', "gpg-sign", &opts->gpg_sign, N_("key-id"),
-		  N_("GPG sign commit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
+		  N_("GPG sign cummit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 		OPT_END()
 	};
 	struct option *options = base_options;
 
 	if (opts->action == REPLAY_PICK) {
 		struct option cp_extra[] = {
-			OPT_BOOL('x', NULL, &opts->record_origin, N_("append commit name")),
+			OPT_BOOL('x', NULL, &opts->record_origin, N_("append cummit name")),
 			OPT_BOOL(0, "ff", &opts->allow_ff, N_("allow fast-forward")),
-			OPT_BOOL(0, "allow-empty", &opts->allow_empty, N_("preserve initially empty commits")),
-			OPT_BOOL(0, "allow-empty-message", &opts->allow_empty_message, N_("allow commits with empty messages")),
-			OPT_BOOL(0, "keep-redundant-commits", &opts->keep_redundant_commits, N_("keep redundant, empty commits")),
+			OPT_BOOL(0, "allow-empty", &opts->allow_empty, N_("preserve initially empty cummits")),
+			OPT_BOOL(0, "allow-empty-message", &opts->allow_empty_message, N_("allow cummits with empty messages")),
+			OPT_BOOL(0, "keep-redundant-cummits", &opts->keep_redundant_cummits, N_("keep redundant, empty cummits")),
 			OPT_END(),
 		};
 		options = parse_options_concat(options, cp_extra);
@@ -140,7 +140,7 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 	the_repository->settings.command_requires_full_index = 0;
 
 	/* implies allow_empty */
-	if (opts->keep_redundant_commits)
+	if (opts->keep_redundant_cummits)
 		opts->allow_empty = 1;
 
 	if (cleanup_arg) {
@@ -163,7 +163,7 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 		}
 
 		verify_opt_compatible(me, this_operation,
-				"--no-commit", opts->no_commit,
+				"--no-cummit", opts->no_cummit,
 				"--signoff", opts->signoff,
 				"--mainline", opts->mainline,
 				"--strategy", opts->strategy ? 1 : 0,
@@ -183,7 +183,7 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 	if (opts->allow_ff)
 		verify_opt_compatible(me, "--ff",
 				"--signoff", opts->signoff,
-				"--no-commit", opts->no_commit,
+				"--no-cummit", opts->no_cummit,
 				"-x", opts->record_origin,
 				"--edit", opts->edit > 0,
 				NULL);

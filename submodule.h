@@ -87,7 +87,7 @@ int should_update_submodules(void);
  * and it should be updated. Returns NULL otherwise.
  */
 const struct submodule *submodule_from_ce(const struct cache_entry *ce);
-void check_for_new_submodule_commits(struct object_id *oid);
+void check_for_new_submodule_cummits(struct object_id *oid);
 int fetch_submodules(struct repository *r,
 		     const struct strvec *options,
 		     const char *prefix,
@@ -119,12 +119,12 @@ int submodule_touches_in_range(struct repository *r,
 			       struct object_id *a,
 			       struct object_id *b);
 int find_unpushed_submodules(struct repository *r,
-			     struct oid_array *commits,
+			     struct oid_array *cummits,
 			     const char *remotes_name,
 			     struct string_list *needs_pushing);
 struct refspec;
 int push_unpushed_submodules(struct repository *r,
-			     struct oid_array *commits,
+			     struct oid_array *cummits,
 			     const struct remote *remote,
 			     const struct refspec *rs,
 			     const struct string_list *push_options,

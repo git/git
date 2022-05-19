@@ -16,7 +16,7 @@ repo=$GIT_DAEMON_DOCUMENT_ROOT_PATH/repo
 
 test_expect_success "create repo served by $VERSION_B" '
 	git.b init "$repo" &&
-	git.b -C "$repo" commit --allow-empty -m one
+	git.b -C "$repo" cummit --allow-empty -m one
 '
 
 test_expect_success "git:// clone with $VERSION_A and protocol v1" '
@@ -28,7 +28,7 @@ test_expect_success "git:// clone with $VERSION_A and protocol v1" '
 '
 
 test_expect_success "git:// fetch with $VERSION_A and protocol v1" '
-	git.b -C "$repo" commit --allow-empty -m two &&
+	git.b -C "$repo" cummit --allow-empty -m two &&
 	git.b -C "$repo" log -1 --format=%s >expect &&
 
 	GIT_TRACE_PACKET=1 git.a -C child -c protocol.version=1 fetch 2>log &&
@@ -43,7 +43,7 @@ stop_git_daemon
 
 test_expect_success "create repo served by $VERSION_B" '
 	git.b init parent &&
-	git.b -C parent commit --allow-empty -m one
+	git.b -C parent cummit --allow-empty -m one
 '
 
 test_expect_success "file:// clone with $VERSION_A and protocol v1" '
@@ -55,7 +55,7 @@ test_expect_success "file:// clone with $VERSION_A and protocol v1" '
 '
 
 test_expect_success "file:// fetch with $VERSION_A and protocol v1" '
-	git.b -C parent commit --allow-empty -m two &&
+	git.b -C parent cummit --allow-empty -m two &&
 	git.b -C parent log -1 --format=%s >expect &&
 
 	GIT_TRACE_PACKET=1 git.a -C child2 -c protocol.version=1 fetch --upload-pack="git.b upload-pack" 2>log &&

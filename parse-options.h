@@ -322,8 +322,8 @@ int parse_opt_verbosity_cb(const struct option *, const char *, int);
 int parse_opt_object_name(const struct option *, const char *, int);
 /* value is struct object_id* */
 int parse_opt_object_id(const struct option *, const char *, int);
-int parse_opt_commits(const struct option *, const char *, int);
-int parse_opt_commit(const struct option *, const char *, int);
+int parse_opt_cummits(const struct option *, const char *, int);
+int parse_opt_cummit(const struct option *, const char *, int);
 int parse_opt_tertiary(const struct option *, const char *, int);
 int parse_opt_string_list(const struct option *, const char *, int);
 int parse_opt_noop_cb(const struct option *, const char *, int);
@@ -357,9 +357,9 @@ int parse_opt_tracking_mode(const struct option *, const char *, int);
 #define OPT_PASSTHRU_ARGV(s, l, v, a, h, f) \
 	{ OPTION_CALLBACK, (s), (l), (v), (a), (h), (f), parse_opt_passthru_argv }
 #define _OPT_CONTAINS_OR_WITH(name, variable, help, flag) \
-	{ OPTION_CALLBACK, 0, name, (variable), N_("commit"), (help), \
+	{ OPTION_CALLBACK, 0, name, (variable), N_("cummit"), (help), \
 	  PARSE_OPT_LASTARG_DEFAULT | flag, \
-	  parse_opt_commits, (intptr_t) "HEAD" \
+	  parse_opt_cummits, (intptr_t) "HEAD" \
 	}
 #define OPT_CONTAINS(v, h) _OPT_CONTAINS_OR_WITH("contains", v, h, PARSE_OPT_NONEG)
 #define OPT_NO_CONTAINS(v, h) _OPT_CONTAINS_OR_WITH("no-contains", v, h, PARSE_OPT_NONEG)

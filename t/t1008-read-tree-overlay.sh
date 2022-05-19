@@ -12,17 +12,17 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success setup '
 	echo one >a &&
 	git add a &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag initial &&
 	echo two >b &&
 	git add b &&
-	git commit -m second &&
+	git cummit -m second &&
 	git checkout -b side initial &&
 	echo three >a &&
 	mkdir b &&
 	echo four >b/c &&
 	git add b/c &&
-	git commit -m third
+	git cummit -m third
 '
 
 test_expect_success 'multi-read' '

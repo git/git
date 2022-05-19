@@ -14,7 +14,7 @@ test_expect_success 'setup' '
 	git init sub &&
 	(
 		cd sub &&
-		test_commit first &&
+		test_cummit first &&
 		git checkout -b new-main &&
 		git tag -a -m new-tag new-tag HEAD
 	)

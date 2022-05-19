@@ -3,10 +3,10 @@
 test_description='diff --dirstat tests'
 . ./test-lib.sh
 
-# set up two commits where the second commit has these files
+# set up two cummits where the second commit has these files
 # (10 lines in each file):
 #
-#   unchanged/text           (unchanged from 1st commit)
+#   unchanged/text           (unchanged from 1st cummit)
 #   changed/text             (changed 1st line)
 #   rearranged/text          (swapped 1st and 2nd line)
 #   dst/copy/unchanged/text  (copied from src/copy/unchanged/text, unchanged)
@@ -138,7 +138,7 @@ move rearranged line #8
 move rearranged line #9
 EOF
 	git add . &&
-	git commit -m "initial" &&
+	git cummit -m "initial" &&
 	mkdir dst &&
 	mkdir dst/copy &&
 	mkdir dst/copy/unchanged &&
@@ -248,7 +248,7 @@ EOF
 	git rm -r src/move/unchanged &&
 	git rm -r src/move/changed &&
 	git rm -r src/move/rearranged &&
-	git commit -m "changes" &&
+	git cummit -m "changes" &&
 	git config diff.renames false
 '
 

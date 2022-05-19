@@ -6,7 +6,7 @@
 #include "refspec.h"
 #include "remote.h"
 #include "sequencer.h"
-#include "commit.h"
+#include "cummit.h"
 #include "worktree.h"
 #include "submodule-config.h"
 #include "run-command.h"
@@ -426,7 +426,7 @@ static void dwim_branch_start(struct repository *r, const char *start_name,
 			   enum branch_track track, char **out_real_ref,
 			   struct object_id *out_oid)
 {
-	struct commit *commit;
+	struct cummit *cummit;
 	struct object_id oid;
 	char *real_ref;
 	int explicit_tracking = 0;
@@ -466,14 +466,14 @@ static void dwim_branch_start(struct repository *r, const char *start_name,
 		break;
 	}
 
-	if ((commit = lookup_commit_reference(r, &oid)) == NULL)
+	if ((cummit = lookup_cummit_reference(r, &oid)) == NULL)
 		die(_("not a valid branch point: '%s'"), start_name);
 	if (out_real_ref) {
 		*out_real_ref = real_ref;
 		real_ref = NULL;
 	}
 	if (out_oid)
-		oidcpy(out_oid, &commit->object.oid);
+		oidcpy(out_oid, &cummit->object.oid);
 
 	FREE_AND_NULL(real_ref);
 }
@@ -518,7 +518,7 @@ void create_branch(struct repository *r,
 		ref_transaction_update(transaction, ref.buf,
 					&oid, forcing ? NULL : null_oid(),
 					0, msg, &err) ||
-		ref_transaction_commit(transaction, &err))
+		ref_transaction_cummit(transaction, &err))
 		die("%s", err.buf);
 	ref_transaction_free(transaction);
 	strbuf_release(&err);
@@ -625,7 +625,7 @@ static int submodule_create_branch(struct repository *r,
 }
 
 void create_branches_recursively(struct repository *r, const char *name,
-				 const char *start_commitish,
+				 const char *start_cummitish,
 				 const char *tracking_name, int force,
 				 int reflog, int quiet, enum branch_track track,
 				 int dry_run)
@@ -635,8 +635,8 @@ void create_branches_recursively(struct repository *r, const char *name,
 	struct object_id super_oid;
 	struct submodule_entry_list submodule_entry_list;
 
-	/* Perform dwim on start_commitish to get super_oid and branch_point. */
-	dwim_branch_start(r, start_commitish, BRANCH_TRACK_NEVER,
+	/* Perform dwim on start_cummitish to get super_oid and branch_point. */
+	dwim_branch_start(r, start_cummitish, BRANCH_TRACK_NEVER,
 			  &branch_point, &super_oid);
 
 	/*
@@ -659,7 +659,7 @@ void create_branches_recursively(struct repository *r, const char *name,
 				submodule_entry_list.entries[i].submodule->name);
 			if (advice_enabled(ADVICE_SUBMODULES_NOT_UPDATED))
 				advise(_("You may try updating the submodules using 'git checkout %s && git submodule update --init'"),
-				       start_commitish);
+				       start_cummitish);
 			exit(code);
 		}
 
@@ -674,7 +674,7 @@ void create_branches_recursively(struct repository *r, const char *name,
 			    name);
 	}
 
-	create_branch(the_repository, name, start_commitish, force, 0, reflog, quiet,
+	create_branch(the_repository, name, start_cummitish, force, 0, reflog, quiet,
 		      BRANCH_TRACK_NEVER, dry_run);
 	if (dry_run)
 		return;
@@ -714,7 +714,7 @@ void remove_merge_branch_state(struct repository *r)
 
 void remove_branch_state(struct repository *r, int verbose)
 {
-	sequencer_post_commit_cleanup(r, verbose);
+	sequencer_post_cummit_cleanup(r, verbose);
 	unlink(git_path_squash_msg(r));
 	remove_merge_branch_state(r);
 }

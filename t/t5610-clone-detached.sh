@@ -14,12 +14,12 @@ head_is_detached() {
 test_expect_success 'setup' '
 	echo one >file &&
 	git add file &&
-	git commit -m one &&
+	git cummit -m one &&
 	echo two >file &&
-	git commit -a -m two &&
+	git cummit -a -m two &&
 	git tag two &&
 	echo three >file &&
-	git commit -a -m three
+	git cummit -a -m three
 '
 
 test_expect_success 'clone repo (detached HEAD points to branch)' '
@@ -64,7 +64,7 @@ test_expect_success 'cloned HEAD is detached' '
 test_expect_success 'clone repo (orphan detached HEAD)' '
 	git checkout main^0 &&
 	echo four >file &&
-	git commit -a -m four &&
+	git cummit -a -m four &&
 	git clone "file://$PWD" detached-orphan
 '
 test_expect_success 'cloned HEAD matches' '

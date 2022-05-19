@@ -11,8 +11,8 @@ Fixes since v1.5.2.2
      represented in 32-bit.  The runtime code to validate such
      an index mishandled such an index for an empty pack.
 
-   - Commit walkers (most notably, fetch over http protocol)
-     tried to traverse commit objects contained in trees (aka
+   - cummit walkers (most notably, fetch over http protocol)
+     tried to traverse cummit objects contained in trees (aka
      subproject); they shouldn't.
 
    - A build option NO_R_TO_GCC_LINKER was not explained in Makefile

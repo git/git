@@ -53,8 +53,8 @@ Updates since v1.5.1
 
 * New commands and options.
 
-  - "git bisect start" can optionally take a single bad commit and
-    zero or more good commits on the command line.
+  - "git bisect start" can optionally take a single bad cummit and
+    zero or more good cummits on the command line.
 
   - "git shortlog" can optionally be told to wrap its output.
 
@@ -65,8 +65,8 @@ Updates since v1.5.1
     option, to override the built-in "[PATCH]".
 
   - "git add -u" is a quick way to do the first stage of "git
-    commit -a" (i.e. update the index to match the working
-    tree); it obviously does not make a commit.
+    cummit -a" (i.e. update the index to match the working
+    tree); it obviously does not make a cummit.
 
   - "git clean" honors a new configuration, "clean.requireforce".  When
     set to true, this makes "git clean" a no-op, preventing you
@@ -80,7 +80,7 @@ Updates since v1.5.1
 
 * Updated behavior of existing commands.
 
-  - When $GIT_COMMITTER_EMAIL or $GIT_AUTHOR_EMAIL is not set
+  - When $GIT_cummitTER_EMAIL or $GIT_AUTHOR_EMAIL is not set
     but $EMAIL is set, the latter is used as a substitute.
 
   - "git diff --stat" shows size of preimage and postimage blobs
@@ -89,15 +89,15 @@ Updates since v1.5.1
   - "git lost-found" shows stuff that are unreachable except
     from reflogs.
 
-  - "git checkout branch^0" now detaches HEAD at the tip commit
+  - "git checkout branch^0" now detaches HEAD at the tip cummit
     on the named branch, instead of just switching to the
     branch (use "git checkout branch" to switch to the branch,
     as before).
 
-  - "git bisect next" can be used after giving only a bad commit
+  - "git bisect next" can be used after giving only a bad cummit
     without giving a good one (this starts bisection half-way to
-    the root commit).  We used to refuse to operate without a
-    good and a bad commit.
+    the root cummit).  We used to refuse to operate without a
+    good and a bad cummit.
 
   - "git push", when pushing into more than one repository, does
     not stop at the first error.
@@ -110,7 +110,7 @@ Updates since v1.5.1
   - "gitview" (in contrib/ section) learned to better support
     "git-annotate".
 
-  - "git diff $commit1:$path2 $commit2:$path2" can now report
+  - "git diff $cummit1:$path2 $cummit2:$path2" can now report
     mode changes between the two blobs.
 
   - Local "git fetch" from a repository whose object store is
@@ -125,7 +125,7 @@ Updates since v1.5.1
     configuration variable.
 
   - "git cherry-pick" and "git revert" does not use .msg file in
-    the working tree to prepare commit message; instead it uses
+    the working tree to prepare cummit message; instead it uses
     $GIT_DIR/MERGE_MSG as other commands do.
 
 * Builds

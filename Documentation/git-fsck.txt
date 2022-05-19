@@ -46,9 +46,9 @@ index file, all SHA-1 references in `refs` namespace, and all reflogs
 	an unreachability trace.
 
 --no-reflogs::
-	Do not consider commits that are referenced only by an
+	Do not consider cummits that are referenced only by an
 	entry in a reflog to be reachable.  This option is meant
-	only to search for commits that used to be in a ref, but
+	only to search for cummits that used to be in a ref, but
 	now aren't, but are still in that corresponding reflog.
 
 --full::
@@ -63,14 +63,14 @@ index file, all SHA-1 references in `refs` namespace, and all reflogs
 
 --connectivity-only::
 	Check only the connectivity of reachable objects, making sure
-	that any objects referenced by a reachable tag, commit, or tree
+	that any objects referenced by a reachable tag, cummit, or tree
 	is present. This speeds up the operation by avoiding reading
 	blobs entirely (though it does still check that referenced blobs
-	exist). This will detect corruption in commits and trees, but
+	exist). This will detect corruption in cummits and trees, but
 	not do any semantic checks (e.g., for format errors). Corruption
 	in blob objects will not be detected at all.
 +
-Unreachable tags, commits, and trees will also be accessed to find the
+Unreachable tags, cummits, and trees will also be accessed to find the
 tips of dangling segments of history. Use `--no-dangling` if you don't
 care about this output and want to speed it up further.
 
@@ -86,7 +86,7 @@ care about this output and want to speed it up further.
 	Be chatty.
 
 --lost-found::
-	Write dangling objects into .git/lost-found/commit/ or
+	Write dangling objects into .git/lost-found/cummit/ or
 	.git/lost-found/other/, depending on type.  If the object is
 	a blob, the contents are written into the file, rather than
 	its object name.
@@ -123,15 +123,15 @@ Any corrupt objects you will have to find in backups or other archives
 (i.e., you can just remove them and do an 'rsync' with some other site in
 the hopes that somebody else has the object you have corrupted).
 
-If core.commitGraph is true, the commit-graph file will also be inspected
-using 'git commit-graph verify'. See linkgit:git-commit-graph[1].
+If core.cummitGraph is true, the cummit-graph file will also be inspected
+using 'git cummit-graph verify'. See linkgit:git-cummit-graph[1].
 
 Extracted Diagnostics
 ---------------------
 
 unreachable <type> <object>::
 	The <type> object <object>, isn't actually referred to directly
-	or indirectly in any of the trees or commits seen. This can
+	or indirectly in any of the trees or cummits seen. This can
 	mean that there's another root node that you're not specifying
 	or that the tree is corrupt. If you haven't missed a root node
 	then you might as well delete unreachable nodes since they
@@ -143,7 +143,7 @@ missing <type> <object>::
 
 dangling <type> <object>::
 	The <type> object <object>, is present in the database but never
-	'directly' used. A dangling commit could be a root node.
+	'directly' used. A dangling cummit could be a root node.
 
 hash mismatch <object>::
 	The database has an object whose hash doesn't match the

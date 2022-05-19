@@ -27,7 +27,7 @@ in non-cone mode.
 
 When in a sparse-checkout, other Git commands behave a bit differently.
 For example, switching branches will not update paths outside the
-sparse-checkout directories/patterns, and `git commit -a` will not record
+sparse-checkout directories/patterns, and `git cummit -a` will not record
 paths outside the sparse-checkout directories/patterns as deleted.
 
 THIS COMMAND IS EXPERIMENTAL. ITS BEHAVIOR, AND THE BEHAVIOR OF OTHER
@@ -106,7 +106,7 @@ interact with your repository until it is disabled.
 	(e.g. because it has unstaged changes or conflicts).  In such
 	cases, it can make sense to run `git sparse-checkout reapply` later
 	after cleaning up affected paths (e.g. resolving conflicts, undoing
-	or committing changes, etc.).
+	or cummitting changes, etc.).
 +
 The `reapply` command can also take `--[no-]cone` and `--[no-]sparse-index`
 flags, with the same meaning as the flags from the `set` command, in order
@@ -253,7 +253,7 @@ contains any untracked files. If all of those files are ignored due to the
 untracked files within that directory is not ignored, then no deletions will
 occur within that directory and a warning message will appear. If these files
 are important, then reset your sparse-checkout definition so they are included,
-use `git add` and `git commit` to store them, then remove any remaining files
+use `git add` and `git cummit` to store them, then remove any remaining files
 manually to ensure Git can behave optimally.
 
 
@@ -265,7 +265,7 @@ are populated based on interactions with the `git submodule` command.
 Specifically, `git submodule init -- <path>` will ensure the submodule
 at `<path>` is present, while `git submodule deinit [-f] -- <path>`
 will remove the files for the submodule at `<path>` (including any
-untracked files, uncommitted changes, and unpushed history).  Similar
+untracked files, uncummitted changes, and unpushed history).  Similar
 to how sparse-checkout removes files from the working tree but still
 leaves entries in the index, deinitialized submodules are removed from
 the working directory but still have an entry in the index.

@@ -101,7 +101,7 @@ test_expect_success 'git help' '
 	test_i18ngrep "^   clone  " help.output &&
 	test_i18ngrep "^   add    " help.output &&
 	test_i18ngrep "^   log    " help.output &&
-	test_i18ngrep "^   commit " help.output &&
+	test_i18ngrep "^   cummit " help.output &&
 	test_i18ngrep "^   fetch  " help.output
 '
 test_expect_success 'git help -g' '

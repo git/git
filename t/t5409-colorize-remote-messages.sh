@@ -21,11 +21,11 @@ test_expect_success 'setup' '
 	EOF
 	echo 1 >file &&
 	git add file &&
-	git commit -m 1 &&
+	git cummit -m 1 &&
 	git clone . child &&
 	(
 		cd child &&
-		test_commit message2 file content2
+		test_cummit message2 file content2
 	)
 '
 

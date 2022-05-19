@@ -49,7 +49,7 @@ test_expect_success SETFACL 'Setup test repo' '
 
 	touch file.txt &&
 	git add file.txt &&
-	git commit -m "init"
+	git cummit -m "init"
 '
 
 test_expect_success SETFACL 'Objects creation does not break ACLs with restrictive umask' '

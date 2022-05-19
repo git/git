@@ -6,13 +6,13 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup ambiguous refs' '
-	test_commit branch file &&
+	test_cummit branch file &&
 	git branch ambiguity &&
 	git branch vagueness &&
-	test_commit tag file &&
+	test_cummit tag file &&
 	git tag ambiguity &&
 	git tag vagueness HEAD:file &&
-	test_commit other file
+	test_cummit other file
 '
 
 test_expect_success 'checkout ambiguous ref succeeds' '

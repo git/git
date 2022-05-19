@@ -45,13 +45,13 @@ test_expect_success setup '
 	>file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git rev-parse --verify HEAD >expect_initial &&
 
 	echo Picked >file &&
 	git add file &&
 	test_tick &&
-	git commit --author="Another Person <another@example.com>" -m second &&
+	git cummit --author="Another Person <another@example.com>" -m second &&
 	git rev-parse --verify HEAD >expect_second
 '
 
@@ -145,13 +145,13 @@ test_expect_success 'log -S --no-textconv (missing textconv tool)' '
 
 test_expect_success 'setup log -[GS] plain & regex' '
 	test_create_repo GS-plain &&
-	test_commit -C GS-plain --append A data.txt "a" &&
-	test_commit -C GS-plain --append B data.txt "a a" &&
-	test_commit -C GS-plain --append C data.txt "b" &&
-	test_commit -C GS-plain --append D data.txt "[b]" &&
-	test_commit -C GS-plain E data.txt "" &&
+	test_cummit -C GS-plain --append A data.txt "a" &&
+	test_cummit -C GS-plain --append B data.txt "a a" &&
+	test_cummit -C GS-plain --append C data.txt "b" &&
+	test_cummit -C GS-plain --append D data.txt "[b]" &&
+	test_cummit -C GS-plain E data.txt "" &&
 
-	# We also include E, the deletion commit
+	# We also include E, the deletion cummit
 	git -C GS-plain log --grep="[ABE]" >A-to-B-then-E-log &&
 	git -C GS-plain log --grep="[CDE]" >C-to-D-then-E-log &&
 	git -C GS-plain log --grep="[DE]" >D-then-E-log &&
@@ -184,9 +184,9 @@ test_expect_success 'log -S<pat> is not a regex, but -S<pat> --pickaxe-regex is'
 
 test_expect_success 'setup log -[GS] binary & --text' '
 	test_create_repo GS-bin-txt &&
-	test_commit -C GS-bin-txt --printf A data.bin "a\na\0a\n" &&
-	test_commit -C GS-bin-txt --append --printf B data.bin "a\na\0a\n" &&
-	test_commit -C GS-bin-txt C data.bin "" &&
+	test_cummit -C GS-bin-txt --printf A data.bin "a\na\0a\n" &&
+	test_cummit -C GS-bin-txt --append --printf B data.bin "a\na\0a\n" &&
+	test_cummit -C GS-bin-txt C data.bin "" &&
 	git -C GS-bin-txt log >full-log
 '
 

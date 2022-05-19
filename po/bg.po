@@ -22,9 +22,9 @@
 # merge base база за сливане
 # force (push) принудително изтласквам
 # stash/index индекс
-# squash commit вкарвам подаване в предходното
-# fixup commit вкарвам подаване в предходното без следа
-# root commit начално подаване
+# squash cummit вкарвам подаване в предходното
+# fixup cummit вкарвам подаване в предходното без следа
+# root cummit начално подаване
 # remote-tracking branch следящ клон
 # git bundle пратка на git
 # bisect двоично търсене
@@ -50,7 +50,7 @@
 # hard reset пълно зануляване (указателя „HEAD“, индекса и работното дърво)
 # merge reset слято зануляване (целия индекс и отчасти работното дърво — без файловете с промени между работното дърво и индекса)
 # keep reset запазващо зануляване (отчасти индекса и работното дърво — файловете с промени от подаването и „HEAD“)
-# commit-ish указател към подаване
+# cummit-ish указател към подаване
 # sequence последователност/поредица
 # whitespace symbol знаци за интервали
 # shortlog съкратения журнал
@@ -140,7 +140,7 @@
 # midx, multi-pack index - файл с индекса за множество пакети
 # overlay mode - припокриващ режим (при изтеглянe)
 # incremental file нарастващ файл
-# split (commit-graphr) раздробен (граф с подавания)
+# split (cummit-graphr) раздробен (граф с подавания)
 # clobber (a tag) презаписвам (етикет)
 # blame извеждане на авторство
 # refname име на указател
@@ -152,7 +152,7 @@
 # stateless без запазване на състоянието
 # end packet пакет за край
 # identity самоличност, информация за
-# boundary commit гранично подаване
+# boundary cummit гранично подаване
 # integrate (changes) внасяне (на промени)
 # overflow data данни за отместването
 # reverse index обратен индекс (а не обърнат, за да не се бърка с reverse key index)
@@ -958,7 +958,7 @@ msgid "Cherry-picking is not possible because you have unmerged files."
 msgstr "Отбирането на подавания е блокирано от неслети файлове."
 
 #: advice.c:180
-msgid "Committing is not possible because you have unmerged files."
+msgid "cummitting is not possible because you have unmerged files."
 msgstr "Подаването е блокирано от неслети файлове."
 
 #: advice.c:182
@@ -981,7 +981,7 @@ msgstr "Действието „%s“ е блокирано от неслети 
 #: advice.c:196
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
-"as appropriate to mark resolution and make a commit."
+"as appropriate to mark resolution and make a cummit."
 msgstr ""
 "Редактирайте ги в работното дърво, и тогава ползвайте „git add/rm ФАЙЛ“,\n"
 "за да отбележите коригирането им.  След това извършете подаването."
@@ -995,7 +995,7 @@ msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "Не сте завършили сливане.  (Указателят „MERGE_HEAD“ съществува)."
 
 #: advice.c:211
-msgid "Please, commit your changes before merging."
+msgid "Please, cummit your changes before merging."
 msgstr "Промените трябва да се подадат преди сливане."
 
 #: advice.c:212
@@ -1032,10 +1032,10 @@ msgid ""
 "Note: switching to '%s'.\n"
 "\n"
 "You are in 'detached HEAD' state. You can look around, make experimental\n"
-"changes and commit them, and you can discard any commits you make in this\n"
+"changes and cummit them, and you can discard any cummits you make in this\n"
 "state without impacting any branches by switching back to a branch.\n"
 "\n"
-"If you want to create a new branch to retain commits you create, you may\n"
+"If you want to create a new branch to retain cummits you create, you may\n"
 "do so (now or later) by using -c with the switch command. Example:\n"
 "\n"
 "  git switch -c <new-branch-name>\n"
@@ -1093,8 +1093,8 @@ msgstr "непозната опция за игнориране на знаци�
 #: builtin/add.c:510 builtin/add.c:512 builtin/add.c:529 builtin/add.c:541
 #: builtin/branch.c:727 builtin/checkout.c:467 builtin/checkout.c:470
 #: builtin/checkout.c:1644 builtin/checkout.c:1754 builtin/checkout.c:1757
-#: builtin/clone.c:906 builtin/commit.c:358 builtin/commit.c:361
-#: builtin/commit.c:1196 builtin/describe.c:593 builtin/diff-tree.c:155
+#: builtin/clone.c:906 builtin/cummit.c:358 builtin/cummit.c:361
+#: builtin/cummit.c:1196 builtin/describe.c:593 builtin/diff-tree.c:155
 #: builtin/difftool.c:733 builtin/fast-export.c:1245 builtin/fetch.c:2038
 #: builtin/fetch.c:2043 builtin/index-pack.c:1852 builtin/init-db.c:560
 #: builtin/log.c:1946 builtin/log.c:1948 builtin/ls-files.c:778
@@ -1854,7 +1854,7 @@ msgid "prepend prefix to each pathname in the archive"
 msgstr "добавяне на този ПРЕФИКС към всеки път в архива"
 
 #: archive.c:554 archive.c:557 builtin/blame.c:880 builtin/blame.c:884
-#: builtin/blame.c:885 builtin/commit-tree.c:115 builtin/config.c:135
+#: builtin/blame.c:885 builtin/cummit-tree.c:115 builtin/config.c:135
 #: builtin/fast-export.c:1181 builtin/fast-export.c:1183
 #: builtin/fast-export.c:1187 builtin/grep.c:935 builtin/hash-object.c:103
 #: builtin/ls-files.c:654 builtin/ls-files.c:657 builtin/notes.c:410
@@ -1909,7 +1909,7 @@ msgid "Unexpected option --remote"
 msgstr "Неочаквана опция „--remote“"
 
 #: archive.c:580 fetch-pack.c:300 revision.c:2887 builtin/add.c:544
-#: builtin/add.c:576 builtin/checkout.c:1763 builtin/commit.c:370
+#: builtin/add.c:576 builtin/checkout.c:1763 builtin/cummit.c:370
 #: builtin/fast-export.c:1230 builtin/index-pack.c:1848 builtin/log.c:2115
 #: builtin/reset.c:435 builtin/reset.c:493 builtin/rm.c:281
 #: builtin/stash.c:1719 builtin/worktree.c:508 http-fetch.c:144
@@ -1962,7 +1962,7 @@ msgstr "Повече не може да се търси двоично!\n"
 
 #: bisect.c:764
 #, c-format
-msgid "Not a valid commit name %s"
+msgid "Not a valid cummit name %s"
 msgstr "Неправилно име на подаване „%s“"
 
 #: bisect.c:789
@@ -1987,7 +1987,7 @@ msgstr ""
 #, c-format
 msgid ""
 "The merge base %s is %s.\n"
-"This means the first '%s' commit is between %s and [%s].\n"
+"This means the first '%s' cummit is between %s and [%s].\n"
 msgstr ""
 "Базата за сливане „%s“ е %s.\n"
 "Следователно първото %s подаване е между „%s“ и [%s].\n"
@@ -2007,7 +2007,7 @@ msgstr ""
 #, c-format
 msgid ""
 "the merge base between %s and [%s] must be skipped.\n"
-"So we cannot be sure the first %s commit is between %s and %s.\n"
+"So we cannot be sure the first %s cummit is between %s and %s.\n"
 "We continue anyway."
 msgstr ""
 "базата за сливане между „%s“ и [%s] трябва да бъде прескочена.\n"
@@ -2046,7 +2046,7 @@ msgstr "„%s“ e както „%s“, така и „%s“\n"
 #: bisect.c:1064
 #, c-format
 msgid ""
-"No testable commit found.\n"
+"No testable cummit found.\n"
 "Maybe you started with bad path arguments?\n"
 msgstr ""
 "Липсва подходящо за тестване подаване.\n"
@@ -2074,17 +2074,17 @@ msgid "--contents and --reverse do not blend well."
 msgstr "опциите „--contents“ и „--reverse“ са несъвместими"
 
 #: blame.c:2790
-msgid "cannot use --contents with final commit object name"
+msgid "cannot use --contents with final cummit object name"
 msgstr "опцията „--contents“ е несъвместима с име на обект от крайно подаване"
 
 #: blame.c:2811
-msgid "--reverse and --first-parent together require specified latest commit"
+msgid "--reverse and --first-parent together require specified latest cummit"
 msgstr ""
 "Едновременното задаване на опциите „--reverse“ и „--first-parent“ изисква "
 "указването на крайно подаване"
 
 #: blame.c:2820 bundle.c:224 midx.c:1042 ref-filter.c:2370 remote.c:2158
-#: sequencer.c:2352 sequencer.c:4899 submodule.c:883 builtin/commit.c:1114
+#: sequencer.c:2352 sequencer.c:4899 submodule.c:883 builtin/cummit.c:1114
 #: builtin/log.c:429 builtin/log.c:1036 builtin/log.c:1644 builtin/log.c:2071
 #: builtin/log.c:2362 builtin/merge.c:431 builtin/pack-objects.c:3373
 #: builtin/pack-objects.c:3775 builtin/pack-objects.c:3790
@@ -2265,13 +2265,13 @@ msgid "unrecognized header: %s%s (%d)"
 msgstr "непозната заглавна част: %s%s (%d)"
 
 #: bundle.c:140 rerere.c:464 rerere.c:674 sequencer.c:2620 sequencer.c:3406
-#: builtin/commit.c:862
+#: builtin/cummit.c:862
 #, c-format
 msgid "could not open '%s'"
 msgstr "„%s“ не може да се отвори"
 
 #: bundle.c:198
-msgid "Repository lacks these prerequisite commits:"
+msgid "Repository lacks these prerequisite cummits:"
 msgstr "В хранилището липсват следните необходими подавания:"
 
 #: bundle.c:201
@@ -2366,284 +2366,284 @@ msgstr "ненулев идентификатор за краен откъс %<P
 msgid "invalid color value: %.*s"
 msgstr "неправилна стойност за цвят: %.*s"
 
-#: commit-graph.c:204 midx.c:51
+#: cummit-graph.c:204 midx.c:51
 msgid "invalid hash version"
 msgstr "неправилна версия на контролна сума"
 
-#: commit-graph.c:262
-msgid "commit-graph file is too small"
+#: cummit-graph.c:262
+msgid "cummit-graph file is too small"
 msgstr "файлът за гра̀фа с подаванията е твърде малък"
 
-#: commit-graph.c:355
+#: cummit-graph.c:355
 #, c-format
-msgid "commit-graph signature %X does not match signature %X"
+msgid "cummit-graph signature %X does not match signature %X"
 msgstr "отпечатъкът на гра̀фа с подаванията %X не съвпада с %X"
 
-#: commit-graph.c:362
+#: cummit-graph.c:362
 #, c-format
-msgid "commit-graph version %X does not match version %X"
+msgid "cummit-graph version %X does not match version %X"
 msgstr "версията на гра̀фа с подаванията %X не съвпада с %X"
 
-#: commit-graph.c:369
+#: cummit-graph.c:369
 #, c-format
-msgid "commit-graph hash version %X does not match version %X"
+msgid "cummit-graph hash version %X does not match version %X"
 msgstr "версията на контролната сума на гра̀фа с подаванията %X не съвпада с %X"
 
-#: commit-graph.c:386
+#: cummit-graph.c:386
 #, c-format
-msgid "commit-graph file is too small to hold %u chunks"
+msgid "cummit-graph file is too small to hold %u chunks"
 msgstr "файлът с гра̀фа на подаванията е твърде малък, за да съдържа %u откъси"
 
-#: commit-graph.c:482
-msgid "commit-graph has no base graphs chunk"
+#: cummit-graph.c:482
+msgid "cummit-graph has no base graphs chunk"
 msgstr "базовият откъс липсва в гра̀фа с подаванията"
 
-#: commit-graph.c:492
-msgid "commit-graph chain does not match"
+#: cummit-graph.c:492
+msgid "cummit-graph chain does not match"
 msgstr "веригата на гра̀фа с подаванията не съвпада"
 
-#: commit-graph.c:540
+#: cummit-graph.c:540
 #, c-format
-msgid "invalid commit-graph chain: line '%s' not a hash"
+msgid "invalid cummit-graph chain: line '%s' not a hash"
 msgstr ""
 "грешка във веригата на гра̀фа с подаванията: ред „%s“ не е контролна сума"
 
-#: commit-graph.c:564
-msgid "unable to find all commit-graph files"
+#: cummit-graph.c:564
+msgid "unable to find all cummit-graph files"
 msgstr "някои файлове на гра̀фа с подаванията не може да бъдат открити"
 
-#: commit-graph.c:749 commit-graph.c:786
-msgid "invalid commit position. commit-graph is likely corrupt"
+#: cummit-graph.c:749 cummit-graph.c:786
+msgid "invalid cummit position. cummit-graph is likely corrupt"
 msgstr ""
 "неправилна позиция на подаването.  Вероятно графът с подаванията е повреден"
 
-#: commit-graph.c:770
+#: cummit-graph.c:770
 #, c-format
-msgid "could not find commit %s"
+msgid "could not find cummit %s"
 msgstr "подаването „%s“ не може да бъде открито"
 
-#: commit-graph.c:803
-msgid "commit-graph requires overflow generation data but has none"
+#: cummit-graph.c:803
+msgid "cummit-graph requires overflow generation data but has none"
 msgstr ""
 "графът с подаванията изисква генериране на данни за отместването, но такива "
 "липсват"
 
-#: commit-graph.c:1108 builtin/am.c:1369
+#: cummit-graph.c:1108 builtin/am.c:1369
 #, c-format
-msgid "unable to parse commit %s"
+msgid "unable to parse cummit %s"
 msgstr "подаването не може да бъде анализирано: %s"
 
-#: commit-graph.c:1370 builtin/pack-objects.c:3070
+#: cummit-graph.c:1370 builtin/pack-objects.c:3070
 #, c-format
 msgid "unable to get type of object %s"
 msgstr "видът на обекта „%s“ не може да бъде определен"
 
-#: commit-graph.c:1401
-msgid "Loading known commits in commit graph"
+#: cummit-graph.c:1401
+msgid "Loading known cummits in cummit graph"
 msgstr "Зареждане на познатите подавания в гра̀фа с подаванията"
 
-#: commit-graph.c:1418
-msgid "Expanding reachable commits in commit graph"
+#: cummit-graph.c:1418
+msgid "Expanding reachable cummits in cummit graph"
 msgstr "Разширяване на достижимите подавания в гра̀фа"
 
-#: commit-graph.c:1438
-msgid "Clearing commit marks in commit graph"
+#: cummit-graph.c:1438
+msgid "Clearing cummit marks in cummit graph"
 msgstr "Изчистване на отбелязванията на подаванията в гра̀фа с подаванията"
 
-#: commit-graph.c:1457
-msgid "Computing commit graph topological levels"
+#: cummit-graph.c:1457
+msgid "Computing cummit graph topological levels"
 msgstr "Изчисляване на топологичните нива в гра̀фа с подаванията"
 
-#: commit-graph.c:1510
-msgid "Computing commit graph generation numbers"
+#: cummit-graph.c:1510
+msgid "Computing cummit graph generation numbers"
 msgstr "Изчисляване на номерата на поколенията в гра̀фа с подаванията"
 
-#: commit-graph.c:1591
-msgid "Computing commit changed paths Bloom filters"
+#: cummit-graph.c:1591
+msgid "Computing cummit changed paths Bloom filters"
 msgstr "Изчисляване на филтрите на Блум на пътищата с промяна при подаването"
 
-#: commit-graph.c:1668
-msgid "Collecting referenced commits"
+#: cummit-graph.c:1668
+msgid "Collecting referenced cummits"
 msgstr "Събиране на свързаните подавания"
 
-#: commit-graph.c:1693
+#: cummit-graph.c:1693
 #, c-format
-msgid "Finding commits for commit graph in %d pack"
-msgid_plural "Finding commits for commit graph in %d packs"
+msgid "Finding cummits for cummit graph in %d pack"
+msgid_plural "Finding cummits for cummit graph in %d packs"
 msgstr[0] "Откриване на подаванията в гра̀фа в %d пакетен файл"
 msgstr[1] "Откриване на подаванията в гра̀фа в %d пакетни файла"
 
-#: commit-graph.c:1706
+#: cummit-graph.c:1706
 #, c-format
 msgid "error adding pack %s"
 msgstr "грешка при добавяне на пакетен файл „%s“"
 
-#: commit-graph.c:1710
+#: cummit-graph.c:1710
 #, c-format
 msgid "error opening index for %s"
 msgstr "грешка при отваряне на индекса на „%s“"
 
-#: commit-graph.c:1747
-msgid "Finding commits for commit graph among packed objects"
+#: cummit-graph.c:1747
+msgid "Finding cummits for cummit graph among packed objects"
 msgstr "Откриване на подаванията в гра̀фа измежду пакетираните обекти"
 
-#: commit-graph.c:1765
-msgid "Finding extra edges in commit graph"
+#: cummit-graph.c:1765
+msgid "Finding extra edges in cummit graph"
 msgstr "Откриване на още върхове в гра̀фа с подаванията"
 
-#: commit-graph.c:1814
+#: cummit-graph.c:1814
 msgid "failed to write correct number of base graph ids"
 msgstr "правилният брой на базовите идентификатори не може да се запише"
 
-#: commit-graph.c:1845 midx.c:1149
+#: cummit-graph.c:1845 midx.c:1149
 #, c-format
 msgid "unable to create leading directories of %s"
 msgstr "родителските директории на „%s“ не може да бъдат създадени"
 
-#: commit-graph.c:1858
+#: cummit-graph.c:1858
 msgid "unable to create temporary graph layer"
 msgstr "не може да бъде създаден временен слой за гра̀фа с подаванията"
 
-#: commit-graph.c:1863
+#: cummit-graph.c:1863
 #, c-format
 msgid "unable to adjust shared permissions for '%s'"
 msgstr "правата за споделен достъп до „%s“ не може да бъдат зададени"
 
-#: commit-graph.c:1920
+#: cummit-graph.c:1920
 #, c-format
-msgid "Writing out commit graph in %d pass"
-msgid_plural "Writing out commit graph in %d passes"
+msgid "Writing out cummit graph in %d pass"
+msgid_plural "Writing out cummit graph in %d passes"
 msgstr[0] "Запазване на гра̀фа с подаванията в %d пас"
 msgstr[1] "Запазване на гра̀фа с подаванията в %d паса"
 
-#: commit-graph.c:1956
-msgid "unable to open commit-graph chain file"
+#: cummit-graph.c:1956
+msgid "unable to open cummit-graph chain file"
 msgstr "файлът с веригата на гра̀фа с подаванията не може да се отвори"
 
-#: commit-graph.c:1972
-msgid "failed to rename base commit-graph file"
+#: cummit-graph.c:1972
+msgid "failed to rename base cummit-graph file"
 msgstr "основният файл на гра̀фа с подаванията не може да бъде преименуван"
 
-#: commit-graph.c:1992
-msgid "failed to rename temporary commit-graph file"
+#: cummit-graph.c:1992
+msgid "failed to rename temporary cummit-graph file"
 msgstr "временният файл на гра̀фа с подаванията не може да бъде преименуван"
 
-#: commit-graph.c:2125
-msgid "Scanning merged commits"
+#: cummit-graph.c:2125
+msgid "Scanning merged cummits"
 msgstr "Търсене на подаванията със сливания"
 
-#: commit-graph.c:2169
-msgid "Merging commit-graph"
+#: cummit-graph.c:2169
+msgid "Merging cummit-graph"
 msgstr "Сливане на гра̀фа с подаванията"
 
-#: commit-graph.c:2277
-msgid "attempting to write a commit-graph, but 'core.commitGraph' is disabled"
+#: cummit-graph.c:2277
+msgid "attempting to write a cummit-graph, but 'core.cummitGraph' is disabled"
 msgstr ""
-"опит за запис на гра̀фа с подаванията, но настройката „core.commitGraph“ е "
+"опит за запис на гра̀фа с подаванията, но настройката „core.cummitGraph“ е "
 "изключена"
 
-#: commit-graph.c:2384
-msgid "too many commits to write graph"
+#: cummit-graph.c:2384
+msgid "too many cummits to write graph"
 msgstr "прекалено много подавания за записване на гра̀фа"
 
-#: commit-graph.c:2482
-msgid "the commit-graph file has incorrect checksum and is likely corrupt"
+#: cummit-graph.c:2482
+msgid "the cummit-graph file has incorrect checksum and is likely corrupt"
 msgstr "графът с подаванията е с грешна сума за проверка — вероятно е повреден"
 
-#: commit-graph.c:2492
+#: cummit-graph.c:2492
 #, c-format
-msgid "commit-graph has incorrect OID order: %s then %s"
+msgid "cummit-graph has incorrect OID order: %s then %s"
 msgstr ""
 "неправилна подредба на обектите по идентификатор в гра̀фа с подаванията: „%s“ "
 "е преди „%s“, а не трябва"
 
-#: commit-graph.c:2502 commit-graph.c:2517
+#: cummit-graph.c:2502 cummit-graph.c:2517
 #, c-format
-msgid "commit-graph has incorrect fanout value: fanout[%d] = %u != %u"
+msgid "cummit-graph has incorrect fanout value: fanout[%d] = %u != %u"
 msgstr ""
 "неправилна стойност за откъс в гра̀фа с подаванията: fanout[%d] = %u, а "
 "трябва да е %u"
 
-#: commit-graph.c:2509
+#: cummit-graph.c:2509
 #, c-format
-msgid "failed to parse commit %s from commit-graph"
+msgid "failed to parse cummit %s from cummit-graph"
 msgstr "подаване „%s“ в гра̀фа с подаванията не може да се анализира"
 
-#: commit-graph.c:2527
-msgid "Verifying commits in commit graph"
+#: cummit-graph.c:2527
+msgid "Verifying cummits in cummit graph"
 msgstr "Проверка на подаванията в гра̀фа"
 
-#: commit-graph.c:2542
+#: cummit-graph.c:2542
 #, c-format
-msgid "failed to parse commit %s from object database for commit-graph"
+msgid "failed to parse cummit %s from object database for cummit-graph"
 msgstr ""
 "подаване „%s“ в базата от данни към гра̀фа с подаванията не може да се "
 "анализира"
 
-#: commit-graph.c:2549
+#: cummit-graph.c:2549
 #, c-format
-msgid "root tree OID for commit %s in commit-graph is %s != %s"
+msgid "root tree OID for cummit %s in cummit-graph is %s != %s"
 msgstr ""
 "идентификаторът на обект за кореновото дърво за подаване „%s“ в гра̀фа с "
 "подаванията е „%s“, а трябва да е „%s“"
 
-#: commit-graph.c:2559
+#: cummit-graph.c:2559
 #, c-format
-msgid "commit-graph parent list for commit %s is too long"
+msgid "cummit-graph parent list for cummit %s is too long"
 msgstr "списъкът с родители на „%s“ в гра̀фа с подаванията е прекалено дълъг"
 
-#: commit-graph.c:2568
+#: cummit-graph.c:2568
 #, c-format
-msgid "commit-graph parent for %s is %s != %s"
+msgid "cummit-graph parent for %s is %s != %s"
 msgstr "родителят на „%s“ в гра̀фа с подаванията е „%s“, а трябва да е „%s“"
 
-#: commit-graph.c:2582
+#: cummit-graph.c:2582
 #, c-format
-msgid "commit-graph parent list for commit %s terminates early"
+msgid "cummit-graph parent list for cummit %s terminates early"
 msgstr "списъкът с родители на „%s“ в гра̀фа с подаванията е прекалено къс"
 
-#: commit-graph.c:2587
+#: cummit-graph.c:2587
 #, c-format
 msgid ""
-"commit-graph has generation number zero for commit %s, but non-zero elsewhere"
+"cummit-graph has generation number zero for cummit %s, but non-zero elsewhere"
 msgstr ""
 "номерът на поколението на подаване „%s“ в гра̀фа с подаванията е 0, а другаде "
 "не е"
 
-#: commit-graph.c:2591
+#: cummit-graph.c:2591
 #, c-format
 msgid ""
-"commit-graph has non-zero generation number for commit %s, but zero elsewhere"
+"cummit-graph has non-zero generation number for cummit %s, but zero elsewhere"
 msgstr ""
 "номерът на поколението на подаване „%s“ в гра̀фа с подаванията не е 0, а "
 "другаде е"
 
-#: commit-graph.c:2608
+#: cummit-graph.c:2608
 #, c-format
-msgid "commit-graph generation for commit %s is %<PRIuMAX> < %<PRIuMAX>"
+msgid "cummit-graph generation for cummit %s is %<PRIuMAX> < %<PRIuMAX>"
 msgstr ""
 "номерът на поколението на подаване „%s“ в гра̀фа с подаванията е %<PRIuMAX> < "
 "%<PRIuMAX>"
 
-#: commit-graph.c:2614
+#: cummit-graph.c:2614
 #, c-format
-msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
+msgid "cummit date for cummit %s in cummit-graph is %<PRIuMAX> != %<PRIuMAX>"
 msgstr ""
 "датата на подаване на „%s“ в гра̀фа с подаванията е %<PRIuMAX>, а трябва да е "
 "%<PRIuMAX>"
 
-#: commit.c:53 sequencer.c:3109 builtin/am.c:399 builtin/am.c:444
+#: cummit.c:53 sequencer.c:3109 builtin/am.c:399 builtin/am.c:444
 #: builtin/am.c:449 builtin/am.c:1448 builtin/am.c:2123 builtin/replace.c:456
 #, c-format
 msgid "could not parse %s"
 msgstr "„%s“ не може да се анализира"
 
-#: commit.c:55
+#: cummit.c:55
 #, c-format
-msgid "%s %s is not a commit!"
+msgid "%s %s is not a cummit!"
 msgstr "%s %s не е подаване!"
 
-#: commit.c:196
+#: cummit.c:196
 msgid ""
 "Support for <GIT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
@@ -2666,37 +2666,37 @@ msgstr ""
 "\n"
 "    git config advice.graftFileDeprecated false"
 
-#: commit.c:1241
+#: cummit.c:1241
 #, c-format
-msgid "Commit %s has an untrusted GPG signature, allegedly by %s."
+msgid "cummit %s has an untrusted GPG signature, allegedly by %s."
 msgstr ""
 "Подаването „%s“ е с недоверен подпис от GPG, който твърди, че е на „%s“."
 
-#: commit.c:1245
+#: cummit.c:1245
 #, c-format
-msgid "Commit %s has a bad GPG signature allegedly by %s."
+msgid "cummit %s has a bad GPG signature allegedly by %s."
 msgstr ""
 "Подаването „%s“ е с неправилен подпис от GPG, който твърди, че е на „%s“."
 
-#: commit.c:1248
+#: cummit.c:1248
 #, c-format
-msgid "Commit %s does not have a GPG signature."
+msgid "cummit %s does not have a GPG signature."
 msgstr "Подаването „%s“ е без подпис от GPG."
 
-#: commit.c:1251
+#: cummit.c:1251
 #, c-format
-msgid "Commit %s has a good GPG signature by %s\n"
+msgid "cummit %s has a good GPG signature by %s\n"
 msgstr "Подаването „%s“ е с коректен подпис от GPG на „%s“.\n"
 
-#: commit.c:1505
+#: cummit.c:1505
 msgid ""
-"Warning: commit message did not conform to UTF-8.\n"
+"Warning: cummit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
-"variable i18n.commitencoding to the encoding your project uses.\n"
+"variable i18n.cummitencoding to the encoding your project uses.\n"
 msgstr ""
 "ПРЕДУПРЕЖДЕНИЕ: съобщението при подаване не е кодирано с UTF-8.\n"
 "Може да поправите подаването заедно със съобщението или може да\n"
-"зададете ползваното кодиране в настройката „i18n.commitencoding“.\n"
+"зададете ползваното кодиране в настройката „i18n.cummitencoding“.\n"
 
 #: compat/obstack.c:406 compat/obstack.c:408
 msgid "memory exhausted"
@@ -3518,7 +3518,7 @@ msgid "--merge-base does not work with ranges"
 msgstr "опцията „--merge-base“ не работи с диапазони"
 
 #: diff-lib.c:563
-msgid "--merge-base only works with commits"
+msgid "--merge-base only works with cummits"
 msgstr "опцията „--merge-base“ работи само с подавания"
 
 #: diff-lib.c:580
@@ -4360,7 +4360,7 @@ msgstr "получено бе %s %d %s"
 
 #: fetch-pack.c:468
 #, c-format
-msgid "invalid commit %s"
+msgid "invalid cummit %s"
 msgstr "неправилно подаване: „%s“"
 
 #: fetch-pack.c:499
@@ -4446,7 +4446,7 @@ msgid "Server does not support this repository's object format"
 msgstr "Сървърът не поддържа форма̀та на обектите на това хранилище"
 
 #: fetch-pack.c:1129
-msgid "no common commits"
+msgid "no common cummits"
 msgstr "няма общи подавания"
 
 #: fetch-pack.c:1138 fetch-pack.c:1485 builtin/clone.c:1130
@@ -4864,7 +4864,7 @@ msgid "Author identity unknown\n"
 msgstr "Липсва информация за автора\n"
 
 #: ident.c:356
-msgid "Committer identity unknown\n"
+msgid "cummitter identity unknown\n"
 msgstr "Липсва информация за подалия\n"
 
 #: ident.c:362
@@ -4924,7 +4924,7 @@ msgstr "не може да се ползва празно име като иде
 msgid "name consists only of disallowed characters: %s"
 msgstr "името съдържа само непозволени знаци: „%s“"
 
-#: ident.c:454 builtin/commit.c:648
+#: ident.c:454 builtin/cummit.c:648
 #, c-format
 msgid "invalid date format: %s"
 msgstr "неправилен формат на дата: %s"
@@ -4989,7 +4989,7 @@ msgstr "обект „%s“ в дървото „%s“ е отбелязан к�
 
 #: list-objects.c:398
 #, c-format
-msgid "unable to load root tree for commit %s"
+msgid "unable to load root tree for cummit %s"
 msgstr "кореновото дърво за подаване „%s“ не може да се зареди"
 
 #: lockfile.c:152
@@ -4998,7 +4998,7 @@ msgid ""
 "Unable to create '%s.lock': %s.\n"
 "\n"
 "Another git process seems to be running in this repository, e.g.\n"
-"an editor opened by 'git commit'. Please make sure all processes\n"
+"an editor opened by 'git cummit'. Please make sure all processes\n"
 "are terminated then try again. If it still fails, a git process\n"
 "may have crashed in this repository earlier:\n"
 "remove the file manually to continue."
@@ -5006,7 +5006,7 @@ msgstr ""
 "Файлът-ключалка „%s.lock“ не може да бъде създаден: %s\n"
 "\n"
 "Изглежда, че и друг процес на git е пуснат в това хранилище, напр.\n"
-"редактор, стартиран с „git commit“.  Уверете се, че всички подобни\n"
+"редактор, стартиран с „git cummit“.  Уверете се, че всички подобни\n"
 "процеси са спрени и опитайте отново.  Ако това не помогне, вероятната\n"
 "причина е, че някой процес на git в това хранилище е забил.  За да\n"
 "продължите работа, ще трябва ръчно да изтриете файла:"
@@ -5046,12 +5046,12 @@ msgstr "Неуспешно сливане на подмодула „%s“ (не
 
 #: merge-ort.c:1593 merge-recursive.c:1218
 #, c-format
-msgid "Failed to merge submodule %s (commits not present)"
+msgid "Failed to merge submodule %s (cummits not present)"
 msgstr "Неуспешно сливане на подмодула „%s“ (няма подавания)"
 
 #: merge-ort.c:1602 merge-recursive.c:1225
 #, c-format
-msgid "Failed to merge submodule %s (commits don't follow merge-base)"
+msgid "Failed to merge submodule %s (cummits don't follow merge-base)"
 msgstr ""
 "Подмодулът „%s“ не може да бъде слят (базата за сливане не предшества "
 "подаванията)"
@@ -5308,7 +5308,7 @@ msgid "Already up to date."
 msgstr "Вече е обновено."
 
 #: merge-recursive.c:353
-msgid "(bad commit)\n"
+msgid "(bad cummit)\n"
 msgstr "(лошо подаване)\n"
 
 #: merge-recursive.c:381
@@ -5373,7 +5373,7 @@ msgstr ""
 
 #: merge-recursive.c:1233 merge-recursive.c:1246
 #, c-format
-msgid "Fast-forwarding submodule %s to the following commit:"
+msgid "Fast-forwarding submodule %s to the following cummit:"
 msgstr "Превъртане на подмодула „%s“ до следното подаване:"
 
 #: merge-recursive.c:1236 merge-recursive.c:1249
@@ -5383,7 +5383,7 @@ msgstr "Превъртане на подмодула „%s“"
 
 #: merge-recursive.c:1273
 #, c-format
-msgid "Failed to merge submodule %s (merge following commits not found)"
+msgid "Failed to merge submodule %s (merge following cummits not found)"
 msgstr ""
 "Неуспешно сливане на подмодула „%s“ (липсва сливането, което се предшества "
 "от подаванията)"
@@ -5588,7 +5588,7 @@ msgstr[0] "открит е %u общ предшественик:"
 msgstr[1] "открити са %u общи предшественици:"
 
 #: merge-recursive.c:3648
-msgid "merge returned no commit"
+msgid "merge returned no cummit"
 msgstr "сливането не върна подаване"
 
 #: merge-recursive.c:3816
@@ -5856,14 +5856,14 @@ msgstr "не може да се изчака нишка за имена (lazy_na
 #, c-format
 msgid ""
 "You have not concluded your previous notes merge (%s exists).\n"
-"Please, use 'git notes merge --commit' or 'git notes merge --abort' to "
-"commit/abort the previous merge before you start a new notes merge."
+"Please, use 'git notes merge --cummit' or 'git notes merge --abort' to "
+"cummit/abort the previous merge before you start a new notes merge."
 msgstr ""
 "Не сте завършили предишното сливане на бележки.  (Указателят „%s“ "
 "съществува).\n"
 "За да завършите предишното сливане, изпълнете:\n"
 "\n"
-"    git notes merge --commit\n"
+"    git notes merge --cummit\n"
 "\n"
 "За да отмените предишното сливане, изпълнете:\n"
 "\n"
@@ -5876,7 +5876,7 @@ msgstr ""
 "Не сте завършили сливането на бележките.  (Указателят „%s“ съществува)."
 
 #: notes-utils.c:46
-msgid "Cannot commit uninitialized/unreferenced notes tree"
+msgid "Cannot cummit uninitialized/unreferenced notes tree"
 msgstr ""
 "Неинициализирано или нереферирано дърво за бележки не може да бъде подадено"
 
@@ -6094,7 +6094,7 @@ msgid "cannot read object for %s"
 msgstr "обектът за „%s“ не може да се прочете"
 
 #: object-file.c:2105
-msgid "corrupt commit"
+msgid "corrupt cummit"
 msgstr "повредено подаване"
 
 #: object-file.c:2113
@@ -6380,7 +6380,7 @@ msgstr ""
 "отместване преди края на индекса на пакетния файл „%s“ (възможно е индексът "
 "да е отрязан)"
 
-#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/commit-graph.c:175
+#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/cummit-graph.c:175
 #, c-format
 msgid "option `%s' expects a numerical value"
 msgstr "опцията „%s“ очаква число за аргумент"
@@ -6712,17 +6712,17 @@ msgstr ""
 
 #: range-diff.c:97 sequencer.c:5602
 #, c-format
-msgid "could not parse commit '%s'"
+msgid "could not parse cummit '%s'"
 msgstr "подаването „%s“ не може да бъде анализирано"
 
 #: range-diff.c:111
 #, c-format
 msgid ""
-"could not parse first line of `log` output: did not start with 'commit ': "
+"could not parse first line of `log` output: did not start with 'cummit ': "
 "'%s'"
 msgstr ""
 "първият ред от изхода на командата „log“ не може да се анализира, защото не "
-"започва с „commit “: „%s“"
+"започва с „cummit “: „%s“"
 
 #: range-diff.c:137
 #, c-format
@@ -6757,7 +6757,7 @@ msgstr ""
 
 #: read-cache.c:766 builtin/submodule--helper.c:3242
 #, c-format
-msgid "'%s' does not have a commit checked out"
+msgid "'%s' does not have a cummit checked out"
 msgstr "не е изтеглено подаване в „%s“"
 
 #: read-cache.c:818
@@ -6855,7 +6855,7 @@ msgstr "неподредени записи за „%s“"
 #: read-cache.c:2078 read-cache.c:2384 rerere.c:549 rerere.c:583 rerere.c:1095
 #: submodule.c:1662 builtin/add.c:600 builtin/check-ignore.c:183
 #: builtin/checkout.c:527 builtin/checkout.c:719 builtin/clean.c:1013
-#: builtin/commit.c:378 builtin/diff-tree.c:122 builtin/grep.c:519
+#: builtin/cummit.c:378 builtin/diff-tree.c:122 builtin/grep.c:519
 #: builtin/mv.c:148 builtin/reset.c:499 builtin/rm.c:293
 #: builtin/submodule--helper.c:327 builtin/submodule--helper.c:3202
 msgid "index file corrupt"
@@ -6966,32 +6966,32 @@ msgstr ""
 #: rebase-interactive.c:33
 #, c-format
 msgid ""
-"unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
+"unrecognized setting %s for option rebase.missingcummitsCheck. Ignoring."
 msgstr ""
-"Непозната стойност „%s“ за настройката „rebase.missingCommitsCheck“.  "
+"Непозната стойност „%s“ за настройката „rebase.missingcummitsCheck“.  "
 "Настройката се прескача."
 
 #: rebase-interactive.c:42
 msgid ""
 "\n"
 "Commands:\n"
-"p, pick <commit> = use commit\n"
-"r, reword <commit> = use commit, but edit the commit message\n"
-"e, edit <commit> = use commit, but stop for amending\n"
-"s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup [-C | -c] <commit> = like \"squash\" but keep only the previous\n"
-"                   commit's log message, unless -C is used, in which case\n"
-"                   keep only this commit's message; -c is same as -C but\n"
+"p, pick <cummit> = use cummit\n"
+"r, reword <cummit> = use cummit, but edit the cummit message\n"
+"e, edit <cummit> = use cummit, but stop for amending\n"
+"s, squash <cummit> = use cummit, but meld into previous cummit\n"
+"f, fixup [-C | -c] <cummit> = like \"squash\" but keep only the previous\n"
+"                   cummit's log message, unless -C is used, in which case\n"
+"                   keep only this cummit's message; -c is same as -C but\n"
 "                   opens the editor\n"
 "x, exec <command> = run command (the rest of the line) using shell\n"
 "b, break = stop here (continue rebase later with 'git rebase --continue')\n"
-"d, drop <commit> = remove commit\n"
+"d, drop <cummit> = remove cummit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified); use -c <commit> to reword the commit message\n"
+"m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+".       create a merge cummit using the original merge cummit's\n"
+".       message (or the oneline, if no original merge cummit was\n"
+".       specified); use -c <cummit> to reword the cummit message\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
@@ -7033,7 +7033,7 @@ msgstr[1] "Пребазиране на „%s“ върху „%s“ (%d кома
 #: rebase-interactive.c:75
 msgid ""
 "\n"
-"Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
+"Do not remove any line. Use 'drop' explicitly to remove a cummit.\n"
 msgstr ""
 "\n"
 "Не изтривайте редове.  Подаванията може да се прескачат с командата „drop“.\n"
@@ -7041,7 +7041,7 @@ msgstr ""
 #: rebase-interactive.c:78
 msgid ""
 "\n"
-"If you remove a line here THAT COMMIT WILL BE LOST.\n"
+"If you remove a line here THAT cummit WILL BE LOST.\n"
 msgstr ""
 "\n"
 "Ако изтриете ред, съответстващото му подаване ще бъде ИЗТРИТО.\n"
@@ -7086,8 +7086,8 @@ msgstr "„%s“ не може да се запише."
 #: rebase-interactive.c:196
 #, c-format
 msgid ""
-"Warning: some commits may have been dropped accidentally.\n"
-"Dropped commits (newer to older):\n"
+"Warning: some cummits may have been dropped accidentally.\n"
+"Dropped cummits (newer to older):\n"
 msgstr ""
 "Предупреждение: някои подавания може да са пропуснати.\n"
 "Пропуснати подавания (новите са най-отгоре):\n"
@@ -7095,16 +7095,16 @@ msgstr ""
 #: rebase-interactive.c:203
 #, c-format
 msgid ""
-"To avoid this message, use \"drop\" to explicitly remove a commit.\n"
+"To avoid this message, use \"drop\" to explicitly remove a cummit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
+"Use 'git config rebase.missingcummitsCheck' to change the level of "
 "warnings.\n"
 "The possible behaviours are: ignore, warn, error.\n"
 "\n"
 msgstr ""
 "За да не получавате това съобщение, изрично ползвайте командата „drop“.\n"
 "\n"
-"Настройката „rebase.missingCommitsCheck“ управлява нивото на предупреждение\n"
+"Настройката „rebase.missingcummitsCheck“ управлява нивото на предупреждение\n"
 "Възможните стойности са „ignore“ (пренебрегване), „warn“ (само "
 "предупреждение)\n"
 "или „error“ (считане за грешка).\n"
@@ -7347,7 +7347,7 @@ msgstr "неправилно име на обект „%s“"
 
 #: ref-filter.c:2745
 #, c-format
-msgid "option `%s' must point to a commit"
+msgid "option `%s' must point to a cummit"
 msgstr "опцията „%s“ не сочи към подаване"
 
 #: refs.c:261
@@ -7544,7 +7544,7 @@ msgstr ""
 #: remote.c:1232
 #, c-format
 msgid ""
-"The <src> part of the refspec is a commit object.\n"
+"The <src> part of the refspec is a cummit object.\n"
 "Did you mean to create a new branch by pushing to\n"
 "'%s:refs/heads/%s'?"
 msgstr ""
@@ -7675,7 +7675,7 @@ msgstr "Клонът е обновен към „%s“.\n"
 
 #: remote.c:2247
 #, c-format
-msgid "Your branch and '%s' refer to different commits.\n"
+msgid "Your branch and '%s' refer to different cummits.\n"
 msgstr "Клонът ви и „%s“ сочат към различни подавания.\n"
 
 #: remote.c:2250
@@ -7685,20 +7685,20 @@ msgstr "  (за повече информация ползвайте „%s“)\n
 
 #: remote.c:2254
 #, c-format
-msgid "Your branch is ahead of '%s' by %d commit.\n"
-msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
+msgid "Your branch is ahead of '%s' by %d cummit.\n"
+msgid_plural "Your branch is ahead of '%s' by %d cummits.\n"
 msgstr[0] "Клонът ви е с %2$d подаване пред „%1$s“.\n"
 msgstr[1] "Клонът ви е с %2$d подавания пред „%1$s“.\n"
 
 #: remote.c:2260
-msgid "  (use \"git push\" to publish your local commits)\n"
+msgid "  (use \"git push\" to publish your local cummits)\n"
 msgstr "  (публикувайте локалните си промени чрез „git push“)\n"
 
 #: remote.c:2263
 #, c-format
-msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
+msgid "Your branch is behind '%s' by %d cummit, and can be fast-forwarded.\n"
 msgid_plural ""
-"Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
+"Your branch is behind '%s' by %d cummits, and can be fast-forwarded.\n"
 msgstr[0] "Клонът ви е с %2$d подаване зад „%1$s“ и може да бъде превъртян.\n"
 msgstr[1] "Клонът ви е с %2$d подавания зад „%1$s“ и може да бъде превъртян.\n"
 
@@ -7710,10 +7710,10 @@ msgstr "  (обновете локалния си клон чрез „git pull�
 #, c-format
 msgid ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commit each, respectively.\n"
+"and have %d and %d different cummit each, respectively.\n"
 msgid_plural ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commits each, respectively.\n"
+"and have %d and %d different cummits each, respectively.\n"
 msgstr[0] ""
 "Текущият клон се е отделил от „%s“,\n"
 "двата имат съответно по %d и %d несъвпадащи подавания.\n"
@@ -7860,7 +7860,7 @@ msgstr "Текущият клон е повреден"
 
 #: revision.c:2689
 #, c-format
-msgid "your current branch '%s' does not have any commits yet"
+msgid "your current branch '%s' does not have any cummits yet"
 msgstr "Текущият клон „%s“ е без подавания "
 
 #: revision.c:2891
@@ -7930,7 +7930,7 @@ msgstr "отсрещната страна не поддържа опции пр�
 
 #: sequencer.c:197
 #, c-format
-msgid "invalid commit message cleanup mode '%s'"
+msgid "invalid cummit message cleanup mode '%s'"
 msgstr "несъществуващ режим на изчистване „%s“ на съобщение при подаване"
 
 #: sequencer.c:325
@@ -7979,7 +7979,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git cherry-pick --continue\".\n"
-"You can instead skip this commit with \"git cherry-pick --skip\".\n"
+"You can instead skip this cummit with \"git cherry-pick --skip\".\n"
 "To abort and get back to the state before \"git cherry-pick\",\n"
 "run \"git cherry-pick --abort\"."
 msgstr ""
@@ -8005,7 +8005,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git revert --continue\".\n"
-"You can instead skip this commit with \"git revert --skip\".\n"
+"You can instead skip this cummit with \"git revert --skip\".\n"
 "To abort and get back to the state before \"git revert\",\n"
 "run \"git revert --abort\"."
 msgstr ""
@@ -8049,7 +8049,7 @@ msgid "failed to finalize '%s'"
 msgstr "„%s“ не може да се завърши"
 
 #: sequencer.c:473 sequencer.c:1934 sequencer.c:3116 sequencer.c:3551
-#: sequencer.c:3679 builtin/am.c:289 builtin/commit.c:834 builtin/merge.c:1148
+#: sequencer.c:3679 builtin/am.c:289 builtin/cummit.c:834 builtin/merge.c:1148
 #, c-format
 msgid "could not read '%s'"
 msgstr "файлът „%s“ не може да бъде прочетен"
@@ -8060,7 +8060,7 @@ msgid "your local changes would be overwritten by %s."
 msgstr "локалните ви промени ще бъдат презаписани при %s."
 
 #: sequencer.c:503
-msgid "commit your changes or stash them to proceed."
+msgid "cummit your changes or stash them to proceed."
 msgstr "подайте или скатайте промените, за да продължите"
 
 #: sequencer.c:535
@@ -8086,7 +8086,7 @@ msgid "unable to update cache tree"
 msgstr "дървото на кеша не може да бъде обновено"
 
 #: sequencer.c:713
-msgid "could not resolve HEAD commit"
+msgid "could not resolve HEAD cummit"
 msgstr "подаването, сочено от указателя „HEAD“, не може да бъде открито"
 
 #: sequencer.c:793
@@ -8138,13 +8138,13 @@ msgstr "настройката за дата „GIT_AUTHOR_DATE“ липсва"
 #, c-format
 msgid ""
 "you have staged changes in your working tree\n"
-"If these changes are meant to be squashed into the previous commit, run:\n"
+"If these changes are meant to be squashed into the previous cummit, run:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
-"If they are meant to go into a new commit, run:\n"
+"If they are meant to go into a new cummit, run:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
@@ -8153,21 +8153,21 @@ msgstr ""
 "в това работно дърво има скатани промени.\n"
 "Ако искате да ги вкарате в предишното подаване, изпълнете:\n"
 "\n"
-"    git commit --amend %s\n"
+"    git cummit --amend %s\n"
 "\n"
 "Ако искате да създадете ново подаване, изпълнете:\n"
 "\n"
-"    git commit %s\n"
+"    git cummit %s\n"
 "\n"
 "И в двата случая продължавате след това с командата:\n"
 "\n"
 "    git rebase --continue\n"
 
 #: sequencer.c:1225
-msgid "'prepare-commit-msg' hook failed"
+msgid "'prepare-cummit-msg' hook failed"
 msgstr ""
 "неуспешно изпълнение на куката при промяна на съобщението при подаване "
-"(prepare-commit-msg)"
+"(prepare-cummit-msg)"
 
 #: sequencer.c:1231
 msgid ""
@@ -8179,9 +8179,9 @@ msgid ""
 "\n"
 "    git config --global --edit\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Името и адресът за е-поща са настроени автоматично на базата на името на\n"
 "потребителя и името на машината.  Проверете дали са верни.  Може да спрете\n"
@@ -8195,7 +8195,7 @@ msgstr ""
 "След като направите това, може да коригирате информацията за автора на\n"
 "текущото подаване чрез:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1244
 msgid ""
@@ -8206,9 +8206,9 @@ msgid ""
 "    git config --global user.name \"Your Name\"\n"
 "    git config --global user.email you@example.com\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Името и адресът за е-поща са настроени автоматично на базата на името на\n"
 "потребителя и името на машината.  Проверете дали са верни.  Може да спрете\n"
@@ -8220,18 +8220,18 @@ msgstr ""
 "След като направите това, може да коригирате информацията за автора на\n"
 "текущото подаване чрез:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1288
-msgid "couldn't look up newly created commit"
+msgid "couldn't look up newly created cummit"
 msgstr "току що създаденото подаване не може да бъде открито"
 
 #: sequencer.c:1290
-msgid "could not parse newly created commit"
+msgid "could not parse newly created cummit"
 msgstr "току що създаденото подаване не може да бъде анализирано"
 
 #: sequencer.c:1339
-msgid "unable to resolve HEAD after creating commit"
+msgid "unable to resolve HEAD after creating cummit"
 msgstr ""
 "състоянието сочено от указателя „HEAD“ не може да бъде открито след "
 "подаването"
@@ -8241,7 +8241,7 @@ msgid "detached HEAD"
 msgstr "несвързан връх „HEAD“"
 
 #: sequencer.c:1346
-msgid " (root-commit)"
+msgid " (root-cummit)"
 msgstr " (начално подаване)"
 
 #: sequencer.c:1367
@@ -8250,15 +8250,15 @@ msgstr "указателят „HEAD“ не може да бъде анализ
 
 #: sequencer.c:1369
 #, c-format
-msgid "HEAD %s is not a commit!"
+msgid "HEAD %s is not a cummit!"
 msgstr "указателят „HEAD“ „%s“ сочи към нещо, което не е подаване!"
 
-#: sequencer.c:1373 sequencer.c:1451 builtin/commit.c:1708
-msgid "could not parse HEAD commit"
+#: sequencer.c:1373 sequencer.c:1451 builtin/cummit.c:1708
+msgid "could not parse HEAD cummit"
 msgstr "върховото подаване „HEAD“ не може да бъде прочетено"
 
 #: sequencer.c:1429 sequencer.c:2314
-msgid "unable to parse commit author"
+msgid "unable to parse cummit author"
 msgstr "авторът на подаването не може да бъде анализиран"
 
 #: sequencer.c:1440 builtin/am.c:1643 builtin/merge.c:710
@@ -8267,7 +8267,7 @@ msgstr "Командата „git write-tree“ не успя да запише 
 
 #: sequencer.c:1473 sequencer.c:1593
 #, c-format
-msgid "unable to read commit message from '%s'"
+msgid "unable to read cummit message from '%s'"
 msgstr "съобщението за подаване не може да бъде прочетено от „%s“"
 
 #: sequencer.c:1504 sequencer.c:1536
@@ -8279,9 +8279,9 @@ msgstr "неправилна самоличност за автор: „%s“"
 msgid "corrupt author: missing date information"
 msgstr "повредена информация за автор: липсва дата"
 
-#: sequencer.c:1549 builtin/am.c:1670 builtin/commit.c:1822 builtin/merge.c:915
+#: sequencer.c:1549 builtin/am.c:1670 builtin/cummit.c:1822 builtin/merge.c:915
 #: builtin/merge.c:940 t/helper/test-fast-rebase.c:78
-msgid "failed to write commit object"
+msgid "failed to write cummit object"
 msgstr "обектът за подаването не може да бъде записан"
 
 #: sequencer.c:1576 sequencer.c:4523 t/helper/test-fast-rebase.c:199
@@ -8292,12 +8292,12 @@ msgstr "„%s“ не може да се обнови"
 
 #: sequencer.c:1625
 #, c-format
-msgid "could not parse commit %s"
+msgid "could not parse cummit %s"
 msgstr "подаването „%s“ не може да бъде анализирано"
 
 #: sequencer.c:1630
 #, c-format
-msgid "could not parse parent commit %s"
+msgid "could not parse parent cummit %s"
 msgstr "родителското подаване „%s“ не може да бъде анализирано"
 
 #: sequencer.c:1713 sequencer.c:1994
@@ -8306,26 +8306,26 @@ msgid "unknown command: %d"
 msgstr "непозната команда: %d"
 
 #: sequencer.c:1755
-msgid "This is the 1st commit message:"
+msgid "This is the 1st cummit message:"
 msgstr "Това е 1-то съобщение при подаване:"
 
 #: sequencer.c:1756
 #, c-format
-msgid "This is the commit message #%d:"
+msgid "This is the cummit message #%d:"
 msgstr "Това е съобщение при подаване №%d:"
 
 #: sequencer.c:1757
-msgid "The 1st commit message will be skipped:"
+msgid "The 1st cummit message will be skipped:"
 msgstr "Съобщението при подаване №1 ще бъде прескочено:"
 
 #: sequencer.c:1758
 #, c-format
-msgid "The commit message #%d will be skipped:"
+msgid "The cummit message #%d will be skipped:"
 msgstr "Съобщението при подаване №%d ще бъде прескочено:"
 
 #: sequencer.c:1759
 #, c-format
-msgid "This is a combination of %d commits."
+msgid "This is a combination of %d cummits."
 msgstr "Това е обединение от %d подавания"
 
 #: sequencer.c:1906 sequencer.c:1963
@@ -8342,13 +8342,13 @@ msgid "could not read HEAD"
 msgstr "указателят „HEAD“ не може да се прочете"
 
 #: sequencer.c:1957
-msgid "could not read HEAD's commit message"
+msgid "could not read HEAD's cummit message"
 msgstr ""
 "съобщението за подаване към указателя „HEAD“ не може да бъде прочетено: %s"
 
 #: sequencer.c:1981
 #, c-format
-msgid "could not read commit message of %s"
+msgid "could not read cummit message of %s"
 msgstr "съобщението за подаване към „%s“ не може да бъде прочетено"
 
 #: sequencer.c:2091
@@ -8356,29 +8356,29 @@ msgid "your index file is unmerged."
 msgstr "индексът не е слят."
 
 #: sequencer.c:2098
-msgid "cannot fixup root commit"
+msgid "cannot fixup root cummit"
 msgstr "началното подаване не може да се вкара в предходното му"
 
 #: sequencer.c:2117
 #, c-format
-msgid "commit %s is a merge but no -m option was given."
+msgid "cummit %s is a merge but no -m option was given."
 msgstr "подаването „%s“ е сливане, но не е дадена опцията „-m“"
 
 #: sequencer.c:2125 sequencer.c:2133
 #, c-format
-msgid "commit %s does not have parent %d"
+msgid "cummit %s does not have parent %d"
 msgstr "подаването „%s“ няма родител %d"
 
 #: sequencer.c:2139
 #, c-format
-msgid "cannot get commit message for %s"
+msgid "cannot get cummit message for %s"
 msgstr "неуспешно извличане на съобщението за подаване на „%s“"
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
 #: sequencer.c:2158
 #, c-format
-msgid "%s: cannot parse parent commit %s"
+msgid "%s: cannot parse parent cummit %s"
 msgstr "%s: неразпозната стойност за родителското подаване „%s“"
 
 #: sequencer.c:2224
@@ -8433,7 +8433,7 @@ msgstr "неправилен ред %d: %.*s"
 
 #: sequencer.c:2576
 #, c-format
-msgid "cannot '%s' without a previous commit"
+msgid "cannot '%s' without a previous cummit"
 msgstr "Без предишно подаване не може да се изпълни „%s“"
 
 #: sequencer.c:2624 builtin/rebase.c:184
@@ -8459,7 +8459,7 @@ msgid "unusable instruction sheet: '%s'"
 msgstr "неизползваем файл с описание на предстоящите действия: „%s“"
 
 #: sequencer.c:2718
-msgid "no commits parsed."
+msgid "no cummits parsed."
 msgstr "никое от подаванията не може да се разпознае."
 
 #: sequencer.c:2729
@@ -8486,7 +8486,7 @@ msgid "malformed options sheet: '%s'"
 msgstr "неправилен файл с опции: „%s“"
 
 #: sequencer.c:3033 sequencer.c:4902
-msgid "empty commit set passed"
+msgid "empty cummit set passed"
 msgstr "зададено е празно множество от подавания"
 
 #: sequencer.c:3050
@@ -8570,7 +8570,7 @@ msgid "no cherry-pick in progress"
 msgstr "в момента не се извършва отбиране на подавания"
 
 #: sequencer.c:3260
-msgid "failed to skip the commit"
+msgid "failed to skip the cummit"
 msgstr "неуспешно прескачане на подаването"
 
 #: sequencer.c:3267
@@ -8580,7 +8580,7 @@ msgstr "няма какво да се прескочи"
 #: sequencer.c:3270
 #, c-format
 msgid ""
-"have you committed already?\n"
+"have you cummitted already?\n"
 "try \"git %s --continue\""
 msgstr ""
 "подали ли сте вече?  Пробвайте с:\n"
@@ -8599,9 +8599,9 @@ msgstr "„%s“ не може да се копира като „%s“"
 #: sequencer.c:3457
 #, c-format
 msgid ""
-"You can amend the commit now, with\n"
+"You can amend the cummit now, with\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
@@ -8609,7 +8609,7 @@ msgid ""
 msgstr ""
 "Може да промените подаването с командата:\n"
 "\n"
-"    git commit --amend %s\n"
+"    git cummit --amend %s\n"
 "\n"
 "След като привършите, продължете с командата:\n"
 "\n"
@@ -8659,7 +8659,7 @@ msgstr "и променѝ индекса и/или работното дърво
 msgid ""
 "execution succeeded: %s\n"
 "but left changes to the index and/or the working tree\n"
-"Commit or stash your changes, and then run\n"
+"cummit or stash your changes, and then run\n"
 "\n"
 "  git rebase --continue\n"
 "\n"
@@ -8677,7 +8677,7 @@ msgid "illegal label name: '%.*s'"
 msgstr "неправилно име на етикет: „%.*s“"
 
 #: sequencer.c:3659
-msgid "writing fake root commit"
+msgid "writing fake root cummit"
 msgstr "запазване на фалшиво начално подаване"
 
 #: sequencer.c:3664
@@ -8709,7 +8709,7 @@ msgstr "върху начално подаване не може да се из�
 
 #: sequencer.c:3873
 #, c-format
-msgid "could not get commit message of '%s'"
+msgid "could not get cummit message of '%s'"
 msgstr "съобщението за подаване към „%s“ не може да бъде получено"
 
 #: sequencer.c:4019
@@ -8849,7 +8849,7 @@ msgid "cannot rebase: You have unstaged changes."
 msgstr "не може да пребазирате, защото има промени, които не са в индекса."
 
 #: sequencer.c:4651
-msgid "cannot amend non-existing commit"
+msgid "cannot amend non-existing cummit"
 msgstr "несъществуващо подаване не може да се поправи"
 
 #: sequencer.c:4653
@@ -8865,7 +8865,7 @@ msgstr "неправилно съдържание: „%s“"
 #: sequencer.c:4658
 msgid ""
 "\n"
-"You have uncommitted changes in your working tree. Please, commit them\n"
+"You have uncummitted changes in your working tree. Please, cummit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 "\n"
@@ -8882,7 +8882,7 @@ msgid "could not remove CHERRY_PICK_HEAD"
 msgstr "указателят „CHERRY_PICK_HEAD“ не може да бъде изтрит"
 
 #: sequencer.c:4759
-msgid "could not commit staged changes."
+msgid "could not cummit staged changes."
 msgstr "промените в индекса не може да бъдат подадени."
 
 #: sequencer.c:4879
@@ -8896,16 +8896,16 @@ msgid "%s: bad revision"
 msgstr "%s: неправилна версия"
 
 #: sequencer.c:4918
-msgid "can't revert as initial commit"
+msgid "can't revert as initial cummit"
 msgstr "първоначалното подаване не може да бъде отменено"
 
 #: sequencer.c:5189 sequencer.c:5418
 #, c-format
-msgid "skipped previously applied commit %s"
+msgid "skipped previously applied cummit %s"
 msgstr "прескачане на вече приложеното подаване „%s“"
 
 #: sequencer.c:5259 sequencer.c:5434
-msgid "use --reapply-cherry-picks to include skipped commits"
+msgid "use --reapply-cherry-picks to include skipped cummits"
 msgstr ""
 "може да включите пропуснатите подавания с опцията „--reapply-cherry-picks“"
 
@@ -9232,7 +9232,7 @@ msgstr "неправилен аргумент за „--ignore-submodules“: �
 #: submodule.c:844
 #, c-format
 msgid ""
-"Submodule in commit %s at path: '%s' collides with a submodule named the "
+"Submodule in cummit %s at path: '%s' collides with a submodule named the "
 "same. Skipping it."
 msgstr ""
 "Подмодулът при подаване %s на пътя „%s“ е различен от другия модул със "
@@ -9240,13 +9240,13 @@ msgstr ""
 
 #: submodule.c:954
 #, c-format
-msgid "submodule entry '%s' (%s) is a %s, not a commit"
+msgid "submodule entry '%s' (%s) is a %s, not a cummit"
 msgstr "записът за подмодула „%s“ (%s) е %s, а не подаване!"
 
 #: submodule.c:1042
 #, c-format
 msgid ""
-"Could not run 'git rev-list <commits> --not --remotes -n 1' command in "
+"Could not run 'git rev-list <cummits> --not --remotes -n 1' command in "
 "submodule %s"
 msgstr ""
 "Командата „git rev-list ПОДАВАНИЯ --not --remotes -n 1“ не може да се "
@@ -9758,7 +9758,7 @@ msgstr "прекалено кратък файл-дърво"
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by checkout:\n"
-"%%sPlease commit your changes or stash them before you switch branches."
+"%%sPlease cummit your changes or stash them before you switch branches."
 msgstr ""
 "Изтеглянето ще презапише локалните промени на тези файлове:\n"
 "%%sПодайте или скатайте промените, за да преминете към нов клон."
@@ -9776,7 +9776,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
-"%%sPlease commit your changes or stash them before you merge."
+"%%sPlease cummit your changes or stash them before you merge."
 msgstr ""
 "Сливането ще презапише локалните промени на тези файлове:\n"
 "%%sПодайте или скатайте промените, за да слеете."
@@ -9794,7 +9794,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by %s:\n"
-"%%sPlease commit your changes or stash them before you %s."
+"%%sPlease cummit your changes or stash them before you %s."
 msgstr ""
 "„%s“ ще презапише локалните промени на тези файлове:\n"
 "%%sПодайте или скатайте промените, за да извършите „%s“."
@@ -10220,20 +10220,20 @@ msgstr ""
 "  (използвайте „git rm ФАЙЛ…“, за да укажете разрешаването на конфликта)"
 
 #: wt-status.c:211 wt-status.c:1131
-msgid "Changes to be committed:"
+msgid "Changes to be cummitted:"
 msgstr "Промени, които ще бъдат подадени:"
 
 #: wt-status.c:234 wt-status.c:1140
-msgid "Changes not staged for commit:"
+msgid "Changes not staged for cummit:"
 msgstr "Промени, които не са в индекса за подаване:"
 
 #: wt-status.c:238
-msgid "  (use \"git add <file>...\" to update what will be committed)"
+msgid "  (use \"git add <file>...\" to update what will be cummitted)"
 msgstr ""
 "  (използвайте „git add ФАЙЛ…“, за да обновите съдържанието за подаване)"
 
 #: wt-status.c:240
-msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
+msgid "  (use \"git add/rm <file>...\" to update what will be cummitted)"
 msgstr ""
 "  (използвайте „git add/rm ФАЙЛ…“, за да обновите съдържанието за подаване)"
 
@@ -10245,14 +10245,14 @@ msgstr ""
 "директория)"
 
 #: wt-status.c:243
-msgid "  (commit or discard the untracked or modified content in submodules)"
+msgid "  (cummit or discard the untracked or modified content in submodules)"
 msgstr ""
 "  (подайте или отхвърлете неследеното или промененото съдържание в "
 "подмодулите)"
 
 #: wt-status.c:254
 #, c-format
-msgid "  (use \"git %s <file>...\" to include in what will be committed)"
+msgid "  (use \"git %s <file>...\" to include in what will be cummitted)"
 msgstr ""
 "  (използвайте „git %s ФАЙЛ…“, за да определите какво включвате в подаването)"
 
@@ -10317,7 +10317,7 @@ msgid "unmerged:"
 msgstr "неслят:"
 
 #: wt-status.c:382
-msgid "new commits, "
+msgid "new cummits, "
 msgstr "нови подавания, "
 
 #: wt-status.c:384
@@ -10340,7 +10340,7 @@ msgid "Submodules changed but not updated:"
 msgstr "Подмодулите са променени, но не са обновени:"
 
 #: wt-status.c:997
-msgid "Submodule changes to be committed:"
+msgid "Submodule changes to be cummitted:"
 msgstr "Промени в подмодулите за подаване:"
 
 #: wt-status.c:1079
@@ -10367,8 +10367,8 @@ msgid "You have unmerged paths."
 msgstr "Някои пътища не са слети."
 
 #: wt-status.c:1204
-msgid "  (fix conflicts and run \"git commit\")"
-msgstr "  (коригирайте конфликтите и изпълнете „git commit“)"
+msgid "  (fix conflicts and run \"git cummit\")"
+msgstr "  (коригирайте конфликтите и изпълнете „git cummit“)"
 
 #: wt-status.c:1206
 msgid "  (use \"git merge --abort\" to abort the merge)"
@@ -10379,8 +10379,8 @@ msgid "All conflicts fixed but you are still merging."
 msgstr "Всички конфликти са решени, но продължавате сливането."
 
 #: wt-status.c:1213
-msgid "  (use \"git commit\" to conclude merge)"
-msgstr "  (използвайте „git commit“, за да завършите сливането)"
+msgid "  (use \"git cummit\" to conclude merge)"
+msgstr "  (използвайте „git cummit“, за да завършите сливането)"
 
 #: wt-status.c:1224
 msgid "You are in the middle of an am session."
@@ -10400,7 +10400,7 @@ msgstr "  (използвайте „git am --skip“, за да пропусн�
 
 #: wt-status.c:1237
 msgid ""
-"  (use \"git am --allow-empty\" to record this patch as an empty commit)"
+"  (use \"git am --allow-empty\" to record this patch as an empty cummit)"
 msgstr ""
 "  (използвайте „git am --allow-empty“, за да включите кръпката като празно "
 "подаване)"
@@ -10475,11 +10475,11 @@ msgstr "  (всички конфликти са коригирани: изпъл
 #: wt-status.c:1449
 #, c-format
 msgid ""
-"You are currently splitting a commit while rebasing branch '%s' on '%s'."
+"You are currently splitting a cummit while rebasing branch '%s' on '%s'."
 msgstr "В момента разделяте подаване докато пребазирате клона „%s“ върху „%s“."
 
 #: wt-status.c:1454
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a cummit during a rebase."
 msgstr "В момента разделяте подаване докато пребазирате."
 
 #: wt-status.c:1457
@@ -10490,18 +10490,18 @@ msgstr ""
 
 #: wt-status.c:1461
 #, c-format
-msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
+msgid "You are currently editing a cummit while rebasing branch '%s' on '%s'."
 msgstr ""
 "В момента редактирате подаване докато пребазирате клона „%s“ върху „%s“."
 
 #: wt-status.c:1466
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a cummit during a rebase."
 msgstr "В момента редактирате подаване докато пребазирате."
 
 #: wt-status.c:1469
-msgid "  (use \"git commit --amend\" to amend the current commit)"
+msgid "  (use \"git cummit --amend\" to amend the current cummit)"
 msgstr ""
-"  (използвайте „git commit --amend“, за да редактирате текущото подаване)"
+"  (използвайте „git cummit --amend“, за да редактирате текущото подаване)"
 
 #: wt-status.c:1471
 msgid ""
@@ -10515,7 +10515,7 @@ msgstr "В момента се извършва отбиране на подав
 
 #: wt-status.c:1485
 #, c-format
-msgid "You are currently cherry-picking commit %s."
+msgid "You are currently cherry-picking cummit %s."
 msgstr "В момента отбирате подаването „%s“."
 
 #: wt-status.c:1492
@@ -10547,7 +10547,7 @@ msgstr "В момента тече отмяна на подаване."
 
 #: wt-status.c:1515
 #, c-format
-msgid "You are currently reverting commit %s."
+msgid "You are currently reverting cummit %s."
 msgstr "В момента отменяте подаване „%s“."
 
 #: wt-status.c:1521
@@ -10622,11 +10622,11 @@ msgid "Not currently on any branch."
 msgstr "Извън всички клони."
 
 #: wt-status.c:1842
-msgid "Initial commit"
+msgid "Initial cummit"
 msgstr "Първоначално подаване"
 
 #: wt-status.c:1843
-msgid "No commits yet"
+msgid "No cummits yet"
 msgstr "Все още липсват подавания"
 
 #: wt-status.c:1857
@@ -10664,20 +10664,20 @@ msgstr "Няма промени"
 
 #: wt-status.c:1882
 #, c-format
-msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
+msgid "no changes added to cummit (use \"git add\" and/or \"git cummit -a\")\n"
 msgstr ""
 "към индекса за подаване не са добавени промени (използвайте „git add“ и/или "
-"„git commit -a“)\n"
+"„git cummit -a“)\n"
 
 #: wt-status.c:1886
 #, c-format
-msgid "no changes added to commit\n"
+msgid "no changes added to cummit\n"
 msgstr "към индекса за подаване не са добавени промени\n"
 
 #: wt-status.c:1890
 #, c-format
 msgid ""
-"nothing added to commit but untracked files present (use \"git add\" to "
+"nothing added to cummit but untracked files present (use \"git add\" to "
 "track)\n"
 msgstr ""
 "към индекса за подаване не са добавени промени, но има нови файлове "
@@ -10685,35 +10685,35 @@ msgstr ""
 
 #: wt-status.c:1894
 #, c-format
-msgid "nothing added to commit but untracked files present\n"
+msgid "nothing added to cummit but untracked files present\n"
 msgstr "към индекса за подаване не са добавени промени, но има нови файлове\n"
 
 #: wt-status.c:1898
 #, c-format
-msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
+msgid "nothing to cummit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
 "липсват каквито и да е промени (създайте или копирайте файлове и използвайте "
 "„git add“, за да започне тяхното следене)\n"
 
 #: wt-status.c:1902 wt-status.c:1908
 #, c-format
-msgid "nothing to commit\n"
+msgid "nothing to cummit\n"
 msgstr "липсват каквито и да е промени\n"
 
 #: wt-status.c:1905
 #, c-format
-msgid "nothing to commit (use -u to show untracked files)\n"
+msgid "nothing to cummit (use -u to show untracked files)\n"
 msgstr ""
 "липсват каквито и да е промени (използвайте опцията „-u“, за да се изведат и "
 "неследените файлове)\n"
 
 #: wt-status.c:1910
 #, c-format
-msgid "nothing to commit, working tree clean\n"
+msgid "nothing to cummit, working tree clean\n"
 msgstr "липсват каквито и да е промени, работното дърво е чисто\n"
 
 #: wt-status.c:2015
-msgid "No commits yet on "
+msgid "No cummits yet on "
 msgstr "Все още липсват подавания в "
 
 #: wt-status.c:2019
@@ -10739,12 +10739,12 @@ msgid "cannot %s: You have unstaged changes."
 msgstr "не може да извършите „%s“, защото има промени, които не са в индекса."
 
 #: wt-status.c:2602
-msgid "additionally, your index contains uncommitted changes."
+msgid "additionally, your index contains uncummitted changes."
 msgstr "освен това в индекса има неподадени промени."
 
 #: wt-status.c:2604
 #, c-format
-msgid "cannot %s: Your index contains uncommitted changes."
+msgid "cannot %s: Your index contains uncummitted changes."
 msgstr "не може да извършите „%s“, защото в индекса има неподадени промени."
 
 #: compat/simple-ipc/ipc-unix-socket.c:205
@@ -10784,7 +10784,7 @@ msgstr "правата на „%2$s“ не може да се зададат д
 msgid "unexpected diff status %c"
 msgstr "неочакван изходен код при генериране на разлика: %c"
 
-#: builtin/add.c:111 builtin/commit.c:298
+#: builtin/add.c:111 builtin/cummit.c:298
 msgid "updating files failed"
 msgstr "неуспешно обновяване на файловете"
 
@@ -10834,7 +10834,7 @@ msgstr ""
 msgid "dry run"
 msgstr "пробно изпълнение"
 
-#: builtin/add.c:369 builtin/check-ignore.c:22 builtin/commit.c:1484
+#: builtin/add.c:369 builtin/check-ignore.c:22 builtin/cummit.c:1484
 #: builtin/count-objects.c:98 builtin/fsck.c:789 builtin/log.c:2313
 #: builtin/mv.c:123 builtin/read-tree.c:120
 msgid "be verbose"
@@ -10965,7 +10965,7 @@ msgstr "неуспешно добавяне на файлове"
 msgid "--chmod param '%s' must be either -x or +x"
 msgstr "параметърът към „--chmod“ — „%s“ може да е или „-x“, или „+x“"
 
-#: builtin/add.c:569 builtin/checkout.c:1751 builtin/commit.c:364
+#: builtin/add.c:569 builtin/checkout.c:1751 builtin/cummit.c:364
 #: builtin/reset.c:429 builtin/rm.c:275 builtin/stash.c:1713
 #, c-format
 msgid "'%s' and pathspec arguments cannot be used together"
@@ -11068,7 +11068,7 @@ msgstr ""
 
 #: builtin/am.c:1159
 #, c-format
-msgid "To record the empty patch as an empty commit, run \"%s --allow-empty\"."
+msgid "To record the empty patch as an empty cummit, run \"%s --allow-empty\"."
 msgstr ""
 "За да включите празната кръпка като празно подаване, изпълнете:\n"
 "\n"
@@ -11090,7 +11090,7 @@ msgstr ""
 
 #: builtin/am.c:1344
 #, c-format
-msgid "missing author line in commit %s"
+msgid "missing author line in cummit %s"
 msgstr "липсва ред за авторство в подаването „%s“"
 
 #: builtin/am.c:1347
@@ -11134,7 +11134,7 @@ msgid "cannot resume: %s does not exist."
 msgstr "не може да се продължи — „%s“ не съществува."
 
 #: builtin/am.c:1725
-msgid "Commit Body is:"
+msgid "cummit Body is:"
 msgstr "Тялото на кръпката за прилагане е:"
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
@@ -11148,7 +11148,7 @@ msgstr ""
 "Прилагане? „y“ — да/„n“ — не/„e“ — редактиране/„v“ — преглед/„a“ — приемане "
 "на всичко:"
 
-#: builtin/am.c:1781 builtin/commit.c:409
+#: builtin/am.c:1781 builtin/cummit.c:409
 msgid "unable to write index file"
 msgstr "индексът не може да бъде записан"
 
@@ -11165,7 +11165,7 @@ msgstr "Прескачане: %.*s"
 
 #: builtin/am.c:1832
 #, c-format
-msgid "Creating an empty commit: %.*s"
+msgid "Creating an empty cummit: %.*s"
 msgstr "Създаване на празно подаване: %.*s"
 
 #: builtin/am.c:1836
@@ -11194,7 +11194,7 @@ msgstr ""
 "    git am --show-current-patch=diff"
 
 #: builtin/am.c:1920
-msgid "No changes - recorded it as an empty commit."
+msgid "No changes - recorded it as an empty cummit."
 msgstr "Няма промени — създаване на празно подаване."
 
 #: builtin/am.c:1922
@@ -11280,7 +11280,7 @@ msgid "be quiet"
 msgstr "без извеждане на информация"
 
 #: builtin/am.c:2334
-msgid "add a Signed-off-by trailer to the commit message"
+msgid "add a Signed-off-by trailer to the cummit message"
 msgstr "добавяне на епилог за подпис „Signed-off-by“ в съобщението за подаване"
 
 #: builtin/am.c:2337
@@ -11324,7 +11324,7 @@ msgstr "прекарване през „git-mailinfo“"
 msgid "pass it through git-apply"
 msgstr "прекарване през „git-apply“"
 
-#: builtin/am.c:2373 builtin/commit.c:1515 builtin/fmt-merge-msg.c:18
+#: builtin/am.c:2373 builtin/cummit.c:1515 builtin/fmt-merge-msg.c:18
 #: builtin/fmt-merge-msg.c:21 builtin/grep.c:919 builtin/merge.c:263
 #: builtin/pull.c:142 builtin/pull.c:204 builtin/pull.c:221
 #: builtin/rebase.c:1046 builtin/repack.c:653 builtin/repack.c:657
@@ -11376,25 +11376,25 @@ msgid "show the patch being applied"
 msgstr "показване на прилаганата кръпка"
 
 #: builtin/am.c:2408
-msgid "record the empty patch as an empty commit"
+msgid "record the empty patch as an empty cummit"
 msgstr "прилагане на празна кръпка като празно подаване"
 
 #: builtin/am.c:2412
-msgid "lie about committer date"
+msgid "lie about cummitter date"
 msgstr "дата за подаване различна от първоначалната"
 
 #: builtin/am.c:2414
 msgid "use current timestamp for author date"
 msgstr "използване на текущото време като това за автор"
 
-#: builtin/am.c:2416 builtin/commit-tree.c:118 builtin/commit.c:1643
+#: builtin/am.c:2416 builtin/cummit-tree.c:118 builtin/cummit.c:1643
 #: builtin/merge.c:302 builtin/pull.c:179 builtin/rebase.c:1099
 #: builtin/revert.c:117 builtin/tag.c:460
 msgid "key-id"
 msgstr "ИДЕНТИФИКАТОР_НА_КЛЮЧ"
 
 #: builtin/am.c:2417 builtin/rebase.c:1100
-msgid "GPG-sign commits"
+msgid "GPG-sign cummits"
 msgstr "подписване на подаванията с GPG"
 
 #: builtin/am.c:2420
@@ -11472,7 +11472,7 @@ msgid "git archive: expected a flush"
 msgstr "git archive: очакваше се изчистване на буферите чрез „flush“"
 
 #: builtin/bisect--helper.c:24
-msgid "git bisect--helper --bisect-reset [<commit>]"
+msgid "git bisect--helper --bisect-reset [<cummit>]"
 msgstr "git bisect--helper --bisect-reset [ПОДАВАНЕ]"
 
 #: builtin/bisect--helper.c:25
@@ -11561,13 +11561,13 @@ msgstr "В момента не се извършва двоично търсен
 
 #: builtin/bisect--helper.c:218
 #, c-format
-msgid "'%s' is not a valid commit"
+msgid "'%s' is not a valid cummit"
 msgstr "„%s“ не е подаване"
 
 #: builtin/bisect--helper.c:227
 #, c-format
 msgid ""
-"could not check out original HEAD '%s'. Try 'git bisect reset <commit>'."
+"could not check out original HEAD '%s'. Try 'git bisect reset <cummit>'."
 msgstr ""
 "първоначално указаното „%s“ в указателя „HEAD“ не може да бъде\n"
 "изтеглено.  Пробвайте да изпълните командата „git bisect reset ПОДАВАНЕ“."
@@ -11614,7 +11614,7 @@ msgstr ""
 
 #: builtin/bisect--helper.c:365
 #, c-format
-msgid "bisecting only with a %s commit"
+msgid "bisecting only with a %s cummit"
 msgstr "двоично търсене само по „%s“ подаване."
 
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -11724,7 +11724,7 @@ msgstr "Неправилна версия: „%s“"
 
 #: builtin/bisect--helper.c:904
 #, c-format
-msgid "Bad rev input (not a commit): %s"
+msgid "Bad rev input (not a cummit): %s"
 msgstr "Неправилна версия (не е подаване): „%s“"
 
 #: builtin/bisect--helper.c:936
@@ -11777,7 +11777,7 @@ msgstr "успешно двоично търсене"
 
 #: builtin/bisect--helper.c:1157
 #, c-format
-msgid "bisect found first bad commit"
+msgid "bisect found first bad cummit"
 msgstr "двоичното търсене откри първото лошо подаване"
 
 #: builtin/bisect--helper.c:1160
@@ -11806,7 +11806,7 @@ msgid "start the bisect session"
 msgstr "начало на двоично търсене"
 
 #: builtin/bisect--helper.c:1200
-msgid "find the next bisection commit"
+msgid "find the next bisection cummit"
 msgstr "откриване на следващото подаване при двоично търсене"
 
 #: builtin/bisect--helper.c:1202
@@ -11822,7 +11822,7 @@ msgid "replay the bisection process from the given file"
 msgstr "наново изпълнение на двоичното търсене чрез дадения файл"
 
 #: builtin/bisect--helper.c:1208
-msgid "skip some commits for checkout"
+msgid "skip some cummits for checkout"
 msgstr "прескачане на някои подавания при изтегляне"
 
 #: builtin/bisect--helper.c:1210
@@ -11840,7 +11840,7 @@ msgid "no log for BISECT_WRITE"
 msgstr "липсва запис за „BISECT_WRITE“"
 
 #: builtin/bisect--helper.c:1229
-msgid "--bisect-reset requires either no argument or a commit"
+msgid "--bisect-reset requires either no argument or a cummit"
 msgstr "опцията „--bisect-reset“ изисква или 0 аргументи, или 1 — подаване"
 
 #: builtin/bisect--helper.c:1234
@@ -11895,13 +11895,13 @@ msgid "show blame entries as we find them, incrementally"
 msgstr "извеждане на авторството с намирането му, последователно"
 
 #: builtin/blame.c:864
-msgid "do not show object names of boundary commits (Default: off)"
+msgid "do not show object names of boundary cummits (Default: off)"
 msgstr ""
 "без извеждане на имената на обектите за граничните подавания (стандартно "
 "опцията е изключена)"
 
 #: builtin/blame.c:865
-msgid "do not treat root commits as boundaries (Default: off)"
+msgid "do not treat root cummits as boundaries (Default: off)"
 msgstr ""
 "началните подавания да не се считат за гранични (стандартно опцията е "
 "изключена)"
@@ -11911,7 +11911,7 @@ msgid "show work cost statistics"
 msgstr "извеждане на статистика за извършените действия"
 
 #: builtin/blame.c:867 builtin/checkout.c:1536 builtin/clone.c:94
-#: builtin/commit-graph.c:75 builtin/commit-graph.c:228 builtin/fetch.c:180
+#: builtin/cummit-graph.c:75 builtin/cummit-graph.c:228 builtin/fetch.c:180
 #: builtin/merge.c:301 builtin/multi-pack-index.c:103
 #: builtin/multi-pack-index.c:154 builtin/multi-pack-index.c:180
 #: builtin/multi-pack-index.c:208 builtin/pull.c:120 builtin/push.c:566
@@ -11938,7 +11938,7 @@ msgid "show in a format designed for machine consumption"
 msgstr "извеждане във формат за по-нататъшна обработка"
 
 #: builtin/blame.c:872
-msgid "show porcelain format with per-line commit information"
+msgid "show porcelain format with per-line cummit information"
 msgstr ""
 "извеждане във формат за команди от потребителско ниво с информация на всеки "
 "ред"
@@ -11954,7 +11954,7 @@ msgid "show raw timestamp (Default: off)"
 msgstr "извеждане на неформатирани времена (стандартно опцията е изключена)"
 
 #: builtin/blame.c:875
-msgid "show long commit SHA1 (Default: off)"
+msgid "show long cummit SHA1 (Default: off)"
 msgstr "извеждане на пълните суми по SHA1 (стандартно опцията е изключена)"
 
 #: builtin/blame.c:876
@@ -12106,7 +12106,7 @@ msgstr ""
 
 #: builtin/branch.c:171
 #, c-format
-msgid "Couldn't look up commit object for '%s'"
+msgid "Couldn't look up cummit object for '%s'"
 msgstr "Обектът-подаване за „%s“ не може да бъде открит"
 
 #: builtin/branch.c:175
@@ -12127,7 +12127,7 @@ msgid "cannot use -a with -d"
 msgstr "опциите „-a“ и „-d“ са несъвместими"
 
 #: builtin/branch.c:230
-msgid "Couldn't look up commit object for HEAD"
+msgid "Couldn't look up cummit object for HEAD"
 msgstr "Обектът-подаване, сочен от указателя „HEAD“, не може да бъде открит"
 
 #: builtin/branch.c:247
@@ -12277,11 +12277,11 @@ msgid "act on remote-tracking branches"
 msgstr "действие върху следящите клони"
 
 #: builtin/branch.c:652 builtin/branch.c:654
-msgid "print only branches that contain the commit"
+msgid "print only branches that contain the cummit"
 msgstr "извеждане само на клоните, които съдържат това ПОДАВАНЕ"
 
 #: builtin/branch.c:653 builtin/branch.c:655
-msgid "print only branches that don't contain the commit"
+msgid "print only branches that don't contain the cummit"
 msgstr "извеждане само на клоните, които не съдържат това ПОДАВАНЕ"
 
 #: builtin/branch.c:658
@@ -12386,7 +12386,7 @@ msgstr "Не може да редактирате описанието на по
 
 #: builtin/branch.c:786
 #, c-format
-msgid "No commit on branch '%s' yet."
+msgid "No cummit on branch '%s' yet."
 msgstr "В клона „%s“ все още няма подавания."
 
 #: builtin/branch.c:789
@@ -12630,9 +12630,9 @@ msgid "only one batch option may be specified"
 msgstr "може да укажете само една пакетна опция"
 
 #: builtin/cat-file.c:662
-msgid "<type> can be one of: blob, tree, commit, tag"
+msgid "<type> can be one of: blob, tree, cummit, tag"
 msgstr ""
-"ВИДът може да е: „blob“ (BLOB), „tree“ (дърво), „commit“ (подаване), "
+"ВИДът може да е: „blob“ (BLOB), „tree“ (дърво), „cummit“ (подаване), "
 "„tag“ (етикет)"
 
 #: builtin/cat-file.c:663
@@ -12994,12 +12994,12 @@ msgstr "… и още %d.\n"
 #: builtin/checkout.c:1010
 #, c-format
 msgid ""
-"Warning: you are leaving %d commit behind, not connected to\n"
+"Warning: you are leaving %d cummit behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"Warning: you are leaving %d commits behind, not connected to\n"
+"Warning: you are leaving %d cummits behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
@@ -13124,7 +13124,7 @@ msgstr "очаква се клон, а не „%s“"
 
 #: builtin/checkout.c:1408
 #, c-format
-msgid "a branch is expected, got commit '%s'"
+msgid "a branch is expected, got cummit '%s'"
 msgstr "очаква се клон, а не подаване — „%s“"
 
 #: builtin/checkout.c:1424
@@ -13194,13 +13194,13 @@ msgstr "опцията „%s“ е несъвместима със задава�
 
 #: builtin/checkout.c:1487
 #, c-format
-msgid "Cannot switch branch to a non-commit '%s'"
+msgid "Cannot switch branch to a non-cummit '%s'"
 msgstr ""
 "За да преминете към клон, подайте указател, който сочи към подаване.  „%s“ "
 "не е такъв"
 
 #: builtin/checkout.c:1494
-msgid "missing branch or commit argument"
+msgid "missing branch or cummit argument"
 msgstr "липсва аргумент — клон или подаване"
 
 #: builtin/checkout.c:1537
@@ -13218,7 +13218,7 @@ msgstr ""
 "„zdiff3“)"
 
 #: builtin/checkout.c:1551 builtin/worktree.c:488
-msgid "detach HEAD at named commit"
+msgid "detach HEAD at named cummit"
 msgstr "отделяне на указателя „HEAD“ към указаното подаване"
 
 #: builtin/checkout.c:1553
@@ -13282,7 +13282,7 @@ msgstr "указан е неправилен път"
 
 #: builtin/checkout.c:1741
 #, c-format
-msgid "'%s' is not a commit and a branch '%s' cannot be created from it"
+msgid "'%s' is not a cummit and a branch '%s' cannot be created from it"
 msgstr "„%s“ не е подаване, затова от него не може да се създаде клон „%s“"
 
 #: builtin/checkout.c:1745
@@ -13960,190 +13960,190 @@ msgstr "поле в знаци между колоните"
 msgid "--command must be the first argument"
 msgstr "опцията „--command“ трябва да е първият аргумент"
 
-#: builtin/commit-graph.c:13
+#: builtin/cummit-graph.c:13
 msgid ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
+"git cummit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
 msgstr ""
-"git commit-graph verify [--object-dir ДИР_ОБЕКТИ] [--shallow] [--"
+"git cummit-graph verify [--object-dir ДИР_ОБЕКТИ] [--shallow] [--"
 "[no-]progress]"
 
-#: builtin/commit-graph.c:16
+#: builtin/cummit-graph.c:16
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--"
-"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
+"git cummit-graph write [--object-dir <objdir>] [--append] [--"
+"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-cummits] [--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
 msgstr ""
-"git commit-graph write [--object-dir ДИР_ОБЕКТИ] [--append] [--"
-"split[=СТРАТЕГИЯ]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
+"git cummit-graph write [--object-dir ДИР_ОБЕКТИ] [--append] [--"
+"split[=СТРАТЕГИЯ]] [--reachable|--stdin-packs|--stdin-cummits] [--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] ОПЦИИ_ЗА_РАЗДЕЛЯНЕ"
 
-#: builtin/commit-graph.c:51 builtin/fetch.c:192 builtin/log.c:1794
+#: builtin/cummit-graph.c:51 builtin/fetch.c:192 builtin/log.c:1794
 msgid "dir"
 msgstr "директория"
 
-#: builtin/commit-graph.c:52
+#: builtin/cummit-graph.c:52
 msgid "the object directory to store the graph"
 msgstr "ДИРекторията_с_ОБЕКТИ за запазване на гра̀фа"
 
-#: builtin/commit-graph.c:73
-msgid "if the commit-graph is split, only verify the tip file"
+#: builtin/cummit-graph.c:73
+msgid "if the cummit-graph is split, only verify the tip file"
 msgstr ""
 "ако гра̀фа с подаванията е раздробен, да се проверява само файлът на върха"
 
-#: builtin/commit-graph.c:100
+#: builtin/cummit-graph.c:100
 #, c-format
-msgid "Could not open commit-graph '%s'"
+msgid "Could not open cummit-graph '%s'"
 msgstr "Графът с подаванията не може да се отвори: „%s“"
 
-#: builtin/commit-graph.c:137
+#: builtin/cummit-graph.c:137
 #, c-format
 msgid "unrecognized --split argument, %s"
 msgstr "непознат аргумент към „--split“: %s"
 
-#: builtin/commit-graph.c:150
+#: builtin/cummit-graph.c:150
 #, c-format
 msgid "unexpected non-hex object ID: %s"
 msgstr "неочакван, нешестнайсетичен идентификатор на обект:  %s"
 
-#: builtin/commit-graph.c:155
+#: builtin/cummit-graph.c:155
 #, c-format
 msgid "invalid object: %s"
 msgstr "неправилен обект: „%s“"
 
-#: builtin/commit-graph.c:205
+#: builtin/cummit-graph.c:205
 msgid "start walk at all refs"
 msgstr "обхождането да започне от всички указатели"
 
-#: builtin/commit-graph.c:207
-msgid "scan pack-indexes listed by stdin for commits"
+#: builtin/cummit-graph.c:207
+msgid "scan pack-indexes listed by stdin for cummits"
 msgstr ""
 "проверка на подаванията за индексите на пакетите изброени на командния ред"
 
-#: builtin/commit-graph.c:209
-msgid "start walk at commits listed by stdin"
+#: builtin/cummit-graph.c:209
+msgid "start walk at cummits listed by stdin"
 msgstr "започване на обхождането при подаванията подадени на стандартния вход"
 
-#: builtin/commit-graph.c:211
-msgid "include all commits already in the commit-graph file"
+#: builtin/cummit-graph.c:211
+msgid "include all cummits already in the cummit-graph file"
 msgstr ""
 "включване на всички подавания, които вече са във файла с гра̀фа на подаванията"
 
-#: builtin/commit-graph.c:213
+#: builtin/cummit-graph.c:213
 msgid "enable computation for changed paths"
 msgstr "включване на изчисленията за променените пътища"
 
-#: builtin/commit-graph.c:215
-msgid "allow writing an incremental commit-graph file"
+#: builtin/cummit-graph.c:215
+msgid "allow writing an incremental cummit-graph file"
 msgstr "позволяване на запис на нарастващ файл с гра̀фа на подаванията"
 
-#: builtin/commit-graph.c:219
-msgid "maximum number of commits in a non-base split commit-graph"
+#: builtin/cummit-graph.c:219
+msgid "maximum number of cummits in a non-base split cummit-graph"
 msgstr "максимален брой подавания в небазово ниво на раздробен граф"
 
-#: builtin/commit-graph.c:221
-msgid "maximum ratio between two levels of a split commit-graph"
+#: builtin/cummit-graph.c:221
+msgid "maximum ratio between two levels of a split cummit-graph"
 msgstr ""
 "максимално отношение на броя подавания в две последователни нива в раздробен "
 "граф"
 
-#: builtin/commit-graph.c:223
+#: builtin/cummit-graph.c:223
 msgid "only expire files older than a given date-time"
 msgstr "обявяване за остарели само на файловете по-стари от това ВРЕМЕ"
 
-#: builtin/commit-graph.c:225
+#: builtin/cummit-graph.c:225
 msgid "maximum number of changed-path Bloom filters to compute"
 msgstr "максимален брой промени в пътищата следени от филтрите на Блум"
 
-#: builtin/commit-graph.c:251
-msgid "use at most one of --reachable, --stdin-commits, or --stdin-packs"
+#: builtin/cummit-graph.c:251
+msgid "use at most one of --reachable, --stdin-cummits, or --stdin-packs"
 msgstr ""
-"опциите „--reachable“, „--stdin-commits“ и „--stdin-packs“ са несъвместими"
+"опциите „--reachable“, „--stdin-cummits“ и „--stdin-packs“ са несъвместими"
 
-#: builtin/commit-graph.c:282
-msgid "Collecting commits from input"
+#: builtin/cummit-graph.c:282
+msgid "Collecting cummits from input"
 msgstr "Получаване на подаванията от входа"
 
-#: builtin/commit-graph.c:328 builtin/multi-pack-index.c:259
+#: builtin/cummit-graph.c:328 builtin/multi-pack-index.c:259
 #, c-format
 msgid "unrecognized subcommand: %s"
 msgstr "непозната подкоманда: %s"
 
-#: builtin/commit-tree.c:18
+#: builtin/cummit-tree.c:18
 msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
+"git cummit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
 "<file>)...] <tree>"
 msgstr ""
-"git commit-tree [(-p РОДИТЕЛ)…] [-S[ИДЕНТИФИКАТОР]] [(-m СЪОБЩЕНИЕ)…] [(-F "
+"git cummit-tree [(-p РОДИТЕЛ)…] [-S[ИДЕНТИФИКАТОР]] [(-m СЪОБЩЕНИЕ)…] [(-F "
 "ФАЙЛ)…] ДЪРВО"
 
-#: builtin/commit-tree.c:31
+#: builtin/cummit-tree.c:31
 #, c-format
 msgid "duplicate parent %s ignored"
 msgstr "прескачане на повтарящ се родител: „%s“"
 
-#: builtin/commit-tree.c:56 builtin/commit-tree.c:134 builtin/log.c:577
+#: builtin/cummit-tree.c:56 builtin/cummit-tree.c:134 builtin/log.c:577
 #, c-format
 msgid "not a valid object name %s"
 msgstr "неправилно име на обект: „%s“"
 
-#: builtin/commit-tree.c:94
+#: builtin/cummit-tree.c:94
 #, c-format
-msgid "git commit-tree: failed to read '%s'"
-msgstr "git commit-tree: „%s“ не може да се прочете"
+msgid "git cummit-tree: failed to read '%s'"
+msgstr "git cummit-tree: „%s“ не може да се прочете"
 
-#: builtin/commit-tree.c:96
+#: builtin/cummit-tree.c:96
 #, c-format
-msgid "git commit-tree: failed to close '%s'"
-msgstr "git commit-tree: „%s“ не може да се затвори"
+msgid "git cummit-tree: failed to close '%s'"
+msgstr "git cummit-tree: „%s“ не може да се затвори"
 
-#: builtin/commit-tree.c:109
+#: builtin/cummit-tree.c:109
 msgid "parent"
 msgstr "родител"
 
-#: builtin/commit-tree.c:110
-msgid "id of a parent commit object"
+#: builtin/cummit-tree.c:110
+msgid "id of a parent cummit object"
 msgstr "ИДЕНТИФИКАТОР на обекта за подаването-родител"
 
-#: builtin/commit-tree.c:112 builtin/commit.c:1627 builtin/merge.c:284
+#: builtin/cummit-tree.c:112 builtin/cummit.c:1627 builtin/merge.c:284
 #: builtin/notes.c:407 builtin/notes.c:573 builtin/stash.c:1677
 #: builtin/tag.c:454
 msgid "message"
 msgstr "СЪОБЩЕНИЕ"
 
-#: builtin/commit-tree.c:113 builtin/commit.c:1627
-msgid "commit message"
+#: builtin/cummit-tree.c:113 builtin/cummit.c:1627
+msgid "cummit message"
 msgstr "СЪОБЩЕНИЕ при подаване"
 
-#: builtin/commit-tree.c:116
-msgid "read commit log message from file"
+#: builtin/cummit-tree.c:116
+msgid "read cummit log message from file"
 msgstr "изчитане на съобщението за подаване от ФАЙЛ"
 
-#: builtin/commit-tree.c:119 builtin/commit.c:1644 builtin/merge.c:303
+#: builtin/cummit-tree.c:119 builtin/cummit.c:1644 builtin/merge.c:303
 #: builtin/pull.c:180 builtin/revert.c:118
-msgid "GPG sign commit"
+msgid "GPG sign cummit"
 msgstr "подписване на подаването с GPG"
 
-#: builtin/commit-tree.c:131
+#: builtin/cummit-tree.c:131
 msgid "must give exactly one tree"
 msgstr "трябва да е точно едно дърво"
 
-#: builtin/commit-tree.c:138
-msgid "git commit-tree: failed to read"
-msgstr "git commit-tree: не може да се прочете"
+#: builtin/cummit-tree.c:138
+msgid "git cummit-tree: failed to read"
+msgstr "git cummit-tree: не може да се прочете"
 
-#: builtin/commit.c:42
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [ОПЦИЯ…] [--] ПЪТ…"
+#: builtin/cummit.c:42
+msgid "git cummit [<options>] [--] <pathspec>..."
+msgstr "git cummit [ОПЦИЯ…] [--] ПЪТ…"
 
-#: builtin/commit.c:47
+#: builtin/cummit.c:47
 msgid "git status [<options>] [--] <pathspec>..."
 msgstr "git status [ОПЦИЯ…] [--] ПЪТ…"
 
-#: builtin/commit.c:52
+#: builtin/cummit.c:52
 msgid ""
-"You asked to amend the most recent commit, but doing so would make\n"
+"You asked to amend the most recent cummit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
-"remove the commit entirely with \"git reset HEAD^\".\n"
+"remove the cummit entirely with \"git reset HEAD^\".\n"
 msgstr ""
 "Поискахте да поправите последното си подаване.  Това действие ще превърне\n"
 "подаването в празно.  Може или да го повторите като разрешите такива "
@@ -14151,43 +14151,43 @@ msgstr ""
 "с опцията „--allow-empty“, или да го изтриете от историята с командата:\n"
 "„git reset HEAD^“.\n"
 
-#: builtin/commit.c:57
+#: builtin/cummit.c:57
 msgid ""
 "The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
-"If you wish to commit it anyway, use:\n"
+"If you wish to cummit it anyway, use:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 msgstr ""
 "Предишното отбрано подаване вече е празно, като най-вероятната причина е\n"
 "корекция на конфликт.  Ако все пак искате да го ползвате, използвайте "
 "командата:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 
-#: builtin/commit.c:64
+#: builtin/cummit.c:64
 msgid "Otherwise, please use 'git rebase --skip'\n"
 msgstr ""
 "В противен случай използвайте командата:\n"
 "\n"
 "    git rebase --skip\n"
 
-#: builtin/commit.c:67
+#: builtin/cummit.c:67
 msgid "Otherwise, please use 'git cherry-pick --skip'\n"
 msgstr ""
 "В противен случай използвайте командата:\n"
 "\n"
 "    git cherry-pick --skip\n"
 
-#: builtin/commit.c:70
+#: builtin/cummit.c:70
 msgid ""
 "and then use:\n"
 "\n"
 "    git cherry-pick --continue\n"
 "\n"
-"to resume cherry-picking the remaining commits.\n"
-"If you wish to skip this commit, use:\n"
+"to resume cherry-picking the remaining cummits.\n"
+"If you wish to skip this cummit, use:\n"
 "\n"
 "    git cherry-pick --skip\n"
 "\n"
@@ -14202,154 +14202,154 @@ msgstr ""
 "    git cherry-pick --skip\n"
 "\n"
 
-#: builtin/commit.c:325
+#: builtin/cummit.c:325
 msgid "failed to unpack HEAD tree object"
 msgstr "върховото дърво (HEAD tree object) не може да бъде извадено от пакет"
 
-#: builtin/commit.c:375
+#: builtin/cummit.c:375
 msgid "No paths with --include/--only does not make sense."
 msgstr "опциите „--include“ и „--only“ изискват аргументи."
 
-#: builtin/commit.c:387
+#: builtin/cummit.c:387
 msgid "unable to create temporary index"
 msgstr "временният индекс не може да бъде създаден"
 
-#: builtin/commit.c:396
+#: builtin/cummit.c:396
 msgid "interactive add failed"
 msgstr "неуспешно интерактивно добавяне"
 
-#: builtin/commit.c:411
+#: builtin/cummit.c:411
 msgid "unable to update temporary index"
 msgstr "временният индекс не може да бъде обновен"
 
-#: builtin/commit.c:413
+#: builtin/cummit.c:413
 msgid "Failed to update main cache tree"
 msgstr "Дървото на основния кеш не може да бъде обновено"
 
-#: builtin/commit.c:438 builtin/commit.c:461 builtin/commit.c:509
+#: builtin/cummit.c:438 builtin/cummit.c:461 builtin/cummit.c:509
 msgid "unable to write new_index file"
 msgstr "новият индекс (new_index) не може да бъде записан"
 
-#: builtin/commit.c:490
-msgid "cannot do a partial commit during a merge."
+#: builtin/cummit.c:490
+msgid "cannot do a partial cummit during a merge."
 msgstr "по време на сливане не може да се извърши частично подаване."
 
-#: builtin/commit.c:492
-msgid "cannot do a partial commit during a cherry-pick."
+#: builtin/cummit.c:492
+msgid "cannot do a partial cummit during a cherry-pick."
 msgstr "по време на отбиране не може да се извърши частично подаване."
 
-#: builtin/commit.c:494
-msgid "cannot do a partial commit during a rebase."
+#: builtin/cummit.c:494
+msgid "cannot do a partial cummit during a rebase."
 msgstr "по време на пребазиране не може да се извърши частично подаване."
 
-#: builtin/commit.c:502
+#: builtin/cummit.c:502
 msgid "cannot read the index"
 msgstr "индексът не може да бъде прочетен"
 
-#: builtin/commit.c:521
+#: builtin/cummit.c:521
 msgid "unable to write temporary index file"
 msgstr "временният индекс не може да бъде записан"
 
-#: builtin/commit.c:619
+#: builtin/cummit.c:619
 #, c-format
-msgid "commit '%s' lacks author header"
+msgid "cummit '%s' lacks author header"
 msgstr "заглавната част за автор в подаването „%s“ липсва"
 
-#: builtin/commit.c:621
+#: builtin/cummit.c:621
 #, c-format
-msgid "commit '%s' has malformed author line"
+msgid "cummit '%s' has malformed author line"
 msgstr "заглавната част за автор в подаването „%s“ е неправилна"
 
-#: builtin/commit.c:640
+#: builtin/cummit.c:640
 msgid "malformed --author parameter"
 msgstr "неправилен параметър към опцията „--author“"
 
-#: builtin/commit.c:693
+#: builtin/cummit.c:693
 msgid ""
 "unable to select a comment character that is not used\n"
-"in the current commit message"
+"in the current cummit message"
 msgstr ""
 "не може да се избере знак за коментар — в текущото съобщение за подаване са "
 "използвани всички подобни знаци"
 
-#: builtin/commit.c:747 builtin/commit.c:781 builtin/commit.c:1166
+#: builtin/cummit.c:747 builtin/cummit.c:781 builtin/cummit.c:1166
 #, c-format
-msgid "could not lookup commit %s"
+msgid "could not lookup cummit %s"
 msgstr "следното подаване не може да бъде открито: %s"
 
-#: builtin/commit.c:759 builtin/shortlog.c:416
+#: builtin/cummit.c:759 builtin/shortlog.c:416
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr "(изчитане на съобщението за подаване от стандартния вход)\n"
 
-#: builtin/commit.c:761
+#: builtin/cummit.c:761
 msgid "could not read log from standard input"
 msgstr "съобщението за подаване не бе прочетено стандартния вход"
 
-#: builtin/commit.c:765
+#: builtin/cummit.c:765
 #, c-format
 msgid "could not read log file '%s'"
 msgstr "файлът със съобщението за подаване „%s“ не може да бъде прочетен"
 
-#: builtin/commit.c:802
+#: builtin/cummit.c:802
 #, c-format
 msgid "options '%s' and '%s:%s' cannot be used together"
 msgstr "опциите „--%s“ и „--%s:%s“ са несъвместими"
 
-#: builtin/commit.c:814 builtin/commit.c:830
+#: builtin/cummit.c:814 builtin/cummit.c:830
 msgid "could not read SQUASH_MSG"
 msgstr "съобщението за вкарване SQUASH_MSG не може да бъде прочетено"
 
-#: builtin/commit.c:821
+#: builtin/cummit.c:821
 msgid "could not read MERGE_MSG"
 msgstr "съобщението за сливане MERGE_MSG не може да бъде прочетено"
 
-#: builtin/commit.c:881
-msgid "could not write commit template"
+#: builtin/cummit.c:881
+msgid "could not write cummit template"
 msgstr "шаблонът за подаване не може да бъде запазен"
 
-#: builtin/commit.c:894
+#: builtin/cummit.c:894
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be ignored.\n"
 msgstr ""
 "Въведете съобщението за подаване на промените.  Редовете, които започват\n"
 "с „%c“, ще бъдат пропуснати.\n"
 
-#: builtin/commit.c:896
+#: builtin/cummit.c:896
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be ignored, and an empty message aborts the commit.\n"
+"Please enter the cummit message for your changes. Lines starting\n"
+"with '%c' will be ignored, and an empty message aborts the cummit.\n"
 msgstr ""
 "Въведете съобщението за подаване на промените.  Редовете, които започват\n"
 "с „%c“, ще бъдат пропуснати, а празно съобщение преустановява подаването.\n"
 
-#: builtin/commit.c:900
+#: builtin/cummit.c:900
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
 msgstr ""
 "Въведете съобщението за подаване на промените.  Редовете, които започват\n"
 "с „%c“, също ще бъдат включени — може да ги изтриете вие.\n"
 
-#: builtin/commit.c:904
+#: builtin/cummit.c:904
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
-"An empty message aborts the commit.\n"
+"An empty message aborts the cummit.\n"
 msgstr ""
 "Въведете съобщението за подаване на промените.  Редовете, които започват\n"
 "с „%c“, също ще бъдат включени — може да ги изтриете вие.  Празно \n"
 "съобщение преустановява подаването.\n"
 
-#: builtin/commit.c:916
+#: builtin/cummit.c:916
 msgid ""
 "\n"
-"It looks like you may be committing a merge.\n"
+"It looks like you may be cummitting a merge.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d MERGE_HEAD\n"
 "and try again.\n"
@@ -14361,10 +14361,10 @@ msgstr ""
 "    git update-ref -d MERGE_HEAD\n"
 "и опитайте отново.\n"
 
-#: builtin/commit.c:921
+#: builtin/cummit.c:921
 msgid ""
 "\n"
-"It looks like you may be committing a cherry-pick.\n"
+"It looks like you may be cummitting a cherry-pick.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "and try again.\n"
@@ -14376,177 +14376,177 @@ msgstr ""
 "    git update-ref -d CHERRY_PICK_HEAD\n"
 "и опитайте отново.\n"
 
-#: builtin/commit.c:948
+#: builtin/cummit.c:948
 #, c-format
 msgid "%sAuthor:    %.*s <%.*s>"
 msgstr "%sАвтор:   %.*s <%.*s>"
 
-#: builtin/commit.c:956
+#: builtin/cummit.c:956
 #, c-format
 msgid "%sDate:      %s"
 msgstr "%sДата:    %s"
 
-#: builtin/commit.c:963
+#: builtin/cummit.c:963
 #, c-format
-msgid "%sCommitter: %.*s <%.*s>"
+msgid "%scummitter: %.*s <%.*s>"
 msgstr "%sПодаващ: %.*s <%.*s>"
 
-#: builtin/commit.c:981
+#: builtin/cummit.c:981
 msgid "Cannot read index"
 msgstr "Индексът не може да бъде прочетен"
 
-#: builtin/commit.c:1026
+#: builtin/cummit.c:1026
 msgid "unable to pass trailers to --trailers"
 msgstr "епилогът не може да се подаде на „--trailers“"
 
-#: builtin/commit.c:1066
+#: builtin/cummit.c:1066
 msgid "Error building trees"
 msgstr "Грешка при изграждане на дърветата"
 
-#: builtin/commit.c:1080 builtin/tag.c:316
+#: builtin/cummit.c:1080 builtin/tag.c:316
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr "Подайте съобщението с някоя от опциите „-m“ или „-F“.\n"
 
-#: builtin/commit.c:1124
+#: builtin/cummit.c:1124
 #, c-format
 msgid "--author '%s' is not 'Name <email>' and matches no existing author"
 msgstr ""
 "опцията „--author '%s'“ не отговаря на форма̀та „Име <е-поща>“ и не съвпада с "
 "никой автор"
 
-#: builtin/commit.c:1138
+#: builtin/cummit.c:1138
 #, c-format
 msgid "Invalid ignored mode '%s'"
 msgstr "Неправилен режим за игнорираните файлове: „%s“"
 
-#: builtin/commit.c:1156 builtin/commit.c:1451
+#: builtin/cummit.c:1156 builtin/cummit.c:1451
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr "Неправилен режим за неследените файлове: „%s“"
 
-#: builtin/commit.c:1227
+#: builtin/cummit.c:1227
 msgid "You are in the middle of a merge -- cannot reword."
 msgstr ""
 "В момента се извършва сливане, не може да промените съобщение при подаване."
 
-#: builtin/commit.c:1229
+#: builtin/cummit.c:1229
 msgid "You are in the middle of a cherry-pick -- cannot reword."
 msgstr ""
 "В момента се извършва отбиране на подаване, не може да промените съобщение "
 "при подаване."
 
-#: builtin/commit.c:1232
+#: builtin/cummit.c:1232
 #, c-format
 msgid "reword option of '%s' and path '%s' cannot be used together"
 msgstr "опцията за промяна на съобщението „%s“ и пътят „%s“ са несъвместими"
 
-#: builtin/commit.c:1234
+#: builtin/cummit.c:1234
 #, c-format
 msgid "reword option of '%s' and '%s' cannot be used together"
 msgstr "опциите „%s“ и „%s“ са несъвместими"
 
-#: builtin/commit.c:1254
+#: builtin/cummit.c:1254
 msgid "Using both --reset-author and --author does not make sense"
 msgstr "опциите „--reset-author“ и „--author“ са несъвместими"
 
-#: builtin/commit.c:1261
+#: builtin/cummit.c:1261
 msgid "You have nothing to amend."
 msgstr "Няма какво да бъде поправено."
 
-#: builtin/commit.c:1264
+#: builtin/cummit.c:1264
 msgid "You are in the middle of a merge -- cannot amend."
 msgstr "В момента се извършва сливане, не може да поправяте."
 
-#: builtin/commit.c:1266
+#: builtin/cummit.c:1266
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "В момента се извършва отбиране на подаване, не може да поправяте."
 
-#: builtin/commit.c:1268
+#: builtin/cummit.c:1268
 msgid "You are in the middle of a rebase -- cannot amend."
 msgstr "В момента се извършва пребазиране, не може да поправяте."
 
-#: builtin/commit.c:1271
+#: builtin/cummit.c:1271
 msgid "Options --squash and --fixup cannot be used together"
 msgstr "опциите „--squash“ и „--fixup“ са несъвместими."
 
-#: builtin/commit.c:1281
+#: builtin/cummit.c:1281
 msgid "Only one of -c/-C/-F/--fixup can be used."
 msgstr "опциите „-c“, „-C“, „-F“ и „--fixup““ са несъвместими."
 
-#: builtin/commit.c:1283
+#: builtin/cummit.c:1283
 msgid "Option -m cannot be combined with -c/-C/-F."
 msgstr "опцията „-m“ е несъвместима с „-c“, „-C“ и „-F“."
 
-#: builtin/commit.c:1292
+#: builtin/cummit.c:1292
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr ""
 "опцията „--reset-author“ може да се използва само заедно с „-C“, „-c“ или\n"
 "„--amend“."
 
-#: builtin/commit.c:1310
+#: builtin/cummit.c:1310
 msgid "Only one of --include/--only/--all/--interactive/--patch can be used."
 msgstr ""
 "опциите „--include“, „--only“, „--all“, „--interactive“ и „--patch“ са\n"
 "несъвместими."
 
-#: builtin/commit.c:1338
+#: builtin/cummit.c:1338
 #, c-format
 msgid "unknown option: --fixup=%s:%s"
 msgstr "непозната опция: --fixup=%s:%s"
 
-#: builtin/commit.c:1355
+#: builtin/cummit.c:1355
 #, c-format
 msgid "paths '%s ...' with -a does not make sense"
 msgstr "опцията „-a“ е несъвместима със задаването на пътища: „%s…“"
 
-#: builtin/commit.c:1486 builtin/commit.c:1655
+#: builtin/cummit.c:1486 builtin/cummit.c:1655
 msgid "show status concisely"
 msgstr "кратка информация за състоянието"
 
-#: builtin/commit.c:1488 builtin/commit.c:1657
+#: builtin/cummit.c:1488 builtin/cummit.c:1657
 msgid "show branch information"
 msgstr "информация за клоните"
 
-#: builtin/commit.c:1490
+#: builtin/cummit.c:1490
 msgid "show stash information"
 msgstr "информация за скатаното"
 
-#: builtin/commit.c:1492 builtin/commit.c:1659
+#: builtin/cummit.c:1492 builtin/cummit.c:1659
 msgid "compute full ahead/behind values"
 msgstr "изчисляване на точните стойности напред/назад"
 
-#: builtin/commit.c:1494
+#: builtin/cummit.c:1494
 msgid "version"
 msgstr "версия"
 
-#: builtin/commit.c:1494 builtin/commit.c:1661 builtin/push.c:551
+#: builtin/cummit.c:1494 builtin/cummit.c:1661 builtin/push.c:551
 #: builtin/worktree.c:690
 msgid "machine-readable output"
 msgstr "формат на изхода за четене от програма"
 
-#: builtin/commit.c:1497 builtin/commit.c:1663
+#: builtin/cummit.c:1497 builtin/cummit.c:1663
 msgid "show status in long format (default)"
 msgstr "подробна информация за състоянието (стандартно)"
 
-#: builtin/commit.c:1500 builtin/commit.c:1666
+#: builtin/cummit.c:1500 builtin/cummit.c:1666
 msgid "terminate entries with NUL"
 msgstr "разделяне на елементите с нулевия знак „NUL“"
 
-#: builtin/commit.c:1502 builtin/commit.c:1506 builtin/commit.c:1669
+#: builtin/cummit.c:1502 builtin/cummit.c:1506 builtin/cummit.c:1669
 #: builtin/fast-export.c:1172 builtin/fast-export.c:1175
 #: builtin/fast-export.c:1178 builtin/rebase.c:1111 parse-options.h:337
 msgid "mode"
 msgstr "РЕЖИМ"
 
-#: builtin/commit.c:1503 builtin/commit.c:1669
+#: builtin/cummit.c:1503 builtin/cummit.c:1669
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
 "извеждане на неследените файлове.  Възможните РЕЖИМи са „all“ (подробна "
 "информация), „normal“ (кратка информация), „no“ (без неследените файлове).  "
 "Стандартният РЕЖИМ е: „all“."
 
-#: builtin/commit.c:1507
+#: builtin/cummit.c:1507
 msgid ""
 "show ignored files, optional modes: traditional, matching, no. (Default: "
 "traditional)"
@@ -14555,11 +14555,11 @@ msgstr ""
 "„traditional“ (традиционен), „matching“ (напасващи), „no“ (без игнорираните "
 "файлове).  Стандартният РЕЖИМ е: „traditional“."
 
-#: builtin/commit.c:1509 parse-options.h:192
+#: builtin/cummit.c:1509 parse-options.h:192
 msgid "when"
 msgstr "КОГА"
 
-#: builtin/commit.c:1510
+#: builtin/cummit.c:1510
 msgid ""
 "ignore changes to submodules, optional when: all, dirty, untracked. "
 "(Default: all)"
@@ -14568,197 +14568,197 @@ msgstr ""
 "една от „all“ (всички), „dirty“ (тези с неподадени промени), "
 "„untracked“ (неследени)"
 
-#: builtin/commit.c:1512
+#: builtin/cummit.c:1512
 msgid "list untracked files in columns"
 msgstr "извеждане на неследените файлове в колони"
 
-#: builtin/commit.c:1513
+#: builtin/cummit.c:1513
 msgid "do not detect renames"
 msgstr "без засичане на преименуванията"
 
-#: builtin/commit.c:1515
+#: builtin/cummit.c:1515
 msgid "detect renames, optionally set similarity index"
 msgstr "засичане на преименуванията, може да се зададе коефициент на прилика"
 
-#: builtin/commit.c:1538
+#: builtin/cummit.c:1538
 msgid "Unsupported combination of ignored and untracked-files arguments"
 msgstr "Неподдържана комбинация от аргументи за игнорирани и неследени файлове"
 
-#: builtin/commit.c:1620
-msgid "suppress summary after successful commit"
+#: builtin/cummit.c:1620
+msgid "suppress summary after successful cummit"
 msgstr "без информация след успешно подаване"
 
-#: builtin/commit.c:1621
-msgid "show diff in commit message template"
+#: builtin/cummit.c:1621
+msgid "show diff in cummit message template"
 msgstr "добавяне на разликата към шаблона за съобщението при подаване"
 
-#: builtin/commit.c:1623
-msgid "Commit message options"
+#: builtin/cummit.c:1623
+msgid "cummit message options"
 msgstr "Опции за съобщението при подаване"
 
-#: builtin/commit.c:1624 builtin/merge.c:288 builtin/tag.c:456
+#: builtin/cummit.c:1624 builtin/merge.c:288 builtin/tag.c:456
 msgid "read message from file"
 msgstr "взимане на съобщението от ФАЙЛ"
 
-#: builtin/commit.c:1625
+#: builtin/cummit.c:1625
 msgid "author"
 msgstr "АВТОР"
 
-#: builtin/commit.c:1625
-msgid "override author for commit"
+#: builtin/cummit.c:1625
+msgid "override author for cummit"
 msgstr "задаване на АВТОР за подаването"
 
-#: builtin/commit.c:1626 builtin/gc.c:551
+#: builtin/cummit.c:1626 builtin/gc.c:551
 msgid "date"
 msgstr "ДАТА"
 
-#: builtin/commit.c:1626
-msgid "override date for commit"
+#: builtin/cummit.c:1626
+msgid "override date for cummit"
 msgstr "задаване на ДАТА за подаването"
 
-#: builtin/commit.c:1628 builtin/commit.c:1629 builtin/commit.c:1635
+#: builtin/cummit.c:1628 builtin/cummit.c:1629 builtin/cummit.c:1635
 #: parse-options.h:329 ref-filter.h:89
-msgid "commit"
+msgid "cummit"
 msgstr "ПОДАВАНЕ"
 
-#: builtin/commit.c:1628
-msgid "reuse and edit message from specified commit"
+#: builtin/cummit.c:1628
+msgid "reuse and edit message from specified cummit"
 msgstr "преизползване и редактиране на съобщението от указаното ПОДАВАНЕ"
 
-#: builtin/commit.c:1629
-msgid "reuse message from specified commit"
+#: builtin/cummit.c:1629
+msgid "reuse message from specified cummit"
 msgstr "преизползване на съобщението от указаното ПОДАВАНЕ"
 
 #. TRANSLATORS: Leave "[(amend|reword):]" as-is,
-#. and only translate <commit>.
+#. and only translate <cummit>.
 #.
-#: builtin/commit.c:1634
-msgid "[(amend|reword):]commit"
+#: builtin/cummit.c:1634
+msgid "[(amend|reword):]cummit"
 msgstr "[(amend|reword):]подаване"
 
-#: builtin/commit.c:1634
+#: builtin/cummit.c:1634
 msgid ""
-"use autosquash formatted message to fixup or amend/reword specified commit"
+"use autosquash formatted message to fixup or amend/reword specified cummit"
 msgstr ""
 "използване на автоматичното съобщение за вкарване на указаното ПОДАВАНЕ в "
 "предходното без следа или за промяна на подаването или съобщението"
 
-#: builtin/commit.c:1635
-msgid "use autosquash formatted message to squash specified commit"
+#: builtin/cummit.c:1635
+msgid "use autosquash formatted message to squash specified cummit"
 msgstr ""
 "използване на автоматичното съобщение за вкарване на указаното ПОДАВАНЕ в "
 "предното"
 
-#: builtin/commit.c:1636
-msgid "the commit is authored by me now (used with -C/-c/--amend)"
+#: builtin/cummit.c:1636
+msgid "the cummit is authored by me now (used with -C/-c/--amend)"
 msgstr ""
 "смяна на автора да съвпада с подаващия (използва се с „-C“/„-c“/„--amend“)"
 
-#: builtin/commit.c:1637 builtin/interpret-trailers.c:111
+#: builtin/cummit.c:1637 builtin/interpret-trailers.c:111
 msgid "trailer"
 msgstr "ЕПИЛОГ"
 
-#: builtin/commit.c:1637
+#: builtin/cummit.c:1637
 msgid "add custom trailer(s)"
 msgstr "добавяне на друг ЕПИЛОГ"
 
-#: builtin/commit.c:1638 builtin/log.c:1769 builtin/merge.c:306
+#: builtin/cummit.c:1638 builtin/log.c:1769 builtin/merge.c:306
 #: builtin/pull.c:146 builtin/revert.c:110
 msgid "add a Signed-off-by trailer"
 msgstr "добавяне на епилог за подпис „Signed-off-by“"
 
-#: builtin/commit.c:1639
+#: builtin/cummit.c:1639
 msgid "use specified template file"
 msgstr "използване на указания шаблонен ФАЙЛ"
 
-#: builtin/commit.c:1640
-msgid "force edit of commit"
+#: builtin/cummit.c:1640
+msgid "force edit of cummit"
 msgstr "редактиране на подаване"
 
-#: builtin/commit.c:1642
-msgid "include status in commit message template"
+#: builtin/cummit.c:1642
+msgid "include status in cummit message template"
 msgstr "вмъкване на състоянието в шаблона за съобщението при подаване"
 
-#: builtin/commit.c:1647
-msgid "Commit contents options"
+#: builtin/cummit.c:1647
+msgid "cummit contents options"
 msgstr "Опции за избор на файлове при подаване"
 
-#: builtin/commit.c:1648
-msgid "commit all changed files"
+#: builtin/cummit.c:1648
+msgid "cummit all changed files"
 msgstr "подаване на всички променени файлове"
 
-#: builtin/commit.c:1649
-msgid "add specified files to index for commit"
+#: builtin/cummit.c:1649
+msgid "add specified files to index for cummit"
 msgstr "добавяне на указаните файлове към индекса за подаване"
 
-#: builtin/commit.c:1650
+#: builtin/cummit.c:1650
 msgid "interactively add files"
 msgstr "интерактивно добавяне на файлове"
 
-#: builtin/commit.c:1651
+#: builtin/cummit.c:1651
 msgid "interactively add changes"
 msgstr "интерактивно добавяне на промени"
 
-#: builtin/commit.c:1652
-msgid "commit only specified files"
+#: builtin/cummit.c:1652
+msgid "cummit only specified files"
 msgstr "подаване само на указаните файлове"
 
-#: builtin/commit.c:1653
-msgid "bypass pre-commit and commit-msg hooks"
+#: builtin/cummit.c:1653
+msgid "bypass pre-cummit and cummit-msg hooks"
 msgstr ""
 "без изпълнение на куките преди подаване и при промяна на съобщението за "
-"подаване (pre-commit и commit-msg)"
+"подаване (pre-cummit и cummit-msg)"
 
-#: builtin/commit.c:1654
-msgid "show what would be committed"
+#: builtin/cummit.c:1654
+msgid "show what would be cummitted"
 msgstr "отпечатване на това, което би било подадено"
 
-#: builtin/commit.c:1667
-msgid "amend previous commit"
+#: builtin/cummit.c:1667
+msgid "amend previous cummit"
 msgstr "поправяне на предишното подаване"
 
-#: builtin/commit.c:1668
+#: builtin/cummit.c:1668
 msgid "bypass post-rewrite hook"
 msgstr "без изпълнение на куката след презаписване (post-rewrite)"
 
-#: builtin/commit.c:1675
+#: builtin/cummit.c:1675
 msgid "ok to record an empty change"
 msgstr "позволяване на празни подавания"
 
-#: builtin/commit.c:1677
+#: builtin/cummit.c:1677
 msgid "ok to record a change with an empty message"
 msgstr "позволяване на подавания с празни съобщения"
 
-#: builtin/commit.c:1753
+#: builtin/cummit.c:1753
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "Повреден файл за върха за сливането „MERGE_HEAD“ (%s)"
 
-#: builtin/commit.c:1760
+#: builtin/cummit.c:1760
 msgid "could not read MERGE_MODE"
 msgstr "режимът на сливане „MERGE_MODE“ не може да бъде прочетен"
 
-#: builtin/commit.c:1781
+#: builtin/cummit.c:1781
 #, c-format
-msgid "could not read commit message: %s"
+msgid "could not read cummit message: %s"
 msgstr "съобщението за подаване не може да бъде прочетено: %s"
 
-#: builtin/commit.c:1788
+#: builtin/cummit.c:1788
 #, c-format
-msgid "Aborting commit due to empty commit message.\n"
+msgid "Aborting cummit due to empty cummit message.\n"
 msgstr "Неизвършване на подаване поради празно съобщение.\n"
 
-#: builtin/commit.c:1793
+#: builtin/cummit.c:1793
 #, c-format
-msgid "Aborting commit; you did not edit the message.\n"
+msgid "Aborting cummit; you did not edit the message.\n"
 msgstr "Неизвършване на подаване поради нередактирано съобщение.\n"
 
-#: builtin/commit.c:1804
+#: builtin/cummit.c:1804
 #, c-format
-msgid "Aborting commit due to empty commit message body.\n"
+msgid "Aborting cummit due to empty cummit message body.\n"
 msgstr "Неизвършване на подаване поради празно съобщение.\n"
 
-#: builtin/commit.c:1840
+#: builtin/cummit.c:1840
 msgid ""
 "repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -15151,7 +15151,7 @@ msgstr ""
 "ms"
 
 #: builtin/describe.c:26
-msgid "git describe [<options>] [<commit-ish>...]"
+msgid "git describe [<options>] [<cummit-ish>...]"
 msgstr "git describe [ОПЦИЯ…] [УКАЗАТЕЛ_КЪМ_ПОДАВАНЕ…]"
 
 #: builtin/describe.c:27
@@ -15215,7 +15215,7 @@ msgstr ""
 
 #: builtin/describe.c:458
 #, c-format
-msgid "traversed %lu commits\n"
+msgid "traversed %lu cummits\n"
 msgstr "претърсени са %lu подавания\n"
 
 #: builtin/describe.c:461
@@ -15239,11 +15239,11 @@ msgstr "Неправилно име на обект „%s“"
 
 #: builtin/describe.c:540
 #, c-format
-msgid "%s is neither a commit nor blob"
+msgid "%s is neither a cummit nor blob"
 msgstr "„%s“ не е нито подаване, нито обект-BLOB"
 
 #: builtin/describe.c:554
-msgid "find the tag that comes after the commit"
+msgid "find the tag that comes after the cummit"
 msgstr "откриване на етикета, който следва подаване"
 
 #: builtin/describe.c:555
@@ -15285,7 +15285,7 @@ msgid "do not consider tags matching <pattern>"
 msgstr "да не се търси измежду етикетите напасващи този ШАБЛОН"
 
 #: builtin/describe.c:570 builtin/name-rev.c:544
-msgid "show abbreviated commit object as fallback"
+msgid "show abbreviated cummit object as fallback"
 msgstr "извеждане на съкратено име на обект като резервен вариант"
 
 #: builtin/describe.c:571 builtin/describe.c:574
@@ -15307,11 +15307,11 @@ msgstr "Не са открити имена — нищо не може да бъ
 
 #: builtin/describe.c:673 builtin/describe.c:675
 #, c-format
-msgid "option '%s' and commit-ishes cannot be used together"
+msgid "option '%s' and cummit-ishes cannot be used together"
 msgstr "опциите „%s“ и указателите към обекти са несъвместими"
 
 #: builtin/diff-tree.c:157
-msgid "--merge-base only works with two commits"
+msgid "--merge-base only works with two cummits"
 msgstr "опцията „--merge-base“ изисква точно две подавания"
 
 #: builtin/diff.c:92
@@ -15354,7 +15354,7 @@ msgid "%s...%s: multiple merge bases, using %s"
 msgstr "%s...%s: много бази за сливане, ще се ползва „%s“"
 
 #: builtin/difftool.c:31
-msgid "git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"
+msgid "git difftool [<options>] [<cummit> [<cummit>]] [--] [<path>...]"
 msgstr "git difftool [ОПЦИЯ…] [ПОДАВАНЕ [ПОДАВАНЕ]] [[--] ПЪТ…]"
 
 #: builtin/difftool.c:287
@@ -15519,7 +15519,7 @@ msgid "select handling of tags that tag filtered objects"
 msgstr "Как да се обработват етикетите на филтрираните обекти"
 
 #: builtin/fast-export.c:1179
-msgid "select handling of commit messages in an alternate encoding"
+msgid "select handling of cummit messages in an alternate encoding"
 msgstr ""
 "как да се обработват съобщенията за подаване, които са в друго кодиране"
 
@@ -15541,7 +15541,7 @@ msgstr ""
 "да се използва изкуствено име на човек при липса на създател на етикета"
 
 #: builtin/fast-export.c:1192
-msgid "output full tree for each commit"
+msgid "output full tree for each cummit"
 msgstr "извеждане на цялото дърво за всяко подаване"
 
 #: builtin/fast-export.c:1194
@@ -15579,7 +15579,7 @@ msgstr ""
 "идентификатор на обект"
 
 #: builtin/fast-export.c:1205
-msgid "show original object ids of blobs/commits"
+msgid "show original object ids of blobs/cummits"
 msgstr "извеждане на първоначалните идентификатори на обектите BLOB/подавяния"
 
 #: builtin/fast-export.c:1207
@@ -15772,7 +15772,7 @@ msgid "check for forced-updates on all updated branches"
 msgstr "проверка за принудителни обновявания на всички клони"
 
 #: builtin/fetch.c:220
-msgid "write the commit-graph after fetching"
+msgid "write the cummit-graph after fetching"
 msgstr "запазване на гра̀фа с подаванията след доставяне"
 
 #: builtin/fetch.c:222
@@ -16090,11 +16090,11 @@ msgid "git for-each-ref [--points-at <object>]"
 msgstr "git for-each-ref [--points ОБЕКТ]"
 
 #: builtin/for-each-ref.c:12
-msgid "git for-each-ref [--merged [<commit>]] [--no-merged [<commit>]]"
+msgid "git for-each-ref [--merged [<cummit>]] [--no-merged [<cummit>]]"
 msgstr "git for-each-ref [--merged [ПОДАВАНЕ]] [--no-merged [ПОДАВАНЕ]]"
 
 #: builtin/for-each-ref.c:13
-msgid "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
+msgid "git for-each-ref [--contains [<cummit>]] [--no-contains [<cummit>]]"
 msgstr "git for-each-ref [--contains [ПОДАВАНЕ]] [--no-contains [ПОДАВАНЕ]]"
 
 #: builtin/for-each-ref.c:31
@@ -16134,11 +16134,11 @@ msgid "print only refs that are not merged"
 msgstr "извеждане само на неслетите указатели"
 
 #: builtin/for-each-ref.c:49
-msgid "print only refs which contain the commit"
+msgid "print only refs which contain the cummit"
 msgstr "извеждане само на указателите, които съдържат това ПОДАВАНЕ"
 
 #: builtin/for-each-ref.c:50
-msgid "print only refs which don't contain the commit"
+msgid "print only refs which don't contain the cummit"
 msgstr "извеждане само на указателите, които не съдържат това ПОДАВАНЕ"
 
 #: builtin/for-each-repo.c:9
@@ -16266,7 +16266,7 @@ msgstr "„%s“: неправилен указател за SHA1: „%s“"
 
 #: builtin/fsck.c:537
 #, c-format
-msgid "%s: not a commit"
+msgid "%s: not a cummit"
 msgstr "%s: не е подаване!"
 
 #: builtin/fsck.c:591
@@ -16529,7 +16529,7 @@ msgid "unrecognized --schedule argument '%s'"
 msgstr "непознат аргумент към „--schedule“: %s"
 
 #: builtin/gc.c:870
-msgid "failed to write commit-graph"
+msgid "failed to write cummit-graph"
 msgstr "графът с подаванията не може да бъде записан"
 
 #: builtin/gc.c:906
@@ -17770,7 +17770,7 @@ msgstr "може да укажете максимум една директор�
 
 #: builtin/log.c:1517 builtin/log.c:2344 builtin/log.c:2346 builtin/log.c:2358
 #, c-format
-msgid "unknown commit %s"
+msgid "unknown cummit %s"
 msgstr "непознато подаване: „%s“"
 
 #: builtin/log.c:1528 builtin/replace.c:58 builtin/replace.c:207
@@ -17785,9 +17785,9 @@ msgstr "точната база за сливане не може да бъде 
 
 #: builtin/log.c:1547
 msgid ""
-"failed to get upstream, if you want to record base commit automatically,\n"
+"failed to get upstream, if you want to record base cummit automatically,\n"
 "please use git branch --set-upstream-to to track a remote branch.\n"
-"Or you could specify base commit by --base=<base-commit-id> manually"
+"Or you could specify base cummit by --base=<base-cummit-id> manually"
 msgstr ""
 "следеният клон не може да бъде установен.  Ако искате ръчно да го\n"
 "зададете, използвайте „git branch --set-upstream-to“.\n"
@@ -17799,11 +17799,11 @@ msgid "failed to find exact merge base"
 msgstr "точната база при сливане не може да бъде открита"
 
 #: builtin/log.c:1587
-msgid "base commit should be the ancestor of revision list"
+msgid "base cummit should be the ancestor of revision list"
 msgstr "базовото подаване трябва да е предшественикът на списъка с версиите"
 
 #: builtin/log.c:1597
-msgid "base commit shouldn't be in revision list"
+msgid "base cummit shouldn't be in revision list"
 msgstr "базовото подаване не може да е в списъка с версиите"
 
 #: builtin/log.c:1655
@@ -17900,7 +17900,7 @@ msgid "output all-zero hash in From header"
 msgstr "в заглавната част „From:“ (от) контролната сума да е само от нули"
 
 #: builtin/log.c:1804
-msgid "don't include a patch matching a commit upstream"
+msgid "don't include a patch matching a cummit upstream"
 msgstr "без кръпки, които присъстват в следения клон"
 
 #: builtin/log.c:1806
@@ -17937,7 +17937,7 @@ msgid "ident"
 msgstr "ИДЕНТИЧНОСТ"
 
 #: builtin/log.c:1814
-msgid "set From address to <ident> (or committer ident if absent)"
+msgid "set From address to <ident> (or cummitter ident if absent)"
 msgstr ""
 "задаване на адреса в заглавната част „From“ (от) да е тази ИДЕНТИЧНОСТ.  Ако "
 "не е зададена такава, се взима адреса на подаващия"
@@ -17979,7 +17979,7 @@ msgid "add a signature"
 msgstr "добавяне на поле за подпис"
 
 #: builtin/log.c:1830
-msgid "base-commit"
+msgid "base-cummit"
 msgstr "БАЗОВО_ПОДАВАНЕ"
 
 #: builtin/log.c:1831
@@ -18301,15 +18301,15 @@ msgid "keep non patch brackets in subject"
 msgstr "запазване на допълнителните квадратни скоби в темата"
 
 #: builtin/mailinfo.c:62
-msgid "copy Message-ID to the end of commit message"
+msgid "copy Message-ID to the end of cummit message"
 msgstr ""
 "копиране на идентификатора на съобщение „Message-ID“ в края на съобщението "
 "при подаване"
 
 #: builtin/mailinfo.c:64
-msgid "re-code metadata to i18n.commitEncoding"
+msgid "re-code metadata to i18n.cummitEncoding"
 msgstr ""
-"прекодиране на метаданните към зададеното в „i18n.commitEncoding“ кодиране"
+"прекодиране на метаданните към зададеното в „i18n.cummitEncoding“ кодиране"
 
 #: builtin/mailinfo.c:67
 msgid "disable charset re-coding of metadata"
@@ -18345,23 +18345,23 @@ msgid "empty mbox: '%s'"
 msgstr "празна пощенска кутия mbox: „%s“"
 
 #: builtin/merge-base.c:32
-msgid "git merge-base [-a | --all] <commit> <commit>..."
+msgid "git merge-base [-a | --all] <cummit> <cummit>..."
 msgstr "git merge-base [-a | --all] ПОДАВАНЕ ПОДАВАНЕ…"
 
 #: builtin/merge-base.c:33
-msgid "git merge-base [-a | --all] --octopus <commit>..."
+msgid "git merge-base [-a | --all] --octopus <cummit>..."
 msgstr "git merge-base [-a | --all] --octopus ПОДАВАНЕ…"
 
 #: builtin/merge-base.c:34
-msgid "git merge-base --independent <commit>..."
+msgid "git merge-base --independent <cummit>..."
 msgstr "git merge-base --independent ПОДАВАНЕ…"
 
 #: builtin/merge-base.c:35
-msgid "git merge-base --is-ancestor <commit> <commit>"
+msgid "git merge-base --is-ancestor <cummit> <cummit>"
 msgstr "git merge-base --is-ancestor ПОДАВАНЕ_1 ПОДАВАНЕ_2"
 
 #: builtin/merge-base.c:36
-msgid "git merge-base --fork-point <ref> [<commit>]"
+msgid "git merge-base --fork-point <ref> [<cummit>]"
 msgstr "git merge-base --fork-point УКАЗАТЕЛ [ПОДАВАНЕ]"
 
 #: builtin/merge-base.c:143
@@ -18382,7 +18382,7 @@ msgid "is the first one ancestor of the other?"
 msgstr "ПОДАВАНЕ_1 предшественик ли е на ПОДАВАНЕ_2?"
 
 #: builtin/merge-base.c:151
-msgid "find where <commit> forked from reflog of <ref>"
+msgid "find where <cummit> forked from reflog of <ref>"
 msgstr "откриване къде ПОДАВАНЕто се е отклонило от историята на УКАЗАТЕЛя"
 
 #: builtin/merge-file.c:9
@@ -18461,7 +18461,7 @@ msgid "Merging %s with %s\n"
 msgstr "Сливане на „%s“ с „%s“\n"
 
 #: builtin/merge.c:59
-msgid "git merge [<options>] [<commit>...]"
+msgid "git merge [<options>] [<cummit>...]"
 msgstr "git merge [ОПЦИЯ…] [ПОДАВАНЕ…]"
 
 #: builtin/merge.c:125
@@ -18501,21 +18501,21 @@ msgid "(synonym to --stat)"
 msgstr "(псевдоним на „--stat“)"
 
 #: builtin/merge.c:264 builtin/pull.c:143
-msgid "add (at most <n>) entries from shortlog to merge commit message"
+msgid "add (at most <n>) entries from shortlog to merge cummit message"
 msgstr ""
 "добавяне (на максимум такъв БРОЙ) записи от съкратения журнал в съобщението "
 "за подаване"
 
 #: builtin/merge.c:267 builtin/pull.c:149
-msgid "create a single commit instead of doing a merge"
+msgid "create a single cummit instead of doing a merge"
 msgstr "създаване на едно подаване вместо извършване на сливане"
 
 #: builtin/merge.c:269 builtin/pull.c:152
-msgid "perform a commit if the merge succeeds (default)"
+msgid "perform a cummit if the merge succeeds (default)"
 msgstr "извършване на подаване при успешно сливане (стандартно действие)"
 
 #: builtin/merge.c:271 builtin/pull.c:155
-msgid "edit message before committing"
+msgid "edit message before cummitting"
 msgstr "редактиране на съобщението преди подаване"
 
 #: builtin/merge.c:273
@@ -18548,7 +18548,7 @@ msgid "option for selected merge strategy"
 msgstr "ОПЦИЯ за избраната стратегия за сливане"
 
 #: builtin/merge.c:285
-msgid "merge commit message (for a non-fast-forward merge)"
+msgid "merge cummit message (for a non-fast-forward merge)"
 msgstr "СЪОБЩЕНИЕ при подаването със сливане (при същински сливания)"
 
 #: builtin/merge.c:291
@@ -18572,10 +18572,10 @@ msgid "allow merging unrelated histories"
 msgstr "позволяване на сливане на независими истории"
 
 #: builtin/merge.c:307
-msgid "bypass pre-merge-commit and commit-msg hooks"
+msgid "bypass pre-merge-cummit and cummit-msg hooks"
 msgstr ""
 "без изпълнение на куките преди подаване и сливане и при промяна на "
-"съобщението за подаване (pre-merge-commit и commit-msg)"
+"съобщението за подаване (pre-merge-cummit и cummit-msg)"
 
 #: builtin/merge.c:323
 msgid "could not run stash."
@@ -18600,7 +18600,7 @@ msgstr "Вече е обновено (няма какво да се вкара)"
 
 #: builtin/merge.c:417
 #, c-format
-msgid "Squash commit -- not updating HEAD\n"
+msgid "Squash cummit -- not updating HEAD\n"
 msgstr "Вкарано подаване — указателят „HEAD“ няма да бъде обновен\n"
 
 #: builtin/merge.c:467
@@ -18611,7 +18611,7 @@ msgstr ""
 
 #: builtin/merge.c:517
 #, c-format
-msgid "'%s' does not point to a commit"
+msgid "'%s' does not point to a cummit"
 msgstr "„%s“ не сочи към подаване"
 
 #: builtin/merge.c:605
@@ -18640,14 +18640,14 @@ msgstr "От „%s“ не може да се чете"
 
 #: builtin/merge.c:825
 #, c-format
-msgid "Not committing merge; use 'git commit' to complete the merge.\n"
+msgid "Not cummitting merge; use 'git cummit' to complete the merge.\n"
 msgstr ""
 "Сливането няма да бъде подадено.  За завършването му и подаването му "
-"използвайте командата „git commit“.\n"
+"използвайте командата „git cummit“.\n"
 
 #: builtin/merge.c:831
 msgid ""
-"Please enter a commit message to explain why this merge is necessary,\n"
+"Please enter a cummit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
 "\n"
 msgstr ""
@@ -18655,20 +18655,20 @@ msgstr ""
 "сливането, особено ако сливате обновен отдалечен клон в тематичен клон.\n"
 
 #: builtin/merge.c:836
-msgid "An empty message aborts the commit.\n"
+msgid "An empty message aborts the cummit.\n"
 msgstr "Празно съобщение предотвратява подаването.\n"
 
 #: builtin/merge.c:839
 #, c-format
 msgid ""
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
-"the commit.\n"
+"the cummit.\n"
 msgstr ""
 "Редовете, които започват с „%c“, ще бъдат пропуснати, а празно\n"
 "съобщение преустановява подаването.\n"
 
 #: builtin/merge.c:894
-msgid "Empty commit message."
+msgid "Empty cummit message."
 msgstr "Празно съобщение при подаване."
 
 #: builtin/merge.c:909
@@ -18678,7 +18678,7 @@ msgstr "Първият етап на сливането завърши.\n"
 
 #: builtin/merge.c:970
 #, c-format
-msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
+msgid "Automatic merge failed; fix conflicts and then cummit the result.\n"
 msgstr ""
 "Неуспешно автоматично сливане — коригирайте конфликтите и подайте "
 "резултата.\n"
@@ -18739,7 +18739,7 @@ msgstr "В момента не се извършва сливане (липсв�
 #: builtin/merge.c:1379
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Не сте завършили сливане.  (Указателят „MERGE_HEAD“ съществува).\n"
 "Подайте промените си, преди да започнете ново сливане."
@@ -18747,7 +18747,7 @@ msgstr ""
 #: builtin/merge.c:1386
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Не сте завършили отбиране на подаване (указателят „CHERRY_PICK_HEAD“\n"
 "съществува).  Подайте промените си, преди да започнете ново сливане."
@@ -18759,16 +18759,16 @@ msgstr ""
 "съществува)."
 
 #: builtin/merge.c:1421
-msgid "No commit specified and merge.defaultToUpstream not set."
+msgid "No cummit specified and merge.defaultToUpstream not set."
 msgstr ""
 "Не е указано подаване и настройката „merge.defaultToUpstream“ не е зададена."
 
 #: builtin/merge.c:1438
-msgid "Squash commit into empty head not supported yet"
+msgid "Squash cummit into empty head not supported yet"
 msgstr "Вкарване на подаване във връх без история все още не се поддържа"
 
 #: builtin/merge.c:1440
-msgid "Non-fast-forward commit does not make sense into an empty head"
+msgid "Non-fast-forward cummit does not make sense into an empty head"
 msgstr ""
 "Понеже върхът е без история, сливания, които не са превъртания, са невъзможни"
 
@@ -18778,7 +18778,7 @@ msgid "%s - not something we can merge"
 msgstr "„%s“ — не е нещо, което може да се слее"
 
 #: builtin/merge.c:1447
-msgid "Can merge only exactly one commit into empty head"
+msgid "Can merge only exactly one cummit into empty head"
 msgstr "Може да слеете точно едно подаване във връх без история"
 
 #: builtin/merge.c:1534
@@ -18829,7 +18829,7 @@ msgstr ""
 
 #: builtin/merge.c:1749
 #, c-format
-msgid "Automatic merge went well; stopped before committing as requested\n"
+msgid "Automatic merge went well; stopped before cummitting as requested\n"
 msgstr ""
 "Автоматичното сливане завърши успешно.  Самото подаване не е извършено\n"
 
@@ -18936,7 +18936,7 @@ msgstr ""
 "индекси"
 
 #: builtin/multi-pack-index.c:107
-msgid "refs snapshot for selecting bitmap commits"
+msgid "refs snapshot for selecting bitmap cummits"
 msgstr "снимка на указателите за избор на подавания по битова маска"
 
 #: builtin/multi-pack-index.c:206
@@ -19046,7 +19046,7 @@ msgid "renaming '%s' failed"
 msgstr "неуспешно преименуване на „%s“"
 
 #: builtin/name-rev.c:474
-msgid "git name-rev [<options>] <commit>..."
+msgid "git name-rev [<options>] <cummit>..."
 msgstr "git name-rev [ОПЦИЯ…] ПОДАВАНЕ…"
 
 #: builtin/name-rev.c:475
@@ -19062,7 +19062,7 @@ msgid "print only ref-based names (no object names)"
 msgstr "извеждане само на имена на базата на указатели (а не имена на обекти)"
 
 #: builtin/name-rev.c:534
-msgid "only use tags to name the commits"
+msgid "only use tags to name the cummits"
 msgstr "използване само на етикетите за именуване на подаванията"
 
 #: builtin/name-rev.c:536
@@ -19074,7 +19074,7 @@ msgid "ignore refs matching <pattern>"
 msgstr "игнориране на указателите напасващи на ШАБЛОНа"
 
 #: builtin/name-rev.c:540
-msgid "list all commits reachable from all refs"
+msgid "list all cummits reachable from all refs"
 msgstr ""
 "извеждане на всички подавания, които може да бъдат достигнати от всички "
 "указатели"
@@ -19132,8 +19132,8 @@ msgstr ""
 "УКАЗАТЕЛ_ЗА_БЕЛЕЖКА"
 
 #: builtin/notes.c:35
-msgid "git notes merge --commit [-v | -q]"
-msgstr "git notes merge --commit [-v | -q]"
+msgid "git notes merge --cummit [-v | -q]"
+msgstr "git notes merge --cummit [-v | -q]"
 
 #: builtin/notes.c:36
 msgid "git notes merge --abort [-v | -q]"
@@ -19184,8 +19184,8 @@ msgid "git notes merge [<options>] <notes-ref>"
 msgstr "git notes merge [ОПЦИЯ…] УКАЗАТЕЛ_ЗА_БЕЛЕЖКА"
 
 #: builtin/notes.c:76
-msgid "git notes merge --commit [<options>]"
-msgstr "git notes merge --commit [ОПЦИЯ…]"
+msgid "git notes merge --cummit [<options>]"
+msgstr "git notes merge --cummit [ОПЦИЯ…]"
 
 #: builtin/notes.c:77
 msgid "git notes merge --abort [<options>]"
@@ -19388,11 +19388,11 @@ msgid "failed to read ref NOTES_MERGE_PARTIAL"
 msgstr "указателят „NOTES_MERGE_PARTIAL“ не може да бъде прочетен"
 
 #: builtin/notes.c:722
-msgid "could not find commit from NOTES_MERGE_PARTIAL."
+msgid "could not find cummit from NOTES_MERGE_PARTIAL."
 msgstr "подаването от „NOTES_MERGE_PARTIAL“ не може да се открие."
 
 #: builtin/notes.c:724
-msgid "could not parse commit from NOTES_MERGE_PARTIAL."
+msgid "could not parse cummit from NOTES_MERGE_PARTIAL."
 msgstr "подаването от „NOTES_MERGE_PARTIAL“ не може да се анализира."
 
 #: builtin/notes.c:737
@@ -19427,11 +19427,11 @@ msgstr ""
 "резултати)"
 
 #: builtin/notes.c:788
-msgid "Committing unmerged notes"
+msgid "cummitting unmerged notes"
 msgstr "Подаване на неслети бележки"
 
 #: builtin/notes.c:790
-msgid "finalize notes merge by committing unmerged notes"
+msgid "finalize notes merge by cummitting unmerged notes"
 msgstr "завършване на сливането чрез подаване на неслети бележки"
 
 #: builtin/notes.c:792
@@ -19443,8 +19443,8 @@ msgid "abort notes merge"
 msgstr "преустановяване на сливането на бележки"
 
 #: builtin/notes.c:805
-msgid "cannot mix --commit, --abort or -s/--strategy"
-msgstr "опциите „--commit“, „--abort“ и „-s“/„--strategy“ са несъвместими"
+msgid "cannot mix --cummit, --abort or -s/--strategy"
+msgstr "опциите „--cummit“, „--abort“ и „-s“/„--strategy“ са несъвместими"
 
 #: builtin/notes.c:810
 msgid "must specify a notes ref to merge"
@@ -19468,12 +19468,12 @@ msgstr "не може да се запази връзка към указате�
 #: builtin/notes.c:880
 #, c-format
 msgid ""
-"Automatic notes merge failed. Fix conflicts in %s and commit the result with "
-"'git notes merge --commit', or abort the merge with 'git notes merge --"
+"Automatic notes merge failed. Fix conflicts in %s and cummit the result with "
+"'git notes merge --cummit', or abort the merge with 'git notes merge --"
 "abort'.\n"
 msgstr ""
 "Неуспешно сливане на бележките.  Разрешете конфликтите в „%s“ и подайте "
-"резултата с „git notes merge --commit“ или преустановете сливането с "
+"резултата с „git notes merge --cummit“ или преустановете сливането с "
 "командата „git notes merge --abort“.\n"
 
 #: builtin/notes.c:899 builtin/tag.c:594
@@ -19861,7 +19861,7 @@ msgid "pack compression level"
 msgstr "ниво на компресиране при пакетиране"
 
 #: builtin/pack-objects.c:3949
-msgid "do not hide commits by grafts"
+msgid "do not hide cummits by grafts"
 msgstr ""
 "извеждане на всички родители — дори и тези, които нормално са скрити при "
 "присажданията"
@@ -20030,10 +20030,10 @@ msgid "allow fast-forward"
 msgstr "позволяване на превъртания"
 
 #: builtin/pull.c:165
-msgid "control use of pre-merge-commit and commit-msg hooks"
+msgid "control use of pre-merge-cummit and cummit-msg hooks"
 msgstr ""
 "дали куките преди подаване и сливане и при промяна на съобщението за "
-"подаване (pre-merge-commit и commit-msg) да се изпълнят"
+"подаване (pre-merge-cummit и cummit-msg) да се изпълнят"
 
 #: builtin/pull.c:171 parse-options.h:340
 msgid "automatically stash/stash pop before and after"
@@ -20138,7 +20138,7 @@ msgstr ""
 
 #: builtin/pull.c:600
 #, c-format
-msgid "unable to access commit %s"
+msgid "unable to access cummit %s"
 msgstr "недостъпно подаване: %s"
 
 #: builtin/pull.c:908
@@ -20183,7 +20183,7 @@ msgid "pull with rebase"
 msgstr "издърпване с пребазиране"
 
 #: builtin/pull.c:1051
-msgid "please commit or stash them."
+msgid "please cummit or stash them."
 msgstr "трябва да подадете или скатаете промените."
 
 #: builtin/pull.c:1076
@@ -20191,7 +20191,7 @@ msgstr "трябва да подадете или скатаете промен�
 msgid ""
 "fetch updated the current branch head.\n"
 "fast-forwarding your working tree from\n"
-"commit %s."
+"cummit %s."
 msgstr ""
 "доставянето обнови върха на текущия клон.  Работното\n"
 "ви копие бе превъртяно от подаване „%s“."
@@ -20391,8 +20391,8 @@ msgstr ""
 
 #: builtin/push.c:280
 msgid ""
-"You cannot update a remote ref that points at a non-commit object,\n"
-"or update a remote ref to make it point at a non-commit object,\n"
+"You cannot update a remote ref that points at a non-cummit object,\n"
+"or update a remote ref to make it point at a non-cummit object,\n"
 "without using the '--force' option.\n"
 msgstr ""
 "Без да укажете опцията „--force“, не може да обновите отдалечен\n"
@@ -20573,7 +20573,7 @@ msgstr "извеждане само на информацията за втор�
 
 #: builtin/range-diff.c:60 builtin/range-diff.c:64
 #, c-format
-msgid "not a commit range: '%s'"
+msgid "not a cummit range: '%s'"
 msgstr "не е диапазон с подавания: „%s“"
 
 #: builtin/range-diff.c:74
@@ -20581,7 +20581,7 @@ msgid "single arg format must be symmetric range"
 msgstr "вариантът с единствен аргумент изисква симетричен диапазон"
 
 #: builtin/range-diff.c:89
-msgid "need two commit ranges"
+msgid "need two cummit ranges"
 msgstr "необходими са два диапазона с подавания"
 
 #: builtin/read-tree.c:41
@@ -20698,7 +20698,7 @@ msgid "could not generate todo list"
 msgstr "файлът с командите не може да се генерира"
 
 #: builtin/rebase.c:331
-msgid "a base commit must be provided with --upstream or --onto"
+msgid "a base cummit must be provided with --upstream or --onto"
 msgstr "опциите „--upstream“ и „--onto“ изискват базово подаване"
 
 #: builtin/rebase.c:390
@@ -20725,7 +20725,7 @@ msgstr "неправилната стойност на „allow_rerere_autoupdat
 msgid ""
 "Resolve all conflicts manually, mark them as resolved with\n"
 "\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
+"You can instead skip this cummit: run \"git rebase --skip\".\n"
 "To abort and get back to the state before \"git rebase\", run \"git rebase --"
 "abort\"."
 msgstr ""
@@ -20825,11 +20825,11 @@ msgid "do not show diffstat of what changed upstream"
 msgstr "без извеждане на статистика с промените в следения клон"
 
 #: builtin/rebase.c:1038
-msgid "add a Signed-off-by trailer to each commit"
+msgid "add a Signed-off-by trailer to each cummit"
 msgstr "добавяне на епилог за подпис „Signed-off-by“ към всяко подаване"
 
 #: builtin/rebase.c:1041
-msgid "make committer date match author date"
+msgid "make cummitter date match author date"
 msgstr "датата на подаващия да отговаря на датата на автора"
 
 #: builtin/rebase.c:1043
@@ -20849,7 +20849,7 @@ msgid "ignore changes in whitespace"
 msgstr "без промени в празните знаци"
 
 #: builtin/rebase.c:1053 builtin/rebase.c:1056
-msgid "cherry-pick all commits, even if unchanged"
+msgid "cherry-pick all cummits, even if unchanged"
 msgstr "отбиране на всички подавания дори да няма промени"
 
 #: builtin/rebase.c:1058
@@ -20885,7 +20885,7 @@ msgid "use merging strategies to rebase"
 msgstr "при пребазиране да се ползва стратегия със сливане"
 
 #: builtin/rebase.c:1081
-msgid "let the user edit the list of commits to rebase"
+msgid "let the user edit the list of cummits to rebase"
 msgstr ""
 "позволяване на потребителя да редактира списъка с подавания за пребазиране"
 
@@ -20894,26 +20894,26 @@ msgid "(DEPRECATED) try to recreate merges instead of ignoring them"
 msgstr "(ОСТАРЯЛО) пресъздаване на сливанията вместо да се прескачат"
 
 #: builtin/rebase.c:1090
-msgid "how to handle commits that become empty"
+msgid "how to handle cummits that become empty"
 msgstr "как да се обработват оказалите се празни подавания"
 
 #: builtin/rebase.c:1093
-msgid "keep commits which start empty"
+msgid "keep cummits which start empty"
 msgstr "запазванe на първоначално празните подавания"
 
 #: builtin/rebase.c:1097
-msgid "move commits that begin with squash!/fixup! under -i"
+msgid "move cummits that begin with squash!/fixup! under -i"
 msgstr ""
 "преместване на подаванията, които започват със „squash!“/“fixup!“ при „-i“"
 
 #: builtin/rebase.c:1104
-msgid "add exec lines after each commit of the editable list"
+msgid "add exec lines after each cummit of the editable list"
 msgstr ""
 "добавяне на редове с команди за изпълнение след всяко подаване в "
 "редактирания списък"
 
 #: builtin/rebase.c:1108
-msgid "allow rebasing commits with empty messages"
+msgid "allow rebasing cummits with empty messages"
 msgstr "позволяване на пребазиране на подавания с празни съобщения"
 
 #: builtin/rebase.c:1112
@@ -20940,7 +20940,7 @@ msgid "pass the argument through to the merge strategy"
 msgstr "аргументът да се подаде на стратегията за сливане"
 
 #: builtin/rebase.c:1123
-msgid "rebase all reachable commits up to the root(s)"
+msgid "rebase all reachable cummits up to the root(s)"
 msgstr "пребазиране на всички достижими подавания до началното им подаване"
 
 #: builtin/rebase.c:1126
@@ -21048,7 +21048,7 @@ msgid "invalid upstream '%s'"
 msgstr "неправилен следен клон: „%s“"
 
 #: builtin/rebase.c:1542
-msgid "Could not create new root commit"
+msgid "Could not create new root cummit"
 msgstr "Не може да се създаде ново начално подаване"
 
 #: builtin/rebase.c:1568
@@ -21063,12 +21063,12 @@ msgstr "„%s“: изисква се точно една база за преб
 
 #: builtin/rebase.c:1580
 #, c-format
-msgid "Does not point to a valid commit '%s'"
+msgid "Does not point to a valid cummit '%s'"
 msgstr "Указателят „%s“ не сочи към подаване"
 
 #: builtin/rebase.c:1607
 #, c-format
-msgid "no such branch/commit '%s'"
+msgid "no such branch/cummit '%s'"
 msgstr "не съществува клон/подаване „%s“"
 
 #: builtin/rebase.c:1618 builtin/submodule--helper.c:39
@@ -21082,7 +21082,7 @@ msgid "Could not resolve HEAD to a revision"
 msgstr "Подаването, сочено от указателя „HEAD“, не може да бъде открито"
 
 #: builtin/rebase.c:1650
-msgid "Please commit or stash them."
+msgid "Please cummit or stash them."
 msgstr "Промените трябва или да се подадат, или да се скатаят."
 
 #: builtin/rebase.c:1686
@@ -21976,7 +21976,7 @@ msgid "git replace [-f] --edit <object>"
 msgstr "git replace [-f] --edit ОБЕКТ"
 
 #: builtin/replace.c:24
-msgid "git replace [-f] --graft <commit> [<parent>...]"
+msgid "git replace [-f] --graft <cummit> [<parent>...]"
 msgstr "git replace [-f] --graft ПОДАВАНЕ [РОДИТЕЛ…]"
 
 #: builtin/replace.c:25
@@ -22086,23 +22086,23 @@ msgstr "новият и старият обект са един и същ: „%s
 
 #: builtin/replace.c:383
 #, c-format
-msgid "could not parse %s as a commit"
+msgid "could not parse %s as a cummit"
 msgstr "„%s“ не може да се анализира като подаване"
 
 #: builtin/replace.c:415
 #, c-format
-msgid "bad mergetag in commit '%s'"
+msgid "bad mergetag in cummit '%s'"
 msgstr "етикетът при сливане в подаването „%s“ e неправилен"
 
 #: builtin/replace.c:417
 #, c-format
-msgid "malformed mergetag in commit '%s'"
+msgid "malformed mergetag in cummit '%s'"
 msgstr "етикетът при сливане в подаването „%s“ e неправилен"
 
 #: builtin/replace.c:429
 #, c-format
 msgid ""
-"original commit '%s' contains mergetag '%s' that is discarded; use --edit "
+"original cummit '%s' contains mergetag '%s' that is discarded; use --edit "
 "instead of --graft"
 msgstr ""
 "Първоначалното подаване „%s“ съдържа етикета при сливане „%s“, който е "
@@ -22110,16 +22110,16 @@ msgstr ""
 
 #: builtin/replace.c:468
 #, c-format
-msgid "the original commit '%s' has a gpg signature"
+msgid "the original cummit '%s' has a gpg signature"
 msgstr "първоначалното подаване „%s“ е с подпис на GPG"
 
 #: builtin/replace.c:469
-msgid "the signature will be removed in the replacement commit!"
+msgid "the signature will be removed in the replacement cummit!"
 msgstr "Подписът ще бъде премахнат в заменящото подаване!"
 
 #: builtin/replace.c:479
 #, c-format
-msgid "could not write replacement commit for: '%s'"
+msgid "could not write replacement cummit for: '%s'"
 msgstr "заменящото подаване за „%s“ не може да бъде записано"
 
 #: builtin/replace.c:487
@@ -22129,7 +22129,7 @@ msgstr "присадката за „%s“ е излишна"
 
 #: builtin/replace.c:491
 #, c-format
-msgid "new commit is the same as the old one: '%s'"
+msgid "new cummit is the same as the old one: '%s'"
 msgstr "новото и старото подаване са едно и също: „%s“"
 
 #: builtin/replace.c:526
@@ -22154,7 +22154,7 @@ msgid "edit existing object"
 msgstr "редактиране на съществуващ обект"
 
 #: builtin/replace.c:550
-msgid "change a commit's parents"
+msgid "change a cummit's parents"
 msgstr "смяна на родителите на подаване"
 
 #: builtin/replace.c:551
@@ -22228,7 +22228,7 @@ msgstr "неуспешно генериране на разлика за „%s�
 
 #: builtin/reset.c:33
 msgid ""
-"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
+"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"
 msgstr ""
 "git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [ПОДАВАНЕ]"
 
@@ -22469,7 +22469,7 @@ msgid "unknown mode for --show-object-format: %s"
 msgstr "непознат режим за „--show-object-format“: „%s“"
 
 #: builtin/revert.c:24
-msgid "git revert [<options>] <commit-ish>..."
+msgid "git revert [<options>] <cummit-ish>..."
 msgstr "git revert [ОПЦИЯ…] УКАЗАТЕЛ_КЪМ_ПОДАВАНЕ…"
 
 #: builtin/revert.c:25
@@ -22477,7 +22477,7 @@ msgid "git revert <subcommand>"
 msgstr "git revert ПОДКОМАНДА"
 
 #: builtin/revert.c:30
-msgid "git cherry-pick [<options>] <commit-ish>..."
+msgid "git cherry-pick [<options>] <cummit-ish>..."
 msgstr "git cherry-pick [ОПЦИЯ…] УКАЗАТЕЛ_КЪМ_ПОДАВАНЕ…"
 
 #: builtin/revert.c:31
@@ -22507,15 +22507,15 @@ msgid "cancel revert or cherry-pick sequence"
 msgstr "отмяна на поредица от отбирания или отмени на подавания"
 
 #: builtin/revert.c:105
-msgid "skip current commit and continue"
+msgid "skip current cummit and continue"
 msgstr "прескачане на текущото подаване и продължаване"
 
 #: builtin/revert.c:107
-msgid "don't automatically commit"
+msgid "don't automatically cummit"
 msgstr "без автоматично подаване"
 
 #: builtin/revert.c:108
-msgid "edit the commit message"
+msgid "edit the cummit message"
 msgstr "редактиране на съобщението при подаване"
 
 #: builtin/revert.c:111
@@ -22535,19 +22535,19 @@ msgid "option for merge strategy"
 msgstr "опция за стратегията на сливане"
 
 #: builtin/revert.c:125
-msgid "append commit name"
+msgid "append cummit name"
 msgstr "добавяне на името на подаването"
 
 #: builtin/revert.c:127
-msgid "preserve initially empty commits"
+msgid "preserve initially empty cummits"
 msgstr "запазване на първоначално празните подавания"
 
 #: builtin/revert.c:128
-msgid "allow commits with empty messages"
+msgid "allow cummits with empty messages"
 msgstr "позволяване на празни съобщения при подаване"
 
 #: builtin/revert.c:129
-msgid "keep redundant, empty commits"
+msgid "keep redundant, empty cummits"
 msgstr "запазване на излишните, празни подавания"
 
 #: builtin/revert.c:241
@@ -22699,15 +22699,15 @@ msgid "unknown group type: %s"
 msgstr "неизвестен вид група: %s"
 
 #: builtin/shortlog.c:351
-msgid "group by committer rather than author"
+msgid "group by cummitter rather than author"
 msgstr "групиране по подаващ, а не по автор"
 
 #: builtin/shortlog.c:354
-msgid "sort output according to the number of commits per author"
+msgid "sort output according to the number of cummits per author"
 msgstr "подредба на подаванията по броя подавания от автор"
 
 #: builtin/shortlog.c:356
-msgid "suppress commit descriptions, only provides commit count"
+msgid "suppress cummit descriptions, only provides cummit count"
 msgstr "без описания на подаванията — да се показва само броя подавания"
 
 #: builtin/shortlog.c:358
@@ -22775,7 +22775,7 @@ msgid "color '*!+-' corresponding to the branch"
 msgstr "оцветяване на „*!+-“ според клоните"
 
 #: builtin/show-branch.c:650
-msgid "show <n> more commits after the common ancestor"
+msgid "show <n> more cummits after the common ancestor"
 msgstr "извеждане на такъв БРОЙ подавания от общия предшественик"
 
 #: builtin/show-branch.c:652
@@ -22791,7 +22791,7 @@ msgid "include the current branch"
 msgstr "включване и на текущия клон"
 
 #: builtin/show-branch.c:657
-msgid "name commits with their object names"
+msgid "name cummits with their object names"
 msgstr "именуване на подаванията с имената им на обекти"
 
 #: builtin/show-branch.c:659
@@ -22803,11 +22803,11 @@ msgid "show refs unreachable from any other ref"
 msgstr "извеждане на недостижимите указатели"
 
 #: builtin/show-branch.c:663
-msgid "show commits in topological order"
+msgid "show cummits in topological order"
 msgstr "извеждане на подаванията в топологическа подредба"
 
 #: builtin/show-branch.c:666
-msgid "show only commits not on the first branch"
+msgid "show only cummits not on the first branch"
 msgstr "извеждане само на подаванията, които не са от първия клон"
 
 #: builtin/show-branch.c:668
@@ -22862,7 +22862,7 @@ msgstr "„%s“ е неправилен указател."
 
 #: builtin/show-branch.c:837
 #, c-format
-msgid "cannot find commit %s (%s)"
+msgid "cannot find cummit %s (%s)"
 msgstr "подаването „%s“ (%s) липсва"
 
 #: builtin/show-index.c:21
@@ -23099,7 +23099,7 @@ msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
 msgstr "git stash apply [--index] [-q|--quiet] [СКАТАНО]"
 
 #: builtin/stash.c:75
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
+msgid "git stash store [-m|--message <message>] [-q|--quiet] <cummit>"
 msgstr "git stash store [-m|--message СЪОБЩЕНИЕ] [-q|--quiet] ПОДАВАНЕ"
 
 #: builtin/stash.c:80
@@ -23122,7 +23122,7 @@ msgstr ""
 
 #: builtin/stash.c:130
 #, c-format
-msgid "'%s' is not a stash-like commit"
+msgid "'%s' is not a stash-like cummit"
 msgstr "„%s“ не е подаване, приличащо на нещо скатано"
 
 #: builtin/stash.c:150
@@ -23239,7 +23239,7 @@ msgid "stash message"
 msgstr "съобщение при скатаване"
 
 #: builtin/stash.c:974
-msgid "\"git stash store\" requires one <commit> argument"
+msgid "\"git stash store\" requires one <cummit> argument"
 msgstr "командата „git stash store“ изисква точно един аргумент-ПОДАВАНЕ"
 
 #: builtin/stash.c:1159
@@ -23251,7 +23251,7 @@ msgid "No changes selected"
 msgstr "Не са избрани никакви промени"
 
 #: builtin/stash.c:1320
-msgid "You do not have the initial commit yet"
+msgid "You do not have the initial cummit yet"
 msgstr "Все още липсва първоначално подаване"
 
 #: builtin/stash.c:1347
@@ -23483,7 +23483,7 @@ msgstr "без изход за състоянието на подмодула"
 
 #: builtin/submodule--helper.c:863
 msgid ""
-"use commit stored in the index instead of the one stored in the submodule "
+"use cummit stored in the index instead of the one stored in the submodule "
 "HEAD"
 msgstr ""
 "използване на подаването указано в индекса, а не това от указателя „HEAD“ на "
@@ -23523,13 +23523,13 @@ msgid "unexpected mode %o\n"
 msgstr "неочакван режим „%o“\n"
 
 #: builtin/submodule--helper.c:1276
-msgid "use the commit stored in the index instead of the submodule HEAD"
+msgid "use the cummit stored in the index instead of the submodule HEAD"
 msgstr ""
 "използване на подаването указано в индекса, а не това от указателя „HEAD“ на "
 "подмодула"
 
 #: builtin/submodule--helper.c:1278
-msgid "compare the commit in the index with that in the submodule HEAD"
+msgid "compare the cummit in the index with that in the submodule HEAD"
 msgstr ""
 "сравнение на подаването указано в индекса с това от указателя „HEAD“ на "
 "подмодула"
@@ -23543,7 +23543,7 @@ msgid "limit the summary size"
 msgstr "ограничаване на размера на обобщението"
 
 #: builtin/submodule--helper.c:1287
-msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
+msgid "git submodule--helper summary [<options>] [<cummit>] [--] [<path>]"
 msgstr "git submodule--helper summary [ОПЦИЯ…] [ПОДАВАНЕ] [--] [ПЪТ]"
 
 #: builtin/submodule--helper.c:1311
@@ -23813,7 +23813,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Fetched in submodule path '%s', but it did not contain %s. Direct fetching "
-"of that commit failed."
+"of that cummit failed."
 msgstr ""
 "Подмодулът в пътя „%s“ е доставен, но не съдържа обекта със сума\n"
 "„%s“.  Директното доставяне на това подаване е неуспешно."
@@ -24136,9 +24136,9 @@ msgstr "git tag -d ЕТИКЕТ…"
 
 #: builtin/tag.c:28
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
+"git tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--"
 "points-at <object>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] "
+"        [--format=<format>] [--merged <cummit>] [--no-merged <cummit>] "
 "[<pattern>...]"
 msgstr ""
 "git tag -l [-n[БРОЙ]] [--contains ПОДАВАНЕ] [--no-contains ПОДАВАНЕ]\n"
@@ -24275,11 +24275,11 @@ msgid "show tag list in columns"
 msgstr "извеждане на списъка на етикетите по колони"
 
 #: builtin/tag.c:467 builtin/tag.c:469
-msgid "print only tags that contain the commit"
+msgid "print only tags that contain the cummit"
 msgstr "извеждане само на етикетите, които съдържат подаването"
 
 #: builtin/tag.c:468 builtin/tag.c:470
-msgid "print only tags that don't contain the commit"
+msgid "print only tags that don't contain the cummit"
 msgstr "извеждане само на етикетите, които не съдържат подаването"
 
 #: builtin/tag.c:471
@@ -24649,15 +24649,15 @@ msgstr ""
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "трансферът да се преустанови след този БРОЙ секунди"
 
-#: builtin/verify-commit.c:19
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] ПОДАВАНЕ…"
+#: builtin/verify-cummit.c:19
+msgid "git verify-cummit [-v | --verbose] <cummit>..."
+msgstr "git verify-cummit [-v | --verbose] ПОДАВАНЕ…"
 
-#: builtin/verify-commit.c:68
-msgid "print commit contents"
+#: builtin/verify-cummit.c:68
+msgid "print cummit contents"
 msgstr "извеждане на съдържанието на подаването"
 
-#: builtin/verify-commit.c:69 builtin/verify-tag.c:37
+#: builtin/verify-cummit.c:69 builtin/verify-tag.c:37
 msgid "print raw gpg status output"
 msgstr "извеждане на необработения изход от състоянието на „gpg“"
 
@@ -24682,7 +24682,7 @@ msgid "print tag contents"
 msgstr "извеждане на съдържанието на ЕТИКЕТи"
 
 #: builtin/worktree.c:19
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
+msgid "git worktree add [<options>] <path> [<cummit-ish>]"
 msgstr "git worktree add [ОПЦИЯ…] ПЪТ [УКАЗАТЕЛ_КЪМ_ПОДАВАНЕ]"
 
 #: builtin/worktree.c:20
@@ -25125,11 +25125,11 @@ msgstr "грешка при подготовката на версии"
 
 #: t/helper/test-reach.c:154
 #, c-format
-msgid "commit %s is not marked reachable"
+msgid "cummit %s is not marked reachable"
 msgstr "подаването „%s“ не е отбелязано като достижимо"
 
 #: t/helper/test-reach.c:164
-msgid "too many commits marked reachable"
+msgid "too many cummits marked reachable"
 msgstr "прекалено много подавания са отбелязани като достижими"
 
 #: t/helper/test-serve-v2.c:7
@@ -25651,7 +25651,7 @@ msgid "Apply a series of patches from a mailbox"
 msgstr "Прилагане на поредица от кръпки от пощенска кутия"
 
 #: command-list.h:52
-msgid "Annotate file lines with commit information"
+msgid "Annotate file lines with cummit information"
 msgstr "Добавяне на информация за подаванията към редовете на файловете"
 
 #: command-list.h:53
@@ -25667,7 +25667,7 @@ msgid "Create an archive of files from a named tree"
 msgstr "Създаване на архив с файловете от именовано дърво"
 
 #: command-list.h:56
-msgid "Use binary search to find the commit that introduced a bug"
+msgid "Use binary search to find the cummit that introduced a bug"
 msgstr "Двоично търсене на промяната, която е причинила грешка"
 
 #: command-list.h:57
@@ -25719,17 +25719,17 @@ msgid "Copy files from the index to the working tree"
 msgstr "Копиране на файлове от индекса към работното дърво"
 
 #: command-list.h:68
-msgid "Find commits yet to be applied to upstream"
+msgid "Find cummits yet to be applied to upstream"
 msgstr ""
 "Откриване на подавания, които още не са подадени към отдалеченото хранилище"
 
 #: command-list.h:69
-msgid "Apply the changes introduced by some existing commits"
+msgid "Apply the changes introduced by some existing cummits"
 msgstr "Прилагане на промените от съществуващи подавания"
 
 #: command-list.h:70
-msgid "Graphical alternative to git-commit"
-msgstr "Графична алтернатива на „git-commit“"
+msgid "Graphical alternative to git-cummit"
+msgstr "Графична алтернатива на „git-cummit“"
 
 #: command-list.h:71
 msgid "Remove untracked files from the working tree"
@@ -25748,11 +25748,11 @@ msgid "Record changes to the repository"
 msgstr "Подаване на промени в хранилището"
 
 #: command-list.h:75
-msgid "Write and verify Git commit-graph files"
+msgid "Write and verify Git cummit-graph files"
 msgstr "Запис и проверка на файловете с гра̀фа на подаванията на Git"
 
 #: command-list.h:76
-msgid "Create a new commit object"
+msgid "Create a new cummit object"
 msgstr "Създаване на нов обект-подаване"
 
 #: command-list.h:77
@@ -25780,7 +25780,7 @@ msgstr ""
 "Помощна програма за запазване на идентификацията на потребител на диска"
 
 #: command-list.h:82
-msgid "Export a single commit to a CVS checkout"
+msgid "Export a single cummit to a CVS checkout"
 msgstr "Изнасяне на едно подаване като изтегляне в CVS"
 
 #: command-list.h:83
@@ -25802,7 +25802,7 @@ msgstr ""
 "указател"
 
 #: command-list.h:87
-msgid "Show changes between commits, commit and working tree, etc"
+msgid "Show changes between cummits, cummit and working tree, etc"
 msgstr "Извеждане на разликите между подаванията, версиите, работното дърво"
 
 #: command-list.h:88
@@ -25844,7 +25844,7 @@ msgid "Rewrite branches"
 msgstr "Презаписване на клони"
 
 #: command-list.h:97
-msgid "Produce a merge commit message"
+msgid "Produce a merge cummit message"
 msgstr "Създаване на съобщение при подаване със сливане"
 
 #: command-list.h:98
@@ -25868,7 +25868,7 @@ msgid "Cleanup unnecessary files and optimize the local repository"
 msgstr "Изчистване на ненужните файлове и оптимизиране на локалното хранилище"
 
 #: command-list.h:103
-msgid "Extract commit ID from an archive created using git-archive"
+msgid "Extract cummit ID from an archive created using git-archive"
 msgstr "Извеждане на идентификатора на подаване от архив на „git-archive“"
 
 #: command-list.h:104
@@ -25918,12 +25918,12 @@ msgid "Instantly browse your working repository in gitweb"
 msgstr "Незабавно разглеждане на работното ви хранилище чрез „gitweb“"
 
 #: command-list.h:115
-msgid "Add or parse structured information in commit messages"
+msgid "Add or parse structured information in cummit messages"
 msgstr ""
 "Добавяне или обработка на структурирана информация в съобщенията при подаване"
 
 #: command-list.h:116
-msgid "Show commit logs"
+msgid "Show cummit logs"
 msgstr "Извеждане на журнала с подаванията"
 
 #: command-list.h:117
@@ -26043,7 +26043,7 @@ msgid "Applies a quilt patchset onto the current branch"
 msgstr "Прилагане на поредица от кръпки от quilt към текущия клон"
 
 #: command-list.h:146
-msgid "Compare two commit ranges (e.g. two versions of a branch)"
+msgid "Compare two cummit ranges (e.g. two versions of a branch)"
 msgstr "Сравняване на два диапазона от подавания (напр. две версии на клон)"
 
 #: command-list.h:147
@@ -26051,7 +26051,7 @@ msgid "Reads tree information into the index"
 msgstr "Изчитане на информация за обект-дърво в индекса"
 
 #: command-list.h:148
-msgid "Reapply commits on top of another base tip"
+msgid "Reapply cummits on top of another base tip"
 msgstr "Прилагане на подаванията върху друг връх"
 
 #: command-list.h:149
@@ -26091,7 +26091,7 @@ msgid "Restore working tree files"
 msgstr "Възстановяване на файловете в работното дърво"
 
 #: command-list.h:158
-msgid "Lists commit objects in reverse chronological order"
+msgid "Lists cummit objects in reverse chronological order"
 msgstr "Извеждане на подаванията в обратна хронологическа подредба"
 
 #: command-list.h:159
@@ -26099,7 +26099,7 @@ msgid "Pick out and massage parameters"
 msgstr "Избор и промяна на параметри"
 
 #: command-list.h:160
-msgid "Revert some existing commits"
+msgid "Revert some existing cummits"
 msgstr "Отменяне на съществуващи подавания"
 
 #: command-list.h:161
@@ -26135,7 +26135,7 @@ msgid "Show various types of objects"
 msgstr "Извеждане на различните видове обекти в Git"
 
 #: command-list.h:169
-msgid "Show branches and their commits"
+msgid "Show branches and their cummits"
 msgstr "Извеждане на клоните и подаванията в тях"
 
 #: command-list.h:170
@@ -26220,7 +26220,7 @@ msgid "Show a Git logical variable"
 msgstr "Извеждане на логическа променлива на Git"
 
 #: command-list.h:190
-msgid "Check the GPG signature of commits"
+msgid "Check the GPG signature of cummits"
 msgstr "Проверка на подписите GPG върху подаванията"
 
 #: command-list.h:191
@@ -26232,7 +26232,7 @@ msgid "Check the GPG signature of tags"
 msgstr "Проверка на подписите GPG върху етикетите"
 
 #: command-list.h:193
-msgid "Show logs with difference each commit introduces"
+msgid "Show logs with difference each cummit introduces"
 msgstr "Извеждане на журнал с разликите, въведени с всяко подаване"
 
 #: command-list.h:194
@@ -26292,7 +26292,7 @@ msgid "The Git repository browser"
 msgstr "Разглеждане на хранилище на Git"
 
 #: command-list.h:208
-msgid "Map author/committer names and/or E-Mail addresses"
+msgid "Map author/cummitter names and/or E-Mail addresses"
 msgstr "Съответствия на имена на автор/подаващ и/или адреси на е-поща"
 
 #: command-list.h:209
@@ -26351,7 +26351,7 @@ msgstr "Не трябва да се прави множествено слива
 
 #: git-merge-octopus.sh:73
 #, sh-format
-msgid "Unable to find common commit with $pretty_name"
+msgid "Unable to find common cummit with $pretty_name"
 msgstr "Не може да се открие общо подаване с „$pretty_name“"
 
 #: git-merge-octopus.sh:77
@@ -26428,12 +26428,12 @@ msgstr ""
 
 #: git-sh-setup.sh:227
 #, sh-format
-msgid "Cannot $action: Your index contains uncommitted changes."
+msgid "Cannot $action: Your index contains uncummitted changes."
 msgstr ""
 "Не може да изпълните „$action“, защото в индекса има неподадени промени."
 
 #: git-sh-setup.sh:229
-msgid "Additionally, your index contains uncommitted changes."
+msgid "Additionally, your index contains uncummitted changes."
 msgstr "Освен това в индекса има неподадени промени."
 
 #: git-sh-setup.sh:349
@@ -26890,7 +26890,7 @@ msgstr "ПРЕДУПРЕЖДЕНИЕ: редът за „sendmail“ не е р�
 #: git-send-email.perl:747
 #, perl-format
 msgid ""
-"File '%s' exists but it could also be the range of commits\n"
+"File '%s' exists but it could also be the range of cummits\n"
 "to produce patches for.  Please disambiguate by...\n"
 "\n"
 "    * Saying \"./%s\" if you mean a file; or\n"
@@ -27024,7 +27024,7 @@ msgstr "Пътят към сертификат „%s“ не съществув�
 #: git-send-email.perl:1565
 msgid ""
 "    The Cc list above has been expanded by additional\n"
-"    addresses found in the patch commit message. By default\n"
+"    addresses found in the patch cummit message. By default\n"
 "    send-email prompts before sending whenever this occurs.\n"
 "    This behavior is controlled by the sendemail.confirm\n"
 "    configuration setting.\n"

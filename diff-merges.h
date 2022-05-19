@@ -3,7 +3,7 @@
 
 /*
  * diff-merges - utility module to handle command-line options for
- * selection of particular diff format of merge commits
+ * selection of particular diff format of merge cummits
  * representation.
  */
 

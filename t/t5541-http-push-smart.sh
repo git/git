@@ -23,7 +23,7 @@ test_expect_success 'setup remote repository' '
 	: >path1 &&
 	git add path1 &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	cd - &&
 	git clone --bare test_repo test_repo.git &&
 	cd test_repo.git &&
@@ -71,7 +71,7 @@ test_expect_success 'push to remote repository (standard)' '
 	: >path2 &&
 	git add path2 &&
 	test_tick &&
-	git commit -m path2 &&
+	git cummit -m path2 &&
 	HEAD=$(git rev-parse --verify HEAD) &&
 	GIT_TRACE_CURL=true git push -v -v 2>err &&
 	! grep "Expect: 100-continue" err &&
@@ -90,7 +90,7 @@ test_expect_success 'create and delete remote branch' '
 	: >path3 &&
 	git add path3 &&
 	test_tick &&
-	git commit -m dev &&
+	git cummit -m dev &&
 	git push origin dev &&
 	git push origin :dev &&
 	test_must_fail git show-ref --verify refs/remotes/origin/dev
@@ -115,7 +115,7 @@ test_expect_success 'rejected update prints status' '
 	: >path4 &&
 	git add path4 &&
 	test_tick &&
-	git commit -m dev2 &&
+	git cummit -m dev2 &&
 	test_must_fail git push origin dev2 2>act &&
 	sed -e "/^remote: /s/ *$//" <act >cmp &&
 	test_cmp exp cmp
@@ -153,7 +153,7 @@ test_expect_success 'push fails for non-fast-forward refs unmatched by remote he
 	git push origin main:niam &&
 
 	echo "change changed" > path2 &&
-	git commit -a -m path2 --amend &&
+	git cummit -a -m path2 --amend &&
 
 	# push main too; this ensures there is at least one '"'push'"' command to
 	# the remote helper and triggers interaction with the helper.
@@ -171,7 +171,7 @@ test_expect_success 'push fails for non-fast-forward refs unmatched by remote he
 
 test_expect_success 'push (chunked)' '
 	git checkout main &&
-	test_commit commit path3 &&
+	test_cummit cummit path3 &&
 	HEAD=$(git rev-parse --verify HEAD) &&
 	test_config http.postbuffer 4 &&
 	git push -v -v origin $BRANCH 2>err &&
@@ -191,8 +191,8 @@ test_expect_success 'push --atomic also prevents branch creation, reports collat
 	up="$HTTPD_URL"/smart/atomic-branches.git &&
 
 	# Tell "$up" about three branches for now
-	test_commit atomic1 &&
-	test_commit atomic2 &&
+	test_cummit atomic1 &&
+	test_cummit atomic2 &&
 	git branch collateral &&
 	git branch other &&
 	git push "$up" atomic1 main collateral other &&
@@ -200,7 +200,7 @@ test_expect_success 'push --atomic also prevents branch creation, reports collat
 
 	# collateral is a valid push, but should be failed by atomic push
 	git checkout collateral &&
-	test_commit collateral1 &&
+	test_cummit collateral1 &&
 
 	# Make main incompatible with upstream to provoke atomic
 	git checkout main &&
@@ -247,7 +247,7 @@ test_expect_success 'push --atomic fails on server-side errors' '
 	# break ref updates for other on the remote site
 	mkdir "$d/refs/heads/other.lock" &&
 
-	# add the new commit to other
+	# add the new cummit to other
 	git branch -f other collateral &&
 
 	# --atomic should cause entire push to be rejected
@@ -307,21 +307,21 @@ test_expect_success 'push --mirror to repo with alternates' '
 
 test_expect_success TTY 'push shows progress when stderr is a tty' '
 	cd "$ROOT_PATH"/test_repo_clone &&
-	test_commit noisy &&
+	test_cummit noisy &&
 	test_terminal git push >output 2>&1 &&
 	test_i18ngrep "^Writing objects" output
 '
 
 test_expect_success TTY 'push --quiet silences status and progress' '
 	cd "$ROOT_PATH"/test_repo_clone &&
-	test_commit quiet &&
+	test_cummit quiet &&
 	test_terminal git push --quiet >output 2>&1 &&
 	test_must_be_empty output
 '
 
 test_expect_success TTY 'push --no-progress silences progress but not status' '
 	cd "$ROOT_PATH"/test_repo_clone &&
-	test_commit no-progress &&
+	test_cummit no-progress &&
 	test_terminal git push --no-progress >output 2>&1 &&
 	test_i18ngrep "^To http" output &&
 	test_i18ngrep ! "^Writing objects" output
@@ -329,7 +329,7 @@ test_expect_success TTY 'push --no-progress silences progress but not status' '
 
 test_expect_success 'push --progress shows progress to non-tty' '
 	cd "$ROOT_PATH"/test_repo_clone &&
-	test_commit progress &&
+	test_cummit progress &&
 	git push --progress >output 2>&1 &&
 	test_i18ngrep "^To http" output &&
 	test_i18ngrep "^Writing objects" output
@@ -337,7 +337,7 @@ test_expect_success 'push --progress shows progress to non-tty' '
 
 test_expect_success 'http push gives sane defaults to reflog' '
 	cd "$ROOT_PATH"/test_repo_clone &&
-	test_commit reflog-test &&
+	test_cummit reflog-test &&
 	git push "$HTTPD_URL"/smart/test_repo.git &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
 		log -g -1 --format="%gn <%ge>" >actual &&
@@ -345,9 +345,9 @@ test_expect_success 'http push gives sane defaults to reflog' '
 	test_cmp expect actual
 '
 
-test_expect_success 'http push respects GIT_COMMITTER_* in reflog' '
+test_expect_success 'http push respects GIT_cummitTER_* in reflog' '
 	cd "$ROOT_PATH"/test_repo_clone &&
-	test_commit custom-reflog-test &&
+	test_cummit custom-reflog-test &&
 	git push "$HTTPD_URL"/smart_custom_env/test_repo.git &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
 		log -g -1 --format="%gn <%ge>" >actual &&
@@ -358,7 +358,7 @@ test_expect_success 'http push respects GIT_COMMITTER_* in reflog' '
 test_expect_success 'push over smart http with auth' '
 	cd "$ROOT_PATH/test_repo_clone" &&
 	echo push-auth-test >expect &&
-	test_commit push-auth-test &&
+	test_cummit push-auth-test &&
 	set_askpass user@host pass@host &&
 	git push "$HTTPD_URL"/auth/smart/test_repo.git &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
@@ -370,7 +370,7 @@ test_expect_success 'push over smart http with auth' '
 test_expect_success 'push to auth-only-for-push repo' '
 	cd "$ROOT_PATH/test_repo_clone" &&
 	echo push-half-auth >expect &&
-	test_commit push-half-auth &&
+	test_cummit push-half-auth &&
 	set_askpass user@host pass@host &&
 	git push "$HTTPD_URL"/auth-push/smart/test_repo.git &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
@@ -384,7 +384,7 @@ test_expect_success 'create repo without http.receivepack set' '
 	git init half-auth &&
 	(
 		cd half-auth &&
-		test_commit one
+		test_cummit one
 	) &&
 	git clone --bare half-auth "$HTTPD_DOCUMENT_ROOT_PATH/half-auth.git"
 '
@@ -400,7 +400,7 @@ test_expect_success 'clone via half-auth-complete does not need password' '
 test_expect_success 'push into half-auth-complete requires password' '
 	cd "$ROOT_PATH/half-auth-clone" &&
 	echo two >expect &&
-	test_commit two &&
+	test_cummit two &&
 	set_askpass user@host pass@host &&
 	git push "$HTTPD_URL/half-auth-complete/smart/half-auth.git" &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/half-auth.git" \
@@ -441,12 +441,12 @@ test_expect_success GPG 'push with post-receive to inspect certificate' '
 		git config receive.certnonceslop 30
 	) &&
 	cd "$ROOT_PATH/test_repo_clone" &&
-	test_commit cert-test &&
+	test_cummit cert-test &&
 	git push --signed "$HTTPD_URL/smart/test_repo.git" &&
 	(
 		cd "$HTTPD_DOCUMENT_ROOT_PATH" &&
 		cat <<-\EOF &&
-		SIGNER=C O Mitter <committer@example.com>
+		SIGNER=C O Mitter <cummitter@example.com>
 		KEY=13B6F51ECDDE430D
 		STATUS=G
 		NONCE_STATUS=OK
@@ -470,7 +470,7 @@ test_expect_success 'clone/fetch scrubs password from reflogs' '
 	git clone "$HTTPD_URL_USER_PASS/smart/test_repo.git" \
 		reflog-test &&
 	cd reflog-test &&
-	test_commit prepare-for-force-fetch &&
+	test_cummit prepare-for-force-fetch &&
 	git switch -c away &&
 	git fetch "$HTTPD_URL_USER_PASS/smart/test_repo.git" \
 		+main:main &&
@@ -485,7 +485,7 @@ test_expect_success 'Non-ASCII branch name can be used with --force-with-lease' 
 	git clone "$HTTPD_URL_USER_PASS/smart/test_repo.git" non-ascii &&
 	cd non-ascii &&
 	git checkout -b rama-de-árbol &&
-	test_commit F &&
+	test_cummit F &&
 	git push --force-with-lease origin rama-de-árbol &&
 	git ls-remote origin refs/heads/rama-de-árbol >actual &&
 	git ls-remote . refs/heads/rama-de-árbol >expect &&

@@ -5,27 +5,27 @@ test_description='Test handling of the current working directory becoming empty'
 . ./test-lib.sh
 
 test_expect_success setup '
-	test_commit init &&
+	test_cummit init &&
 
 	git branch fd_conflict &&
 
 	mkdir -p foo/bar &&
-	test_commit foo/bar/baz &&
+	test_cummit foo/bar/baz &&
 
 	git revert HEAD &&
 	git tag reverted &&
 
 	git checkout fd_conflict &&
 	mkdir dirORfile &&
-	test_commit dirORfile/foo &&
+	test_cummit dirORfile/foo &&
 
 	git rm -r dirORfile &&
 	echo not-a-directory >dirORfile &&
 	git add dirORfile &&
-	git commit -m dirORfile &&
+	git cummit -m dirORfile &&
 
 	git switch -c df_conflict HEAD~1 &&
-	test_commit random_file &&
+	test_cummit random_file &&
 
 	git switch -c undo_fd_conflict fd_conflict &&
 	git revert HEAD
@@ -34,7 +34,7 @@ test_expect_success setup '
 test_incidental_dir_removal () {
 	test_when_finished "git reset --hard" &&
 
-	git checkout foo/bar/baz^{commit} &&
+	git checkout foo/bar/baz^{cummit} &&
 	test_path_is_dir foo/bar &&
 
 	(
@@ -52,7 +52,7 @@ test_incidental_dir_removal () {
 }
 
 test_required_dir_removal () {
-	git checkout df_conflict^{commit} &&
+	git checkout df_conflict^{cummit} &&
 	test_when_finished "git clean -fdx" &&
 
 	(
@@ -159,7 +159,7 @@ test_expect_success 'apply does not remove cwd incidentally' '
 test_incidental_untracked_dir_removal () {
 	test_when_finished "git reset --hard" &&
 
-	git checkout foo/bar/baz^{commit} &&
+	git checkout foo/bar/baz^{cummit} &&
 	mkdir -p untracked &&
 	mkdir empty
 	>untracked/random &&
@@ -248,9 +248,9 @@ test_submodule_removal () {
 	git init my_submodule &&
 	touch my_submodule/file &&
 	git -C my_submodule add file &&
-	git -C my_submodule commit -m "initial commit" &&
+	git -C my_submodule cummit -m "initial cummit" &&
 	git submodule add ./my_submodule &&
-	git commit -m "Add the submodule" &&
+	git cummit -m "Add the submodule" &&
 
 	(
 		cd my_submodule &&

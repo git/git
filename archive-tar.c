@@ -316,7 +316,7 @@ static int write_tar_entry(struct archiver_args *args,
 
 static void write_global_extended_header(struct archiver_args *args)
 {
-	const struct object_id *oid = args->commit_oid;
+	const struct object_id *oid = args->cummit_oid;
 	struct strbuf ext_header = STRBUF_INIT;
 	struct ustar_header header;
 	unsigned int mode;

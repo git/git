@@ -10,17 +10,17 @@ test_expect_success setup '
 	echo This is a test. >a &&
 	git update-index --add a &&
 	tree0=$(git write-tree) &&
-	commit0=$(echo setup | git commit-tree $tree0) &&
+	cummit0=$(echo setup | git cummit-tree $tree0) &&
 	echo We hope it works. >a &&
 	git update-index a &&
 	tree1=$(git write-tree) &&
-	commit1=$(echo modify | git commit-tree $tree1 -p $commit0) &&
-	git update-ref refs/heads/main $commit0 &&
-	git update-ref refs/heads/tofail $commit1 &&
+	cummit1=$(echo modify | git cummit-tree $tree1 -p $cummit0) &&
+	git update-ref refs/heads/main $cummit0 &&
+	git update-ref refs/heads/tofail $cummit1 &&
 	git clone --bare ./. victim.git &&
-	GIT_DIR=victim.git git update-ref refs/heads/tofail $commit1 &&
-	git update-ref refs/heads/main $commit1 &&
-	git update-ref refs/heads/tofail $commit0 &&
+	GIT_DIR=victim.git git update-ref refs/heads/tofail $cummit1 &&
+	git update-ref refs/heads/main $cummit1 &&
+	git update-ref refs/heads/tofail $cummit0 &&
 
 	test_hook --setup -C victim.git pre-receive <<-\EOF &&
 	printf %s "$@" >>$GIT_DIR/pre-receive.args
@@ -58,8 +58,8 @@ test_expect_success push '
 '
 
 test_expect_success 'updated as expected' '
-	test $(GIT_DIR=victim.git git rev-parse main) = $commit1 &&
-	test $(GIT_DIR=victim.git git rev-parse tofail) = $commit1
+	test $(GIT_DIR=victim.git git rev-parse main) = $cummit1 &&
+	test $(GIT_DIR=victim.git git rev-parse tofail) = $cummit1
 '
 
 test_expect_success 'hooks ran' '
@@ -74,19 +74,19 @@ test_expect_success 'hooks ran' '
 '
 
 test_expect_success 'pre-receive hook input' '
-	(echo $commit0 $commit1 refs/heads/main &&
-	 echo $commit1 $commit0 refs/heads/tofail
+	(echo $cummit0 $cummit1 refs/heads/main &&
+	 echo $cummit1 $cummit0 refs/heads/tofail
 	) | test_cmp - victim.git/pre-receive.stdin
 '
 
 test_expect_success 'update hook arguments' '
-	(echo refs/heads/main $commit0 $commit1 &&
-	 echo refs/heads/tofail $commit1 $commit0
+	(echo refs/heads/main $cummit0 $cummit1 &&
+	 echo refs/heads/tofail $cummit1 $cummit0
 	) | test_cmp - victim.git/update.args
 '
 
 test_expect_success 'post-receive hook input' '
-	echo $commit0 $commit1 refs/heads/main |
+	echo $cummit0 $cummit1 refs/heads/main |
 	test_cmp - victim.git/post-receive.stdin
 '
 

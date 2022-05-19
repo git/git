@@ -62,11 +62,11 @@ msgid "Reading"
 msgstr "Llegint"
 
 #: gitk:496 gitk:4525
-msgid "Reading commits..."
+msgid "Reading cummits..."
 msgstr "Llegint les revisions..."
 
 #: gitk:499 gitk:1637 gitk:4528
-msgid "No commits selected"
+msgid "No cummits selected"
 msgstr "Cap comissió seleccionada"
 
 #: gitk:1445 gitk:4045 gitk:12432
@@ -78,7 +78,7 @@ msgid "Can't parse git log output:"
 msgstr "No es pot analitzar la sortida del git log:"
 
 #: gitk:1740
-msgid "No commit information available"
+msgid "No cummit information available"
 msgstr "Cap informació de comissió disponible"
 
 #: gitk:1903 gitk:1932 gitk:4315 gitk:9669 gitk:11241 gitk:11521
@@ -171,7 +171,7 @@ msgid "Find"
 msgstr "Cerca"
 
 #: gitk:2295
-msgid "commit"
+msgid "cummit"
 msgstr "comissió"
 
 #: gitk:2299 gitk:2301 gitk:4687 gitk:4710 gitk:4734 gitk:6755 gitk:6827
@@ -221,7 +221,7 @@ msgid "Author"
 msgstr "Autor"
 
 #: gitk:2319 gitk:4871 gitk:6786 gitk:7326
-msgid "Committer"
+msgid "cummitter"
 msgstr "Comitent"
 
 #: gitk:2350
@@ -277,7 +277,7 @@ msgid "Create tag"
 msgstr "Crea etiqueta"
 
 #: gitk:2621 gitk:9371
-msgid "Write commit to file"
+msgid "Write cummit to file"
 msgstr "Escriu la comissió a un fitxer"
 
 #: gitk:2622 gitk:9428
@@ -285,7 +285,7 @@ msgid "Create new branch"
 msgstr "Crea una branca nova"
 
 #: gitk:2623
-msgid "Cherry-pick this commit"
+msgid "Cherry-pick this cummit"
 msgstr "Recull aquesta comissió com a cirera"
 
 #: gitk:2624
@@ -293,7 +293,7 @@ msgid "Reset HEAD branch to here"
 msgstr "Restableix la branca HEAD aquí"
 
 #: gitk:2625
-msgid "Mark this commit"
+msgid "Mark this cummit"
 msgstr "Marca aquesta comissió"
 
 #: gitk:2626
@@ -305,19 +305,19 @@ msgid "Find descendant of this and mark"
 msgstr "Troba la descendent d'aquesta i marca-la"
 
 #: gitk:2628
-msgid "Compare with marked commit"
+msgid "Compare with marked cummit"
 msgstr "Compara amb la comissió marcada"
 
 #: gitk:2629 gitk:2640
-msgid "Diff this -> marked commit"
+msgid "Diff this -> marked cummit"
 msgstr "Diferencia aquesta -> la comissió marcada"
 
 #: gitk:2630 gitk:2641
-msgid "Diff marked commit -> this"
+msgid "Diff marked cummit -> this"
 msgstr "Diferencia la comissió seleccionada -> aquesta"
 
 #: gitk:2631
-msgid "Revert this commit"
+msgid "Revert this cummit"
 msgstr "Reverteix aquesta comissió"
 
 #: gitk:2647
@@ -345,7 +345,7 @@ msgid "External diff"
 msgstr "Diferència externa"
 
 #: gitk:2659
-msgid "Blame parent commit"
+msgid "Blame parent cummit"
 msgstr "Culpabilitat de la comissió mare"
 
 #: gitk:2660
@@ -363,7 +363,7 @@ msgstr "Executa git gui blame en aquesta línia"
 #: gitk:3014
 msgid ""
 "\n"
-"Gitk - a commit viewer for git\n"
+"Gitk - a cummit viewer for git\n"
 "\n"
 "Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
@@ -399,19 +399,19 @@ msgid "<%s-W>\t\tClose window"
 msgstr "<%s-W>\t\tTanca la finestra"
 
 #: gitk:3050
-msgid "<Home>\t\tMove to first commit"
+msgid "<Home>\t\tMove to first cummit"
 msgstr "<Inici>\t\tVés a la primera comissió"
 
 #: gitk:3051
-msgid "<End>\t\tMove to last commit"
+msgid "<End>\t\tMove to last cummit"
 msgstr "<Fi>\t\tVés a l'última comissió"
 
 #: gitk:3052
-msgid "<Up>, p, k\tMove up one commit"
+msgid "<Up>, p, k\tMove up one cummit"
 msgstr "<Amunt>, p, k\tMou-te cap amunt per una comissió"
 
 #: gitk:3053
-msgid "<Down>, n, j\tMove down one commit"
+msgid "<Down>, n, j\tMove down one cummit"
 msgstr "<Avall>, n, j\tMou-te cap avall per una comissió"
 
 #: gitk:3054
@@ -424,54 +424,54 @@ msgstr "<Dreta>, x, l\tAvança en la llista d'història"
 
 #: gitk:3056
 #, tcl-format
-msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgid "<%s-n>\tGo to n-th parent of current cummit in history list"
 msgstr ""
 "<%s-n>\tVés a l'enèsima mare de la comissió actual en la llista d'història"
 
 #: gitk:3057
-msgid "<PageUp>\tMove up one page in commit list"
+msgid "<PageUp>\tMove up one page in cummit list"
 msgstr "<RePàg>\tMou-te cap amunt per una pàgina en la llista de comissions"
 
 #: gitk:3058
-msgid "<PageDown>\tMove down one page in commit list"
+msgid "<PageDown>\tMove down one page in cummit list"
 msgstr "<AvPàg>\tMou-te cap avall per una pàgina en la llista de comissions"
 
 #: gitk:3059
 #, tcl-format
-msgid "<%s-Home>\tScroll to top of commit list"
+msgid "<%s-Home>\tScroll to top of cummit list"
 msgstr "<%s-Inici>\tDesplaça't a la part superior de la llista de comissions"
 
 #: gitk:3060
 #, tcl-format
-msgid "<%s-End>\tScroll to bottom of commit list"
+msgid "<%s-End>\tScroll to bottom of cummit list"
 msgstr "<%s-Fi>\tDesplaça't a la part inferior de la llista de comissions"
 
 #: gitk:3061
 #, tcl-format
-msgid "<%s-Up>\tScroll commit list up one line"
+msgid "<%s-Up>\tScroll cummit list up one line"
 msgstr "<%s-Amunt>\tDesplaça la llista de comissions cap amunt per una línia"
 
 #: gitk:3062
 #, tcl-format
-msgid "<%s-Down>\tScroll commit list down one line"
+msgid "<%s-Down>\tScroll cummit list down one line"
 msgstr "<%s-Avall>\tDesplaça la llista de comissions cap avall per una línia"
 
 #: gitk:3063
 #, tcl-format
-msgid "<%s-PageUp>\tScroll commit list up one page"
+msgid "<%s-PageUp>\tScroll cummit list up one page"
 msgstr "<%s-RePàg>\tDesplaça la llista de comissions cap amunt per una pàgina"
 
 #: gitk:3064
 #, tcl-format
-msgid "<%s-PageDown>\tScroll commit list down one page"
+msgid "<%s-PageDown>\tScroll cummit list down one page"
 msgstr "<%s-AvPàg>\tDesplaça la llista de comissions cap avall per una pàgina"
 
 #: gitk:3065
-msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgid "<Shift-Up>\tFind backwards (upwards, later cummits)"
 msgstr "<Maj-Amunt>\tCerca cap enrere (cap amunt, les comissions més noves)"
 
 #: gitk:3066
-msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgid "<Shift-Down>\tFind forwards (downwards, earlier cummits)"
 msgstr "<Maj-Avall>\tCerca cap endavant (cap avall, les comissions més velles)"
 
 #: gitk:3067
@@ -509,7 +509,7 @@ msgid "<Return>\tMove to next find hit"
 msgstr "<Retorn>\tMou-te a la propera coincidència de la cerca"
 
 #: gitk:3075
-msgid "g\t\tGo to commit"
+msgid "g\t\tGo to cummit"
 msgstr "g\t\tVés a l'última comissió"
 
 #: gitk:3076
@@ -573,7 +573,7 @@ msgid "command failed:"
 msgstr "l'ordre ha fallat:"
 
 #: gitk:3784
-msgid "No such commit"
+msgid "No such cummit"
 msgstr "Cap comissió així"
 
 #: gitk:3798
@@ -606,7 +606,7 @@ msgstr "Error en executar el git blame: %s"
 
 #: gitk:3925
 #, tcl-format
-msgid "That line comes from commit %s,  which is not in this view"
+msgid "That line comes from cummit %s,  which is not in this view"
 msgstr ""
 "Aquella línia ve de la comissió %s, la qual no és en aquesta visualització"
 
@@ -647,7 +647,7 @@ msgid "All remote-tracking branches"
 msgstr "Totes les branques amb seguiment remot"
 
 #: gitk:4081
-msgid "Commit Info (regular expressions):"
+msgid "cummit Info (regular expressions):"
 msgstr "Informació de comissió (expressions regulars):"
 
 #: gitk:4082
@@ -655,19 +655,19 @@ msgid "Author:"
 msgstr "Autor:"
 
 #: gitk:4083
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "Comitent:"
 
 #: gitk:4084
-msgid "Commit Message:"
+msgid "cummit Message:"
 msgstr "Missatge de comissió:"
 
 #: gitk:4085
-msgid "Matches all Commit Info criteria"
+msgid "Matches all cummit Info criteria"
 msgstr "Coincideix amb tots els criteris d'informació de comissió"
 
 #: gitk:4086
-msgid "Matches no Commit Info criteria"
+msgid "Matches no cummit Info criteria"
 msgstr "No coincideix amb cap criteri d'informació de comissió"
 
 #: gitk:4087
@@ -688,7 +688,7 @@ msgstr "Cadena de cerca:"
 
 #: gitk:4091
 msgid ""
-"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"cummit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 msgstr ""
 "Dates de comissió (\"fa 2 setmanes\", \"2009-03-17 15:27:38\", \"17 abr 2009 "
@@ -743,7 +743,7 @@ msgid "Enter files and directories to include, one per line:"
 msgstr "Introduïu els fitxers i directoris a incloure, un per línia:"
 
 #: gitk:4104
-msgid "Command to generate more commits to include:"
+msgid "Command to generate more cummits to include:"
 msgstr "Ordre per a generar més comissions a incloure:"
 
 #: gitk:4228
@@ -763,7 +763,7 @@ msgid "Apply (F5)"
 msgstr "Aplica (F5)"
 
 #: gitk:4354
-msgid "Error in commit selection arguments:"
+msgid "Error in cummit selection arguments:"
 msgstr "Error en els paràmetres de selecció de comissions:"
 
 #: gitk:4409 gitk:4462 gitk:4924 gitk:4938 gitk:6208 gitk:12373 gitk:12374
@@ -787,11 +787,11 @@ msgid "Not ancestor"
 msgstr "No avantpassat"
 
 #: gitk:5324
-msgid "Local changes checked in to index but not committed"
+msgid "Local changes checked in to index but not cummitted"
 msgstr "Canvis locals registrats en l'índex però no comesos"
 
 #: gitk:5360
-msgid "Local uncommitted changes, not checked in to index"
+msgid "Local uncummitted changes, not checked in to index"
 msgstr "Canvis locals sense cometre, no registrats en l'índex"
 
 #: gitk:7134
@@ -873,7 +873,7 @@ msgid "Detached head: can't reset"
 msgstr "Cap separat: no es pot restablir"
 
 #: gitk:9005 gitk:9011
-msgid "Skipping merge commit "
+msgid "Skipping merge cummit "
 msgstr "Saltant la comissió de fusió "
 
 #: gitk:9020 gitk:9025
@@ -885,7 +885,7 @@ msgid " - stopping\n"
 msgstr " - aturant\n"
 
 #: gitk:9031 gitk:9034 gitk:9042 gitk:9056 gitk:9065
-msgid "Commit "
+msgid "cummit "
 msgstr "Comissió "
 
 #: gitk:9035
@@ -906,7 +906,7 @@ msgstr ""
 
 #: gitk:9045
 msgid ""
-"Diff of commits:\n"
+"Diff of cummits:\n"
 "\n"
 msgstr ""
 "Diferència entre comissions:\n"
@@ -919,12 +919,12 @@ msgstr " té %s filles - aturant\n"
 
 #: gitk:9085
 #, tcl-format
-msgid "Error writing commit to file: %s"
+msgid "Error writing cummit to file: %s"
 msgstr "Error en escriure la comissió al fitxer: %s"
 
 #: gitk:9091
 #, tcl-format
-msgid "Error diffing commits: %s"
+msgid "Error diffing cummits: %s"
 msgstr "Error en diferenciar les comissions: %s"
 
 #: gitk:9137
@@ -1009,7 +1009,7 @@ msgid "Write"
 msgstr "Escriu"
 
 #: gitk:9408
-msgid "Error writing commit:"
+msgid "Error writing cummit:"
 msgstr "Error en escriure la comissió:"
 
 #: gitk:9435
@@ -1027,7 +1027,7 @@ msgstr "La branca '%s' ja existeix. Voleu sobreescriure?"
 
 #: gitk:9530
 #, tcl-format
-msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgid "cummit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
 "La comissió %s ja està inclosa en la branca %s -- realment voleu tornar a "
 "aplicar-la?"
@@ -1040,7 +1040,7 @@ msgstr "Recollint cireres"
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
-"Please commit, reset or stash your changes and try again."
+"Please cummit, reset or stash your changes and try again."
 msgstr ""
 "El recull de cireres ha fallat a causa de canvis locals al fitxer '%s'.\n"
 "Si us plau, cometeu, restabliu o emmagatzemeu els vostres canvis i torneu a "
@@ -1055,12 +1055,12 @@ msgstr ""
 "Voleu executar el git citool per a resoldre'l?"
 
 #: gitk:9566 gitk:9624
-msgid "No changes committed"
+msgid "No changes cummitted"
 msgstr "Cap canvi comès"
 
 #: gitk:9593
 #, tcl-format
-msgid "Commit %s is not included in branch %s -- really revert it?"
+msgid "cummit %s is not included in branch %s -- really revert it?"
 msgstr ""
 "La comissió %s no s'inclou en la branca %s -- realment voleu revertir-la?"
 
@@ -1072,7 +1072,7 @@ msgstr "Revertint"
 #, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
-"commit, reset or stash  your changes and try again."
+"cummit, reset or stash  your changes and try again."
 msgstr ""
 "La reversió ha fallat a causa de canvis locals als fitxers següents:%s Si us "
 "plau, cometeu, restabliu o emmagatzemeu els vostres canvis i torneu-ho a "
@@ -1130,7 +1130,7 @@ msgstr "No es pot suprimir la branca actualment agafada"
 #: gitk:9802
 #, tcl-format
 msgid ""
-"The commits on branch %s aren't on any other branch.\n"
+"The cummits on branch %s aren't on any other branch.\n"
 "Really delete branch %s?"
 msgstr ""
 "Les comissions en la branca %s no són en cap altra branca.\n"
@@ -1147,7 +1147,7 @@ msgstr "Filtre"
 
 #: gitk:10146
 msgid ""
-"Error reading commit topology information; branch and preceding/following "
+"Error reading cummit topology information; branch and preceding/following "
 "tag information will be incomplete."
 msgstr ""
 "Error en llegir la informació de topologia de comissió; la informació sobre "
@@ -1174,7 +1174,7 @@ msgid "I"
 msgstr "I"
 
 #: gitk:11348
-msgid "Commit list display options"
+msgid "cummit list display options"
 msgstr "Opcions de visualització de la llista de comissions"
 
 #: gitk:11351

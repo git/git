@@ -8,7 +8,7 @@ test_expect_success 'setup' '
 	vector=$TEST_DIRECTORY/t4135 &&
 
 	test_tick &&
-	git commit --allow-empty -m preimage &&
+	git cummit --allow-empty -m preimage &&
 	git tag preimage &&
 
 	reset_preimage() {

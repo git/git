@@ -5,7 +5,7 @@ test_description='Intent to add'
 . ./test-lib.sh
 
 test_expect_success 'intent to add' '
-	test_commit 1 &&
+	test_cummit 1 &&
 	git rm 1.t &&
 	echo hello >1.t &&
 	echo hello >file &&
@@ -60,33 +60,33 @@ test_expect_success 'intent to add does not clobber existing paths' '
 
 test_expect_success 'i-t-a entry is simply ignored' '
 	test_tick &&
-	git commit -a -m initial &&
+	git cummit -a -m initial &&
 	git reset --hard &&
 
 	echo xyzzy >rezrov &&
 	echo frotz >nitfol &&
 	git add rezrov &&
 	git add -N nitfol &&
-	git commit -m second &&
+	git cummit -m second &&
 	test $(git ls-tree HEAD -- nitfol | wc -l) = 0 &&
 	test $(git diff --name-only HEAD -- nitfol | wc -l) = 1 &&
 	test $(git diff --name-only -- nitfol | wc -l) = 1
 '
 
-test_expect_success 'can commit with an unrelated i-t-a entry in index' '
+test_expect_success 'can cummit with an unrelated i-t-a entry in index' '
 	git reset --hard &&
 	echo bozbar >rezrov &&
 	echo frotz >nitfol &&
 	git add rezrov &&
 	git add -N nitfol &&
-	git commit -m partial rezrov
+	git cummit -m partial rezrov
 '
 
-test_expect_success 'can "commit -a" with an i-t-a entry' '
+test_expect_success 'can "cummit -a" with an i-t-a entry' '
 	git reset --hard &&
 	: >nitfol &&
 	git add -N nitfol &&
-	git commit -a -m all
+	git cummit -a -m all
 '
 
 test_expect_success 'cache-tree invalidates i-t-a paths' '
@@ -94,7 +94,7 @@ test_expect_success 'cache-tree invalidates i-t-a paths' '
 	mkdir dir &&
 	: >dir/foo &&
 	git add dir/foo &&
-	git commit -m foo &&
+	git cummit -m foo &&
 
 	: >dir/bar &&
 	git add -N dir/bar &&
@@ -120,7 +120,7 @@ test_expect_success 'cache-tree does not ignore dir that has i-t-a entries' '
 		done &&
 		git add 1 2/2 3 &&
 		git add -N 2/1 &&
-		git commit -m committed &&
+		git cummit -m cummitted &&
 		git ls-tree -r HEAD >actual &&
 		grep 2/2 actual
 	)
@@ -140,24 +140,24 @@ test_expect_success 'cache-tree does skip dir that becomes empty' '
 	)
 '
 
-test_expect_success 'commit: ita entries ignored in empty initial commit check' '
-	git init empty-initial-commit &&
+test_expect_success 'cummit: ita entries ignored in empty initial cummit check' '
+	git init empty-initial-cummit &&
 	(
-		cd empty-initial-commit &&
+		cd empty-initial-cummit &&
 		: >one &&
 		git add -N one &&
-		test_must_fail git commit -m nothing-new-here
+		test_must_fail git cummit -m nothing-new-here
 	)
 '
 
-test_expect_success 'commit: ita entries ignored in empty commit check' '
-	git init empty-subsequent-commit &&
+test_expect_success 'cummit: ita entries ignored in empty cummit check' '
+	git init empty-subsequent-cummit &&
 	(
-		cd empty-subsequent-commit &&
-		test_commit one &&
+		cd empty-subsequent-cummit &&
+		test_cummit one &&
 		: >two &&
 		git add -N two &&
-		test_must_fail git commit -m nothing-new-here
+		test_must_fail git cummit -m nothing-new-here
 	)
 '
 
@@ -167,7 +167,7 @@ test_expect_success 'rename detection finds the right names' '
 		cd rename-detection &&
 		echo contents >first &&
 		git add first &&
-		git commit -m first &&
+		git cummit -m first &&
 		mv first third &&
 		git add -N third &&
 
@@ -206,7 +206,7 @@ test_expect_success 'double rename detection in status' '
 		cd rename-detection-2 &&
 		echo contents >first &&
 		git add first &&
-		git commit -m first &&
+		git cummit -m first &&
 		git mv first second &&
 		mv second third &&
 		git add -N third &&

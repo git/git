@@ -8,11 +8,11 @@ test_description='git apply --build-fake-ancestor handling.'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit 1 &&
-	test_commit 2 &&
+	test_cummit 1 &&
+	test_cummit 2 &&
 	mkdir sub &&
-	test_commit 3 sub/3.t &&
-	test_commit 4
+	test_cummit 3 sub/3.t &&
+	test_cummit 4
 '
 
 test_expect_success 'apply --build-fake-ancestor' '

@@ -12,7 +12,7 @@ test_expect_success 'setup' '
 	echo build >.gitignore &&
 	echo \*.o >>.gitignore &&
 	git add . &&
-	git commit -m setup &&
+	git cummit -m setup &&
 	touch src/part2.c README &&
 	git add .
 

@@ -18,7 +18,7 @@ test_expect_success SYMLINKS setup '
 	mkdir subdir &&
 	echo file >subdir/file &&
 	git add subdir/file &&
-	git commit -q -m file &&
+	git cummit -q -m file &&
 	git clone -q . clone-repo &&
 	ln -s clone-repo/subdir/ subdir-link &&
 	(
@@ -33,7 +33,7 @@ test_expect_success SYMLINKS setup '
 test_expect_success SYMLINKS 'pulling from real subdir' '
 	(
 		echo real >subdir/file &&
-		git commit -m real subdir/file &&
+		git cummit -m real subdir/file &&
 		cd clone-repo/subdir/ &&
 		git pull &&
 		test real = $(cat file)
@@ -61,7 +61,7 @@ test_expect_success SYMLINKS 'pulling from real subdir' '
 test_expect_success SYMLINKS 'pulling from symlinked subdir' '
 	(
 		echo link >subdir/file &&
-		git commit -m link subdir/file &&
+		git cummit -m link subdir/file &&
 		cd subdir-link/ &&
 		git pull &&
 		test link = $(cat file)
@@ -75,7 +75,7 @@ test_expect_success SYMLINKS 'pushing from symlinked subdir' '
 	(
 		cd subdir-link/ &&
 		echo push >file &&
-		git commit -m push ./file &&
+		git cummit -m push ./file &&
 		git push
 	) &&
 	test push = $(git show HEAD:subdir/file)

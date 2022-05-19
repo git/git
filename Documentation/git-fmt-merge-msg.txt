@@ -3,7 +3,7 @@ git-fmt-merge-msg(1)
 
 NAME
 ----
-git-fmt-merge-msg - Produce a merge commit message
+git-fmt-merge-msg - Produce a merge cummit message
 
 
 SYNOPSIS
@@ -15,7 +15,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Takes the list of merged objects on stdin and produces a suitable
-commit message to be used for the merge commit, usually to be
+cummit message to be used for the merge cummit, usually to be
 passed as the '<merge-message>' argument of 'git merge'.
 
 This command is intended mostly for internal use by scripts
@@ -26,13 +26,13 @@ OPTIONS
 
 --log[=<n>]::
 	In addition to branch names, populate the log message with
-	one-line descriptions from the actual commits that are being
-	merged.  At most <n> commits from each merge parent will be
+	one-line descriptions from the actual cummits that are being
+	merged.  At most <n> cummits from each merge parent will be
 	used (20 if <n> is omitted).  This overrides the `merge.log`
 	configuration variable.
 
 --no-log::
-	Do not list one-line descriptions from the actual commits being
+	Do not list one-line descriptions from the actual cummits being
 	merged.
 
 --[no-]summary::

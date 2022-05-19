@@ -27,7 +27,7 @@ Fixes since v2.33
 
  * "git range-diff" code clean-up.
 
- * "git commit --fixup" now works with "--edit" again, after it was
+ * "git cummit --fixup" now works with "--edit" again, after it was
    broken in v2.32.
 
  * Use upload-artifacts v1 (instead of v2) for 32-bit linux, as the
@@ -36,7 +36,7 @@ Fixes since v2.33
  * Checking out all the paths from HEAD during the last conflicted
    step in "git rebase" and continuing would cause the step to be
    skipped (which is expected), but leaves MERGE_MSG file behind in
-   $GIT_DIR and confuses the next "git commit", which has been
+   $GIT_DIR and confuses the next "git cummit", which has been
    corrected.
 
  * Various bugs in "git rebase -r" have been fixed.
@@ -52,7 +52,7 @@ Fixes since v2.33
    even when --quiet and/or --no-progress options were given.
 
  * "git branch -D <branch>" used to refuse to remove a broken branch
-   ref that points at a missing commit, which has been corrected.
+   ref that points at a missing cummit, which has been corrected.
 
  * Build update for Apple clang.
 

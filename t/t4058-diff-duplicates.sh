@@ -119,17 +119,17 @@ test_expect_success 'diff-tree FROM duplicate tree, with renames' '
 	test_cmp expect actual
 '
 
-test_expect_success 'create a few commits' '
-	git commit-tree -m "Duplicate Entries" two^{tree} >commit_id &&
-	git branch base $(cat commit_id) &&
+test_expect_success 'create a few cummits' '
+	git cummit-tree -m "Duplicate Entries" two^{tree} >cummit_id &&
+	git branch base $(cat cummit_id) &&
 
-	git commit-tree -p $(cat commit_id) -m "Just one" three^{tree} >up &&
+	git cummit-tree -p $(cat cummit_id) -m "Just one" three^{tree} >up &&
 	git branch update $(cat up) &&
 
-	git commit-tree -p $(cat up) -m "Back to weird" two^{tree} >final &&
+	git cummit-tree -p $(cat up) -m "Back to weird" two^{tree} >final &&
 	git branch final $(cat final) &&
 
-	rm commit_id up final
+	rm cummit_id up final
 '
 
 test_expect_failure 'git read-tree does not segfault' '

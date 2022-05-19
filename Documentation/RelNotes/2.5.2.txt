@@ -8,10 +8,10 @@ Fixes since v2.5.1
    which was found to be a bit confusing to new users.
 
  * The "interpret-trailers" helper mistook a multi-paragraph title of
-   a commit log message with a colon in it as the end of the trailer
+   a cummit log message with a colon in it as the end of the trailer
    block.
 
- * When re-priming the cache-tree opportunistically while committing
+ * When re-priming the cache-tree opportunistically while cummitting
    the in-core index as-is, we mistakenly invalidated the in-core
    index too aggressively, causing the experimental split-index code
    to unnecessarily rewrite the on-disk index file(s).

@@ -99,7 +99,7 @@ CFLAGS=-g -O3 -Wall
 CC=gcc
 
 
-PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
+PROG=   update-cache show-diff init-db write-tree read-tree cummit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
 	check-files ls-tree merge-base
 
@@ -124,8 +124,8 @@ write-tree: write-tree.o read-cache.o
 read-tree: read-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o read-tree read-tree.o read-cache.o $(LIBS)
 
-commit-tree: commit-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o commit-tree commit-tree.o read-cache.o $(LIBS)
+cummit-tree: cummit-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o cummit-tree cummit-tree.o read-cache.o $(LIBS)
 
 cat-file: cat-file.o read-cache.o
 	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
@@ -272,7 +272,7 @@ CFLAGS=-g -O3 -Wall
 CC=gcc
 
 
-PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
+PROG=   update-cache show-diff init-db write-tree read-tree cummit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
 	check-files ls-tree merge-base
 
@@ -297,8 +297,8 @@ write-tree: write-tree.o read-cache.o
 read-tree: read-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o read-tree read-tree.o read-cache.o $(LIBS)
 
-commit-tree: commit-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o commit-tree commit-tree.o read-cache.o $(LIBS)
+cummit-tree: cummit-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o cummit-tree cummit-tree.o read-cache.o $(LIBS)
 
 cat-file: cat-file.o read-cache.o
 	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
@@ -312,8 +312,8 @@ checkout-cache: checkout-cache.o read-cache.o
 diff-tree: diff-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o diff-tree diff-tree.o read-cache.o $(LIBS)
 
-rev-tree: rev-tree.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+rev-tree: rev-tree.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 show-files: show-files.o read-cache.o
 	$(CC) $(CFLAGS) -o show-files show-files.o read-cache.o $(LIBS)
@@ -377,7 +377,7 @@ CFLAGS=-g -O3 -Wall
 CC=gcc
 
 
-PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
+PROG=   update-cache show-diff init-db write-tree read-tree cummit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
 	check-files ls-tree merge-base merge-cache
 
@@ -402,8 +402,8 @@ write-tree: write-tree.o read-cache.o
 read-tree: read-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o read-tree read-tree.o read-cache.o $(LIBS)
 
-commit-tree: commit-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o commit-tree commit-tree.o read-cache.o $(LIBS)
+cummit-tree: cummit-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o cummit-tree cummit-tree.o read-cache.o $(LIBS)
 
 cat-file: cat-file.o read-cache.o
 	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
@@ -485,7 +485,7 @@ CFLAGS=-g -O3 -Wall
 CC=gcc
 
 
-PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
+PROG=   update-cache show-diff init-db write-tree read-tree cummit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
 	check-files ls-tree merge-base
 
@@ -510,14 +510,14 @@ write-tree: write-tree.o read-cache.o
 read-tree: read-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o read-tree read-tree.o read-cache.o $(LIBS)
 
-commit-tree: commit-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o commit-tree commit-tree.o read-cache.o $(LIBS)
+cummit-tree: cummit-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o cummit-tree cummit-tree.o read-cache.o $(LIBS)
 
 cat-file: cat-file.o read-cache.o
 	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
 
-fsck-cache: fsck-cache.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+fsck-cache: fsck-cache.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 checkout-cache: checkout-cache.o read-cache.o
 	$(CC) $(CFLAGS) -o checkout-cache checkout-cache.o read-cache.o $(LIBS)
@@ -525,8 +525,8 @@ checkout-cache: checkout-cache.o read-cache.o
 diff-tree: diff-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o diff-tree diff-tree.o read-cache.o $(LIBS)
 
-rev-tree: rev-tree.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+rev-tree: rev-tree.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 show-files: show-files.o read-cache.o
 	$(CC) $(CFLAGS) -o show-files show-files.o read-cache.o $(LIBS)
@@ -590,7 +590,7 @@ CFLAGS=-g -O3 -Wall
 CC=gcc
 
 
-PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
+PROG=   update-cache show-diff init-db write-tree read-tree cummit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
 	check-files ls-tree merge-base
 
@@ -615,14 +615,14 @@ write-tree: write-tree.o read-cache.o
 read-tree: read-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o read-tree read-tree.o read-cache.o $(LIBS)
 
-commit-tree: commit-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o commit-tree commit-tree.o read-cache.o $(LIBS)
+cummit-tree: cummit-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o cummit-tree cummit-tree.o read-cache.o $(LIBS)
 
 cat-file: cat-file.o read-cache.o
 	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
 
-fsck-cache: fsck-cache.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+fsck-cache: fsck-cache.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 checkout-cache: checkout-cache.o read-cache.o
 	$(CC) $(CFLAGS) -o checkout-cache checkout-cache.o read-cache.o $(LIBS)
@@ -630,8 +630,8 @@ checkout-cache: checkout-cache.o read-cache.o
 diff-tree: diff-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o diff-tree diff-tree.o read-cache.o $(LIBS)
 
-rev-tree: rev-tree.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+rev-tree: rev-tree.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 show-files: show-files.o read-cache.o
 	$(CC) $(CFLAGS) -o show-files show-files.o read-cache.o $(LIBS)
@@ -642,8 +642,8 @@ check-files: check-files.o read-cache.o
 ls-tree: ls-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o ls-tree ls-tree.o read-cache.o $(LIBS)
 
-merge-base: merge-base.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+merge-base: merge-base.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 read-cache.o: cache.h
 show-diff.o: cache.h
@@ -779,7 +779,7 @@ CFLAGS=-g -O3 -Wall
 CC=gcc
 
 
-PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
+PROG=   update-cache show-diff init-db write-tree read-tree cummit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
 	check-files ls-tree merge-base
 
@@ -804,14 +804,14 @@ write-tree: write-tree.o read-cache.o
 read-tree: read-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o read-tree read-tree.o read-cache.o $(LIBS)
 
-commit-tree: commit-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o commit-tree commit-tree.o read-cache.o $(LIBS)
+cummit-tree: cummit-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o cummit-tree cummit-tree.o read-cache.o $(LIBS)
 
 cat-file: cat-file.o read-cache.o
 	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
 
-fsck-cache: fsck-cache.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+fsck-cache: fsck-cache.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 checkout-cache: checkout-cache.o read-cache.o
 	$(CC) $(CFLAGS) -o checkout-cache checkout-cache.o read-cache.o $(LIBS)
@@ -819,8 +819,8 @@ checkout-cache: checkout-cache.o read-cache.o
 diff-tree: diff-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o diff-tree diff-tree.o read-cache.o $(LIBS)
 
-rev-tree: rev-tree.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+rev-tree: rev-tree.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 show-files: show-files.o read-cache.o
 	$(CC) $(CFLAGS) -o show-files show-files.o read-cache.o $(LIBS)
@@ -831,8 +831,8 @@ check-files: check-files.o read-cache.o
 ls-tree: ls-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o ls-tree ls-tree.o read-cache.o $(LIBS)
 
-merge-base: merge-base.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+merge-base: merge-base.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 read-cache.o: cache.h
 show-diff.o: cache.h
@@ -913,7 +913,7 @@ Content-length: 140
 K 7
 svn:log
 V 42
-(r14) Cherry-pick right 2 commits to trunk
+(r14) Cherry-pick right 2 cummits to trunk
 K 10
 svn:author
 V 3
@@ -960,7 +960,7 @@ CFLAGS=-g -O3 -Wall
 CC=gcc
 
 
-PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
+PROG=   update-cache show-diff init-db write-tree read-tree cummit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
 	check-files ls-tree merge-base merge-cache
 
@@ -985,14 +985,14 @@ write-tree: write-tree.o read-cache.o
 read-tree: read-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o read-tree read-tree.o read-cache.o $(LIBS)
 
-commit-tree: commit-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o commit-tree commit-tree.o read-cache.o $(LIBS)
+cummit-tree: cummit-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o cummit-tree cummit-tree.o read-cache.o $(LIBS)
 
 cat-file: cat-file.o read-cache.o
 	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
 
-fsck-cache: fsck-cache.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+fsck-cache: fsck-cache.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 checkout-cache: checkout-cache.o read-cache.o
 	$(CC) $(CFLAGS) -o checkout-cache checkout-cache.o read-cache.o $(LIBS)
@@ -1000,8 +1000,8 @@ checkout-cache: checkout-cache.o read-cache.o
 diff-tree: diff-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o diff-tree diff-tree.o read-cache.o $(LIBS)
 
-rev-tree: rev-tree.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+rev-tree: rev-tree.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 show-files: show-files.o read-cache.o
 	$(CC) $(CFLAGS) -o show-files show-files.o read-cache.o $(LIBS)
@@ -1012,8 +1012,8 @@ check-files: check-files.o read-cache.o
 ls-tree: ls-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o ls-tree ls-tree.o read-cache.o $(LIBS)
 
-merge-base: merge-base.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+merge-base: merge-base.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 merge-cache: merge-cache.o read-cache.o
 	$(CC) $(CFLAGS) -o merge-cache merge-cache.o read-cache.o $(LIBS)
@@ -1184,7 +1184,7 @@ CFLAGS=-g -O3 -Wall
 CC=gcc
 
 
-PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
+PROG=   update-cache show-diff init-db write-tree read-tree cummit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
 	check-files ls-tree merge-base merge-cache
 
@@ -1209,14 +1209,14 @@ write-tree: write-tree.o read-cache.o
 read-tree: read-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o read-tree read-tree.o read-cache.o $(LIBS)
 
-commit-tree: commit-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o commit-tree commit-tree.o read-cache.o $(LIBS)
+cummit-tree: cummit-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o cummit-tree cummit-tree.o read-cache.o $(LIBS)
 
 cat-file: cat-file.o read-cache.o
 	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
 
-fsck-cache: fsck-cache.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+fsck-cache: fsck-cache.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 checkout-cache: checkout-cache.o read-cache.o
 	$(CC) $(CFLAGS) -o checkout-cache checkout-cache.o read-cache.o $(LIBS)
@@ -1224,8 +1224,8 @@ checkout-cache: checkout-cache.o read-cache.o
 diff-tree: diff-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o diff-tree diff-tree.o read-cache.o $(LIBS)
 
-rev-tree: rev-tree.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+rev-tree: rev-tree.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 show-files: show-files.o read-cache.o
 	$(CC) $(CFLAGS) -o show-files show-files.o read-cache.o $(LIBS)
@@ -1236,8 +1236,8 @@ check-files: check-files.o read-cache.o
 ls-tree: ls-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o ls-tree ls-tree.o read-cache.o $(LIBS)
 
-merge-base: merge-base.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+merge-base: merge-base.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 merge-cache: merge-cache.o read-cache.o
 	$(CC) $(CFLAGS) -o merge-cache merge-cache.o read-cache.o $(LIBS)
@@ -1339,7 +1339,7 @@ Content-length: 146
 K 7
 svn:log
 V 48
-(r21) Cherry-pick left sub-branch commit to left
+(r21) Cherry-pick left sub-branch cummit to left
 K 10
 svn:author
 V 3
@@ -1426,7 +1426,7 @@ CFLAGS=-g -O3 -Wall
 CC=gcc
 
 
-PROG=   update-cache show-diff init-db write-tree read-tree commit-tree \
+PROG=   update-cache show-diff init-db write-tree read-tree cummit-tree \
 	cat-file fsck-cache checkout-cache diff-tree rev-tree show-files \
 	check-files ls-tree merge-base merge-cache
 
@@ -1451,14 +1451,14 @@ write-tree: write-tree.o read-cache.o
 read-tree: read-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o read-tree read-tree.o read-cache.o $(LIBS)
 
-commit-tree: commit-tree.o read-cache.o
-	$(CC) $(CFLAGS) -o commit-tree commit-tree.o read-cache.o $(LIBS)
+cummit-tree: cummit-tree.o read-cache.o
+	$(CC) $(CFLAGS) -o cummit-tree cummit-tree.o read-cache.o $(LIBS)
 
 cat-file: cat-file.o read-cache.o
 	$(CC) $(CFLAGS) -o cat-file cat-file.o read-cache.o $(LIBS)
 
-fsck-cache: fsck-cache.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+fsck-cache: fsck-cache.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o fsck-cache fsck-cache.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 checkout-cache: checkout-cache.o read-cache.o
 	$(CC) $(CFLAGS) -o checkout-cache checkout-cache.o read-cache.o $(LIBS)
@@ -1466,8 +1466,8 @@ checkout-cache: checkout-cache.o read-cache.o
 diff-tree: diff-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o diff-tree diff-tree.o read-cache.o $(LIBS)
 
-rev-tree: rev-tree.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+rev-tree: rev-tree.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o rev-tree rev-tree.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 show-files: show-files.o read-cache.o
 	$(CC) $(CFLAGS) -o show-files show-files.o read-cache.o $(LIBS)
@@ -1478,8 +1478,8 @@ check-files: check-files.o read-cache.o
 ls-tree: ls-tree.o read-cache.o
 	$(CC) $(CFLAGS) -o ls-tree ls-tree.o read-cache.o $(LIBS)
 
-merge-base: merge-base.o read-cache.o object.o commit.o tree.o blob.o
-	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o commit.o tree.o blob.o $(LIBS)
+merge-base: merge-base.o read-cache.o object.o cummit.o tree.o blob.o
+	$(CC) $(CFLAGS) -o merge-base merge-base.o read-cache.o object.o cummit.o tree.o blob.o $(LIBS)
 
 merge-cache: merge-cache.o read-cache.o
 	$(CC) $(CFLAGS) -o merge-cache merge-cache.o read-cache.o $(LIBS)
@@ -1794,7 +1794,7 @@ Content-length: 143
 K 7
 svn:log
 V 45
-(r30) trunk commit before merging trunk to b2
+(r30) trunk cummit before merging trunk to b2
 K 10
 svn:author
 V 3
@@ -2290,7 +2290,7 @@ Content-length: 120
 K 7
 svn:log
 V 22
-(r43) commit to bugfix
+(r43) cummit to bugfix
 K 10
 svn:author
 V 3

@@ -19,29 +19,29 @@ test_revision_subjects () {
 #              \
 #               z
 test_expect_success 'setup of non-linear-history' '
-	test_commit a &&
-	test_commit b &&
-	test_commit c &&
+	test_cummit a &&
+	test_cummit b &&
+	test_cummit c &&
 	git checkout b &&
-	test_commit d &&
-	test_commit e &&
+	test_cummit d &&
+	test_cummit e &&
 
 	git checkout c &&
-	test_commit g &&
+	test_cummit g &&
 	revert h g &&
 	git checkout d &&
 	cherry_pick gp g &&
-	test_commit i &&
+	test_cummit i &&
 	git checkout b &&
-	test_commit f &&
+	test_cummit f &&
 
 	git checkout d &&
-	test_commit n &&
-	test_commit o &&
+	test_cummit n &&
+	test_cummit o &&
 	test_merge w e &&
 	test_merge v c &&
 	git checkout o &&
-	test_commit z
+	test_cummit z
 '
 
 test_run_rebase () {

@@ -27,14 +27,14 @@ test_expect_success \
      mkdir directory2 &&
      echo "in directory2" >> directory2/file &&
      git add . &&
-     git commit -m "first commit" &&
+     git cummit -m "first cummit" &&
 
      echo "new file in subdir 2" > directory2/file2 &&
      git add . &&
-     git commit -m "commit in directory2" &&
+     git cummit -m "cummit in directory2" &&
 
      echo "changed file 1" > file1 &&
-     git commit -a -m "second commit" &&
+     git cummit -a -m "second cummit" &&
 
      git config --add color.test.slot1 green &&
      git config --add test.string value &&

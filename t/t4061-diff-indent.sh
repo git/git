@@ -18,7 +18,7 @@ compare_diff () {
 }
 
 # Compare blame output using the expectation for a diff as reference.
-# Only look for the lines coming from non-boundary commits.
+# Only look for the lines coming from non-boundary cummits.
 compare_blame () {
 	sed -n -e "1,4d" -e "s/^+//p" <"$1" >.tmp-1
 	sed -ne "s/^[^^][^)]*) *//p" <"$2" >.tmp-2
@@ -50,7 +50,7 @@ test_expect_success 'prepare' '
 
 	git add spaces.txt functions.c &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git branch old &&
 
 	cat <<-\EOF >spaces.txt &&
@@ -85,7 +85,7 @@ test_expect_success 'prepare' '
 
 	git add spaces.txt functions.c &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git branch new &&
 
 	tr "_" " " <<-\EOF >spaces-expect &&

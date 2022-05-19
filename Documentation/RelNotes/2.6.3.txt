@@ -52,7 +52,7 @@ Fixes since v2.6.2
    cannot remove a file that is still open.
 
  * Correct "git p4 --detect-labels" so that it does not fail to create
-   a tag that points at a commit that is also being imported.
+   a tag that points at a cummit that is also being imported.
 
  * The internal stripspace() function has been moved to where it
    logically belongs to, i.e. strbuf API, and the command line parser
@@ -75,7 +75,7 @@ Fixes since v2.6.2
    grace period, the user must make sure that the repository is
    quiescent.
 
- * A recent "filter-branch --msg-filter" broke skipping of the commit
+ * A recent "filter-branch --msg-filter" broke skipping of the cummit
    object header, which is fixed.
 
  * "git --literal-pathspecs add -u/-A" without any command line

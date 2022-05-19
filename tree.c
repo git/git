@@ -3,7 +3,7 @@
 #include "tree.h"
 #include "object-store.h"
 #include "blob.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "alloc.h"
 #include "tree-walk.h"
@@ -50,20 +50,20 @@ int read_tree_at(struct repository *r,
 		if (S_ISDIR(entry.mode))
 			oidcpy(&oid, &entry.oid);
 		else if (S_ISGITLINK(entry.mode)) {
-			struct commit *commit;
+			struct cummit *cummit;
 
-			commit = lookup_commit(r, &entry.oid);
-			if (!commit)
-				die("Commit %s in submodule path %s%s not found",
+			cummit = lookup_cummit(r, &entry.oid);
+			if (!cummit)
+				die("cummit %s in submodule path %s%s not found",
 				    oid_to_hex(&entry.oid),
 				    base->buf, entry.path);
 
-			if (parse_commit(commit))
-				die("Invalid commit %s in submodule path %s%s",
+			if (parse_cummit(cummit))
+				die("Invalid cummit %s in submodule path %s%s",
 				    oid_to_hex(&entry.oid),
 				    base->buf, entry.path);
 
-			oidcpy(&oid, get_commit_tree_oid(commit));
+			oidcpy(&oid, get_cummit_tree_oid(cummit));
 		}
 		else
 			continue;

@@ -59,7 +59,7 @@ test_expect_success 'git p4 sync uninitialized repo' '
 '
 
 #
-# Create a git repo by hand.  Add a commit so that HEAD is valid.
+# Create a git repo by hand.  Add a cummit so that HEAD is valid.
 # Test imports a new p4 repository into a new git branch.
 #
 test_expect_success 'git p4 sync new branch' '
@@ -134,7 +134,7 @@ test_expect_success 'clone two dirs, @all, conflicting files' '
 	)
 '
 
-test_expect_success 'clone two dirs, each edited by submit, single git commit' '
+test_expect_success 'clone two dirs, each edited by submit, single git cummit' '
 	(
 		cd "$cli" &&
 		echo sub1/f4 >sub1/f4 &&
@@ -274,7 +274,7 @@ test_expect_success 'run hook p4-pre-submit before submit' '
 		cd "$git" &&
 		echo "hello world" >hello.txt &&
 		git add hello.txt &&
-		git commit -m "add hello.txt" &&
+		git cummit -m "add hello.txt" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --dry-run >out &&
 		grep "Would apply" out
@@ -305,7 +305,7 @@ test_expect_success 'submit from detached head' '
 		git checkout p4/master &&
 		>detached_head_test &&
 		git add detached_head_test &&
-		git commit -m "add detached_head" &&
+		git cummit -m "add detached_head" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit &&
 		git p4 rebase &&
@@ -322,14 +322,14 @@ test_expect_success 'submit from worktree' '
 	) &&
 	(
 		cd "$git/../worktree-test" &&
-		test_commit "worktree-commit" &&
+		test_cummit "worktree-cummit" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit
 	) &&
 	(
 		cd "$cli" &&
 		p4 sync &&
-		test_path_is_file worktree-commit.t
+		test_path_is_file worktree-cummit.t
 	)
 '
 

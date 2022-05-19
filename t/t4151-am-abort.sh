@@ -9,7 +9,7 @@ test_expect_success setup '
 	cp file-1 file-2 &&
 	test_tick &&
 	git add file-1 file-2 &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag initial &&
 	git format-patch --stdout --root initial >initial.patch &&
 	for i in 2 3 4 5 6
@@ -18,7 +18,7 @@ test_expect_success setup '
 		echo $i >otherfile-$i &&
 		git add otherfile-$i &&
 		test_tick &&
-		git commit -a -m $i || return 1
+		git cummit -a -m $i || return 1
 	done &&
 	git branch changes &&
 	git format-patch --no-numbered initial &&
@@ -26,7 +26,7 @@ test_expect_success setup '
 	echo different >>file-1 &&
 	echo whatever >new-file &&
 	git add file-1 new-file &&
-	git commit -m different &&
+	git cummit -m different &&
 	git checkout -b side initial &&
 	echo local change >file-2-expect
 '
@@ -85,9 +85,9 @@ test_expect_success 'am -3 --abort removes otherfile-4' '
 	test_path_is_missing otherfile-4
 '
 
-test_expect_success 'am --abort will keep the local commits intact' '
+test_expect_success 'am --abort will keep the local cummits intact' '
 	test_must_fail git am 0004-*.patch &&
-	test_commit unrelated &&
+	test_cummit unrelated &&
 	git rev-parse HEAD >expect &&
 	git am --abort &&
 	git rev-parse HEAD >actual &&
@@ -140,7 +140,7 @@ test_expect_success 'am -3 --abort removes otherfile-4 on unborn branch' '
 	test_path_is_missing otherfile-4
 '
 
-test_expect_success 'am -3 --abort on unborn branch removes applied commits' '
+test_expect_success 'am -3 --abort on unborn branch removes applied cummits' '
 	git checkout -f --orphan orphan &&
 	git reset &&
 	rm -f otherfile-4 otherfile-2 file-1 file-2 &&
@@ -156,11 +156,11 @@ test_expect_success 'am -3 --abort on unborn branch removes applied commits' '
 	test refs/heads/orphan = "$(git symbolic-ref HEAD)"
 '
 
-test_expect_success 'am --abort on unborn branch will keep local commits intact' '
+test_expect_success 'am --abort on unborn branch will keep local cummits intact' '
 	git checkout -f --orphan orphan &&
 	git reset &&
 	test_must_fail git am 0004-*.patch &&
-	test_commit unrelated2 &&
+	test_cummit unrelated2 &&
 	git rev-parse HEAD >expect &&
 	git am --abort &&
 	git rev-parse HEAD >actual &&
@@ -170,7 +170,7 @@ test_expect_success 'am --abort on unborn branch will keep local commits intact'
 test_expect_success 'am --skip leaves index stat info alone' '
 	git checkout -f --orphan skip-stat-info &&
 	git reset &&
-	test_commit skip-should-be-untouched &&
+	test_cummit skip-should-be-untouched &&
 	test-tool chmtime =0 skip-should-be-untouched.t &&
 	git update-index --refresh &&
 	git diff-files --exit-code --quiet &&
@@ -182,7 +182,7 @@ test_expect_success 'am --skip leaves index stat info alone' '
 test_expect_success 'am --abort leaves index stat info alone' '
 	git checkout -f --orphan abort-stat-info &&
 	git reset &&
-	test_commit abort-should-be-untouched &&
+	test_cummit abort-should-be-untouched &&
 	test-tool chmtime =0 abort-should-be-untouched.t &&
 	git update-index --refresh &&
 	git diff-files --exit-code --quiet &&

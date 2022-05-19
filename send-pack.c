@@ -1,6 +1,6 @@
 #include "builtin.h"
 #include "config.h"
-#include "commit.h"
+#include "cummit.h"
 #include "refs.h"
 #include "object-store.h"
 #include "pkt-line.h"
@@ -274,7 +274,7 @@ static int sideband_demux(int in, int out, void *data)
 	return ret;
 }
 
-static int advertise_shallow_grafts_cb(const struct commit_graft *graft, void *cb)
+static int advertise_shallow_grafts_cb(const struct cummit_graft *graft, void *cb)
 {
 	struct strbuf *sb = cb;
 	if (graft->nr_parent == -1)
@@ -286,7 +286,7 @@ static void advertise_shallow_grafts_buf(struct strbuf *sb)
 {
 	if (!is_repository_shallow(the_repository))
 		return;
-	for_each_commit_graft(advertise_shallow_grafts_cb, sb);
+	for_each_cummit_graft(advertise_shallow_grafts_cb, sb);
 }
 
 #define CHECK_REF_NO_PUSH -1

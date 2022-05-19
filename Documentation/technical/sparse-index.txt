@@ -161,7 +161,7 @@ the most common builtins that use the index to operate as O(Populated).
 Here is a potential list of commands that could be valuable to integrate
 at this point:
 
-* `git commit`
+* `git cummit`
 * `git checkout`
 * `git merge`
 * `git rebase`

@@ -368,10 +368,10 @@ C: Build an empty set, `common`, to hold the objects that are later
 C: Build a set, `want`, of the objects from `advertised` the client
    wants to fetch, based on what it saw during ref discovery.
 
-C: Start a queue, `c_pending`, ordered by commit time (popping newest
-   first).  Add all client refs.  When a commit is popped from
+C: Start a queue, `c_pending`, ordered by cummit time (popping newest
+   first).  Add all client refs.  When a cummit is popped from
    the queue its parents SHOULD be automatically inserted back.
-   Commits MUST only enter the queue once.
+   cummits MUST only enter the queue once.
 
 'one compute step:'
 
@@ -408,10 +408,10 @@ object name as its value.  Multiple object names MUST be sent by sending
 multiple commands. Object names MUST be given using the object format
 negotiated through the `object-format` capability (default SHA-1).
 
-The `have` list is created by popping the first 32 commits
+The `have` list is created by popping the first 32 cummits
 from `c_pending`.  Less can be supplied if `c_pending` empties.
 
-If the client has sent 256 "have" commits and has not yet
+If the client has sent 256 "have" cummits and has not yet
 received one of those back from `s_common`, or the client has
 emptied `c_pending` it SHOULD include a "done" command to let
 the server know it won't proceed:
@@ -438,7 +438,7 @@ If "have" was sent:
 Loop through the objects in the order supplied by the client.
 
 For each object, if the server has the object reachable from
-a ref, add it to `s_common`.  If a commit is added to `s_common`,
+a ref, add it to `s_common`.  If a cummit is added to `s_common`,
 do not add any ancestors, even if they also appear in `have`.
 
 S: Send the git-upload-pack response:

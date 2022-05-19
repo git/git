@@ -4,7 +4,7 @@
 #include "notes-utils.h"
 #include "strbuf.h"
 
-struct commit;
+struct cummit;
 struct object_id;
 struct repository;
 
@@ -19,7 +19,7 @@ struct notes_merge_options {
 	struct repository *repo;
 	const char *local_ref;
 	const char *remote_ref;
-	struct strbuf commit_msg;
+	struct strbuf cummit_msg;
 	int verbosity;
 	enum notes_merge_strategy strategy;
 	unsigned has_worktree:1;
@@ -35,18 +35,18 @@ void init_notes_merge_options(struct repository *r,
  * o->local_ref. This is the notes_tree in which the object-level merge is
  * performed.
  *
- * The commits given by the two refs are merged, producing one of the following
+ * The cummits given by the two refs are merged, producing one of the following
  * outcomes:
  *
- * 1. The merge trivially results in an existing commit (e.g. fast-forward or
+ * 1. The merge trivially results in an existing cummit (e.g. fast-forward or
  *    already-up-to-date). 'local_tree' is untouched, the OID of the result
  *    is written into 'result_oid' and 0 is returned.
- * 2. The merge successfully completes, producing a merge commit. local_tree
- *    contains the updated notes tree, the OID of the resulting commit is
+ * 2. The merge successfully completes, producing a merge cummit. local_tree
+ *    contains the updated notes tree, the OID of the resulting cummit is
  *    written into 'result_oid', and 1 is returned.
  * 3. The merge results in conflicts. This is similar to #2 in that the
  *    partial merge result (i.e. merge result minus the unmerged entries)
- *    are stored in 'local_tree', and the OID or the resulting commit
+ *    are stored in 'local_tree', and the OID or the resulting cummit
  *    (to be amended when the conflicts have been resolved) is written into
  *    'result_oid'. The unmerged entries are written into the
  *    .git/NOTES_MERGE_WORKTREE directory with conflict markers.
@@ -65,16 +65,16 @@ int notes_merge(struct notes_merge_options *o,
  * Finalize conflict resolution from an earlier notes_merge()
  *
  * The given notes tree 'partial_tree' must be the notes_tree corresponding to
- * the given 'partial_commit', the partial result commit created by a previous
+ * the given 'partial_cummit', the partial result cummit created by a previous
  * call to notes_merge().
  *
  * This function will add the (now resolved) notes in .git/NOTES_MERGE_WORKTREE
- * to 'partial_tree', and create a final notes merge commit, the OID of which
+ * to 'partial_tree', and create a final notes merge cummit, the OID of which
  * will be stored in 'result_oid'.
  */
-int notes_merge_commit(struct notes_merge_options *o,
+int notes_merge_cummit(struct notes_merge_options *o,
 		       struct notes_tree *partial_tree,
-		       struct commit *partial_commit,
+		       struct cummit *partial_cummit,
 		       struct object_id *result_oid);
 
 /*

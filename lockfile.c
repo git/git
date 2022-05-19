@@ -151,7 +151,7 @@ void unable_to_lock_message(const char *path, int err, struct strbuf *buf)
 	if (err == EEXIST) {
 		strbuf_addf(buf, _("Unable to create '%s.lock': %s.\n\n"
 		    "Another git process seems to be running in this repository, e.g.\n"
-		    "an editor opened by 'git commit'. Please make sure all processes\n"
+		    "an editor opened by 'git cummit'. Please make sure all processes\n"
 		    "are terminated then try again. If it still fails, a git process\n"
 		    "may have crashed in this repository earlier:\n"
 		    "remove the file manually to continue."),
@@ -201,11 +201,11 @@ char *get_locked_file_path(struct lock_file *lk)
 	return strbuf_detach(&ret, NULL);
 }
 
-int commit_lock_file(struct lock_file *lk)
+int cummit_lock_file(struct lock_file *lk)
 {
 	char *result_path = get_locked_file_path(lk);
 
-	if (commit_lock_file_to(lk, result_path)) {
+	if (cummit_lock_file_to(lk, result_path)) {
 		int save_errno = errno;
 		free(result_path);
 		errno = save_errno;

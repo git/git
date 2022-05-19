@@ -3,7 +3,7 @@
 #
 # This script should be run inside the worktree of a TEST repo.
 # It will use the contents of the current HEAD to generate a
-# commit containing copies of the current worktree such that the
+# cummit containing copies of the current worktree such that the
 # total size of the commit has at least <target_size> files.
 #
 # Usage: [-t target_size] [-b branch_name]
@@ -51,7 +51,7 @@ fi
 git checkout -b $branch_name HEAD
 echo "$target_size" > inflate-repo.params
 git add inflate-repo.params
-git commit -q -m params
+git cummit -q -m params
 
 # Create ballast for in our branch.
 copy=1
@@ -65,18 +65,18 @@ do
     copy=$(expr $copy + 1)
 done
 rm GEN_src_list
-git commit -q -m "ballast"
+git cummit -q -m "ballast"
 
-# Modify 1 file and commit.
+# Modify 1 file and cummit.
 echo "$target_size" >> inflate-repo.params
 git add inflate-repo.params
-git commit -q -m "ballast plus 1"
+git cummit -q -m "ballast plus 1"
 
 nr_files=$(git ls-files | wc -l)
 
 # Checkout master to put repo in canonical state (because
 # the perf test may need to clone and enable sparse-checkout
-# before attempting to checkout a commit with the ballast
+# before attempting to checkout a cummit with the ballast
 # (because it may contain 100K directories and 1M files)).
 git checkout $src_branch
 

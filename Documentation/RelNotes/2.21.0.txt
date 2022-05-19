@@ -5,9 +5,9 @@ Backward Compatibility Notes
 ----------------------------
 
  * Historically, the "-m" (mainline) option can only be used for "git
-   cherry-pick" and "git revert" when working with a merge commit.
+   cherry-pick" and "git revert" when working with a merge cummit.
    This version of Git no longer warns or errors out when working with
-   a single-parent commit, as long as the argument to the "-m" option
+   a single-parent cummit, as long as the argument to the "-m" option
    is 1 (i.e. it has only one parent, and the request is to pick or
    revert relative to that first parent).  Scripts that relied on the
    behaviour may get broken with this change.
@@ -45,12 +45,12 @@ UI, Workflows & Features
    uninitialized submodules.
 
  * "git cherry-pick -m1" was forbidden when picking a non-merge
-   commit, even though there _is_ parent number 1 for such a commit.
+   cummit, even though there _is_ parent number 1 for such a cummit.
    This was done to avoid mistakes back when "cherry-pick" was about
-   picking a single commit, but is no longer useful with "cherry-pick"
-   that can pick a range of commits.  Now the "-m$num" option is
-   allowed when picking any commit, as long as $num names an existing
-   parent of the commit.
+   picking a single cummit, but is no longer useful with "cherry-pick"
+   that can pick a range of cummits.  Now the "-m$num" option is
+   allowed when picking any cummit, as long as $num names an existing
+   parent of the cummit.
 
  * Update "git multimail" from the upstream.
 
@@ -66,7 +66,7 @@ UI, Workflows & Features
  * "git diff --color-moved-ws" updates.
 
  * Custom userformat "log --format" learned %S atom that stands for
-   the tip the traversal reached the commit from, i.e. --source.
+   the tip the traversal reached the cummit from, i.e. --source.
 
  * "git instaweb" learned to drive http.server that comes with
    "batteries included" Python installation (both Python2 & 3).
@@ -128,16 +128,16 @@ Performance, Internal Implementation, Development Support etc.
    use of scaled quantities.  This is to ensure potential compatibility
    issues will not get out of hand.
 
- * Micro-optimize the code that prepares commit objects to be walked
-   by "git rev-list" when the commit-graph is available.
+ * Micro-optimize the code that prepares cummit objects to be walked
+   by "git rev-list" when the cummit-graph is available.
 
  * "git fetch" and "git upload-pack" learned to send all exchanges over
    the sideband channel while talking the v2 protocol.
 
- * The codepath to write out commit-graph has been optimized by
+ * The codepath to write out cummit-graph has been optimized by
    following the usual pattern of visiting objects in in-pack order.
 
- * The codepath to show progress meter while writing out commit-graph
+ * The codepath to show progress meter while writing out cummit-graph
    file has been improved.
 
  * Cocci rules have been updated to encourage use of strbuf_addbuf().
@@ -207,8 +207,8 @@ Fixes since v2.20
    (merge 7eae4a3ac4 sg/clone-initial-fetch-configuration later to maint).
 
  * A properly configured username/email is required under
-   user.useConfigOnly in order to create commits; now "git stash"
-   (even though it creates commit objects to represent stash entries)
+   user.useConfigOnly in order to create cummits; now "git stash"
+   (even though it creates cummit objects to represent stash entries)
    command is exempt from the requirement.
    (merge 3bc2111fc2 sd/stash-wo-user-name later to maint).
 
@@ -294,7 +294,7 @@ Fixes since v2.20
    hidden-ref configuration, which has been corrected.
    (merge e20b4192a3 jk/proto-v2-hidden-refs-fix later to maint).
 
- * "git fetch --recurse-submodules" may not fetch the necessary commit
+ * "git fetch --recurse-submodules" may not fetch the necessary cummit
    that is bound to the superproject, which is getting corrected.
    (merge be76c21282 sb/submodule-recursive-fetch-gets-the-tip later to maint).
 
@@ -311,7 +311,7 @@ Fixes since v2.20
    files, which has been corrected.
    (merge 7a10946ab9 ld/git-p4-shelve-update-fix later to maint).
 
- * The codepath to read from the commit-graph file attempted to read
+ * The codepath to read from the cummit-graph file attempted to read
    past the end of it when the file's table-of-contents was corrupt.
 
  * The compat/obstack code had casts that -Wcast-function-type
@@ -344,7 +344,7 @@ Fixes since v2.20
    (merge edb673cf10 ph/pack-objects-mutex-fix later to maint).
 
  * "git checkout -b <new> [HEAD]" to create a new branch from the
-   current commit and check it out ought to be a no-op in the index
+   current cummit and check it out ought to be a no-op in the index
    and the working tree in normal cases, but there are corner cases
    that do require updates to the index and the working tree.  Running
    it immediately after "git clone --no-checkout" is one of these
@@ -363,11 +363,11 @@ Fixes since v2.20
    corrected.
    (merge 891d4a0313 pw/no-editor-in-rebase-i-implicit later to maint).
 
- * The commit-graph facility did not work when in-core objects that
-   are promoted from unknown type to commit (e.g. a commit that is
+ * The cummit-graph facility did not work when in-core objects that
+   are promoted from unknown type to cummit (e.g. a cummit that is
    accessed via a tag that refers to it) were involved, which has been
    corrected.
-   (merge 4468d4435c sg/object-as-type-commit-graph-fix later to maint).
+   (merge 4468d4435c sg/object-as-type-cummit-graph-fix later to maint).
 
  * "git fetch" output cleanup.
    (merge dc40b24df4 nd/fetch-compact-update later to maint).
@@ -378,7 +378,7 @@ Fixes since v2.20
  * Documentation around core.crlf has been updated.
    (merge c9446f0504 jk/autocrlf-overrides-eol-doc later to maint).
 
- * The documentation of "git commit-tree" said that the command
+ * The documentation of "git cummit-tree" said that the command
    understands "--gpg-sign" in addition to "-S", but the command line
    parser did not know about the longhand, which has been corrected.
 
@@ -391,7 +391,7 @@ Fixes since v2.20
    fixed.
    (merge 6195a76da4 nd/help-align-command-desc later to maint).
 
- * The "git submodule summary" subcommand showed shortened commit
+ * The "git submodule summary" subcommand showed shortened cummit
    object names by mechanically truncating them at 7-hexdigit, which
    has been improved to let "rev-parse --short" scale the length of
    the abbreviation with the size of the repository.
@@ -431,7 +431,7 @@ Fixes since v2.20
    (merge b8b4cb27e6 ds/gc-doc-typofix later to maint).
    (merge 3b3357626e nd/style-opening-brace later to maint).
    (merge b4583d5595 es/doc-worktree-guessremote-config later to maint).
-   (merge cce99cd8c6 ds/commit-graph-assert-missing-parents later to maint).
+   (merge cce99cd8c6 ds/cummit-graph-assert-missing-parents later to maint).
    (merge 0650614982 cy/completion-typofix later to maint).
    (merge 6881925ef5 rs/sha1-file-close-mapped-file-on-error later to maint).
    (merge bd8d6f0def en/show-ref-doc-fix later to maint).
@@ -441,7 +441,7 @@ Fixes since v2.20
    (merge d609615f48 js/test-git-installed later to maint).
    (merge ba170517be ja/doc-style-fix later to maint).
    (merge 86fb1c4e77 km/init-doc-typofix later to maint).
-   (merge 5cfd4a9d10 nd/commit-doc later to maint).
+   (merge 5cfd4a9d10 nd/cummit-doc later to maint).
    (merge 9fce19a431 ab/diff-tree-doc-fix later to maint).
    (merge 2e285e7803 tz/gpg-test-fix later to maint).
    (merge 5427de960b kl/pretty-doc-markup-fix later to maint).

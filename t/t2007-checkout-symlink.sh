@@ -16,14 +16,14 @@ test_expect_success setup '
 	echo hello >frotz/filfre &&
 	git add frotz/filfre &&
 	test_tick &&
-	git commit -m "main has file frotz/filfre" &&
+	git cummit -m "main has file frotz/filfre" &&
 
 	git branch side &&
 
 	echo goodbye >nitfol &&
 	git add nitfol &&
 	test_tick &&
-	git commit -m "main adds file nitfol" &&
+	git cummit -m "main adds file nitfol" &&
 
 	git checkout side &&
 
@@ -32,7 +32,7 @@ test_expect_success setup '
 	test_ln_s_add xyzzy frotz &&
 	git add xyzzy/filfre &&
 	test_tick &&
-	git commit -m "side moves frotz/ to xyzzy/ and adds frotz->xyzzy/"
+	git cummit -m "side moves frotz/ to xyzzy/ and adds frotz->xyzzy/"
 
 '
 

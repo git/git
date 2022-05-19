@@ -22,9 +22,9 @@ UI, Workflows & Features
    to evolve.
 
  * "git push --force-with-lease[=<ref>]" can easily be misused to lose
-   commits unless the user takes good care of their own "git fetch".
+   cummits unless the user takes good care of their own "git fetch".
    A new option "--force-if-includes" attempts to ensure that what is
-   being force-pushed was created after examining the commit at the
+   being force-pushed was created after examining the cummit at the
    tip of the remote ref that is about to be force-replaced.
 
  * "git clone" learned clone.defaultremotename configuration variable
@@ -52,7 +52,7 @@ UI, Workflows & Features
  * "git checkout-index" did not consistently signal an error with its
    exit status, but now it does.
 
- * A commit and tag object may have CR at the end of each and
+ * A cummit and tag object may have CR at the end of each and
    every line (you can create such an object with hash-object or
    using --cleanup=verbatim to decline the default clean-up
    action), but it would make it impossible to have a blank line
@@ -111,7 +111,7 @@ Performance, Internal Implementation, Development Support etc.
  * GitHub Actions automated test improvement to skip tests on a tree
    identical to what has already been tested.
 
- * Test-coverage for running commit-graph task "git maintenance" has
+ * Test-coverage for running cummit-graph task "git maintenance" has
    been extended.
 
  * Our test scripts can be told to run only individual pieces while
@@ -144,7 +144,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git bisect start/next" in a large span of history spends a lot of
    time trying to come up with exactly the half-way point; this can be
-   optimized by stopping when we see a commit that is close enough to
+   optimized by stopping when we see a cummit that is close enough to
    the half-way point.
 
  * A lazily defined test prerequisite can now be defined in terms of
@@ -172,14 +172,14 @@ Performance, Internal Implementation, Development Support etc.
 Fixes since v2.29
 -----------------
 
- * In 2.29, "--committer-date-is-author-date" option of "rebase" and
+ * In 2.29, "--cummitter-date-is-author-date" option of "rebase" and
    "am" subcommands lost the e-mail address by mistake, which has been
    corrected.
-   (merge 5f35edd9d7 jk/committer-date-is-author-date-fix later to maint).
+   (merge 5f35edd9d7 jk/cummitter-date-is-author-date-fix later to maint).
 
  * "git checkout -p A...B [-- <path>]" did not work, even though the
    same command without "-p" correctly used the merge-base between
-   commits A and B.
+   cummits A and B.
    (merge 35166b1fb5 dl/checkout-p-merge-base later to maint).
 
  * The side-band status report can be sent at the same time as the
@@ -198,10 +198,10 @@ Fixes since v2.29
    has been corrected.
    (merge 262d5ad5a5 es/test-cmp-typocatcher later to maint).
 
- * When "git commit-graph" detects the same commit recorded more than
+ * When "git cummit-graph" detects the same cummit recorded more than
    once while it is merging the layers, it used to die.  The code now
    ignores all but one of them and continues.
-   (merge 85102ac71b ds/commit-graph-merging-fix later to maint).
+   (merge 85102ac71b ds/cummit-graph-merging-fix later to maint).
 
  * The meaning of a Signed-off-by trailer can vary from project to
    project; this and also what it means to this project has been
@@ -375,7 +375,7 @@ Fixes since v2.29
    (merge 4e1bee9a99 js/t7006-cleanup later to maint).
    (merge f5bcde6c58 es/tutorial-mention-asciidoc-early later to maint).
    (merge 714d491af0 so/format-patch-doc-on-default-diff-format later to maint).
-   (merge 0795df4b9b rs/clear-commit-marks-in-repo later to maint).
+   (merge 0795df4b9b rs/clear-cummit-marks-in-repo later to maint).
    (merge 9542d56379 sd/prompt-local-variable later to maint).
    (merge 06d43fad18 rs/pack-write-hashwrite-simplify later to maint).
    (merge b7e20b4373 mc/typofix later to maint).

@@ -29,11 +29,11 @@ UI, Workflows & Features
    breakage along the first-parent chain.
 
  * "git log --first-parent -p" showed patches only for single-parent
-   commits on the first-parent chain; the "--first-parent" option has
+   cummits on the first-parent chain; the "--first-parent" option has
    been made to imply "-m".  Use "--no-diff-merges" to restore the
-   previous behaviour to omit patches for merge commits.
+   previous behaviour to omit patches for merge cummits.
 
- * The commit labels used to explain each side of conflicted hunks
+ * The cummit labels used to explain each side of conflicted hunks
    placed by the sequencer machinery have been made more readable by
    humans.
 
@@ -92,7 +92,7 @@ UI, Workflows & Features
    when it fails the local check (hence due to atomicity it is known
    that no certificate is needed).
 
- * "git commit-graph write" learned to limit the number of bloom
+ * "git cummit-graph write" learned to limit the number of bloom
    filters that are computed from scratch with the --max-new-filters
    option.
 
@@ -107,7 +107,7 @@ UI, Workflows & Features
  * The command line completion (in contrib/) learned that "git restore
    -s <TAB>" is often followed by a refname.
 
- * "git shortlog" has been taught to group commits by the contents of
+ * "git shortlog" has been taught to group cummits by the contents of
    the trailer lines, like "Reviewed-by:", "Coauthored-by:", etc.
 
  * "git archive" learns the "--add-file" option to include untracked
@@ -176,7 +176,7 @@ Performance, Internal Implementation, Development Support etc.
  * Updates to "git merge" tests, in preparation for a new merge
    strategy backend.
 
- * midx and commit-graph files now use the byte defined in their file
+ * midx and cummit-graph files now use the byte defined in their file
    format specification for identifying the hash function used for
    object names.
 
@@ -212,7 +212,7 @@ Performance, Internal Implementation, Development Support etc.
  * "diff-highlight" (in contrib/) had a logic to flush its output upon
    seeing a blank line but the way it detected a blank line was broken.
 
- * The logic to skip testing on the tagged commit and the tag itself
+ * The logic to skip testing on the tagged cummit and the tag itself
    was not quite consistent which led to failure of Windows test
    tasks.  It has been revamped to consistently skip revisions that
    have already been tested, based on the tree object of the revision.
@@ -397,8 +397,8 @@ Fixes since v2.28
    shown quoted consistently.
 
  * "git diff/show" on a change that involves a submodule used to read
-   the information on commits in the submodule from a wrong repository
-   and gave a wrong information when the commit-graph is involved.
+   the information on cummits in the submodule from a wrong repository
+   and gave a wrong information when the cummit-graph is involved.
    (merge 85a1ec2c32 mf/submodule-summary-with-correct-repository later to maint).
 
  * Unlike "git config --local", "git config --worktree" did not fail
@@ -419,8 +419,8 @@ Fixes since v2.28
    which has been corrected.
    (merge 4e735c1326 ar/fetch-ipversion-in-all later to maint).
 
- * The "unshelve" subcommand of "git p4" incorrectly used commit^N
-   where it meant to say commit~N to name the Nth generation
+ * The "unshelve" subcommand of "git p4" incorrectly used cummit^N
+   where it meant to say cummit~N to name the Nth generation
    ancestor, which has been corrected.
    (merge 0acbf5997f ld/p4-unshelve-fix later to maint).
 
@@ -447,10 +447,10 @@ Fixes since v2.28
  * "git blame --ignore-rev/--ignore-revs-file" failed to validate
    their input are valid revision, and failed to take into account
    that the user may want to give an annotated tag instead of a
-   commit, which has been corrected.
+   cummit, which has been corrected.
    (merge 610e2b9240 jc/blame-ignore-fix later to maint).
 
- * "git bisect start X Y", when X and Y are not valid committish
+ * "git bisect start X Y", when X and Y are not valid cummittish
    object names, should take X and Y as pathspec, but didn't.
    (merge 73c6de06af cc/bisect-start-fix later to maint).
 
@@ -461,9 +461,9 @@ Fixes since v2.28
    the codepath that reads pack files.
    (merge bda959c476 mt/delta-base-cache-races later to maint).
 
- * in_merge_bases_many(), a way to see if a commit is reachable from
-   any commit in a set of commits, was totally broken when the
-   commit-graph feature was in use, which has been corrected.
+ * in_merge_bases_many(), a way to see if a cummit is reachable from
+   any cummit in a set of cummits, was totally broken when the
+   cummit-graph feature was in use, which has been corrected.
    (merge 8791bf1841 ds/in-merge-bases-many-optim-bug later to maint).
 
  * "git submodule update --quiet" did not squelch underlying "rebase"
@@ -495,7 +495,7 @@ Fixes since v2.28
    (merge ac900fddb7 ma/stop-progress-null-fix later to maint).
    (merge e767963ab6 rs/upload-pack-sigchain-fix later to maint).
    (merge a831908599 rs/preserve-merges-unused-code-removal later to maint).
-   (merge 6dfefe70a9 jb/commit-graph-doc-fix later to maint).
+   (merge 6dfefe70a9 jb/cummit-graph-doc-fix later to maint).
    (merge 847b37271e pb/set-url-docfix later to maint).
    (merge 748f733d54 mt/checkout-entry-dead-code-removal later to maint).
    (merge ce820cbd58 dl/subtree-docs later to maint).
@@ -508,7 +508,7 @@ Fixes since v2.28
    (merge e6d5a11fed al/t3200-back-on-a-branch later to maint).
    (merge 324efcf6b6 pw/add-p-leakfix later to maint).
    (merge 1c6ffb546b jk/add-i-fixes later to maint).
-   (merge e40e936551 cd/commit-graph-doc later to maint).
+   (merge e40e936551 cd/cummit-graph-doc later to maint).
    (merge 0512eabd91 jc/sequencer-stopped-sha-simplify later to maint).
    (merge d01141de5a so/combine-diff-simplify later to maint).
    (merge 3be01e5ab1 sn/fast-import-doc later to maint).

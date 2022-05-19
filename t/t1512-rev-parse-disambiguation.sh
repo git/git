@@ -2,12 +2,12 @@
 
 test_description='object name disambiguation
 
-Create blobs, trees, commits and a tag that all share the same
+Create blobs, trees, cummits and a tag that all share the same
 prefix, and make sure "git rev-parse" can take advantage of
 type information to disambiguate short object names that are
 not necessarily unique.
 
-The final history used in the test has five commits, with the bottom
+The final history used in the test has five cummits, with the bottom
 one tagged as v1.0.0.  They all have one regular file each.
 
   +-------------------------------------------+
@@ -128,7 +128,7 @@ test_expect_success 'blob and tree' '
 '
 
 test_expect_success 'warn ambiguity when no candidate matches type hint' '
-	test_must_fail git rev-parse --verify 000000000^{commit} 2>actual &&
+	test_must_fail git rev-parse --verify 000000000^{cummit} 2>actual &&
 	test_i18ngrep "short object ID 000000000 is ambiguous" actual
 '
 
@@ -163,38 +163,38 @@ test_expect_success 'disambiguate blob' '
 '
 
 test_expect_success 'disambiguate tree' '
-	commit=$(echo "d7xm" | git commit-tree 000000000) &&
-	# this commit is fffff2e and not ambiguous with the 00000* objects
-	test $(git rev-parse $commit^{tree}) = $(git rev-parse 0000000000cdc)
+	cummit=$(echo "d7xm" | git cummit-tree 000000000) &&
+	# this cummit is fffff2e and not ambiguous with the 00000* objects
+	test $(git rev-parse $cummit^{tree}) = $(git rev-parse 0000000000cdc)
 '
 
-test_expect_success 'first commit' '
-	# create one commit 0000000000e4f
-	git commit -m a2onsxbvj
+test_expect_success 'first cummit' '
+	# create one cummit 0000000000e4f
+	git cummit -m a2onsxbvj
 '
 
-test_expect_success 'disambiguate commit-ish' '
-	# feed commit-ish in an unambiguous way
-	git rev-parse --verify 0000000000e4f^{commit} &&
+test_expect_success 'disambiguate cummit-ish' '
+	# feed cummit-ish in an unambiguous way
+	git rev-parse --verify 0000000000e4f^{cummit} &&
 
 	# ambiguous at the object name level, but there is only one
-	# such commit (the others are tree and blob)
-	git rev-parse --verify 000000000^{commit} &&
+	# such cummit (the others are tree and blob)
+	git rev-parse --verify 000000000^{cummit} &&
 
 	# likewise
 	git rev-parse --verify 000000000^0
 '
 
-test_expect_success 'disambiguate commit' '
-	commit=$(echo "hoaxj" | git commit-tree 0000000000cdc -p 000000000) &&
-	# this commit is ffffffd8 and not ambiguous with the 00000* objects
-	test $(git rev-parse $commit^) = $(git rev-parse 0000000000e4f)
+test_expect_success 'disambiguate cummit' '
+	cummit=$(echo "hoaxj" | git cummit-tree 0000000000cdc -p 000000000) &&
+	# this cummit is ffffffd8 and not ambiguous with the 00000* objects
+	test $(git rev-parse $cummit^) = $(git rev-parse 0000000000e4f)
 '
 
-test_expect_success 'log name1..name2 takes only commit-ishes on both ends' '
+test_expect_success 'log name1..name2 takes only cummit-ishes on both ends' '
 	# These are underspecified from the prefix-length point of view
-	# to disambiguate the commit with other objects, but there is only
-	# one commit that has 00000* prefix at this point.
+	# to disambiguate the cummit with other objects, but there is only
+	# one cummit that has 00000* prefix at this point.
 	git log 000000000..000000000 &&
 	git log ..000000000 &&
 	git log 000000000.. &&
@@ -203,19 +203,19 @@ test_expect_success 'log name1..name2 takes only commit-ishes on both ends' '
 	git log 000000000...
 '
 
-test_expect_success 'rev-parse name1..name2 takes only commit-ishes on both ends' '
+test_expect_success 'rev-parse name1..name2 takes only cummit-ishes on both ends' '
 	# Likewise.
 	git rev-parse 000000000..000000000 &&
 	git rev-parse ..000000000 &&
 	git rev-parse 000000000..
 '
 
-test_expect_success 'git log takes only commit-ish' '
+test_expect_success 'git log takes only cummit-ish' '
 	# Likewise.
 	git log 000000000
 '
 
-test_expect_success 'git reset takes only commit-ish' '
+test_expect_success 'git reset takes only cummit-ish' '
 	# Likewise.
 	git reset 000000000
 '
@@ -225,17 +225,17 @@ test_expect_success 'first tag' '
 	git tag -a -m j7cp83um v1.0.0
 '
 
-test_expect_failure 'two semi-ambiguous commit-ish' '
+test_expect_failure 'two semi-ambiguous cummit-ish' '
 	# At this point, we have a tag 0000000000f8f that points
-	# at a commit 0000000000e4f, and a tree and a blob that
-	# share 0000000000 prefix with these tag and commit.
+	# at a cummit 0000000000e4f, and a tree and a blob that
+	# share 0000000000 prefix with these tag and cummit.
 	#
 	# Once the parser becomes ultra-smart, it could notice that
-	# 0000000000 before ^{commit} name many different objects, but
-	# that only two (HEAD and v1.0.0 tag) can be peeled to commit,
-	# and that peeling them down to commit yield the same commit
+	# 0000000000 before ^{cummit} name many different objects, but
+	# that only two (HEAD and v1.0.0 tag) can be peeled to cummit,
+	# and that peeling them down to cummit yield the same cummit
 	# without ambiguity.
-	git rev-parse --verify 0000000000^{commit} &&
+	git rev-parse --verify 0000000000^{cummit} &&
 
 	# likewise
 	git log 0000000000..0000000000 &&
@@ -257,28 +257,28 @@ test_expect_success 'parse describe name' '
 	git rev-parse --verify v1.0.0-0-g0000000000e4f &&
 
 	# ambiguous at the object name level, but there is only one
-	# such commit (others are blob, tree and tag)
+	# such cummit (others are blob, tree and tag)
 	git rev-parse --verify v1.0.0-0-g000000000
 '
 
 test_expect_success 'more history' '
-	# commit 0000000000043
+	# cummit 0000000000043
 	git mv a0blgqsjc d12cr3h8t &&
 	echo h62xsjeu >>d12cr3h8t &&
 	git add d12cr3h8t &&
 
 	test_tick &&
-	git commit -m czy8f73t &&
+	git cummit -m czy8f73t &&
 
-	# commit 00000000008ec
+	# cummit 00000000008ec
 	git mv d12cr3h8t j000jmpzn &&
 	echo j08bekfvt >>j000jmpzn &&
 	git add j000jmpzn &&
 
 	test_tick &&
-	git commit -m ioiley5o &&
+	git cummit -m ioiley5o &&
 
-	# commit 0000000005b0
+	# cummit 0000000005b0
 	git checkout v1.0.0^0 &&
 	git mv a0blgqsjc f5518nwu &&
 
@@ -286,16 +286,16 @@ test_expect_success 'more history' '
 	git add f5518nwu &&
 
 	test_tick &&
-	git commit -m b3wettvi &&
+	git cummit -m b3wettvi &&
 	side=$(git rev-parse HEAD) &&
 
-	# commit 000000000066
+	# cummit 000000000066
 	git checkout main &&
 
 	# If you use recursive, merge will fail and you will need to
 	# clean up a0blgqsjc as well.  If you use resolve, merge will
 	# succeed.
-	test_might_fail git merge --no-commit -s recursive $side &&
+	test_might_fail git merge --no-cummit -s recursive $side &&
 	git rm -f f5518nwu j000jmpzn &&
 
 	test_might_fail git rm -f a0blgqsjc &&
@@ -306,13 +306,13 @@ test_expect_success 'more history' '
 	git add ab2gs879 &&
 
 	test_tick &&
-	git commit -m ad2uee
+	git cummit -m ad2uee
 
 '
 
 test_expect_failure 'parse describe name taking advantage of generation' '
 	# ambiguous at the object name level, but there is only one
-	# such commit at generation 0
+	# such cummit at generation 0
 	git rev-parse --verify v1.0.0-0-g000000000 &&
 
 	# likewise for generation 2 and 4
@@ -325,19 +325,19 @@ test_expect_failure 'parse describe name taking advantage of generation' '
 # reason.  When it learns to use the generation number, the previous
 # test should succeed, and also this test should fail because the
 # describe name used in the test with generation number can name two
-# commits.  Make sure that such a future enhancement does not randomly
+# cummits.  Make sure that such a future enhancement does not randomly
 # pick one.
 test_expect_success 'parse describe name not ignoring ambiguity' '
 	# ambiguous at the object name level, and there are two such
-	# commits at generation 1
+	# cummits at generation 1
 	test_must_fail git rev-parse --verify v1.0.0-1-g000000000
 '
 
-test_expect_success 'ambiguous commit-ish' '
-	# Now there are many commits that begin with the
+test_expect_success 'ambiguous cummit-ish' '
+	# Now there are many cummits that begin with the
 	# common prefix, none of these should pick one at
 	# random.  They all should result in ambiguity errors.
-	test_must_fail git rev-parse --verify 00000000^{commit} &&
+	test_must_fail git rev-parse --verify 00000000^{cummit} &&
 
 	# likewise
 	test_must_fail git log 000000000..000000000 &&
@@ -357,7 +357,7 @@ test_expect_success 'ambiguous tags peel to treeish' '
 
 test_expect_success 'rev-parse --disambiguate' '
 	# The test creates 16 objects that share the prefix and two
-	# commits created by commit-tree in earlier tests share a
+	# cummits created by cummit-tree in earlier tests share a
 	# different prefix.
 	git rev-parse --disambiguate=000000000 >actual &&
 	test_line_count = 16 actual &&
@@ -374,7 +374,7 @@ test_expect_success 'rev-parse --disambiguate drops duplicates' '
 test_expect_success 'ambiguous 40-hex ref' '
 	TREE=$(git mktree </dev/null) &&
 	REF=$(git rev-parse HEAD) &&
-	VAL=$(git commit-tree $TREE </dev/null) &&
+	VAL=$(git cummit-tree $TREE </dev/null) &&
 	git update-ref refs/heads/$REF $VAL &&
 	test $(git rev-parse $REF 2>err) = $REF &&
 	grep "refname.*${REF}.*ambiguous" err
@@ -383,7 +383,7 @@ test_expect_success 'ambiguous 40-hex ref' '
 test_expect_success 'ambiguous short sha1 ref' '
 	TREE=$(git mktree </dev/null) &&
 	REF=$(git rev-parse --short HEAD) &&
-	VAL=$(git commit-tree $TREE </dev/null) &&
+	VAL=$(git cummit-tree $TREE </dev/null) &&
 	git update-ref refs/heads/$REF $VAL &&
 	test $(git rev-parse $REF 2>err) = $VAL &&
 	grep "refname.*${REF}.*ambiguous" err
@@ -402,7 +402,7 @@ test_expect_success 'ambiguity errors are not repeated (treeish)' '
 '
 
 test_expect_success 'ambiguity errors are not repeated (peel)' '
-	test_must_fail git rev-parse 00000^{commit} 2>stderr &&
+	test_must_fail git rev-parse 00000^{cummit} 2>stderr &&
 	grep "is ambiguous" stderr >errors &&
 	test_line_count = 1 errors
 '
@@ -415,18 +415,18 @@ test_expect_success 'ambiguity hints' '
 '
 
 test_expect_success 'ambiguity hints respect type' '
-	test_must_fail git rev-parse 000000000^{commit} 2>stderr &&
+	test_must_fail git rev-parse 000000000^{cummit} 2>stderr &&
 	grep ^hint: stderr >hints &&
-	# 5 commits, 1 tag (which is a committish), plus intro line
+	# 5 cummits, 1 tag (which is a cummittish), plus intro line
 	test_line_count = 7 hints
 '
 
 test_expect_success 'failed type-selector still shows hint' '
 	# these two blobs share the same prefix "ee3d", but neither
-	# will pass for a commit
+	# will pass for a cummit
 	echo 851 | git hash-object --stdin -w &&
 	echo 872 | git hash-object --stdin -w &&
-	test_must_fail git rev-parse ee3d^{commit} 2>stderr &&
+	test_must_fail git rev-parse ee3d^{cummit} 2>stderr &&
 	grep ^hint: stderr >hints &&
 	test_line_count = 3 hints
 '
@@ -435,30 +435,30 @@ test_expect_success 'core.disambiguate config can prefer types' '
 	# ambiguous between tree and tag
 	sha1=0000000000f &&
 	test_must_fail git rev-parse $sha1 &&
-	git rev-parse $sha1^{commit} &&
-	git -c core.disambiguate=committish rev-parse $sha1
+	git rev-parse $sha1^{cummit} &&
+	git -c core.disambiguate=cummittish rev-parse $sha1
 '
 
 test_expect_success 'core.disambiguate does not override context' '
 	# treeish ambiguous between tag and tree
 	test_must_fail \
-		git -c core.disambiguate=committish rev-parse $sha1^{tree}
+		git -c core.disambiguate=cummittish rev-parse $sha1^{tree}
 '
 
-test_expect_success 'ambiguous commits are printed by type first, then hash order' '
+test_expect_success 'ambiguous cummits are printed by type first, then hash order' '
 	test_must_fail git rev-parse 0000 2>stderr &&
 	grep ^hint: stderr >hints &&
 	grep 0000 hints >objects &&
 	cat >expected <<-\EOF &&
 	tag
-	commit
+	cummit
 	tree
 	blob
 	EOF
 	awk "{print \$3}" <objects >objects.types &&
 	uniq <objects.types >objects.types.uniq &&
 	test_cmp expected objects.types.uniq &&
-	for type in tag commit tree blob
+	for type in tag cummit tree blob
 	do
 		grep $type objects >$type.objects &&
 		sort $type.objects >$type.objects.sorted &&

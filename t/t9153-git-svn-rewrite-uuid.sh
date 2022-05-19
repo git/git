@@ -16,9 +16,9 @@ test_expect_success 'load svn repo' "
 	"
 
 test_expect_success 'verify uuid' "
-	git cat-file commit refs/remotes/git-svn~0 >actual &&
+	git cat-file cummit refs/remotes/git-svn~0 >actual &&
 	grep '^git-svn-id: .*@2 $uuid$' actual &&
-	git cat-file commit refs/remotes/git-svn~1 >actual &&
+	git cat-file cummit refs/remotes/git-svn~1 >actual &&
 	grep '^git-svn-id: .*@1 $uuid$' actual
 	"
 

@@ -8,7 +8,7 @@ Fixes since v1.7.12.1
    header, it did not grok charset= attribute correctly.
 
  * Even during a conflicted merge, "git blame $path" always meant to
-   blame uncommitted changes to the "working tree" version; make it
+   blame uncummitted changes to the "working tree" version; make it
    more useful by showing cleanly merged parts as coming from the other
    branch that is being merged.
 
@@ -27,9 +27,9 @@ Fixes since v1.7.12.1
    is not their language, mildly irritating others. Localization to
    the line has been disabled for now.
 
- * "git log --all-match --grep=A --grep=B" ought to show commits that
+ * "git log --all-match --grep=A --grep=B" ought to show cummits that
    mention both A and B, but when these three options are used with
-   --author or --committer, it showed commits that mention either A or
+   --author or --cummitter, it showed cummits that mention either A or
    B (or both) instead.
 
  * The subcommand to remove the definition of a remote in "git remote"

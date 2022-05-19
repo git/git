@@ -13,7 +13,7 @@ test_expect_success setup '
 	>hello &&
 	>later/3 &&
 	git add before hello later &&
-	git commit -m world &&
+	git cummit -m world &&
 
 	H=$(git rev-parse :hello) &&
 	git rm --cached hello &&

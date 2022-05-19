@@ -6,7 +6,7 @@
 #define USE_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 #include "config.h"
-#include "commit.h"
+#include "cummit.h"
 #include "refs.h"
 #include "quote.h"
 #include "builtin.h"
@@ -15,7 +15,7 @@
 #include "revision.h"
 #include "split-index.h"
 #include "submodule.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 #include "shallow.h"
 
 #define DO_REVS		1
@@ -277,22 +277,22 @@ static int try_difference(const char *arg)
 		return 0;
 	}
 
-	if (!get_oid_committish(start, &start_oid) && !get_oid_committish(end, &end_oid)) {
+	if (!get_oid_cummittish(start, &start_oid) && !get_oid_cummittish(end, &end_oid)) {
 		show_rev(NORMAL, &end_oid, end);
 		show_rev(symmetric ? NORMAL : REVERSED, &start_oid, start);
 		if (symmetric) {
-			struct commit_list *exclude;
-			struct commit *a, *b;
-			a = lookup_commit_reference(the_repository, &start_oid);
-			b = lookup_commit_reference(the_repository, &end_oid);
+			struct cummit_list *exclude;
+			struct cummit *a, *b;
+			a = lookup_cummit_reference(the_repository, &start_oid);
+			b = lookup_cummit_reference(the_repository, &end_oid);
 			if (!a || !b) {
 				*dotdot = '.';
 				return 0;
 			}
 			exclude = get_merge_bases(a, b);
 			while (exclude) {
-				struct commit *commit = pop_commit(&exclude);
-				show_rev(REVERSED, &commit->object.oid, NULL);
+				struct cummit *cummit = pop_cummit(&exclude);
+				show_rev(REVERSED, &cummit->object.oid, NULL);
 			}
 		}
 		*dotdot = '.';
@@ -306,8 +306,8 @@ static int try_parent_shorthands(const char *arg)
 {
 	char *dotdot;
 	struct object_id oid;
-	struct commit *commit;
-	struct commit_list *parents;
+	struct cummit *cummit;
+	struct cummit_list *parents;
 	int parent_number;
 	int include_rev = 0;
 	int include_parents = 0;
@@ -335,21 +335,21 @@ static int try_parent_shorthands(const char *arg)
 		return 0;
 
 	*dotdot = 0;
-	if (get_oid_committish(arg, &oid) ||
-	    !(commit = lookup_commit_reference(the_repository, &oid))) {
+	if (get_oid_cummittish(arg, &oid) ||
+	    !(cummit = lookup_cummit_reference(the_repository, &oid))) {
 		*dotdot = '^';
 		return 0;
 	}
 
 	if (exclude_parent &&
-	    exclude_parent > commit_list_count(commit->parents)) {
+	    exclude_parent > cummit_list_count(cummit->parents)) {
 		*dotdot = '^';
 		return 0;
 	}
 
 	if (include_rev)
 		show_rev(NORMAL, &oid, arg);
-	for (parents = commit->parents, parent_number = 1;
+	for (parents = cummit->parents, parent_number = 1;
 	     parents;
 	     parents = parents->next, parent_number++) {
 		char *name = NULL;

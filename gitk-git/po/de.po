@@ -60,11 +60,11 @@ msgid "Reading"
 msgstr "Lesen"
 
 #: gitk:496 gitk:4525
-msgid "Reading commits..."
+msgid "Reading cummits..."
 msgstr "Versionen werden gelesen ..."
 
 #: gitk:499 gitk:1637 gitk:4528
-msgid "No commits selected"
+msgid "No cummits selected"
 msgstr "Keine Versionen ausgewählt"
 
 #: gitk:1445 gitk:4045 gitk:12432
@@ -76,7 +76,7 @@ msgid "Can't parse git log output:"
 msgstr "Ausgabe von »git log« kann nicht erkannt werden:"
 
 #: gitk:1740
-msgid "No commit information available"
+msgid "No cummit information available"
 msgstr "Keine Versionsinformation verfügbar"
 
 #: gitk:1903 gitk:1932 gitk:4315 gitk:9669 gitk:11241 gitk:11521
@@ -169,7 +169,7 @@ msgid "Find"
 msgstr "Suche"
 
 #: gitk:2295
-msgid "commit"
+msgid "cummit"
 msgstr "Version nach"
 
 #: gitk:2299 gitk:2301 gitk:4687 gitk:4710 gitk:4734 gitk:6755 gitk:6827
@@ -219,7 +219,7 @@ msgid "Author"
 msgstr "Autor"
 
 #: gitk:2319 gitk:4871 gitk:6786 gitk:7326
-msgid "Committer"
+msgid "cummitter"
 msgstr "Eintragender"
 
 #: gitk:2350
@@ -275,7 +275,7 @@ msgid "Create tag"
 msgstr "Markierung erstellen"
 
 #: gitk:2621 gitk:9371
-msgid "Write commit to file"
+msgid "Write cummit to file"
 msgstr "Version in Datei schreiben"
 
 #: gitk:2622 gitk:9428
@@ -283,7 +283,7 @@ msgid "Create new branch"
 msgstr "Neuen Zweig erstellen"
 
 #: gitk:2623
-msgid "Cherry-pick this commit"
+msgid "Cherry-pick this cummit"
 msgstr "Diese Version pflücken"
 
 #: gitk:2624
@@ -291,7 +291,7 @@ msgid "Reset HEAD branch to here"
 msgstr "HEAD-Zweig auf diese Version zurücksetzen"
 
 #: gitk:2625
-msgid "Mark this commit"
+msgid "Mark this cummit"
 msgstr "Lesezeichen setzen"
 
 #: gitk:2626
@@ -303,19 +303,19 @@ msgid "Find descendant of this and mark"
 msgstr "Abkömmling von Lesezeichen und dieser Version finden"
 
 #: gitk:2628
-msgid "Compare with marked commit"
+msgid "Compare with marked cummit"
 msgstr "Mit Lesezeichen vergleichen"
 
 #: gitk:2629 gitk:2640
-msgid "Diff this -> marked commit"
+msgid "Diff this -> marked cummit"
 msgstr "Vergleich: diese -> gewählte Version"
 
 #: gitk:2630 gitk:2641
-msgid "Diff marked commit -> this"
+msgid "Diff marked cummit -> this"
 msgstr "Vergleich: gewählte -> diese Version"
 
 #: gitk:2631
-msgid "Revert this commit"
+msgid "Revert this cummit"
 msgstr "Version umkehren"
 
 #: gitk:2647
@@ -343,7 +343,7 @@ msgid "External diff"
 msgstr "Externes Diff-Programm"
 
 #: gitk:2659
-msgid "Blame parent commit"
+msgid "Blame parent cummit"
 msgstr "Annotieren der Elternversion"
 
 #: gitk:2660
@@ -361,7 +361,7 @@ msgstr "Diese Zeile annotieren (»git gui blame«)"
 #: gitk:3014
 msgid ""
 "\n"
-"Gitk - a commit viewer for git\n"
+"Gitk - a cummit viewer for git\n"
 "\n"
 "Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
@@ -398,19 +398,19 @@ msgid "<%s-W>\t\tClose window"
 msgstr "<%s-F>\t\tFenster schließen"
 
 #: gitk:3050
-msgid "<Home>\t\tMove to first commit"
+msgid "<Home>\t\tMove to first cummit"
 msgstr "<Pos1>\t\tZur neuesten Version springen"
 
 #: gitk:3051
-msgid "<End>\t\tMove to last commit"
+msgid "<End>\t\tMove to last cummit"
 msgstr "<Ende>\t\tZur ältesten Version springen"
 
 #: gitk:3052
-msgid "<Up>, p, k\tMove up one commit"
+msgid "<Up>, p, k\tMove up one cummit"
 msgstr "<Hoch>, p, k\tNächste neuere Version"
 
 #: gitk:3053
-msgid "<Down>, n, j\tMove down one commit"
+msgid "<Down>, n, j\tMove down one cummit"
 msgstr "<Runter>, n, j\tNächste ältere Version"
 
 #: gitk:3054
@@ -423,53 +423,53 @@ msgstr "<Rechts>, x, l\tEine Version weitergehen"
 
 #: gitk:3056
 #, tcl-format
-msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgid "<%s-n>\tGo to n-th parent of current cummit in history list"
 msgstr "<%s-n>\tZu n-ter Elternversion in Versionshistorie springen"
 
 #: gitk:3057
-msgid "<PageUp>\tMove up one page in commit list"
+msgid "<PageUp>\tMove up one page in cummit list"
 msgstr "<BildHoch>\tEine Seite nach oben blättern"
 
 #: gitk:3058
-msgid "<PageDown>\tMove down one page in commit list"
+msgid "<PageDown>\tMove down one page in cummit list"
 msgstr "<BildRunter>\tEine Seite nach unten blättern"
 
 #: gitk:3059
 #, tcl-format
-msgid "<%s-Home>\tScroll to top of commit list"
+msgid "<%s-Home>\tScroll to top of cummit list"
 msgstr "<%s-Pos1>\tZum oberen Ende der Versionsliste blättern"
 
 #: gitk:3060
 #, tcl-format
-msgid "<%s-End>\tScroll to bottom of commit list"
+msgid "<%s-End>\tScroll to bottom of cummit list"
 msgstr "<%s-Ende>\tZum unteren Ende der Versionsliste blättern"
 
 #: gitk:3061
 #, tcl-format
-msgid "<%s-Up>\tScroll commit list up one line"
+msgid "<%s-Up>\tScroll cummit list up one line"
 msgstr "<%s-Hoch>\tVersionsliste eine Zeile nach oben blättern"
 
 #: gitk:3062
 #, tcl-format
-msgid "<%s-Down>\tScroll commit list down one line"
+msgid "<%s-Down>\tScroll cummit list down one line"
 msgstr "<%s-Runter>\tVersionsliste eine Zeile nach unten blättern"
 
 #: gitk:3063
 #, tcl-format
-msgid "<%s-PageUp>\tScroll commit list up one page"
+msgid "<%s-PageUp>\tScroll cummit list up one page"
 msgstr "<%s-BildHoch>\tVersionsliste eine Seite nach oben blättern"
 
 #: gitk:3064
 #, tcl-format
-msgid "<%s-PageDown>\tScroll commit list down one page"
+msgid "<%s-PageDown>\tScroll cummit list down one page"
 msgstr "<%s-BildRunter>\tVersionsliste eine Seite nach unten blättern"
 
 #: gitk:3065
-msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgid "<Shift-Up>\tFind backwards (upwards, later cummits)"
 msgstr "<Umschalt-Hoch>\tRückwärts suchen (nach oben; neuere Versionen)"
 
 #: gitk:3066
-msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgid "<Shift-Down>\tFind forwards (downwards, earlier cummits)"
 msgstr "<Umschalt-Runter> Suchen (nach unten; ältere Versionen)"
 
 #: gitk:3067
@@ -507,7 +507,7 @@ msgid "<Return>\tMove to next find hit"
 msgstr "<Eingabetaste>\tWeitersuchen"
 
 #: gitk:3075
-msgid "g\t\tGo to commit"
+msgid "g\t\tGo to cummit"
 msgstr "g\t\tZu Version springen"
 
 #: gitk:3076
@@ -571,7 +571,7 @@ msgid "command failed:"
 msgstr "Kommando fehlgeschlagen:"
 
 #: gitk:3784
-msgid "No such commit"
+msgid "No such cummit"
 msgstr "Version nicht gefunden"
 
 #: gitk:3798
@@ -604,7 +604,7 @@ msgstr "Fehler beim Ausführen von »git blame«: %s"
 
 #: gitk:3925
 #, tcl-format
-msgid "That line comes from commit %s,  which is not in this view"
+msgid "That line comes from cummit %s,  which is not in this view"
 msgstr ""
 "Diese Zeile stammt aus Version %s, die nicht in dieser Ansicht gezeigt wird"
 
@@ -645,7 +645,7 @@ msgid "All remote-tracking branches"
 msgstr "Alle Übernahmezweige"
 
 #: gitk:4081
-msgid "Commit Info (regular expressions):"
+msgid "cummit Info (regular expressions):"
 msgstr "Versionsinformationen (reguläre Ausdrücke):"
 
 #: gitk:4082
@@ -653,19 +653,19 @@ msgid "Author:"
 msgstr "Autor:"
 
 #: gitk:4083
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "Eintragender:"
 
 #: gitk:4084
-msgid "Commit Message:"
+msgid "cummit Message:"
 msgstr "Versionsbeschreibung:"
 
 #: gitk:4085
-msgid "Matches all Commit Info criteria"
+msgid "Matches all cummit Info criteria"
 msgstr "Alle Versionsinformationen-Kriterien erfüllen"
 
 #: gitk:4086
-msgid "Matches no Commit Info criteria"
+msgid "Matches no cummit Info criteria"
 msgstr "keine Versionsinformationen-Kriterien erfüllen"
 
 #: gitk:4087
@@ -686,7 +686,7 @@ msgstr "Suchausdruck:"
 
 #: gitk:4091
 msgid ""
-"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"cummit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 msgstr ""
 "Datum (»2 weeks ago«, »2009-03-17 15:27:38«, »March 17, 2009 15:27:38«)"
@@ -740,7 +740,7 @@ msgid "Enter files and directories to include, one per line:"
 msgstr "Folgende Dateien und Verzeichnisse anzeigen (eine pro Zeile):"
 
 #: gitk:4104
-msgid "Command to generate more commits to include:"
+msgid "Command to generate more cummits to include:"
 msgstr "Versionsliste durch folgendes Kommando erzeugen lassen:"
 
 #: gitk:4228
@@ -760,7 +760,7 @@ msgid "Apply (F5)"
 msgstr "Anwenden (F5)"
 
 #: gitk:4354
-msgid "Error in commit selection arguments:"
+msgid "Error in cummit selection arguments:"
 msgstr "Fehler in den ausgewählten Versionen:"
 
 #: gitk:4409 gitk:4462 gitk:4924 gitk:4938 gitk:6208 gitk:12373 gitk:12374
@@ -784,11 +784,11 @@ msgid "Not ancestor"
 msgstr "Kein Vorgänger"
 
 #: gitk:5324
-msgid "Local changes checked in to index but not committed"
+msgid "Local changes checked in to index but not cummitted"
 msgstr "Lokale Änderungen bereitgestellt, aber nicht eingetragen"
 
 #: gitk:5360
-msgid "Local uncommitted changes, not checked in to index"
+msgid "Local uncummitted changes, not checked in to index"
 msgstr "Lokale Änderungen, nicht bereitgestellt"
 
 #: gitk:7134
@@ -870,7 +870,7 @@ msgid "Detached head: can't reset"
 msgstr "Zweigspitze ist abgetrennt: Zurücksetzen nicht möglich"
 
 #: gitk:9005 gitk:9011
-msgid "Skipping merge commit "
+msgid "Skipping merge cummit "
 msgstr "Überspringe Zusammenführungs-Version "
 
 #: gitk:9020 gitk:9025
@@ -882,7 +882,7 @@ msgid " - stopping\n"
 msgstr " - Abbruch.\n"
 
 #: gitk:9031 gitk:9034 gitk:9042 gitk:9056 gitk:9065
-msgid "Commit "
+msgid "cummit "
 msgstr "Version "
 
 #: gitk:9035
@@ -903,7 +903,7 @@ msgstr ""
 
 #: gitk:9045
 msgid ""
-"Diff of commits:\n"
+"Diff of cummits:\n"
 "\n"
 msgstr ""
 "Vergleich der Versionen:\n"
@@ -916,12 +916,12 @@ msgstr " hat %s Kinder. Abbruch\n"
 
 #: gitk:9085
 #, tcl-format
-msgid "Error writing commit to file: %s"
+msgid "Error writing cummit to file: %s"
 msgstr "Fehler beim Schreiben der Version in Datei: %s"
 
 #: gitk:9091
 #, tcl-format
-msgid "Error diffing commits: %s"
+msgid "Error diffing cummits: %s"
 msgstr "Fehler beim Vergleichen der Versionen: %s"
 
 #: gitk:9137
@@ -1006,7 +1006,7 @@ msgid "Write"
 msgstr "Schreiben"
 
 #: gitk:9408
-msgid "Error writing commit:"
+msgid "Error writing cummit:"
 msgstr "Fehler beim Schreiben der Version:"
 
 #: gitk:9435
@@ -1024,7 +1024,7 @@ msgstr "Zweig »%s« existiert bereits. Soll er überschrieben werden?"
 
 #: gitk:9530
 #, tcl-format
-msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgid "cummit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
 "Version »%s« ist bereits im Zweig »%s« enthalten -- trotzdem erneut "
 "eintragen?"
@@ -1037,7 +1037,7 @@ msgstr "Version pflücken"
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
-"Please commit, reset or stash your changes and try again."
+"Please cummit, reset or stash your changes and try again."
 msgstr ""
 "Pflücken fehlgeschlagen, da noch lokale Änderungen in Datei »%s«\n"
 "vorliegen. Bitte diese Änderungen eintragen, zurücksetzen oder\n"
@@ -1053,12 +1053,12 @@ msgstr ""
 "werden, um diesen Konflikt aufzulösen?"
 
 #: gitk:9566 gitk:9624
-msgid "No changes committed"
+msgid "No changes cummitted"
 msgstr "Keine Änderungen eingetragen"
 
 #: gitk:9593
 #, tcl-format
-msgid "Commit %s is not included in branch %s -- really revert it?"
+msgid "cummit %s is not included in branch %s -- really revert it?"
 msgstr ""
 "Version »%s« ist nicht im Zweig »%s« enthalten -- trotzdem umkehren?"
 
@@ -1070,7 +1070,7 @@ msgstr "Umkehren"
 #, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
-"commit, reset or stash  your changes and try again."
+"cummit, reset or stash  your changes and try again."
 msgstr ""
 "Umkehren fehlgeschlagen, da noch lokale Änderungen in Datei »%s«\n"
 "vorliegen. Bitte diese Änderungen eintragen, zurücksetzen oder\n"
@@ -1133,7 +1133,7 @@ msgstr ""
 #: gitk:9802
 #, tcl-format
 msgid ""
-"The commits on branch %s aren't on any other branch.\n"
+"The cummits on branch %s aren't on any other branch.\n"
 "Really delete branch %s?"
 msgstr ""
 "Die Versionen auf Zweig »%s« existieren auf keinem anderen Zweig.\n"
@@ -1150,7 +1150,7 @@ msgstr "Filtern"
 
 #: gitk:10146
 msgid ""
-"Error reading commit topology information; branch and preceding/following "
+"Error reading cummit topology information; branch and preceding/following "
 "tag information will be incomplete."
 msgstr ""
 "Fehler beim Lesen der Strukturinformationen; Zweige und Informationen zu "
@@ -1177,7 +1177,7 @@ msgid "I"
 msgstr "K"
 
 #: gitk:11348
-msgid "Commit list display options"
+msgid "cummit list display options"
 msgstr "Anzeige der Versionsliste"
 
 #: gitk:11351

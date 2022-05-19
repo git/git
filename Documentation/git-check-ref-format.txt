@@ -93,7 +93,7 @@ This option should be
 used by porcelains to accept this syntax anywhere a branch name is
 expected, so they can act as if you typed the branch name. As an
 exception note that, the ``previous checkout operation'' might result
-in a commit object name when the N-th last thing checked out was not
+in a cummit object name when the N-th last thing checked out was not
 a branch.
 
 OPTIONS

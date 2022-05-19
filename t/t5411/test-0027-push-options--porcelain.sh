@@ -23,7 +23,7 @@ test_expect_success "proc-receive: not support push options ($PROTOCOL/porcelain
 		actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<COMMIT-A> refs/heads/main
+	<cummit-A> refs/heads/main
 	EOF
 '
 
@@ -56,14 +56,14 @@ test_expect_success "proc-receive: ignore push-options for version 0 ($PROTOCOL/
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/next        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/heads/next        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/next        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/heads/next        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> To <URL/of/upstream.git>
 	> *	HEAD:refs/heads/next	[new branch]
 	> *	HEAD:refs/for/main/topic	[new reference]
@@ -72,8 +72,8 @@ test_expect_success "proc-receive: ignore push-options for version 0 ($PROTOCOL/
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<COMMIT-A> refs/heads/main
-	<COMMIT-A> refs/heads/next
+	<cummit-A> refs/heads/main
+	<cummit-A> refs/heads/next
 	EOF
 '
 
@@ -107,17 +107,17 @@ test_expect_success "proc-receive: push with options ($PROTOCOL/porcelain)" '
 	make_user_friendly_and_stable_output <out >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/next        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/heads/next        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: # proc-receive hook        Z
 	> remote: proc-receive: atomic push_options        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> remote: proc-receive< issue=123        Z
 	> remote: proc-receive< reviewer=user1        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/next        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/heads/next        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
 	> To <URL/of/upstream.git>
 	> *	HEAD:refs/heads/next	[new branch]
 	> *	HEAD:refs/for/main/topic	[new reference]
@@ -126,8 +126,8 @@ test_expect_success "proc-receive: push with options ($PROTOCOL/porcelain)" '
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<COMMIT-A> refs/heads/main
-	<COMMIT-A> refs/heads/next
+	<cummit-A> refs/heads/main
+	<cummit-A> refs/heads/next
 	EOF
 '
 

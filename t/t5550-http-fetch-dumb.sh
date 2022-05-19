@@ -19,10 +19,10 @@ test_expect_success 'setup repository' '
 	git config push.default matching &&
 	echo content1 >file &&
 	git add file &&
-	git commit -m one &&
+	git cummit -m one &&
 	echo content2 >file &&
 	git add file &&
-	git commit -m two
+	git cummit -m two
 '
 
 setup_post_update_server_info_hook () {
@@ -130,7 +130,7 @@ test_expect_success 'set up repo with http submodules' '
 	(
 		cd super &&
 		git submodule add "$HTTPD_URL/auth/dumb/repo.git" sub &&
-		git commit -m "add submodule"
+		git cummit -m "add submodule"
 	)
 '
 
@@ -158,7 +158,7 @@ test_expect_success 'cmdline credential config passes submodule via fetch' '
 
 test_expect_success 'cmdline credential config passes submodule update' '
 	# advance the submodule HEAD so that a fetch is required
-	git commit --allow-empty -m foo &&
+	git cummit --allow-empty -m foo &&
 	git push "$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/repo.git" HEAD &&
 	sha1=$(git rev-parse HEAD) &&
 	git -C super-clone update-index --cacheinfo 160000,$sha1,sub &&
@@ -175,7 +175,7 @@ test_expect_success 'cmdline credential config passes submodule update' '
 
 test_expect_success 'fetch changes via http' '
 	echo content >>file &&
-	git commit -a -m two &&
+	git cummit -a -m two &&
 	git push public &&
 	(cd clone && git pull) &&
 	test_cmp file clone/file
@@ -289,13 +289,13 @@ test_expect_success 'fetch can handle previously-fetched .idx files' '
 	git checkout --orphan branch1 &&
 	echo base >file &&
 	git add file &&
-	git commit -m base &&
+	git cummit -m base &&
 	git --bare init "$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git &&
 	git push "$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git branch1 &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git repack -d &&
 	git checkout -b branch2 branch1 &&
 	echo b2 >>file &&
-	git commit -a -m b2 &&
+	git cummit -a -m b2 &&
 	git push "$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git branch2 &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git repack -d &&
 	git --bare init clone_packed_branches.git &&
@@ -416,7 +416,7 @@ test_expect_success 'http.followRedirects defaults to "initial"' '
 test_expect_success 'set up evil alternates scheme' '
 	victim=$HTTPD_DOCUMENT_ROOT_PATH/victim.git &&
 	git init --bare "$victim" &&
-	git -C "$victim" --work-tree=. commit --allow-empty -m secret &&
+	git -C "$victim" --work-tree=. cummit --allow-empty -m secret &&
 	git -C "$victim" repack -ad &&
 	git -C "$victim" update-server-info &&
 	sha1=$(git -C "$victim" rev-parse HEAD) &&
@@ -471,14 +471,14 @@ test_expect_success 'print HTTP error when any intermediate redirect throws erro
 test_expect_success 'fetching via http alternates works' '
 	parent=$HTTPD_DOCUMENT_ROOT_PATH/alt-parent.git &&
 	git init --bare "$parent" &&
-	git -C "$parent" --work-tree=. commit --allow-empty -m foo &&
+	git -C "$parent" --work-tree=. cummit --allow-empty -m foo &&
 	git -C "$parent" update-server-info &&
-	commit=$(git -C "$parent" rev-parse HEAD) &&
+	cummit=$(git -C "$parent" rev-parse HEAD) &&
 
 	child=$HTTPD_DOCUMENT_ROOT_PATH/alt-child.git &&
 	git init --bare "$child" &&
 	echo "../../alt-parent.git/objects" >"$child/objects/info/alternates" &&
-	git -C "$child" update-ref HEAD $commit &&
+	git -C "$child" update-ref HEAD $cummit &&
 	git -C "$child" update-server-info &&
 
 	git -c http.followredirects=true clone "$HTTPD_URL/dumb/alt-child.git"

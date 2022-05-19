@@ -19,7 +19,7 @@ test_expect_success setup '
 	>file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag mark &&
 	git tag mark1.1 &&
 	git tag mark1.2 &&

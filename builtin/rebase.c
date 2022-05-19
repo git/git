@@ -18,11 +18,11 @@
 #include "unpack-trees.h"
 #include "lockfile.h"
 #include "parse-options.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "wt-status.h"
 #include "revision.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 #include "rerere.h"
 #include "branch.h"
 #include "sequencer.h"
@@ -64,18 +64,18 @@ struct rebase_options {
 	enum empty_type empty;
 	const char *default_backend;
 	const char *state_dir;
-	struct commit *upstream;
+	struct cummit *upstream;
 	const char *upstream_name;
 	const char *upstream_arg;
 	char *head_name;
 	struct object_id orig_head;
-	struct commit *onto;
+	struct cummit *onto;
 	const char *onto_name;
 	const char *revisions;
 	const char *switch_to;
 	int root, root_with_onto;
 	struct object_id *squash_onto;
-	struct commit *restrict_revision;
+	struct cummit *restrict_revision;
 	int dont_finish_rebase;
 	enum {
 		REBASE_NO_QUIET = 1<<0,
@@ -92,7 +92,7 @@ struct rebase_options {
 	int autosquash;
 	char *gpg_sign_opt;
 	int autostash;
-	int committer_date_is_author_date;
+	int cummitter_date_is_author_date;
 	int ignore_date;
 	char *cmd;
 	int allow_empty_message;
@@ -129,13 +129,13 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 		replay.allow_rerere_auto = opts->allow_rerere_autoupdate;
 	replay.allow_empty = 1;
 	replay.allow_empty_message = opts->allow_empty_message;
-	replay.drop_redundant_commits = (opts->empty == EMPTY_DROP);
-	replay.keep_redundant_commits = (opts->empty == EMPTY_KEEP);
+	replay.drop_redundant_cummits = (opts->empty == EMPTY_DROP);
+	replay.keep_redundant_cummits = (opts->empty == EMPTY_KEEP);
 	replay.quiet = !(opts->flags & REBASE_NO_QUIET);
 	replay.verbose = opts->flags & REBASE_VERBOSE;
 	replay.reschedule_failed_exec = opts->reschedule_failed_exec;
-	replay.committer_date_is_author_date =
-					opts->committer_date_is_author_date;
+	replay.cummitter_date_is_author_date =
+					opts->cummitter_date_is_author_date;
 	replay.ignore_date = opts->ignore_date;
 	replay.gpg_sign = xstrdup_or_null(opts->gpg_sign_opt);
 	if (opts->strategy)
@@ -196,11 +196,11 @@ static int edit_todo_file(unsigned flags)
 	return res;
 }
 
-static int get_revision_ranges(struct commit *upstream, struct commit *onto,
+static int get_revision_ranges(struct cummit *upstream, struct cummit *onto,
 			       struct object_id *orig_head, char **revisions,
 			       char **shortrevisions)
 {
-	struct commit *base_rev = upstream ? upstream : onto;
+	struct cummit *base_rev = upstream ? upstream : onto;
 	const char *shorthead;
 
 	*revisions = xstrfmt("%s...%s", oid_to_hex(&base_rev->object.oid),
@@ -222,7 +222,7 @@ static int get_revision_ranges(struct commit *upstream, struct commit *onto,
 }
 
 static int init_basic_state(struct replay_opts *opts, const char *head_name,
-			    struct commit *onto,
+			    struct cummit *onto,
 			    const struct object_id *orig_head)
 {
 	FILE *interactive;
@@ -329,7 +329,7 @@ static int run_sequencer_rebase(struct rebase_options *opts,
 	switch (command) {
 	case ACTION_NONE: {
 		if (!opts->onto && !opts->upstream)
-			die(_("a base commit must be provided with --upstream or --onto"));
+			die(_("a base cummit must be provided with --upstream or --onto"));
 
 		ret = do_interactive_rebase(opts, flags);
 		break;
@@ -431,7 +431,7 @@ static int read_basic_state(struct rebase_options *opts)
 	strbuf_release(&head_name);
 	if (get_oid(buf.buf, &oid))
 		return error(_("could not get 'onto': '%s'"), buf.buf);
-	opts->onto = lookup_commit_or_die(&oid, buf.buf);
+	opts->onto = lookup_cummit_or_die(&oid, buf.buf);
 
 	/*
 	 * We always write to orig-head, but interactive rebase used to write to
@@ -599,7 +599,7 @@ static int move_to_original_branch(struct rebase_options *opts)
 static const char *resolvemsg =
 N_("Resolve all conflicts manually, mark them as resolved with\n"
 "\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
+"You can instead skip this cummit: run \"git rebase --skip\".\n"
 "To abort and get back to the state before \"git rebase\", run "
 "\"git rebase --abort\".");
 
@@ -788,7 +788,7 @@ static int rebase_config(const char *var, const char *value, void *data)
 		return 0;
 	}
 
-	if (!strcmp(var, "commit.gpgsign")) {
+	if (!strcmp(var, "cummit.gpgsign")) {
 		free(opts->gpg_sign_opt);
 		opts->gpg_sign_opt = git_config_bool(var, value) ?
 			xstrdup("-S") : NULL;
@@ -840,14 +840,14 @@ static int checkout_up_to_date(struct rebase_options *options)
 }
 
 /*
- * Determines whether the commits in from..to are linear, i.e. contain
- * no merge commits. This function *expects* `from` to be an ancestor of
+ * Determines whether the cummits in from..to are linear, i.e. contain
+ * no merge cummits. This function *expects* `from` to be an ancestor of
  * `to`.
  */
-static int is_linear_history(struct commit *from, struct commit *to)
+static int is_linear_history(struct cummit *from, struct cummit *to)
 {
 	while (to && to != from) {
-		parse_commit(to);
+		parse_cummit(to);
 		if (!to->parents)
 			return 1;
 		if (to->parents->next)
@@ -857,12 +857,12 @@ static int is_linear_history(struct commit *from, struct commit *to)
 	return 1;
 }
 
-static int can_fast_forward(struct commit *onto, struct commit *upstream,
-			    struct commit *restrict_revision,
+static int can_fast_forward(struct cummit *onto, struct cummit *upstream,
+			    struct cummit *restrict_revision,
 			    struct object_id *head_oid, struct object_id *merge_base)
 {
-	struct commit *head = lookup_commit(the_repository, head_oid);
-	struct commit_list *merge_bases = NULL;
+	struct cummit *head = lookup_cummit(the_repository, head_oid);
+	struct cummit_list *merge_bases = NULL;
 	int res = 0;
 
 	if (!head)
@@ -884,7 +884,7 @@ static int can_fast_forward(struct commit *onto, struct commit *upstream,
 	if (!upstream)
 		goto done;
 
-	free_commit_list(merge_bases);
+	free_cummit_list(merge_bases);
 	merge_bases = get_merge_bases(upstream, head);
 	if (!merge_bases || merge_bases->next)
 		goto done;
@@ -895,7 +895,7 @@ static int can_fast_forward(struct commit *onto, struct commit *upstream,
 	res = 1;
 
 done:
-	free_commit_list(merge_bases);
+	free_cummit_list(merge_bases);
 	return res && is_linear_history(onto, head);
 }
 
@@ -1063,10 +1063,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			N_("do not show diffstat of what changed upstream"),
 			PARSE_OPT_NOARG, NULL, REBASE_DIFFSTAT },
 		OPT_BOOL(0, "signoff", &options.signoff,
-			 N_("add a Signed-off-by trailer to each commit")),
-		OPT_BOOL(0, "committer-date-is-author-date",
-			 &options.committer_date_is_author_date,
-			 N_("make committer date match author date")),
+			 N_("add a Signed-off-by trailer to each cummit")),
+		OPT_BOOL(0, "cummitter-date-is-author-date",
+			 &options.cummitter_date_is_author_date,
+			 N_("make cummitter date match author date")),
 		OPT_BOOL(0, "reset-author-date", &options.ignore_date,
 			 N_("ignore author date and use current date")),
 		OPT_HIDDEN_BOOL(0, "ignore-date", &options.ignore_date,
@@ -1078,10 +1078,10 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		OPT_PASSTHRU_ARGV(0, "whitespace", &options.git_am_opts,
 				  N_("action"), N_("passed to 'git apply'"), 0),
 		OPT_BIT('f', "force-rebase", &options.flags,
-			N_("cherry-pick all commits, even if unchanged"),
+			N_("cherry-pick all cummits, even if unchanged"),
 			REBASE_FORCE),
 		OPT_BIT(0, "no-ff", &options.flags,
-			N_("cherry-pick all commits, even if unchanged"),
+			N_("cherry-pick all cummits, even if unchanged"),
 			REBASE_FORCE),
 		OPT_CMDMODE(0, "continue", &action, N_("continue"),
 			    ACTION_CONTINUE),
@@ -1106,7 +1106,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
 			parse_opt_merge),
 		OPT_CALLBACK_F('i', "interactive", &options, NULL,
-			N_("let the user edit the list of commits to rebase"),
+			N_("let the user edit the list of cummits to rebase"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
 			parse_opt_interactive),
 		OPT_SET_INT_F('p', "preserve-merges", &preserve_merges_selected,
@@ -1115,25 +1115,25 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 			      1, PARSE_OPT_HIDDEN),
 		OPT_RERERE_AUTOUPDATE(&options.allow_rerere_autoupdate),
 		OPT_CALLBACK_F(0, "empty", &options, "{drop,keep,ask}",
-			       N_("how to handle commits that become empty"),
+			       N_("how to handle cummits that become empty"),
 			       PARSE_OPT_NONEG, parse_opt_empty),
 		OPT_CALLBACK_F('k', "keep-empty", &options, NULL,
-			N_("keep commits which start empty"),
+			N_("keep cummits which start empty"),
 			PARSE_OPT_NOARG | PARSE_OPT_HIDDEN,
 			parse_opt_keep_empty),
 		OPT_BOOL(0, "autosquash", &options.autosquash,
-			 N_("move commits that begin with "
+			 N_("move cummits that begin with "
 			    "squash!/fixup! under -i")),
 		{ OPTION_STRING, 'S', "gpg-sign", &gpg_sign, N_("key-id"),
-			N_("GPG-sign commits"),
+			N_("GPG-sign cummits"),
 			PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 		OPT_AUTOSTASH(&options.autostash),
 		OPT_STRING_LIST('x', "exec", &exec, N_("exec"),
-				N_("add exec lines after each commit of the "
+				N_("add exec lines after each cummit of the "
 				   "editable list")),
 		OPT_BOOL_F(0, "allow-empty-message",
 			   &options.allow_empty_message,
-			   N_("allow rebasing commits with empty messages"),
+			   N_("allow rebasing cummits with empty messages"),
 			   PARSE_OPT_HIDDEN),
 		{OPTION_STRING, 'r', "rebase-merges", &rebase_merges,
 			N_("mode"),
@@ -1148,7 +1148,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				N_("pass the argument through to the merge "
 				   "strategy")),
 		OPT_BOOL(0, "root", &options.root,
-			 N_("rebase all reachable commits up to the root(s)")),
+			 N_("rebase all reachable cummits up to the root(s)")),
 		OPT_BOOL(0, "reschedule-failed-exec",
 			 &reschedule_failed_exec,
 			 N_("automatically re-schedule any `exec` that fails")),
@@ -1366,7 +1366,7 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 	    options.autosquash) {
 		allow_preemptive_ff = 0;
 	}
-	if (options.committer_date_is_author_date || options.ignore_date)
+	if (options.cummitter_date_is_author_date || options.ignore_date)
 		options.flags |= REBASE_FORCE;
 
 	for (i = 0; i < options.git_am_opts.nr; i++) {
@@ -1428,9 +1428,9 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (ignore_whitespace)
 			strvec_push(&options.git_am_opts,
 				    "--ignore-whitespace");
-		if (options.committer_date_is_author_date)
+		if (options.cummitter_date_is_author_date)
 			strvec_push(&options.git_am_opts,
-				    "--committer-date-is-author-date");
+				    "--cummitter-date-is-author-date");
 		if (options.ignore_date)
 			strvec_push(&options.git_am_opts, "--ignore-date");
 	} else {
@@ -1558,15 +1558,15 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				options.upstream_name = "@{-1}";
 		}
 		options.upstream =
-			lookup_commit_reference_by_name(options.upstream_name);
+			lookup_cummit_reference_by_name(options.upstream_name);
 		if (!options.upstream)
 			die(_("invalid upstream '%s'"), options.upstream_name);
 		options.upstream_arg = options.upstream_name;
 	} else {
 		if (!options.onto_name) {
-			if (commit_tree("", 0, the_hash_algo->empty_tree, NULL,
+			if (cummit_tree("", 0, the_hash_algo->empty_tree, NULL,
 					&squash_onto, NULL, NULL) < 0)
-				die(_("Could not create new root commit"));
+				die(_("Could not create new root cummit"));
 			options.squash_onto = &squash_onto;
 			options.onto_name = squash_onto_name =
 				xstrdup(oid_to_hex(&squash_onto));
@@ -1583,13 +1583,13 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 	/*
 	 * If the branch to rebase is given, that is the branch we will rebase
-	 * branch_name -- branch/commit being rebased, or
+	 * branch_name -- branch/cummit being rebased, or
 	 * 		  HEAD (already detached)
-	 * orig_head -- commit object name of tip of the branch before rebasing
+	 * orig_head -- cummit object name of tip of the branch before rebasing
 	 * head_name -- refs/heads/<that-branch> or NULL (detached HEAD)
 	 */
 	if (argc == 1) {
-		/* Is it "rebase other branchname" or "rebase other commit"? */
+		/* Is it "rebase other branchname" or "rebase other cummit"? */
 		branch_name = argv[0];
 		options.switch_to = argv[0];
 
@@ -1599,14 +1599,14 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 		if (!read_ref(buf.buf, &options.orig_head)) {
 			die_if_checked_out(buf.buf, 1);
 			options.head_name = xstrdup(buf.buf);
-		/* If not is it a valid ref (branch or commit)? */
+		/* If not is it a valid ref (branch or cummit)? */
 		} else {
-			struct commit *commit =
-				lookup_commit_reference_by_name(branch_name);
-			if (!commit)
-				die(_("no such branch/commit '%s'"),
+			struct cummit *cummit =
+				lookup_cummit_reference_by_name(branch_name);
+			if (!cummit)
+				die(_("no such branch/cummit '%s'"),
 				    branch_name);
-			oidcpy(&options.orig_head, &commit->object.oid);
+			oidcpy(&options.orig_head, &cummit->object.oid);
 			options.head_name = NULL;
 		}
 	} else if (argc == 0) {
@@ -1648,19 +1648,19 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 				die(_("'%s': need exactly one merge base"),
 				    options.onto_name);
 		}
-		options.onto = lookup_commit_or_die(&merge_base,
+		options.onto = lookup_cummit_or_die(&merge_base,
 						    options.onto_name);
 	} else {
 		options.onto =
-			lookup_commit_reference_by_name(options.onto_name);
+			lookup_cummit_reference_by_name(options.onto_name);
 		if (!options.onto)
-			die(_("Does not point to a valid commit '%s'"),
+			die(_("Does not point to a valid cummit '%s'"),
 				options.onto_name);
 	}
 
 	if (options.fork_point > 0) {
-		struct commit *head =
-			lookup_commit_reference(the_repository,
+		struct cummit *head =
+			lookup_cummit_reference(the_repository,
 						&options.orig_head);
 		options.restrict_revision =
 			get_fork_point(options.upstream_name, head);
@@ -1675,20 +1675,20 @@ int cmd_rebase(int argc, const char **argv, const char *prefix)
 
 
 	if (require_clean_work_tree(the_repository, "rebase",
-				    _("Please commit or stash them."), 1, 1)) {
+				    _("Please cummit or stash them."), 1, 1)) {
 		ret = -1;
 		goto cleanup;
 	}
 
 	/*
-	 * Now we are rebasing commits upstream..orig_head (or with --root,
+	 * Now we are rebasing cummits upstream..orig_head (or with --root,
 	 * everything leading up to orig_head) on top of onto.
 	 */
 
 	/*
 	 * Check if we are already based on onto with linear history,
-	 * in which case we could fast-forward without replacing the commits
-	 * with new commits recreated by replaying their changes.
+	 * in which case we could fast-forward without replacing the cummits
+	 * with new cummits recreated by replaying their changes.
 	 *
 	 * Note that can_fast_forward() initializes merge_base, so we have to
 	 * call it before checking allow_preemptive_ff.

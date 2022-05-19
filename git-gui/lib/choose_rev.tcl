@@ -16,7 +16,7 @@ field cur_specs [list]; # list of specs for $revtype
 field spec_head       ; # list of all head specs
 field spec_trck       ; # list of all tracking branch specs
 field spec_tag        ; # list of all tag specs
-field tip_data        ; # array of tip commit info by refname
+field tip_data        ; # array of tip cummit info by refname
 field log_last        ; # array of reflog date by refname
 
 field tooltip_wm        {} ; # Current tooltip toplevel, if open
@@ -158,12 +158,12 @@ constructor _new {path unmerged_only title} {
 	while {[gets $fr_fd line] > 0} {
 		set line [eval $line]
 		if {[lindex $line 1 0] eq {tag}} {
-			if {[lindex $line 2 0] eq {commit}} {
+			if {[lindex $line 2 0] eq {cummit}} {
 				set sha1 [lindex $line 2 1]
 			} else {
 				continue
 			}
-		} elseif {[lindex $line 1 0] eq {commit}} {
+		} elseif {[lindex $line 1 0] eq {cummit}} {
 			set sha1 [lindex $line 1 1]
 		} else {
 			continue
@@ -299,7 +299,7 @@ method get_tracking_branch {} {
 	return [lrange [lindex $cur_specs $i] 1 end]
 }
 
-method get_commit {} {
+method get_cummit {} {
 	set e [_expr $this]
 	if {$e eq {}} {
 		return {}
@@ -307,8 +307,8 @@ method get_commit {} {
 	return [git rev-parse --verify "$e^0"]
 }
 
-method commit_or_die {} {
-	if {[catch {set new [get_commit $this]} err]} {
+method cummit_or_die {} {
+	if {[catch {set new [get_cummit $this]} err]} {
 
 		# Cleanup the not-so-friendly error from rev-parse.
 		#
@@ -520,12 +520,12 @@ method _open_tooltip {} {
 	set data $tip_data($refn)
 	if {[lindex $data 0 0] eq {tag}} {
 		set tag  [lindex $data 0]
-		if {[lindex $data 1 0] eq {commit}} {
+		if {[lindex $data 1 0] eq {cummit}} {
 			set cmit [lindex $data 1]
 		} else {
 			set cmit {}
 		}
-	} elseif {[lindex $data 0 0] eq {commit}} {
+	} elseif {[lindex $data 0 0] eq {cummit}} {
 		set tag  {}
 		set cmit [lindex $data 0]
 	}
@@ -551,7 +551,7 @@ method _open_tooltip {} {
 
 	if {$cmit ne {}} {
 		$tooltip_t insert end "\n"
-		$tooltip_t insert end [mc "Commit@@noun"] section_header
+		$tooltip_t insert end [mc "cummit@@noun"] section_header
 		$tooltip_t insert end "  [lindex $cmit 1]\n"
 		$tooltip_t insert end [lindex $cmit 2]
 		$tooltip_t insert end " ([lindex $cmit 3])\n"

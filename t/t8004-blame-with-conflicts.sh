@@ -12,7 +12,7 @@ test_expect_success 'setup first case' '
 	# Create the old file
 	echo "Old line" > file1 &&
 	git add file1 &&
-	git commit --author "Old Line <ol@localhost>" -m file1.a &&
+	git cummit --author "Old Line <ol@localhost>" -m file1.a &&
 
 	# Branch
 	git checkout -b foo &&
@@ -22,14 +22,14 @@ test_expect_success 'setup first case' '
 	echo "New line ..."  > file2 &&
 	echo "... and more" >> file2 &&
 	git add file2 &&
-	git commit --author "U Gly <ug@localhost>" -m ugly &&
+	git cummit --author "U Gly <ug@localhost>" -m ugly &&
 
 	# Back to main and change something
 	git checkout main &&
 	echo "
 
 bla" >> file1 &&
-	git commit --author "Old Line <ol@localhost>" -a -m file1.b &&
+	git cummit --author "Old Line <ol@localhost>" -a -m file1.b &&
 
 	# Back to foo and merge main
 	git checkout foo &&
@@ -45,14 +45,14 @@ bla" >> file1 &&
 bla
 Even more" > file2 &&
 	git rm file1 &&
-	git commit --author "M Result <mr@localhost>" -a -m merged &&
+	git cummit --author "M Result <mr@localhost>" -a -m merged &&
 
 	# Back to main and change file1 again
 	git checkout main &&
 	sed s/bla/foo/ <file1 >X &&
 	rm file1 &&
 	mv X file1 &&
-	git commit --author "No Bla <nb@localhost>" -a -m replace &&
+	git cummit --author "No Bla <nb@localhost>" -a -m replace &&
 
 	# Try to merge into foo again
 	git checkout foo &&

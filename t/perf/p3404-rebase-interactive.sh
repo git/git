@@ -5,9 +5,9 @@ test_description='Tests rebase -i performance'
 
 test_perf_default_repo
 
-# This commit merges a sufficiently long topic branch for reasonable
+# This cummit merges a sufficiently long topic branch for reasonable
 # performance testing
-branch_merge=ba5312da19c6fdb6c6747d479f58932aae6e900c^{commit}
+branch_merge=ba5312da19c6fdb6c6747d479f58932aae6e900c^{cummit}
 export branch_merge
 
 git rev-parse --verify $branch_merge >/dev/null 2>&1 || {
@@ -17,7 +17,7 @@ git rev-parse --verify $branch_merge >/dev/null 2>&1 || {
 
 write_script swap-first-two.sh <<\EOF
 case "$1" in
-*/COMMIT_EDITMSG)
+*/cummit_EDITMSG)
 	mv "$1" "$1".bak &&
 	sed -e '1{h;d}' -e 2G <"$1".bak >"$1"
 	;;

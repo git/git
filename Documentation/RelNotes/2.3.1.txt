@@ -15,7 +15,7 @@ Fixes since v2.3
  * "git log --help" used to show rev-list options that are irrelevant
    to the "log" command.
 
- * The error message from "git commit", when a non-existing author
+ * The error message from "git cummit", when a non-existing author
    name was given as value to the "--author=" parameter, has been
    reworded to avoid misunderstanding.
 

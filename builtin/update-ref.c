@@ -348,15 +348,15 @@ static void parse_cmd_abort(struct ref_transaction *transaction,
 	report_ok("abort");
 }
 
-static void parse_cmd_commit(struct ref_transaction *transaction,
+static void parse_cmd_cummit(struct ref_transaction *transaction,
 			     const char *next, const char *end)
 {
 	struct strbuf error = STRBUF_INIT;
 	if (*next != line_termination)
-		die("commit: extra input: %s", next);
-	if (ref_transaction_commit(transaction, &error))
-		die("commit: %s", error.buf);
-	report_ok("commit");
+		die("cummit: extra input: %s", next);
+	if (ref_transaction_cummit(transaction, &error))
+		die("cummit: %s", error.buf);
+	report_ok("cummit");
 	ref_transaction_free(transaction);
 }
 
@@ -365,9 +365,9 @@ enum update_refs_state {
 	UPDATE_REFS_OPEN,
 	/* A transaction has been started. */
 	UPDATE_REFS_STARTED,
-	/* References are locked and ready for commit */
+	/* References are locked and ready for cummit */
 	UPDATE_REFS_PREPARED,
-	/* Transaction has been committed or closed. */
+	/* Transaction has been cummitted or closed. */
 	UPDATE_REFS_CLOSED,
 };
 
@@ -385,7 +385,7 @@ static const struct parse_cmd {
 	{ "start",   parse_cmd_start,   0, UPDATE_REFS_STARTED },
 	{ "prepare", parse_cmd_prepare, 0, UPDATE_REFS_PREPARED },
 	{ "abort",   parse_cmd_abort,   0, UPDATE_REFS_CLOSED },
-	{ "commit",  parse_cmd_commit,  0, UPDATE_REFS_CLOSED },
+	{ "cummit",  parse_cmd_cummit,  0, UPDATE_REFS_CLOSED },
 };
 
 static void update_refs_stdin(void)
@@ -475,8 +475,8 @@ static void update_refs_stdin(void)
 
 	switch (state) {
 	case UPDATE_REFS_OPEN:
-		/* Commit by default if no transaction was requested. */
-		if (ref_transaction_commit(transaction, &err))
+		/* cummit by default if no transaction was requested. */
+		if (ref_transaction_cummit(transaction, &err))
 			die("%s", err.buf);
 		ref_transaction_free(transaction);
 		break;

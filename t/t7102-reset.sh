@@ -12,10 +12,10 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-commit_msg () {
+cummit_msg () {
 	# String "modify 2nd file (changed)" partly in German
 	# (translated with Google Translate),
-	# encoded in UTF-8, used as a commit log message below.
+	# encoded in UTF-8, used as a cummit log message below.
 	msg="modify 2nd file (ge\303\244ndert)\n"
 	if test -n "$1"
 	then
@@ -28,32 +28,32 @@ commit_msg () {
 # Tested non-UTF-8 encoding
 test_encoding="ISO8859-1"
 
-test_expect_success 'creating initial files and commits' '
+test_expect_success 'creating initial files and cummits' '
 	test_tick &&
 	echo "1st file" >first &&
 	git add first &&
-	git commit -m "create 1st file" &&
+	git cummit -m "create 1st file" &&
 
 	echo "2nd file" >second &&
 	git add second &&
-	git commit -m "create 2nd file" &&
+	git cummit -m "create 2nd file" &&
 
 	echo "2nd line 1st file" >>first &&
-	git commit -a -m "modify 1st file" &&
+	git cummit -a -m "modify 1st file" &&
 	head5p2=$(git rev-parse --verify HEAD) &&
 	head5p2f=$(git rev-parse --short HEAD:first) &&
 
 	git rm first &&
 	git mv second secondfile &&
-	git commit -a -m "remove 1st and rename 2nd" &&
+	git cummit -a -m "remove 1st and rename 2nd" &&
 	head5p1=$(git rev-parse --verify HEAD) &&
 	head5p1s=$(git rev-parse --short HEAD:secondfile) &&
 
 	echo "1st line 2nd file" >secondfile &&
 	echo "2nd line 2nd file" >>secondfile &&
-	# "git commit -m" would break MinGW, as Windows refuse to pass
+	# "git cummit -m" would break MinGW, as Windows refuse to pass
 	# $test_encoding encoded parameter to git.
-	commit_msg $test_encoding | git -c "i18n.commitEncoding=$test_encoding" commit -a -F - &&
+	cummit_msg $test_encoding | git -c "i18n.cummitEncoding=$test_encoding" cummit -a -F - &&
 	head5=$(git rev-parse --verify HEAD) &&
 	head5s=$(git rev-parse --short HEAD:secondfile) &&
 	head5sl=$(git rev-parse HEAD:secondfile)
@@ -74,14 +74,14 @@ check_changes () {
 test_expect_success 'reset --hard message' '
 	hex=$(git log -1 --format="%h") &&
 	git reset --hard >.actual &&
-	echo HEAD is now at $hex $(commit_msg) >.expected &&
+	echo HEAD is now at $hex $(cummit_msg) >.expected &&
 	test_cmp .expected .actual
 '
 
 test_expect_success 'reset --hard message (ISO8859-1 logoutputencoding)' '
 	hex=$(git log -1 --format="%h") &&
 	git -c "i18n.logOutputEncoding=$test_encoding" reset --hard >.actual &&
-	echo HEAD is now at $hex $(commit_msg $test_encoding) >.expected &&
+	echo HEAD is now at $hex $(cummit_msg $test_encoding) >.expected &&
 	test_cmp .expected .actual
 '
 
@@ -136,17 +136,17 @@ test_expect_success 'trying to do reset --soft with pending merge should fail' '
 
 	git checkout branch1 &&
 	echo "3rd line in branch1" >>secondfile &&
-	git commit -a -m "change in branch1" &&
+	git cummit -a -m "change in branch1" &&
 
 	git checkout branch2 &&
 	echo "3rd line in branch2" >>secondfile &&
-	git commit -a -m "change in branch2" &&
+	git cummit -a -m "change in branch2" &&
 
 	test_must_fail git merge branch1 &&
 	test_must_fail git reset --soft &&
 
 	printf "1st line 2nd file\n2nd line 2nd file\n3rd line" >secondfile &&
-	git commit -a -m "the change in branch2" &&
+	git cummit -a -m "the change in branch2" &&
 
 	git checkout main &&
 	git branch -D branch1 branch2 &&
@@ -159,7 +159,7 @@ test_expect_success 'trying to do reset --soft with pending checkout merge shoul
 
 	git checkout branch3 &&
 	echo "3rd line in branch3" >>secondfile &&
-	git commit -a -m "line in branch3" &&
+	git cummit -a -m "line in branch3" &&
 
 	git checkout branch4 &&
 	echo "3rd line in branch4" >>secondfile &&
@@ -168,7 +168,7 @@ test_expect_success 'trying to do reset --soft with pending checkout merge shoul
 	test_must_fail git reset --soft &&
 
 	printf "1st line 2nd file\n2nd line 2nd file\n3rd line" >secondfile &&
-	git commit -a -m "the line in branch3" &&
+	git cummit -a -m "the line in branch3" &&
 
 	git checkout main &&
 	git branch -D branch3 branch4 &&
@@ -217,7 +217,7 @@ test_expect_success '--soft reset only should show changes in diff --cached' '
 			$head5
 '
 
-test_expect_success 'changing files and redo the last commit should succeed' '
+test_expect_success 'changing files and redo the last cummit should succeed' '
 	>.diff_expect &&
 	>.cached_expect &&
 	cat >.cat_expect <<-\EOF &&
@@ -227,14 +227,14 @@ test_expect_success 'changing files and redo the last commit should succeed' '
 	3rd line 2nd file
 	EOF
 	echo "3rd line 2nd file" >>secondfile &&
-	git commit -a -C ORIG_HEAD &&
+	git cummit -a -C ORIG_HEAD &&
 	head4=$(git rev-parse --verify HEAD) &&
 	check_changes $head4 &&
 	test "$(git rev-parse ORIG_HEAD)" = \
 			$head5
 '
 
-test_expect_success '--hard reset should change the files and undo commits permanently' '
+test_expect_success '--hard reset should change the files and undo cummits permanently' '
 	>.diff_expect &&
 	>.cached_expect &&
 	cat >.cat_expect <<-\EOF &&
@@ -250,7 +250,7 @@ test_expect_success '--hard reset should change the files and undo commits perma
 			$head4
 '
 
-test_expect_success 'redoing changes adding them without commit them should succeed' '
+test_expect_success 'redoing changes adding them without cummit them should succeed' '
 	>.diff_expect &&
 	cat >.cached_expect <<-EOF &&
 	diff --git a/first b/first
@@ -320,7 +320,7 @@ test_expect_success '--mixed reset to HEAD should unadd the files' '
 	test "$(git rev-parse ORIG_HEAD)" = $head5p2
 '
 
-test_expect_success 'redoing the last two commits should succeed' '
+test_expect_success 'redoing the last two cummits should succeed' '
 	>.diff_expect &&
 	>.cached_expect &&
 	cat >.cat_expect <<-\EOF &&
@@ -332,13 +332,13 @@ test_expect_success 'redoing the last two commits should succeed' '
 	git reset --hard $head5p2 &&
 	git rm first &&
 	git mv second secondfile &&
-	git commit -a -m "remove 1st and rename 2nd" &&
+	git cummit -a -m "remove 1st and rename 2nd" &&
 
 	echo "1st line 2nd file" >secondfile &&
 	echo "2nd line 2nd file" >>secondfile &&
-	# "git commit -m" would break MinGW, as Windows refuse to pass
+	# "git cummit -m" would break MinGW, as Windows refuse to pass
 	# $test_encoding encoded parameter to git.
-	commit_msg $test_encoding | git -c "i18n.commitEncoding=$test_encoding" commit -a -F - &&
+	cummit_msg $test_encoding | git -c "i18n.cummitEncoding=$test_encoding" cummit -a -F - &&
 	check_changes $head5
 '
 
@@ -356,11 +356,11 @@ test_expect_success '--hard reset to HEAD should clear a failed merge' '
 
 	git checkout branch1 &&
 	echo "3rd line in branch1" >>secondfile &&
-	git commit -a -m "change in branch1" &&
+	git cummit -a -m "change in branch1" &&
 
 	git checkout branch2 &&
 	echo "3rd line in branch2" >>secondfile &&
-	git commit -a -m "change in branch2" &&
+	git cummit -a -m "change in branch2" &&
 	head3=$(git rev-parse --verify HEAD) &&
 
 	test_must_fail git pull . branch1 &&
@@ -393,7 +393,7 @@ test_expect_success 'test --mixed <paths>' '
 	echo 2 >file2 &&
 	git add file1 file2 &&
 	test_tick &&
-	git commit -m files &&
+	git cummit -m files &&
 	before1=$(git rev-parse --short HEAD:file1) &&
 	before2=$(git rev-parse --short HEAD:file2) &&
 	git rm file2 &&
@@ -575,7 +575,7 @@ test_expect_success 'disambiguation (4)' '
 '
 
 test_expect_success 'reset with paths accepts tree' '
-	# for simpler tests, drop last commit containing added files
+	# for simpler tests, drop last cummit containing added files
 	git reset --hard HEAD^ &&
 	git reset HEAD^^{tree} -- . &&
 	git diff --cached HEAD^ --exit-code &&
@@ -600,7 +600,7 @@ test_expect_success 'reset --mixed sets up work tree' '
 	git init mixed_worktree &&
 	(
 		cd mixed_worktree &&
-		test_commit dummy
+		test_cummit dummy
 	) &&
 	git --git-dir=mixed_worktree/.git --work-tree=mixed_worktree reset >actual &&
 	test_must_be_empty actual

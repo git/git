@@ -22,8 +22,8 @@ expect_deleted() {
 }
 
 test_expect_success 'set up repo' '
-	test_commit one &&
-	test_commit two &&
+	test_cummit one &&
+	test_cummit two &&
 	git remote add origin foo.git
 '
 

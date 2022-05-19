@@ -8,11 +8,11 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
-	test_commit --annotate A &&
+	test_cummit --annotate A &&
 	git checkout -b side &&
-	test_commit --annotate B &&
+	test_cummit --annotate B &&
 	git checkout main &&
-	test_commit C &&
+	test_cummit C &&
 	git branch B A^0
 '
 
@@ -189,7 +189,7 @@ test_expect_success 'show-ref --verify with dangling ref' '
 	(
 		git init dangling &&
 		cd dangling &&
-		test_commit dangling &&
+		test_cummit dangling &&
 		sha=$(git rev-parse refs/tags/dangling) &&
 		remove_object $sha &&
 		test_must_fail git show-ref --verify refs/tags/dangling

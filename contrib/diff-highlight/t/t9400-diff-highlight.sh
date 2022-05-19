@@ -19,7 +19,7 @@ then
 fi
 
 # dh_test is a test helper function which takes 3 file names as parameters. The
-# first 2 files are used to generate diff and commit output, which is then
+# first 2 files are used to generate diff and cummit output, which is then
 # piped through diff-highlight. The 3rd file should contain the expected output
 # of diff-highlight (minus the diff/commit header, ie. everything after and
 # including the first @@ line).
@@ -31,18 +31,18 @@ dh_test () {
 	{
 		cat "$a" >file &&
 		git add file &&
-		git commit -m "Add a file" &&
+		git cummit -m "Add a file" &&
 
 		cat "$b" >file &&
 		git diff file >diff.raw &&
-		git commit -a -m "Update a file" &&
-		git show >commit.raw
+		git cummit -a -m "Update a file" &&
+		git show >cummit.raw
 	} >/dev/null &&
 
 	"$DIFF_HIGHLIGHT" <diff.raw | test_strip_patch_header >diff.act &&
-	"$DIFF_HIGHLIGHT" <commit.raw | test_strip_patch_header >commit.act &&
+	"$DIFF_HIGHLIGHT" <cummit.raw | test_strip_patch_header >cummit.act &&
 	test_cmp patch.exp diff.act &&
-	test_cmp patch.exp commit.act
+	test_cmp patch.exp cummit.act
 }
 
 test_strip_patch_header () {
@@ -57,43 +57,43 @@ test_strip_patch_header () {
 #	D---E---F branch
 #
 #	git log --all --graph
-#	* commit
+#	* cummit
 #	|    B
-#	| * commit
+#	| * cummit
 #	| |    F
-#	* | commit
+#	* | cummit
 #	| |    A
-#	| * commit
+#	| * cummit
 #	|/
 #	|    E
-#	* commit
+#	* cummit
 #	     D
 #
 dh_test_setup_history () {
 	echo file1 >file &&
 	git add file &&
 	test_tick &&
-	git commit -m "D" &&
+	git cummit -m "D" &&
 
 	git checkout -b branch &&
 	echo file2 >file &&
 	test_tick &&
-	git commit -a -m "E" &&
+	git cummit -a -m "E" &&
 
 	git checkout master &&
 	echo file2 >file &&
 	test_tick &&
-	git commit -a -m "A" &&
+	git cummit -a -m "A" &&
 
 	git checkout branch &&
 	echo file3 >file &&
 	test_tick &&
-	git commit -a -m "F" &&
+	git cummit -a -m "F" &&
 
 	git checkout master &&
 	echo file3 >file &&
 	test_tick &&
-	git commit -a -m "B"
+	git cummit -a -m "B"
 }
 
 left_trim () {
@@ -254,7 +254,7 @@ test_expect_failure 'diff-highlight treats combining code points as a unit' '
 test_expect_success 'diff-highlight works with the --graph option' '
 	dh_test_setup_history &&
 
-	# date-order so that the commits are interleaved for both
+	# date-order so that the cummits are interleaved for both
 	# trim graph elements so we can do a diff
 	# trim leading space because our trim_graph is not perfect
 	git log --branches -p --date-order |
@@ -284,18 +284,18 @@ test_expect_success 'diff-highlight works with color graph' '
 test_expect_success 'diff-highlight ignores combined diffs' '
 	echo "content" >file &&
 	git add file &&
-	git commit -m base &&
+	git cummit -m base &&
 
 	>file &&
-	git commit -am master &&
+	git cummit -am master &&
 
 	git checkout -b other HEAD^ &&
 	echo "modified content" >file &&
-	git commit -am other &&
+	git cummit -am other &&
 
 	test_must_fail git merge master &&
 	echo "resolved content" >file &&
-	git commit -am resolved &&
+	git cummit -am resolved &&
 
 	cat >expect <<-\EOF &&
 	--- a/file
@@ -317,12 +317,12 @@ test_expect_success 'diff-highlight handles --graph with leading dash' '
 	-leading dash
 	EOF
 	git add file &&
-	git commit -m before &&
+	git cummit -m before &&
 
 	sed s/old/new/ <file >file.tmp &&
 	mv file.tmp file &&
 	git add file &&
-	git commit -m after &&
+	git cummit -m after &&
 
 	cat >expect <<-EOF &&
 	--- a/file

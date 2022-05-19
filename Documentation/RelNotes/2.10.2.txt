@@ -65,9 +65,9 @@ Fixes since v2.10.1
    level, but the codepath did not check errors while copying and
    adjusting the file that lists alternate object stores.
 
- * Documentation for "git commit" was updated to clarify that "commit
+ * Documentation for "git cummit" was updated to clarify that "cummit
    -p <paths>" adds to the current contents of the index to come up
-   with what to commit.
+   with what to cummit.
 
  * A stray symbolic link in $GIT_DIR/refs/ directory could make name
    resolution loop forever, which has been corrected.

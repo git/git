@@ -49,13 +49,13 @@ test_expect_success 'setup' '
 		echo >>folder1/0/0/0 &&
 		echo >>folder2/0/1 &&
 		git add . &&
-		git commit -m "initial commit" &&
+		git cummit -m "initial cummit" &&
 		git checkout -b base &&
 		for dir in folder1 folder2 deep
 		do
 			git checkout -b update-$dir base &&
 			echo "updated $dir" >$dir/a &&
-			git commit -a -m "update $dir" || return 1
+			git cummit -a -m "update $dir" || return 1
 		done &&
 
 		git checkout -b rename-base base &&
@@ -69,7 +69,7 @@ test_expect_success 'setup' '
 		cp folder1/larger-content folder2/ &&
 		cp folder1/larger-content deep/deeper1/ &&
 		git add . &&
-		git commit -m "add interesting rename content" &&
+		git cummit -m "add interesting rename content" &&
 
 		git checkout -b rename-out-to-out rename-base &&
 		mv folder1/a folder2/b &&
@@ -78,7 +78,7 @@ test_expect_success 'setup' '
 		echo >>folder2/0/1 &&
 		echo stuff >>deep/deeper1/a &&
 		git add . &&
-		git commit -m "rename folder1/... to folder2/..." &&
+		git cummit -m "rename folder1/... to folder2/..." &&
 
 		git checkout -b rename-out-to-in rename-base &&
 		mv folder1/a deep/deeper1/b &&
@@ -89,7 +89,7 @@ test_expect_success 'setup' '
 		mv folder1/larger-content deep/deeper1/edited-content &&
 		echo >>deep/deeper1/edited-content &&
 		git add . &&
-		git commit -m "rename folder1/... to deep/deeper1/..." &&
+		git cummit -m "rename folder1/... to deep/deeper1/..." &&
 
 		git checkout -b rename-in-to-out rename-base &&
 		mv deep/deeper1/a folder1/b &&
@@ -99,26 +99,26 @@ test_expect_success 'setup' '
 		mv deep/deeper1/larger-content folder1/edited-content &&
 		echo >>folder1/edited-content &&
 		git add . &&
-		git commit -m "rename deep/deeper1/... to folder1/..." &&
+		git cummit -m "rename deep/deeper1/... to folder1/..." &&
 
 		git checkout -b df-conflict-1 base &&
 		rm -rf folder1 &&
 		echo content >folder1 &&
 		git add . &&
-		git commit -m "dir to file" &&
+		git cummit -m "dir to file" &&
 
 		git checkout -b df-conflict-2 base &&
 		rm -rf folder2 &&
 		echo content >folder2 &&
 		git add . &&
-		git commit -m "dir to file" &&
+		git cummit -m "dir to file" &&
 
 		git checkout -b fd-conflict base &&
 		rm a &&
 		mkdir a &&
 		echo content >a/a &&
 		git add . &&
-		git commit -m "file to dir" &&
+		git cummit -m "file to dir" &&
 
 		for side in left right
 		do
@@ -127,14 +127,14 @@ test_expect_success 'setup' '
 			echo $side >>folder1/a &&
 			echo $side >>folder2/a &&
 			git add . &&
-			git commit -m "$side" || return 1
+			git cummit -m "$side" || return 1
 		done &&
 
 		git checkout -b deepest base &&
 		echo "updated deepest" >deep/deeper1/deepest/a &&
 		echo "updated deepest2" >deep/deeper1/deepest2/a &&
 		echo "updated deepest3" >deep/deeper1/deepest3/a &&
-		git commit -a -m "update deepest" &&
+		git cummit -a -m "update deepest" &&
 
 		git checkout -f base &&
 		git reset --hard
@@ -296,7 +296,7 @@ test_expect_success 'status reports sparse-checkout' '
 	test_i18ngrep "You are in a sparse checkout." sparse
 '
 
-test_expect_success 'add, commit, checkout' '
+test_expect_success 'add, cummit, checkout' '
 	init_repos &&
 
 	write_script edit-contents <<-\EOF &&
@@ -306,7 +306,7 @@ test_expect_success 'add, commit, checkout' '
 
 	test_all_match git add README.md &&
 	test_all_match git status --porcelain=v2 &&
-	test_all_match git commit -m "Add README.md" &&
+	test_all_match git cummit -m "Add README.md" &&
 
 	test_all_match git checkout HEAD~1 &&
 	test_all_match git checkout - &&
@@ -315,7 +315,7 @@ test_expect_success 'add, commit, checkout' '
 
 	test_all_match git add -A &&
 	test_all_match git status --porcelain=v2 &&
-	test_all_match git commit -m "Extend README.md" &&
+	test_all_match git cummit -m "Extend README.md" &&
 
 	test_all_match git checkout HEAD~1 &&
 	test_all_match git checkout - &&
@@ -326,7 +326,7 @@ test_expect_success 'add, commit, checkout' '
 	test_all_match git status --porcelain=v2 &&
 	test_all_match git add . &&
 	test_all_match git status --porcelain=v2 &&
-	test_all_match git commit -m "add deep/newfile" &&
+	test_all_match git cummit -m "add deep/newfile" &&
 
 	test_all_match git checkout HEAD~1 &&
 	test_all_match git checkout -
@@ -354,7 +354,7 @@ test_expect_success 'add outside sparse cone' '
 	test_sparse_unstaged folder1/newfile
 '
 
-test_expect_success 'commit including unstaged changes' '
+test_expect_success 'cummit including unstaged changes' '
 	init_repos &&
 
 	write_script edit-file <<-\EOF &&
@@ -364,21 +364,21 @@ test_expect_success 'commit including unstaged changes' '
 	run_on_all ../edit-file 1 a &&
 	run_on_all ../edit-file 1 deep/a &&
 
-	test_all_match git commit -m "-a" -a &&
+	test_all_match git cummit -m "-a" -a &&
 	test_all_match git status --porcelain=v2 &&
 
 	run_on_all ../edit-file 2 a &&
 	run_on_all ../edit-file 2 deep/a &&
 
-	test_all_match git commit -m "--include" --include deep/a &&
+	test_all_match git cummit -m "--include" --include deep/a &&
 	test_all_match git status --porcelain=v2 &&
-	test_all_match git commit -m "--include" --include a &&
+	test_all_match git cummit -m "--include" --include a &&
 	test_all_match git status --porcelain=v2 &&
 
 	run_on_all ../edit-file 3 a &&
 	run_on_all ../edit-file 3 deep/a &&
 
-	test_all_match git commit -m "--amend" -a --amend &&
+	test_all_match git cummit -m "--amend" -a --amend &&
 	test_all_match git status --porcelain=v2
 '
 
@@ -415,13 +415,13 @@ test_expect_success 'status/add: outside sparse cone' '
 
 	test_all_match git add --sparse . &&
 	test_all_match git status --porcelain=v2 &&
-	test_all_match git commit -m folder1/new &&
+	test_all_match git cummit -m folder1/new &&
 	test_all_match git rev-parse HEAD^{tree} &&
 
 	run_on_all ../edit-contents folder1/newer &&
 	test_all_match git add --sparse folder1/ &&
 	test_all_match git status --porcelain=v2 &&
-	test_all_match git commit -m folder1/newer &&
+	test_all_match git cummit -m folder1/newer &&
 	test_all_match git rev-parse HEAD^{tree}
 '
 
@@ -869,7 +869,7 @@ test_expect_success 'read-tree --merge with edit/edit conflicts in sparse direct
 test_expect_success 'read-tree --prefix' '
 	init_repos &&
 
-	# If files differing between the index and target <commit-ish> exist
+	# If files differing between the index and target <cummit-ish> exist
 	# inside the prefix, `read-tree --prefix` should fail
 	test_all_match test_must_fail git read-tree --prefix=deep/ deepest &&
 	test_all_match test_must_fail git read-tree --prefix=folder1/ update-folder1 &&
@@ -1024,12 +1024,12 @@ test_expect_success 'cherry-pick with conflicts' '
 	test_all_match git checkout -b to-cherry-pick &&
 	run_on_all ../edit-conflict ABC &&
 	test_all_match git add conflict &&
-	test_all_match git commit -m "conflict to pick" &&
+	test_all_match git cummit -m "conflict to pick" &&
 
 	test_all_match git checkout -B base HEAD~1 &&
 	run_on_all ../edit-conflict DEF &&
 	test_all_match git add conflict &&
-	test_all_match git commit -m "conflict in base" &&
+	test_all_match git cummit -m "conflict in base" &&
 
 	test_all_match test_must_fail git cherry-pick to-cherry-pick
 '
@@ -1108,7 +1108,7 @@ test_expect_success 'clean' '
 	echo bogus >>.gitignore &&
 	run_on_all cp ../.gitignore . &&
 	test_all_match git add .gitignore &&
-	test_all_match git commit -m "ignore bogus files" &&
+	test_all_match git cummit -m "ignore bogus files" &&
 
 	run_on_sparse mkdir folder1 &&
 	run_on_all mkdir -p deep/untracked-deep &&
@@ -1158,10 +1158,10 @@ test_expect_success 'submodule handling' '
 	test_all_match mkdir modules &&
 	test_all_match touch modules/a &&
 	test_all_match git add modules &&
-	test_all_match git commit -m "add modules directory" &&
+	test_all_match git cummit -m "add modules directory" &&
 
 	run_on_all git submodule add "$(pwd)/initial-repo" modules/sub &&
-	test_all_match git commit -m "add submodule" &&
+	test_all_match git cummit -m "add submodule" &&
 
 	# having a submodule prevents "modules" from collapse
 	test_sparse_match git sparse-checkout set deep/deeper1 &&
@@ -1242,13 +1242,13 @@ test_expect_success 'sparse-index is not expanded' '
 
 	ensure_not_expanded status &&
 	ensure_not_expanded ls-files --sparse &&
-	ensure_not_expanded commit --allow-empty -m empty &&
+	ensure_not_expanded cummit --allow-empty -m empty &&
 	echo >>sparse-index/a &&
-	ensure_not_expanded commit -a -m a &&
+	ensure_not_expanded cummit -a -m a &&
 	echo >>sparse-index/a &&
-	ensure_not_expanded commit --include a -m a &&
+	ensure_not_expanded cummit --include a -m a &&
 	echo >>sparse-index/deep/deeper1/a &&
-	ensure_not_expanded commit --include deep/deeper1/a -m deeper &&
+	ensure_not_expanded cummit --include deep/deeper1/a -m deeper &&
 	ensure_not_expanded checkout rename-out-to-out &&
 	ensure_not_expanded checkout - &&
 	ensure_not_expanded switch rename-out-to-out &&
@@ -1316,7 +1316,7 @@ test_expect_success 'sparse-index is not expanded: merge conflict in cone' '
 	do
 		git -C sparse-index checkout -b expand-$side base &&
 		echo $side >sparse-index/deep/a &&
-		git -C sparse-index commit -a -m "$side" || return 1
+		git -C sparse-index cummit -a -m "$side" || return 1
 	done &&
 
 	(
@@ -1407,8 +1407,8 @@ test_expect_success 'sparse index is not expanded: fetch/pull' '
 
 	git -C sparse-index remote add full "file://$(pwd)/full-checkout" &&
 	ensure_not_expanded fetch full &&
-	git -C full-checkout commit --allow-empty -m "for pull merge" &&
-	git -C sparse-index commit --allow-empty -m "for pull merge" &&
+	git -C full-checkout cummit --allow-empty -m "for pull merge" &&
+	git -C sparse-index cummit --allow-empty -m "for pull merge" &&
 	ensure_not_expanded pull full base
 '
 
@@ -1428,7 +1428,7 @@ test_expect_success 'sparse index is not expanded: read-tree' '
 
 	rm -rf sparse-index/deep/deeper2 &&
 	ensure_not_expanded add . &&
-	ensure_not_expanded commit -m "test" &&
+	ensure_not_expanded cummit -m "test" &&
 
 	ensure_not_expanded read-tree --prefix=deep/deeper2 -u deepest
 '

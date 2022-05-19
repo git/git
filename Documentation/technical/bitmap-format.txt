@@ -69,7 +69,7 @@ MIDXs, both the bit-cache and rev-cache extensions are required.
 
 		4-byte entry count (network byte order)
 
-			The total count of entries (bitmapped commits) in this bitmap index.
+			The total count of entries (bitmapped cummits) in this bitmap index.
 
 		20-byte checksum
 
@@ -85,7 +85,7 @@ MIDXs, both the bit-cache and rev-cache extensions are required.
 		There is a bitmap for each Git object type, stored in the following
 		order:
 
-			- Commits
+			- cummits
 			- Trees
 			- Blobs
 			- Tags
@@ -97,20 +97,20 @@ MIDXs, both the bit-cache and rev-cache extensions are required.
 		in a full set (all bits set), and the AND of all 4 bitmaps will
 		result in an empty bitmap (no bits set).
 
-	- N entries with compressed bitmaps, one for each indexed commit
+	- N entries with compressed bitmaps, one for each indexed cummit
 
 		Where `N` is the total amount of entries in this bitmap index.
 		Each entry contains the following:
 
 		- 4-byte object position (network byte order)
 			The position **in the index for the packfile or
-			multi-pack index** where the bitmap for this commit is
+			multi-pack index** where the bitmap for this cummit is
 			found.
 
 		- 1-byte XOR-offset
 			The xor offset used to compress this bitmap. For an entry
 			in position `x`, a XOR offset of `y` means that the actual
-			bitmap representing this commit is composed by XORing the
+			bitmap representing this cummit is composed by XORing the
 			bitmap for this entry with the bitmap in entry `x-y` (i.e.
 			the bitmap `y` entries before this one).
 

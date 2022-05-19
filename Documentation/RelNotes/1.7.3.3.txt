@@ -15,7 +15,7 @@ Fixes since v1.7.3.2
 
  * "git apply" segfaulted when a bogus input is fed to it.
 
- * Running "git cherry-pick --ff" on a root commit segfaulted.
+ * Running "git cherry-pick --ff" on a root cummit segfaulted.
 
  * "diff", "blame" and friends incorrectly applied textconv filters to
    symlinks.

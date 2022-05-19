@@ -27,7 +27,7 @@ p4_grant_admin() {
 	} | p4 protect -i
 }
 
-p4_check_commit_author() {
+p4_check_cummit_author() {
 	file=$1 user=$2 &&
 	p4 changes -m 1 //depot/$file | grep -q $user
 }
@@ -36,7 +36,7 @@ make_change_by_user() {
 	file=$1 name=$2 email=$3 &&
 	echo "username: a change by $name" >>"$file" &&
 	git add "$file" &&
-	git commit --author "$name <$email>" -m "a change by $name"
+	git cummit --author "$name <$email>" -m "a change by $name"
 }
 
 # Test username support, submitting as user 'alice'
@@ -50,14 +50,14 @@ test_expect_success 'preserve users' '
 		cd "$git" &&
 		echo "username: a change by alice" >>file1 &&
 		echo "username: a change by bob" >>file2 &&
-		git commit --author "Alice <alice@example.com>" -m "a change by alice" file1 &&
-		git commit --author "Bob <bob@example.com>" -m "a change by bob" file2 &&
+		git cummit --author "Alice <alice@example.com>" -m "a change by alice" file1 &&
+		git cummit --author "Bob <bob@example.com>" -m "a change by bob" file2 &&
 		git config git-p4.skipSubmitEditCheck true &&
 		P4EDITOR="test-tool chmtime +5" P4USER=alice P4PASSWD=secret &&
 		export P4EDITOR P4USER P4PASSWD &&
-		git p4 commit --preserve-user &&
-		p4_check_commit_author file1 alice &&
-		p4_check_commit_author file2 bob
+		git p4 cummit --preserve-user &&
+		p4_check_cummit_author file1 alice &&
+		p4_check_cummit_author file2 bob
 	)
 '
 
@@ -70,10 +70,10 @@ test_expect_success 'refuse to preserve users without perms' '
 		cd "$git" &&
 		git config git-p4.skipSubmitEditCheck true &&
 		echo "username-noperms: a change by alice" >>file1 &&
-		git commit --author "Alice <alice@example.com>" -m "perms: a change by alice" file1 &&
+		git cummit --author "Alice <alice@example.com>" -m "perms: a change by alice" file1 &&
 		P4EDITOR="test-tool chmtime +5" P4USER=bob P4PASSWD=secret &&
 		export P4EDITOR P4USER P4PASSWD &&
-		test_must_fail git p4 commit --preserve-user &&
+		test_must_fail git p4 cummit --preserve-user &&
 		! git diff --exit-code HEAD..p4/master
 	)
 '
@@ -86,20 +86,20 @@ test_expect_success 'preserve user where author is unknown to p4' '
 		cd "$git" &&
 		git config git-p4.skipSubmitEditCheck true &&
 		echo "username-bob: a change by bob" >>file1 &&
-		git commit --author "Bob <bob@example.com>" -m "preserve: a change by bob" file1 &&
+		git cummit --author "Bob <bob@example.com>" -m "preserve: a change by bob" file1 &&
 		echo "username-unknown: a change by charlie" >>file1 &&
-		git commit --author "Charlie <charlie@example.com>" -m "preserve: a change by charlie" file1 &&
+		git cummit --author "Charlie <charlie@example.com>" -m "preserve: a change by charlie" file1 &&
 		P4EDITOR="test-tool chmtime +5" P4USER=alice P4PASSWD=secret &&
 		export P4EDITOR P4USER P4PASSWD &&
-		test_must_fail git p4 commit --preserve-user &&
+		test_must_fail git p4 cummit --preserve-user &&
 		! git diff --exit-code HEAD..p4/master &&
 
 		echo "$0: repeat with allowMissingP4Users enabled" &&
 		git config git-p4.allowMissingP4Users true &&
 		git config git-p4.preserveUser true &&
-		git p4 commit &&
+		git p4 cummit &&
 		git diff --exit-code HEAD..p4/master &&
-		p4_check_commit_author file1 alice
+		p4_check_cummit_author file1 alice
 	)
 '
 
@@ -118,23 +118,23 @@ test_expect_success 'not preserving user with mixed authorship' '
 		make_change_by_user usernamefile3 Derek derek@example.com &&
 		P4EDITOR=cat P4USER=alice P4PASSWD=secret &&
 		export P4EDITOR P4USER P4PASSWD &&
-		git p4 commit >actual &&
+		git p4 cummit >actual &&
 		grep "git author derek@example.com does not match" actual &&
 
 		make_change_by_user usernamefile3 Charlie charlie@example.com &&
-		git p4 commit >actual &&
+		git p4 cummit >actual &&
 		grep "git author charlie@example.com does not match" actual &&
 
 		make_change_by_user usernamefile3 alice alice@example.com &&
-		git p4 commit >actual &&
+		git p4 cummit >actual &&
 		! grep "git author.*does not match" actual &&
 
 		git config git-p4.skipUserNameCheck true &&
 		make_change_by_user usernamefile3 Charlie charlie@example.com &&
-		git p4 commit >actual &&
+		git p4 cummit >actual &&
 		! grep "git author.*does not match" actual &&
 
-		p4_check_commit_author usernamefile3 alice
+		p4_check_cummit_author usernamefile3 alice
 	)
 '
 

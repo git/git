@@ -3,7 +3,7 @@
 test_description='test handling of --alternate-refs traversal'
 . ./test-lib.sh
 
-# Avoid test_commit because we want a specific and known set of refs:
+# Avoid test_cummit because we want a specific and known set of refs:
 #
 #  base -- one
 #      \      \
@@ -14,12 +14,12 @@ test_description='test handling of --alternate-refs traversal'
 test_expect_success 'set up local refs' '
 	git checkout -b one &&
 	test_tick &&
-	git commit --allow-empty -m base &&
+	git cummit --allow-empty -m base &&
 	test_tick &&
-	git commit --allow-empty -m one &&
+	git cummit --allow-empty -m one &&
 	git checkout -b two HEAD^ &&
 	test_tick &&
-	git commit --allow-empty -m two
+	git cummit --allow-empty -m two
 '
 
 # We'll enter the child repository after it's set up since that's where

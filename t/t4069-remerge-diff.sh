@@ -14,7 +14,7 @@ fi
 test_expect_success 'setup basic merges' '
 	test_write_lines 1 2 3 4 5 6 7 8 9 >numbers &&
 	git add numbers &&
-	git commit -m base &&
+	git cummit -m base &&
 
 	git branch feature_a &&
 	git branch feature_b &&
@@ -25,15 +25,15 @@ test_expect_success 'setup basic merges' '
 
 	git checkout feature_a &&
 	test_write_lines 1 2 three 4 5 6 7 eight 9 >numbers &&
-	git commit -a -m change_a &&
+	git cummit -a -m change_a &&
 
 	git checkout feature_b &&
 	test_write_lines 1 2 tres 4 5 6 7 8 9 >numbers &&
-	git commit -a -m change_b &&
+	git cummit -a -m change_b &&
 
 	git checkout feature_c &&
 	test_write_lines 1 2 3 4 5 6 7 8 9 10 >numbers &&
-	git commit -a -m change_c &&
+	git cummit -a -m change_c &&
 
 	git checkout bc_resolution &&
 	git merge --ff-only feature_b &&
@@ -96,7 +96,7 @@ test_expect_success 'setup non-content conflicts' '
 	test_write_lines a b c d e f g h i >letters &&
 	test_write_lines in the way >content &&
 	git add numbers letters content &&
-	git commit -m base &&
+	git cummit -m base &&
 
 	git branch side1 &&
 	git branch side2 &&
@@ -106,7 +106,7 @@ test_expect_success 'setup non-content conflicts' '
 	git mv letters letters_side1 &&
 	git mv content file_or_directory &&
 	git add numbers &&
-	git commit -m side1 &&
+	git cummit -m side1 &&
 
 	git checkout side2 &&
 	git rm numbers &&
@@ -114,7 +114,7 @@ test_expect_success 'setup non-content conflicts' '
 	mkdir file_or_directory &&
 	echo hello >file_or_directory/world &&
 	git add file_or_directory/world &&
-	git commit -m side2 &&
+	git cummit -m side2 &&
 
 	git checkout -b resolution side1 &&
 	test_must_fail git merge side2 &&
@@ -125,7 +125,7 @@ test_expect_success 'setup non-content conflicts' '
 	git rm letters_side2 &&
 	git add file_or_directory~HEAD &&
 	git mv file_or_directory~HEAD wanted_content &&
-	git commit -m resolved
+	git cummit -m resolved
 '
 
 test_expect_success 'remerge-diff with non-content conflicts' '
@@ -237,7 +237,7 @@ test_expect_success 'setup non-content conflicts' '
 
 	test_write_lines 1 2 3 4 5 6 7 8 9 >numbers &&
 	git add numbers &&
-	git commit -m base &&
+	git cummit -m base &&
 
 	git branch newside1 &&
 	git branch newside2 &&
@@ -245,18 +245,18 @@ test_expect_success 'setup non-content conflicts' '
 	git checkout newside1 &&
 	test_write_lines 1 2 three 4 5 6 7 8 9 >numbers &&
 	git add numbers &&
-	git commit -m side1 &&
+	git cummit -m side1 &&
 
 	git checkout newside2 &&
 	test_write_lines 1 2 drei 4 5 6 7 8 9 >numbers &&
 	git add numbers &&
-	git commit -m side2 &&
+	git cummit -m side2 &&
 
 	git checkout -b newresolution newside1 &&
 	test_must_fail git merge newside2 &&
 	git checkout --theirs numbers &&
 	git add -u numbers &&
-	git commit -m resolved
+	git cummit -m resolved
 '
 
 test_expect_success 'remerge-diff turns off history simplification' '

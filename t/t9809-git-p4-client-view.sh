@@ -272,7 +272,7 @@ test_expect_success 'subdir clone, submit modify' '
 		git config git-p4.skipSubmitEdit true &&
 		echo line >>dir1/file12 &&
 		git add dir1/file12 &&
-		git commit -m dir1/file12 &&
+		git cummit -m dir1/file12 &&
 		git p4 submit
 	) &&
 	(
@@ -291,7 +291,7 @@ test_expect_success 'subdir clone, submit add' '
 		git config git-p4.skipSubmitEdit true &&
 		echo file13 >dir1/file13 &&
 		git add dir1/file13 &&
-		git commit -m dir1/file13 &&
+		git cummit -m dir1/file13 &&
 		git p4 submit
 	) &&
 	(
@@ -308,7 +308,7 @@ test_expect_success 'subdir clone, submit delete' '
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
 		git rm dir1/file12 &&
-		git commit -m "delete dir1/file12" &&
+		git cummit -m "delete dir1/file12" &&
 		git p4 submit
 	) &&
 	(
@@ -327,7 +327,7 @@ test_expect_success 'subdir clone, submit copy' '
 		git config git-p4.detectCopies true &&
 		cp dir1/file11 dir1/file11a &&
 		git add dir1/file11a &&
-		git commit -m "copy to dir1/file11a" &&
+		git cummit -m "copy to dir1/file11a" &&
 		git p4 submit
 	) &&
 	(
@@ -346,7 +346,7 @@ test_expect_success 'subdir clone, submit rename' '
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.detectRenames true &&
 		git mv dir1/file13 dir1/file13a &&
-		git commit -m "rename dir1/file13 to dir1/file13a" &&
+		git cummit -m "rename dir1/file13 to dir1/file13a" &&
 		git p4 submit
 	) &&
 	(
@@ -372,7 +372,7 @@ test_expect_success 'wildcard files submit back to p4, client-spec case' '
 		echo git-wild-at >dir1/git-wild@at &&
 		echo git-wild-percent >dir1/git-wild%percent &&
 		git add dir1/git-wild* &&
-		git commit -m "add some wildcard filenames" &&
+		git cummit -m "add some wildcard filenames" &&
 		git config git-p4.skipSubmitEditCheck true &&
 		git p4 submit
 	) &&
@@ -391,7 +391,7 @@ test_expect_success 'wildcard files submit back to p4, client-spec case' '
 		# on files with wildcards; but git-p4 knows how
 		cd "$git" &&
 		git rm dir1/git-wild* &&
-		git commit -m "clean up the wildcards" &&
+		git cummit -m "clean up the wildcards" &&
 		git p4 submit
 	)
 '

@@ -63,7 +63,7 @@
  */
 
 struct combine_diff_path;
-struct commit;
+struct cummit;
 struct diff_filespec;
 struct diff_options;
 struct diff_queue_struct;
@@ -250,7 +250,7 @@ struct diff_options {
 	 * path that is the same as, or first path that sorts after,
 	 * <file>.  Because it is unreasonable to require the exact
 	 * match for "git log -p --rotate-to=<file>" (i.e. not all
-	 * commit would touch that single <file>), "git log" sets it
+	 * cummit would touch that single <file>), "git log" sets it
 	 * to false.  "git diff" sets it to true to detect an error
 	 * in the command line option.
 	 */
@@ -434,7 +434,7 @@ enum color_diff {
 	DIFF_FRAGINFO = 3,
 	DIFF_FILE_OLD = 4,
 	DIFF_FILE_NEW = 5,
-	DIFF_COMMIT = 6,
+	DIFF_cummit = 6,
 	DIFF_WHITESPACE = 7,
 	DIFF_FUNCINFO = 8,
 	DIFF_FILE_OLD_MOVED = 9,
@@ -494,7 +494,7 @@ void show_combined_diff(struct combine_diff_path *elem, int num_parent,
 
 void diff_tree_combined(const struct object_id *oid, const struct oid_array *parents, struct rev_info *rev);
 
-void diff_tree_combined_merge(const struct commit *commit, struct rev_info *rev);
+void diff_tree_combined_merge(const struct cummit *cummit, struct rev_info *rev);
 
 void diff_set_mnemonic_prefix(struct diff_options *options, const char *a, const char *b);
 

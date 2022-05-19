@@ -18,12 +18,12 @@ TEST_FILE=foo
 test_expect_success 'Setup' '
 	echo "Initial" >"$TEST_FILE" &&
 	git add "$TEST_FILE" &&
-	git commit -m "First Commit" &&
+	git cummit -m "First cummit" &&
 	test_tick &&
 	echo "State 1" >>"$TEST_FILE" &&
 	git add "$TEST_FILE" &&
 	test_tick &&
-	git commit -m "Second Commit"
+	git cummit -m "Second cummit"
 '
 
 test_expect_success '--orphan creates a new orphan branch from HEAD' '
@@ -31,7 +31,7 @@ test_expect_success '--orphan creates a new orphan branch from HEAD' '
 	test_must_fail git rev-parse --verify HEAD &&
 	test "refs/heads/alpha" = "$(git symbolic-ref HEAD)" &&
 	test_tick &&
-	git commit -m "Third Commit" &&
+	git cummit -m "Third cummit" &&
 	test_must_fail git rev-parse --verify HEAD^ &&
 	git diff-tree --quiet main alpha
 '
@@ -42,7 +42,7 @@ test_expect_success '--orphan creates a new orphan branch from <start_point>' '
 	test_must_fail git rev-parse --verify HEAD &&
 	test "refs/heads/beta" = "$(git symbolic-ref HEAD)" &&
 	test_tick &&
-	git commit -m "Fourth Commit" &&
+	git cummit -m "Fourth cummit" &&
 	test_must_fail git rev-parse --verify HEAD^ &&
 	git diff-tree --quiet main^ beta
 '
@@ -82,7 +82,7 @@ test_expect_success '--orphan makes reflog by default' '
 	git config --unset core.logAllRefUpdates &&
 	git checkout --orphan delta &&
 	test_must_fail git rev-parse --verify delta@{0} &&
-	git commit -m Delta &&
+	git cummit -m Delta &&
 	git rev-parse --verify delta@{0}
 '
 
@@ -91,7 +91,7 @@ test_expect_success REFFILES '--orphan does not make reflog when core.logAllRefU
 	git config core.logAllRefUpdates false &&
 	git checkout --orphan epsilon &&
 	test_must_fail git rev-parse --verify epsilon@{0} &&
-	git commit -m Epsilon &&
+	git cummit -m Epsilon &&
 	test_must_fail git rev-parse --verify epsilon@{0}
 '
 
@@ -99,11 +99,11 @@ test_expect_success '--orphan with -l makes reflog when core.logAllRefUpdates = 
 	git checkout main &&
 	git checkout -l --orphan zeta &&
 	test_must_fail git rev-parse --verify zeta@{0} &&
-	git commit -m Zeta &&
+	git cummit -m Zeta &&
 	git rev-parse --verify zeta@{0}
 '
 
-test_expect_success 'giving up --orphan not committed when -l and core.logAllRefUpdates = false deletes reflog' '
+test_expect_success 'giving up --orphan not cummitted when -l and core.logAllRefUpdates = false deletes reflog' '
 	git checkout main &&
 	git checkout -l --orphan eta &&
 	test_must_fail git rev-parse --verify eta@{0} &&

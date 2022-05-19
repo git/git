@@ -89,12 +89,12 @@ msgid "Scanning for modified files ..."
 msgstr "Recherche de fichiers modifiés..."
 
 #: git-gui.sh:1454
-msgid "Calling prepare-commit-msg hook..."
-msgstr "Lancement de l'action de préparation du message de commit..."
+msgid "Calling prepare-cummit-msg hook..."
+msgstr "Lancement de l'action de préparation du message de cummit..."
 
 #: git-gui.sh:1471
-msgid "Commit declined by prepare-commit-msg hook."
-msgstr "Commit refusé par l'action de préparation du message de commit."
+msgid "cummit declined by prepare-cummit-msg hook."
+msgstr "cummit refusé par l'action de préparation du message de cummit."
 
 #: git-gui.sh:1629 lib/browser.tcl:246
 msgid "Ready."
@@ -114,15 +114,15 @@ msgid "Modified, not staged"
 msgstr "Modifié, pas indexé"
 
 #: git-gui.sh:1916 git-gui.sh:1924
-msgid "Staged for commit"
+msgid "Staged for cummit"
 msgstr "Indexé"
 
 #: git-gui.sh:1917 git-gui.sh:1925
-msgid "Portions staged for commit"
+msgid "Portions staged for cummit"
 msgstr "Portions indexées"
 
 #: git-gui.sh:1918 git-gui.sh:1926
-msgid "Staged for commit, missing"
+msgid "Staged for cummit, missing"
 msgstr "Indexés, manquant"
 
 #: git-gui.sh:1920
@@ -179,8 +179,8 @@ msgid "Branch"
 msgstr "Branche"
 
 #: git-gui.sh:2461 lib/choose_rev.tcl:548
-msgid "Commit@@noun"
-msgstr "Commit"
+msgid "cummit@@noun"
+msgstr "cummit"
 
 #: git-gui.sh:2464 lib/merge.tcl:121 lib/merge.tcl:150 lib/merge.tcl:168
 msgid "Merge"
@@ -300,31 +300,31 @@ msgid "Done"
 msgstr "Effectué"
 
 #: git-gui.sh:2610
-msgid "Commit@@verb"
-msgstr "Commiter@@verb"
+msgid "cummit@@verb"
+msgstr "cummiter@@verb"
 
 #: git-gui.sh:2619 git-gui.sh:3050
-msgid "New Commit"
-msgstr "Nouveau commit"
+msgid "New cummit"
+msgstr "Nouveau cummit"
 
 #: git-gui.sh:2627 git-gui.sh:3057
-msgid "Amend Last Commit"
-msgstr "Corriger dernier commit"
+msgid "Amend Last cummit"
+msgstr "Corriger dernier cummit"
 
 #: git-gui.sh:2637 git-gui.sh:3011 lib/remote_branch_delete.tcl:99
 msgid "Rescan"
 msgstr "Recharger modifs."
 
 #: git-gui.sh:2643
-msgid "Stage To Commit"
+msgid "Stage To cummit"
 msgstr "Indexer"
 
 #: git-gui.sh:2649
-msgid "Stage Changed Files To Commit"
+msgid "Stage Changed Files To cummit"
 msgstr "Indexer toutes modifications"
 
 #: git-gui.sh:2655
-msgid "Unstage From Commit"
+msgid "Unstage From cummit"
 msgstr "Désindexer"
 
 #: git-gui.sh:2661 lib/index.tcl:412
@@ -401,8 +401,8 @@ msgid "Current Branch:"
 msgstr "Branche courante :"
 
 #: git-gui.sh:2947
-msgid "Staged Changes (Will Commit)"
-msgstr "Modifs. indexées (pour commit)"
+msgid "Staged Changes (Will cummit)"
+msgstr "Modifs. indexées (pour cummit)"
 
 #: git-gui.sh:2967
 msgid "Unstaged Changes"
@@ -417,28 +417,28 @@ msgid "Push"
 msgstr "Pousser"
 
 #: git-gui.sh:3071
-msgid "Initial Commit Message:"
-msgstr "Message de commit initial :"
+msgid "Initial cummit Message:"
+msgstr "Message de cummit initial :"
 
 #: git-gui.sh:3072
-msgid "Amended Commit Message:"
-msgstr "Message de commit corrigé :"
+msgid "Amended cummit Message:"
+msgstr "Message de cummit corrigé :"
 
 #: git-gui.sh:3073
-msgid "Amended Initial Commit Message:"
-msgstr "Message de commit initial corrigé :"
+msgid "Amended Initial cummit Message:"
+msgstr "Message de cummit initial corrigé :"
 
 #: git-gui.sh:3074
-msgid "Amended Merge Commit Message:"
-msgstr "Message de commit de fusion corrigé :"
+msgid "Amended Merge cummit Message:"
+msgstr "Message de cummit de fusion corrigé :"
 
 #: git-gui.sh:3075
-msgid "Merge Commit Message:"
-msgstr "Message de commit de fusion :"
+msgid "Merge cummit Message:"
+msgstr "Message de cummit de fusion :"
 
 #: git-gui.sh:3076
-msgid "Commit Message:"
-msgstr "Message de commit :"
+msgid "cummit Message:"
+msgstr "Message de cummit :"
 
 #: git-gui.sh:3125 git-gui.sh:3267 lib/console.tcl:73
 msgid "Copy All"
@@ -505,27 +505,27 @@ msgid "Start git gui In The Submodule"
 msgstr "Démarrer git gui dans le sous-module"
 
 #: git-gui.sh:3389
-msgid "Unstage Hunk From Commit"
+msgid "Unstage Hunk From cummit"
 msgstr "Désindexer la section"
 
 #: git-gui.sh:3391
-msgid "Unstage Lines From Commit"
-msgstr "Désindexer la ligne du commit"
+msgid "Unstage Lines From cummit"
+msgstr "Désindexer la ligne du cummit"
 
 #: git-gui.sh:3393
-msgid "Unstage Line From Commit"
+msgid "Unstage Line From cummit"
 msgstr "Désindexer la ligne"
 
 #: git-gui.sh:3396
-msgid "Stage Hunk For Commit"
+msgid "Stage Hunk For cummit"
 msgstr "Indexer la section"
 
 #: git-gui.sh:3398
-msgid "Stage Lines For Commit"
+msgid "Stage Lines For cummit"
 msgstr "Indexer les lignes"
 
 #: git-gui.sh:3400
-msgid "Stage Line For Commit"
+msgid "Stage Line For cummit"
 msgstr "Indexer la ligne"
 
 #: git-gui.sh:3424
@@ -585,12 +585,12 @@ msgid "File Viewer"
 msgstr "Visionneur de fichier"
 
 #: lib/blame.tcl:78
-msgid "Commit:"
-msgstr "Commit :"
+msgid "cummit:"
+msgstr "cummit :"
 
 #: lib/blame.tcl:271
-msgid "Copy Commit"
-msgstr "Copier commit"
+msgid "Copy cummit"
+msgstr "Copier cummit"
 
 #: lib/blame.tcl:275
 msgid "Find Text..."
@@ -605,8 +605,8 @@ msgid "Show History Context"
 msgstr "Montrer l'historique"
 
 #: lib/blame.tcl:291
-msgid "Blame Parent Commit"
-msgstr "Blâmer le commit parent"
+msgid "Blame Parent cummit"
+msgstr "Blâmer le cummit parent"
 
 #: lib/blame.tcl:450
 #, tcl-format
@@ -650,20 +650,20 @@ msgid "Author:"
 msgstr "Auteur :"
 
 #: lib/blame.tcl:967
-msgid "Committer:"
-msgstr "Commiteur :"
+msgid "cummitter:"
+msgstr "cummiteur :"
 
 #: lib/blame.tcl:972
 msgid "Original File:"
 msgstr "Fichier original :"
 
 #: lib/blame.tcl:1020
-msgid "Cannot find HEAD commit:"
+msgid "Cannot find HEAD cummit:"
 msgstr "Impossible de trouver le commit HEAD :"
 
 #: lib/blame.tcl:1075
-msgid "Cannot find parent commit:"
-msgstr "Impossible de trouver le commit parent :"
+msgid "Cannot find parent cummit:"
+msgstr "Impossible de trouver le cummit parent :"
 
 #: lib/blame.tcl:1090
 msgid "Unable to display parent"
@@ -998,12 +998,12 @@ msgstr "'%s' chargé."
 
 #: lib/checkout_op.tcl:535
 #, tcl-format
-msgid "Resetting '%s' to '%s' will lose the following commits:"
-msgstr "Réinitialiser '%s' à '%s' va faire perdre les commits suivants :"
+msgid "Resetting '%s' to '%s' will lose the following cummits:"
+msgstr "Réinitialiser '%s' à '%s' va faire perdre les cummits suivants :"
 
 #: lib/checkout_op.tcl:557
-msgid "Recovering lost commits may not be easy."
-msgstr "Récupérer les commits perdus ne sera peut être pas facile."
+msgid "Recovering lost cummits may not be easy."
+msgstr "Récupérer les cummits perdus ne sera peut être pas facile."
 
 #: lib/checkout_op.tcl:562
 #, tcl-format
@@ -1260,8 +1260,8 @@ msgstr "Aucune branche par défaut n'a été obtenue."
 
 #: lib/choose_repository.tcl:926
 #, tcl-format
-msgid "Cannot resolve %s as a commit."
-msgstr "Impossible de résoudre %s comme commit."
+msgid "Cannot resolve %s as a cummit."
+msgstr "Impossible de résoudre %s comme cummit."
 
 #: lib/choose_repository.tcl:938
 msgid "Creating working directory"
@@ -1330,55 +1330,55 @@ msgstr "Mise à jour:"
 msgid "URL"
 msgstr "URL"
 
-#: lib/commit.tcl:9
+#: lib/cummit.tcl:9
 msgid ""
 "There is nothing to amend.\n"
 "\n"
-"You are about to create the initial commit.  There is no commit before this "
+"You are about to create the initial cummit.  There is no cummit before this "
 "to amend.\n"
 msgstr ""
 "Il n'y a rien à corriger.\n"
 "\n"
-"Vous allez créer le commit initial. Il n'y a pas de commit avant celui-ci à "
+"Vous allez créer le cummit initial. Il n'y a pas de cummit avant celui-ci à "
 "corriger.\n"
 
-#: lib/commit.tcl:18
+#: lib/cummit.tcl:18
 msgid ""
 "Cannot amend while merging.\n"
 "\n"
 "You are currently in the middle of a merge that has not been fully "
-"completed.  You cannot amend the prior commit unless you first abort the "
+"completed.  You cannot amend the prior cummit unless you first abort the "
 "current merge activity.\n"
 msgstr ""
 "Impossible de corriger pendant une fusion.\n"
 "\n"
 "Vous êtes actuellement au milieu d'une fusion qui n'a pas été complètement "
-"terminée. Vous ne pouvez pas corriger le commit précédent sauf si vous "
+"terminée. Vous ne pouvez pas corriger le cummit précédent sauf si vous "
 "abandonnez la fusion courante.\n"
 
-#: lib/commit.tcl:48
-msgid "Error loading commit data for amend:"
-msgstr "Erreur lors du chargement des données de commit pour correction :"
+#: lib/cummit.tcl:48
+msgid "Error loading cummit data for amend:"
+msgstr "Erreur lors du chargement des données de cummit pour correction :"
 
-#: lib/commit.tcl:75
+#: lib/cummit.tcl:75
 msgid "Unable to obtain your identity:"
 msgstr "Impossible d'obtenir votre identité :"
 
-#: lib/commit.tcl:80
-msgid "Invalid GIT_COMMITTER_IDENT:"
-msgstr "GIT_COMMITTER_IDENT invalide :"
+#: lib/cummit.tcl:80
+msgid "Invalid GIT_cummitTER_IDENT:"
+msgstr "GIT_cummitTER_IDENT invalide :"
 
-#: lib/commit.tcl:129
+#: lib/cummit.tcl:129
 #, tcl-format
 msgid "warning: Tcl does not support encoding '%s'."
 msgstr "attention : Tcl ne supporte pas le codage '%s'."
 
-#: lib/commit.tcl:149
+#: lib/cummit.tcl:149
 msgid ""
 "Last scanned state does not match repository state.\n"
 "\n"
 "Another Git program has modified this repository since the last scan.  A "
-"rescan must be performed before another commit can be created.\n"
+"rescan must be performed before another cummit can be created.\n"
 "\n"
 "The rescan will be automatically started now.\n"
 msgstr ""
@@ -1387,126 +1387,126 @@ msgstr ""
 "\n"
 "Un autre programme Git a modifié ce dépôt depuis la dernière "
 "synchronisation. Une resynshronisation doit être effectuée avant de pouvoir "
-"créer un nouveau commit.\n"
+"créer un nouveau cummit.\n"
 "\n"
 "Cela va être fait tout de suite automatiquement.\n"
 
-#: lib/commit.tcl:172
+#: lib/cummit.tcl:172
 #, tcl-format
 msgid ""
-"Unmerged files cannot be committed.\n"
+"Unmerged files cannot be cummitted.\n"
 "\n"
 "File %s has merge conflicts.  You must resolve them and stage the file "
-"before committing.\n"
+"before cummitting.\n"
 msgstr ""
-"Des fichiers non fusionnés ne peuvent être commités.\n"
+"Des fichiers non fusionnés ne peuvent être cummités.\n"
 "\n"
 "Le fichier %s a des conflicts de fusion. Vous devez les résoudre et pré-"
-"commiter le fichier avant de pouvoir commiter.\n"
+"cummiter le fichier avant de pouvoir cummiter.\n"
 
-#: lib/commit.tcl:180
+#: lib/cummit.tcl:180
 #, tcl-format
 msgid ""
 "Unknown file state %s detected.\n"
 "\n"
-"File %s cannot be committed by this program.\n"
+"File %s cannot be cummitted by this program.\n"
 msgstr ""
 "Un état de fichier inconnu %s a été détecté.\n"
 "\n"
-"Le fichier %s ne peut pas être commité par ce programme.\n"
+"Le fichier %s ne peut pas être cummité par ce programme.\n"
 
-#: lib/commit.tcl:188
+#: lib/cummit.tcl:188
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"You must stage at least 1 file before you can commit.\n"
+"You must stage at least 1 file before you can cummit.\n"
 msgstr ""
-"Pas de modification à commiter.\n"
+"Pas de modification à cummiter.\n"
 "\n"
-"Vous devez indexer au moins 1 fichier avant de pouvoir commiter.\n"
+"Vous devez indexer au moins 1 fichier avant de pouvoir cummiter.\n"
 
-#: lib/commit.tcl:203
+#: lib/cummit.tcl:203
 msgid ""
-"Please supply a commit message.\n"
+"Please supply a cummit message.\n"
 "\n"
-"A good commit message has the following format:\n"
+"A good cummit message has the following format:\n"
 "\n"
 "- First line: Describe in one sentence what you did.\n"
 "- Second line: Blank\n"
 "- Remaining lines: Describe why this change is good.\n"
 msgstr ""
-"Merci de fournir un message de commit.\n"
+"Merci de fournir un message de cummit.\n"
 "\n"
-"Un bon message de commit a le format suivant :\n"
+"Un bon message de cummit a le format suivant :\n"
 "\n"
 "- Première ligne : décrire en une phrase ce que vous avez fait.\n"
 "- Deuxième ligne : rien.\n"
 "- Lignes suivantes : Décrire pourquoi ces modifications sont bonnes.\n"
 
-#: lib/commit.tcl:234
+#: lib/cummit.tcl:234
 msgid "Calling pre-commit hook..."
-msgstr "Lancement de l'action d'avant-commit..."
+msgstr "Lancement de l'action d'avant-cummit..."
 
-#: lib/commit.tcl:249
-msgid "Commit declined by pre-commit hook."
-msgstr "Commit refusé par l'action d'avant-commit."
+#: lib/cummit.tcl:249
+msgid "cummit declined by pre-commit hook."
+msgstr "cummit refusé par l'action d'avant-cummit."
 
-#: lib/commit.tcl:272
-msgid "Calling commit-msg hook..."
-msgstr "Lancement de l'action \"message de commit\"..."
+#: lib/cummit.tcl:272
+msgid "Calling cummit-msg hook..."
+msgstr "Lancement de l'action \"message de cummit\"..."
 
-#: lib/commit.tcl:287
-msgid "Commit declined by commit-msg hook."
-msgstr "Commit refusé par l'action \"message de commit\"."
+#: lib/cummit.tcl:287
+msgid "cummit declined by cummit-msg hook."
+msgstr "cummit refusé par l'action \"message de cummit\"."
 
-#: lib/commit.tcl:300
-msgid "Committing changes..."
-msgstr "Commit des modifications..."
+#: lib/cummit.tcl:300
+msgid "cummitting changes..."
+msgstr "cummit des modifications..."
 
-#: lib/commit.tcl:316
+#: lib/cummit.tcl:316
 msgid "write-tree failed:"
 msgstr "write-tree a échoué :"
 
-#: lib/commit.tcl:317 lib/commit.tcl:361 lib/commit.tcl:382
-msgid "Commit failed."
-msgstr "Le commit a échoué."
+#: lib/cummit.tcl:317 lib/cummit.tcl:361 lib/cummit.tcl:382
+msgid "cummit failed."
+msgstr "Le cummit a échoué."
 
-#: lib/commit.tcl:334
+#: lib/cummit.tcl:334
 #, tcl-format
-msgid "Commit %s appears to be corrupt"
-msgstr "Le commit %s semble être corrompu"
+msgid "cummit %s appears to be corrupt"
+msgstr "Le cummit %s semble être corrompu"
 
-#: lib/commit.tcl:339
+#: lib/cummit.tcl:339
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"No files were modified by this commit and it was not a merge commit.\n"
+"No files were modified by this cummit and it was not a merge cummit.\n"
 "\n"
 "A rescan will be automatically started now.\n"
 msgstr ""
-"Pas de modification à commiter.\n"
+"Pas de modification à cummiter.\n"
 "\n"
-"Aucun fichier n'a été modifié par ce commit et il ne s'agit pas d'un commit "
+"Aucun fichier n'a été modifié par ce cummit et il ne s'agit pas d'un cummit "
 "de fusion.\n"
 "\n"
 "Une resynchronisation va être lancée tout de suite automatiquement.\n"
 
-#: lib/commit.tcl:346
-msgid "No changes to commit."
-msgstr "Pas de modifications à commiter."
+#: lib/cummit.tcl:346
+msgid "No changes to cummit."
+msgstr "Pas de modifications à cummiter."
 
-#: lib/commit.tcl:360
-msgid "commit-tree failed:"
-msgstr "commit-tree a échoué :"
+#: lib/cummit.tcl:360
+msgid "cummit-tree failed:"
+msgstr "cummit-tree a échoué :"
 
-#: lib/commit.tcl:381
+#: lib/cummit.tcl:381
 msgid "update-ref failed:"
 msgstr "update-ref a échoué :"
 
-#: lib/commit.tcl:469
+#: lib/cummit.tcl:469
 #, tcl-format
-msgid "Created commit %s: %s"
-msgstr "Commit %s créé : %s"
+msgid "Created cummit %s: %s"
+msgstr "cummit %s créé : %s"
 
 #: lib/console.tcl:59
 msgid "Working... please wait..."
@@ -1706,8 +1706,8 @@ msgid "warning"
 msgstr "attention"
 
 #: lib/error.tcl:94
-msgid "You must correct the above errors before committing."
-msgstr "Vous devez corriger les erreurs suivantes avant de pouvoir commiter."
+msgid "You must correct the above errors before cummitting."
+msgstr "Vous devez corriger les erreurs suivantes avant de pouvoir cummiter."
 
 #: lib/index.tcl:6
 msgid "Unable to unlock the index."
@@ -1735,12 +1735,12 @@ msgstr "Déverrouiller l'index"
 
 #: lib/index.tcl:289
 #, tcl-format
-msgid "Unstaging %s from commit"
+msgid "Unstaging %s from cummit"
 msgstr "Désindexation de : %s"
 
 #: lib/index.tcl:328
-msgid "Ready to commit."
-msgstr "Prêt à être commité."
+msgid "Ready to cummit."
+msgstr "Prêt à être cummité."
 
 #: lib/index.tcl:341
 #, tcl-format
@@ -1780,11 +1780,11 @@ msgstr "Annulation des modifications dans %s"
 msgid ""
 "Cannot merge while amending.\n"
 "\n"
-"You must finish amending this commit before starting any type of merge.\n"
+"You must finish amending this cummit before starting any type of merge.\n"
 msgstr ""
 "Impossible de fusionner pendant une correction.\n"
 "\n"
-"Vous devez finir de corriger ce commit avant de lancer une quelconque "
+"Vous devez finir de corriger ce cummit avant de lancer une quelconque "
 "fusion.\n"
 
 #: lib/merge.tcl:27
@@ -1812,14 +1812,14 @@ msgid ""
 "\n"
 "File %s has merge conflicts.\n"
 "\n"
-"You must resolve them, stage the file, and commit to complete the current "
+"You must resolve them, stage the file, and cummit to complete the current "
 "merge.  Only then can you begin another merge.\n"
 msgstr ""
 "Vous êtes au milieu d'une fusion conflictuelle.\n"
 "\n"
 "Le fichier %s a des conflicts de fusion.\n"
 "\n"
-"Vous devez les résoudre, puis indexer le fichier, et enfin commiter pour "
+"Vous devez les résoudre, puis indexer le fichier, et enfin cummiter pour "
 "terminer la fusion courante. Seulement à ce moment là sera-t-il possible "
 "d'effectuer une nouvelle fusion.\n"
 
@@ -1830,14 +1830,14 @@ msgid ""
 "\n"
 "File %s is modified.\n"
 "\n"
-"You should complete the current commit before starting a merge.  Doing so "
+"You should complete the current cummit before starting a merge.  Doing so "
 "will help you abort a failed merge, should the need arise.\n"
 msgstr ""
 "Vous êtes au milieu d'une modification.\n"
 "\n"
 "Le fichier %s a été modifié.\n"
 "\n"
-"Vous devriez terminer le commit courant avant de lancer une fusion. En "
+"Vous devriez terminer le cummit courant avant de lancer une fusion. En "
 "faisait comme cela, vous éviterez de devoir éventuellement abandonner une "
 "fusion ayant échoué.\n"
 
@@ -1872,24 +1872,24 @@ msgstr "Révision à fusionner"
 msgid ""
 "Cannot abort while amending.\n"
 "\n"
-"You must finish amending this commit.\n"
+"You must finish amending this cummit.\n"
 msgstr ""
 "Impossible d'abandonner en cours de correction.\n"
 "\n"
-"Vous devez finir de corriger ce commit.\n"
+"Vous devez finir de corriger ce cummit.\n"
 
 #: lib/merge.tcl:222
 msgid ""
 "Abort merge?\n"
 "\n"
-"Aborting the current merge will cause *ALL* uncommitted changes to be lost.\n"
+"Aborting the current merge will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with aborting the current merge?"
 msgstr ""
 "Abandonner la fusion ?\n"
 "\n"
 "Abandonner la fusion courante entrainera la perte de TOUTES les "
-"modifications non commitées.\n"
+"modifications non cummitées.\n"
 "\n"
 "Abandonner quand même la fusion courante ?"
 
@@ -1897,14 +1897,14 @@ msgstr ""
 msgid ""
 "Reset changes?\n"
 "\n"
-"Resetting the changes will cause *ALL* uncommitted changes to be lost.\n"
+"Resetting the changes will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with resetting the current changes?"
 msgstr ""
 "Réinitialiser les modifications ?\n"
 "\n"
 "Réinitialiser les modifications va faire perdre TOUTES les modifications non "
-"commitées.\n"
+"cummitées.\n"
 "\n"
 "Réinitialiser quand même les modifications courantes ?"
 
@@ -2050,8 +2050,8 @@ msgid "Email Address"
 msgstr "Adresse email"
 
 #: lib/option.tcl:141
-msgid "Summarize Merge Commits"
-msgstr "Résumer les commits de fusion"
+msgid "Summarize Merge cummits"
+msgstr "Résumer les cummits de fusion"
 
 #: lib/option.tcl:142
 msgid "Merge Verbosity"
@@ -2094,8 +2094,8 @@ msgid "Number of Diff Context Lines"
 msgstr "Nombre de lignes de contexte dans les diffs"
 
 #: lib/option.tcl:153
-msgid "Commit Message Text Width"
-msgstr "Largeur du texte de message de commit"
+msgid "cummit Message Text Width"
+msgstr "Largeur du texte de message de cummit"
 
 #: lib/option.tcl:154
 msgid "New Branch Name Template"
@@ -2273,10 +2273,10 @@ msgstr ""
 #, tcl-format
 msgid ""
 "One or more of the merge tests failed because you have not fetched the "
-"necessary commits.  Try fetching from %s first."
+"necessary cummits.  Try fetching from %s first."
 msgstr ""
 "Un ou plusieurs des tests de fusion ont échoué parce que vous n'avez pas "
-"récupéré les commits nécessaires. Essayez de récupérer à partir de %s "
+"récupéré les cummits nécessaires. Essayez de récupérer à partir de %s "
 "d'abord."
 
 #: lib/remote_branch_delete.tcl:207

@@ -28,14 +28,14 @@ add_file () {
 		echo "$name" >"$name" &&
 		git add "$name" &&
 		test_tick &&
-		git commit -m "Add $name"
+		git cummit -m "Add $name"
 	done >/dev/null
 	git rev-parse --short HEAD
 	cd "$owd"
 }
-commit_file () {
+cummit_file () {
 	test_tick &&
-	git commit "$@" -m "Commit $*" >/dev/null
+	git cummit "$@" -m "cummit $*" >/dev/null
 }
 
 test_create_repo sm1 &&
@@ -89,7 +89,7 @@ test_expect_success 'added submodule (subdirectory with explicit path)' "
 	test_cmp expected actual
 "
 
-commit_file sm1 &&
+cummit_file sm1 &&
 head2=$(add_file sm1 foo3)
 
 test_expect_success 'modified submodule(forward)' "
@@ -130,7 +130,7 @@ test_expect_success 'no ignore=all setting has any effect' "
 "
 
 
-commit_file sm1 &&
+cummit_file sm1 &&
 head3=$(
 	cd sm1 &&
 	git reset --hard HEAD~2 >/dev/null &&
@@ -175,7 +175,7 @@ test_expect_success '--summary-limit' "
 	test_cmp expected actual
 "
 
-commit_file sm1 &&
+cummit_file sm1 &&
 mv sm1 sm1-bak &&
 echo sm1 >sm1 &&
 head5=$(git hash-object sm1 | cut -c1-7) &&
@@ -217,17 +217,17 @@ test_expect_success 'typechanged submodule(submodule->blob)' "
 rm -f sm1 &&
 test_create_repo sm1 &&
 head6=$(add_file sm1 foo6 foo7)
-test_expect_success 'nonexistent commit' "
+test_expect_success 'nonexistent cummit' "
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&
 	* sm1 $head4...$head6:
-	  Warn: sm1 doesn't contain commit $head4_full
+	  Warn: sm1 doesn't contain cummit $head4_full
 
 	EOF
 	test_cmp expected actual
 "
 
-commit_file
+cummit_file
 test_expect_success 'typechanged submodule(blob->submodule)' "
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&
@@ -238,7 +238,7 @@ test_expect_success 'typechanged submodule(blob->submodule)' "
 	test_cmp expected actual
 "
 
-commit_file sm1 &&
+cummit_file sm1 &&
 rm -rf sm1
 test_expect_success 'deleted submodule' "
 	git submodule summary >actual &&
@@ -277,8 +277,8 @@ test_expect_success 'path filter' "
 	test_cmp expected actual
 "
 
-commit_file sm2
-test_expect_success 'given commit' "
+cummit_file sm2
+test_expect_success 'given cummit' "
 	git submodule summary HEAD^ >actual &&
 	cat >expected <<-EOF &&
 	* sm1 $head6...0000000:

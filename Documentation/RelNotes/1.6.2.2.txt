@@ -7,7 +7,7 @@ Fixes since v1.6.2.1
 * A longstanding confusing description of what --pickaxe option of
   git-diff does has been clarified in the documentation.
 
-* "git-blame -S" did not quite work near the commits that were given
+* "git-blame -S" did not quite work near the cummits that were given
   on the command line correctly.
 
 * "git diff --pickaxe-regexp" did not count overlapping matches

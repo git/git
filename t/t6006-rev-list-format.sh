@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Copyright (c) 2009 Jens Lehmann
-# Copyright (c) 2011 Alexey Shumkin (+ non-UTF-8 commit encoding tests)
+# Copyright (c) 2011 Alexey Shumkin (+ non-UTF-8 cummit encoding tests)
 
 test_description='git rev-list --pretty=format test'
 
@@ -17,7 +17,7 @@ test_encoding="ISO8859-1"
 
 # String "added" in German
 # (translated with Google Translate),
-# encoded in UTF-8, used as a commit log message below.
+# encoded in UTF-8, used as a cummit log message below.
 added_utf8_part=$(printf "\303\274")
 added_utf8_part_iso88591=$(echo "$added_utf8_part" | iconv -f utf-8 -t $test_encoding)
 added=$(printf "added (hinzugef${added_utf8_part}gt) foo")
@@ -37,21 +37,21 @@ truncate_count=20
 test_expect_success 'setup' '
 	: >foo &&
 	git add foo &&
-	git config i18n.commitEncoding $test_encoding &&
-	echo "$added_iso88591" | git commit -F - &&
+	git config i18n.cummitEncoding $test_encoding &&
+	echo "$added_iso88591" | git cummit -F - &&
 	head1=$(git rev-parse --verify HEAD) &&
 	head1_short=$(git rev-parse --verify --short $head1) &&
 	head1_short4=$(git rev-parse --verify --short=4 $head1) &&
 	tree1=$(git rev-parse --verify HEAD:) &&
 	tree1_short=$(git rev-parse --verify --short $tree1) &&
 	echo "$changed" > foo &&
-	echo "$changed_iso88591" | git commit -a -F - &&
+	echo "$changed_iso88591" | git cummit -a -F - &&
 	head2=$(git rev-parse --verify HEAD) &&
 	head2_short=$(git rev-parse --verify --short $head2) &&
 	head2_short4=$(git rev-parse --verify --short=4 $head2) &&
 	tree2=$(git rev-parse --verify HEAD:) &&
 	tree2_short=$(git rev-parse --verify --short $tree2) &&
-	git config --unset i18n.commitEncoding
+	git config --unset i18n.cummitEncoding
 '
 
 # usage: test_format [argument...] name format_string [failure] <expected_output
@@ -115,17 +115,17 @@ has_no_color () {
 }
 
 test_format percent %%h <<EOF
-commit $head2
+cummit $head2
 %h
-commit $head1
+cummit $head1
 %h
 EOF
 
 test_format hash %H%n%h <<EOF
-commit $head2
+cummit $head2
 $head2
 $head2_short
-commit $head1
+cummit $head1
 $head1
 $head1_short
 EOF
@@ -137,7 +137,7 @@ $head1
 $head1_short
 EOF
 
-test_format --abbrev-commit --abbrev=0 --no-commit-header hash-no-header-abbrev %H%n%h <<EOF
+test_format --abbrev-cummit --abbrev=0 --no-commit-header hash-no-header-abbrev %H%n%h <<EOF
 $head2
 $head2_short4
 $head1
@@ -145,33 +145,33 @@ $head1_short4
 EOF
 
 test_format tree %T%n%t <<EOF
-commit $head2
+cummit $head2
 $tree2
 $tree2_short
-commit $head1
+cummit $head1
 $tree1
 $tree1_short
 EOF
 
 test_format parents %P%n%p <<EOF
-commit $head2
+cummit $head2
 $head1
 $head1_short
-commit $head1
+cummit $head1
 
 
 EOF
 
 # we don't test relative here
 test_format author %an%n%ae%n%al%n%ad%n%aD%n%at <<EOF
-commit $head2
+cummit $head2
 $GIT_AUTHOR_NAME
 $GIT_AUTHOR_EMAIL
 $TEST_AUTHOR_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
-commit $head1
+cummit $head1
 $GIT_AUTHOR_NAME
 $GIT_AUTHOR_EMAIL
 $TEST_AUTHOR_LOCALNAME
@@ -180,54 +180,54 @@ Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
 EOF
 
-test_format committer %cn%n%ce%n%cl%n%cd%n%cD%n%ct <<EOF
-commit $head2
-$GIT_COMMITTER_NAME
-$GIT_COMMITTER_EMAIL
-$TEST_COMMITTER_LOCALNAME
+test_format cummitter %cn%n%ce%n%cl%n%cd%n%cD%n%ct <<EOF
+cummit $head2
+$GIT_cummitTER_NAME
+$GIT_cummitTER_EMAIL
+$TEST_cummitTER_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
-commit $head1
-$GIT_COMMITTER_NAME
-$GIT_COMMITTER_EMAIL
-$TEST_COMMITTER_LOCALNAME
+cummit $head1
+$GIT_cummitTER_NAME
+$GIT_cummitTER_EMAIL
+$TEST_cummitTER_LOCALNAME
 Thu Apr 7 15:13:13 2005 -0700
 Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
 EOF
 
 test_format encoding %e <<EOF
-commit $head2
+cummit $head2
 $test_encoding
-commit $head1
+cummit $head1
 $test_encoding
 EOF
 
 test_format subject %s <<EOF
-commit $head2
+cummit $head2
 $changed
-commit $head1
+cummit $head1
 $added
 EOF
 
 test_format subject-truncated "%<($truncate_count,trunc)%s" <<EOF
-commit $head2
+cummit $head2
 changed (ge${changed_utf8_part}ndert)..
-commit $head1
+cummit $head1
 added (hinzugef${added_utf8_part}gt..
 EOF
 
 test_format body %b <<EOF
-commit $head2
-commit $head1
+cummit $head2
+cummit $head1
 EOF
 
 test_format raw-body %B <<EOF
-commit $head2
+cummit $head2
 $changed
 
-commit $head1
+cummit $head1
 $added
 
 EOF
@@ -245,12 +245,12 @@ $head1 $added
 EOF
 
 test_pretty short short <<EOF
-commit $head2
+cummit $head2
 Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 
     $changed
 
-commit $head1
+cummit $head1
 Author: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
 
     $added
@@ -259,7 +259,7 @@ EOF
 
 test_expect_success 'basic colors' '
 	cat >expect <<-EOF &&
-	commit $head2
+	cummit $head2
 	<RED>foo<GREEN>bar<BLUE>baz<RESET>xyzzy
 	EOF
 	format="%Credfoo%Cgreenbar%Cbluebaz%Cresetxyzzy" &&
@@ -274,7 +274,7 @@ test_expect_success '%S is not a placeholder for rev-list yet' '
 
 test_expect_success 'advanced colors' '
 	cat >expect <<-EOF &&
-	commit $head2
+	cummit $head2
 	<BOLD;RED;BYELLOW>foo<RESET>
 	EOF
 	format="%C(red yellow bold)foo%C(reset)" &&
@@ -352,131 +352,131 @@ test_expect_success 'rev-list %C(auto,...) respects --color' '
 		-1 HEAD >actual.raw &&
 	test_decode_color <actual.raw >actual &&
 	cat >expect <<-EOF &&
-	commit $(git rev-parse HEAD)
+	cummit $(git rev-parse HEAD)
 	<GREEN>foo<RESET>
 	EOF
 	test_cmp expect actual
 '
 
-iconv -f utf-8 -t $test_encoding > commit-msg <<EOF
+iconv -f utf-8 -t $test_encoding > cummit-msg <<EOF
 Test printing of complex bodies
 
-This commit message is much longer than the others,
+This cummit message is much longer than the others,
 and it will be encoded in $test_encoding. We should therefore
 include an ISO8859 character: ¡bueno!
 EOF
 
 test_expect_success 'setup complex body' '
-	git config i18n.commitencoding $test_encoding &&
-	echo change2 >foo && git commit -a -F commit-msg &&
+	git config i18n.cummitencoding $test_encoding &&
+	echo change2 >foo && git cummit -a -F cummit-msg &&
 	head3=$(git rev-parse --verify HEAD) &&
 	head3_short=$(git rev-parse --short $head3)
 '
 
 test_format complex-encoding %e <<EOF
-commit $head3
+cummit $head3
 $test_encoding
-commit $head2
+cummit $head2
 $test_encoding
-commit $head1
+cummit $head1
 $test_encoding
 EOF
 
 test_format complex-subject %s <<EOF
-commit $head3
+cummit $head3
 Test printing of complex bodies
-commit $head2
+cummit $head2
 $changed_iso88591
-commit $head1
+cummit $head1
 $added_iso88591
 EOF
 
 test_format complex-subject-trunc "%<($truncate_count,trunc)%s" <<EOF
-commit $head3
+cummit $head3
 Test printing of c..
-commit $head2
+cummit $head2
 changed (ge${changed_utf8_part_iso88591}ndert)..
-commit $head1
+cummit $head1
 added (hinzugef${added_utf8_part_iso88591}gt..
 EOF
 
 test_format complex-subject-mtrunc "%<($truncate_count,mtrunc)%s" <<EOF
-commit $head3
+cummit $head3
 Test prin..ex bodies
-commit $head2
+cummit $head2
 changed (..dert) foo
-commit $head1
+cummit $head1
 added (hi..f${added_utf8_part_iso88591}gt) foo
 EOF
 
 test_format complex-subject-ltrunc "%<($truncate_count,ltrunc)%s" <<EOF
-commit $head3
+cummit $head3
 .. of complex bodies
-commit $head2
+cummit $head2
 ..ged (ge${changed_utf8_part_iso88591}ndert) foo
-commit $head1
+cummit $head1
 .. (hinzugef${added_utf8_part_iso88591}gt) foo
 EOF
 
 test_expect_success 'setup expected messages (for test %b)' '
 	cat <<-EOF >expected.utf-8 &&
-	commit $head3
-	This commit message is much longer than the others,
+	cummit $head3
+	This cummit message is much longer than the others,
 	and it will be encoded in $test_encoding. We should therefore
 	include an ISO8859 character: ¡bueno!
 
-	commit $head2
-	commit $head1
+	cummit $head2
+	cummit $head1
 	EOF
 	iconv -f utf-8 -t $test_encoding expected.utf-8 >expected.ISO8859-1
 '
 
 test_format complex-body %b <expected.ISO8859-1
 
-# Git uses i18n.commitEncoding if no i18n.logOutputEncoding set
-# so unset i18n.commitEncoding to test encoding conversion
-git config --unset i18n.commitEncoding
+# Git uses i18n.cummitEncoding if no i18n.logOutputEncoding set
+# so unset i18n.cummitEncoding to test encoding conversion
+git config --unset i18n.cummitEncoding
 
-test_format complex-subject-commitencoding-unset %s <<EOF
-commit $head3
+test_format complex-subject-cummitencoding-unset %s <<EOF
+cummit $head3
 Test printing of complex bodies
-commit $head2
+cummit $head2
 $changed
-commit $head1
+cummit $head1
 $added
 EOF
 
-test_format complex-subject-commitencoding-unset-trunc "%<($truncate_count,trunc)%s" <<EOF
-commit $head3
+test_format complex-subject-cummitencoding-unset-trunc "%<($truncate_count,trunc)%s" <<EOF
+cummit $head3
 Test printing of c..
-commit $head2
+cummit $head2
 changed (ge${changed_utf8_part}ndert)..
-commit $head1
+cummit $head1
 added (hinzugef${added_utf8_part}gt..
 EOF
 
-test_format complex-subject-commitencoding-unset-mtrunc "%<($truncate_count,mtrunc)%s" <<EOF
-commit $head3
+test_format complex-subject-cummitencoding-unset-mtrunc "%<($truncate_count,mtrunc)%s" <<EOF
+cummit $head3
 Test prin..ex bodies
-commit $head2
+cummit $head2
 changed (..dert) foo
-commit $head1
+cummit $head1
 added (hi..f${added_utf8_part}gt) foo
 EOF
 
-test_format complex-subject-commitencoding-unset-ltrunc "%<($truncate_count,ltrunc)%s" <<EOF
-commit $head3
+test_format complex-subject-cummitencoding-unset-ltrunc "%<($truncate_count,ltrunc)%s" <<EOF
+cummit $head3
 .. of complex bodies
-commit $head2
+cummit $head2
 ..ged (ge${changed_utf8_part}ndert) foo
-commit $head1
+cummit $head1
 .. (hinzugef${added_utf8_part}gt) foo
 EOF
 
-test_format complex-body-commitencoding-unset %b <expected.utf-8
+test_format complex-body-cummitencoding-unset %b <expected.utf-8
 
 test_expect_success '%x00 shows NUL' '
-	echo  >expect commit $head3 &&
+	echo  >expect cummit $head3 &&
 	echo >>expect fooQbar &&
 	git rev-list -1 --format=foo%x00bar HEAD >actual.nul &&
 	nul_to_q <actual.nul >actual &&
@@ -491,7 +491,7 @@ test_expect_success '%ad respects --date=' '
 
 test_expect_success 'empty email' '
 	test_tick &&
-	C=$(GIT_AUTHOR_EMAIL= git commit-tree HEAD^{tree} </dev/null) &&
+	C=$(GIT_AUTHOR_EMAIL= git cummit-tree HEAD^{tree} </dev/null) &&
 	A=$(git show --pretty=format:%an,%ae,%ad%n -s $C) &&
 	verbose test "$A" = "$GIT_AUTHOR_NAME,,Thu Apr 7 15:14:13 2005 -0700"
 '
@@ -541,15 +541,15 @@ test_expect_success '--abbrev' '
 	! test_cmp actual1 actual2
 '
 
-test_expect_success '%H is not affected by --abbrev-commit' '
+test_expect_success '%H is not affected by --abbrev-cummit' '
 	expected=$(($(test_oid hexsz) + 1)) &&
-	git log -1 --format=%H --abbrev-commit --abbrev=20 HEAD >actual &&
+	git log -1 --format=%H --abbrev-cummit --abbrev=20 HEAD >actual &&
 	len=$(wc -c <actual) &&
 	test $len = $expected
 '
 
-test_expect_success '%h is not affected by --abbrev-commit' '
-	git log -1 --format=%h --abbrev-commit --abbrev=20 HEAD >actual &&
+test_expect_success '%h is not affected by --abbrev-cummit' '
+	git log -1 --format=%h --abbrev-cummit --abbrev=20 HEAD >actual &&
 	len=$(wc -c <actual) &&
 	test $len = 21
 '
@@ -579,14 +579,14 @@ test_expect_success '%gd shortens ref name' '
 '
 
 test_expect_success 'reflog identity' '
-	echo "$GIT_COMMITTER_NAME:$GIT_COMMITTER_EMAIL" >expect &&
+	echo "$GIT_cummitTER_NAME:$GIT_cummitTER_EMAIL" >expect &&
 	git log -g -1 --format="%gn:%ge" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'oneline with empty message' '
-	git commit --allow-empty --cleanup=verbatim -m "$LF" &&
-	git commit --allow-empty --allow-empty-message &&
+	git cummit --allow-empty --cleanup=verbatim -m "$LF" &&
+	git cummit --allow-empty --allow-empty-message &&
 	git rev-list --oneline HEAD >test.txt &&
 	test_line_count = 5 test.txt &&
 	git rev-list --oneline --graph HEAD >testg.txt &&
@@ -594,7 +594,7 @@ test_expect_success 'oneline with empty message' '
 '
 
 test_expect_success 'single-character name is parsed correctly' '
-	git commit --author="a <a@example.com>" --allow-empty -m foo &&
+	git cummit --author="a <a@example.com>" --allow-empty -m foo &&
 	echo "a <a@example.com>" >expect &&
 	git log -1 --format="%an <%ae>" >actual &&
 	test_cmp expect actual

@@ -74,8 +74,8 @@ verify <file>::
 	Used to check that a bundle file is valid and will apply
 	cleanly to the current repository.  This includes checks on the
 	bundle format itself as well as checking that the prerequisite
-	commits exist and are fully linked in the current repository.
-	Then, 'git bundle' prints a list of missing commits, if any.
+	cummits exist and are fully linked in the current repository.
+	Then, 'git bundle' prints a list of missing cummits, if any.
 	Finally, information about additional capabilities, such as "object
 	filter", is printed. See "Capabilities" in link:technical/bundle-format.html
 	for more information. The exit code is zero for success, but will
@@ -99,7 +99,7 @@ unbundle <file>::
 	below), that specifies the specific objects and references
 	to transport.  For example, `master~10..master` causes the
 	current master reference to be packaged along with all objects
-	added since its 10th ancestor commit.  There is no explicit
+	added since its 10th ancestor cummit.  There is no explicit
 	limit to the number of references and objects that may be
 	packaged.
 
@@ -226,7 +226,7 @@ from the source repository would get, use `--branches --tags` for
 the `<git-rev-list-args>`.
 
 The 'git bundle verify' command can be used to check whether your
-recipient repository has the required prerequisite commits for a
+recipient repository has the required prerequisite cummits for a
 bundle.
 
 EXAMPLES
@@ -239,7 +239,7 @@ but we can move data from A to B via some mechanism (CD, email, etc.).
 We want to update R2 with development made on the branch master in R1.
 
 To bootstrap the process, you can first create a bundle that does not have
-any prerequisites. You can use a tag to remember up to what commit you last
+any prerequisites. You can use a tag to remember up to what cummit you last
 processed, in order to make it easy to later update the other repository
 with an incremental bundle:
 
@@ -288,7 +288,7 @@ machineB$ cd R2
 machineB$ git pull
 ----------------
 
-If you know up to what commit the intended recipient repository should
+If you know up to what cummit the intended recipient repository should
 have the necessary objects, you can use that knowledge to specify the
 prerequisites, giving a cut-off point to limit the revisions and objects that go
 in the resulting bundle. The previous example used the lastR2bundle tag
@@ -307,7 +307,7 @@ You can use a prerequisite based on time:
 $ git bundle create mybundle --since=10.days master
 ----------------
 
-You can use the number of commits:
+You can use the number of cummits:
 
 ----------------
 $ git bundle create mybundle -10 master
@@ -320,7 +320,7 @@ that was created with a prerequisite:
 $ git bundle verify mybundle
 ----------------
 
-This will list what commits you must have in order to extract from the
+This will list what cummits you must have in order to extract from the
 bundle and will error out if you do not have them.
 
 A bundle from a recipient repository's point of view is just like a

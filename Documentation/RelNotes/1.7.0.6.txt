@@ -7,7 +7,7 @@ Fixes since v1.7.0.5
  * "git diff --stat" used "int" to count the size of differences,
    which could result in overflowing.
 
- * "git rev-list --abbrev-commit" defaulted to 40-byte abbreviations, unlike
+ * "git rev-list --abbrev-cummit" defaulted to 40-byte abbreviations, unlike
    newer tools in the git toolset.
 
 And other minor fixes and documentation updates.

@@ -3,7 +3,7 @@
 #include "repository.h"
 #include "refs.h"
 #include "object.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "packfile.h"
 #include "object-store.h"

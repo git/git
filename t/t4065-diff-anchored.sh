@@ -81,10 +81,10 @@ test_expect_success 'later algorithm arguments override earlier ones' '
 test_expect_success '--anchored works with other commands like "git show"' '
 	printf "a\nb\nc\n" >file &&
 	git add file &&
-	git commit -m foo &&
+	git cummit -m foo &&
 	printf "c\na\nb\n" >file &&
 	git add file &&
-	git commit -m foo &&
+	git cummit -m foo &&
 
 	# with anchor, a is moved
 	git show --patience --anchored=c >diff &&

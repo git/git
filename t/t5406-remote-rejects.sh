@@ -10,11 +10,11 @@ test_expect_success 'setup' '
 	EOF
 	echo 1 >file &&
 	git add file &&
-	git commit -m 1 &&
+	git cummit -m 1 &&
 	git clone . child &&
 	cd child &&
 	echo 2 >file &&
-	git commit -a -m 2
+	git cummit -a -m 2
 '
 
 test_expect_success 'push reports error' 'test_must_fail git push 2>stderr'

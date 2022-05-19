@@ -29,7 +29,7 @@ test_expect_success 'edit with lock not taken' '
 		cd "$git" &&
 		echo line2 >>file1 &&
 		git add file1 &&
-		git commit -m "line2 in file1" &&
+		git cummit -m "line2 in file1" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit
 	)
@@ -42,7 +42,7 @@ test_expect_success 'add with lock not taken' '
 		cd "$git" &&
 		echo line1 >>add-lock-not-taken &&
 		git add add-lock-not-taken &&
-		git commit -m "add add-lock-not-taken" &&
+		git cummit -m "add add-lock-not-taken" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --verbose
 	)
@@ -72,7 +72,7 @@ test_expect_failure 'edit with lock taken' '
 		cd "$git" &&
 		echo line3 >>file1 &&
 		git add file1 &&
-		git commit -m "line3 in file1" &&
+		git cummit -m "line3 in file1" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --verbose
 	)
@@ -86,7 +86,7 @@ test_expect_failure 'delete with lock taken' '
 	(
 		cd "$git" &&
 		git rm file1 &&
-		git commit -m "delete file1" &&
+		git cummit -m "delete file1" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --verbose
 	)
@@ -101,7 +101,7 @@ test_expect_failure 'chmod with lock taken' '
 		cd "$git" &&
 		chmod +x file1 &&
 		git add file1 &&
-		git commit -m "chmod +x file1" &&
+		git cummit -m "chmod +x file1" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --verbose
 	)
@@ -116,7 +116,7 @@ test_expect_success 'copy with lock taken' '
 		cd "$git" &&
 		cp file1 file2 &&
 		git add file2 &&
-		git commit -m "cp file1 to file2" &&
+		git cummit -m "cp file1 to file2" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.detectCopies true &&
 		git p4 submit --verbose
@@ -131,7 +131,7 @@ test_expect_failure 'move with lock taken' '
 	(
 		cd "$git" &&
 		git mv file1 file3 &&
-		git commit -m "mv file1 to file3" &&
+		git cummit -m "mv file1 to file3" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.detectRenames true &&
 		git p4 submit --verbose

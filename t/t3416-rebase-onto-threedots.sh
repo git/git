@@ -8,7 +8,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-rebase.sh"
 
-# Rebase only the tip commit of "topic" on merge base between "main"
+# Rebase only the tip cummit of "topic" on merge base between "main"
 # and "topic".  Cannot do this for "side" with "main" because there
 # is no single merge base.
 #
@@ -22,10 +22,10 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 #	  H---I---J---K side
 
 test_expect_success setup '
-	test_commit A &&
-	test_commit B &&
+	test_cummit A &&
+	test_cummit B &&
 	git branch side &&
-	test_commit C &&
+	test_cummit C &&
 	git branch topic &&
 	git checkout side &&
 	test_commit H &&
@@ -33,16 +33,16 @@ test_expect_success setup '
 	test_tick &&
 	git merge H &&
 	git tag D &&
-	test_commit E &&
+	test_cummit E &&
 	git checkout topic &&
-	test_commit F &&
-	test_commit G &&
+	test_cummit F &&
+	test_cummit G &&
 	git checkout side &&
 	test_tick &&
 	git merge C &&
 	git tag I &&
-	test_commit J &&
-	test_commit K
+	test_cummit J &&
+	test_cummit K
 '
 
 test_expect_success 'rebase --onto main...topic' '

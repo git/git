@@ -19,7 +19,7 @@ easy by the `git request-pull` command.
 Earlier, a typical pull request may have started like this:
 
 ------------
- The following changes since commit 406da78032179...:
+ The following changes since cummit 406da78032179...:
 
    Froboz 3.2 (2011-09-30 14:20:57 -0700)
 
@@ -33,7 +33,7 @@ followed by a shortlog of the changes and a diffstat.
 The request was for a branch name (e.g. `for-xyzzy`) in the public
 repository of the contributor, and even though it stated where the
 contributor forked her work from, the message did not say anything about
-the commit to expect at the tip of the for-xyzzy branch. If the site that
+the cummit to expect at the tip of the for-xyzzy branch. If the site that
 hosts the public repository of the contributor cannot be fully trusted, it
 was unnecessarily hard to make sure what was pulled by the integrator was
 genuinely what the contributor had produced for the project. Also there
@@ -41,10 +41,10 @@ was no easy way for third-party auditors to later verify the resulting
 history.
 
 Starting from Git release v1.7.9, a contributor can add a signed tag to
-the commit at the tip of the history and ask the integrator to pull that
+the cummit at the tip of the history and ask the integrator to pull that
 signed tag. When the integrator runs `git pull`, the signed tag is
 automatically verified to assure that the history is not tampered with.
-In addition, the resulting merge commit records the content of the signed
+In addition, the resulting merge cummit records the content of the signed
 tag, so that other people can verify that the branch merged by the
 integrator was signed by the contributor, without fetching the signed tag
 used to validate the pull request separately and keeping it in the refs
@@ -62,7 +62,7 @@ to create a signed tag:
 
 ------------
  $ git checkout work
- $ ... "git pull" from sublieutenants, "git commit" your own work ...
+ $ ... "git pull" from sublieutenants, "git cummit" your own work ...
  $ git tag -s -m "Completed frotz feature" frotz-for-xyzzy work
 ------------
 
@@ -94,7 +94,7 @@ The contributor then prepares a message to request a "pull":
 
 The arguments are:
 
-. the version of the integrator's commit the contributor based her work on;
+. the version of the integrator's cummit the contributor based her work on;
 . the URL of the repository, to which the contributor has pushed what she
   wants to get pulled; and
 . the name of the tag the contributor wants to get pulled (earlier, she could
@@ -103,7 +103,7 @@ The arguments are:
 The resulting msg.txt file begins like so:
 
 ------------
- The following changes since commit 406da78032179...:
+ The following changes since cummit 406da78032179...:
 
    Froboz 3.2 (2011-09-30 14:20:57 -0700)
 
@@ -124,7 +124,7 @@ followed by a shortlog of the changes and a diffstat.  Comparing this with
 the earlier illustration of the output from the traditional `git request-pull`
 command, the reader should notice that:
 
-. The tip commit to expect is shown to the integrator; and
+. The tip cummit to expect is shown to the integrator; and
 . The signed tag message is shown prominently between the dashed lines
   before the shortlog.
 
@@ -145,9 +145,9 @@ integrates the tag named in the request, with:
 ------------
 
 This operation will always open an editor to allow the integrator to fine
-tune the commit log message when merging a signed tag.  Also, pulling a
-signed tag will always create a merge commit even when the integrator does
-not have any new commit since the contributor's work forked (i.e. 'fast
+tune the cummit log message when merging a signed tag.  Also, pulling a
+signed tag will always create a merge cummit even when the integrator does
+not have any new cummit since the contributor's work forked (i.e. 'fast
 forward'), so that the integrator can properly explain what the merge is
 about and why it was made.
 
@@ -166,7 +166,7 @@ feature" appears here, and again that is why it is important for the
 contributor to explain her work well when creating the signed tag.
 
 As usual, the lines commented with `#` are stripped out. The resulting
-commit records the signed tag used for this validation in a hidden field
+cummit records the signed tag used for this validation in a hidden field
 so that it can later be used by others to audit the history. There is no
 need for the integrator to keep a separate copy of the tag in his
 repository (i.e. `git tag -l` won't list the `frotz-for-xyzzy` tag in the
@@ -187,14 +187,14 @@ Auditors
 --------
 
 The `--show-signature` option can be given to `git log` or `git show` and
-shows the verification status of the embedded signed tag in merge commits
+shows the verification status of the embedded signed tag in merge cummits
 created when the integrator responded to a pull request of a signed tag.
 
 A typical output from `git show --show-signature` may look like this:
 
 ------------
  $ git show --show-signature
- commit 02306ef6a3498a39118aef9df7975bdb50091585
+ cummit 02306ef6a3498a39118aef9df7975bdb50091585
  merged tag 'frotz-for-xyzzy'
  gpg: Signature made Fri 06 Jan 2012 12:41:49 PM PST using RSA key ID 96AFE6CB
  gpg: Good signature from "Con Tributor <nitfol@example.com>"
@@ -206,7 +206,7 @@ A typical output from `git show --show-signature` may look like this:
 
      Completed frotz feature
 
-     * tag 'frotz-for-xyzzy' (100 commits)
+     * tag 'frotz-for-xyzzy' (100 cummits)
        Add tests and documentation for frotz
        ...
 ------------
@@ -214,4 +214,4 @@ A typical output from `git show --show-signature` may look like this:
 There is no need for the auditor to explicitly fetch the contributor's
 signature, or to even be aware of what tag(s) the contributor and integrator
 used to communicate the signature.  All the required information is recorded
-as part of the merge commit.
+as part of the merge cummit.

@@ -14,7 +14,7 @@ Updates since v1.5.0
     to give their output in the order opposite from their usual.
     They typically output from new to old, but with this option
     their output would read from old to new.  "git shortlog"
-    usually lists older commits first, but with this option,
+    usually lists older cummits first, but with this option,
     they are shown from new to old.
 
   - "git log --pretty=format:<string>" to allow more flexible
@@ -73,7 +73,7 @@ Updates since v1.5.0
     symlinks on filesystems that do not support them; they are
     checked out as regular files instead.
 
-  - You can name a commit object with its first line of the
+  - You can name a cummit object with its first line of the
     message.  The syntax to use is ':/message text'.  E.g.
 
     $ git show ":/object name: introduce ':/<oneline prefix>' notation"
@@ -140,11 +140,11 @@ Updates since v1.5.0
   - "git name-rev" used to stress the fact that a ref is a tag too
     much, by saying something like "v1.2.3^0~22".  It now says
     "v1.2.3~22" in such a case (it still says "v1.2.3^0" if it does
-    not talk about an ancestor of the commit that is tagged, which
+    not talk about an ancestor of the cummit that is tagged, which
     makes sense).
 
   - "git rev-list --boundary" now shows boundary markers for the
-    commits omitted by --max-age and --max-count condition.
+    cummits omitted by --max-age and --max-count condition.
 
   - The configuration mechanism now reads $(prefix)/etc/gitconfig.
 
@@ -271,7 +271,7 @@ These are all in v1.5.0.x series.
   - 'git diff :tracked-file `pwd`/an-untracked-file' gave an extra
     slashes after a/ and b/.
 
-  - 'git format-patch' produced too long filenames if the commit
+  - 'git format-patch' produced too long filenames if the cummit
     message had too long line at the beginning.
 
   - Running 'make all' and then without changing anything
@@ -301,7 +301,7 @@ These are all in v1.5.0.x series.
 
   - 'git-remote' did not like period in a remote's name.
 
-  - 'git.el' honors the commit coding system from the configuration.
+  - 'git.el' honors the cummit coding system from the configuration.
 
   - 'blameview' in contrib/ correctly digs deeper when a line is
     clicked.
@@ -314,7 +314,7 @@ These are all in v1.5.0.x series.
     working tree was dirty and cannot fast forward.  It does
     now.
 
-  - 'cvsexportcommit' does not lose yet-to-be-used message file.
+  - 'cvsexportcummit' does not lose yet-to-be-used message file.
 
   - int-vs-size_t typefix when running combined diff on files
     over 2GB long.
@@ -331,7 +331,7 @@ These are all in v1.5.0.x series.
   - 'git fmt-merge-msg --file' without file parameter did not
     correctly error out.
 
-  - 'git archimport' barfed upon encountering a commit without
+  - 'git archimport' barfed upon encountering a cummit without
     summary.
 
   - 'git index-pack' did not protect itself from getting a short
@@ -344,7 +344,7 @@ These are all in v1.5.0.x series.
 
   - git.el does not add duplicate sign-off lines.
 
-  - git-commit shows the full stat of the resulting commit, not
+  - git-cummit shows the full stat of the resulting cummit, not
     just about the files in the current directory, when run from
     a subdirectory.
 
@@ -360,7 +360,7 @@ These are all in v1.5.0.x series.
   - build procedure for user-manual is fixed not to require locally
     installed stylesheets.
 
-  - "git commit $paths" on paths whose earlier contents were
+  - "git cummit $paths" on paths whose earlier contents were
     already updated in the index were failing out.
 
 

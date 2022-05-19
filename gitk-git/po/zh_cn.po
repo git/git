@@ -55,11 +55,11 @@ msgid "Reading"
 msgstr "读取中"
 
 #: gitk:496 gitk:4549
-msgid "Reading commits..."
+msgid "Reading cummits..."
 msgstr "提交记录读取中..."
 
 #: gitk:499 gitk:1641 gitk:4552
-msgid "No commits selected"
+msgid "No cummits selected"
 msgstr "未选中任何提交"
 
 #: gitk:1449 gitk:4069 gitk:12583
@@ -71,7 +71,7 @@ msgid "Can't parse git log output:"
 msgstr "不能解析git log输出："
 
 #: gitk:1744
-msgid "No commit information available"
+msgid "No cummit information available"
 msgstr "无可用提交信息"
 
 #: gitk:1907 gitk:1936 gitk:4339 gitk:9789 gitk:11388 gitk:11668
@@ -164,7 +164,7 @@ msgid "Find"
 msgstr "查找"
 
 #: gitk:2313
-msgid "commit"
+msgid "cummit"
 msgstr "提交"
 
 #: gitk:2317 gitk:2319 gitk:4711 gitk:4734 gitk:4758 gitk:6779 gitk:6851
@@ -214,7 +214,7 @@ msgid "Author"
 msgstr "作者"
 
 #: gitk:2337 gitk:4895 gitk:6810 gitk:7350
-msgid "Committer"
+msgid "cummitter"
 msgstr "提交者"
 
 #: gitk:2371
@@ -270,11 +270,11 @@ msgid "Create tag"
 msgstr "创建tag"
 
 #: gitk:2643
-msgid "Copy commit summary"
+msgid "Copy cummit summary"
 msgstr "复制提交摘要"
 
 #: gitk:2644 gitk:9414
-msgid "Write commit to file"
+msgid "Write cummit to file"
 msgstr "写入提交到文件"
 
 #: gitk:2645
@@ -282,7 +282,7 @@ msgid "Create new branch"
 msgstr "创建新分支"
 
 #: gitk:2646
-msgid "Cherry-pick this commit"
+msgid "Cherry-pick this cummit"
 msgstr "在此提交运用补丁(cherry-pick)命令"
 
 #: gitk:2647
@@ -290,7 +290,7 @@ msgid "Reset HEAD branch to here"
 msgstr "将分支头(HEAD)重置到此处"
 
 #: gitk:2648
-msgid "Mark this commit"
+msgid "Mark this cummit"
 msgstr "标记此提交"
 
 #: gitk:2649
@@ -302,19 +302,19 @@ msgid "Find descendant of this and mark"
 msgstr "查找本次提交的子提交并标记"
 
 #: gitk:2651
-msgid "Compare with marked commit"
+msgid "Compare with marked cummit"
 msgstr "和已标记的提交作比较"
 
 #: gitk:2652 gitk:2663
-msgid "Diff this -> marked commit"
+msgid "Diff this -> marked cummit"
 msgstr "比较从当前提交到已标记提交的差异"
 
 #: gitk:2653 gitk:2664
-msgid "Diff marked commit -> this"
+msgid "Diff marked cummit -> this"
 msgstr "比较从已标记提交到当前提交的差异"
 
 #: gitk:2654
-msgid "Revert this commit"
+msgid "Revert this cummit"
 msgstr "撤销(revert)此提交"
 
 #: gitk:2670
@@ -346,7 +346,7 @@ msgid "External diff"
 msgstr "外部diff"
 
 #: gitk:2683
-msgid "Blame parent commit"
+msgid "Blame parent cummit"
 msgstr "Blame父提交"
 
 #: gitk:2684
@@ -368,7 +368,7 @@ msgstr "关于gitk"
 #: gitk:3038
 msgid ""
 "\n"
-"Gitk - a commit viewer for git\n"
+"Gitk - a cummit viewer for git\n"
 "\n"
 "Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
@@ -398,19 +398,19 @@ msgid "<%s-W>\t\tClose window"
 msgstr "<%s-W>\t\t关闭窗口"
 
 #: gitk:3074
-msgid "<Home>\t\tMove to first commit"
+msgid "<Home>\t\tMove to first cummit"
 msgstr "<Home>\t\t移动到第一次提交"
 
 #: gitk:3075
-msgid "<End>\t\tMove to last commit"
+msgid "<End>\t\tMove to last cummit"
 msgstr "<End>\t\t移动到最后一次提交"
 
 #: gitk:3076
-msgid "<Up>, p, k\tMove up one commit"
+msgid "<Up>, p, k\tMove up one cummit"
 msgstr "<Up>, p, k\t移动到上一次提交"
 
 #: gitk:3077
-msgid "<Down>, n, j\tMove down one commit"
+msgid "<Down>, n, j\tMove down one cummit"
 msgstr "<Down>, n, j\t移动到下一次提交"
 
 #: gitk:3078
@@ -423,53 +423,53 @@ msgstr "<Right>, x, l\t历史列表的下一项"
 
 #: gitk:3080
 #, tcl-format
-msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgid "<%s-n>\tGo to n-th parent of current cummit in history list"
 msgstr "<%s-n>\t在历史列表中前往本次提交的第n个父提交"
 
 #: gitk:3081
-msgid "<PageUp>\tMove up one page in commit list"
+msgid "<PageUp>\tMove up one page in cummit list"
 msgstr "<PageUp>\t上一页提交列表"
 
 #: gitk:3082
-msgid "<PageDown>\tMove down one page in commit list"
+msgid "<PageDown>\tMove down one page in cummit list"
 msgstr "<PageDown>\t下一页提交列表"
 
 #: gitk:3083
 #, tcl-format
-msgid "<%s-Home>\tScroll to top of commit list"
+msgid "<%s-Home>\tScroll to top of cummit list"
 msgstr "<%s-Home>\t滚动到提交列表顶部"
 
 #: gitk:3084
 #, tcl-format
-msgid "<%s-End>\tScroll to bottom of commit list"
+msgid "<%s-End>\tScroll to bottom of cummit list"
 msgstr "<%s-End>\t滚动到提交列表底部"
 
 #: gitk:3085
 #, tcl-format
-msgid "<%s-Up>\tScroll commit list up one line"
+msgid "<%s-Up>\tScroll cummit list up one line"
 msgstr "<%s-Up>\t向上滚动一行提交列表"
 
 #: gitk:3086
 #, tcl-format
-msgid "<%s-Down>\tScroll commit list down one line"
+msgid "<%s-Down>\tScroll cummit list down one line"
 msgstr "<%s-Down>\t向下滚动一行提交列表"
 
 #: gitk:3087
 #, tcl-format
-msgid "<%s-PageUp>\tScroll commit list up one page"
+msgid "<%s-PageUp>\tScroll cummit list up one page"
 msgstr "<%s-PageUp>\t向上滚动一页提交列表"
 
 #: gitk:3088
 #, tcl-format
-msgid "<%s-PageDown>\tScroll commit list down one page"
+msgid "<%s-PageDown>\tScroll cummit list down one page"
 msgstr "<%s-PageDown>\t向下滚动一页提交列表"
 
 #: gitk:3089
-msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgid "<Shift-Up>\tFind backwards (upwards, later cummits)"
 msgstr "<Shift-Up>\t向后查找(向上的，更晚的提交)"
 
 #: gitk:3090
-msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgid "<Shift-Down>\tFind forwards (downwards, earlier cummits)"
 msgstr "<Shift-Down>\t向前查找(向下的，更早的提交)"
 
 #: gitk:3091
@@ -507,7 +507,7 @@ msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\t\t移动到下一次查找命中"
 
 #: gitk:3099
-msgid "g\t\tGo to commit"
+msgid "g\t\tGo to cummit"
 msgstr "g\t\t转到提交"
 
 #: gitk:3100
@@ -571,7 +571,7 @@ msgid "command failed:"
 msgstr "执行命令失败："
 
 #: gitk:3808
-msgid "No such commit"
+msgid "No such cummit"
 msgstr "无此提交"
 
 #: gitk:3822
@@ -604,7 +604,7 @@ msgstr "运行git blame出错：%s"
 
 #: gitk:3949
 #, tcl-format
-msgid "That line comes from commit %s,  which is not in this view"
+msgid "That line comes from cummit %s,  which is not in this view"
 msgstr "此行来自提交%s，不在此视图中"
 
 #: gitk:3963
@@ -652,7 +652,7 @@ msgid "All remote-tracking branches"
 msgstr "所有远程跟踪分支"
 
 #: gitk:4105
-msgid "Commit Info (regular expressions):"
+msgid "cummit Info (regular expressions):"
 msgstr "提交信息 (正则表达式)："
 
 #: gitk:4106
@@ -660,19 +660,19 @@ msgid "Author:"
 msgstr "作者："
 
 #: gitk:4107
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "提交者："
 
 #: gitk:4108
-msgid "Commit Message:"
+msgid "cummit Message:"
 msgstr "提交信息："
 
 #: gitk:4109
-msgid "Matches all Commit Info criteria"
+msgid "Matches all cummit Info criteria"
 msgstr "匹配所有提交信息标准"
 
 #: gitk:4110
-msgid "Matches no Commit Info criteria"
+msgid "Matches no cummit Info criteria"
 msgstr "匹配无提交信息标准"
 
 #: gitk:4111
@@ -693,7 +693,7 @@ msgstr "搜索字符串："
 
 #: gitk:4115
 msgid ""
-"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"cummit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 msgstr "提交日期 (\"2星期之前\", \"2009-03-17 15:27:38\", \"5月 17, 2009 15:27:38\"):"
 
@@ -746,7 +746,7 @@ msgid "Enter files and directories to include, one per line:"
 msgstr "输入文件和文件夹来引用，每行一个："
 
 #: gitk:4128
-msgid "Command to generate more commits to include:"
+msgid "Command to generate more cummits to include:"
 msgstr "命令产生更多的提交来引用："
 
 #: gitk:4252
@@ -766,7 +766,7 @@ msgid "Apply (F5)"
 msgstr "应用(F5)"
 
 #: gitk:4378
-msgid "Error in commit selection arguments:"
+msgid "Error in cummit selection arguments:"
 msgstr "提交选择参数错误："
 
 #: gitk:4433 gitk:4486 gitk:4948 gitk:4962 gitk:6232 gitk:12524 gitk:12525
@@ -790,11 +790,11 @@ msgid "Not ancestor"
 msgstr "非父提交"
 
 #: gitk:5348
-msgid "Local changes checked in to index but not committed"
+msgid "Local changes checked in to index but not cummitted"
 msgstr "已添加到索引但未提交的修改"
 
 #: gitk:5384
-msgid "Local uncommitted changes, not checked in to index"
+msgid "Local uncummitted changes, not checked in to index"
 msgstr "未添加到索引且未提交的修改"
 
 #: gitk:7158
@@ -876,7 +876,7 @@ msgid "Detached head: can't reset"
 msgstr "分离的头(head)：不能重置(reset)"
 
 #: gitk:9034 gitk:9040
-msgid "Skipping merge commit "
+msgid "Skipping merge cummit "
 msgstr "跳过合并提交"
 
 #: gitk:9049 gitk:9054
@@ -888,7 +888,7 @@ msgid " - stopping\n"
 msgstr " — 停止中\n"
 
 #: gitk:9060 gitk:9063 gitk:9071 gitk:9085 gitk:9094
-msgid "Commit "
+msgid "cummit "
 msgstr "提交"
 
 #: gitk:9064
@@ -905,7 +905,7 @@ msgstr " 差异来自\n       "
 
 #: gitk:9074
 msgid ""
-"Diff of commits:\n"
+"Diff of cummits:\n"
 "\n"
 msgstr "提交的差异(Diff)：\n\n"
 
@@ -916,12 +916,12 @@ msgstr "有%s子节点 — 停止中\n"
 
 #: gitk:9114
 #, tcl-format
-msgid "Error writing commit to file: %s"
+msgid "Error writing cummit to file: %s"
 msgstr "写入提交到文件出错：%s"
 
 #: gitk:9120
 #, tcl-format
-msgid "Error diffing commits: %s"
+msgid "Error diffing cummits: %s"
 msgstr "比较提交差异出错：%s"
 
 #: gitk:9166
@@ -1006,7 +1006,7 @@ msgid "Write"
 msgstr "写入"
 
 #: gitk:9451
-msgid "Error writing commit:"
+msgid "Error writing cummit:"
 msgstr "写入提交出错："
 
 #: gitk:9473
@@ -1041,7 +1041,7 @@ msgstr "请重新指定新分支的名称"
 
 #: gitk:9650
 #, tcl-format
-msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgid "cummit %s is already included in branch %s -- really re-apply it?"
 msgstr "提交%s已经存在于分支%s。确定重新应用它？"
 
 #: gitk:9655
@@ -1052,8 +1052,8 @@ msgstr "打补丁中(Cherry-picking)"
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
-"Please commit, reset or stash your changes and try again."
-msgstr "打补丁(Cherry-pick)失败，因为本地修改了文件\"%s\"。\n请提交(commit)、重置(reset)或暂存(stash)修改后重试。"
+"Please cummit, reset or stash your changes and try again."
+msgstr "打补丁(Cherry-pick)失败，因为本地修改了文件\"%s\"。\n请提交(cummit)、重置(reset)或暂存(stash)修改后重试。"
 
 #: gitk:9670
 msgid ""
@@ -1062,12 +1062,12 @@ msgid ""
 msgstr "打补丁(Cherry-pick)失败因为合并冲突。\n你是否希望运行git citool 来解决冲突？"
 
 #: gitk:9686 gitk:9744
-msgid "No changes committed"
+msgid "No changes cummitted"
 msgstr "无已经提交的修改"
 
 #: gitk:9713
 #, tcl-format
-msgid "Commit %s is not included in branch %s -- really revert it?"
+msgid "cummit %s is not included in branch %s -- really revert it?"
 msgstr "提交%s不包含在分支%s中，确认回滚(revert)它？"
 
 #: gitk:9718
@@ -1078,8 +1078,8 @@ msgstr "回滚中(Reverting)"
 #, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
-"commit, reset or stash  your changes and try again."
-msgstr "回滚(revert)失败，因为如下的本地文件修改：%s\n请提交(commit)、重置(reset)或者暂存(stash)改变后重试。"
+"cummit, reset or stash  your changes and try again."
+msgstr "回滚(revert)失败，因为如下的本地文件修改：%s\n请提交(cummit)、重置(reset)或者暂存(stash)改变后重试。"
 
 #: gitk:9730
 msgid ""
@@ -1134,7 +1134,7 @@ msgstr "不能删除当前检出(checkout)分支"
 #: gitk:9949
 #, tcl-format
 msgid ""
-"The commits on branch %s aren't on any other branch.\n"
+"The cummits on branch %s aren't on any other branch.\n"
 "Really delete branch %s?"
 msgstr "在分支%s上的提交不在其他任何分支上。\n确认删除分支%s？"
 
@@ -1149,7 +1149,7 @@ msgstr "过滤器"
 
 #: gitk:10293
 msgid ""
-"Error reading commit topology information; branch and preceding/following "
+"Error reading cummit topology information; branch and preceding/following "
 "tag information will be incomplete."
 msgstr "读取提交拓扑信息出错；分支和之前/之后的tag信息将不能完成。"
 
@@ -1174,7 +1174,7 @@ msgid "I"
 msgstr "斜体"
 
 #: gitk:11495
-msgid "Commit list display options"
+msgid "cummit list display options"
 msgstr "提交列表展示选项"
 
 #: gitk:11498

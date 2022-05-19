@@ -52,7 +52,7 @@ can set it to "simple" today without waiting for Git 2.0.
 When "git add -u" (and "git add -A") is run inside a subdirectory and
 does not specify which paths to add on the command line, it
 will operate on the entire tree in Git 2.0 for consistency
-with "git commit -a" and other commands.  There will be no
+with "git cummit -a" and other commands.  There will be no
 mechanism to make plain "git add -u" behave like "git add -u .".
 Current users of "git add -u" (without a pathspec) should start
 training their fingers to explicitly say "git add -u ."
@@ -241,7 +241,7 @@ for details).
    validation paths do different things on such a refname.  Loosen the
    client side's validation to allow such a ref.
 
- * "git log --left-right A...B" lost the "leftness" of commits
+ * "git log --left-right A...B" lost the "leftness" of cummits
    reachable from A when A is a tag as a side effect of a recent
    bugfix.  This is a regression in 1.8.4.x series.
 
@@ -319,7 +319,7 @@ for details).
  * SSL-related options were not passed correctly to underlying socket
    layer in "git send-email".
 
- * "git commit -v" appends the patch to the log message before
+ * "git cummit -v" appends the patch to the log message before
    editing, and then removes the patch when the editor returned
    control. However, the patch was not stripped correctly when the
    first modified path was a submodule.

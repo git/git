@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "tag.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tree.h"
 #include "blob.h"
 #include "diff.h"
@@ -16,17 +16,17 @@
 struct traversal_context {
 	struct rev_info *revs;
 	show_object_fn show_object;
-	show_commit_fn show_commit;
+	show_cummit_fn show_cummit;
 	void *show_data;
 	struct filter *filter;
 };
 
-static void show_commit(struct traversal_context *ctx,
-			struct commit *commit)
+static void show_cummit(struct traversal_context *ctx,
+			struct cummit *cummit)
 {
-	if (!ctx->show_commit)
+	if (!ctx->show_cummit)
 		return;
-	ctx->show_commit(commit, ctx->show_data);
+	ctx->show_cummit(cummit, ctx->show_data);
 }
 
 static void show_object(struct traversal_context *ctx,
@@ -90,7 +90,7 @@ static void process_blob(struct traversal_context *ctx,
  *  - is the subproject actually checked out?
  *  - if so, see if the subproject has already been added
  *    to the alternates list, and add it if not.
- *  - process the commit (or tag) the gitlink points to
+ *  - process the cummit (or tag) the gitlink points to
  *    recursively.
  *
  * However, it's unclear whether there is really ever any
@@ -248,17 +248,17 @@ static void process_tag(struct traversal_context *ctx,
 		show_object(ctx, &tag->object, name);
 }
 
-static void mark_edge_parents_uninteresting(struct commit *commit,
+static void mark_edge_parents_uninteresting(struct cummit *cummit,
 					    struct rev_info *revs,
 					    show_edge_fn show_edge)
 {
-	struct commit_list *parents;
+	struct cummit_list *parents;
 
-	for (parents = commit->parents; parents; parents = parents->next) {
-		struct commit *parent = parents->item;
+	for (parents = cummit->parents; parents; parents = parents->next) {
+		struct cummit *parent = parents->item;
 		if (!(parent->object.flags & UNINTERESTING))
 			continue;
-		mark_tree_uninteresting(revs->repo, get_commit_tree(parent));
+		mark_tree_uninteresting(revs->repo, get_cummit_tree(parent));
 		if (revs->edge_hint && !(parent->object.flags & SHOWN)) {
 			parent->object.flags |= SHOWN;
 			show_edge(parent);
@@ -266,16 +266,16 @@ static void mark_edge_parents_uninteresting(struct commit *commit,
 	}
 }
 
-static void add_edge_parents(struct commit *commit,
+static void add_edge_parents(struct cummit *cummit,
 			     struct rev_info *revs,
 			     show_edge_fn show_edge,
 			     struct oidset *set)
 {
-	struct commit_list *parents;
+	struct cummit_list *parents;
 
-	for (parents = commit->parents; parents; parents = parents->next) {
-		struct commit *parent = parents->item;
-		struct tree *tree = get_commit_tree(parent);
+	for (parents = cummit->parents; parents; parents = parents->next) {
+		struct cummit *parent = parents->item;
+		struct tree *tree = get_cummit_tree(parent);
 
 		if (!tree)
 			continue;
@@ -297,53 +297,53 @@ void mark_edges_uninteresting(struct rev_info *revs,
 			      show_edge_fn show_edge,
 			      int sparse)
 {
-	struct commit_list *list;
+	struct cummit_list *list;
 	int i;
 
 	if (sparse) {
 		struct oidset set;
 		oidset_init(&set, 16);
 
-		for (list = revs->commits; list; list = list->next) {
-			struct commit *commit = list->item;
-			struct tree *tree = get_commit_tree(commit);
+		for (list = revs->cummits; list; list = list->next) {
+			struct cummit *cummit = list->item;
+			struct tree *tree = get_cummit_tree(cummit);
 
-			if (commit->object.flags & UNINTERESTING)
+			if (cummit->object.flags & UNINTERESTING)
 				tree->object.flags |= UNINTERESTING;
 
 			oidset_insert(&set, &tree->object.oid);
-			add_edge_parents(commit, revs, show_edge, &set);
+			add_edge_parents(cummit, revs, show_edge, &set);
 		}
 
 		mark_trees_uninteresting_sparse(revs->repo, &set);
 		oidset_clear(&set);
 	} else {
-		for (list = revs->commits; list; list = list->next) {
-			struct commit *commit = list->item;
-			if (commit->object.flags & UNINTERESTING) {
+		for (list = revs->cummits; list; list = list->next) {
+			struct cummit *cummit = list->item;
+			if (cummit->object.flags & UNINTERESTING) {
 				mark_tree_uninteresting(revs->repo,
-							get_commit_tree(commit));
-				if (revs->edge_hint_aggressive && !(commit->object.flags & SHOWN)) {
-					commit->object.flags |= SHOWN;
-					show_edge(commit);
+							get_cummit_tree(cummit));
+				if (revs->edge_hint_aggressive && !(cummit->object.flags & SHOWN)) {
+					cummit->object.flags |= SHOWN;
+					show_edge(cummit);
 				}
 				continue;
 			}
-			mark_edge_parents_uninteresting(commit, revs, show_edge);
+			mark_edge_parents_uninteresting(cummit, revs, show_edge);
 		}
 	}
 
 	if (revs->edge_hint_aggressive) {
 		for (i = 0; i < revs->cmdline.nr; i++) {
 			struct object *obj = revs->cmdline.rev[i].item;
-			struct commit *commit = (struct commit *)obj;
-			if (obj->type != OBJ_COMMIT || !(obj->flags & UNINTERESTING))
+			struct cummit *cummit = (struct cummit *)obj;
+			if (obj->type != OBJ_cummit || !(obj->flags & UNINTERESTING))
 				continue;
 			mark_tree_uninteresting(revs->repo,
-						get_commit_tree(commit));
+						get_cummit_tree(cummit));
 			if (!(obj->flags & SHOWN)) {
 				obj->flags |= SHOWN;
-				show_edge(commit);
+				show_edge(cummit);
 			}
 		}
 	}
@@ -354,7 +354,7 @@ static void add_pending_tree(struct rev_info *revs, struct tree *tree)
 	add_pending_object(revs, &tree->object, "");
 }
 
-static void traverse_non_commits(struct traversal_context *ctx,
+static void traverse_non_cummits(struct traversal_context *ctx,
 				 struct strbuf *base)
 {
 	int i;
@@ -390,52 +390,52 @@ static void traverse_non_commits(struct traversal_context *ctx,
 
 static void do_traverse(struct traversal_context *ctx)
 {
-	struct commit *commit;
+	struct cummit *cummit;
 	struct strbuf csp; /* callee's scratch pad */
 	strbuf_init(&csp, PATH_MAX);
 
-	while ((commit = get_revision(ctx->revs)) != NULL) {
+	while ((cummit = get_revision(ctx->revs)) != NULL) {
 		enum list_objects_filter_result r;
 
 		r = list_objects_filter__filter_object(ctx->revs->repo,
-				LOFS_COMMIT, &commit->object,
+				LOFS_cummit, &cummit->object,
 				NULL, NULL, ctx->filter);
 
 		/*
-		 * an uninteresting boundary commit may not have its tree
+		 * an uninteresting boundary cummit may not have its tree
 		 * parsed yet, but we are not going to show them anyway
 		 */
 		if (!ctx->revs->tree_objects)
 			; /* do not bother loading tree */
-		else if (get_commit_tree(commit)) {
-			struct tree *tree = get_commit_tree(commit);
+		else if (get_cummit_tree(cummit)) {
+			struct tree *tree = get_cummit_tree(cummit);
 			tree->object.flags |= NOT_USER_GIVEN;
 			add_pending_tree(ctx->revs, tree);
-		} else if (commit->object.parsed) {
-			die(_("unable to load root tree for commit %s"),
-			      oid_to_hex(&commit->object.oid));
+		} else if (cummit->object.parsed) {
+			die(_("unable to load root tree for cummit %s"),
+			      oid_to_hex(&cummit->object.oid));
 		}
 
 		if (r & LOFR_MARK_SEEN)
-			commit->object.flags |= SEEN;
+			cummit->object.flags |= SEEN;
 		if (r & LOFR_DO_SHOW)
-			show_commit(ctx, commit);
+			show_cummit(ctx, cummit);
 
-		if (ctx->revs->tree_blobs_in_commit_order)
+		if (ctx->revs->tree_blobs_in_cummit_order)
 			/*
 			 * NEEDSWORK: Adding the tree and then flushing it here
-			 * needs a reallocation for each commit. Can we pass the
+			 * needs a reallocation for each cummit. Can we pass the
 			 * tree directory without allocation churn?
 			 */
-			traverse_non_commits(ctx, &csp);
+			traverse_non_cummits(ctx, &csp);
 	}
-	traverse_non_commits(ctx, &csp);
+	traverse_non_cummits(ctx, &csp);
 	strbuf_release(&csp);
 }
 
-void traverse_commit_list_filtered(
+void traverse_cummit_list_filtered(
 	struct rev_info *revs,
-	show_commit_fn show_commit,
+	show_cummit_fn show_cummit,
 	show_object_fn show_object,
 	void *show_data,
 	struct oidset *omitted)
@@ -443,7 +443,7 @@ void traverse_commit_list_filtered(
 	struct traversal_context ctx = {
 		.revs = revs,
 		.show_object = show_object,
-		.show_commit = show_commit,
+		.show_cummit = show_cummit,
 		.show_data = show_data,
 	};
 

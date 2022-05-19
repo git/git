@@ -5,11 +5,11 @@
 #include "date.h"
 #include "string-list.h"
 
-struct commit;
+struct cummit;
 struct strbuf;
 struct process_trailer_options;
 
-/* Commit formats */
+/* cummit formats */
 enum cmit_fmt {
 	CMIT_FMT_RAW,
 	CMIT_FMT_MEDIUM,
@@ -60,7 +60,7 @@ struct pretty_print_context {
 	int graph_width;
 };
 
-/* Check whether commit format is mail. */
+/* Check whether cummit format is mail. */
 static inline int cmit_fmt_is_mail(enum cmit_fmt fmt)
 {
 	return (fmt == CMIT_FMT_EMAIL || fmt == CMIT_FMT_MBOXRD);
@@ -68,7 +68,7 @@ static inline int cmit_fmt_is_mail(enum cmit_fmt fmt)
 
 /*
  * Examine the user-specified format given by "fmt" (or if NULL, the global one
- * previously saved by get_commit_format()), and set flags based on which items
+ * previously saved by get_cummit_format()), and set flags based on which items
  * the format will need when it is expanded.
  */
 struct userformat_want {
@@ -79,10 +79,10 @@ struct userformat_want {
 void userformat_find_requirements(const char *fmt, struct userformat_want *w);
 
 /*
- * Shortcut for invoking pretty_print_commit if we do not have any context.
+ * Shortcut for invoking pretty_print_cummit if we do not have any context.
  * Context would be set empty except "fmt".
  */
-void pp_commit_easy(enum cmit_fmt fmt, const struct commit *commit,
+void pp_cummit_easy(enum cmit_fmt fmt, const struct cummit *cummit,
 			struct strbuf *sb);
 
 /*
@@ -96,7 +96,7 @@ void pp_user_info(struct pretty_print_context *pp, const char *what,
 			const char *encoding);
 
 /*
- * Format title line of commit message taken from "msg_p" and
+ * Format title line of cummit message taken from "msg_p" and
  * put it into "sb".
  * First line of "msg_p" is also affected.
  */
@@ -105,39 +105,39 @@ void pp_title_line(struct pretty_print_context *pp, const char **msg_p,
 			int need_8bit_cte);
 
 /*
- * Get current state of commit message from "msg_p" and continue formatting
+ * Get current state of cummit message from "msg_p" and continue formatting
  * by adding indentation and '>' signs. Put result into "sb".
  */
 void pp_remainder(struct pretty_print_context *pp, const char **msg_p,
 			struct strbuf *sb, int indent);
 
 /*
- * Create a text message about commit using given "format" and "context".
+ * Create a text message about cummit using given "format" and "context".
  * Put the result to "sb".
  * Please use this function for custom formats.
  */
-void repo_format_commit_message(struct repository *r,
-			const struct commit *commit,
+void repo_format_cummit_message(struct repository *r,
+			const struct cummit *cummit,
 			const char *format, struct strbuf *sb,
 			const struct pretty_print_context *context);
 #ifndef NO_THE_REPOSITORY_COMPATIBILITY_MACROS
-#define format_commit_message(c, f, s, con) \
-	repo_format_commit_message(the_repository, c, f, s, con)
+#define format_cummit_message(c, f, s, con) \
+	repo_format_cummit_message(the_repository, c, f, s, con)
 #endif
 
 /*
  * Parse given arguments from "arg", check it for correctness and
  * fill struct rev_info.
  */
-void get_commit_format(const char *arg, struct rev_info *);
+void get_cummit_format(const char *arg, struct rev_info *);
 
 /*
- * Make a commit message with all rules from given "pp"
+ * Make a cummit message with all rules from given "pp"
  * and put it into "sb".
  * Please use this function if you have a context (candidate for "pp").
  */
-void pretty_print_commit(struct pretty_print_context *pp,
-			const struct commit *commit,
+void pretty_print_cummit(struct pretty_print_context *pp,
+			const struct cummit *cummit,
 			struct strbuf *sb);
 
 /*
@@ -148,9 +148,9 @@ const char *format_subject(struct strbuf *sb, const char *msg,
 			const char *line_separator);
 
 /* Check if "cmit_fmt" will produce an empty output. */
-int commit_format_is_empty(enum cmit_fmt);
+int cummit_format_is_empty(enum cmit_fmt);
 
-/* Make subject of commit message suitable for filename */
+/* Make subject of cummit message suitable for filename */
 void format_sanitized_subject(struct strbuf *sb, const char *msg, size_t len);
 
 /*

@@ -36,7 +36,7 @@ test_expect_success 'setup showEmail tests' '
 	git add one &&
 	GIT_AUTHOR_NAME=name1 \
 	GIT_AUTHOR_EMAIL=email1@test.git \
-	git commit -m First --date="2010-01-01 01:00:00" &&
+	git cummit -m First --date="2010-01-01 01:00:00" &&
 	cat >expected_n <<-\EOF &&
 	(name1 2010-01-01 01:00:00 +0000 1) bin: test number 1
 	EOF
@@ -94,7 +94,7 @@ test_expect_success 'blame with showEmail config true' '
 '
 
 test_expect_success 'set up abbrev tests' '
-	test_commit abbrev &&
+	test_cummit abbrev &&
 	sha1=$(git rev-parse --verify HEAD) &&
 	check_abbrev () {
 		expect=$1 && shift &&
@@ -106,12 +106,12 @@ test_expect_success 'set up abbrev tests' '
 '
 
 test_expect_success 'blame --abbrev=<n> works' '
-	# non-boundary commits get +1 for alignment
+	# non-boundary cummits get +1 for alignment
 	check_abbrev 31 --abbrev=30 HEAD &&
 	check_abbrev 30 --abbrev=30 ^HEAD
 '
 
-test_expect_success 'blame -l aligns regular and boundary commits' '
+test_expect_success 'blame -l aligns regular and boundary cummits' '
 	check_abbrev $hexsz         -l HEAD &&
 	check_abbrev $((hexsz - 1)) -l ^HEAD
 '
@@ -129,11 +129,11 @@ test_expect_success '--exclude-promisor-objects does not BUG-crash' '
 	test_must_fail git blame --exclude-promisor-objects one
 '
 
-test_expect_success 'blame with uncommitted edits in partial clone does not crash' '
+test_expect_success 'blame with uncummitted edits in partial clone does not crash' '
 	git init server &&
 	echo foo >server/file.txt &&
 	git -C server add file.txt &&
-	git -C server commit -m file &&
+	git -C server cummit -m file &&
 
 	git clone --filter=blob:none "file://$(pwd)/server" client &&
 	echo bar >>client/file.txt &&

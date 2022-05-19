@@ -394,7 +394,7 @@ static void check_smart_http(struct discovery *d, const char *service,
 
 	/*
 	 * If we don't see x-$service-advertisement, then it's not smart-http.
-	 * But once we do, we commit to it and assume any other protocol
+	 * But once we do, we cummit to it and assume any other protocol
 	 * violations are hard errors.
 	 */
 	if (!skip_prefix(type->buf, "application/x-", &p) ||

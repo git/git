@@ -41,14 +41,14 @@ shared_repo=shared.git
 
 git_pack_redundant='git pack-redundant --i-still-use-this'
 
-# Create commits in <repo> and assign each commit's oid to shell variables
+# Create cummits in <repo> and assign each cummit's oid to shell variables
 # given in the arguments (A, B, and C). E.g.:
 #
-#     create_commits_in <repo> A B C
+#     create_cummits_in <repo> A B C
 #
 # NOTE: Avoid calling this function from a subshell since variable
 # assignments will disappear when subshell exits.
-create_commits_in () {
+create_cummits_in () {
 	repo="$1" &&
 	if ! parent=$(git -C "$repo" rev-parse HEAD^{} 2>/dev/null)
 	then
@@ -62,9 +62,9 @@ create_commits_in () {
 		test_tick &&
 		if test -z "$parent"
 		then
-			oid=$(echo $name | git -C "$repo" commit-tree $T)
+			oid=$(echo $name | git -C "$repo" cummit-tree $T)
 		else
-			oid=$(echo $name | git -C "$repo" commit-tree -p $parent $T)
+			oid=$(echo $name | git -C "$repo" cummit-tree -p $parent $T)
 		fi &&
 		eval $name=$oid &&
 		parent=$oid &&
@@ -75,13 +75,13 @@ create_commits_in () {
 }
 
 # Create pack in <repo> and assign pack id to variable given in the 2nd argument
-# (<name>). Commits in the pack will be read from stdin. E.g.:
+# (<name>). cummits in the pack will be read from stdin. E.g.:
 #
 #     create_pack_in <repo> <name> <<-EOF
 #         ...
 #         EOF
 #
-# NOTE: commits from stdin should be given using heredoc, not using pipe, and
+# NOTE: cummits from stdin should be given using heredoc, not using pipe, and
 # avoid calling this function from a subshell since variable assignments will
 # disappear when subshell exits.
 create_pack_in () {
@@ -111,7 +111,7 @@ format_packfiles () {
 
 test_expect_success 'setup main repo' '
 	git init --bare "$main_repo" &&
-	create_commits_in "$main_repo" A B C D E F G H I J K L M N O P Q R
+	create_cummits_in "$main_repo" A B C D E F G H I J K L M N O P Q R
 '
 
 test_expect_success 'main: pack-redundant works with no packfile' '
@@ -395,7 +395,7 @@ test_expect_success 'shared: remove redundant packs, no packs left' '
 '
 
 test_expect_success 'shared: create new objects and packs' '
-	create_commits_in "$shared_repo" X Y Z &&
+	create_cummits_in "$shared_repo" X Y Z &&
 	create_pack_in "$shared_repo" Px1 <<-EOF &&
 		$X
 		$Y

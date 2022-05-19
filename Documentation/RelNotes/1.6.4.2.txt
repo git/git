@@ -27,6 +27,6 @@ Fixes since v1.6.4.1
   non-ASCII names.
 
 * "git pull origin branch" and "git fetch origin && git merge origin/branch"
-  left different merge messages in the resulting commit.
+  left different merge messages in the resulting cummit.
 
 Other minor documentation updates are included.

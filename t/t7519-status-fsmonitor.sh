@@ -65,7 +65,7 @@ test_expect_success 'setup' '
 	: >dir2/tracked &&
 	: >dir2/modified &&
 	git -c core.fsmonitor= add . &&
-	git -c core.fsmonitor= commit -m initial &&
+	git -c core.fsmonitor= cummit -m initial &&
 	git config core.fsmonitor .git/hooks/fsmonitor-test &&
 	cat >.gitignore <<-\EOF
 	.gitignore
@@ -232,7 +232,7 @@ test_expect_success 'refresh_index() invalidates fsmonitor cache' '
 	git add . &&
 	test_hook --clobber fsmonitor-test<<-\EOF &&
 	EOF
-	git commit -m "to reset" &&
+	git cummit -m "to reset" &&
 	git reset HEAD~1 &&
 	git status >actual &&
 	git -c core.fsmonitor= status >expect &&
@@ -290,7 +290,7 @@ do
 			rm -f marker &&
 			git status >actual &&
 			test_path_is_file marker &&
-			test_i18ngrep ! "Changes not staged for commit:" actual &&
+			test_i18ngrep ! "Changes not staged for cummit:" actual &&
 			if test $uc_val = true
 			then
 				test_i18ngrep ! "Untracked files:" actual
@@ -378,7 +378,7 @@ test_expect_success 'status succeeds after staging/unstaging' '
 	test_create_repo fsmonitor-stage-unstage &&
 	(
 		cd fsmonitor-stage-unstage &&
-		test_commit initial &&
+		test_cummit initial &&
 		git update-index --fsmonitor &&
 		removed=$(test_seq 1 100 | sed "s/^/z/") &&
 		touch $removed &&
@@ -431,7 +431,7 @@ test_expect_success 'status succeeds with sparse index' '
 		do
 			cp -r $repo/dir1 $repo/dir1a &&
 			git -C $repo add dir1a &&
-			git -C $repo commit -m "add dir1a" || return 1
+			git -C $repo cummit -m "add dir1a" || return 1
 		done &&
 		git -C sparse sparse-checkout set dir1 dir2 &&
 

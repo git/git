@@ -20,7 +20,7 @@ test_expect_success 'set some properties to create an unhandled.log file' '
 	(
 		cd test_wc &&
 		svn_cmd propset foo bar test.txt &&
-		svn_cmd commit -m "property set"
+		svn_cmd cummit -m "property set"
 	)'
 
 test_expect_success 'Setup repo' 'git svn init "$svnrepo"'

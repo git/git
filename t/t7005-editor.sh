@@ -35,7 +35,7 @@ fi
 test_expect_success setup '
 
 	msg="Hand-edited" &&
-	test_commit "$msg" &&
+	test_cummit "$msg" &&
 	echo "$msg" >expect &&
 	git show -s --format=%s > actual &&
 	test_cmp expect actual
@@ -46,7 +46,7 @@ TERM=dumb
 export TERM
 test_expect_success 'dumb should error out when falling back on vi' '
 
-	if git commit --amend
+	if git cummit --amend
 	then
 		echo "Oops?"
 		false
@@ -60,7 +60,7 @@ test_expect_success 'dumb should prefer EDITOR to VISUAL' '
 	EDITOR=./e-EDITOR.sh &&
 	VISUAL=./e-VISUAL.sh &&
 	export EDITOR VISUAL &&
-	git commit --amend &&
+	git cummit --amend &&
 	test "$(git show -s --format=%s)" = "Edited by EDITOR"
 
 '
@@ -82,7 +82,7 @@ do
 		;;
 	esac
 	test_expect_success "Using $i" '
-		git --exec-path=. commit --amend &&
+		git --exec-path=. cummit --amend &&
 		git show -s --pretty=oneline |
 		sed -e "s/^[0-9a-f]* //" >actual &&
 		test_cmp expect actual
@@ -104,7 +104,7 @@ do
 		;;
 	esac
 	test_expect_success "Using $i (override)" '
-		git --exec-path=. commit --amend &&
+		git --exec-path=. cummit --amend &&
 		git show -s --pretty=oneline |
 		sed -e "s/^[0-9a-f]* //" >actual &&
 		test_cmp expect actual
@@ -114,7 +114,7 @@ done
 test_expect_success 'editor with a space' '
 	echo "echo space >\"\$1\"" >"e space.sh" &&
 	chmod a+x "e space.sh" &&
-	GIT_EDITOR="./e\ space.sh" git commit --amend &&
+	GIT_EDITOR="./e\ space.sh" git cummit --amend &&
 	test space = "$(git show -s --pretty=format:%s)"
 
 '
@@ -123,7 +123,7 @@ unset GIT_EDITOR
 test_expect_success 'core.editor with a space' '
 
 	git config core.editor \"./e\ space.sh\" &&
-	git commit --amend &&
+	git cummit --amend &&
 	test space = "$(git show -s --pretty=format:%s)"
 
 '

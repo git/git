@@ -9,10 +9,10 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success setup '
 	git config --global advice.statusuoption false &&
-	test_commit A &&
-	test_commit B oneside added &&
+	test_cummit A &&
+	test_cummit B oneside added &&
 	git checkout A^0 &&
-	test_commit C oneside created
+	test_cummit C oneside created
 '
 
 test_expect_success 'A/A conflict' '
@@ -36,26 +36,26 @@ test_expect_success 'M/D conflict does not segfault' '
 	cat >expect <<EOF &&
 On branch side
 You have unmerged paths.
-  (fix conflicts and run "git commit")
+  (fix conflicts and run "git cummit")
   (use "git merge --abort" to abort the merge)
 
 Unmerged paths:
   (use "git add/rm <file>..." as appropriate to mark resolution)
 	deleted by us:   foo
 
-no changes added to commit (use "git add" and/or "git commit -a")
+no changes added to cummit (use "git add" and/or "git cummit -a")
 EOF
 	mkdir mdconflict &&
 	(
 		cd mdconflict &&
 		git init &&
-		test_commit initial foo "" &&
-		test_commit modify foo foo &&
+		test_cummit initial foo "" &&
+		test_cummit modify foo foo &&
 		git checkout -b side HEAD^ &&
 		git rm foo &&
-		git commit -m delete &&
+		git cummit -m delete &&
 		test_must_fail git merge main &&
-		test_must_fail git commit --dry-run >../actual &&
+		test_must_fail git cummit --dry-run >../actual &&
 		test_cmp ../expect ../actual &&
 		git status >../actual &&
 		test_cmp ../expect ../actual
@@ -67,7 +67,7 @@ test_expect_success 'rename & unmerged setup' '
 	cat "$TEST_DIRECTORY/README" >ONE &&
 	git add ONE &&
 	test_tick &&
-	git commit -m "One commit with ONE" &&
+	git cummit -m "One cummit with ONE" &&
 
 	echo Modified >TWO &&
 	cat ONE >>TWO &&
@@ -128,19 +128,19 @@ test_expect_success 'git diff-index --cached -C shows 2 copies + 1 unmerged' '
 test_expect_success 'status when conflicts with add and rm advice (deleted by them)' '
 	git reset --hard &&
 	git checkout main &&
-	test_commit init main.txt init &&
+	test_cummit init main.txt init &&
 	git checkout -b second_branch &&
 	git rm main.txt &&
-	git commit -m "main.txt deleted on second_branch" &&
-	test_commit second conflict.txt second &&
+	git cummit -m "main.txt deleted on second_branch" &&
+	test_cummit second conflict.txt second &&
 	git checkout main &&
-	test_commit on_second main.txt on_second &&
-	test_commit main conflict.txt main &&
+	test_cummit on_second main.txt on_second &&
+	test_cummit main conflict.txt main &&
 	test_must_fail git merge second_branch &&
 	cat >expected <<\EOF &&
 On branch main
 You have unmerged paths.
-  (fix conflicts and run "git commit")
+  (fix conflicts and run "git cummit")
   (use "git merge --abort" to abort the merge)
 
 Unmerged paths:
@@ -148,7 +148,7 @@ Unmerged paths:
 	both added:      conflict.txt
 	deleted by them: main.txt
 
-no changes added to commit (use "git add" and/or "git commit -a")
+no changes added to cummit (use "git add" and/or "git cummit -a")
 EOF
 	git status --untracked-files=no >actual &&
 	test_cmp expected actual
@@ -158,13 +158,13 @@ EOF
 test_expect_success 'prepare for conflicts' '
 	git reset --hard &&
 	git checkout -b conflict &&
-	test_commit one main.txt one &&
+	test_cummit one main.txt one &&
 	git branch conflict_second &&
 	git mv main.txt sub_main.txt &&
-	git commit -m "main.txt renamed in sub_main.txt" &&
+	git cummit -m "main.txt renamed in sub_main.txt" &&
 	git checkout conflict_second &&
 	git mv main.txt sub_second.txt &&
-	git commit -m "main.txt renamed in sub_second.txt"
+	git cummit -m "main.txt renamed in sub_second.txt"
 '
 
 
@@ -173,7 +173,7 @@ test_expect_success 'status when conflicts with add and rm advice (both deleted)
 	cat >expected <<\EOF &&
 On branch conflict_second
 You have unmerged paths.
-  (fix conflicts and run "git commit")
+  (fix conflicts and run "git cummit")
   (use "git merge --abort" to abort the merge)
 
 Unmerged paths:
@@ -182,7 +182,7 @@ Unmerged paths:
 	added by them:   sub_main.txt
 	added by us:     sub_second.txt
 
-no changes added to commit (use "git add" and/or "git commit -a")
+no changes added to cummit (use "git add" and/or "git cummit -a")
 EOF
 	git status --untracked-files=no >actual &&
 	test_cmp expected actual
@@ -197,10 +197,10 @@ test_expect_success 'status when conflicts with only rm advice (both deleted)' '
 	cat >expected <<\EOF &&
 On branch conflict_second
 You have unmerged paths.
-  (fix conflicts and run "git commit")
+  (fix conflicts and run "git cummit")
   (use "git merge --abort" to abort the merge)
 
-Changes to be committed:
+Changes to be cummitted:
 	new file:   sub_main.txt
 
 Unmerged paths:

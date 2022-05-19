@@ -76,11 +76,11 @@ then
 fi
 
 merge_base=$(git merge-base $baserev $headrev) ||
-die "fatal: No commits in common between $base and $head"
+die "fatal: No cummits in common between $base and $head"
 
 # $head is the refname from the command line.
 # Find a ref with the same name as $head that exists at the remote
-# and points to the same commit as the local object.
+# and points to the same cummit as the local object.
 find_matching_ref='
 	my ($head,$headrev) = (@ARGV);
 	my $pattern = qr{/\Q$head\E$};
@@ -118,7 +118,7 @@ ref=$3
 
 if test -z "$ref"
 then
-	echo "warn: No match for commit $headrev found at $url" >&2
+	echo "warn: No match for cummit $headrev found at $url" >&2
 	echo "warn: Are you sure you pushed '${remote:-HEAD}' there?" >&2
 	status=1
 elif test "$local_sha1" != "$remote_sha1"
@@ -136,7 +136,7 @@ fi
 
 url=$(git ls-remote --get-url "$url")
 
-git show -s --format='The following changes since commit %H:
+git show -s --format='The following changes since cummit %H:
 
   %s (%ci)
 

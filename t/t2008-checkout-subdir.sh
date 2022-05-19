@@ -18,7 +18,7 @@ test_expect_success setup '
 	echo "bonjour" > dir2/file2 &&
 	git add dir2/file2 &&
 	test_tick &&
-	git commit -m "populate tree"
+	git cummit -m "populate tree"
 
 '
 

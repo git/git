@@ -17,20 +17,20 @@ test_expect_success setup '
 	echo file >file &&
 	git add file &&
 	test_tick &&
-	git commit -m upstream &&
+	git cummit -m upstream &&
 	git clone . super &&
 	git clone super submodule &&
 	(
 		cd submodule &&
 		git submodule add ../submodule sub-submodule &&
 		test_tick &&
-		git commit -m "sub-submodule"
+		git cummit -m "sub-submodule"
 	) &&
 	(
 		cd super &&
 		git submodule add ../submodule submodule &&
 		test_tick &&
-		git commit -m "submodule"
+		git cummit -m "submodule"
 	) &&
 	git clone super super-clone &&
 	(
@@ -60,7 +60,7 @@ test_expect_success 'change submodule' '
 		cd submodule &&
 		echo second line >>file &&
 		test_tick &&
-		git commit -a -m "change submodule"
+		git cummit -a -m "change submodule"
 	)
 '
 
@@ -89,13 +89,13 @@ test_expect_success 'change submodule url' '
 		cd moved-submodule &&
 		git config -f .gitmodules submodule.sub-submodule.url ../moved-submodule &&
 		test_tick &&
-		git commit -a -m moved-sub-submodule
+		git cummit -a -m moved-sub-submodule
 	) &&
 	(
 		cd super &&
 		git config -f .gitmodules submodule.submodule.url ../moved-submodule &&
 		test_tick &&
-		git commit -a -m moved-submodule
+		git cummit -a -m moved-submodule
 	)
 '
 
@@ -337,7 +337,7 @@ test_expect_success '"git submodule sync" handles origin URL of the form ../foo/
 			>.gitignore &&
 			git add .gitignore &&
 			test_tick &&
-			git commit -m "initial commit"
+			git cummit -m "initial cummit"
 		) &&
 		git submodule add ../bar/a/b/c ./a/b/c &&
 		git submodule sync &&

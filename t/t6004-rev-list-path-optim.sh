@@ -25,16 +25,16 @@ test_expect_success setup '
 	echo World >d/z &&
 	git add a d &&
 	test_tick &&
-	git commit -m "Initial commit" &&
+	git cummit -m "Initial cummit" &&
 	git rev-parse --verify HEAD &&
 	git tag initial
 '
 
 test_expect_success path-optimization '
 	test_tick &&
-	commit=$(echo "Unchanged tree" | git commit-tree "HEAD^{tree}" -p HEAD) &&
-	test $(git rev-list $commit | wc -l) = 2 &&
-	test $(git rev-list $commit -- . | wc -l) = 1
+	cummit=$(echo "Unchanged tree" | git cummit-tree "HEAD^{tree}" -p HEAD) &&
+	test $(git rev-list $cummit | wc -l) = 2 &&
+	test $(git rev-list $cummit -- . | wc -l) = 1
 '
 
 test_expect_success 'further setup' '
@@ -43,33 +43,33 @@ test_expect_success 'further setup' '
 	echo Irrelevant >d/f &&
 	git add c d/f &&
 	test_tick &&
-	git commit -m "Side makes an irrelevant commit" &&
+	git cummit -m "Side makes an irrelevant cummit" &&
 	git tag side_c0 &&
 	echo "More Irrelevancy" >c &&
 	git add c &&
 	test_tick &&
-	git commit -m "Side makes another irrelevant commit" &&
+	git cummit -m "Side makes another irrelevant cummit" &&
 	echo Bye >a &&
 	git add a &&
 	test_tick &&
-	git commit -m "Side touches a" &&
+	git cummit -m "Side touches a" &&
 	git tag side_a1 &&
 	echo "Yet more Irrelevancy" >c &&
 	git add c &&
 	test_tick &&
-	git commit -m "Side makes yet another irrelevant commit" &&
+	git cummit -m "Side makes yet another irrelevant cummit" &&
 	git checkout main &&
 	echo Another >b &&
 	echo Munged >d/z &&
 	git add b d/z &&
 	test_tick &&
-	git commit -m "Main touches b" &&
+	git cummit -m "Main touches b" &&
 	git tag main_b0 &&
 	git merge side &&
 	echo Touched >b &&
 	git add b &&
 	test_tick &&
-	git commit -m "Main touches b again"
+	git cummit -m "Main touches b again"
 '
 
 test_expect_success 'path optimization 2' '

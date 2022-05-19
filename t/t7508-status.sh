@@ -21,25 +21,25 @@ test_expect_success 'status -h in broken repository' '
 	test_i18ngrep "[Uu]sage" broken/usage
 '
 
-test_expect_success 'commit -h in broken repository' '
+test_expect_success 'cummit -h in broken repository' '
 	mkdir broken &&
 	test_when_finished "rm -fr broken" &&
 	(
 		cd broken &&
 		git init &&
 		echo "[status] showuntrackedfiles = CORRUPT" >>.git/config &&
-		test_expect_code 129 git commit -h >usage 2>&1
+		test_expect_code 129 git cummit -h >usage 2>&1
 	) &&
 	test_i18ngrep "[Uu]sage" broken/usage
 '
 
 test_expect_success 'create upstream branch' '
 	git checkout -b upstream &&
-	test_commit upstream1 &&
-	test_commit upstream2 &&
-	# leave the first commit on main as root because several
+	test_cummit upstream1 &&
+	test_cummit upstream2 &&
+	# leave the first cummit on main as root because several
 	# tests depend on this case; for our upstream we only
-	# care about commit counts anyway, so a totally divergent
+	# care about cummit counts anyway, so a totally divergent
 	# history is OK
 	git checkout --orphan main
 '
@@ -58,7 +58,7 @@ test_expect_success 'setup' '
 	git status >output &&
 
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	: >untracked &&
 	: >dir1/untracked &&
 	: >dir2/untracked &&
@@ -90,20 +90,20 @@ test_expect_success 'status --column' '
 	cat >expect <<\EOF &&
 # On branch main
 # Your branch and '\''upstream'\'' have diverged,
-# and have 1 and 2 different commits each, respectively.
+# and have 1 and 2 different cummits each, respectively.
 #   (use "git pull" to merge the remote branch into yours)
 #
-# Changes to be committed:
+# Changes to be cummitted:
 #   (use "git restore --staged <file>..." to unstage)
 #	new file:   dir2/added
 #
-# Changes not staged for commit:
-#   (use "git add <file>..." to update what will be committed)
+# Changes not staged for cummit:
+#   (use "git add <file>..." to update what will be cummitted)
 #   (use "git restore <file>..." to discard changes in working directory)
 #	modified:   dir1/modified
 #
 # Untracked files:
-#   (use "git add <file>..." to include in what will be committed)
+#   (use "git add <file>..." to include in what will be cummitted)
 #	dir1/untracked dir2/untracked
 #	dir2/modified  untracked
 #
@@ -121,20 +121,20 @@ test_expect_success 'status --column status.displayCommentPrefix=false' '
 cat >expect <<\EOF
 # On branch main
 # Your branch and 'upstream' have diverged,
-# and have 1 and 2 different commits each, respectively.
+# and have 1 and 2 different cummits each, respectively.
 #   (use "git pull" to merge the remote branch into yours)
 #
-# Changes to be committed:
+# Changes to be cummitted:
 #   (use "git restore --staged <file>..." to unstage)
 #	new file:   dir2/added
 #
-# Changes not staged for commit:
-#   (use "git add <file>..." to update what will be committed)
+# Changes not staged for cummit:
+#   (use "git add <file>..." to update what will be cummitted)
 #   (use "git restore <file>..." to discard changes in working directory)
 #	modified:   dir1/modified
 #
 # Untracked files:
-#   (use "git add <file>..." to include in what will be committed)
+#   (use "git add <file>..." to include in what will be cummitted)
 #	dir1/untracked
 #	dir2/modified
 #	dir2/untracked
@@ -161,10 +161,10 @@ test_expect_success 'status -v' '
 
 test_expect_success 'status -v -v' '
 	(cat expect &&
-	 echo "Changes to be committed:" &&
+	 echo "Changes to be cummitted:" &&
 	 git -c diff.mnemonicprefix=true diff --cached &&
 	 echo "--------------------------------------------------" &&
-	 echo "Changes not staged for commit:" &&
+	 echo "Changes not staged for cummit:" &&
 	 git -c diff.mnemonicprefix=true diff) >expect-with-v &&
 	git status -v -v >output &&
 	test_cmp expect-with-v output
@@ -178,29 +178,29 @@ EOF
 	chmod 755 .git/editor
 '
 
-commit_template_commented () {
+cummit_template_commented () {
 	(
 		EDITOR=.git/editor &&
 		export EDITOR &&
 		# Fails due to empty message
-		test_must_fail git commit
+		test_must_fail git cummit
 	) &&
 	! grep '^[^#]' output
 }
 
-test_expect_success 'commit ignores status.displayCommentPrefix=false in COMMIT_EDITMSG' '
-	commit_template_commented
+test_expect_success 'cummit ignores status.displayCommentPrefix=false in cummit_EDITMSG' '
+	cummit_template_commented
 '
 
 cat >expect <<\EOF
 On branch main
 Your branch and 'upstream' have diverged,
-and have 1 and 2 different commits each, respectively.
+and have 1 and 2 different cummits each, respectively.
 
-Changes to be committed:
+Changes to be cummitted:
 	new file:   dir2/added
 
-Changes not staged for commit:
+Changes not staged for cummit:
 	modified:   dir1/modified
 
 Untracked files:
@@ -268,24 +268,24 @@ test_expect_success 'status with gitignore' '
 	cat >expect <<\EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+and have 1 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	dir2/modified
 
 Ignored files:
-  (use "git add -f <file>..." to include in what will be committed)
+  (use "git add -f <file>..." to include in what will be cummitted)
 	.gitignore
 	dir1/untracked
 	dir2/untracked
@@ -333,20 +333,20 @@ test_expect_success 'status with gitignore (nothing untracked)' '
 	cat >expect <<\EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+and have 1 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Ignored files:
-  (use "git add -f <file>..." to include in what will be committed)
+  (use "git add -f <file>..." to include in what will be cummitted)
 	.gitignore
 	dir1/untracked
 	dir2/modified
@@ -403,15 +403,15 @@ test_expect_success 'status -uno' '
 	cat >expect <<EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+and have 1 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
@@ -431,12 +431,12 @@ test_expect_success 'status -uno (advice.statusHints false)' '
 	cat >expect <<EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+and have 1 and 2 different cummits each, respectively.
 
-Changes to be committed:
+Changes to be cummitted:
 	new file:   dir2/added
 
-Changes not staged for commit:
+Changes not staged for cummit:
 	modified:   dir1/modified
 
 Untracked files not listed
@@ -465,20 +465,20 @@ test_expect_success 'status -unormal' '
 	cat >expect <<EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+and have 1 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -520,20 +520,20 @@ test_expect_success 'status -uall' '
 	cat >expect <<EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+and have 1 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -580,20 +580,20 @@ test_expect_success 'status with relative paths' '
 	cat >expect <<\EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+and have 1 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	new file:   ../dir2/added
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	untracked
 	../dir2/modified
 	../dir2/untracked
@@ -648,20 +648,20 @@ test_expect_success TTY 'status with color.ui' '
 	cat >expect <<\EOF &&
 On branch <GREEN>main<RESET>
 Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+and have 1 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	<GREEN>new file:   dir2/added<RESET>
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	<RED>modified:   dir1/modified<RESET>
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	<BLUE>dir1/untracked<RESET>
 	<BLUE>dir2/modified<RESET>
 	<BLUE>dir2/untracked<RESET>
@@ -771,20 +771,20 @@ test_expect_success 'status without relative paths' '
 	cat >expect <<\EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+and have 1 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -841,25 +841,25 @@ test_expect_success 'status -s without relative paths' '
 	test_cmp expect output-wo-ignored
 '
 
-test_expect_success 'dry-run of partial commit excluding new file in index' '
+test_expect_success 'dry-run of partial cummit excluding new file in index' '
 	cat >expect <<EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+and have 1 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/
 	untracked
 
 EOF
-	git commit --dry-run dir1/modified >output &&
+	git cummit --dry-run dir1/modified >output &&
 	test_cmp expect output
 '
 
@@ -877,7 +877,7 @@ test_expect_success 'status shows detached HEAD properly after checking out non-
 	test_when_finished rm -rf upstream downstream actual &&
 
 	test_create_repo upstream &&
-	test_commit -C upstream foo &&
+	test_cummit -C upstream foo &&
 
 	git clone upstream downstream &&
 	git -C downstream checkout @{u} &&
@@ -890,7 +890,7 @@ test_expect_success 'setup status submodule summary' '
 		cd sm &&
 		>foo &&
 		git add foo &&
-		git commit -m "Add foo"
+		git cummit -m "Add foo"
 	) &&
 	git add sm
 '
@@ -899,21 +899,21 @@ test_expect_success 'status submodule summary is disabled by default' '
 	cat >expect <<EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+and have 1 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 	new file:   sm
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -956,26 +956,26 @@ test_expect_success 'status submodule summary' '
 	cat >expect <<EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 1 and 2 different commits each, respectively.
+and have 1 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	new file:   dir2/added
 	new file:   sm
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
-Submodule changes to be committed:
+Submodule changes to be cummitted:
 
 * sm 0000000...$head (1):
   > Add foo
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -993,8 +993,8 @@ test_expect_success 'status submodule summary with status.displayCommentPrefix=f
 	test_cmp expect output
 '
 
-test_expect_success 'commit with submodule summary ignores status.displayCommentPrefix' '
-	commit_template_commented
+test_expect_success 'cummit with submodule summary ignores status.displayCommentPrefix' '
+	cummit_template_commented
 '
 
 cat >expect <<EOF
@@ -1011,30 +1011,30 @@ test_expect_success 'status -s submodule summary' '
 	test_cmp expect output
 '
 
-test_expect_success 'status submodule summary (clean submodule): commit' '
+test_expect_success 'status submodule summary (clean submodule): cummit' '
 	cat >expect <<EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+and have 2 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
 	untracked
 
-no changes added to commit (use "git add" and/or "git commit -a")
+no changes added to cummit (use "git add" and/or "git cummit -a")
 EOF
-	git commit -m "commit submodule" &&
+	git cummit -m "cummit submodule" &&
 	git config status.submodulesummary 10 &&
-	test_must_fail git commit --dry-run >output &&
+	test_must_fail git cummit --dry-run >output &&
 	test_cmp expect output &&
 	git status >output &&
 	test_cmp expect output
@@ -1059,30 +1059,30 @@ test_expect_success 'status -z implies porcelain' '
 	test_cmp expect output
 '
 
-test_expect_success 'commit --dry-run submodule summary (--amend)' '
+test_expect_success 'cummit --dry-run submodule summary (--amend)' '
 	cat >expect <<EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+and have 2 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --source=HEAD^1 --staged <file>..." to unstage)
 	new file:   dir2/added
 	new file:   sm
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
-Submodule changes to be committed:
+Submodule changes to be cummitted:
 
 * sm 0000000...$head (1):
   > Add foo
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
@@ -1090,7 +1090,7 @@ Untracked files:
 
 EOF
 	git config status.submodulesummary 10 &&
-	git commit --dry-run --amend >output &&
+	git cummit --dry-run --amend >output &&
 	test_cmp expect output
 '
 
@@ -1107,7 +1107,7 @@ test_expect_success POSIXPERM,SANITY 'status succeeds in a read-only repository'
 	)
 '
 
-(cd sm && echo > bar && git add bar && git commit -q -m 'Add bar') && git add sm
+(cd sm && echo > bar && git add bar && git cummit -q -m 'Add bar') && git add sm
 new_head=$(cd sm && git rev-parse --short=7 --verify HEAD)
 touch .gitmodules
 
@@ -1115,25 +1115,25 @@ test_expect_success '--ignore-submodules=untracked suppresses submodules with un
 	cat > expect << EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+and have 2 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
-Submodule changes to be committed:
+Submodule changes to be cummitted:
 
 * sm $head...$new_head (1):
   > Add bar
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1224,27 +1224,27 @@ test_expect_success "--ignore-submodules=untracked doesn't suppress submodules w
 	cat > expect << EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+and have 2 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
-  (commit or discard the untracked or modified content in submodules)
+  (cummit or discard the untracked or modified content in submodules)
 	modified:   dir1/modified
 	modified:   sm (modified content)
 
-Submodule changes to be committed:
+Submodule changes to be cummitted:
 
 * sm $head...$new_head (1):
   > Add bar
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1275,26 +1275,26 @@ test_expect_success ".git/config ignore=untracked doesn't suppress submodules wi
 	git config -f .gitmodules  --remove-section submodule.subname
 '
 
-head2=$(cd sm && git commit -q -m "2nd commit" foo && git rev-parse --short=7 --verify HEAD)
+head2=$(cd sm && git cummit -q -m "2nd cummit" foo && git rev-parse --short=7 --verify HEAD)
 
 test_expect_success "--ignore-submodules=untracked doesn't suppress submodule summary" '
 	cat > expect << EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+and have 2 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
-	modified:   sm (new commits)
+	modified:   sm (new cummits)
 
-Submodule changes to be committed:
+Submodule changes to be cummitted:
 
 * sm $head...$new_head (1):
   > Add bar
@@ -1302,10 +1302,10 @@ Submodule changes to be committed:
 Submodules changed but not updated:
 
 * sm $new_head...$head2 (1):
-  > 2nd commit
+  > 2nd cummit
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1362,20 +1362,20 @@ test_expect_success ".git/config ignore=dirty doesn't suppress submodule summary
 cat > expect << EOF
 ; On branch main
 ; Your branch and 'upstream' have diverged,
-; and have 2 and 2 different commits each, respectively.
+; and have 2 and 2 different cummits each, respectively.
 ;   (use "git pull" to merge the remote branch into yours)
 ;
-; Changes to be committed:
+; Changes to be cummitted:
 ;   (use "git restore --staged <file>..." to unstage)
 ;	modified:   sm
 ;
-; Changes not staged for commit:
-;   (use "git add <file>..." to update what will be committed)
+; Changes not staged for cummit:
+;   (use "git add <file>..." to update what will be cummitted)
 ;   (use "git restore <file>..." to discard changes in working directory)
 ;	modified:   dir1/modified
-;	modified:   sm (new commits)
+;	modified:   sm (new cummits)
 ;
-; Submodule changes to be committed:
+; Submodule changes to be cummitted:
 ;
 ; * sm $head...$new_head (1):
 ;   > Add bar
@@ -1383,10 +1383,10 @@ cat > expect << EOF
 ; Submodules changed but not updated:
 ;
 ; * sm $new_head...$head2 (1):
-;   > 2nd commit
+;   > 2nd cummit
 ;
 ; Untracked files:
-;   (use "git add <file>..." to include in what will be committed)
+;   (use "git add <file>..." to include in what will be cummitted)
 ;	.gitmodules
 ;	dir1/untracked
 ;	dir2/modified
@@ -1410,23 +1410,23 @@ test_expect_success "--ignore-submodules=all suppresses submodule summary" '
 	cat > expect << EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+and have 2 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	.gitmodules
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
 	untracked
 
-no changes added to commit (use "git add" and/or "git commit -a")
+no changes added to cummit (use "git add" and/or "git cummit -a")
 EOF
 	git status --ignore-submodules=all > output &&
 	test_cmp expect output
@@ -1436,20 +1436,20 @@ test_expect_success '.gitmodules ignore=all suppresses unstaged submodule summar
 	cat > expect << EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+and have 2 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files:
-  (use "git add <file>..." to include in what will be committed)
+  (use "git add <file>..." to include in what will be cummitted)
 	.gitmodules
 	dir1/untracked
 	dir2/modified
@@ -1537,7 +1537,7 @@ test_expect_success 'Restore default test environment' '
 	git config --unset status.showUntrackedFiles
 '
 
-test_expect_success 'git commit will commit a staged but ignored submodule' '
+test_expect_success 'git cummit will cummit a staged but ignored submodule' '
 	git config --add -f .gitmodules submodule.subname.ignore all &&
 	git config --add -f .gitmodules submodule.subname.path sm &&
 	git config --add submodule.subname.ignore all &&
@@ -1545,39 +1545,39 @@ test_expect_success 'git commit will commit a staged but ignored submodule' '
 	test_i18ngrep "^M. sm" output &&
 	GIT_EDITOR="echo hello >>\"\$1\"" &&
 	export GIT_EDITOR &&
-	git commit -uno &&
+	git cummit -uno &&
 	git status -s --ignore-submodules=dirty >output &&
 	test_i18ngrep ! "^M. sm" output
 '
 
-test_expect_success 'git commit --dry-run will show a staged but ignored submodule' '
+test_expect_success 'git cummit --dry-run will show a staged but ignored submodule' '
 	git reset HEAD^ &&
 	git add sm &&
 	cat >expect << EOF &&
 On branch main
 Your branch and '\''upstream'\'' have diverged,
-and have 2 and 2 different commits each, respectively.
+and have 2 and 2 different cummits each, respectively.
   (use "git pull" to merge the remote branch into yours)
 
-Changes to be committed:
+Changes to be cummitted:
   (use "git restore --staged <file>..." to unstage)
 	modified:   sm
 
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
+Changes not staged for cummit:
+  (use "git add <file>..." to update what will be cummitted)
   (use "git restore <file>..." to discard changes in working directory)
 	modified:   dir1/modified
 
 Untracked files not listed (use -u option to show untracked files)
 EOF
-	git commit -uno --dry-run >output &&
+	git cummit -uno --dry-run >output &&
 	test_cmp expect output &&
 	git status -s --ignore-submodules=dirty >output &&
 	test_i18ngrep "^M. sm" output
 '
 
-test_expect_success 'git commit -m will commit a staged but ignored submodule' '
-	git commit -uno -m message &&
+test_expect_success 'git cummit -m will cummit a staged but ignored submodule' '
+	git cummit -uno -m message &&
 	git status -s --ignore-submodules=dirty >output &&
 	test_i18ngrep ! "^M. sm" output &&
 	git config --remove-section submodule.subname &&
@@ -1616,34 +1616,34 @@ test_expect_success 'no additional info if no stash entries' '
 	test_cmp expected_without_stash actual
 '
 
-test_expect_success '"No commits yet" should be noted in status output' '
+test_expect_success '"No cummits yet" should be noted in status output' '
 	git checkout --orphan empty-branch-1 &&
 	git status >output &&
-	test_i18ngrep "No commits yet" output
+	test_i18ngrep "No cummits yet" output
 '
 
-test_expect_success '"No commits yet" should not be noted in status output' '
+test_expect_success '"No cummits yet" should not be noted in status output' '
 	git checkout --orphan empty-branch-2 &&
-	test_commit test-commit-1 &&
+	test_cummit test-cummit-1 &&
 	git status >output &&
-	test_i18ngrep ! "No commits yet" output
+	test_i18ngrep ! "No cummits yet" output
 '
 
-test_expect_success '"Initial commit" should be noted in commit template' '
+test_expect_success '"Initial cummit" should be noted in cummit template' '
 	git checkout --orphan empty-branch-3 &&
-	touch to_be_committed_1 &&
-	git add to_be_committed_1 &&
-	git commit --dry-run >output &&
-	test_i18ngrep "Initial commit" output
+	touch to_be_cummitted_1 &&
+	git add to_be_cummitted_1 &&
+	git cummit --dry-run >output &&
+	test_i18ngrep "Initial cummit" output
 '
 
-test_expect_success '"Initial commit" should not be noted in commit template' '
+test_expect_success '"Initial cummit" should not be noted in cummit template' '
 	git checkout --orphan empty-branch-4 &&
-	test_commit test-commit-2 &&
-	touch to_be_committed_2 &&
-	git add to_be_committed_2 &&
-	git commit --dry-run >output &&
-	test_i18ngrep ! "Initial commit" output
+	test_cummit test-cummit-2 &&
+	touch to_be_cummitted_2 &&
+	git add to_be_cummitted_2 &&
+	git cummit --dry-run >output &&
+	test_i18ngrep ! "Initial cummit" output
 '
 
 test_expect_success '--no-optional-locks prevents index update' '
@@ -1658,7 +1658,7 @@ test_expect_success 'racy timestamps will be fixed for clean worktree' '
 	echo content >racy-dirty &&
 	echo content >racy-racy &&
 	git add racy* &&
-	git commit -m "racy test files" &&
+	git cummit -m "racy test files" &&
 	# let status rewrite the index, if necessary; after that we expect
 	# no more index writes unless caused by racy timestamps; note that
 	# timestamps may already be racy now (depending on previous tests)

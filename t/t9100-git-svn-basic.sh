@@ -44,13 +44,13 @@ test_expect_success \
 
 test_expect_success "checkout from svn" 'svn co "$svnrepo" "$SVN_TREE"'
 
-name='try a deep --rmdir with a commit'
+name='try a deep --rmdir with a cummit'
 test_expect_success "$name" '
 	git checkout -f -b mybranch remotes/git-svn &&
 	mv dir/a/b/c/d/e/file dir/file &&
 	cp dir/file file &&
 	git update-index --add --remove dir/a/b/c/d/e/file dir/file file &&
-	git commit -m "$name" &&
+	git cummit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch &&
 	svn_cmd up "$SVN_TREE" &&
@@ -64,7 +64,7 @@ test_expect_success "$name" '
 	mv dir/new_file dir/file &&
 	git update-index --remove dir/file &&
 	git update-index --add dir/file/file &&
-	git commit -m "$name" &&
+	git cummit -m "$name" &&
 	test_must_fail git svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch
 '
@@ -79,7 +79,7 @@ test_expect_success "$name" '
 	mv zzz bar &&
 	git update-index --remove -- bar/zzz &&
 	git update-index --add -- bar &&
-	git commit -m "$name" &&
+	git cummit -m "$name" &&
 	test_must_fail git svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch2
 '
@@ -94,7 +94,7 @@ test_expect_success "$name" '
 	mkdir bar/zzz &&
 	echo yyy > bar/zzz/yyy &&
 	git update-index --add bar/zzz/yyy &&
-	git commit -m "$name" &&
+	git cummit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch3 &&
 	svn_cmd up "$SVN_TREE" &&
@@ -111,7 +111,7 @@ test_expect_success "$name" '
 	touch dir &&
 	echo asdf > dir &&
 	git update-index --add -- dir &&
-	git commit -m "$name" &&
+	git cummit -m "$name" &&
 	test_must_fail git svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch4
 '
@@ -123,7 +123,7 @@ test_expect_success POSIXPERM "$name" '
 	git checkout -f -b mybranch5 remotes/git-svn &&
 	chmod -x exec.sh &&
 	git update-index exec.sh &&
-	git commit -m "$name" &&
+	git cummit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
@@ -134,7 +134,7 @@ name='add executable bit back file'
 test_expect_success POSIXPERM "$name" '
 	chmod +x exec.sh &&
 	git update-index exec.sh &&
-	git commit -m "$name" &&
+	git cummit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
@@ -146,7 +146,7 @@ test_expect_success SYMLINKS "$name" '
 	rm exec.sh &&
 	ln -s file exec.sh &&
 	git update-index exec.sh &&
-	git commit -m "$name" &&
+	git cummit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
@@ -158,7 +158,7 @@ test_expect_success POSIXPERM,SYMLINKS "$name" '
 	chmod +x file &&
 	ln -s file exec-2.sh &&
 	git update-index --add file exec-2.sh &&
-	git commit -m "$name" &&
+	git cummit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
@@ -171,7 +171,7 @@ test_expect_success POSIXPERM,SYMLINKS "$name" '
 	rm exec-2.sh &&
 	cp help exec-2.sh &&
 	git update-index exec-2.sh &&
-	git commit -m "$name" &&
+	git cummit -m "$name" &&
 	git svn set-tree --find-copies-harder --rmdir \
 		remotes/git-svn..mybranch5 &&
 	svn_cmd up "$SVN_TREE" &&
@@ -179,14 +179,14 @@ test_expect_success POSIXPERM,SYMLINKS "$name" '
 	test ! -h "$SVN_TREE"/exec-2.sh &&
 	test_cmp help "$SVN_TREE"/exec-2.sh'
 
-name="commit with UTF-8 message: locale: $GIT_TEST_UTF8_LOCALE"
+name="cummit with UTF-8 message: locale: $GIT_TEST_UTF8_LOCALE"
 LC_ALL="$GIT_TEST_UTF8_LOCALE"
 export LC_ALL
 # This test relies on the previous test, hence requires POSIXPERM,SYMLINKS
 test_expect_success UTF8,POSIXPERM,SYMLINKS "$name" "
 	echo '# hello' >> exec-2.sh &&
 	git update-index exec-2.sh &&
-	git commit -m 'éï∏' &&
+	git cummit -m 'éï∏' &&
 	git svn set-tree HEAD"
 unset LC_ALL
 
@@ -255,17 +255,17 @@ test_expect_success \
 			      "^:refs/remotes/git-svn$"
         '
 
-test_expect_success 'dcommit $rev does not clobber current branch' '
+test_expect_success 'dcummit $rev does not clobber current branch' '
 	git svn fetch -i bar &&
 	git checkout -b my-bar refs/remotes/bar &&
 	echo 1 > foo &&
 	git add foo &&
-	git commit -m "change 1" &&
+	git cummit -m "change 1" &&
 	echo 2 > foo &&
 	git add foo &&
-	git commit -m "change 2" &&
+	git cummit -m "change 2" &&
 	old_head=$(git rev-parse HEAD) &&
-	git svn dcommit -i bar HEAD^ &&
+	git svn dcummit -i bar HEAD^ &&
 	test $old_head = $(git rev-parse HEAD) &&
 	test refs/heads/my-bar = $(git symbolic-ref HEAD) &&
 	git log refs/remotes/bar | grep "change 1" &&
@@ -274,31 +274,31 @@ test_expect_success 'dcommit $rev does not clobber current branch' '
 	git branch -D my-bar
 	'
 
-test_expect_success 'able to dcommit to a subdirectory' '
+test_expect_success 'able to dcummit to a subdirectory' '
 	git svn fetch -i bar &&
 	git checkout -b my-bar refs/remotes/bar &&
 	echo abc > d &&
 	git update-index --add d &&
-	git commit -m "/bar/d should be in the log" &&
-	git svn dcommit -i bar &&
+	git cummit -m "/bar/d should be in the log" &&
+	git svn dcummit -i bar &&
 	test -z "$(git diff refs/heads/my-bar refs/remotes/bar)" &&
 	mkdir newdir &&
 	echo new > newdir/dir &&
 	git update-index --add newdir/dir &&
-	git commit -m "add a new directory" &&
-	git svn dcommit -i bar &&
+	git cummit -m "add a new directory" &&
+	git svn dcummit -i bar &&
 	test -z "$(git diff refs/heads/my-bar refs/remotes/bar)" &&
 	echo foo >> newdir/dir &&
 	git update-index newdir/dir &&
-	git commit -m "modify a file in new directory" &&
-	git svn dcommit -i bar &&
+	git cummit -m "modify a file in new directory" &&
+	git svn dcummit -i bar &&
 	test -z "$(git diff refs/heads/my-bar refs/remotes/bar)"
 '
 
-test_expect_success 'dcommit should not fail with a touched file' '
-	test_commit "commit-new-file-foo2" foo2 &&
+test_expect_success 'dcummit should not fail with a touched file' '
+	test_cummit "cummit-new-file-foo2" foo2 &&
 	test-tool chmtime =-60 foo &&
-	git svn dcommit
+	git svn dcummit
 '
 
 test_expect_success 'rebase should not fail with a touched file' '
@@ -309,7 +309,7 @@ test_expect_success 'rebase should not fail with a touched file' '
 test_expect_success 'able to set-tree to a subdirectory' '
 	echo cba > d &&
 	git update-index d &&
-	git commit -m "update /bar/d" &&
+	git cummit -m "update /bar/d" &&
 	git svn set-tree -i bar HEAD &&
 	test -z "$(git diff refs/heads/my-bar refs/remotes/bar)"
 '

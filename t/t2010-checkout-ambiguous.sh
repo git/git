@@ -12,7 +12,7 @@ test_expect_success 'setup' '
 	echo hello >world &&
 	echo hello >all &&
 	git add all world &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git branch world
 '
 

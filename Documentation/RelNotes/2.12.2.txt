@@ -47,7 +47,7 @@ Fixes since v2.12.1
    in the repository and used a fixed-length buffer to hold them
    without checking for overflow.
 
- * The code that parses header fields in the commit object has been
+ * The code that parses header fields in the cummit object has been
    updated for (micro)performance and code hygiene.
 
  * A test that creates a confusing branch whose name is HEAD has been

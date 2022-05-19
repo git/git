@@ -397,9 +397,9 @@ include::config/color.txt[]
 
 include::config/column.txt[]
 
-include::config/commit.txt[]
+include::config/cummit.txt[]
 
-include::config/commitgraph.txt[]
+include::config/cummitgraph.txt[]
 
 include::config/credential.txt[]
 

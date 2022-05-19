@@ -5,10 +5,10 @@
 # Minimal changes to "port" it to core-git (c) Johannes Schindelin, 2007
 #
 # Lets you rewrite the revision history of the current branch, creating
-# a new branch. You can specify a number of filters to modify the commits,
+# a new branch. You can specify a number of filters to modify the cummits,
 # files and trees.
 
-# The following functions will also be available in the commit filter:
+# The following functions will also be available in the cummit filter:
 
 functions=$(cat << \EOF
 EMPTY_TREE=$(git hash-object -t tree /dev/null)
@@ -28,10 +28,10 @@ map()
 	fi
 }
 
-# if you run 'skip_commit "$@"' in a commit filter, it will print
-# the (mapped) parents, effectively skipping the commit.
+# if you run 'skip_cummit "$@"' in a cummit filter, it will print
+# the (mapped) parents, effectively skipping the cummit.
 
-skip_commit()
+skip_cummit()
 {
 	shift;
 	while [ -n "$1" ];
@@ -42,16 +42,16 @@ skip_commit()
 	done;
 }
 
-# if you run 'git_commit_non_empty_tree "$@"' in a commit filter,
-# it will skip commits that leave the tree untouched, commit the other.
-git_commit_non_empty_tree()
+# if you run 'git_cummit_non_empty_tree "$@"' in a cummit filter,
+# it will skip cummits that leave the tree untouched, cummit the other.
+git_cummit_non_empty_tree()
 {
 	if test $# = 3 && test "$1" = $(git rev-parse "$3^{tree}"); then
 		map "$3"
 	elif test $# = 1 && test "$1" = $EMPTY_TREE; then
 		:
 	else
-		git commit-tree "$@"
+		git cummit-tree "$@"
 	fi
 }
 # override die(): this version puts in an extra line break, so that
@@ -78,9 +78,9 @@ finish_ident() {
 }
 
 set_ident () {
-	parse_ident_from_commit author AUTHOR committer COMMITTER
+	parse_ident_from_cummit author AUTHOR cummitter cummitTER
 	finish_ident AUTHOR
-	finish_ident COMMITTER
+	finish_ident cummitTER
 }
 
 if test -z "$FILTER_BRANCH_SQUELCH_WARNING$GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS"
@@ -100,7 +100,7 @@ fi
 USAGE="[--setup <command>] [--subdirectory-filter <directory>] [--env-filter <command>]
 	[--tree-filter <command>] [--index-filter <command>]
 	[--parent-filter <command>] [--msg-filter <command>]
-	[--commit-filter <command>] [--tag-name-filter <command>]
+	[--cummit-filter <command>] [--tag-name-filter <command>]
 	[--original <namespace>]
 	[-d <directory>] [-f | --force] [--state-branch <branch>]
 	[--] [<rev-list options>...]"
@@ -119,7 +119,7 @@ filter_tree=
 filter_index=
 filter_parent=
 filter_msg=cat
-filter_commit=
+filter_cummit=
 filter_tag_name=
 filter_subdir=
 state_branch=
@@ -189,8 +189,8 @@ do
 	--msg-filter)
 		filter_msg="$OPTARG"
 		;;
-	--commit-filter)
-		filter_commit="$functions; $OPTARG"
+	--cummit-filter)
+		filter_cummit="$functions; $OPTARG"
 		;;
 	--tag-name-filter)
 		filter_tag_name="$OPTARG"
@@ -207,15 +207,15 @@ do
 	esac
 done
 
-case "$prune_empty,$filter_commit" in
+case "$prune_empty,$filter_cummit" in
 ,)
-	filter_commit='git commit-tree "$@"';;
+	filter_cummit='git cummit-tree "$@"';;
 t,)
-	filter_commit="$functions;"' git_commit_non_empty_tree "$@"';;
+	filter_cummit="$functions;"' git_cummit_non_empty_tree "$@"';;
 ,*)
 	;;
 *)
-	die "Cannot set --prune-empty and --commit-filter at the same time"
+	die "Cannot set --prune-empty and --cummit-filter at the same time"
 esac
 
 case "$force" in
@@ -242,9 +242,9 @@ ORIG_GIT_INDEX_FILE="$GIT_INDEX_FILE"
 ORIG_GIT_AUTHOR_NAME="$GIT_AUTHOR_NAME"
 ORIG_GIT_AUTHOR_EMAIL="$GIT_AUTHOR_EMAIL"
 ORIG_GIT_AUTHOR_DATE="$GIT_AUTHOR_DATE"
-ORIG_GIT_COMMITTER_NAME="$GIT_COMMITTER_NAME"
-ORIG_GIT_COMMITTER_EMAIL="$GIT_COMMITTER_EMAIL"
-ORIG_GIT_COMMITTER_DATE="$GIT_COMMITTER_DATE"
+ORIG_GIT_cummitTER_NAME="$GIT_cummitTER_NAME"
+ORIG_GIT_cummitTER_EMAIL="$GIT_cummitTER_EMAIL"
+ORIG_GIT_cummitTER_DATE="$GIT_cummitTER_DATE"
 
 GIT_WORK_TREE=.
 export GIT_DIR GIT_WORK_TREE
@@ -276,7 +276,7 @@ do
 	then
 		echo "$ref"
 	else
-		warn "WARNING: not rewriting '$ref' (not a committish)"
+		warn "WARNING: not rewriting '$ref' (not a cummittish)"
 	fi
 done >"$tempdir"/heads <"$tempdir"/raw-refs
 
@@ -286,15 +286,15 @@ test -s "$tempdir"/heads ||
 GIT_INDEX_FILE="$(pwd)/../index"
 export GIT_INDEX_FILE
 
-# map old->new commit ids for rewriting parents
+# map old->new cummit ids for rewriting parents
 mkdir ../map || die "Could not create map/ directory"
 
 if test -n "$state_branch"
 then
-	state_commit=$(git rev-parse --no-flags --revs-only "$state_branch")
-	if test -n "$state_commit"
+	state_cummit=$(git rev-parse --no-flags --revs-only "$state_branch")
+	if test -n "$state_cummit"
 	then
-		echo "Populating map from $state_branch ($state_commit)" 1>&2
+		echo "Populating map from $state_branch ($state_cummit)" 1>&2
 		perl -e'open(MAP, "-|", "git show $ARGV[0]:filter.map") or die;
 			while (<MAP>) {
 				m/(.*):(.*)/ or die;
@@ -302,7 +302,7 @@ then
 				print F "$2" or die;
 				close(F) or die;
 			}
-			close(MAP) or die;' "$state_commit" \
+			close(MAP) or die;' "$state_cummit" \
 				|| die "Unable to load state from $state_branch:filter.map"
 	else
 		echo "Branch $state_branch does not exist. Will create" 1>&2
@@ -333,22 +333,22 @@ esac
 
 git rev-list --reverse --topo-order --default HEAD \
 	--parents --simplify-merges --stdin "$@" <../parse >../revs ||
-	die "Could not get the commits"
-commits=$(wc -l <../revs | tr -d " ")
+	die "Could not get the cummits"
+cummits=$(wc -l <../revs | tr -d " ")
 
-test $commits -eq 0 && die_with_status 2 "Found nothing to rewrite"
+test $cummits -eq 0 && die_with_status 2 "Found nothing to rewrite"
 
-# Rewrite the commits
+# Rewrite the cummits
 report_progress ()
 {
 	if test -n "$progress" &&
-		test $git_filter_branch__commit_count -gt $next_sample_at
+		test $git_filter_branch__cummit_count -gt $next_sample_at
 	then
-		count=$git_filter_branch__commit_count
+		count=$git_filter_branch__cummit_count
 
 		now=$(date +%s)
 		elapsed=$(($now - $start_timestamp))
-		remaining=$(( ($commits - $count) * $elapsed / $count ))
+		remaining=$(( ($cummits - $count) * $elapsed / $count ))
 		if test $elapsed -gt 0
 		then
 			next_sample_at=$(( ($elapsed + 1) * $count / $elapsed ))
@@ -357,10 +357,10 @@ report_progress ()
 		fi
 		progress=" ($elapsed seconds passed, remaining $remaining predicted)"
 	fi
-	printf "\rRewrite $commit ($count/$commits)$progress    "
+	printf "\rRewrite $cummit ($count/$cummits)$progress    "
 }
 
-git_filter_branch__commit_count=0
+git_filter_branch__cummit_count=0
 
 progress= start_timestamp=
 if date '+%s' 2>/dev/null | grep -q '^[0-9][0-9]*$'
@@ -382,24 +382,24 @@ fi
 eval "$filter_setup" < /dev/null ||
 	die "filter setup failed: $filter_setup"
 
-while read commit parents; do
-	git_filter_branch__commit_count=$(($git_filter_branch__commit_count+1))
+while read cummit parents; do
+	git_filter_branch__cummit_count=$(($git_filter_branch__cummit_count+1))
 
 	report_progress
-	test -f "$workdir"/../map/$commit && continue
+	test -f "$workdir"/../map/$cummit && continue
 
 	case "$filter_subdir" in
 	"")
 		if test -n "$need_index"
 		then
-			GIT_ALLOW_NULL_SHA1=1 git read-tree -i -m $commit
+			GIT_ALLOW_NULL_SHA1=1 git read-tree -i -m $cummit
 		fi
 		;;
 	*)
-		# The commit may not have the subdirectory at all
+		# The cummit may not have the subdirectory at all
 		err=$(GIT_ALLOW_NULL_SHA1=1 \
-		      git read-tree -i -m $commit:"$filter_subdir" 2>&1) || {
-			if ! git rev-parse -q --verify $commit:"$filter_subdir"
+		      git read-tree -i -m $cummit:"$filter_subdir" 2>&1) || {
+			if ! git rev-parse -q --verify $cummit:"$filter_subdir"
 			then
 				rm -f "$GIT_INDEX_FILE"
 			else
@@ -409,27 +409,27 @@ while read commit parents; do
 		}
 	esac || die "Could not initialize the index"
 
-	GIT_COMMIT=$commit
-	export GIT_COMMIT
-	git cat-file commit "$commit" >../commit ||
-		die "Cannot read commit $commit"
+	GIT_cummit=$cummit
+	export GIT_cummit
+	git cat-file cummit "$cummit" >../cummit ||
+		die "Cannot read cummit $cummit"
 
-	eval "$(set_ident <../commit)" ||
-		die "setting author/committer failed for commit $commit"
+	eval "$(set_ident <../cummit)" ||
+		die "setting author/cummitter failed for cummit $cummit"
 	eval "$filter_env" < /dev/null ||
 		die "env filter failed: $filter_env"
 
 	if [ "$filter_tree" ]; then
 		git checkout-index -f -u -a ||
 			die "Could not checkout the index"
-		# files that $commit removed are now still in the working tree;
+		# files that $cummit removed are now still in the working tree;
 		# remove them, else they would be added again
 		git clean -d -q -f -x
 		eval "$filter_tree" < /dev/null ||
 			die "tree filter failed: $filter_tree"
 
 		(
-			git diff-index -r --name-only --ignore-submodules $commit -- &&
+			git diff-index -r --name-only --ignore-submodules $cummit -- &&
 			git ls-files --others
 		) > "$tempdir"/tree-state || exit
 		git update-index --add --replace --remove --stdin \
@@ -462,9 +462,9 @@ while read commit parents; do
 			# skip header lines...
 			:;
 		done
-		# and output the actual commit message
+		# and output the actual cummit message
 		cat
-	} <../commit |
+	} <../cummit |
 		eval "$filter_msg" > ../message ||
 			die "msg filter failed: $filter_msg"
 
@@ -472,16 +472,16 @@ while read commit parents; do
 	then
 		tree=$(git write-tree)
 	else
-		tree=$(git rev-parse "$commit^{tree}")
+		tree=$(git rev-parse "$cummit^{tree}")
 	fi
-	workdir=$workdir @SHELL_PATH@ -c "$filter_commit" "git commit-tree" \
-		"$tree" $parentstr < ../message > ../map/$commit ||
-			die "could not write rewritten commit"
+	workdir=$workdir @SHELL_PATH@ -c "$filter_cummit" "git cummit-tree" \
+		"$tree" $parentstr < ../message > ../map/$cummit ||
+			die "could not write rewritten cummit"
 done <../revs
 
 # If we are filtering for paths, as in the case of a subdirectory
 # filter, it is possible that a specified head is not in the set of
-# rewritten commits, because it was pruned by the revision walker.
+# rewritten cummits, because it was pruned by the revision walker.
 # Ancestor remapping fixes this by mapping these heads to the unique
 # nearest ancestor that survived the pruning.
 
@@ -523,7 +523,7 @@ do
 					"$ref" $rewritten $sha1 2>/dev/null; then
 			if test $(git cat-file -t "$ref") = tag; then
 				if test -z "$filter_tag_name"; then
-					warn "WARNING: You said to rewrite tagged commits, but not the corresponding tag."
+					warn "WARNING: You said to rewrite tagged cummits, but not the corresponding tag."
 					warn "WARNING: Perhaps use '--tag-name-filter cat' to rewrite the tag."
 				fi
 			else
@@ -545,27 +545,27 @@ if [ "$filter_tag_name" ]; then
 	while read sha1 type ref; do
 		ref="${ref#refs/tags/}"
 		# XXX: Rewrite tagged trees as well?
-		if [ "$type" != "commit" -a "$type" != "tag" ]; then
+		if [ "$type" != "cummit" -a "$type" != "tag" ]; then
 			continue;
 		fi
 
 		if [ "$type" = "tag" ]; then
-			# Dereference to a commit
+			# Dereference to a cummit
 			sha1t="$sha1"
-			sha1="$(git rev-parse -q "$sha1"^{commit})" || continue
+			sha1="$(git rev-parse -q "$sha1"^{cummit})" || continue
 		fi
 
 		[ -f "../map/$sha1" ] || continue
 		new_sha1="$(cat "../map/$sha1")"
-		GIT_COMMIT="$sha1"
-		export GIT_COMMIT
+		GIT_cummit="$sha1"
+		export GIT_cummit
 		new_ref="$(echo "$ref" | eval "$filter_tag_name")" ||
 			die "tag name filter failed: $filter_tag_name"
 
 		echo "$ref -> $new_ref ($sha1 -> $new_sha1)"
 
 		if [ "$type" = "tag" ]; then
-			new_sha1=$( ( printf 'object %s\ntype commit\ntag %s\n' \
+			new_sha1=$( ( printf 'object %s\ntype cummit\ntag %s\n' \
 						"$new_sha1" "$new_ref"
 				git cat-file tag "$ref" |
 				sed -n \
@@ -592,7 +592,7 @@ fi
 
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 unset GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE
-unset GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE
+unset GIT_cummitTER_NAME GIT_cummitTER_EMAIL GIT_cummitTER_DATE
 test -z "$ORIG_GIT_DIR" || {
 	GIT_DIR="$ORIG_GIT_DIR" && export GIT_DIR
 }
@@ -616,17 +616,17 @@ test -z "$ORIG_GIT_AUTHOR_DATE" || {
 	GIT_AUTHOR_DATE="$ORIG_GIT_AUTHOR_DATE" &&
 	export GIT_AUTHOR_DATE
 }
-test -z "$ORIG_GIT_COMMITTER_NAME" || {
-	GIT_COMMITTER_NAME="$ORIG_GIT_COMMITTER_NAME" &&
-	export GIT_COMMITTER_NAME
+test -z "$ORIG_GIT_cummitTER_NAME" || {
+	GIT_cummitTER_NAME="$ORIG_GIT_cummitTER_NAME" &&
+	export GIT_cummitTER_NAME
 }
-test -z "$ORIG_GIT_COMMITTER_EMAIL" || {
-	GIT_COMMITTER_EMAIL="$ORIG_GIT_COMMITTER_EMAIL" &&
-	export GIT_COMMITTER_EMAIL
+test -z "$ORIG_GIT_cummitTER_EMAIL" || {
+	GIT_cummitTER_EMAIL="$ORIG_GIT_cummitTER_EMAIL" &&
+	export GIT_cummitTER_EMAIL
 }
-test -z "$ORIG_GIT_COMMITTER_DATE" || {
-	GIT_COMMITTER_DATE="$ORIG_GIT_COMMITTER_DATE" &&
-	export GIT_COMMITTER_DATE
+test -z "$ORIG_GIT_cummitTER_DATE" || {
+	GIT_cummitTER_DATE="$ORIG_GIT_cummitTER_DATE" &&
+	export GIT_cummitTER_DATE
 }
 
 if test -n "$state_branch"
@@ -643,13 +643,13 @@ then
 			}
 			close(H) or die;' || die "Unable to save state")
 	state_tree=$(printf '100644 blob %s\tfilter.map\n' "$state_blob" | git mktree)
-	if test -n "$state_commit"
+	if test -n "$state_cummit"
 	then
-		state_commit=$(echo "Sync" | git commit-tree "$state_tree" -p "$state_commit")
+		state_cummit=$(echo "Sync" | git cummit-tree "$state_tree" -p "$state_cummit")
 	else
-		state_commit=$(echo "Sync" | git commit-tree "$state_tree" )
+		state_cummit=$(echo "Sync" | git cummit-tree "$state_tree" )
 	fi
-	git update-ref "$state_branch" "$state_commit"
+	git update-ref "$state_branch" "$state_cummit"
 fi
 
 cd "$orig_dir"

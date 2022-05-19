@@ -14,7 +14,7 @@ Fixes since v1.8.5.3
  * SSL-related options were not passed correctly to underlying socket
    layer in "git send-email".
 
- * "git commit -v" appends the patch to the log message before
+ * "git cummit -v" appends the patch to the log message before
    editing, and then removes the patch when the editor returned
    control. However, the patch was not stripped correctly when the
    first modified path was a submodule.

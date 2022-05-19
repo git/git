@@ -1709,7 +1709,7 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 	else if (mode == ADD_P_RESET) {
 		/*
 		 * NEEDSWORK: Instead of comparing to the literal "HEAD",
-		 * compare the commit objects instead so that other ways of
+		 * compare the cummit objects instead so that other ways of
 		 * saying the same thing (such as "@") are also handled
 		 * appropriately.
 		 *

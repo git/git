@@ -677,10 +677,10 @@ test_expect_success 'invalid unit' '
 '
 
 test_expect_success 'invalid unit boolean' '
-	git config commit.gpgsign "1true" &&
-	test_cmp_config 1true commit.gpgsign &&
-	test_must_fail git config --bool --get commit.gpgsign 2>actual &&
-	test_i18ngrep "bad boolean config value .1true. for .commit.gpgsign." actual
+	git config cummit.gpgsign "1true" &&
+	test_cmp_config 1true cummit.gpgsign &&
+	test_must_fail git config --bool --get cummit.gpgsign 2>actual &&
+	test_i18ngrep "bad boolean config value .1true. for .cummit.gpgsign." actual
 '
 
 test_expect_success 'line number is reported correctly' '
@@ -1056,7 +1056,7 @@ test_expect_success 'check split_cmdline return' "
 	test_must_fail git split-cmdline-fix &&
 	echo foo > foo &&
 	git add foo &&
-	git commit -m 'initial commit' &&
+	git cummit -m 'initial cummit' &&
 	git config branch.main.mergeoptions 'echo \"' &&
 	test_must_fail git merge main
 "
@@ -2009,7 +2009,7 @@ test_expect_success '--show-origin blob ref' '
 	blob:main:custom.conf	user.custom=true
 	EOF
 	git add "$CUSTOM_CONFIG_FILE" &&
-	git commit -m "new config file" &&
+	git cummit -m "new config file" &&
 	git config --blob=main:"$CUSTOM_CONFIG_FILE" --show-origin --list >output &&
 	test_cmp expect output
 '

@@ -10,23 +10,23 @@ is_delta_base () {
 	test "$delta_base" = "$2"
 }
 
-# generate a commit on branch $1 with a single file, "file", whose
+# generate a cummit on branch $1 with a single file, "file", whose
 # content is mostly based on the seed $2, but with a unique bit
 # of content $3 appended. This should allow us to see whether
 # blobs of different refs delta against each other.
-commit() {
+cummit() {
 	blob=$({ test-tool genrandom "$2" 10240 && echo "$3"; } |
 	       git hash-object -w --stdin) &&
 	tree=$(printf '100644 blob %s\tfile\n' "$blob" | git mktree) &&
-	commit=$(echo "$2-$3" | git commit-tree "$tree" ${4:+-p "$4"}) &&
-	git update-ref "refs/heads/$1" "$commit" &&
+	cummit=$(echo "$2-$3" | git cummit-tree "$tree" ${4:+-p "$4"}) &&
+	git update-ref "refs/heads/$1" "$cummit" &&
 	eval "$1"'=$(git rev-parse $1:file)' &&
 	eval "echo >&2 $1=\$$1"
 }
 
-test_expect_success 'setup commits' '
-	commit one seed 1 &&
-	commit two seed 12
+test_expect_success 'setup cummits' '
+	cummit one seed 1 &&
+	cummit two seed 12
 '
 
 # Note: This is heavily dependent on the "prefer larger objects as base"
@@ -87,9 +87,9 @@ test_expect_success 'island regexes follow last-one-wins scheme' '
 '
 
 test_expect_success 'setup shared history' '
-	commit root shared root &&
-	commit one shared 1 root &&
-	commit two shared 12-long root
+	cummit root shared root &&
+	cummit one shared 1 root &&
+	cummit two shared 12-long root
 '
 
 # We know that $two will be preferred as a base from $one,
@@ -121,7 +121,7 @@ test_expect_success 'deltas allowed against superset islands' '
 # before "$two". This should be guaranteed by the island code. However, for
 # this test to fail without islands, we are also assuming that it would not
 # otherwise do so. This is true by the current write order, which will put
-# commits (and their contents) before their parents.
+# cummits (and their contents) before their parents.
 test_expect_success 'island core places core objects first' '
 	cat >expect <<-EOF &&
 	$root

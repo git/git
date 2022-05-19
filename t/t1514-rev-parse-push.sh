@@ -17,7 +17,7 @@ test_expect_success 'setup' '
 	git init --bare other.git &&
 	git remote add origin parent.git &&
 	git remote add other other.git &&
-	test_commit base &&
+	test_cummit base &&
 	git push origin HEAD &&
 	git branch --set-upstream-to=origin/main main &&
 	git branch --track topic origin/main &&

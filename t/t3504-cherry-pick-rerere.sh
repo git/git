@@ -8,13 +8,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success setup '
-	test_commit foo &&
-	test_commit foo-main foo &&
-	test_commit bar-main bar &&
+	test_cummit foo &&
+	test_cummit foo-main foo &&
+	test_cummit bar-main bar &&
 
 	git checkout -b dev foo &&
-	test_commit foo-dev foo &&
-	test_commit bar-dev bar &&
+	test_cummit foo-dev foo &&
+	test_cummit bar-dev bar &&
 	git config rerere.enabled true
 '
 
@@ -25,7 +25,7 @@ test_expect_success 'conflicting merge' '
 test_expect_success 'fixup' '
 	echo foo-resolved >foo &&
 	echo bar-resolved >bar &&
-	git commit -am resolved &&
+	git cummit -am resolved &&
 	cp foo foo-expect &&
 	cp bar bar-expect &&
 	git reset --hard HEAD^

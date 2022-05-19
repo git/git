@@ -9,7 +9,7 @@
 #include "config.h"
 #include "color.h"
 #include "refs.h"
-#include "commit.h"
+#include "cummit.h"
 #include "builtin.h"
 #include "remote.h"
 #include "parse-options.h"
@@ -23,7 +23,7 @@
 #include "ref-filter.h"
 #include "worktree.h"
 #include "help.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 
 static const char * const builtin_branch_usage[] = {
 	N_("git branch [<options>] [-r | -a] [--merged] [--no-merged]"),
@@ -122,7 +122,7 @@ static const char *branch_get_color(enum color_branch ix)
 }
 
 static int branch_merged(int kind, const char *name,
-			 struct commit *rev, struct commit *head_rev)
+			 struct cummit *rev, struct cummit *head_rev)
 {
 	/*
 	 * This checks whether the merge bases of branch and HEAD (or
@@ -130,7 +130,7 @@ static int branch_merged(int kind, const char *name,
 	 * branch, which means that the branch has already been merged
 	 * safely to HEAD (or the other branch).
 	 */
-	struct commit *reference_rev = NULL;
+	struct cummit *reference_rev = NULL;
 	const char *reference_name = NULL;
 	void *reference_name_to_free = NULL;
 	int merged;
@@ -144,7 +144,7 @@ static int branch_merged(int kind, const char *name,
 		    (reference_name = reference_name_to_free =
 		     resolve_refdup(upstream, RESOLVE_REF_READING,
 				    &oid, NULL)) != NULL)
-			reference_rev = lookup_commit_reference(the_repository,
+			reference_rev = lookup_cummit_reference(the_repository,
 								&oid);
 	}
 	if (!reference_rev)
@@ -174,13 +174,13 @@ static int branch_merged(int kind, const char *name,
 	return merged;
 }
 
-static int check_branch_commit(const char *branchname, const char *refname,
-			       const struct object_id *oid, struct commit *head_rev,
+static int check_branch_cummit(const char *branchname, const char *refname,
+			       const struct object_id *oid, struct cummit *head_rev,
 			       int kinds, int force)
 {
-	struct commit *rev = lookup_commit_reference(the_repository, oid);
+	struct cummit *rev = lookup_cummit_reference(the_repository, oid);
 	if (!force && !rev) {
-		error(_("Couldn't look up commit object for '%s'"), refname);
+		error(_("Couldn't look up cummit object for '%s'"), refname);
 		return -1;
 	}
 	if (!force && !branch_merged(kinds, branchname, rev, head_rev)) {
@@ -205,7 +205,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			   int quiet)
 {
 	struct worktree **worktrees;
-	struct commit *head_rev = NULL;
+	struct cummit *head_rev = NULL;
 	struct object_id oid;
 	char *name = NULL;
 	const char *fmt;
@@ -237,9 +237,9 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 	branch_name_pos = strcspn(fmt, "%");
 
 	if (!force) {
-		head_rev = lookup_commit_reference(the_repository, &head_oid);
+		head_rev = lookup_cummit_reference(the_repository, &head_oid);
 		if (!head_rev)
-			die(_("Couldn't look up commit object for HEAD"));
+			die(_("Couldn't look up cummit object for HEAD"));
 	}
 
 	worktrees = get_worktrees();
@@ -278,7 +278,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		}
 
 		if (!(flags & (REF_ISSYMREF|REF_ISBROKEN)) &&
-		    check_branch_commit(bname.buf, name, &oid, head_rev, kinds,
+		    check_branch_cummit(bname.buf, name, &oid, head_rev, kinds,
 					force)) {
 			ret = 1;
 			goto next;
@@ -663,10 +663,10 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT__COLOR(&branch_use_color, N_("use colored output")),
 		OPT_SET_INT('r', "remotes",     &filter.kind, N_("act on remote-tracking branches"),
 			FILTER_REFS_REMOTES),
-		OPT_CONTAINS(&filter.with_commit, N_("print only branches that contain the commit")),
-		OPT_NO_CONTAINS(&filter.no_commit, N_("print only branches that don't contain the commit")),
-		OPT_WITH(&filter.with_commit, N_("print only branches that contain the commit")),
-		OPT_WITHOUT(&filter.no_commit, N_("print only branches that don't contain the commit")),
+		OPT_CONTAINS(&filter.with_cummit, N_("print only branches that contain the cummit")),
+		OPT_NO_CONTAINS(&filter.no_cummit, N_("print only branches that don't contain the cummit")),
+		OPT_WITH(&filter.with_cummit, N_("print only branches that contain the cummit")),
+		OPT_WITHOUT(&filter.no_cummit, N_("print only branches that don't contain the cummit")),
 		OPT__ABBREV(&filter.abbrev),
 
 		OPT_GROUP(N_("Specific git-branch actions:")),
@@ -724,7 +724,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	    !show_current && !unset_upstream && argc == 0)
 		list = 1;
 
-	if (filter.with_commit || filter.no_commit ||
+	if (filter.with_cummit || filter.no_cummit ||
 	    filter.reachable_from || filter.unreachable_from || filter.points_at.nr)
 		list = 1;
 
@@ -811,7 +811,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 			strbuf_release(&branch_ref);
 
 			if (!argc)
-				return error(_("No commit on branch '%s' yet."),
+				return error(_("No cummit on branch '%s' yet."),
 					     branch_name);
 			else
 				return error(_("No branch named '%s'."),

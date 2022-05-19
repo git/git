@@ -89,16 +89,16 @@ test_expect_success 'add untracked (multiple)' '
 	test_cmp expected output
 '
 
-test_expect_success 'setup (commit)' '
+test_expect_success 'setup (cummit)' '
 	echo baseline >file &&
 	git add file &&
-	git commit -m commit &&
+	git cummit -m cummit &&
 	echo content >>file &&
 	git add file &&
 	echo more >>file &&
 	echo lines >>file
 '
-test_expect_success 'status works (commit)' '
+test_expect_success 'status works (cummit)' '
 	git add -i </dev/null >output &&
 	grep "+1/-0 *+2/-0 file" output
 '
@@ -114,12 +114,12 @@ test_expect_success 'setup expected' '
 	EOF
 '
 
-test_expect_success 'diff works (commit)' '
+test_expect_success 'diff works (cummit)' '
 	test_write_lines d 1 | git add -i >output &&
 	sed -ne "/^index/,/content/p" <output >diff &&
 	diff_cmp expected diff
 '
-test_expect_success 'revert works (commit)' '
+test_expect_success 'revert works (cummit)' '
 	git add file &&
 	test_write_lines r 1 | git add -i &&
 	git add -i </dev/null >output &&
@@ -249,14 +249,14 @@ test_expect_success 'edit can strip spaces from empty context lines' '
 	diff_cmp expected output
 '
 
-test_expect_success 'skip files similarly as commit -a' '
+test_expect_success 'skip files similarly as cummit -a' '
 	git reset &&
 	echo file >.gitignore &&
 	echo changed >file &&
 	echo y | git add -p file &&
 	git diff >output &&
 	git reset &&
-	git commit -am commit &&
+	git cummit -am cummit &&
 	git diff >expected &&
 	diff_cmp expected output &&
 	git reset --hard HEAD^
@@ -409,7 +409,7 @@ test_expect_success 'setup expected' '
 
 # Test splitting the first patch, then adding both
 test_expect_success 'add first line works' '
-	git commit -am "clear local changes" &&
+	git cummit -am "clear local changes" &&
 	git apply patch &&
 	test_write_lines s y y s y n y | git add -p 2>error >raw-output &&
 	sed -n -e "s/^([1-9]\/[1-9]) Stage this hunk[^@]*\(@@ .*\)/\1/" \
@@ -436,7 +436,7 @@ test_expect_success 'deleting a non-empty file' '
 	git reset --hard &&
 	echo content >non-empty &&
 	git add non-empty &&
-	git commit -m non-empty &&
+	git cummit -m non-empty &&
 	rm non-empty &&
 	echo y | git add -p non-empty &&
 	git diff --cached >diff &&
@@ -455,7 +455,7 @@ test_expect_success 'deleting an empty file' '
 	git reset --hard &&
 	> empty &&
 	git add empty &&
-	git commit -m empty &&
+	git cummit -m empty &&
 	rm empty &&
 	echo y | git add -p empty &&
 	git diff --cached >diff &&
@@ -466,11 +466,11 @@ test_expect_success 'adding an empty file' '
 	git init added &&
 	(
 		cd added &&
-		test_commit initial &&
+		test_cummit initial &&
 		>empty &&
 		git add empty &&
 		test_tick &&
-		git commit -m empty &&
+		git cummit -m empty &&
 		git tag added-file &&
 		git reset --hard HEAD^ &&
 		test_path_is_missing empty &&
@@ -486,7 +486,7 @@ test_expect_success 'split hunk setup' '
 	test_write_lines 10 20 30 40 50 60 >test &&
 	git add test &&
 	test_tick &&
-	git commit -m test &&
+	git cummit -m test &&
 
 	test_write_lines 10 15 20 21 22 23 24 30 40 50 60 >test
 '
@@ -586,12 +586,12 @@ test_expect_failure 'edit, adding lines to the first hunk' '
 
 test_expect_success 'patch mode ignores unmerged entries' '
 	git reset --hard &&
-	test_commit conflict &&
-	test_commit non-conflict &&
+	test_cummit conflict &&
+	test_cummit non-conflict &&
 	git checkout -b side &&
-	test_commit side conflict.t &&
+	test_cummit side conflict.t &&
 	git checkout main &&
-	test_commit main conflict.t &&
+	test_cummit main conflict.t &&
 	test_must_fail git merge side &&
 	echo changed >non-conflict.t &&
 	echo y | git add -p >output &&
@@ -784,7 +784,7 @@ test_expect_success 'add -p handles globs' '
 	echo base >one.c &&
 	echo base >subdir/two.c &&
 	git add "*.c" &&
-	git commit -m base &&
+	git cummit -m base &&
 
 	echo change >one.c &&
 	echo change >subdir/two.c &&
@@ -806,7 +806,7 @@ test_expect_success 'add -p handles relative paths' '
 
 	echo base >relpath.c &&
 	git add "*.c" &&
-	git commit -m relpath &&
+	git cummit -m relpath &&
 
 	echo change >relpath.c &&
 	mkdir -p subdir &&
@@ -828,7 +828,7 @@ test_expect_success 'add -p does not expand argument lists' '
 
 	echo content >not-changed &&
 	git add not-changed &&
-	git commit -m "add not-changed file" &&
+	git cummit -m "add not-changed file" &&
 
 	echo change >file &&
 	GIT_TRACE=$(pwd)/trace.out git add -p . <<-\EOF &&
@@ -864,22 +864,22 @@ test_expect_success 'setup different kinds of dirty submodules' '
 	test_create_repo for-submodules &&
 	(
 		cd for-submodules &&
-		test_commit initial &&
+		test_cummit initial &&
 		test_create_repo dirty-head &&
 		(
 			cd dirty-head &&
-			test_commit initial
+			test_cummit initial
 		) &&
 		cp -R dirty-head dirty-otherwise &&
 		cp -R dirty-head dirty-both-ways &&
 		git add dirty-head &&
 		git add dirty-otherwise dirty-both-ways &&
-		git commit -m initial &&
+		git cummit -m initial &&
 
 		cd dirty-head &&
-		test_commit updated &&
+		test_cummit updated &&
 		cd ../dirty-both-ways &&
-		test_commit updated &&
+		test_cummit updated &&
 		echo dirty >>initial &&
 		: >untracked &&
 		cd ../dirty-otherwise &&
@@ -918,7 +918,7 @@ test_expect_success 'set up pathological context' '
 	git reset --hard &&
 	test_write_lines a a a a a a a a a a a >a &&
 	git add a &&
-	git commit -m a &&
+	git cummit -m a &&
 	test_write_lines c b a a a a a a a b a a a a >a &&
 	test_write_lines     a a a a a a a b a a a a >expected-1 &&
 	test_write_lines   b a a a a a a a b a a a a >expected-2 &&
@@ -982,9 +982,9 @@ test_expect_success 'checkout -p patch editing of added file' '
 	(
 		setup_new_file &&
 		git add new-file &&
-		git commit -m "add new file" &&
+		git cummit -m "add new file" &&
 		git rm new-file &&
-		git commit -m "remove new file" &&
+		git cummit -m "remove new file" &&
 		test_write_lines e n q | git checkout -p HEAD^ &&
 		test_cmp new-file-expect new-file &&
 		test_cmp patch-expect patch

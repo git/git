@@ -90,16 +90,16 @@ msgid "Scanning for modified files ..."
 msgstr "Söker efter ändrade filer..."
 
 #: git-gui.sh:1639
-msgid "Calling prepare-commit-msg hook..."
+msgid "Calling prepare-cummit-msg hook..."
 msgstr ""
-"Anropar kroken för förberedelse av incheckningsmeddelande (prepare-commit-"
+"Anropar kroken för förberedelse av incheckningsmeddelande (prepare-cummit-"
 "msg)..."
 
 #: git-gui.sh:1656
-msgid "Commit declined by prepare-commit-msg hook."
+msgid "cummit declined by prepare-cummit-msg hook."
 msgstr ""
 "Incheckningen avvisades av kroken för förberedelse av incheckningsmeddelande "
-"(prepare-commit-msg)."
+"(prepare-cummit-msg)."
 
 #: git-gui.sh:1814 lib/browser.tcl:252
 msgid "Ready."
@@ -122,15 +122,15 @@ msgid "Modified, not staged"
 msgstr "Förändrade, ej köade"
 
 #: git-gui.sh:2104 git-gui.sh:2116
-msgid "Staged for commit"
+msgid "Staged for cummit"
 msgstr "Köade för incheckning"
 
 #: git-gui.sh:2105 git-gui.sh:2117
-msgid "Portions staged for commit"
+msgid "Portions staged for cummit"
 msgstr "Delar köade för incheckning"
 
 #: git-gui.sh:2106 git-gui.sh:2118
-msgid "Staged for commit, missing"
+msgid "Staged for cummit, missing"
 msgstr "Köade för incheckning, saknade"
 
 #: git-gui.sh:2108
@@ -138,7 +138,7 @@ msgid "File type changed, not staged"
 msgstr "Filtyp ändrad, ej köade"
 
 #: git-gui.sh:2109 git-gui.sh:2110
-msgid "File type changed, old type staged for commit"
+msgid "File type changed, old type staged for cummit"
 msgstr "Filtyp ändrad, gammal typ köade för incheckning"
 
 #: git-gui.sh:2111
@@ -199,7 +199,7 @@ msgid "Branch"
 msgstr "Gren"
 
 #: git-gui.sh:2660 lib/choose_rev.tcl:554
-msgid "Commit@@noun"
+msgid "cummit@@noun"
 msgstr "Incheckning"
 
 #: git-gui.sh:2663 lib/merge.tcl:123 lib/merge.tcl:152 lib/merge.tcl:170
@@ -324,15 +324,15 @@ msgid "Done"
 msgstr "Färdig"
 
 #: git-gui.sh:2819
-msgid "Commit@@verb"
+msgid "cummit@@verb"
 msgstr "Checka in"
 
 #: git-gui.sh:2828 git-gui.sh:3309
-msgid "New Commit"
+msgid "New cummit"
 msgstr "Ny incheckning"
 
 #: git-gui.sh:2836 git-gui.sh:3316
-msgid "Amend Last Commit"
+msgid "Amend Last cummit"
 msgstr "Lägg till föregående incheckning"
 
 #: git-gui.sh:2846 git-gui.sh:3270 lib/remote_branch_delete.tcl:101
@@ -340,15 +340,15 @@ msgid "Rescan"
 msgstr "Sök på nytt"
 
 #: git-gui.sh:2852
-msgid "Stage To Commit"
+msgid "Stage To cummit"
 msgstr "Köa för incheckning"
 
 #: git-gui.sh:2858
-msgid "Stage Changed Files To Commit"
+msgid "Stage Changed Files To cummit"
 msgstr "Köa ändrade filer för incheckning"
 
 #: git-gui.sh:2864
-msgid "Unstage From Commit"
+msgid "Unstage From cummit"
 msgstr "Ta bort från incheckningskö"
 
 #: git-gui.sh:2870 lib/index.tcl:442
@@ -432,7 +432,7 @@ msgid "Current Branch:"
 msgstr "Aktuell gren:"
 
 #: git-gui.sh:3185
-msgid "Staged Changes (Will Commit)"
+msgid "Staged Changes (Will cummit)"
 msgstr "Köade ändringar (kommer att checkas in)"
 
 #: git-gui.sh:3205
@@ -448,27 +448,27 @@ msgid "Push"
 msgstr "Sänd"
 
 #: git-gui.sh:3330
-msgid "Initial Commit Message:"
+msgid "Initial cummit Message:"
 msgstr "Inledande incheckningsmeddelande:"
 
 #: git-gui.sh:3331
-msgid "Amended Commit Message:"
+msgid "Amended cummit Message:"
 msgstr "Utökat incheckningsmeddelande:"
 
 #: git-gui.sh:3332
-msgid "Amended Initial Commit Message:"
+msgid "Amended Initial cummit Message:"
 msgstr "Utökat inledande incheckningsmeddelande:"
 
 #: git-gui.sh:3333
-msgid "Amended Merge Commit Message:"
+msgid "Amended Merge cummit Message:"
 msgstr "Utökat incheckningsmeddelande för sammanslagning:"
 
 #: git-gui.sh:3334
-msgid "Merge Commit Message:"
+msgid "Merge cummit Message:"
 msgstr "Incheckningsmeddelande för sammanslagning:"
 
 #: git-gui.sh:3335
-msgid "Commit Message:"
+msgid "cummit Message:"
 msgstr "Incheckningsmeddelande:"
 
 #: git-gui.sh:3384 git-gui.sh:3538 lib/console.tcl:73
@@ -536,27 +536,27 @@ msgid "Start git gui In The Submodule"
 msgstr "Starta git gui i undermodulen"
 
 #: git-gui.sh:3673
-msgid "Unstage Hunk From Commit"
+msgid "Unstage Hunk From cummit"
 msgstr "Ta bort del ur incheckningskö"
 
 #: git-gui.sh:3675
-msgid "Unstage Lines From Commit"
+msgid "Unstage Lines From cummit"
 msgstr "Ta bort rader ur incheckningskö"
 
 #: git-gui.sh:3677
-msgid "Unstage Line From Commit"
+msgid "Unstage Line From cummit"
 msgstr "Ta bort rad ur incheckningskö"
 
 #: git-gui.sh:3680
-msgid "Stage Hunk For Commit"
+msgid "Stage Hunk For cummit"
 msgstr "Ställ del i incheckningskö"
 
 #: git-gui.sh:3682
-msgid "Stage Lines For Commit"
+msgid "Stage Lines For cummit"
 msgstr "Ställ rader i incheckningskö"
 
 #: git-gui.sh:3684
-msgid "Stage Line For Commit"
+msgid "Stage Line For cummit"
 msgstr "Ställ rad i incheckningskö"
 
 #: git-gui.sh:3709
@@ -742,12 +742,12 @@ msgstr "Checkade ut \"%s\"."
 
 #: lib/checkout_op.tcl:535
 #, tcl-format
-msgid "Resetting '%s' to '%s' will lose the following commits:"
+msgid "Resetting '%s' to '%s' will lose the following cummits:"
 msgstr ""
 "Om du återställer \"%s\" till \"%s\" går följande incheckningar förlorade:"
 
 #: lib/checkout_op.tcl:557
-msgid "Recovering lost commits may not be easy."
+msgid "Recovering lost cummits may not be easy."
 msgstr "Det kanske inte är så enkelt att återskapa förlorade incheckningar."
 
 #: lib/checkout_op.tcl:562
@@ -986,7 +986,7 @@ msgstr "Revision"
 msgid ""
 "Cannot merge while amending.\n"
 "\n"
-"You must finish amending this commit before starting any type of merge.\n"
+"You must finish amending this cummit before starting any type of merge.\n"
 msgstr ""
 "Kan inte slå ihop vid utökning.\n"
 "\n"
@@ -1016,7 +1016,7 @@ msgid ""
 "\n"
 "File %s has merge conflicts.\n"
 "\n"
-"You must resolve them, stage the file, and commit to complete the current "
+"You must resolve them, stage the file, and cummit to complete the current "
 "merge.  Only then can you begin another merge.\n"
 msgstr ""
 "Du är mitt i en sammanslagning med konflikter.\n"
@@ -1033,7 +1033,7 @@ msgid ""
 "\n"
 "File %s is modified.\n"
 "\n"
-"You should complete the current commit before starting a merge.  Doing so "
+"You should complete the current cummit before starting a merge.  Doing so "
 "will help you abort a failed merge, should the need arise.\n"
 msgstr ""
 "Du är mitt i en ändring.\n"
@@ -1075,7 +1075,7 @@ msgstr "Revisioner att slå ihop"
 msgid ""
 "Cannot abort while amending.\n"
 "\n"
-"You must finish amending this commit.\n"
+"You must finish amending this cummit.\n"
 msgstr ""
 "Kan inte avbryta vid utökning.\n"
 "\n"
@@ -1085,7 +1085,7 @@ msgstr ""
 msgid ""
 "Abort merge?\n"
 "\n"
-"Aborting the current merge will cause *ALL* uncommitted changes to be lost.\n"
+"Aborting the current merge will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with aborting the current merge?"
 msgstr ""
@@ -1100,7 +1100,7 @@ msgstr ""
 msgid ""
 "Reset changes?\n"
 "\n"
-"Resetting the changes will cause *ALL* uncommitted changes to be lost.\n"
+"Resetting the changes will cause *ALL* uncummitted changes to be lost.\n"
 "\n"
 "Continue with resetting the current changes?"
 msgstr ""
@@ -1409,7 +1409,7 @@ msgid "Email Address"
 msgstr "E-postadress"
 
 #: lib/option.tcl:143
-msgid "Summarize Merge Commits"
+msgid "Summarize Merge cummits"
 msgstr "Summera sammanslagningsincheckningar"
 
 #: lib/option.tcl:144
@@ -1465,7 +1465,7 @@ msgid "Additional Diff Parameters"
 msgstr "Ytterligare diff-parametrar"
 
 #: lib/option.tcl:158
-msgid "Commit Message Text Width"
+msgid "cummit Message Text Width"
 msgstr "Textbredd för incheckningsmeddelande"
 
 #: lib/option.tcl:159
@@ -1477,7 +1477,7 @@ msgid "Default File Contents Encoding"
 msgstr "Standardteckenkodning för filinnehåll"
 
 #: lib/option.tcl:161
-msgid "Warn before committing to a detached head"
+msgid "Warn before cummitting to a detached head"
 msgstr "Varna för incheckning på frånkopplat huvud"
 
 #: lib/option.tcl:162
@@ -1796,7 +1796,7 @@ msgstr ""
 #, tcl-format
 msgid ""
 "One or more of the merge tests failed because you have not fetched the "
-"necessary commits.  Try fetching from %s first."
+"necessary cummits.  Try fetching from %s first."
 msgstr ""
 "En eller flera av sammanslagningstesterna misslyckades eftersom du inte har "
 "hämtat de nödvändiga incheckningarna. Försök hämta från %s först."
@@ -2035,7 +2035,7 @@ msgstr "Hämtade ingen standardgren."
 
 #: lib/choose_repository.tcl:949
 #, tcl-format
-msgid "Cannot resolve %s as a commit."
+msgid "Cannot resolve %s as a cummit."
 msgstr "Kunde inte slå upp %s till någon incheckning."
 
 #: lib/choose_repository.tcl:961
@@ -2081,11 +2081,11 @@ msgid "File Viewer"
 msgstr "Filvisare"
 
 #: lib/blame.tcl:79
-msgid "Commit:"
+msgid "cummit:"
 msgstr "Incheckning:"
 
 #: lib/blame.tcl:280
-msgid "Copy Commit"
+msgid "Copy cummit"
 msgstr "Kopiera incheckning"
 
 #: lib/blame.tcl:284
@@ -2105,7 +2105,7 @@ msgid "Show History Context"
 msgstr "Visa historiksammanhang"
 
 #: lib/blame.tcl:304
-msgid "Blame Parent Commit"
+msgid "Blame Parent cummit"
 msgstr "Klandra föräldraincheckning"
 
 #: lib/blame.tcl:466
@@ -2150,7 +2150,7 @@ msgid "Author:"
 msgstr "Författare:"
 
 #: lib/blame.tcl:1004
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "Incheckare:"
 
 #: lib/blame.tcl:1009
@@ -2158,11 +2158,11 @@ msgid "Original File:"
 msgstr "Ursprunglig fil:"
 
 #: lib/blame.tcl:1057
-msgid "Cannot find HEAD commit:"
+msgid "Cannot find HEAD cummit:"
 msgstr "Hittar inte incheckning för HEAD:"
 
 #: lib/blame.tcl:1112
-msgid "Cannot find parent commit:"
+msgid "Cannot find parent cummit:"
 msgstr "Hittar inte föräldraincheckning:"
 
 #: lib/blame.tcl:1127
@@ -2324,11 +2324,11 @@ msgstr "Uppdaterad"
 msgid "URL"
 msgstr "Webbadress"
 
-#: lib/commit.tcl:9
+#: lib/cummit.tcl:9
 msgid ""
 "There is nothing to amend.\n"
 "\n"
-"You are about to create the initial commit.  There is no commit before this "
+"You are about to create the initial cummit.  There is no cummit before this "
 "to amend.\n"
 msgstr ""
 "Det finns ingenting att utöka.\n"
@@ -2336,12 +2336,12 @@ msgstr ""
 "Du håller på att skapa den inledande incheckningen. Det finns ingen tidigare "
 "incheckning att utöka.\n"
 
-#: lib/commit.tcl:18
+#: lib/cummit.tcl:18
 msgid ""
 "Cannot amend while merging.\n"
 "\n"
 "You are currently in the middle of a merge that has not been fully "
-"completed.  You cannot amend the prior commit unless you first abort the "
+"completed.  You cannot amend the prior cummit unless you first abort the "
 "current merge activity.\n"
 msgstr ""
 "Kan inte utöka vid sammanslagning.\n"
@@ -2350,29 +2350,29 @@ msgstr ""
 "utöka tidigare incheckningar om du inte först avbryter den pågående "
 "sammanslagningen.\n"
 
-#: lib/commit.tcl:48
-msgid "Error loading commit data for amend:"
+#: lib/cummit.tcl:48
+msgid "Error loading cummit data for amend:"
 msgstr "Fel vid inläsning av incheckningsdata för utökning:"
 
-#: lib/commit.tcl:75
+#: lib/cummit.tcl:75
 msgid "Unable to obtain your identity:"
 msgstr "Kunde inte hämta din identitet:"
 
-#: lib/commit.tcl:80
-msgid "Invalid GIT_COMMITTER_IDENT:"
-msgstr "Felaktig GIT_COMMITTER_IDENT:"
+#: lib/cummit.tcl:80
+msgid "Invalid GIT_cummitTER_IDENT:"
+msgstr "Felaktig GIT_cummitTER_IDENT:"
 
-#: lib/commit.tcl:129
+#: lib/cummit.tcl:129
 #, tcl-format
 msgid "warning: Tcl does not support encoding '%s'."
 msgstr "varning: Tcl stöder inte teckenkodningen \"%s\"."
 
-#: lib/commit.tcl:149
+#: lib/cummit.tcl:149
 msgid ""
 "Last scanned state does not match repository state.\n"
 "\n"
 "Another Git program has modified this repository since the last scan.  A "
-"rescan must be performed before another commit can be created.\n"
+"rescan must be performed before another cummit can be created.\n"
 "\n"
 "The rescan will be automatically started now.\n"
 msgstr ""
@@ -2383,45 +2383,45 @@ msgstr ""
 "\n"
 "Sökningen kommer att startas automatiskt nu.\n"
 
-#: lib/commit.tcl:173
+#: lib/cummit.tcl:173
 #, tcl-format
 msgid ""
-"Unmerged files cannot be committed.\n"
+"Unmerged files cannot be cummitted.\n"
 "\n"
 "File %s has merge conflicts.  You must resolve them and stage the file "
-"before committing.\n"
+"before cummitting.\n"
 msgstr ""
 "Osammanslagna filer kan inte checkas in.\n"
 "\n"
 "Filen %s har sammanslagningskonflikter. Du måste lösa dem och köa filen "
 "innan du checkar in den.\n"
 
-#: lib/commit.tcl:181
+#: lib/cummit.tcl:181
 #, tcl-format
 msgid ""
 "Unknown file state %s detected.\n"
 "\n"
-"File %s cannot be committed by this program.\n"
+"File %s cannot be cummitted by this program.\n"
 msgstr ""
 "Okänd filstatus %s upptäckt.\n"
 "\n"
 "Filen %s kan inte checkas in av programmet.\n"
 
-#: lib/commit.tcl:189
+#: lib/cummit.tcl:189
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"You must stage at least 1 file before you can commit.\n"
+"You must stage at least 1 file before you can cummit.\n"
 msgstr ""
 "Inga ändringar att checka in.\n"
 "\n"
 "Du måste köa åtminstone en fil innan du kan checka in.\n"
 
-#: lib/commit.tcl:204
+#: lib/cummit.tcl:204
 msgid ""
-"Please supply a commit message.\n"
+"Please supply a cummit message.\n"
 "\n"
-"A good commit message has the following format:\n"
+"A good cummit message has the following format:\n"
 "\n"
 "- First line: Describe in one sentence what you did.\n"
 "- Second line: Blank\n"
@@ -2435,22 +2435,22 @@ msgstr ""
 "- Andra raden: Tom\n"
 "- Följande rader: Beskriv varför det här är en bra ändring.\n"
 
-#: lib/commit.tcl:235
+#: lib/cummit.tcl:235
 msgid "Calling pre-commit hook..."
-msgstr "Anropar kroken före incheckning (pre-commit)..."
+msgstr "Anropar kroken före incheckning (pre-cummit)..."
 
-#: lib/commit.tcl:250
-msgid "Commit declined by pre-commit hook."
-msgstr "Incheckningen avvisades av kroken före incheckning (pre-commit)."
+#: lib/cummit.tcl:250
+msgid "cummit declined by pre-commit hook."
+msgstr "Incheckningen avvisades av kroken före incheckning (pre-cummit)."
 
-#: lib/commit.tcl:269
+#: lib/cummit.tcl:269
 msgid ""
-"You are about to commit on a detached head. This is a potentially dangerous "
+"You are about to cummit on a detached head. This is a potentially dangerous "
 "thing to do because if you switch to another branch you will lose your "
 "changes and it can be difficult to retrieve them later from the reflog. You "
-"should probably cancel this commit and create a new branch to continue.\n"
+"should probably cancel this cummit and create a new branch to continue.\n"
 " \n"
-" Do you really want to proceed with your Commit?"
+" Do you really want to proceed with your cummit?"
 msgstr ""
 "Du är på väg att checka in på ett frånkopplat huvud. Det kan potentiellt "
 "vara farligt, eftersom du kommer förlora dina ändringar om du växlar till en "
@@ -2459,36 +2459,36 @@ msgstr ""
 " \n"
 " Vill du verkligen fortsätta checka in?"
 
-#: lib/commit.tcl:290
-msgid "Calling commit-msg hook..."
-msgstr "Anropar kroken för incheckningsmeddelande (commit-msg)..."
+#: lib/cummit.tcl:290
+msgid "Calling cummit-msg hook..."
+msgstr "Anropar kroken för incheckningsmeddelande (cummit-msg)..."
 
-#: lib/commit.tcl:305
-msgid "Commit declined by commit-msg hook."
-msgstr "Incheckning avvisad av kroken för incheckningsmeddelande (commit-msg)."
+#: lib/cummit.tcl:305
+msgid "cummit declined by cummit-msg hook."
+msgstr "Incheckning avvisad av kroken för incheckningsmeddelande (cummit-msg)."
 
-#: lib/commit.tcl:318
-msgid "Committing changes..."
+#: lib/cummit.tcl:318
+msgid "cummitting changes..."
 msgstr "Checkar in ändringar..."
 
-#: lib/commit.tcl:334
+#: lib/cummit.tcl:334
 msgid "write-tree failed:"
 msgstr "write-tree misslyckades:"
 
-#: lib/commit.tcl:335 lib/commit.tcl:379 lib/commit.tcl:400
-msgid "Commit failed."
+#: lib/cummit.tcl:335 lib/cummit.tcl:379 lib/cummit.tcl:400
+msgid "cummit failed."
 msgstr "Incheckningen misslyckades."
 
-#: lib/commit.tcl:352
+#: lib/cummit.tcl:352
 #, tcl-format
-msgid "Commit %s appears to be corrupt"
+msgid "cummit %s appears to be corrupt"
 msgstr "Incheckningen %s verkar vara trasig"
 
-#: lib/commit.tcl:357
+#: lib/cummit.tcl:357
 msgid ""
-"No changes to commit.\n"
+"No changes to cummit.\n"
 "\n"
-"No files were modified by this commit and it was not a merge commit.\n"
+"No files were modified by this cummit and it was not a merge cummit.\n"
 "\n"
 "A rescan will be automatically started now.\n"
 msgstr ""
@@ -2498,21 +2498,21 @@ msgstr ""
 "\n"
 "En sökning kommer att startas automatiskt nu.\n"
 
-#: lib/commit.tcl:364
-msgid "No changes to commit."
+#: lib/cummit.tcl:364
+msgid "No changes to cummit."
 msgstr "Inga ändringar att checka in."
 
-#: lib/commit.tcl:378
-msgid "commit-tree failed:"
-msgstr "commit-tree misslyckades:"
+#: lib/cummit.tcl:378
+msgid "cummit-tree failed:"
+msgstr "cummit-tree misslyckades:"
 
-#: lib/commit.tcl:399
+#: lib/cummit.tcl:399
 msgid "update-ref failed:"
 msgstr "update-ref misslyckades:"
 
-#: lib/commit.tcl:492
+#: lib/cummit.tcl:492
 #, tcl-format
-msgid "Created commit %s: %s"
+msgid "Created cummit %s: %s"
 msgstr "Skapade incheckningen %s: %s"
 
 #: lib/branch_delete.tcl:16
@@ -2571,11 +2571,11 @@ msgstr "Lås upp index"
 
 #: lib/index.tcl:298
 #, tcl-format
-msgid "Unstaging %s from commit"
+msgid "Unstaging %s from cummit"
 msgstr "Tar bort %s för incheckningskön"
 
 #: lib/index.tcl:337
-msgid "Ready to commit."
+msgid "Ready to cummit."
 msgstr "Redo att checka in."
 
 #: lib/index.tcl:350
@@ -2696,7 +2696,7 @@ msgid "warning"
 msgstr "varning"
 
 #: lib/error.tcl:96
-msgid "You must correct the above errors before committing."
+msgid "You must correct the above errors before cummitting."
 msgstr "Du måste rätta till felen ovan innan du checkar in."
 
 #~ msgid "Displaying only %s of %s files."

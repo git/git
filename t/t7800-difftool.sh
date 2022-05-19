@@ -42,11 +42,11 @@ test_expect_success 'basic usage requires no repo' '
 test_expect_success 'setup' '
 	echo main >file &&
 	git add file &&
-	git commit -m "added file" &&
+	git cummit -m "added file" &&
 
 	git checkout -b branch main &&
 	echo branch >file &&
-	git commit -a -m "branch changed file" &&
+	git cummit -a -m "branch changed file" &&
 	git checkout main
 '
 
@@ -358,12 +358,12 @@ test_expect_success 'difftool --extcmd cat arg2' '
 test_expect_success 'setup with 2 files different' '
 	echo m2 >file2 &&
 	git add file2 &&
-	git commit -m "added file2" &&
+	git cummit -m "added file2" &&
 
 	git checkout branch &&
 	echo br2 >file2 &&
 	git add file2 &&
-	git commit -a -m "branch changed file2" &&
+	git cummit -a -m "branch changed file2" &&
 	git checkout main
 '
 
@@ -403,12 +403,12 @@ test_expect_success 'setup change in subdirectory' '
 	mkdir sub &&
 	echo main >sub/sub &&
 	git add sub/sub &&
-	git commit -m "added sub/sub" &&
+	git cummit -m "added sub/sub" &&
 	git tag v1 &&
 	echo test >>file &&
 	echo test >>sub/sub &&
 	git add file sub/sub &&
-	git commit -m "modified both"
+	git cummit -m "modified both"
 '
 
 test_expect_success 'difftool -d with growing paths' '
@@ -548,11 +548,11 @@ run_dir_diff_test 'difftool --dir-diff with unmerged files' '
 	git checkout conflict-a &&
 	echo a >>file &&
 	git add file &&
-	git commit -m conflict-a &&
+	git cummit -m conflict-a &&
 	git checkout conflict-b &&
 	echo b >>file &&
 	git add file &&
-	git commit -m conflict-b &&
+	git cummit -m conflict-b &&
 	git checkout main &&
 	git merge conflict-a &&
 	test_must_fail git merge conflict-b &&
@@ -660,10 +660,10 @@ test_expect_success SYMLINKS 'difftool --dir-diff symlinked directories' '
 		mkdir foo &&
 		: >foo/bar &&
 		git add foo/bar &&
-		test_commit symlink-one &&
+		test_cummit symlink-one &&
 		ln -s foo link &&
 		git add link &&
-		test_commit symlink-two &&
+		test_cummit symlink-two &&
 		echo good >expect &&
 		git difftool --tool=checktrees --dir-diff HEAD~ >actual &&
 		test_cmp expect actual
@@ -676,7 +676,7 @@ test_expect_success SYMLINKS 'difftool --dir-diff handles modified symlinks' '
 	ln -s b c &&
 	git add b c &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	touch d &&
 	rm c &&
 	ln -s d c &&
@@ -744,7 +744,7 @@ test_expect_success SYMLINKS 'difftool --dir-diff writes symlinks as raw text' '
 		# later and not have to consider the any cases where difftool
 		# will create symlinks back into the worktree.
 		test_tick &&
-		git commit --allow-empty -m init &&
+		git cummit --allow-empty -m init &&
 
 		# Create a file called "file-a" with a symlink pointing to it.
 		git switch -c branch-a &&
@@ -752,7 +752,7 @@ test_expect_success SYMLINKS 'difftool --dir-diff writes symlinks as raw text' '
 		ln -s file-a link &&
 		git add file-a link &&
 		test_tick &&
-		git commit -m link-to-file-a &&
+		git cummit -m link-to-file-a &&
 
 		# Create a file called "file-b" and point the symlink to it.
 		git switch -c branch-b &&
@@ -762,7 +762,7 @@ test_expect_success SYMLINKS 'difftool --dir-diff writes symlinks as raw text' '
 		git add file-b link &&
 		git rm file-a &&
 		test_tick &&
-		git commit -m link-to-file-b &&
+		git cummit -m link-to-file-b &&
 
 		# Checkout the initial branch so that the --symlinks behavior is
 		# not activated. The two directories should be completely
@@ -804,10 +804,10 @@ test_expect_success 'add -N and difftool -d' '
 test_expect_success 'difftool --cached with unmerged files' '
 	test_when_finished git reset --hard &&
 
-	test_commit conflicting &&
-	test_commit conflict-a conflict.t a &&
+	test_cummit conflicting &&
+	test_cummit conflict-a conflict.t a &&
 	git reset --hard conflicting &&
-	test_commit conflict-b conflict.t b &&
+	test_cummit conflict-b conflict.t b &&
 	test_must_fail git merge conflict-a &&
 
 	git difftool --cached --no-prompt >output &&
@@ -839,7 +839,7 @@ test_expect_success 'difftool --rotate-to' '
 	echo 2 >2 &&
 	echo 4 >4 &&
 	git add 1 2 4 &&
-	git commit -a -m "124" &&
+	git cummit -a -m "124" &&
 	git difftool --no-prompt --extcmd=cat --rotate-to="2" HEAD^ >output &&
 	cat >expect <<-\EOF &&
 	2

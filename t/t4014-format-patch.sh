@@ -16,30 +16,30 @@ test_expect_success setup '
 	cat file >elif &&
 	git add file elif &&
 	test_tick &&
-	git commit -m Initial &&
+	git cummit -m Initial &&
 	git checkout -b side &&
 
 	test_write_lines 1 2 5 6 A B C 7 8 9 10 >file &&
 	test_chmod +x elif &&
 	test_tick &&
-	git commit -m "Side changes #1" &&
+	git cummit -m "Side changes #1" &&
 
 	test_write_lines D E F >>file &&
 	git update-index file &&
 	test_tick &&
-	git commit -m "Side changes #2" &&
+	git cummit -m "Side changes #2" &&
 	git tag C2 &&
 
 	test_write_lines 5 6 1 2 3 A 4 B C 7 8 9 10 D E F >file &&
 	git update-index file &&
 	test_tick &&
-	git commit -m "Side changes #3 with \\n backslash-n in it." &&
+	git cummit -m "Side changes #3 with \\n backslash-n in it." &&
 
 	git checkout main &&
 	git diff-tree -p C2 >patch &&
 	git apply --index <patch &&
 	test_tick &&
-	git commit -m "Main accepts moral equivalent of #2" &&
+	git cummit -m "Main accepts moral equivalent of #2" &&
 
 	git checkout side &&
 	git checkout -b patchid &&
@@ -48,16 +48,16 @@ test_expect_success setup '
 	test_write_lines 8 9 10 >file &&
 	git add file file2 file3 &&
 	test_tick &&
-	git commit -m "patchid 1" &&
+	git cummit -m "patchid 1" &&
 	test_write_lines 4 A B 7 8 9 10 >file2 &&
 	test_write_lines 8 9 10 5 6 >file3 &&
 	git add file2 file3 &&
 	test_tick &&
-	git commit -m "patchid 2" &&
+	git cummit -m "patchid 2" &&
 	test_write_lines 10 5 6 >file &&
 	git add file &&
 	test_tick &&
-	git commit -m "patchid 3" &&
+	git cummit -m "patchid 3" &&
 
 	git checkout main
 '
@@ -83,14 +83,14 @@ test_expect_success 'format-patch --ignore-if-in-upstream handles tags' '
 	test_line_count = 2 from1
 '
 
-test_expect_success "format-patch doesn't consider merge commits" '
+test_expect_success "format-patch doesn't consider merge cummits" '
 	git checkout -b feature main &&
 	echo "Another line" >>file &&
 	test_tick &&
-	git commit -am "Feature branch change #1" &&
+	git cummit -am "Feature branch change #1" &&
 	echo "Yet another line" >>file &&
 	test_tick &&
-	git commit -am "Feature branch change #2" &&
+	git cummit -am "Feature branch change #2" &&
 	git checkout -b merger main &&
 	test_tick &&
 	git merge --no-ff feature &&
@@ -113,8 +113,8 @@ test_expect_success 'format-patch --ignore-if-in-upstream result applies' '
 	test_line_count = 2 list
 '
 
-test_expect_success 'commit did not screw up the log message' '
-	git cat-file commit side >actual &&
+test_expect_success 'cummit did not screw up the log message' '
+	git cat-file cummit side >actual &&
 	grep "^Side .* with .* backslash-n" actual
 '
 
@@ -124,7 +124,7 @@ test_expect_success 'format-patch did not screw up the log message' '
 '
 
 test_expect_success 'replay did not screw up the log message' '
-	git cat-file commit rebuild-1 >actual &&
+	git cat-file cummit rebuild-1 >actual &&
 	grep "^Side .* with .* backslash-n" actual
 '
 
@@ -240,14 +240,14 @@ test_expect_success 'format.from=false' '
 	git -c format.from=false format-patch --stdout main..side >patch &&
 	sed -e "/^\$/q" patch >hdrs &&
 	check_patch patch &&
-	! grep "^From: C O Mitter <committer@example.com>\$" hdrs
+	! grep "^From: C O Mitter <cummitter@example.com>\$" hdrs
 '
 
 test_expect_success 'format.from=true' '
 	git -c format.from=true format-patch --stdout main..side >patch &&
 	sed -e "/^\$/q" patch >hdrs &&
 	check_patch hdrs &&
-	grep "^From: C O Mitter <committer@example.com>\$" hdrs
+	grep "^From: C O Mitter <cummitter@example.com>\$" hdrs
 '
 
 test_expect_success 'format.from with address' '
@@ -657,7 +657,7 @@ test_expect_success 'excessive subject' '
 	after=$(git hash-object file) &&
 	after=$(git rev-parse --short $after) &&
 	git update-index file &&
-	git commit -m "This is an excessively long subject line for a message due to the habit some projects have of not having a short, one-line subject at the start of the commit message, but rather sticking a whole paragraph right at the start as the only thing in the commit message. It had better not become the filename for the patch." &&
+	git cummit -m "This is an excessively long subject line for a message due to the habit some projects have of not having a short, one-line subject at the start of the cummit message, but rather sticking a whole paragraph right at the start as the only thing in the cummit message. It had better not become the filename for the patch." &&
 	git format-patch -o patches/ main..side &&
 	ls patches/0004-This-is-an-excessively-long-subject-line-for-a-messa.patch
 '
@@ -670,7 +670,7 @@ test_expect_success 'failure to write cover-letter aborts gracefully' '
 
 test_expect_success 'cover-letter inherits diff options' '
 	git mv file foo &&
-	git commit -m foo &&
+	git cummit -m foo &&
 	git format-patch --no-renames --cover-letter -1 &&
 	check_patch 0000-cover-letter.patch &&
 	! grep "file => foo .* 0 *\$" 0000-cover-letter.patch &&
@@ -681,8 +681,8 @@ test_expect_success 'cover-letter inherits diff options' '
 cat >expect <<EOF
   This is an excessively long subject line for a message due to the
     habit some projects have of not having a short, one-line subject at
-    the start of the commit message, but rather sticking a whole
-    paragraph right at the start as the only thing in the commit
+    the start of the cummit message, but rather sticking a whole
+    paragraph right at the start as the only thing in the cummit
     message. It had better not become the filename for the patch.
   foo
 
@@ -790,7 +790,7 @@ test_expect_success 'format-patch --in-reply-to' '
 
 test_expect_success 'format-patch --signoff' '
 	git format-patch -1 --signoff --stdout >out &&
-	grep "^Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" out
+	grep "^Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>" out
 '
 
 test_expect_success 'format-patch --notes --signoff' '
@@ -932,20 +932,20 @@ test_expect_success 'format-patch -- <path>' '
 	echo file_a 1 >file_a &&
 	echo file_b 1 >file_b &&
 	git add file_a file_b &&
-	git commit -m pathspec_initial &&
+	git cummit -m pathspec_initial &&
 
 	echo file_a 2 >>file_a &&
 	git add file_a &&
-	git commit -m pathspec_a &&
+	git cummit -m pathspec_a &&
 
 	echo file_b 2 >>file_b &&
 	git add file_b &&
-	git commit -m pathspec_b &&
+	git cummit -m pathspec_b &&
 
 	echo file_a 3 >>file_a &&
 	echo file_b 3 >>file_b &&
 	git add file_a file_b &&
-	git commit -m pathspec_ab &&
+	git cummit -m pathspec_ab &&
 
 	cat >expect <<-\EOF &&
 	0001-pathspec_initial.patch
@@ -1117,7 +1117,7 @@ test_expect_success 'format-patch handles multi-line subjects' '
 	echo content >>file &&
 	test_write_lines one two three >msg &&
 	git add file &&
-	git commit -F msg &&
+	git cummit -F msg &&
 	git format-patch -o patches -1 &&
 	grep ^Subject: patches/0001-one.patch >actual &&
 	echo "Subject: [PATCH] one two three" >expect &&
@@ -1129,7 +1129,7 @@ test_expect_success 'format-patch handles multi-line encoded subjects' '
 	echo content >>file &&
 	test_write_lines en två tre >msg &&
 	git add file &&
-	git commit -F msg &&
+	git cummit -F msg &&
 	git format-patch -o patches -1 &&
 	grep ^Subject: patches/0001-en.patch >actual &&
 	echo "Subject: [PATCH] =?UTF-8?q?en=20tv=C3=A5=20tre?=" >expect &&
@@ -1151,7 +1151,7 @@ EOF
 test_expect_success 'format-patch wraps extremely long subject (ascii)' '
 	echo content >>file &&
 	git add file &&
-	git commit -m "$M512" &&
+	git cummit -m "$M512" &&
 	git format-patch --stdout -1 >patch &&
 	sed -n "/^Subject/p; /^ /p; /^$/q" patch >subject &&
 	test_cmp expect subject
@@ -1190,7 +1190,7 @@ test_expect_success 'format-patch wraps extremely long subject (rfc2047)' '
 	rm -rf patches/ &&
 	echo content >>file &&
 	git add file &&
-	git commit -m "$M512" &&
+	git cummit -m "$M512" &&
 	git format-patch --stdout -1 >patch &&
 	sed -n "/^Subject/p; /^ /p; /^$/q" patch >subject &&
 	test_cmp expect subject
@@ -1199,7 +1199,7 @@ test_expect_success 'format-patch wraps extremely long subject (rfc2047)' '
 check_author() {
 	echo content >>file &&
 	git add file &&
-	GIT_AUTHOR_NAME=$1 git commit -m author-check &&
+	GIT_AUTHOR_NAME=$1 git cummit -m author-check &&
 	git format-patch --stdout -1 >patch &&
 	sed -n "/^From: /p; /^ /p; /^$/q" patch >actual &&
 	test_cmp expect actual
@@ -1279,7 +1279,7 @@ test_expect_success 'format-patch wraps extremely long from-header (non-ASCII wi
 	echo content >>file &&
 	git add file &&
 	GIT_AUTHOR_NAME="Foö Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar" \
-	git commit -m author-check &&
+	git cummit -m author-check &&
 	git format-patch --no-encode-email-headers --stdout -1 >patch &&
 	sed -n "/^From: /p; /^ /p; /^$/q" patch >actual &&
 	test_cmp expect actual
@@ -1291,7 +1291,7 @@ EOF
 test_expect_success 'subject lines are unencoded with --no-encode-email-headers' '
 	echo content >>file &&
 	git add file &&
-	git commit -m "Foö" &&
+	git cummit -m "Foö" &&
 	git format-patch --no-encode-email-headers -1 --stdout >patch &&
 	grep ^Subject: patch >actual &&
 	test_cmp expect actual
@@ -1303,7 +1303,7 @@ EOF
 test_expect_success 'subject lines are unencoded with format.encodeEmailHeaders=false' '
 	echo content >>file &&
 	git add file &&
-	git commit -m "Foö" &&
+	git cummit -m "Foö" &&
 	git config format.encodeEmailHeaders false &&
 	git format-patch -1 --stdout >patch &&
 	grep ^Subject: patch >actual &&
@@ -1316,7 +1316,7 @@ EOF
 test_expect_success '--encode-email-headers overrides format.encodeEmailHeaders' '
 	echo content >>file &&
 	git add file &&
-	git commit -m "Foö" &&
+	git cummit -m "Foö" &&
 	git config format.encodeEmailHeaders false &&
 	git format-patch --encode-email-headers -1 --stdout >patch &&
 	grep ^Subject: patch >actual &&
@@ -1329,7 +1329,7 @@ EOF
 test_expect_success 'subject lines do not have 822 atom-quoting' '
 	echo content >>file &&
 	git add file &&
-	git commit -m "header with . in it" &&
+	git cummit -m "header with . in it" &&
 	git format-patch -k -1 --stdout >patch &&
 	grep ^Subject: patch >actual &&
 	test_cmp expect actual
@@ -1378,10 +1378,10 @@ test_expect_success '--from=ident replaces author' '
 	test_cmp expect patch.head
 '
 
-test_expect_success '--from uses committer ident' '
+test_expect_success '--from uses cummitter ident' '
 	git format-patch -1 --stdout --from >patch &&
 	cat >expect <<-\EOF &&
-	From: C O Mitter <committer@example.com>
+	From: C O Mitter <cummitter@example.com>
 
 	From: A U Thor <author@example.com>
 
@@ -1401,11 +1401,11 @@ test_expect_success '--from omits redundant in-body header' '
 '
 
 test_expect_success 'in-body headers trigger content encoding' '
-	test_env GIT_AUTHOR_NAME="éxötìc" test_commit exotic &&
+	test_env GIT_AUTHOR_NAME="éxötìc" test_cummit exotic &&
 	test_when_finished "git reset --hard HEAD^" &&
 	git format-patch -1 --stdout --from >patch &&
 	cat >expect <<-\EOF &&
-	From: C O Mitter <committer@example.com>
+	From: C O Mitter <cummitter@example.com>
 	Content-Type: text/plain; charset=UTF-8
 
 	From: éxötìc <author@example.com>
@@ -1417,38 +1417,38 @@ test_expect_success 'in-body headers trigger content encoding' '
 
 append_signoff()
 {
-	C=$(git commit-tree HEAD^^{tree} -p HEAD) &&
+	C=$(git cummit-tree HEAD^^{tree} -p HEAD) &&
 	git format-patch --stdout --signoff $C^..$C >append_signoff.patch &&
 	sed -n -e "1,/^---$/p" append_signoff.patch |
 		egrep -n "^Subject|Sign|^$"
 }
 
-test_expect_success 'signoff: commit with no body' '
+test_expect_success 'signoff: cummit with no body' '
 	append_signoff </dev/null >actual &&
 	cat <<-\EOF | sed "s/EOL$//" >expect &&
 	4:Subject: [PATCH] EOL
 	8:
-	9:Signed-off-by: C O Mitter <committer@example.com>
+	9:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
 
-test_expect_success 'signoff: commit with only subject' '
+test_expect_success 'signoff: cummit with only subject' '
 	echo subject | append_signoff >actual &&
 	cat >expect <<-\EOF &&
 	4:Subject: [PATCH] subject
 	8:
-	9:Signed-off-by: C O Mitter <committer@example.com>
+	9:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
 
-test_expect_success 'signoff: commit with only subject that does not end with NL' '
+test_expect_success 'signoff: cummit with only subject that does not end with NL' '
 	printf subject | append_signoff >actual &&
 	cat >expect <<-\EOF &&
 	4:Subject: [PATCH] subject
 	8:
-	9:Signed-off-by: C O Mitter <committer@example.com>
+	9:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
@@ -1463,7 +1463,7 @@ test_expect_success 'signoff: no existing signoffs' '
 	4:Subject: [PATCH] subject
 	8:
 	10:
-	11:Signed-off-by: C O Mitter <committer@example.com>
+	11:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
@@ -1474,7 +1474,7 @@ test_expect_success 'signoff: no existing signoffs and no trailing NL' '
 	4:Subject: [PATCH] subject
 	8:
 	10:
-	11:Signed-off-by: C O Mitter <committer@example.com>
+	11:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
@@ -1492,7 +1492,7 @@ test_expect_success 'signoff: some random signoff' '
 	8:
 	10:
 	11:Signed-off-by: my@house
-	12:Signed-off-by: C O Mitter <committer@example.com>
+	12:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
@@ -1504,7 +1504,7 @@ test_expect_success 'signoff: misc conforming footer elements' '
 	body
 
 	Signed-off-by: my@house
-	(cherry picked from commit da39a3ee5e6b4b0d3255bfef95601890afd80709)
+	(cherry picked from cummit da39a3ee5e6b4b0d3255bfef95601890afd80709)
 	Tested-by: Some One <someone@example.com>
 	Bug: 1234
 	EOF
@@ -1513,7 +1513,7 @@ test_expect_success 'signoff: misc conforming footer elements' '
 	8:
 	10:
 	11:Signed-off-by: my@house
-	15:Signed-off-by: C O Mitter <committer@example.com>
+	15:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
@@ -1529,7 +1529,7 @@ test_expect_success 'signoff: some random signoff-alike' '
 	4:Subject: [PATCH] subject
 	8:
 	11:
-	12:Signed-off-by: C O Mitter <committer@example.com>
+	12:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
@@ -1545,7 +1545,7 @@ test_expect_success 'signoff: not really a signoff' '
 	8:
 	9:I want to mention about Signed-off-by: here.
 	10:
-	11:Signed-off-by: C O Mitter <committer@example.com>
+	11:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
@@ -1561,7 +1561,7 @@ test_expect_success 'signoff: not really a signoff (2)' '
 	4:Subject: [PATCH] subject
 	8:
 	10:Signed-off-by: example happens to be wrapped here.
-	11:Signed-off-by: C O Mitter <committer@example.com>
+	11:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
@@ -1582,7 +1582,7 @@ test_expect_success 'signoff: valid S-o-b paragraph in the middle' '
 	10:Signed-off-by: your@house
 	11:
 	13:
-	14:Signed-off-by: C O Mitter <committer@example.com>
+	14:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
@@ -1593,24 +1593,24 @@ test_expect_success 'signoff: the same signoff at the end' '
 
 	body
 
-	Signed-off-by: C O Mitter <committer@example.com>
+	Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	cat >expect <<-\EOF &&
 	4:Subject: [PATCH] subject
 	8:
 	10:
-	11:Signed-off-by: C O Mitter <committer@example.com>
+	11:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
 
 test_expect_success 'signoff: the same signoff at the end, no trailing NL' '
-	printf "subject\n\nSigned-off-by: C O Mitter <committer@example.com>" |
+	printf "subject\n\nSigned-off-by: C O Mitter <cummitter@example.com>" |
 		append_signoff >actual &&
 	cat >expect <<-\EOF &&
 	4:Subject: [PATCH] subject
 	8:
-	9:Signed-off-by: C O Mitter <committer@example.com>
+	9:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
@@ -1621,14 +1621,14 @@ test_expect_success 'signoff: the same signoff NOT at the end' '
 
 	body
 
-	Signed-off-by: C O Mitter <committer@example.com>
+	Signed-off-by: C O Mitter <cummitter@example.com>
 	Signed-off-by: my@house
 	EOF
 	cat >expect <<-\EOF &&
 	4:Subject: [PATCH] subject
 	8:
 	10:
-	11:Signed-off-by: C O Mitter <committer@example.com>
+	11:Signed-off-by: C O Mitter <cummitter@example.com>
 	12:Signed-off-by: my@house
 	EOF
 	test_cmp expect actual
@@ -1642,13 +1642,13 @@ test_expect_success 'signoff: tolerate garbage in conforming footer' '
 
 	Tested-by: my@house
 	Some Trash
-	Signed-off-by: C O Mitter <committer@example.com>
+	Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	cat >expect <<-\EOF &&
 	4:Subject: [PATCH] subject
 	8:
 	10:
-	13:Signed-off-by: C O Mitter <committer@example.com>
+	13:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
@@ -1664,7 +1664,7 @@ test_expect_success 'signoff: respect trailer config' '
 	4:Subject: [PATCH] subject
 	8:
 	11:
-	12:Signed-off-by: C O Mitter <committer@example.com>
+	12:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual &&
 
@@ -1678,7 +1678,7 @@ test_expect_success 'signoff: respect trailer config' '
 	cat >expect <<-\EOF &&
 	4:Subject: [PATCH] subject
 	8:
-	11:Signed-off-by: C O Mitter <committer@example.com>
+	11:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
@@ -1692,14 +1692,14 @@ test_expect_success 'signoff: footer begins with non-signoff without @ sign' '
 	Reviewed-id: Noone
 	Tested-by: my@house
 	Change-id: Ideadbeef
-	Signed-off-by: C O Mitter <committer@example.com>
+	Signed-off-by: C O Mitter <cummitter@example.com>
 	Bug: 1234
 	EOF
 	cat >expect <<-\EOF &&
 	4:Subject: [PATCH] subject
 	8:
 	10:
-	14:Signed-off-by: C O Mitter <committer@example.com>
+	14:Signed-off-by: C O Mitter <cummitter@example.com>
 	EOF
 	test_cmp expect actual
 '
@@ -1717,7 +1717,7 @@ test_expect_success 'format patch respects diff.relative' '
 	mkdir subdir &&
 	echo other content >subdir/file2 &&
 	git add subdir/file2 &&
-	git commit -F msg &&
+	git cummit -F msg &&
 	test_unconfig diff.relative &&
 	git format-patch --relative=subdir --stdout -1 >expect &&
 	test_config diff.relative true &&
@@ -1972,8 +1972,8 @@ test_expect_success 'cover letter auto user override' '
 	test_line_count = 2 list
 '
 
-test_expect_success 'format-patch --zero-commit' '
-	git format-patch --zero-commit --stdout v2..v1 >patch2 &&
+test_expect_success 'format-patch --zero-cummit' '
+	git format-patch --zero-cummit --stdout v2..v1 >patch2 &&
 	grep "^From " patch2 | sort | uniq >actual &&
 	echo "From $ZERO_OID Mon Sep 17 00:00:00 2001" >expect &&
 	test_cmp expect actual
@@ -2072,8 +2072,8 @@ test_expect_success 'format-patch --base' '
 	tail -n 7 patch >actual2 &&
 
 	echo >expect &&
-	git rev-parse HEAD~3 >commit-id-base &&
-	echo "base-commit: $(cat commit-id-base)" >>expect &&
+	git rev-parse HEAD~3 >cummit-id-base &&
+	echo "base-cummit: $(cat cummit-id-base)" >>expect &&
 
 	git show --patch HEAD~2 >patch &&
 	git patch-id --stable <patch >patch.id.raw &&
@@ -2088,7 +2088,7 @@ test_expect_success 'format-patch --base' '
 	test_cmp expect actual2 &&
 
 	echo >fail &&
-	echo "base-commit: $(cat commit-id-base)" >>fail &&
+	echo "base-cummit: $(cat cummit-id-base)" >>fail &&
 
 	git show --patch HEAD~2 >patch &&
 	git patch-id --unstable <patch >patch.id.raw &&
@@ -2103,40 +2103,40 @@ test_expect_success 'format-patch --base' '
 	! test_cmp fail actual2
 '
 
-test_expect_success 'format-patch --base errors out when base commit is in revision list' '
+test_expect_success 'format-patch --base errors out when base cummit is in revision list' '
 	test_must_fail git format-patch --base=HEAD -2 &&
 	test_must_fail git format-patch --base=HEAD~1 -2 &&
 	git format-patch --stdout --base=HEAD~2 -2 >patch &&
-	grep "^base-commit:" patch >actual &&
-	git rev-parse HEAD~2 >commit-id-base &&
-	echo "base-commit: $(cat commit-id-base)" >expect &&
+	grep "^base-cummit:" patch >actual &&
+	git rev-parse HEAD~2 >cummit-id-base &&
+	echo "base-cummit: $(cat cummit-id-base)" >expect &&
 	test_cmp expect actual
 '
 
-test_expect_success 'format-patch --base errors out when base commit is not ancestor of revision list' '
+test_expect_success 'format-patch --base errors out when base cummit is not ancestor of revision list' '
 	# For history as below:
 	#
 	#    ---Q---P---Z---Y---*---X
 	#	 \             /
 	#	  ------------W
 	#
-	# If "format-patch Z..X" is given, P and Z can not be specified as the base commit
+	# If "format-patch Z..X" is given, P and Z can not be specified as the base cummit
 	git checkout -b topic1 main &&
-	git rev-parse HEAD >commit-id-base &&
-	test_commit P &&
-	git rev-parse HEAD >commit-id-P &&
-	test_commit Z &&
-	git rev-parse HEAD >commit-id-Z &&
-	test_commit Y &&
+	git rev-parse HEAD >cummit-id-base &&
+	test_cummit P &&
+	git rev-parse HEAD >cummit-id-P &&
+	test_cummit Z &&
+	git rev-parse HEAD >cummit-id-Z &&
+	test_cummit Y &&
 	git checkout -b topic2 main &&
-	test_commit W &&
+	test_cummit W &&
 	git merge topic1 &&
-	test_commit X &&
-	test_must_fail git format-patch --base=$(cat commit-id-P) -3 &&
-	test_must_fail git format-patch --base=$(cat commit-id-Z) -3 &&
-	git format-patch --stdout --base=$(cat commit-id-base) -3 >patch &&
-	grep "^base-commit:" patch >actual &&
-	echo "base-commit: $(cat commit-id-base)" >expect &&
+	test_cummit X &&
+	test_must_fail git format-patch --base=$(cat cummit-id-P) -3 &&
+	test_must_fail git format-patch --base=$(cat cummit-id-Z) -3 &&
+	git format-patch --stdout --base=$(cat cummit-id-base) -3 >patch &&
+	grep "^base-cummit:" patch >actual &&
+	echo "base-cummit: $(cat cummit-id-base)" >expect &&
 	test_cmp expect actual
 '
 
@@ -2144,12 +2144,12 @@ test_expect_success 'format-patch --base=auto' '
 	git checkout -b upstream main &&
 	git checkout -b local upstream &&
 	git branch --set-upstream-to=upstream &&
-	test_commit N1 &&
-	test_commit N2 &&
+	test_cummit N1 &&
+	test_cummit N2 &&
 	git format-patch --stdout --base=auto -2 >patch &&
-	grep "^base-commit:" patch >actual &&
-	git rev-parse upstream >commit-id-base &&
-	echo "base-commit: $(cat commit-id-base)" >expect &&
+	grep "^base-cummit:" patch >actual &&
+	git rev-parse upstream >cummit-id-base &&
+	echo "base-cummit: $(cat cummit-id-base)" >expect &&
 	test_cmp expect actual
 '
 
@@ -2163,36 +2163,36 @@ test_expect_success 'format-patch errors out when history involves criss-cross' 
 	#   C---M2---E
 	#
 	git checkout main &&
-	test_commit A &&
+	test_cummit A &&
 	git checkout -b xb main &&
-	test_commit B &&
+	test_cummit B &&
 	git checkout -b xc main &&
-	test_commit C &&
+	test_cummit C &&
 	git checkout -b xbc xb -- &&
 	git merge xc &&
 	git checkout -b xcb xc -- &&
 	git branch --set-upstream-to=xbc &&
 	git merge xb &&
 	git checkout xbc &&
-	test_commit D &&
+	test_cummit D &&
 	git checkout xcb &&
-	test_commit E &&
+	test_cummit E &&
 	test_must_fail 	git format-patch --base=auto -1
 '
 
 test_expect_success 'format-patch format.useAutoBase whenAble history involves criss-cross' '
 	test_config format.useAutoBase whenAble &&
 	git format-patch -1 >patch &&
-	! grep "^base-commit:" patch
+	! grep "^base-cummit:" patch
 '
 
 test_expect_success 'format-patch format.useAutoBase option' '
 	git checkout local &&
 	test_config format.useAutoBase true &&
 	git format-patch --stdout -1 >patch &&
-	grep "^base-commit:" patch >actual &&
-	git rev-parse upstream >commit-id-base &&
-	echo "base-commit: $(cat commit-id-base)" >expect &&
+	grep "^base-cummit:" patch >actual &&
+	git rev-parse upstream >cummit-id-base &&
+	echo "base-cummit: $(cat cummit-id-base)" >expect &&
 	test_cmp expect actual
 '
 
@@ -2200,36 +2200,36 @@ test_expect_success 'format-patch format.useAutoBase option with whenAble' '
 	git checkout local &&
 	test_config format.useAutoBase whenAble &&
 	git format-patch --stdout -1 >patch &&
-	grep "^base-commit:" patch >actual &&
-	git rev-parse upstream >commit-id-base &&
-	echo "base-commit: $(cat commit-id-base)" >expect &&
+	grep "^base-cummit:" patch >actual &&
+	git rev-parse upstream >cummit-id-base &&
+	echo "base-cummit: $(cat cummit-id-base)" >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'format-patch --base overrides format.useAutoBase' '
 	test_config format.useAutoBase true &&
 	git format-patch --stdout --base=HEAD~1 -1 >patch &&
-	grep "^base-commit:" patch >actual &&
-	git rev-parse HEAD~1 >commit-id-base &&
-	echo "base-commit: $(cat commit-id-base)" >expect &&
+	grep "^base-cummit:" patch >actual &&
+	git rev-parse HEAD~1 >cummit-id-base &&
+	echo "base-cummit: $(cat cummit-id-base)" >expect &&
 	test_cmp expect actual
 '
 
 test_expect_success 'format-patch --no-base overrides format.useAutoBase' '
 	test_config format.useAutoBase true &&
 	git format-patch --stdout --no-base -1 >patch &&
-	! grep "^base-commit:" patch
+	! grep "^base-cummit:" patch
 '
 
 test_expect_success 'format-patch --no-base overrides format.useAutoBase whenAble' '
 	test_config format.useAutoBase whenAble &&
 	git format-patch --stdout --no-base -1 >patch &&
-	! grep "^base-commit:" patch
+	! grep "^base-cummit:" patch
 '
 
 test_expect_success 'format-patch --base with --attach' '
 	git format-patch --attach=mimemime --stdout --base=HEAD~ -1 >patch &&
-	sed -n -e "/^base-commit:/s/.*/1/p" -e "/^---*mimemime--$/s/.*/2/p" \
+	sed -n -e "/^base-cummit:/s/.*/1/p" -e "/^---*mimemime--$/s/.*/2/p" \
 		patch >actual &&
 	test_write_lines 1 2 >expect &&
 	test_cmp expect actual
@@ -2278,7 +2278,7 @@ test_expect_success 'format-patch --pretty=mboxrd' '
 	From
 	INPUT_END
 
-	C=$(git commit-tree HEAD^^{tree} -p HEAD <msg) &&
+	C=$(git cummit-tree HEAD^^{tree} -p HEAD <msg) &&
 	git format-patch --pretty=mboxrd --stdout -1 $C~1..$C >patch &&
 	git grep -h --no-index -A11 \
 		"^>From could trip up a loose mbox parser" patch >actual &&
@@ -2287,8 +2287,8 @@ test_expect_success 'format-patch --pretty=mboxrd' '
 
 test_expect_success 'interdiff: setup' '
 	git checkout -b boop main &&
-	test_commit fnorp blorp &&
-	test_commit fleep blorp
+	test_cummit fnorp blorp &&
+	test_cummit fleep blorp
 '
 
 test_expect_success 'interdiff: cover-letter' '

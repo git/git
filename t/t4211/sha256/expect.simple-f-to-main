@@ -1,4 +1,4 @@
-commit 5a1b3989063d55e71e7685efa3392f133385b4034bddde530dcb5090d8b8b8ca
+cummit 5a1b3989063d55e71e7685efa3392f133385b4034bddde530dcb5090d8b8b8ca
 Author: Thomas Rast <trast@student.ethz.ch>
 Date:   Thu Feb 28 10:45:41 2013 +0100
 
@@ -24,7 +24,7 @@ diff --git a/a.c b/a.c
   */
  
 
-commit ccf97b9878189c40a981da50b15713bb80a35755326320ec80900caf22ced46f
+cummit ccf97b9878189c40a981da50b15713bb80a35755326320ec80900caf22ced46f
 Author: Thomas Rast <trast@student.ethz.ch>
 Date:   Thu Feb 28 10:45:16 2013 +0100
 
@@ -50,7 +50,7 @@ diff --git a/a.c b/a.c
   */
  
 
-commit f6434acd34260a6c9f61e96d96bf9a323d330561df5b1ca2631104f82026dfed
+cummit f6434acd34260a6c9f61e96d96bf9a323d330561df5b1ca2631104f82026dfed
 Author: Thomas Rast <trast@student.ethz.ch>
 Date:   Thu Feb 28 10:44:55 2013 +0100
 
@@ -75,7 +75,7 @@ diff --git a/a.c b/a.c
   */
  
 
-commit 1dd7e9b2b1699324b53b341e728653b913bc192a14dfea168c5b51f2b3d03592
+cummit 1dd7e9b2b1699324b53b341e728653b913bc192a14dfea168c5b51f2b3d03592
 Author: Thomas Rast <trast@student.ethz.ch>
 Date:   Thu Feb 28 10:44:48 2013 +0100
 

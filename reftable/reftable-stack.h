@@ -50,12 +50,12 @@ int reftable_addition_add(struct reftable_addition *add,
 					     void *arg),
 			  void *arg);
 
-/* Commits the transaction, releasing the lock. After calling this,
+/* cummits the transaction, releasing the lock. After calling this,
  * reftable_addition_destroy should still be called.
  */
-int reftable_addition_commit(struct reftable_addition *add);
+int reftable_addition_cummit(struct reftable_addition *add);
 
-/* Release all non-committed data from the transaction, and deallocate the
+/* Release all non-cummitted data from the transaction, and deallocate the
  * transaction. Releases the lock if held. */
 void reftable_addition_destroy(struct reftable_addition *add);
 

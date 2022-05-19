@@ -420,8 +420,8 @@ static struct combine_diff_path *ll_diff_tree_paths(
 	/*
 	 * load parents first, as they are probably already cached.
 	 *
-	 * ( log_tree_diff() parses commit->parent before calling here via
-	 *   diff_tree_oid(parent, commit) )
+	 * ( log_tree_diff() parses cummit->parent before calling here via
+	 *   diff_tree_oid(parent, cummit) )
 	 */
 	for (i = 0; i < nparent; ++i)
 		tptree[i] = fill_tree_descriptor(opt->repo, &tp[i], parents_oid[i]);

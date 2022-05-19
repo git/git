@@ -34,7 +34,7 @@ Updates since v1.6.1
   improvements.
 
 * (contrib/emacs) git.el now has commands for checking out a branch,
-  creating a branch, cherry-picking and reverting commits; vc-git.el
+  creating a branch, cherry-picking and reverting cummits; vc-git.el
   is not shipped with git anymore (it is part of official Emacs).
 
 (performance)
@@ -88,7 +88,7 @@ Updates since v1.6.1
   exists) when the <upstream> argument is not given.
 
 * "git cvsserver" can be told not to add extra "via git-CVS emulator" to
-  the commit log message it serves via gitcvs.commitmsgannotation
+  the cummit log message it serves via gitcvs.cummitmsgannotation
   configuration.
 
 * "git cvsserver" learned to handle 'noop' command some CVS clients seem
@@ -102,7 +102,7 @@ Updates since v1.6.1
 
 * "git diff" learned --patience to run "patience diff" algorithm.
 
-* "git filter-branch" learned --prune-empty option that discards commits
+* "git filter-branch" learned --prune-empty option that discards cummits
   that do not change the contents.
 
 * "git fsck" now checks loose objects in alternate object stores, instead
@@ -120,7 +120,7 @@ Updates since v1.6.1
 
 * "git reset --merge" is a new mode that works similar to the way
   "git checkout" switches branches, taking the local changes while
-  switching to another commit.
+  switching to another cummit.
 
 * "git submodule update" learned --no-fetch option.
 
@@ -144,7 +144,7 @@ v1.6.1.X series.
   from the command line wanted to.
 
 * "git filter-branch" unnecessarily refused to work when you had
-  checked out a different commit from what is recorded in the superproject
+  checked out a different cummit from what is recorded in the superproject
   index in a submodule.
 
 * "git filter-branch" incorrectly tried to update a nonexistent work tree

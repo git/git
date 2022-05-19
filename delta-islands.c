@@ -2,7 +2,7 @@
 #include "attr.h"
 #include "object.h"
 #include "blob.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "tree.h"
 #include "delta.h"
@@ -206,7 +206,7 @@ static void mark_remote_island_1(struct repository *r,
 		marks = create_or_get_island_marks(obj);
 		island_bitmap_set(marks, island_counter);
 
-		if (is_core_island && obj->type == OBJ_COMMIT)
+		if (is_core_island && obj->type == OBJ_cummit)
 			obj->flags |= NEEDS_BITMAP;
 
 		/* If it was a tag, also make sure we hit the underlying object. */
@@ -252,7 +252,7 @@ void resolve_tree_islands(struct repository *r,
 		return;
 
 	/*
-	 * We process only trees, as commits and tags have already been handled
+	 * We process only trees, as cummits and tags have already been handled
 	 * (and passed their marks on to root trees, as well. We must make sure
 	 * to process them in descending tree-depth order so that marks
 	 * propagate down the tree properly, even if a sub-tree is found in
@@ -467,17 +467,17 @@ void load_delta_islands(struct repository *r, int progress)
 		fprintf(stderr, _("Marked %d islands, done.\n"), island_counter);
 }
 
-void propagate_island_marks(struct commit *commit)
+void propagate_island_marks(struct cummit *cummit)
 {
-	khiter_t pos = kh_get_oid_map(island_marks, commit->object.oid);
+	khiter_t pos = kh_get_oid_map(island_marks, cummit->object.oid);
 
 	if (pos < kh_end(island_marks)) {
-		struct commit_list *p;
+		struct cummit_list *p;
 		struct island_bitmap *root_marks = kh_value(island_marks, pos);
 
-		parse_commit(commit);
-		set_island_marks(&get_commit_tree(commit)->object, root_marks);
-		for (p = commit->parents; p; p = p->next)
+		parse_cummit(cummit);
+		set_island_marks(&get_cummit_tree(cummit)->object, root_marks);
+		for (p = cummit->parents; p; p = p->next)
 			set_island_marks(&p->item->object, root_marks);
 	}
 }

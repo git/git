@@ -12,12 +12,12 @@ test_expect_success setup '
 	>dir/main &&
 	echo common >dir/common &&
 	git add dir/main dir/common &&
-	test_tick && git commit -m "main has dir/main" &&
+	test_tick && git cummit -m "main has dir/main" &&
 	git checkout -b next &&
 	git mv dir/main dir/next0 &&
 	echo next >dir/next1 &&
 	git add dir &&
-	test_tick && git commit -m "next has dir/next but not dir/main"
+	test_tick && git cummit -m "next has dir/next but not dir/main"
 '
 
 test_expect_success 'checking out paths out of a tree does not clobber unrelated paths' '
@@ -70,7 +70,7 @@ test_expect_success 'do not touch files that are already up-to-date' '
 	echo one >file1 &&
 	echo two >file2 &&
 	git add file1 file2 &&
-	git commit -m base &&
+	git cummit -m base &&
 	echo modified >file1 &&
 	test-tool chmtime =1000000000 file2 &&
 	git update-index -q --refresh &&
@@ -86,7 +86,7 @@ test_expect_success 'checkout HEAD adds deleted intent-to-add file back to index
 	echo "nonempty" >nonempty &&
 	>empty &&
 	git add nonempty empty &&
-	git commit -m "create files to be deleted" &&
+	git cummit -m "create files to be deleted" &&
 	git rm --cached nonempty empty &&
 	git add -N nonempty empty &&
 	git checkout HEAD nonempty empty &&

@@ -75,9 +75,9 @@ test_expect_success 'setup' '
 	mkdir -p sub/dir work &&
 	cp -R .git repo.git &&
 	git checkout -B main &&
-	test_commit abc &&
+	test_cummit abc &&
 	git checkout -b side &&
-	test_commit def &&
+	test_cummit def &&
 	git checkout main &&
 	git worktree add worktree side
 '
@@ -179,7 +179,7 @@ test_expect_success 'git-path inside sub-dir' '
 '
 
 test_expect_success 'rev-parse --is-shallow-repository in shallow repo' '
-	test_commit test_commit &&
+	test_cummit test_cummit &&
 	echo true >expect &&
 	git clone --depth 1 --no-local . shallow &&
 	test_when_finished "rm -rf shallow" &&
@@ -222,25 +222,25 @@ test_expect_success 'showing the superproject correctly' '
 	test_must_be_empty out &&
 
 	test_create_repo super &&
-	test_commit -C super test_commit &&
+	test_cummit -C super test_cummit &&
 	test_create_repo sub &&
-	test_commit -C sub test_commit &&
+	test_cummit -C sub test_cummit &&
 	git -C super submodule add ../sub dir/sub &&
 	echo $(pwd)/super >expect  &&
 	git -C super/dir/sub rev-parse --show-superproject-working-tree >out &&
 	test_cmp expect out &&
 
-	test_commit -C super submodule_add &&
+	test_cummit -C super submodule_add &&
 	git -C super checkout -b branch1 &&
 	git -C super/dir/sub checkout -b branch1 &&
-	test_commit -C super/dir/sub branch1_commit &&
+	test_cummit -C super/dir/sub branch1_cummit &&
 	git -C super add dir/sub &&
-	test_commit -C super branch1_commit &&
+	test_cummit -C super branch1_cummit &&
 	git -C super checkout -b branch2 main &&
 	git -C super/dir/sub checkout -b branch2 main &&
-	test_commit -C super/dir/sub branch2_commit &&
+	test_cummit -C super/dir/sub branch2_cummit &&
 	git -C super add dir/sub &&
-	test_commit -C super branch2_commit &&
+	test_cummit -C super branch2_cummit &&
 	test_must_fail git -C super merge branch1 &&
 
 	git -C super/dir/sub rev-parse --show-superproject-working-tree >out &&

@@ -9,7 +9,7 @@ git-worktree - Manage multiple working trees
 SYNOPSIS
 --------
 [verse]
-'git worktree add' [-f] [--detach] [--checkout] [--lock [--reason <string>]] [-b <new-branch>] <path> [<commit-ish>]
+'git worktree add' [-f] [--detach] [--checkout] [--lock [--reason <string>]] [-b <new-branch>] <path> [<cummit-ish>]
 'git worktree list' [-v | --porcelain [-z]]
 'git worktree lock' [--reason <string>] <worktree>
 'git worktree move' <worktree> <new-path>
@@ -45,7 +45,7 @@ plan to make some experimental changes or do testing without disturbing
 existing development, it is often convenient to create a 'throwaway'
 worktree not associated with any branch. For instance,
 `git worktree add -d <path>` creates a new worktree with a detached `HEAD`
-at the same commit as the current branch.
+at the same cummit as the current branch.
 
 If a working tree is deleted without using `git worktree remove`, then
 its associated administrative files, which reside in the repository
@@ -62,14 +62,14 @@ locked.
 
 COMMANDS
 --------
-add <path> [<commit-ish>]::
+add <path> [<cummit-ish>]::
 
-Create a worktree at `<path>` and checkout `<commit-ish>` into it. The new worktree
+Create a worktree at `<path>` and checkout `<cummit-ish>` into it. The new worktree
 is linked to the current repository, sharing everything except per-worktree
-files such as `HEAD`, `index`, etc. As a convenience, `<commit-ish>` may
+files such as `HEAD`, `index`, etc. As a convenience, `<cummit-ish>` may
 be a bare "`-`", which is synonymous with `@{-1}`.
 +
-If `<commit-ish>` is a branch name (call it `<branch>`) and is not found,
+If `<cummit-ish>` is a branch name (call it `<branch>`) and is not found,
 and neither `-b` nor `-B` nor `--detach` are used, but there does
 exist a tracking branch in exactly one remote (call it `<remote>`)
 with a matching name, treat as equivalent to:
@@ -87,7 +87,7 @@ branches from there if `<branch>` is ambiguous but exists on the
 `origin` remote. See also `checkout.defaultRemote` in
 linkgit:git-config[1].
 +
-If `<commit-ish>` is omitted and neither `-b` nor `-B` nor `--detach` used,
+If `<cummit-ish>` is omitted and neither `-b` nor `-B` nor `--detach` used,
 then, as a convenience, the new worktree is associated with a branch (call
 it `<branch>`) named after `$(basename <path>)`.  If `<branch>` doesn't
 exist, a new branch based on `HEAD` is automatically created as if
@@ -161,7 +161,7 @@ OPTIONS
 -f::
 --force::
 	By default, `add` refuses to create a new worktree when
-	`<commit-ish>` is a branch name and is already checked out by
+	`<cummit-ish>` is a branch name and is already checked out by
 	another worktree, or if `<path>` is already assigned to some
 	worktree but is missing (for instance, if `<path>` was deleted
 	manually). This option overrides these safeguards. To add a missing but
@@ -178,11 +178,11 @@ To remove a locked worktree, specify `--force` twice.
 -b <new-branch>::
 -B <new-branch>::
 	With `add`, create a new branch named `<new-branch>` starting at
-	`<commit-ish>`, and check out `<new-branch>` into the new worktree.
-	If `<commit-ish>` is omitted, it defaults to `HEAD`.
+	`<cummit-ish>`, and check out `<new-branch>` into the new worktree.
+	If `<cummit-ish>` is omitted, it defaults to `HEAD`.
 	By default, `-b` refuses to create a new branch if it already
 	exists. `-B` overrides this safeguard, resetting `<new-branch>` to
-	`<commit-ish>`.
+	`<cummit-ish>`.
 
 -d::
 --detach::
@@ -190,13 +190,13 @@ To remove a locked worktree, specify `--force` twice.
 	in linkgit:git-checkout[1].
 
 --[no-]checkout::
-	By default, `add` checks out `<commit-ish>`, however, `--no-checkout` can
+	By default, `add` checks out `<cummit-ish>`, however, `--no-checkout` can
 	be used to suppress checkout in order to make customizations,
 	such as configuring sparse-checkout. See "Sparse checkout"
 	in linkgit:git-read-tree[1].
 
 --[no-]guess-remote::
-	With `worktree add <path>`, without `<commit-ish>`, instead
+	With `worktree add <path>`, without `<cummit-ish>`, instead
 	of creating a new branch from `HEAD`, if there exists a tracking
 	branch in exactly one remote matching the basename of `<path>`,
 	base the new branch on the remote-tracking branch, and mark
@@ -206,9 +206,9 @@ This can also be set up as the default behaviour by using the
 `worktree.guessRemote` config option.
 
 --[no-]track::
-	When creating a new branch, if `<commit-ish>` is a branch,
+	When creating a new branch, if `<cummit-ish>` is a branch,
 	mark it as "upstream" from the new branch.  This is the
-	default if `<commit-ish>` is a remote-tracking branch.  See
+	default if `<cummit-ish>` is a remote-tracking branch.  See
 	`--track` in linkgit:git-branch[1] for details.
 
 --lock::
@@ -489,7 +489,7 @@ refactoring session.
 $ git worktree add -b emergency-fix ../temp master
 $ pushd ../temp
 # ... hack hack hack ...
-$ git commit -a -m 'emergency fix for boss'
+$ git cummit -a -m 'emergency fix for boss'
 $ popd
 $ git worktree remove ../temp
 ------------

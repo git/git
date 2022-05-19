@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # Copyright (c) 2010, Will Palmer
-# Copyright (c) 2011, Alexey Shumkin (+ non-UTF-8 commit encoding tests)
+# Copyright (c) 2011, Alexey Shumkin (+ non-UTF-8 cummit encoding tests)
 #
 
 test_description='Test pretty formats'
@@ -12,10 +12,10 @@ test_encoding="ISO8859-1"
 
 sample_utf8_part=$(printf "f\303\244ng")
 
-commit_msg () {
+cummit_msg () {
 	# String "initial. initial" partly in German
 	# (translated with Google Translate),
-	# encoded in UTF-8, used as a commit log message below.
+	# encoded in UTF-8, used as a cummit log message below.
 	msg="initial. an${sample_utf8_part}lich\n"
 	if test -n "$1"
 	then
@@ -30,12 +30,12 @@ test_expect_success 'set up basic repos' '
 	>bar &&
 	git add foo &&
 	test_tick &&
-	git config i18n.commitEncoding $test_encoding &&
-	commit_msg $test_encoding | git commit -F - &&
+	git config i18n.cummitEncoding $test_encoding &&
+	cummit_msg $test_encoding | git cummit -F - &&
 	git add bar &&
 	test_tick &&
-	git commit -m "add bar" &&
-	git config --unset i18n.commitEncoding
+	git cummit -m "add bar" &&
+	git config --unset i18n.cummitEncoding
 '
 
 test_expect_success 'alias builtin format' '
@@ -107,29 +107,29 @@ test_expect_success 'alias loop' '
 '
 
 test_expect_success 'NUL separation' '
-	printf "add bar\0$(commit_msg)" >expected &&
+	printf "add bar\0$(cummit_msg)" >expected &&
 	git log -z --pretty="format:%s" >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'NUL termination' '
-	printf "add bar\0$(commit_msg)\0" >expected &&
+	printf "add bar\0$(cummit_msg)\0" >expected &&
 	git log -z --pretty="tformat:%s" >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'NUL separation with --stat' '
 	stat0_part=$(git diff --stat HEAD^ HEAD) &&
-	stat1_part=$(git diff-tree --no-commit-id --stat --root HEAD^) &&
-	printf "add bar\n$stat0_part\n\0$(commit_msg)\n$stat1_part\n" >expected &&
+	stat1_part=$(git diff-tree --no-cummit-id --stat --root HEAD^) &&
+	printf "add bar\n$stat0_part\n\0$(cummit_msg)\n$stat1_part\n" >expected &&
 	git log -z --stat --pretty="format:%s" >actual &&
 	test_cmp expected actual
 '
 
 test_expect_failure 'NUL termination with --stat' '
 	stat0_part=$(git diff --stat HEAD^ HEAD) &&
-	stat1_part=$(git diff-tree --no-commit-id --stat --root HEAD^) &&
-	printf "add bar\n$stat0_part\n\0$(commit_msg)\n$stat1_part\n0" >expected &&
+	stat1_part=$(git diff-tree --no-cummit-id --stat --root HEAD^) &&
+	printf "add bar\n$stat0_part\n\0$(cummit_msg)\n$stat1_part\n0" >expected &&
 	git log -z --stat --pretty="tformat:%s" >actual &&
 	test_cmp expected actual
 '
@@ -164,9 +164,9 @@ test_expect_success 'NUL termination with --reflog --pretty=oneline' '
 	test_cmp expect actual
 '
 
-test_expect_success 'setup more commits' '
-	test_commit "message one" one one message-one &&
-	test_commit "message two" two two message-two &&
+test_expect_success 'setup more cummits' '
+	test_cummit "message one" one one message-one &&
+	test_cummit "message two" two two message-two &&
 	head1=$(git rev-parse --verify --short HEAD~0) &&
 	head2=$(git rev-parse --verify --short HEAD~1) &&
 	head3=$(git rev-parse --verify --short HEAD~2) &&
@@ -179,7 +179,7 @@ test_expect_success 'left alignment formatting' '
 	message two                            Z
 	message one                            Z
 	add bar                                Z
-	$(commit_msg)                    Z
+	$(cummit_msg)                    Z
 	EOF
 	test_cmp expected actual
 '
@@ -190,7 +190,7 @@ test_expect_success 'left alignment formatting. i18n.logOutputEncoding' '
 	message two                            Z
 	message one                            Z
 	add bar                                Z
-	$(commit_msg)                    Z
+	$(cummit_msg)                    Z
 	EOF
 	test_cmp expected actual
 '
@@ -201,7 +201,7 @@ test_expect_success 'left alignment formatting at the nth column' '
 	$head1 message two                    Z
 	$head2 message one                    Z
 	$head3 add bar                        Z
-	$head4 $(commit_msg)            Z
+	$head4 $(cummit_msg)            Z
 	EOF
 	test_cmp expected actual
 '
@@ -212,7 +212,7 @@ test_expect_success 'left alignment formatting at the nth column' '
 	$head1 message two                    Z
 	$head2 message one                    Z
 	$head3 add bar                        Z
-	$head4 $(commit_msg)            Z
+	$head4 $(cummit_msg)            Z
 	EOF
 	test_cmp expected actual
 '
@@ -223,7 +223,7 @@ test_expect_success 'left alignment formatting at the nth column. i18n.logOutput
 	$head1 message two                    Z
 	$head2 message one                    Z
 	$head3 add bar                        Z
-	$head4 $(commit_msg)            Z
+	$head4 $(cummit_msg)            Z
 	EOF
 	test_cmp expected actual
 '
@@ -234,7 +234,7 @@ test_expect_success 'left alignment formatting with no padding' '
 	message two
 	message one
 	add bar
-	$(commit_msg)
+	$(cummit_msg)
 	EOF
 	test_cmp expected actual
 '
@@ -245,7 +245,7 @@ test_expect_success 'left alignment formatting with no padding. i18n.logOutputEn
 	message two
 	message one
 	add bar
-	$(commit_msg)
+	$(cummit_msg)
 	EOF
 	test_cmp expected actual
 '
@@ -322,7 +322,7 @@ test_expect_success 'right alignment formatting' '
 	Z                            message two
 	Z                            message one
 	Z                                add bar
-	Z                    $(commit_msg)
+	Z                    $(cummit_msg)
 	EOF
 	test_cmp expected actual
 '
@@ -333,7 +333,7 @@ test_expect_success 'right alignment formatting. i18n.logOutputEncoding' '
 	Z                            message two
 	Z                            message one
 	Z                                add bar
-	Z                    $(commit_msg)
+	Z                    $(cummit_msg)
 	EOF
 	test_cmp expected actual
 '
@@ -344,7 +344,7 @@ test_expect_success 'right alignment formatting at the nth column' '
 	$head1                      message two
 	$head2                      message one
 	$head3                          add bar
-	$head4              $(commit_msg)
+	$head4              $(cummit_msg)
 	EOF
 	test_cmp expected actual
 '
@@ -355,7 +355,7 @@ test_expect_success 'right alignment formatting at the nth column' '
 	$head1                      message two
 	$head2                      message one
 	$head3                          add bar
-	$head4              $(commit_msg)
+	$head4              $(cummit_msg)
 	EOF
 	test_cmp expected actual
 '
@@ -366,7 +366,7 @@ test_expect_success 'right alignment formatting at the nth column. i18n.logOutpu
 	$head1                      message two
 	$head2                      message one
 	$head3                          add bar
-	$head4              $(commit_msg)
+	$head4              $(cummit_msg)
 	EOF
 	test_cmp expected actual
 '
@@ -379,7 +379,7 @@ test_expect_success 'right alignment formatting at the nth column with --graph. 
 	* $head1                    message two
 	* $head2                    message one
 	* $head3                        add bar
-	* $head4            $(commit_msg)
+	* $head4            $(cummit_msg)
 	EOF
 	test_cmp expected actual
 '
@@ -390,7 +390,7 @@ test_expect_success 'right alignment formatting with no padding' '
 	message two
 	message one
 	add bar
-	$(commit_msg)
+	$(cummit_msg)
 	EOF
 	test_cmp expected actual
 '
@@ -401,7 +401,7 @@ test_expect_success 'right alignment formatting with no padding and with --graph
 	* message two
 	* message one
 	* add bar
-	* $(commit_msg)
+	* $(cummit_msg)
 	EOF
 	test_cmp expected actual
 '
@@ -412,7 +412,7 @@ test_expect_success 'right alignment formatting with no padding. i18n.logOutputE
 	message two
 	message one
 	add bar
-	$(commit_msg)
+	$(cummit_msg)
 	EOF
 	test_cmp expected actual
 '
@@ -423,7 +423,7 @@ test_expect_success 'center alignment formatting' '
 	Z             message two              Z
 	Z             message one              Z
 	Z               add bar                Z
-	Z         $(commit_msg)          Z
+	Z         $(cummit_msg)          Z
 	EOF
 	test_cmp expected actual
 '
@@ -434,7 +434,7 @@ test_expect_success 'center alignment formatting. i18n.logOutputEncoding' '
 	Z             message two              Z
 	Z             message one              Z
 	Z               add bar                Z
-	Z         $(commit_msg)          Z
+	Z         $(cummit_msg)          Z
 	EOF
 	test_cmp expected actual
 '
@@ -444,7 +444,7 @@ test_expect_success 'center alignment formatting at the nth column' '
 	$head1           message two          Z
 	$head2           message one          Z
 	$head3             add bar            Z
-	$head4       $(commit_msg)      Z
+	$head4       $(cummit_msg)      Z
 	EOF
 	test_cmp expected actual
 '
@@ -455,7 +455,7 @@ test_expect_success 'center alignment formatting at the nth column' '
 	$head1           message two          Z
 	$head2           message one          Z
 	$head3             add bar            Z
-	$head4       $(commit_msg)      Z
+	$head4       $(cummit_msg)      Z
 	EOF
 	test_cmp expected actual
 '
@@ -466,7 +466,7 @@ test_expect_success 'center alignment formatting at the nth column. i18n.logOutp
 	$head1           message two          Z
 	$head2           message one          Z
 	$head3             add bar            Z
-	$head4       $(commit_msg)      Z
+	$head4       $(cummit_msg)      Z
 	EOF
 	test_cmp expected actual
 '
@@ -477,7 +477,7 @@ test_expect_success 'center alignment formatting with no padding' '
 	message two
 	message one
 	add bar
-	$(commit_msg)
+	$(cummit_msg)
 	EOF
 	test_cmp expected actual
 '
@@ -491,13 +491,13 @@ test_expect_success 'center alignment formatting with no padding. i18n.logOutput
 	message two
 	message one
 	add bar
-	$(commit_msg)
+	$(cummit_msg)
 	EOF
 	test_cmp expected actual
 '
 
 test_expect_success 'left/right alignment formatting with stealing' '
-	git commit --amend -m short --author "long long long <long@me.com>" &&
+	git cummit --amend -m short --author "long long long <long@me.com>" &&
 	git log --pretty="tformat:%<(10,trunc)%s%>>(10,ltrunc)% an" >actual &&
 	cat <<-\EOF >expected &&
 	short long  long long
@@ -554,7 +554,7 @@ test_expect_success 'log decoration properly follows tag chain' '
 	git tag -a tag1 -m tag1 &&
 	git tag -a tag2 -m tag2 tag1 &&
 	git tag -d tag1 &&
-	git commit --amend -m shorter &&
+	git cummit --amend -m shorter &&
 	git log --no-walk --tags --pretty="%H %d" --decorate=full >actual &&
 	cat <<-EOF >expected &&
 	$head2  (tag: refs/tags/message-one)
@@ -591,10 +591,10 @@ unfold () {
 test_expect_success 'set up trailer tests' '
 	echo "Some contents" >trailerfile &&
 	git add trailerfile &&
-	git commit -F - <<-EOF
-	trailers: this commit message has trailers
+	git cummit -F - <<-EOF
+	trailers: this cummit message has trailers
 
-	This commit is a test commit with trailers at the end. We parse this
+	This cummit is a test cummit with trailers at the end. We parse this
 	message and display the trailers using %(trailers).
 
 	$(cat trailers)
@@ -815,7 +815,7 @@ test_expect_success 'pretty format %(trailers:separator,key_value_separator) cha
 '
 
 test_expect_success 'pretty format %(trailers) combining separator/key/keyonly/valueonly' '
-	git commit --allow-empty -F - <<-\EOF &&
+	git cummit --allow-empty -F - <<-\EOF &&
 	Important fix
 
 	The fix is explained here
@@ -823,7 +823,7 @@ test_expect_success 'pretty format %(trailers) combining separator/key/keyonly/v
 	Closes: #1234
 	EOF
 
-	git commit --allow-empty -F - <<-\EOF &&
+	git cummit --allow-empty -F - <<-\EOF &&
 	Another fix
 
 	The fix is explained here
@@ -832,7 +832,7 @@ test_expect_success 'pretty format %(trailers) combining separator/key/keyonly/v
 	Closes: #890
 	EOF
 
-	git commit --allow-empty -F - <<-\EOF &&
+	git cummit --allow-empty -F - <<-\EOF &&
 	Does not close any tickets
 	EOF
 
@@ -852,11 +852,11 @@ test_expect_success 'pretty format %(trailers) combining separator/key/keyonly/v
 '
 
 test_expect_success 'trailer parsing not fooled by --- line' '
-	git commit --allow-empty -F - <<-\EOF &&
+	git cummit --allow-empty -F - <<-\EOF &&
 	this is the subject
 
 	This is the body. The message has a "---" line which would confuse a
-	message+patch parser. But here we know we have only a commit message,
+	message+patch parser. But here we know we have only a cummit message,
 	so we get it right.
 
 	trailer: wrong
@@ -876,10 +876,10 @@ test_expect_success 'trailer parsing not fooled by --- line' '
 
 test_expect_success 'set up %S tests' '
 	git checkout --orphan source-a &&
-	test_commit one &&
-	test_commit two &&
+	test_cummit one &&
+	test_cummit two &&
 	git checkout -b source-b HEAD^ &&
-	test_commit three
+	test_cummit three
 '
 
 test_expect_success 'log --format=%S paints branch names' '
@@ -945,7 +945,7 @@ test_expect_success 'log --pretty=reference with explicit date overrides short d
 
 test_expect_success 'log --pretty=reference is never unabbreviated' '
 	git log --pretty="tformat:%h (%s, %as)" >expect &&
-	git log --no-abbrev-commit --pretty=reference >actual &&
+	git log --no-abbrev-cummit --pretty=reference >actual &&
 	test_cmp expect actual
 '
 

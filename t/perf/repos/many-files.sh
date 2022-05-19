@@ -81,28 +81,28 @@ mkdir $repo
 cd $repo
 git init .
 
-# Create an initial commit just to define master.
+# Create an initial cummit just to define master.
 touch many-files.empty
 echo "$depth $width $files" >many-files.params
 git add many-files.*
-git commit -q -m params
+git cummit -q -m params
 
 # Create ballast for p0006 based upon the given params and
-# inflate the index with thousands of empty files and commit.
+# inflate the index with thousands of empty files and cummit.
 git checkout -b p0006-ballast
 fill_index "ballast" $depth $width $files
-git commit -q -m "ballast"
+git cummit -q -m "ballast"
 
 nr_files=$(git ls-files | wc -l)
 
-# Modify 1 file and commit.
+# Modify 1 file and cummit.
 echo "$depth $width $files" >>many-files.params
 git add many-files.params
-git commit -q -m "ballast plus 1"
+git cummit -q -m "ballast plus 1"
 
 # Checkout master to put repo in canonical state (because
 # the perf test may need to clone and enable sparse-checkout
-# before attempting to checkout a commit with the ballast
+# before attempting to checkout a cummit with the ballast
 # (because it may contain 100K directories and 1M files)).
 git checkout master
 

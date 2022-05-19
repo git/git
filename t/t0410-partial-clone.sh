@@ -6,10 +6,10 @@ test_description='partial clone'
 
 # missing promisor objects cause repacks which write bitmaps to fail
 GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
-# When enabled, some commands will write commit-graphs. This causes fsck
+# When enabled, some commands will write cummit-graphs. This causes fsck
 # to fail when delete_object() is called because fsck will attempt to
-# verify the out-of-sync commit graph.
-GIT_TEST_COMMIT_GRAPH=0
+# verify the out-of-sync cummit graph.
+GIT_TEST_cummit_GRAPH=0
 
 delete_object () {
 	rm $1/.git/objects/$(echo $2 | sed -e 's|^..|&/|')
@@ -40,8 +40,8 @@ test_expect_success 'extensions.partialclone without filter' '
 test_expect_success 'convert shallow clone to partial clone' '
 	rm -fr server client &&
 	test_create_repo server &&
-	test_commit -C server my_commit 1 &&
-	test_commit -C server my_commit2 1 &&
+	test_cummit -C server my_cummit 1 &&
+	test_cummit -C server my_cummit2 1 &&
 	git clone --depth=1 "file://$(pwd)/server" client &&
 	git -C client fetch --unshallow --filter="blob:none" &&
 	test_cmp_config -C client true remote.origin.promisor &&
@@ -52,8 +52,8 @@ test_expect_success 'convert shallow clone to partial clone' '
 test_expect_success SHA1 'convert to partial clone with noop extension' '
 	rm -fr server client &&
 	test_create_repo server &&
-	test_commit -C server my_commit 1 &&
-	test_commit -C server my_commit2 1 &&
+	test_cummit -C server my_cummit 1 &&
+	test_cummit -C server my_cummit2 1 &&
 	git clone --depth=1 "file://$(pwd)/server" client &&
 	test_cmp_config -C client 0 core.repositoryformatversion &&
 	git -C client config extensions.noop true &&
@@ -63,25 +63,25 @@ test_expect_success SHA1 'convert to partial clone with noop extension' '
 test_expect_success SHA1 'converting to partial clone fails with unrecognized extension' '
 	rm -fr server client &&
 	test_create_repo server &&
-	test_commit -C server my_commit 1 &&
-	test_commit -C server my_commit2 1 &&
+	test_cummit -C server my_cummit 1 &&
+	test_cummit -C server my_cummit2 1 &&
 	git clone --depth=1 "file://$(pwd)/server" client &&
 	test_cmp_config -C client 0 core.repositoryformatversion &&
 	git -C client config extensions.nonsense true &&
 	test_must_fail git -C client fetch --unshallow --filter="blob:none"
 '
 
-test_expect_success 'missing reflog object, but promised by a commit, passes fsck' '
+test_expect_success 'missing reflog object, but promised by a cummit, passes fsck' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo my_commit &&
+	test_cummit -C repo my_cummit &&
 
-	A=$(git -C repo commit-tree -m a HEAD^{tree}) &&
-	C=$(git -C repo commit-tree -m c -p $A HEAD^{tree}) &&
+	A=$(git -C repo cummit-tree -m a HEAD^{tree}) &&
+	C=$(git -C repo cummit-tree -m c -p $A HEAD^{tree}) &&
 
 	# Reference $A only from reflog, and delete it
 	git -C repo branch my_branch "$A" &&
-	git -C repo branch -f my_branch my_commit &&
+	git -C repo branch -f my_branch my_cummit &&
 	delete_object repo "$A" &&
 
 	# State that we got $C, which refers to $A, from promisor
@@ -99,16 +99,16 @@ test_expect_success 'missing reflog object, but promised by a commit, passes fsc
 test_expect_success 'missing reflog object, but promised by a tag, passes fsck' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo my_commit &&
+	test_cummit -C repo my_cummit &&
 
-	A=$(git -C repo commit-tree -m a HEAD^{tree}) &&
+	A=$(git -C repo cummit-tree -m a HEAD^{tree}) &&
 	git -C repo tag -a -m d my_tag_name $A &&
 	T=$(git -C repo rev-parse my_tag_name) &&
 	git -C repo tag -d my_tag_name &&
 
 	# Reference $A only from reflog, and delete it
 	git -C repo branch my_branch "$A" &&
-	git -C repo branch -f my_branch my_commit &&
+	git -C repo branch -f my_branch my_cummit &&
 	delete_object repo "$A" &&
 
 	# State that we got $T, which refers to $A, from promisor
@@ -122,14 +122,14 @@ test_expect_success 'missing reflog object, but promised by a tag, passes fsck' 
 test_expect_success 'missing reflog object alone fails fsck, even with extension set' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo my_commit &&
+	test_cummit -C repo my_cummit &&
 
-	A=$(git -C repo commit-tree -m a HEAD^{tree}) &&
-	B=$(git -C repo commit-tree -m b HEAD^{tree}) &&
+	A=$(git -C repo cummit-tree -m a HEAD^{tree}) &&
+	B=$(git -C repo cummit-tree -m b HEAD^{tree}) &&
 
 	# Reference $A only from reflog, and delete it
 	git -C repo branch my_branch "$A" &&
-	git -C repo branch -f my_branch my_commit &&
+	git -C repo branch -f my_branch my_cummit &&
 	delete_object repo "$A" &&
 
 	git -C repo config core.repositoryformatversion 1 &&
@@ -140,9 +140,9 @@ test_expect_success 'missing reflog object alone fails fsck, even with extension
 test_expect_success 'missing ref object, but promised, passes fsck' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo my_commit &&
+	test_cummit -C repo my_cummit &&
 
-	A=$(git -C repo commit-tree -m a HEAD^{tree}) &&
+	A=$(git -C repo cummit-tree -m a HEAD^{tree}) &&
 
 	# Reference $A only from ref
 	git -C repo branch my_branch "$A" &&
@@ -156,9 +156,9 @@ test_expect_success 'missing ref object, but promised, passes fsck' '
 test_expect_success 'missing object, but promised, passes fsck' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo 1 &&
-	test_commit -C repo 2 &&
-	test_commit -C repo 3 &&
+	test_cummit -C repo 1 &&
+	test_cummit -C repo 2 &&
+	test_cummit -C repo 3 &&
 	git -C repo tag -a annotated_tag -m "annotated tag" &&
 
 	C=$(git -C repo rev-parse 1) &&
@@ -179,9 +179,9 @@ test_expect_success 'missing object, but promised, passes fsck' '
 test_expect_success 'missing CLI object, but promised, passes fsck' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo my_commit &&
+	test_cummit -C repo my_cummit &&
 
-	A=$(git -C repo commit-tree -m a HEAD^{tree}) &&
+	A=$(git -C repo cummit-tree -m a HEAD^{tree}) &&
 	promise_and_delete "$A" &&
 
 	git -C repo config core.repositoryformatversion 1 &&
@@ -192,7 +192,7 @@ test_expect_success 'missing CLI object, but promised, passes fsck' '
 test_expect_success 'fetching of missing objects' '
 	rm -rf repo err &&
 	test_create_repo server &&
-	test_commit -C server foo &&
+	test_cummit -C server foo &&
 	git -C server repack -a -d --write-bitmap-index &&
 
 	git clone "file://$(pwd)/server" repo &&
@@ -229,7 +229,7 @@ test_expect_success 'fetching of missing objects works with ref-in-want enabled'
 
 test_expect_success 'fetching of missing objects from another promisor remote' '
 	git clone "file://$(pwd)/server" server2 &&
-	test_commit -C server2 bar &&
+	test_cummit -C server2 bar &&
 	git -C server2 repack -a -d --write-bitmap-index &&
 	HASH2=$(git -C server2 rev-parse bar) &&
 
@@ -252,7 +252,7 @@ test_expect_success 'fetching of missing objects from another promisor remote' '
 
 test_expect_success 'fetching of missing objects configures a promisor remote' '
 	git clone "file://$(pwd)/server" server3 &&
-	test_commit -C server3 baz &&
+	test_cummit -C server3 baz &&
 	git -C server3 repack -a -d --write-bitmap-index &&
 	HASH3=$(git -C server3 rev-parse baz) &&
 	git -C server3 config uploadpack.allowfilter 1 &&
@@ -277,7 +277,7 @@ test_expect_success 'fetching of missing blobs works' '
 	rm -rf server server2 repo &&
 	rm -rf server server3 repo &&
 	test_create_repo server &&
-	test_commit -C server foo &&
+	test_cummit -C server foo &&
 	git -C server repack -a -d --write-bitmap-index &&
 
 	git clone "file://$(pwd)/server" repo &&
@@ -295,7 +295,7 @@ test_expect_success 'fetching of missing blobs works' '
 test_expect_success 'fetching of missing trees does not fetch blobs' '
 	rm -rf server repo &&
 	test_create_repo server &&
-	test_commit -C server foo &&
+	test_cummit -C server foo &&
 	git -C server repack -a -d --write-bitmap-index &&
 
 	git clone "file://$(pwd)/server" repo &&
@@ -315,11 +315,11 @@ test_expect_success 'fetching of missing trees does not fetch blobs' '
 	grep "^[?]$(cat blobhash)" objects
 '
 
-test_expect_success 'rev-list stops traversal at missing and promised commit' '
+test_expect_success 'rev-list stops traversal at missing and promised cummit' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo foo &&
-	test_commit -C repo bar &&
+	test_cummit -C repo foo &&
+	test_cummit -C repo bar &&
 
 	FOO=$(git -C repo rev-parse foo) &&
 	promise_and_delete "$FOO" &&
@@ -334,9 +334,9 @@ test_expect_success 'rev-list stops traversal at missing and promised commit' '
 test_expect_success 'missing tree objects with --missing=allow-promisor and --exclude-promisor-objects' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo foo &&
-	test_commit -C repo bar &&
-	test_commit -C repo baz &&
+	test_cummit -C repo foo &&
+	test_cummit -C repo bar &&
+	test_cummit -C repo baz &&
 
 	promise_and_delete $(git -C repo rev-parse bar^{tree}) &&
 	promise_and_delete $(git -C repo rev-parse foo^{tree}) &&
@@ -346,14 +346,14 @@ test_expect_success 'missing tree objects with --missing=allow-promisor and --ex
 
 	git -C repo rev-list --missing=allow-promisor --objects HEAD >objs 2>rev_list_err &&
 	test_must_be_empty rev_list_err &&
-	# 3 commits, 3 blobs, and 1 tree
+	# 3 cummits, 3 blobs, and 1 tree
 	test_line_count = 7 objs &&
 
 	# Do the same for --exclude-promisor-objects, but with all trees gone.
 	promise_and_delete $(git -C repo rev-parse baz^{tree}) &&
 	git -C repo rev-list --exclude-promisor-objects --objects HEAD >objs 2>rev_list_err &&
 	test_must_be_empty rev_list_err &&
-	# 3 commits, no blobs or trees
+	# 3 cummits, no blobs or trees
 	test_line_count = 3 objs
 '
 
@@ -363,7 +363,7 @@ test_expect_success 'missing non-root tree object and rev-list' '
 	mkdir repo/dir &&
 	echo foo >repo/dir/foo &&
 	git -C repo add dir/foo &&
-	git -C repo commit -m "commit dir/foo" &&
+	git -C repo cummit -m "cummit dir/foo" &&
 
 	promise_and_delete $(git -C repo rev-parse HEAD:dir) &&
 
@@ -372,20 +372,20 @@ test_expect_success 'missing non-root tree object and rev-list' '
 
 	git -C repo rev-list --missing=allow-any --objects HEAD >objs 2>rev_list_err &&
 	test_must_be_empty rev_list_err &&
-	# 1 commit and 1 tree
+	# 1 cummit and 1 tree
 	test_line_count = 2 objs
 '
 
 test_expect_success 'rev-list stops traversal at missing and promised tree' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo foo &&
+	test_cummit -C repo foo &&
 	mkdir repo/a_dir &&
 	echo something >repo/a_dir/something &&
 	git -C repo add a_dir/something &&
-	git -C repo commit -m bar &&
+	git -C repo cummit -m bar &&
 
-	# foo^{tree} (tree referenced from commit)
+	# foo^{tree} (tree referenced from cummit)
 	TREE=$(git -C repo rev-parse foo^{tree}) &&
 
 	# a tree referenced by HEAD^{tree} (tree referenced from tree)
@@ -408,7 +408,7 @@ test_expect_success 'rev-list stops traversal at missing and promised blob' '
 	test_create_repo repo &&
 	echo something >repo/something &&
 	git -C repo add something &&
-	git -C repo commit -m foo &&
+	git -C repo cummit -m foo &&
 
 	BLOB=$(git -C repo hash-object -w something) &&
 	promise_and_delete "$BLOB" &&
@@ -420,22 +420,22 @@ test_expect_success 'rev-list stops traversal at missing and promised blob' '
 	! grep $BLOB out
 '
 
-test_expect_success 'rev-list stops traversal at promisor commit, tree, and blob' '
+test_expect_success 'rev-list stops traversal at promisor cummit, tree, and blob' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo foo &&
-	test_commit -C repo bar &&
-	test_commit -C repo baz &&
+	test_cummit -C repo foo &&
+	test_cummit -C repo bar &&
+	test_cummit -C repo baz &&
 
-	COMMIT=$(git -C repo rev-parse foo) &&
+	cummit=$(git -C repo rev-parse foo) &&
 	TREE=$(git -C repo rev-parse bar^{tree}) &&
 	BLOB=$(git hash-object repo/baz.t) &&
-	printf "%s\n%s\n%s\n" $COMMIT $TREE $BLOB | pack_as_from_promisor &&
+	printf "%s\n%s\n%s\n" $cummit $TREE $BLOB | pack_as_from_promisor &&
 
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
 	git -C repo rev-list --exclude-promisor-objects --objects HEAD >out &&
-	! grep $COMMIT out &&
+	! grep $cummit out &&
 	! grep $TREE out &&
 	! grep $BLOB out &&
 	grep $(git -C repo rev-parse bar) out  # sanity check that some walking was done
@@ -444,22 +444,22 @@ test_expect_success 'rev-list stops traversal at promisor commit, tree, and blob
 test_expect_success 'rev-list dies for missing objects on cmd line' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo foo &&
-	test_commit -C repo bar &&
-	test_commit -C repo baz &&
+	test_cummit -C repo foo &&
+	test_cummit -C repo bar &&
+	test_cummit -C repo baz &&
 
-	COMMIT=$(git -C repo rev-parse foo) &&
+	cummit=$(git -C repo rev-parse foo) &&
 	TREE=$(git -C repo rev-parse bar^{tree}) &&
 	BLOB=$(git hash-object repo/baz.t) &&
 
-	promise_and_delete $COMMIT &&
+	promise_and_delete $cummit &&
 	promise_and_delete $TREE &&
 	promise_and_delete $BLOB &&
 
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
 
-	for OBJ in "$COMMIT" "$TREE" "$BLOB"; do
+	for OBJ in "$cummit" "$TREE" "$BLOB"; do
 		test_must_fail git -C repo rev-list --objects \
 			--exclude-promisor-objects "$OBJ" &&
 		test_must_fail git -C repo rev-list --objects-edge-aggressive \
@@ -489,8 +489,8 @@ test_expect_success 'single promisor remote can be re-initialized gracefully' '
 test_expect_success 'gc repacks promisor objects separately from non-promisor objects' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo one &&
-	test_commit -C repo two &&
+	test_cummit -C repo one &&
+	test_cummit -C repo two &&
 
 	TREE_ONE=$(git -C repo rev-parse one^{tree}) &&
 	printf "$TREE_ONE\n" | pack_as_from_promisor &&
@@ -502,7 +502,7 @@ test_expect_success 'gc repacks promisor objects separately from non-promisor ob
 	git -C repo gc &&
 
 	# Ensure that exactly one promisor packfile exists, and that it
-	# contains the trees but not the commits
+	# contains the trees but not the cummits
 	ls repo/.git/objects/pack/pack-*.promisor >promisorlist &&
 	test_line_count = 1 promisorlist &&
 	PROMISOR_PACKFILE=$(sed "s/.promisor/.pack/" <promisorlist) &&
@@ -515,7 +515,7 @@ test_expect_success 'gc repacks promisor objects separately from non-promisor ob
 	# Remove the promisor packfile and associated files
 	rm $(sed "s/.promisor//" <promisorlist).* &&
 
-	# Ensure that the single other pack contains the commits, but not the
+	# Ensure that the single other pack contains the cummits, but not the
 	# trees
 	ls repo/.git/objects/pack/pack-*.pack >packlist &&
 	test_line_count = 1 packlist &&
@@ -529,7 +529,7 @@ test_expect_success 'gc repacks promisor objects separately from non-promisor ob
 test_expect_success 'gc does not repack promisor objects if there are none' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo one &&
+	test_cummit -C repo one &&
 
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
@@ -562,10 +562,10 @@ test_expect_success 'repack -d does not irreversibly delete promisor objects' '
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
 
-	git -C repo commit --allow-empty -m one &&
-	git -C repo commit --allow-empty -m two &&
-	git -C repo commit --allow-empty -m three &&
-	git -C repo commit --allow-empty -m four &&
+	git -C repo cummit --allow-empty -m one &&
+	git -C repo cummit --allow-empty -m two &&
+	git -C repo cummit --allow-empty -m three &&
+	git -C repo cummit --allow-empty -m four &&
 	ONE=$(git -C repo rev-parse HEAD^^^) &&
 	TWO=$(git -C repo rev-parse HEAD^^) &&
 	THREE=$(git -C repo rev-parse HEAD^) &&
@@ -583,7 +583,7 @@ test_expect_success 'repack -d does not irreversibly delete promisor objects' '
 test_expect_success 'gc stops traversal when a missing but promised object is reached' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo my_commit &&
+	test_cummit -C repo my_cummit &&
 
 	TREE_HASH=$(git -C repo rev-parse HEAD^{tree}) &&
 	HASH=$(promise_and_delete $TREE_HASH) &&
@@ -596,7 +596,7 @@ test_expect_success 'gc stops traversal when a missing but promised object is re
 	test -e repo/.git/objects/pack/pack-$HASH.pack &&
 	rm repo/.git/objects/pack/pack-$HASH.* &&
 
-	# Ensure that the single other pack contains the commit, but not the tree
+	# Ensure that the single other pack contains the cummit, but not the tree
 	ls repo/.git/objects/pack/pack-*.pack >packlist &&
 	test_line_count = 1 packlist &&
 	git verify-pack repo/.git/objects/pack/pack-*.pack -v >out &&
@@ -607,10 +607,10 @@ test_expect_success 'gc stops traversal when a missing but promised object is re
 test_expect_success 'do not fetch when checking existence of tree we construct ourselves' '
 	rm -rf repo &&
 	test_create_repo repo &&
-	test_commit -C repo base &&
-	test_commit -C repo side1 &&
+	test_cummit -C repo base &&
+	test_cummit -C repo side1 &&
 	git -C repo checkout base &&
-	test_commit -C repo side2 &&
+	test_cummit -C repo side2 &&
 
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
@@ -622,9 +622,9 @@ test_expect_success 'exact rename does not need to fetch the blob lazily' '
 	rm -rf repo partial.git &&
 	test_create_repo repo &&
 	content="some dummy content" &&
-	test_commit -C repo create-a-file file.txt "$content" &&
+	test_cummit -C repo create-a-file file.txt "$content" &&
 	git -C repo mv file.txt new-file.txt &&
-	git -C repo commit -m rename-the-file &&
+	git -C repo cummit -m rename-the-file &&
 	FILE_HASH=$(git -C repo rev-parse HEAD:new-file.txt) &&
 	test_config -C repo uploadpack.allowfilter 1 &&
 	test_config -C repo uploadpack.allowanysha1inwant 1 &&
@@ -640,7 +640,7 @@ test_expect_success 'exact rename does not need to fetch the blob lazily' '
 test_expect_success 'lazy-fetch when accessing object not in the_repository' '
 	rm -rf full partial.git &&
 	test_create_repo full &&
-	test_commit -C full create-a-file file.txt &&
+	test_cummit -C full create-a-file file.txt &&
 
 	test_config -C full uploadpack.allowfilter 1 &&
 	test_config -C full uploadpack.allowanysha1inwant 1 &&
@@ -667,7 +667,7 @@ test_expect_success 'fetching of missing objects from an HTTP server' '
 	rm -rf repo &&
 	SERVER="$HTTPD_DOCUMENT_ROOT_PATH/server" &&
 	test_create_repo "$SERVER" &&
-	test_commit -C "$SERVER" foo &&
+	test_cummit -C "$SERVER" foo &&
 	git -C "$SERVER" repack -a -d --write-bitmap-index &&
 
 	git clone $HTTPD_URL/smart/server repo &&

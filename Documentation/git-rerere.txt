@@ -99,18 +99,18 @@ One way to do it is to pull master into the topic branch:
     o---o---o---*---o---o master
 ------------
 
-The commits marked with `*` touch the same area in the same
-file; you need to resolve the conflicts when creating the commit
+The cummits marked with `*` touch the same area in the same
+file; you need to resolve the conflicts when creating the cummit
 marked with `+`.  Then you can test the result to make sure your
 work-in-progress still works with what is in the latest master.
 
 After this test merge, there are two ways to continue your work
 on the topic.  The easiest is to build on top of the test merge
-commit `+`, and when your work in the topic branch is finally
+cummit `+`, and when your work in the topic branch is finally
 ready, pull the topic branch into master, and/or ask the
 upstream to pull from you.  By that time, however, the master or
 the upstream might have been advanced since the test merge `+`,
-in which case the final commit graph would look like this:
+in which case the final cummit graph would look like this:
 
 ------------
 	$ git switch topic
@@ -125,7 +125,7 @@ in which case the final commit graph would look like this:
 ------------
 
 When your topic branch is long-lived, however, your topic branch
-would end up having many such "Merge from master" commits on it,
+would end up having many such "Merge from master" cummits on it,
 which would unnecessarily clutter the development history.
 Readers of the Linux kernel mailing list may remember that Linus
 complained about such too frequent test merges when a subsystem
@@ -148,10 +148,10 @@ top of the tip before the test merge:
     o---o---o---*---o---o---o---o---+ master
 ------------
 
-This would leave only one merge commit when your topic branch is
+This would leave only one merge cummit when your topic branch is
 finally ready and merged into the master branch.  This merge
 would require you to resolve the conflict, introduced by the
-commits marked with `*`.  However, this conflict is often the
+cummits marked with `*`.  However, this conflict is often the
 same conflict you resolved when you created the test merge you
 blew away.  'git rerere' helps you resolve this final
 conflicted merge using the information from your earlier hand
@@ -178,8 +178,8 @@ so you still need to do the final sanity checks with `git diff`
 As a convenience measure, 'git merge' automatically invokes
 'git rerere' upon exiting with a failed automerge and 'git rerere'
 records the hand resolve when it is a new conflict, or reuses the earlier hand
-resolve when it is not.  'git commit' also invokes 'git rerere'
-when committing a merge result.  What this means is that you do
+resolve when it is not.  'git cummit' also invokes 'git rerere'
+when cummitting a merge result.  What this means is that you do
 not have to do anything special yourself (besides enabling
 the rerere.enabled config variable).
 

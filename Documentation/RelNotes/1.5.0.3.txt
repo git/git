@@ -6,7 +6,7 @@ Fixes since v1.5.0.2
 
 * Bugfixes
 
-  - 'git.el' honors the commit coding system from the configuration.
+  - 'git.el' honors the cummit coding system from the configuration.
 
   - 'blameview' in contrib/ correctly digs deeper when a line is
     clicked.
@@ -19,7 +19,7 @@ Fixes since v1.5.0.2
     working tree was dirty and cannot fast forward.  It does
     now.
 
-  - 'cvsexportcommit' does not lose yet-to-be-used message file.
+  - 'cvsexportcummit' does not lose yet-to-be-used message file.
 
   - int-vs-size_t typefix when running combined diff on files
     over 2GB long.
@@ -36,7 +36,7 @@ Fixes since v1.5.0.2
   - 'git fmt-merge-msg --file' without file parameter did not
     correctly error out.
 
-  - 'git archimport' barfed upon encountering a commit without
+  - 'git archimport' barfed upon encountering a cummit without
     summary.
 
   - 'git index-pack' did not protect itself from getting a short

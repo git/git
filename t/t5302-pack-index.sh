@@ -28,11 +28,11 @@ test_expect_success 'setup' '
 	{ echo 101 && test-tool genrandom 100 8192; } >file_101 &&
 	git update-index --add file_101 &&
 	tree=$(git write-tree) &&
-	commit=$(git commit-tree $tree </dev/null) && {
+	cummit=$(git cummit-tree $tree </dev/null) && {
 		echo $tree &&
 		git ls-tree $tree | sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"
 	} >obj-list &&
-	git update-ref HEAD $commit
+	git update-ref HEAD $cummit
 '
 
 test_expect_success 'pack-objects with index version 1' '
@@ -173,7 +173,7 @@ test_expect_success \
 
 test_expect_success \
 	'[index v1] 4) confirm that the pack is actually corrupted' '
-	test_must_fail git fsck --full $commit
+	test_must_fail git fsck --full $cummit
 '
 
 test_expect_success \
@@ -218,7 +218,7 @@ test_expect_success \
 
 test_expect_success \
 	'[index v2] 4) confirm that the pack is actually corrupted' '
-	test_must_fail git fsck --full $commit
+	test_must_fail git fsck --full $cummit
 '
 
 test_expect_success \
@@ -257,7 +257,7 @@ test_expect_success 'index-pack --strict warns upon missing tagger in tag' '
 	sha=$(git rev-parse HEAD) &&
 	cat >wrong-tag <<EOF &&
 object $sha
-type commit
+type cummit
 tag guten tag
 
 This is an invalid tag.

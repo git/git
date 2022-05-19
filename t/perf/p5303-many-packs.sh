@@ -7,7 +7,7 @@ test_perf_large_repo
 
 # A real many-pack situation would probably come from having a lot of pushes
 # over time. We don't know how big each push would be, but we can fake it by
-# just walking the first-parent chain and having every 5 commits be their own
+# just walking the first-parent chain and having every 5 cummits be their own
 # "push". This isn't _entirely_ accurate, as real pushes would have some
 # duplicate objects due to thin-pack fixing, but it's a reasonable
 # approximation.
@@ -24,10 +24,10 @@ repack_into_n () {
 	perl -e '
 		my $n = shift;
 		while (<>) {
-			last unless @commits < $n;
-			push @commits, $_ if $. % 5 == 1;
+			last unless @cummits < $n;
+			push @cummits, $_ if $. % 5 == 1;
 		}
-		print reverse @commits;
+		print reverse @cummits;
 	' "$1" >pushes &&
 
 	# create base packfile
@@ -41,7 +41,7 @@ repack_into_n () {
 	empty_pack=$(git pack-objects staging/pack </dev/null) &&
 	test_export empty_pack &&
 
-	# and then incrementals between each pair of commits
+	# and then incrementals between each pair of cummits
 	last= &&
 	while read rev
 	do
@@ -90,7 +90,7 @@ do
 		git rev-list --objects --all >/dev/null
 	'
 
-	test_perf "abbrev-commit ($nr_packs)" '
+	test_perf "abbrev-cummit ($nr_packs)" '
 		git rev-list --abbrev-commit HEAD >/dev/null
 	'
 
@@ -138,7 +138,7 @@ test_expect_success 'generate lots of packs' '
 # The purpose of this test is to evaluate load time for a large number
 # of packs while doing as little other work as possible.
 test_perf "load 10,000 packs" '
-	git rev-parse --verify "HEAD^{commit}"
+	git rev-parse --verify "HEAD^{cummit}"
 '
 
 test_done

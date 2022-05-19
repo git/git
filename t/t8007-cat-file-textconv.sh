@@ -14,9 +14,9 @@ test_expect_success 'setup ' '
 	echo "bin: test" >one.bin &&
 	test_ln_s_add one.bin symlink.bin &&
 	git add . &&
-	GIT_AUTHOR_NAME=Number1 git commit -a -m First --date="2010-01-01 18:00:00" &&
+	GIT_AUTHOR_NAME=Number1 git cummit -a -m First --date="2010-01-01 18:00:00" &&
 	echo "bin: test version 2" >one.bin &&
-	GIT_AUTHOR_NAME=Number2 git commit -a -m Second --date="2010-01-01 20:00:00"
+	GIT_AUTHOR_NAME=Number2 git cummit -a -m Second --date="2010-01-01 20:00:00"
 '
 
 test_expect_success 'usage: <bad rev>' '
@@ -85,7 +85,7 @@ cat >expected <<EOF
 bin: test
 EOF
 
-test_expect_success 'cat-file without --textconv on previous commit' '
+test_expect_success 'cat-file without --textconv on previous cummit' '
 	git cat-file -p HEAD^:one.bin >result &&
 	test_cmp expected result
 '
@@ -94,7 +94,7 @@ cat >expected <<EOF
 converted: test version 2
 EOF
 
-test_expect_success 'cat-file --textconv on last commit' '
+test_expect_success 'cat-file --textconv on last cummit' '
 	git cat-file --textconv :one.bin >result &&
 	test_cmp expected result
 '
@@ -103,7 +103,7 @@ cat >expected <<EOF
 converted: test
 EOF
 
-test_expect_success 'cat-file --textconv on previous commit' '
+test_expect_success 'cat-file --textconv on previous cummit' '
 	git cat-file --textconv HEAD^:one.bin >result &&
 	test_cmp expected result
 '

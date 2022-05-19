@@ -5,7 +5,7 @@ test_description='test disabling of local paths in clone/fetch'
 . "$TEST_DIRECTORY/lib-proto-disable.sh"
 
 test_expect_success 'setup repository to clone' '
-	test_commit one
+	test_cummit one
 '
 
 test_proto "file://" file "file://$PWD"

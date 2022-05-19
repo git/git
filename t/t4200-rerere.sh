@@ -43,7 +43,7 @@ test_expect_success 'setup' '
 
 	git add a1 &&
 	test_tick &&
-	git commit -q -a -m initial &&
+	git cummit -q -a -m initial &&
 
 	cat >>a1 <<-\EOF &&
 	Some title
@@ -58,14 +58,14 @@ test_expect_success 'setup' '
 
 	git checkout -b first &&
 	test_tick &&
-	git commit -q -a -m first &&
+	git cummit -q -a -m first &&
 
 	git checkout -b second main &&
 	git show first:a1 |
 	sed -e "s/To die, t/To die! T/" -e "s/Some title/Some Title/" >a1 &&
 	echo "* END *" >>a1 &&
 	test_tick &&
-	git commit -q -a -m second
+	git cummit -q -a -m second
 '
 
 test_expect_success 'nothing recorded without rerere' '
@@ -166,14 +166,14 @@ test_expect_success 'rerere status' '
 test_expect_success 'first postimage wins' '
 	git show first:a1 | sed "s/To die: t/To die! T/" >expect &&
 
-	git commit -q -a -m "prefer first over second" &&
+	git cummit -q -a -m "prefer first over second" &&
 	test -f $rr/postimage &&
 
 	oldmtimepost=$(test-tool chmtime --get -60 $rr/postimage) &&
 
 	git checkout -b third main &&
 	git show second^:a1 | sed "s/To die: t/To die! T/" >a1 &&
-	git commit -q -a -m third &&
+	git cummit -q -a -m third &&
 
 	test_must_fail git merge first &&
 	# rerere kicked in
@@ -285,18 +285,18 @@ test_expect_success 'setup: file2 added differently in two branches' '
 	echo Hallo >file2 &&
 	git add file2 &&
 	test_tick &&
-	git commit -m version1 &&
+	git cummit -m version1 &&
 
 	git checkout third &&
 	echo Bello >file2 &&
 	git add file2 &&
 	test_tick &&
-	git commit -m version2 &&
+	git cummit -m version2 &&
 
 	test_must_fail git merge fourth &&
 	echo Cello >file2 &&
 	git add file2 &&
-	git commit -m resolution
+	git cummit -m resolution
 '
 
 test_expect_success 'resolution was recorded properly' '
@@ -308,13 +308,13 @@ test_expect_success 'resolution was recorded properly' '
 	echo Hallo >file3 &&
 	git add file3 &&
 	test_tick &&
-	git commit -m version1 &&
+	git cummit -m version1 &&
 
 	git checkout third &&
 	echo Bello >file3 &&
 	git add file3 &&
 	test_tick &&
-	git commit -m version2 &&
+	git cummit -m version2 &&
 	git tag version2 &&
 
 	test_must_fail git merge fifth &&
@@ -478,18 +478,18 @@ test_expect_success 'multiple identical conflicts' '
 	concat_insert short >file1 &&
 	concat_insert long >file2 &&
 	git add file1 file2 &&
-	git commit -m base &&
+	git cummit -m base &&
 	git tag base &&
 	git checkout -b six.1 &&
 	concat_insert short 6.1 >file1 &&
 	concat_insert long 6.1 >file2 &&
 	git add file1 file2 &&
-	git commit -m 6.1 &&
+	git cummit -m 6.1 &&
 	git checkout -b six.2 HEAD^ &&
 	concat_insert short 6.2 >file1 &&
 	concat_insert long 6.2 >file2 &&
 	git add file1 file2 &&
-	git commit -m 6.2 &&
+	git cummit -m 6.2 &&
 
 	# At this point, six.1 and six.2
 	# - derive from common ancestor that has two files
@@ -586,13 +586,13 @@ test_expect_success 'rerere with unexpected conflict markers does not crash' '
 	git checkout -b branch-1 main &&
 	echo "bar" >test &&
 	git add test &&
-	git commit -q -m two &&
+	git cummit -q -m two &&
 
 	git reset --hard &&
 	git checkout -b branch-2 main &&
 	echo "foo" >test &&
 	git add test &&
-	git commit -q -a -m one &&
+	git cummit -q -a -m one &&
 
 	test_must_fail git merge branch-1 &&
 	echo "<<<<<<< a" >test &&
@@ -607,38 +607,38 @@ test_expect_success 'rerere with inner conflict markers' '
 	git checkout -b A main &&
 	echo "bar" >test &&
 	git add test &&
-	git commit -q -m two &&
+	git cummit -q -m two &&
 	echo "baz" >test &&
 	git add test &&
-	git commit -q -m three &&
+	git cummit -q -m three &&
 
 	git reset --hard &&
 	git checkout -b B main &&
 	echo "foo" >test &&
 	git add test &&
-	git commit -q -a -m one &&
+	git cummit -q -a -m one &&
 
 	test_must_fail git merge A~ &&
 	git add test &&
-	git commit -q -m "will solve conflicts later" &&
+	git cummit -q -m "will solve conflicts later" &&
 	test_must_fail git merge A &&
 
 	echo "resolved" >test &&
 	git add test &&
-	git commit -q -m "solved conflict" &&
+	git cummit -q -m "solved conflict" &&
 
 	echo "resolved" >expect &&
 
 	git reset --hard HEAD~~ &&
 	test_must_fail git merge A~ &&
 	git add test &&
-	git commit -q -m "will solve conflicts later" &&
+	git cummit -q -m "will solve conflicts later" &&
 	test_must_fail git merge A &&
 	cat test >actual &&
 	test_cmp expect actual &&
 
 	git add test &&
-	git commit -m "rerere solved conflict" &&
+	git cummit -m "rerere solved conflict" &&
 	git reset --hard HEAD~ &&
 	test_must_fail git merge A &&
 	cat test >actual &&
@@ -652,15 +652,15 @@ test_expect_success 'setup simple stage 1 handling' '
 
 		test_seq 1 10 >original &&
 		git add original &&
-		git commit -m original &&
+		git cummit -m original &&
 
 		git checkout -b A main &&
 		git mv original A &&
-		git commit -m "rename to A" &&
+		git cummit -m "rename to A" &&
 
 		git checkout -b B main &&
 		git mv original B &&
-		git commit -m "rename to B"
+		git cummit -m "rename to B"
 	)
 '
 

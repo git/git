@@ -6,7 +6,7 @@ merge.branchdesc::
 merge.log::
 	In addition to branch names, populate the log message with at
 	most the specified number of one-line descriptions from the
-	actual commits that are being merged.  Defaults to false, and
+	actual cummits that are being merged.  Defaults to false, and
 	true is a synonym for 20.
 
 merge.suppressDest::

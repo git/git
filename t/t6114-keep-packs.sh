@@ -4,9 +4,9 @@ test_description='rev-list with .keep packs'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit loose &&
-	test_commit packed &&
-	test_commit kept &&
+	test_cummit loose &&
+	test_cummit packed &&
+	test_cummit kept &&
 
 	KEPT_PACK=$(git pack-objects --revs .git/objects/pack/pack <<-EOF
 	refs/tags/kept
@@ -45,7 +45,7 @@ test_expect_success '--no-kept-objects excludes trees and blobs in .keep packs' 
 test_expect_success '--no-kept-objects excludes kept non-MIDX object' '
 	test_config core.multiPackIndex true &&
 
-	# Create a pack with just the commit object in pack, and do not mark it
+	# Create a pack with just the cummit object in pack, and do not mark it
 	# as kept (even though it appears in $KEPT_PACK, which does have a .keep
 	# file).
 	MIDX_PACK=$(git pack-objects .git/objects/pack/pack <<-EOF
@@ -53,7 +53,7 @@ test_expect_success '--no-kept-objects excludes kept non-MIDX object' '
 	EOF
 	) &&
 
-	# Write a MIDX containing all packs, but use the version of the commit
+	# Write a MIDX containing all packs, but use the version of the cummit
 	# at "kept" in a non-kept pack by touching $MIDX_PACK.
 	touch .git/objects/pack/pack-$MIDX_PACK.pack &&
 	git multi-pack-index write &&

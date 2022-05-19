@@ -74,7 +74,7 @@ numbers do not need to be consecutive, nor monotonically
 increasing.
 
 For instance, if your configuration file contains only the two
-revisions 4711 and 42, where 4711 is the initial commit, the
+revisions 4711 and 42, where 4711 is the initial cummit, the
 only requirement is that 4711 is completely defined before 42.
 
 =pod
@@ -87,12 +87,12 @@ about the revision.
  [3]
  ; author sets the author of the revisions
  author=Peter Krefting <peter@softwolves.pp.se>
- ; branch sets the branch that the revision should be committed to
+ ; branch sets the branch that the revision should be cummitted to
  branch=master
- ; parent describes the revision that is the parent of this commit
+ ; parent describes the revision that is the parent of this cummit
  ; (optional)
  parent=1
- ; merges describes a revision that is merged into this commit
+ ; merges describes a revision that is merged into this cummit
  ; (optional; can be repeated)
  merges=2
  ; selects one file to take the timestamp from
@@ -122,11 +122,11 @@ File names are treated as byte strings (but please see below on
 quoting rules), and should be stored in the configuration file in
 the encoding that should be used in the generated repository.
 
-=head3 Revision commit message section
+=head3 Revision cummit message section
 
 A section whose section name is an integer followed by B<.message>
-gives the commit message. This section is read verbatim, up until
-the beginning of the next section. As such, a commit message may not
+gives the cummit message. This section is read verbatim, up until
+the beginning of the next section. As such, a cummit message may not
 contain a line that begins with an opening square bracket ("[") and
 ends with a closing square bracket ("]"), unless they are surrounded
 by whitespace or other characters.
@@ -264,7 +264,7 @@ LINE: while (my $line = <CFG>)
 	}
 	else
 	{
-		# Commit message
+		# cummit message
 		my $current = $revmap{$rev};
 		if (defined $message{$current})
 		{
@@ -276,23 +276,23 @@ LINE: while (my $line = <CFG>)
 close CFG;
 
 # Start spewing out data for git-fast-import
-foreach my $commit (@revs)
+foreach my $cummit (@revs)
 {
 	# Progress
-	print OUT "progress Creating revision $commit\n";
+	print OUT "progress Creating revision $cummit\n";
 
 	# Create commit header
-	my $mark = $revmap{$commit};
+	my $mark = $revmap{$cummit};
 
-	# Branch and commit id
-	print OUT "commit refs/heads/", $branch{$mark}, "\nmark :", $mark, "\n";
+	# Branch and cummit id
+	print OUT "cummit refs/heads/", $branch{$mark}, "\nmark :", $mark, "\n";
 
 	# Author and timestamp
-	die "No timestamp defined for $commit (no files?)\n" unless defined $time{$mark};
-	print OUT "committer ", $author{$mark}, " ", $time{$mark}, " +0100\n";
+	die "No timestamp defined for $cummit (no files?)\n" unless defined $time{$mark};
+	print OUT "cummitter ", $author{$mark}, " ", $time{$mark}, " +0100\n";
 
-	# Commit message
-	die "No message defined for $commit\n" unless defined $message{$mark};
+	# cummit message
+	die "No message defined for $cummit\n" unless defined $message{$mark};
 	my $message = $message{$mark};
 	$message =~ s/\n$//; # Kill trailing empty line
 	print OUT "data ", length($message), "\n", $message, "\n";

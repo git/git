@@ -6,7 +6,7 @@ Updates since v2.26
 
 Backward compatibility notes
 
- * When "git describe C" finds that commit C is pointed by a signed or
+ * When "git describe C" finds that cummit C is pointed by a signed or
    annotated tag, which records T as its tagname in the object, the
    command gives T as its answer.  Even if the user renames or moves
    such a tag from its natural location in the "refs/tags/" hierarchy,
@@ -39,7 +39,7 @@ UI, Workflows & Features
    appears, in addition to its path, which has already been given).
 
  * When "git describe C" finds an annotated tag with tagname A to be
-   the best name to explain commit C, and the tag is stored in a
+   the best name to explain cummit C, and the tag is stored in a
    "wrong" place in the refs/tags hierarchy, e.g. refs/tags/B, the
    command gave a warning message but used A (not B) to describe C.
    If C is exactly at the tag, the describe output would be "A", but
@@ -59,7 +59,7 @@ UI, Workflows & Features
    sense to pass down were not passed down.
 
  * "git rebase" learned the "--no-gpg-sign" option to countermand
-   commit.gpgSign the user may have.
+   cummit.gpgSign the user may have.
 
  * The output from "git format-patch" uses RFC 2047 encoding for
    non-ASCII letters on From: and Subject: headers, so that it can
@@ -67,21 +67,21 @@ UI, Workflows & Features
    to produce these headers in raw.
 
  * "git log" learned "--show-pulls" that helps pathspec limited
-   history views; a merge commit that takes the whole change from a
+   history views; a merge cummit that takes the whole change from a
    side branch, which is normally omitted from the output, is shown
-   in addition to the commits that introduce real changes.
+   in addition to the cummits that introduce real changes.
 
  * The interactive input from various codepaths are consolidated and
    any prompt possibly issued earlier are fflush()ed before we read.
 
- * Allow "git rebase" to reapply all local commits, even if the may be
+ * Allow "git rebase" to reapply all local cummits, even if the may be
    already in the upstream, without checking first.
 
  * The 'pack.useSparse' configuration variable now defaults to 'true',
    enabling an optimization that has been experimental since Git 2.21.
 
  * "git rebase" happens to call some hooks meant for "checkout" and
-   "commit" by this was not a designed behaviour than historical
+   "cummit" by this was not a designed behaviour than historical
    accident.  This has been documented.
 
  * "git merge" learns the "--autostash" option.
@@ -90,14 +90,14 @@ UI, Workflows & Features
 
  * "git update-ref --stdin" learned a handful of new verbs to let the
    user control ref update transactions more explicitly, which helps
-   as an ingredient to implement two-phase commit-style atomic
+   as an ingredient to implement two-phase cummit-style atomic
    ref-updates across multiple repositories.
 
- * "git commit-graph write" learned different ways to write out split
+ * "git cummit-graph write" learned different ways to write out split
    files.
 
- * Introduce an extension to the commit-graph to make it efficient to
-   check for the paths that were modified at each commit using Bloom
+ * Introduce an extension to the cummit-graph to make it efficient to
+   check for the paths that were modified at each cummit using Bloom
    filters.
 
  * The approxidate parser learns to parse seconds with fraction and
@@ -168,7 +168,7 @@ Performance, Internal Implementation, Development Support etc.
    the depth of the tree, which was corrected.
 
  * "git blame" learns to take advantage of the "changed-paths" Bloom
-   filter stored in the commit-graph file.
+   filter stored in the cummit-graph file.
 
  * The "bugreport" tool has been added.
 
@@ -199,7 +199,7 @@ Fixes since v2.26
  * Update "git p4" to work with Python 3.
    (merge 6bb40ed20a yz/p4-py3 later to maint).
 
- * The mechanism to prevent "git commit" from making an empty commit
+ * The mechanism to prevent "git cummit" from making an empty cummit
    or amending during an interrupted cherry-pick was broken during the
    rewrite of "git rebase" in C, which has been corrected.
    (merge 430b75f720 pw/advise-rebase-skip later to maint).
@@ -219,7 +219,7 @@ Fixes since v2.26
    corrected.
    (merge c839fcff65 js/import-tars-do-not-make-phony-files-from-pax-headers later to maint).
 
- * Simplify the commit ancestry connectedness check in a partial clone
+ * Simplify the cummit ancestry connectedness check in a partial clone
    repository in which "promised" objects are assumed to be obtainable
    lazily on-demand from promisor remote repositories.
    (merge 2b98478c6f jt/connectivity-check-optim-in-partial-clone later to maint).
@@ -272,9 +272,9 @@ Fixes since v2.26
    (merge 3efc128cd5 js/mingw-fixes later to maint).
 
  * "git rebase" (again) learns to honor "--no-keep-empty", which lets
-   the user to discard commits that are empty from the beginning (as
+   the user to discard cummits that are empty from the beginning (as
    opposed to the ones that become empty because of rebasing).  The
-   interactive rebase also marks commits that are empty in the todo.
+   interactive rebase also marks cummits that are empty in the todo.
    (merge 50ed76148a en/rebase-no-keep-empty later to maint).
 
  * Parsing the host part out of URL for the credential helper has been corrected.
@@ -310,9 +310,9 @@ Fixes since v2.26
  * "git log" learns "--[no-]mailmap" as a synonym to "--[no-]use-mailmap"
    (merge 88acccda38 jc/log-no-mailmap later to maint).
 
- * "git commit-graph write --expire-time=<timestamp>" did not use the
+ * "git cummit-graph write --expire-time=<timestamp>" did not use the
    given timestamp correctly, which has been corrected.
-   (merge b09b785c78 ds/commit-graph-expiry-fix later to maint).
+   (merge b09b785c78 ds/cummit-graph-expiry-fix later to maint).
 
  * Tests update to use "test-chmtime" instead of "touch -t".
    (merge e892a56845 ds/t5319-touch-fix later to maint).
@@ -370,12 +370,12 @@ Fixes since v2.26
    (merge 3919997447 dd/mailinfo-with-nul later to maint).
 
  * Fix in-core inconsistency after fetching into a shallow repository
-   that broke the code to write out commit-graph.
+   that broke the code to write out cummit-graph.
    (merge 37b9dcabfc tb/reset-shallow later to maint).
 
- * The commit-graph code exhausted file descriptors easily when it
+ * The cummit-graph code exhausted file descriptors easily when it
    does not have to.
-   (merge c8828530b7 tb/commit-graph-fd-exhaustion-fix later to maint).
+   (merge c8828530b7 tb/cummit-graph-fd-exhaustion-fix later to maint).
 
  * The multi-pack-index left mmapped file descriptors open when it
    does not have to.
@@ -403,7 +403,7 @@ Fixes since v2.26
    (merge 9a121b0d22 js/partial-urlmatch-2.17 later to maint).
    (merge cd93e6c029 js/partial-urlmatch later to maint).
 
- * Some of the files commit-graph subsystem keeps on disk did not
+ * Some of the files cummit-graph subsystem keeps on disk did not
    correctly honor the core.sharedRepository settings and some were
    left read-write.
 
@@ -450,7 +450,7 @@ Fixes since v2.26
    API.
    (merge 1aed817f99 cb/credential-doc-fixes later to maint).
 
- * Teach "am", "commit", "merge" and "rebase", when they are run with
+ * Teach "am", "cummit", "merge" and "rebase", when they are run with
    the "--quiet" option, to pass "--quiet" down to "gc --auto".
    (merge 7c3e9e8cfb jc/auto-gc-quiet later to maint).
 
@@ -496,7 +496,7 @@ Fixes since v2.26
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 564956f358 jc/maintain-doc later to maint).
-   (merge 7422b2a0a1 sg/commit-slab-clarify-peek later to maint).
+   (merge 7422b2a0a1 sg/cummit-slab-clarify-peek later to maint).
    (merge 9c688735f6 rs/doc-passthru-fetch-options later to maint).
    (merge 757c2ba3e2 en/oidset-uninclude-hashmap later to maint).
    (merge 8312aa7d74 jc/config-tar later to maint).

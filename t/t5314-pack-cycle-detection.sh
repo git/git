@@ -31,7 +31,7 @@ that it does so in one of two general strategies:
     The two blobs must be present in the same tree, not present in other trees,
     and the dummy pathname must sort before the delta path.
 
-The setup below focuses on case 2. We have two commits HEAD and HEAD^, each
+The setup below focuses on case 2. We have two cummits HEAD and HEAD^, each
 which has two files: "dummy" and "file". Then we can make two packs which
 contain:
 
@@ -86,7 +86,7 @@ test_expect_success 'setup' '
 
 		git add file dummy &&
 		test_tick &&
-		git commit -m $i ||
+		git cummit -m $i ||
 		return 1
 	done &&
 

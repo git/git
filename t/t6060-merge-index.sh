@@ -6,16 +6,16 @@ test_description='basic git merge-index / git-merge-one-file tests'
 test_expect_success 'setup diverging branches' '
 	test_write_lines 1 2 3 4 5 6 7 8 9 10 >file &&
 	git add file &&
-	git commit -m base &&
+	git cummit -m base &&
 	git tag base &&
 	sed s/2/two/ <file >tmp &&
 	mv tmp file &&
-	git commit -a -m two &&
+	git cummit -a -m two &&
 	git tag two &&
 	git checkout -b other HEAD^ &&
 	sed s/10/ten/ <file >tmp &&
 	mv tmp file &&
-	git commit -a -m ten &&
+	git cummit -a -m ten &&
 	git tag ten
 '
 

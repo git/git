@@ -12,7 +12,7 @@ Content-Type: text/plain; charset=UTF-8; format=fixed
 Content-Transfer-Encoding: 8bit
 
 
-This is the second commit.
+This is the second cummit.
 ---
  dir/sub | 2 ++
  file0   | 3 +++

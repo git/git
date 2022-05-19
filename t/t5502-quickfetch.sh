@@ -12,7 +12,7 @@ test_expect_success setup '
 	test_tick &&
 	echo ichi >file &&
 	git add file &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	cnt=$( (
 		git count-objects | sed -e "s/ *objects,.*//"
@@ -35,11 +35,11 @@ test_expect_success 'clone without alternate' '
 	test $cnt -eq 3
 '
 
-test_expect_success 'further commits in the original' '
+test_expect_success 'further cummits in the original' '
 
 	test_tick &&
 	echo ni >file &&
-	git commit -a -m second &&
+	git cummit -a -m second &&
 
 	cnt=$( (
 		git count-objects | sed -e "s/ *objects,.*//"
@@ -47,7 +47,7 @@ test_expect_success 'further commits in the original' '
 	test $cnt -eq 6
 '
 
-test_expect_success 'copy commit and tree but not blob by hand' '
+test_expect_success 'copy cummit and tree but not blob by hand' '
 
 	git rev-list --objects HEAD |
 	git pack-objects --stdout |

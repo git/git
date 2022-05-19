@@ -62,11 +62,11 @@ msgid "Reading"
 msgstr "Leyendo"
 
 #: gitk:496 gitk:4525
-msgid "Reading commits..."
+msgid "Reading cummits..."
 msgstr "Leyendo revisiones..."
 
 #: gitk:499 gitk:1637 gitk:4528
-msgid "No commits selected"
+msgid "No cummits selected"
 msgstr "No se seleccionaron revisiones"
 
 #: gitk:1445 gitk:4045 gitk:12432
@@ -78,7 +78,7 @@ msgid "Can't parse git log output:"
 msgstr "Error analizando la salida de git log:"
 
 #: gitk:1740
-msgid "No commit information available"
+msgid "No cummit information available"
 msgstr "Falta información sobre las revisiones"
 
 #: gitk:1903 gitk:1932 gitk:4315 gitk:9669 gitk:11241 gitk:11521
@@ -171,7 +171,7 @@ msgid "Find"
 msgstr "Buscar"
 
 #: gitk:2295
-msgid "commit"
+msgid "cummit"
 msgstr "revisión"
 
 #: gitk:2299 gitk:2301 gitk:4687 gitk:4710 gitk:4734 gitk:6755 gitk:6827
@@ -221,7 +221,7 @@ msgid "Author"
 msgstr "Autor"
 
 #: gitk:2319 gitk:4871 gitk:6786 gitk:7326
-msgid "Committer"
+msgid "cummitter"
 msgstr ""
 
 #: gitk:2350
@@ -277,7 +277,7 @@ msgid "Create tag"
 msgstr "Crear etiqueta"
 
 #: gitk:2621 gitk:9371
-msgid "Write commit to file"
+msgid "Write cummit to file"
 msgstr "Escribir revisiones a archivo"
 
 #: gitk:2622 gitk:9428
@@ -285,7 +285,7 @@ msgid "Create new branch"
 msgstr "Crear nueva rama"
 
 #: gitk:2623
-msgid "Cherry-pick this commit"
+msgid "Cherry-pick this cummit"
 msgstr "Añadir esta revisión a la rama actual (cherry-pick)"
 
 #: gitk:2624
@@ -294,7 +294,7 @@ msgstr "Traer la rama HEAD aquí"
 
 #: gitk:2625
 #, fuzzy
-msgid "Mark this commit"
+msgid "Mark this cummit"
 msgstr "Añadir esta revisión a la rama actual (cherry-pick)"
 
 #: gitk:2626
@@ -306,22 +306,22 @@ msgid "Find descendant of this and mark"
 msgstr ""
 
 #: gitk:2628
-msgid "Compare with marked commit"
+msgid "Compare with marked cummit"
 msgstr ""
 
 #: gitk:2629 gitk:2640
 #, fuzzy
-msgid "Diff this -> marked commit"
+msgid "Diff this -> marked cummit"
 msgstr "Diferencia de esta -> seleccionada"
 
 #: gitk:2630 gitk:2641
 #, fuzzy
-msgid "Diff marked commit -> this"
+msgid "Diff marked cummit -> this"
 msgstr "Diferencia de seleccionada -> esta"
 
 #: gitk:2631
 #, fuzzy
-msgid "Revert this commit"
+msgid "Revert this cummit"
 msgstr "Añadir esta revisión a la rama actual (cherry-pick)"
 
 #: gitk:2647
@@ -349,7 +349,7 @@ msgid "External diff"
 msgstr ""
 
 #: gitk:2659
-msgid "Blame parent commit"
+msgid "Blame parent cummit"
 msgstr ""
 
 #: gitk:2660
@@ -368,7 +368,7 @@ msgstr ""
 #, fuzzy
 msgid ""
 "\n"
-"Gitk - a commit viewer for git\n"
+"Gitk - a cummit viewer for git\n"
 "\n"
 "Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
@@ -405,21 +405,21 @@ msgid "<%s-W>\t\tClose window"
 msgstr "<%s-F>\t\tBuscar"
 
 #: gitk:3050
-msgid "<Home>\t\tMove to first commit"
+msgid "<Home>\t\tMove to first cummit"
 msgstr "<Home>\t\tIr a la primera revisión"
 
 #: gitk:3051
-msgid "<End>\t\tMove to last commit"
+msgid "<End>\t\tMove to last cummit"
 msgstr "<End>\t\tIr a la última revisión"
 
 #: gitk:3052
 #, fuzzy
-msgid "<Up>, p, k\tMove up one commit"
+msgid "<Up>, p, k\tMove up one cummit"
 msgstr "<Up>, p, i\tSubir una revisión"
 
 #: gitk:3053
 #, fuzzy
-msgid "<Down>, n, j\tMove down one commit"
+msgid "<Down>, n, j\tMove down one cummit"
 msgstr "<Down>, n, k\tBajar una revisión"
 
 #: gitk:3054
@@ -433,53 +433,53 @@ msgstr "<Right>, x, l\tAvanzar en la historia"
 
 #: gitk:3056
 #, tcl-format
-msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgid "<%s-n>\tGo to n-th parent of current cummit in history list"
 msgstr ""
 
 #: gitk:3057
-msgid "<PageUp>\tMove up one page in commit list"
+msgid "<PageUp>\tMove up one page in cummit list"
 msgstr "<PageUp>\tSubir una página en la lista de revisiones"
 
 #: gitk:3058
-msgid "<PageDown>\tMove down one page in commit list"
+msgid "<PageDown>\tMove down one page in cummit list"
 msgstr "<PageDown>\tBajar una página en la lista de revisiones"
 
 #: gitk:3059
 #, tcl-format
-msgid "<%s-Home>\tScroll to top of commit list"
+msgid "<%s-Home>\tScroll to top of cummit list"
 msgstr "<%s-Home>\tDesplazarse al inicio de la lista de revisiones"
 
 #: gitk:3060
 #, tcl-format
-msgid "<%s-End>\tScroll to bottom of commit list"
+msgid "<%s-End>\tScroll to bottom of cummit list"
 msgstr "<%s-End>\tDesplazarse al final de la lista de revisiones"
 
 #: gitk:3061
 #, tcl-format
-msgid "<%s-Up>\tScroll commit list up one line"
+msgid "<%s-Up>\tScroll cummit list up one line"
 msgstr "<%s-Up>\tDesplazar una línea hacia arriba la lista de revisiones"
 
 #: gitk:3062
 #, tcl-format
-msgid "<%s-Down>\tScroll commit list down one line"
+msgid "<%s-Down>\tScroll cummit list down one line"
 msgstr "<%s-Down>\tDesplazar una línea hacia abajo la lista de revisiones"
 
 #: gitk:3063
 #, tcl-format
-msgid "<%s-PageUp>\tScroll commit list up one page"
+msgid "<%s-PageUp>\tScroll cummit list up one page"
 msgstr "<%s-PageUp>\tDesplazar una página hacia arriba la lista de revisiones"
 
 #: gitk:3064
 #, tcl-format
-msgid "<%s-PageDown>\tScroll commit list down one page"
+msgid "<%s-PageDown>\tScroll cummit list down one page"
 msgstr "<%s-PageDown>\tDesplazar una página hacia abajo la lista de revisiones"
 
 #: gitk:3065
-msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgid "<Shift-Up>\tFind backwards (upwards, later cummits)"
 msgstr "<Shift-Up>\tBuscar hacia atrás (arriba, revisiones siguientes)"
 
 #: gitk:3066
-msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgid "<Shift-Down>\tFind forwards (downwards, earlier cummits)"
 msgstr "<Shift-Down>\tBuscar hacia adelante (abajo, revisiones anteriores)"
 
 #: gitk:3067
@@ -518,7 +518,7 @@ msgstr "<Return>\tBuscar el siguiente"
 
 #: gitk:3075
 #, fuzzy
-msgid "g\t\tGo to commit"
+msgid "g\t\tGo to cummit"
 msgstr "<End>\t\tIr a la última revisión"
 
 #: gitk:3076
@@ -584,7 +584,7 @@ msgstr "Línea de comandos"
 
 #: gitk:3784
 #, fuzzy
-msgid "No such commit"
+msgid "No such cummit"
 msgstr "No se han guardado cambios"
 
 #: gitk:3798
@@ -617,7 +617,7 @@ msgstr "Error al crear la etiqueta:"
 
 #: gitk:3925
 #, tcl-format
-msgid "That line comes from commit %s,  which is not in this view"
+msgid "That line comes from cummit %s,  which is not in this view"
 msgstr ""
 
 #: gitk:3939
@@ -659,7 +659,7 @@ msgid "All remote-tracking branches"
 msgstr ""
 
 #: gitk:4081
-msgid "Commit Info (regular expressions):"
+msgid "cummit Info (regular expressions):"
 msgstr ""
 
 #: gitk:4082
@@ -669,19 +669,19 @@ msgstr "Autor"
 
 #: gitk:4083
 #, fuzzy
-msgid "Committer:"
+msgid "cummitter:"
 msgstr "revisión"
 
 #: gitk:4084
-msgid "Commit Message:"
+msgid "cummit Message:"
 msgstr ""
 
 #: gitk:4085
-msgid "Matches all Commit Info criteria"
+msgid "Matches all cummit Info criteria"
 msgstr ""
 
 #: gitk:4086
-msgid "Matches no Commit Info criteria"
+msgid "Matches no cummit Info criteria"
 msgstr ""
 
 #: gitk:4087
@@ -703,7 +703,7 @@ msgstr "Buscando"
 
 #: gitk:4091
 msgid ""
-"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"cummit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 msgstr ""
 
@@ -758,7 +758,7 @@ msgid "Enter files and directories to include, one per line:"
 msgstr "Introducir archivos y directorios a incluir, uno por línea:"
 
 #: gitk:4104
-msgid "Command to generate more commits to include:"
+msgid "Command to generate more cummits to include:"
 msgstr "Comando que genera más revisiones a incluir:"
 
 #: gitk:4228
@@ -779,7 +779,7 @@ msgid "Apply (F5)"
 msgstr ""
 
 #: gitk:4354
-msgid "Error in commit selection arguments:"
+msgid "Error in cummit selection arguments:"
 msgstr "Error en los argumentos de selección de las revisiones:"
 
 #: gitk:4409 gitk:4462 gitk:4924 gitk:4938 gitk:6208 gitk:12373 gitk:12374
@@ -803,11 +803,11 @@ msgid "Not ancestor"
 msgstr "No antepasado"
 
 #: gitk:5324
-msgid "Local changes checked in to index but not committed"
+msgid "Local changes checked in to index but not cummitted"
 msgstr "Cambios locales añadidos al índice pero sin completar revisión"
 
 #: gitk:5360
-msgid "Local uncommitted changes, not checked in to index"
+msgid "Local uncummitted changes, not checked in to index"
 msgstr "Cambios locales sin añadir al índice"
 
 #: gitk:7134
@@ -889,7 +889,7 @@ msgid "Detached head: can't reset"
 msgstr ""
 
 #: gitk:9005 gitk:9011
-msgid "Skipping merge commit "
+msgid "Skipping merge cummit "
 msgstr ""
 
 #: gitk:9020 gitk:9025
@@ -903,7 +903,7 @@ msgstr ""
 
 #: gitk:9031 gitk:9034 gitk:9042 gitk:9056 gitk:9065
 #, fuzzy
-msgid "Commit "
+msgid "cummit "
 msgstr "revisión"
 
 #: gitk:9035
@@ -920,7 +920,7 @@ msgstr ""
 
 #: gitk:9045
 msgid ""
-"Diff of commits:\n"
+"Diff of cummits:\n"
 "\n"
 msgstr ""
 
@@ -931,12 +931,12 @@ msgstr ""
 
 #: gitk:9085
 #, fuzzy, tcl-format
-msgid "Error writing commit to file: %s"
+msgid "Error writing cummit to file: %s"
 msgstr "Error al escribir revisión:"
 
 #: gitk:9091
 #, fuzzy, tcl-format
-msgid "Error diffing commits: %s"
+msgid "Error diffing cummits: %s"
 msgstr "Error al escribir revisión:"
 
 #: gitk:9137
@@ -1022,7 +1022,7 @@ msgid "Write"
 msgstr "Escribir"
 
 #: gitk:9408
-msgid "Error writing commit:"
+msgid "Error writing cummit:"
 msgstr "Error al escribir revisión:"
 
 #: gitk:9435
@@ -1040,7 +1040,7 @@ msgstr "La etiqueta \"%s\" ya existe"
 
 #: gitk:9530
 #, tcl-format
-msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgid "cummit %s is already included in branch %s -- really re-apply it?"
 msgstr "La revisión %s ya está incluida en la rama %s -- ¿Volver a aplicarla?"
 
 #: gitk:9535
@@ -1051,7 +1051,7 @@ msgstr "Eligiendo revisiones (cherry-picking)"
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
-"Please commit, reset or stash your changes and try again."
+"Please cummit, reset or stash your changes and try again."
 msgstr ""
 
 #: gitk:9550
@@ -1061,12 +1061,12 @@ msgid ""
 msgstr ""
 
 #: gitk:9566 gitk:9624
-msgid "No changes committed"
+msgid "No changes cummitted"
 msgstr "No se han guardado cambios"
 
 #: gitk:9593
 #, fuzzy, tcl-format
-msgid "Commit %s is not included in branch %s -- really revert it?"
+msgid "cummit %s is not included in branch %s -- really revert it?"
 msgstr "La revisión %s ya está incluida en la rama %s -- ¿Volver a aplicarla?"
 
 #: gitk:9598
@@ -1078,7 +1078,7 @@ msgstr "Reponiendo"
 #, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
-"commit, reset or stash  your changes and try again."
+"cummit, reset or stash  your changes and try again."
 msgstr ""
 
 #: gitk:9610
@@ -1131,7 +1131,7 @@ msgstr "No se puede borrar la rama actual"
 #: gitk:9802
 #, tcl-format
 msgid ""
-"The commits on branch %s aren't on any other branch.\n"
+"The cummits on branch %s aren't on any other branch.\n"
 "Really delete branch %s?"
 msgstr ""
 "Las revisiones de la rama %s no están presentes en otras ramas.\n"
@@ -1148,7 +1148,7 @@ msgstr "Filtro"
 
 #: gitk:10146
 msgid ""
-"Error reading commit topology information; branch and preceding/following "
+"Error reading cummit topology information; branch and preceding/following "
 "tag information will be incomplete."
 msgstr ""
 "Error al leer la topología de revisiones: la información sobre las ramas y "
@@ -1175,7 +1175,7 @@ msgid "I"
 msgstr "I"
 
 #: gitk:11348
-msgid "Commit list display options"
+msgid "cummit list display options"
 msgstr "Opciones de visualización de la lista de revisiones"
 
 #: gitk:11351

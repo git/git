@@ -43,10 +43,10 @@ test_pack_input_limit () {
 	'
 }
 
-test_expect_success "create known-size (1024 bytes) commit" '
+test_expect_success "create known-size (1024 bytes) cummit" '
 	test-tool genrandom foo 1024 >one-k &&
 	git add one-k &&
-	test_commit one-k
+	test_cummit one-k
 '
 
 test_pack_input_limit index

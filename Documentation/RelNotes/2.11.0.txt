@@ -15,7 +15,7 @@ Backward compatibility notes.
    eventually the warning can be turned into a hard error, upgrading
    the deprecation into removal of this (mis)feature.
 
- * The historical argument order "git merge <msg> HEAD <commit>..."
+ * The historical argument order "git merge <msg> HEAD <cummit>..."
    has been deprecated for quite some time, and will be removed in the
    next release (not this one).
 
@@ -53,7 +53,7 @@ UI, Workflows & Features
 
  * The "git diff --submodule={short,log}" mechanism has been enhanced
    to allow "--submodule=diff" to show the patch between the submodule
-   commits bound to the superproject.
+   cummits bound to the superproject.
 
  * Even though "git hash-objects", which is a tool to take an
    on-filesystem data stream and put it into the Git object store,
@@ -136,15 +136,15 @@ UI, Workflows & Features
    key, a signature made by a revoked key, etc.  New output letters
    have been assigned to express them.
 
- * In addition to purely abbreviated commit object names, "gitweb"
+ * In addition to purely abbreviated cummit object names, "gitweb"
    learned to turn "git describe" output (e.g. v2.9.3-599-g2376d31787)
    into clickable links in its output.
 
- * "git commit" created an empty commit when invoked with an index
+ * "git cummit" created an empty cummit when invoked with an index
    consisting solely of intend-to-add paths (added with "git add -N").
-   It now requires the "--allow-empty" option to create such a commit.
+   It now requires the "--allow-empty" option to create such a cummit.
    The same logic prevented "git status" from showing such paths as "new files" in the
-   "Changes not staged for commit" section.
+   "Changes not staged for cummit" section.
 
  * The smudge/clean filter API spawns an external process
    to filter the contents of each path that has a filter defined.  A
@@ -234,7 +234,7 @@ Performance, Internal Implementation, Development Support etc.
    other callers in preparation for upcoming "rebase -i" work.
 
  * "git upload-pack" had its code cleaned-up and performance improved
-   by reducing use of timestamp-ordered commit-list, which was
+   by reducing use of timestamp-ordered cummit-list, which was
    replaced with a priority queue.
 
  * "git diff --no-index" codepath has been updated not to try to peek
@@ -304,16 +304,16 @@ notes for details).
  * "git fetch http::/site/path" did not die correctly and segfaulted
    instead.
 
- * "git commit-tree" stopped reading commit.gpgsign configuration
-   variable that was meant for Porcelain "git commit" in Git 2.9; we
+ * "git cummit-tree" stopped reading cummit.gpgsign configuration
+   variable that was meant for Porcelain "git cummit" in Git 2.9; we
    forgot to update "git gui" to look at the configuration to match
    this change.
 
  * "git add --chmod={+,-}x" added recently lacked documentation, which has
    been corrected.
 
- * "git log --cherry-pick" used to include merge commits as candidates
-   to be matched up with other commits, resulting a lot of wasted time.
+ * "git log --cherry-pick" used to include merge cummits as candidates
+   to be matched up with other cummits, resulting a lot of wasted time.
    The patch-id generation logic has been updated to ignore merges and
    avoid the wastage.
 
@@ -339,14 +339,14 @@ notes for details).
    configuration.
 
  * "git format-patch --base=..." feature that was recently added
-   showed the base commit information after the "-- " e-mail signature
+   showed the base cummit information after the "-- " e-mail signature
    line, which turned out to be inconvenient.  The base information
    has been moved above the signature line.
 
  * More i18n.
 
  * Even when "git pull --rebase=preserve" (and the underlying "git
-   rebase --preserve") can complete without creating any new commits
+   rebase --preserve") can complete without creating any new cummits
    (i.e. fast-forwards), it still insisted on having usable ident
    information (read: user.email is set correctly), which was less
    than nice.  As the underlying commands used inside "git rebase"
@@ -476,7 +476,7 @@ notes for details).
 
  * "git blame --reverse OLD path" is now DWIMmed to show how lines
    in path in an old revision OLD have survived up to the current
-   commit.
+   cummit.
    (merge e1d09701a4 jc/blame-reverse later to maint).
 
  * The http.emptyauth configuration variable is a way to allow an empty username to
@@ -489,9 +489,9 @@ notes for details).
    level, but the codepath did not check errors while copying and
    adjusting the file that lists alternate object stores.
 
- * Documentation for "git commit" was updated to clarify that "commit
+ * Documentation for "git cummit" was updated to clarify that "cummit
    -p <paths>" adds to the current contents of the index to come up
-   with what to commit.
+   with what to cummit.
 
  * A stray symbolic link in the $GIT_DIR/refs/ directory could make name
    resolution loop forever, which has been corrected.
@@ -583,7 +583,7 @@ notes for details).
    (merge 5c238e29a8 jk/common-main later to maint).
    (merge 5a5749e45b ak/pre-receive-hook-template-modefix later to maint).
    (merge 6d834ac8f1 jk/rebase-config-insn-fmt-docfix later to maint).
-   (merge de9f7fa3b0 rs/commit-pptr-simplify later to maint).
+   (merge de9f7fa3b0 rs/cummit-pptr-simplify later to maint).
    (merge 4259d693fc sc/fmt-merge-msg-doc-markup-fix later to maint).
    (merge 28fab7b23d nd/test-helpers later to maint).
    (merge c2bb0c1d1e rs/cocci later to maint).

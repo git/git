@@ -7,11 +7,11 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-commit () {
+cummit () {
 	test_tick &&
 	echo $1 > foo &&
 	git add foo &&
-	git commit -m "$1"
+	git cummit -m "$1"
 }
 
 compare () {
@@ -23,23 +23,23 @@ compare () {
 
 test_expect_success 'setup' '
 
-	commit main &&
+	cummit main &&
 	git checkout -b subspace/one main &&
-	commit one &&
+	cummit one &&
 	git checkout -b subspace/two main &&
-	commit two &&
+	cummit two &&
 	git checkout -b subspace-x main &&
-	commit subspace-x &&
+	cummit subspace-x &&
 	git checkout -b other/three main &&
-	commit three &&
+	cummit three &&
 	git checkout -b someref main &&
-	commit some &&
+	cummit some &&
 	git checkout main &&
-	commit topic_2 &&
+	cummit topic_2 &&
 	git tag foo/bar main &&
-	commit topic_3 &&
+	cummit topic_3 &&
 	git update-ref refs/remotes/foo/baz main &&
-	commit topic_4 &&
+	cummit topic_4 &&
 	git update-ref refs/remotes/upstream/one subspace/one &&
 	git update-ref refs/remotes/upstream/two subspace/two &&
 	git update-ref refs/remotes/upstream/x subspace-x &&

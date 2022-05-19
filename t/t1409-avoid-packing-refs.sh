@@ -18,11 +18,11 @@ check_packed_refs_marked () {
 }
 
 test_expect_success 'setup' '
-	git commit --allow-empty -m "Commit A" &&
+	git cummit --allow-empty -m "cummit A" &&
 	A=$(git rev-parse HEAD) &&
-	git commit --allow-empty -m "Commit B" &&
+	git cummit --allow-empty -m "cummit B" &&
 	B=$(git rev-parse HEAD) &&
-	git commit --allow-empty -m "Commit C" &&
+	git cummit --allow-empty -m "cummit C" &&
 	C=$(git rev-parse HEAD)
 '
 

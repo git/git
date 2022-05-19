@@ -4,7 +4,7 @@ test_description='check environment showed to remote side of transports'
 . ./test-lib.sh
 
 test_expect_success 'set up "remote" push situation' '
-	test_commit one &&
+	test_cummit one &&
 	git config push.default current &&
 	git init remote
 '

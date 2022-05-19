@@ -104,9 +104,9 @@ eval "set $(git rev-parse --sq --prefix "$prefix" -- "$@")"
 If you want to make sure that the output actually names an object in
 your object database and/or can be used as a specific type of object
 you require, you can add the `^{type}` peeling operator to the parameter.
-For example, `git rev-parse "$VAR^{commit}"` will make sure `$VAR`
-names an existing object that is a commit-ish (i.e. a commit, or an
-annotated tag that points at a commit).  To make sure that `$VAR`
+For example, `git rev-parse "$VAR^{cummit}"` will make sure `$VAR`
+names an existing object that is a cummit-ish (i.e. a cummit, or an
+annotated tag that points at a cummit).  To make sure that `$VAR`
 names an existing object of any type, `git rev-parse "$VAR^{object}"`
 can be used.
 +
@@ -455,16 +455,16 @@ $ sh your-git-script.sh "a b'c"
 EXAMPLES
 --------
 
-* Print the object name of the current commit:
+* Print the object name of the current cummit:
 +
 ------------
 $ git rev-parse --verify HEAD
 ------------
 
-* Print the commit object name from the revision in the $REV shell variable:
+* Print the cummit object name from the revision in the $REV shell variable:
 +
 ------------
-$ git rev-parse --verify --end-of-options $REV^{commit}
+$ git rev-parse --verify --end-of-options $REV^{cummit}
 ------------
 +
 This will error out if $REV is empty or not a valid revision.
@@ -475,7 +475,7 @@ This will error out if $REV is empty or not a valid revision.
 $ git rev-parse --default master --verify --end-of-options $REV
 ------------
 +
-but if $REV is empty, the commit object name from master will be printed.
+but if $REV is empty, the cummit object name from master will be printed.
 
 GIT
 ---

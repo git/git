@@ -24,7 +24,7 @@ In the second form, the last argument has to be an existing
 directory; the given sources will be moved into this directory.
 
 The index is updated after successful completion, but the change must still be
-committed.
+cummitted.
 
 OPTIONS
 -------
@@ -55,7 +55,7 @@ the linkgit:gitmodules[5] file and stage that file (unless -n is used).
 BUGS
 ----
 Each time a superproject update moves a populated submodule (e.g. when
-switching between commits before and after the move) a stale submodule
+switching between cummits before and after the move) a stale submodule
 checkout will remain in the old location and an empty directory will
 appear in the new location. To populate the submodule again in the new
 location the user will have to run "git submodule update"

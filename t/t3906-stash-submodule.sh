@@ -22,7 +22,7 @@ git_stash () {
 }
 
 KNOWN_FAILURE_STASH_DOES_IGNORE_SUBMODULE_CHANGES=1
-KNOWN_FAILURE_CHERRY_PICK_SEES_EMPTY_COMMIT=1
+KNOWN_FAILURE_CHERRY_PICK_SEES_EMPTY_cummit=1
 KNOWN_FAILURE_NOFF_MERGE_DOESNT_CREATE_EMPTY_SUBMODULE_DIR=1
 test_submodule_switch_func "git_stash"
 
@@ -31,13 +31,13 @@ setup_basic () {
 	git init sub &&
 	(
 		cd sub &&
-		test_commit sub_file
+		test_cummit sub_file
 	) &&
 	git init main &&
 	(
 		cd main &&
 		git submodule add ../sub &&
-		test_commit main_file
+		test_cummit main_file
 	)
 }
 

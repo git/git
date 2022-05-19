@@ -211,7 +211,7 @@ test_expect_success 'setup' '
 
 	git -c core.fsmonitor=false add . &&
 	test_tick &&
-	git -c core.fsmonitor=false commit -m initial &&
+	git -c core.fsmonitor=false cummit -m initial &&
 
 	git config core.fsmonitor true
 '
@@ -468,7 +468,7 @@ test_expect_success 'setup worktree base' '
 	git init wt-base &&
 	echo 1 >wt-base/file1 &&
 	git -C wt-base add file1 &&
-	git -C wt-base commit -m "c1"
+	git -C wt-base cummit -m "c1"
 '
 
 test_expect_success 'worktree with .git file' '

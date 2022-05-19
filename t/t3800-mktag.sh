@@ -117,11 +117,11 @@ test_expect_mktag_success() {
 }
 
 ###########################################################
-# first create a commit, so we have a valid object/type
+# first create a cummit, so we have a valid object/type
 # for the tag.
 test_expect_success 'setup' '
-	test_commit A &&
-	test_commit B &&
+	test_cummit A &&
+	test_cummit B &&
 	head=$(git rev-parse --verify HEAD) &&
 	head_parent=$(git rev-parse --verify HEAD~) &&
 	tree=$(git rev-parse HEAD^{tree}) &&
@@ -131,7 +131,7 @@ test_expect_success 'setup' '
 test_expect_success 'basic usage' '
 	cat >tag.sig <<-EOF &&
 	object $head
-	type commit
+	type cummit
 	tag mytag
 	tagger T A Gger <tagger@example.com> 1206478233 -0500
 	EOF
@@ -281,26 +281,26 @@ tagger . <> 0 +0000
 EOF
 
 check_verify_failure 'verify object (hash/type) check -- mismatched type, valid object' \
-	'^fatal: object.*tagged as.*tree.*but is.*commit' \
+	'^fatal: object.*tagged as.*tree.*but is.*cummit' \
 	--fsck-obj-ok
 
 ############################################################
 #  9.5. verify object (hash/type) check -- replacement
 
-test_expect_success 'setup replacement of commit -> commit and tree -> blob' '
+test_expect_success 'setup replacement of cummit -> cummit and tree -> blob' '
 	git replace $head_parent $head &&
 	git replace -f $tree $blob
 '
 
 cat >tag.sig <<EOF
 object $head_parent
-type commit
+type cummit
 tag mytag
 tagger . <> 0 +0000
 
 EOF
 
-test_expect_mktag_success 'tag to a commit replaced by another commit'
+test_expect_mktag_success 'tag to a cummit replaced by another cummit'
 
 cat >tag.sig <<EOF
 object $tree
@@ -319,7 +319,7 @@ check_verify_failure 'verify object (hash/type) check -- mismatched type, valid 
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag my	tag
 tagger . <> 0 +0000
 
@@ -335,7 +335,7 @@ check_verify_failure 'verify tag-name check' \
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 
 This is filler
@@ -351,7 +351,7 @@ check_verify_failure '"tagger" line label check #1' \
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger
 
@@ -368,7 +368,7 @@ check_verify_failure '"tagger" line label check #2' \
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger  <> 0 +0000
 
@@ -382,7 +382,7 @@ test_expect_mktag_success 'allow missing tag author name'
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <
  > 0 +0000
@@ -399,7 +399,7 @@ check_verify_failure 'disallow malformed tagger' \
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <> 0 +0000
 
@@ -412,7 +412,7 @@ test_expect_mktag_success 'allow empty tag email'
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <tag ger@example.com> 0 +0000
 
@@ -425,7 +425,7 @@ test_expect_mktag_success 'allow spaces in tag email like fsck'
 
 tr '_' ' ' >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <tagger@example.com>__
 
@@ -439,7 +439,7 @@ check_verify_failure 'disallow missing tag timestamp' \
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <tagger@example.com> Tue Mar 25 15:47:44 2008
 
@@ -453,7 +453,7 @@ check_verify_failure 'detect invalid tag timestamp1' \
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <tagger@example.com> 2008-03-31T12:20:15-0500
 
@@ -467,7 +467,7 @@ check_verify_failure 'detect invalid tag timestamp2' \
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <tagger@example.com> 1206478233 GMT
 
@@ -481,7 +481,7 @@ check_verify_failure 'detect invalid tag timezone1' \
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <tagger@example.com> 1206478233 +  30
 
@@ -495,7 +495,7 @@ check_verify_failure 'detect invalid tag timezone2' \
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <tagger@example.com> 1206478233 -1430
 
@@ -508,7 +508,7 @@ test_expect_mktag_success 'allow invalid tag timezone'
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <tagger@example.com> 1206478233 -0500
 this line should not be here
@@ -542,7 +542,7 @@ test_expect_success 'invalid header entry config & fsck' '
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <tagger@example.com> 1206478233 -0500
 
@@ -554,7 +554,7 @@ test_expect_mktag_success 'allow extra newlines at start of body'
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <tagger@example.com> 1206478233 -0500
 
@@ -564,7 +564,7 @@ test_expect_mktag_success 'allow a blank line before an empty body (1)'
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <tagger@example.com> 1206478233 -0500
 EOF
@@ -576,7 +576,7 @@ test_expect_mktag_success 'allow no blank line before an empty body (2)'
 
 cat >tag.sig <<EOF
 object $head
-type commit
+type cummit
 tag mytag
 tagger T A Gger <tagger@example.com> 1206478233 -0500
 EOF

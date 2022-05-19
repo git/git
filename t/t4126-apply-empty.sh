@@ -10,8 +10,8 @@ test_expect_success setup '
 	>empty &&
 	git add empty &&
 	test_tick &&
-	git commit -m initial &&
-	git commit --allow-empty -m "empty commit" &&
+	git cummit -m initial &&
+	git cummit --allow-empty -m "empty cummit" &&
 	git format-patch --always HEAD~ >empty.patch &&
 	test_write_lines a b c d e >empty &&
 	cat empty >expect &&

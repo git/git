@@ -442,7 +442,7 @@ static int do_io_reply_callback(struct ipc_server_reply_data *reply_data,
  * If the client hangs up without sending any data on the wire, just
  * quietly close the socket and ignore this client.
  *
- * This worker thread is committed to reading the IPC request data
+ * This worker thread is cummitted to reading the IPC request data
  * from the client at the other end of this fd.  Wait here for the
  * client to actually put something on the wire -- because if the
  * client just does a ping (connect and hangup without sending any

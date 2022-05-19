@@ -9,7 +9,7 @@ test_expect_success 'setup svn repository' '
 		cd work.svn &&
 		echo >file &&
 		svn_cmd add file &&
-		svn_cmd commit -m "first commit" file
+		svn_cmd cummit -m "first cummit" file
 	)
 '
 
@@ -22,24 +22,24 @@ test_expect_success 'interact with it via git svn' '
 
 		echo modification >file &&
 		test_tick &&
-		git commit -a -m second &&
+		git cummit -a -m second &&
 
 		test_tick &&
-		git svn dcommit &&
+		git svn dcummit &&
 
 		echo "further modification" >file &&
 		test_tick &&
-		git commit -a -m third &&
+		git cummit -a -m third &&
 
 		test_tick &&
-		git svn --add-author-from dcommit &&
+		git svn --add-author-from dcummit &&
 
 		echo "yet further modification" >file &&
 		test_tick &&
-		git commit -a -m fourth &&
+		git cummit -a -m fourth &&
 
 		test_tick &&
-		git svn --add-author-from --use-log-author dcommit &&
+		git svn --add-author-from --use-log-author dcummit &&
 
 		git log &&
 
@@ -66,12 +66,12 @@ test_expect_success 'interact with it via git svn' '
 	# the authorship information
 	grep "^Author: A U Thor " actual.4 &&
 
-	# Make sure there are no commit messages with excess blank lines
+	# Make sure there are no cummit messages with excess blank lines
 	test $(grep "^ " actual.2 | wc -l) = 3 &&
 	test $(grep "^ " actual.3 | wc -l) = 5 &&
 	test $(grep "^ " actual.4 | wc -l) = 5 &&
 
-	# Make sure there are no svn commit messages with excess blank lines
+	# Make sure there are no svn cummit messages with excess blank lines
 	(
 		cd work.svn &&
 		svn_cmd up &&

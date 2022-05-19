@@ -18,8 +18,8 @@ Fixes since v2.11
    to interfere while merging or cherry-picking a change to create a
    submodule directory there, which has been fixed..
 
- * The code in "git push" to compute if any commit being pushed in the
-   superproject binds a commit in a submodule that hasn't been pushed
+ * The code in "git push" to compute if any cummit being pushed in the
+   superproject binds a cummit in a submodule that hasn't been pushed
    out was overly inefficient, making it unusable even for a small
    project that does not have any submodule but have a reasonable
    number of refs.
@@ -53,15 +53,15 @@ Fixes since v2.11
  * "git difftool --dir-diff" had a minor regression when started from
    a subdirectory, which has been fixed.
 
- * "git commit --allow-empty --only" (no pathspec) with dirty index
-   ought to be an acceptable way to create a new commit that does not
+ * "git cummit --allow-empty --only" (no pathspec) with dirty index
+   ought to be an acceptable way to create a new cummit that does not
    change any paths, but it was forbidden, perhaps because nobody
    needed it so far.
 
  * A pathname that begins with "//" or "\\" on Windows is special but
    path normalization logic was unaware of it.
 
- * "git pull --rebase", when there is no new commits on our side since
+ * "git pull --rebase", when there is no new cummits on our side since
    we forked from the upstream, should be able to fast-forward without
    invoking "git rebase", but it didn't.
 
@@ -71,7 +71,7 @@ Fixes since v2.11
  * Unlike "git am --abort", "git cherry-pick --abort" moved HEAD back
    to where cherry-pick started while picking multiple changes, when
    the cherry-pick stopped to ask for help from the user, and the user
-   did "git reset --hard" to a different commit in order to re-attempt
+   did "git reset --hard" to a different cummit in order to re-attempt
    the operation.
 
  * Code cleanup in shallow boundary computation.
@@ -105,8 +105,8 @@ Fixes since v2.11
    has been fixed.
 
  * "git p4" that tracks multiple p4 paths imported a single changelist
-   that touches files in these multiple paths as one commit, followed
-   by many empty commits.  This has been fixed.
+   that touches files in these multiple paths as one cummit, followed
+   by many empty cummits.  This has been fixed.
 
  * A potential but unlikely buffer overflow in Windows port has been
    fixed.
@@ -149,11 +149,11 @@ Fixes since v2.11
    failed to notice a file that is marked as binary via the userdiff
    driver configuration.
 
- * "git blame --porcelain" misidentified the "previous" <commit, path>
+ * "git blame --porcelain" misidentified the "previous" <cummit, path>
    pair (aka "source") when contents came from two or more files.
 
  * "git rebase -i" with a recent update started showing an incorrect
-   count when squashing more than 10 commits.
+   count when squashing more than 10 cummits.
 
  * "git <cmd> @{push}" on a detached HEAD used to segfault; it has
    been corrected to error out with a message.

@@ -93,7 +93,7 @@ proc hook_failed_popup {hook msg {is_fatal 1}} {
 	pack $w.m.l1 -side top -fill x
 	if {$is_fatal} {
 		${NS}::label $w.m.l2 \
-			-text [mc "You must correct the above errors before committing."] \
+			-text [mc "You must correct the above errors before cummitting."] \
 			-anchor w \
 			-justify left \
 			-font font_uibold

@@ -10,13 +10,13 @@ test_expect_success 'setup' '
 	echo content >file &&
 	git add file &&
 	test_tick &&
-	git commit -m one
+	git cummit -m one
 '
 
-commit=$(git rev-parse --short HEAD)
+cummit=$(git rev-parse --short HEAD)
 cat >expect <<'EOF'
-Reflog: HEAD@{0} (C O Mitter <committer@example.com>)
-Reflog message: commit (initial): one
+Reflog: HEAD@{0} (C O Mitter <cummitter@example.com>)
+Reflog message: cummit (initial): one
 EOF
 test_expect_success 'log -g shows reflog headers' '
 	git log -g -1 >tmp &&
@@ -25,7 +25,7 @@ test_expect_success 'log -g shows reflog headers' '
 '
 
 cat >expect <<EOF
-$commit HEAD@{0}: commit (initial): one
+$commit HEAD@{0}: cummit (initial): one
 EOF
 test_expect_success 'oneline reflog format' '
 	git log -g -1 --oneline >actual &&
@@ -38,9 +38,9 @@ test_expect_success 'reflog default format' '
 '
 
 cat >expect <<EOF
-commit $commit
-Reflog: HEAD@{0} (C O Mitter <committer@example.com>)
-Reflog message: commit (initial): one
+cummit $cummit
+Reflog: HEAD@{0} (C O Mitter <cummitter@example.com>)
+Reflog message: cummit (initial): one
 Author: A U Thor <author@example.com>
 
     one
@@ -51,8 +51,8 @@ test_expect_success 'override reflog default format' '
 '
 
 cat >expect <<'EOF'
-Reflog: HEAD@{Thu Apr 7 15:13:13 2005 -0700} (C O Mitter <committer@example.com>)
-Reflog message: commit (initial): one
+Reflog: HEAD@{Thu Apr 7 15:13:13 2005 -0700} (C O Mitter <cummitter@example.com>)
+Reflog message: cummit (initial): one
 EOF
 test_expect_success 'using @{now} syntax shows reflog date (multiline)' '
 	git log -g -1 HEAD@{now} >tmp &&
@@ -61,7 +61,7 @@ test_expect_success 'using @{now} syntax shows reflog date (multiline)' '
 '
 
 cat >expect <<EOF
-$commit HEAD@{Thu Apr 7 15:13:13 2005 -0700}: commit (initial): one
+$commit HEAD@{Thu Apr 7 15:13:13 2005 -0700}: cummit (initial): one
 EOF
 test_expect_success 'using @{now} syntax shows reflog date (oneline)' '
 	git log -g -1 --oneline HEAD@{now} >actual &&
@@ -77,8 +77,8 @@ test_expect_success 'using @{now} syntax shows reflog date (format=%gd)' '
 '
 
 cat >expect <<'EOF'
-Reflog: HEAD@{Thu Apr 7 15:13:13 2005 -0700} (C O Mitter <committer@example.com>)
-Reflog message: commit (initial): one
+Reflog: HEAD@{Thu Apr 7 15:13:13 2005 -0700} (C O Mitter <cummitter@example.com>)
+Reflog message: cummit (initial): one
 EOF
 test_expect_success 'using --date= shows reflog date (multiline)' '
 	git log -g -1 --date=default >tmp &&
@@ -87,7 +87,7 @@ test_expect_success 'using --date= shows reflog date (multiline)' '
 '
 
 cat >expect <<EOF
-$commit HEAD@{Thu Apr 7 15:13:13 2005 -0700}: commit (initial): one
+$commit HEAD@{Thu Apr 7 15:13:13 2005 -0700}: cummit (initial): one
 EOF
 test_expect_success 'using --date= shows reflog date (oneline)' '
 	git log -g -1 --oneline --date=default >actual &&
@@ -103,8 +103,8 @@ test_expect_success 'using --date= shows reflog date (format=%gd)' '
 '
 
 cat >expect <<'EOF'
-Reflog: HEAD@{0} (C O Mitter <committer@example.com>)
-Reflog message: commit (initial): one
+Reflog: HEAD@{0} (C O Mitter <cummitter@example.com>)
+Reflog message: cummit (initial): one
 EOF
 test_expect_success 'log.date does not invoke "--date" magic (multiline)' '
 	test_config log.date raw &&
@@ -114,7 +114,7 @@ test_expect_success 'log.date does not invoke "--date" magic (multiline)' '
 '
 
 cat >expect <<EOF
-$commit HEAD@{0}: commit (initial): one
+$commit HEAD@{0}: cummit (initial): one
 EOF
 test_expect_success 'log.date does not invoke "--date" magic (oneline)' '
 	test_config log.date raw &&
@@ -148,10 +148,10 @@ test_expect_success 'empty reflog file' '
 '
 
 # This guards against the alternative of showing the diffs vs. the
-# reflog ancestor.  The reflog used is designed to list the commits
+# reflog ancestor.  The reflog used is designed to list the cummits
 # more than once, so as to exercise the corresponding logic.
 test_expect_success 'git log -g -p shows diffs vs. parents' '
-	test_commit two &&
+	test_cummit two &&
 	git branch flipflop &&
 	git update-ref refs/heads/flipflop -m flip1 HEAD^ &&
 	git update-ref refs/heads/flipflop -m flop1 HEAD &&

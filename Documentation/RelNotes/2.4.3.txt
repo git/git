@@ -36,7 +36,7 @@ Fixes since v2.4.3
    removed at the same time as 'refs/heads/xyzzy' is added (or vice
    versa) very well.
 
- * The "log --decorate" enhancement in Git 2.4 that shows the commit
+ * The "log --decorate" enhancement in Git 2.4 that shows the cummit
    at the tip of the current branch e.g. "HEAD -> master", did not
    work with --decorate=full.
 
@@ -64,7 +64,7 @@ Fixes since v2.4.3
    with native transports.
 
  * Some time ago, "git blame" (incorrectly) lost the convert_to_git()
-   call when synthesizing a fake "tip" commit that represents the
+   call when synthesizing a fake "tip" cummit that represents the
    state in the working tree, which broke folks who record the history
    with LF line ending to make their project portable across
    platforms while terminating lines in their working tree files with

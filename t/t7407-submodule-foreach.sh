@@ -19,7 +19,7 @@ test_expect_success 'setup a submodule tree' '
 	echo file > file &&
 	git add file &&
 	test_tick &&
-	git commit -m upstream &&
+	git cummit -m upstream &&
 	git clone . super &&
 	git clone super submodule &&
 	(
@@ -35,7 +35,7 @@ test_expect_success 'setup a submodule tree' '
 			submodule.sub3 submodule.foo3 &&
 		git add .gitmodules &&
 		test_tick &&
-		git commit -m "submodules" &&
+		git cummit -m "submodules" &&
 		git submodule init sub1 &&
 		git submodule init sub2 &&
 		git submodule init sub3
@@ -45,7 +45,7 @@ test_expect_success 'setup a submodule tree' '
 		echo different > file &&
 		git add file &&
 		test_tick &&
-		git commit -m "different"
+		git cummit -m "different"
 	) &&
 	(
 		cd super &&
@@ -55,7 +55,7 @@ test_expect_success 'setup a submodule tree' '
 		) &&
 		git add sub3 &&
 		test_tick &&
-		git commit -m "update sub3"
+		git cummit -m "update sub3"
 	)
 '
 
@@ -107,28 +107,28 @@ test_expect_success 'setup nested submodules' '
 		cd nested3 &&
 		git submodule add ../submodule submodule &&
 		test_tick &&
-		git commit -m "submodule" &&
+		git cummit -m "submodule" &&
 		git submodule init submodule
 	) &&
 	(
 		cd nested2 &&
 		git submodule add ../nested3 nested3 &&
 		test_tick &&
-		git commit -m "nested3" &&
+		git cummit -m "nested3" &&
 		git submodule init nested3
 	) &&
 	(
 		cd nested1 &&
 		git submodule add ../nested2 nested2 &&
 		test_tick &&
-		git commit -m "nested2" &&
+		git cummit -m "nested2" &&
 		git submodule init nested2
 	) &&
 	(
 		cd super &&
 		git submodule add ../nested1 nested1 &&
 		test_tick &&
-		git commit -m "nested1" &&
+		git cummit -m "nested1" &&
 		git submodule init nested1
 	)
 '
@@ -309,7 +309,7 @@ test_expect_success 'ensure "status --cached --recursive" preserves the --cached
 		cd clone3 &&
 		(
 			cd nested1/nested2 &&
-			test_commit file2
+			test_cummit file2
 		) &&
 		git submodule status --cached --recursive -- nested1 > ../actual
 	) &&

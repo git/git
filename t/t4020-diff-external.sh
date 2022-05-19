@@ -10,14 +10,14 @@ test_expect_success setup '
 	test_tick &&
 	echo initial >file &&
 	git add file &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	test_tick &&
 	echo second >file &&
 	before=$(git hash-object file) &&
 	before=$(git rev-parse --short $before) &&
 	git add file &&
-	git commit -m second &&
+	git cummit -m second &&
 
 	test_tick &&
 	echo third >file
@@ -187,7 +187,7 @@ test_expect_success 'force diff with "diff"' '
 test_expect_success 'GIT_EXTERNAL_DIFF with more than one changed files' '
 	echo anotherfile > file2 &&
 	git add file2 &&
-	git commit -m "added 2nd file" &&
+	git cummit -m "added 2nd file" &&
 	echo modified >file2 &&
 	GIT_EXTERNAL_DIFF=echo git diff
 '
@@ -252,11 +252,11 @@ test_expect_success 'clean up crlf leftovers' '
 
 test_expect_success 'submodule diff' '
 	git init sub &&
-	( cd sub && test_commit sub1 ) &&
+	( cd sub && test_cummit sub1 ) &&
 	git add sub &&
 	test_tick &&
-	git commit -m "add submodule" &&
-	( cd sub && test_commit sub2 ) &&
+	git cummit -m "add submodule" &&
+	( cd sub && test_cummit sub2 ) &&
 	write_script gather_pre_post.sh <<-\EOF &&
 	echo "$1 $4" # path, mode
 	cat "$2" # old file
@@ -265,8 +265,8 @@ test_expect_success 'submodule diff' '
 	GIT_EXTERNAL_DIFF=./gather_pre_post.sh git diff >actual &&
 	cat >expected <<-EOF &&
 	sub 160000
-	Subproject commit $(git rev-parse HEAD:sub)
-	Subproject commit $(cd sub && git rev-parse HEAD)
+	Subproject cummit $(git rev-parse HEAD:sub)
+	Subproject cummit $(cd sub && git rev-parse HEAD)
 	EOF
 	test_cmp expected actual
 '

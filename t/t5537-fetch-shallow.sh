@@ -7,17 +7,17 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-commit() {
+cummit() {
 	echo "$1" >tracked &&
 	git add tracked &&
-	git commit -m "$1"
+	git cummit -m "$1"
 }
 
 test_expect_success 'setup' '
-	commit 1 &&
-	commit 2 &&
-	commit 3 &&
-	commit 4 &&
+	cummit 1 &&
+	cummit 2 &&
+	cummit 3 &&
+	cummit 4 &&
 	git config --global transfer.fsckObjects true &&
 	test_oid_cache <<-\EOF
 	perl sha1:s/0034shallow %s/0036unshallow %s/
@@ -46,7 +46,7 @@ test_expect_success 'clone from shallow clone' '
 test_expect_success 'fetch from shallow clone' '
 	(
 	cd shallow &&
-	commit 5
+	cummit 5
 	) &&
 	(
 	cd shallow2 &&
@@ -61,7 +61,7 @@ test_expect_success 'fetch from shallow clone' '
 test_expect_success 'fetch --depth from shallow clone' '
 	(
 	cd shallow &&
-	commit 6
+	cummit 6
 	) &&
 	(
 	cd shallow2 &&
@@ -91,7 +91,7 @@ test_expect_success 'fetch --unshallow from a full clone' '
 	git log --format=%s >actual &&
 	test_write_lines 4 3 >expect &&
 	test_cmp expect actual &&
-	git -c fetch.writeCommitGraph fetch --unshallow &&
+	git -c fetch.writecummitGraph fetch --unshallow &&
 	git log origin/main --format=%s >actual &&
 	test_write_lines 4 3 2 1 >expect &&
 	test_cmp expect actual
@@ -104,7 +104,7 @@ test_expect_success 'fetch something upstream has but hidden by clients shallow 
 	! git --git-dir=shallow2/.git cat-file blob $(echo 1|git hash-object --stdin) >/dev/null &&
 	echo 1 >1.t &&
 	git add 1.t &&
-	git commit -m add-1-back &&
+	git cummit -m add-1-back &&
 	(
 	cd shallow2 &&
 	git fetch ../.git +refs/heads/main:refs/remotes/top/main &&
@@ -120,7 +120,7 @@ test_expect_success 'fetch that requires changes in .git/shallow is filtered' '
 	(
 	cd shallow &&
 	git checkout --orphan no-shallow &&
-	commit no-shallow
+	cummit no-shallow
 	) &&
 	git init notshallow &&
 	(
@@ -139,7 +139,7 @@ test_expect_success 'fetch --update-shallow' '
 	(
 	cd shallow &&
 	git checkout main &&
-	commit 7 &&
+	cummit 7 &&
 	git tag -m foo heavy-tag HEAD^ &&
 	git tag light-tag HEAD^:tracked
 	) &&
@@ -163,22 +163,22 @@ test_expect_success 'fetch --update-shallow' '
 
 test_expect_success 'fetch --update-shallow into a repo with submodules' '
 	git init a-submodule &&
-	test_commit -C a-submodule foo &&
+	test_cummit -C a-submodule foo &&
 	git init repo-with-sub &&
 	git -C repo-with-sub submodule add ../a-submodule a-submodule &&
-	git -C repo-with-sub commit -m "added submodule" &&
+	git -C repo-with-sub cummit -m "added submodule" &&
 	git -C repo-with-sub fetch --update-shallow ../shallow/.git refs/heads/*:refs/remotes/shallow/*
 '
 
-test_expect_success 'fetch --update-shallow (with fetch.writeCommitGraph)' '
+test_expect_success 'fetch --update-shallow (with fetch.writecummitGraph)' '
 	(
 	cd shallow &&
 	git checkout main &&
-	commit 8 &&
+	cummit 8 &&
 	git tag -m foo heavy-tag-for-graph HEAD^ &&
 	git tag light-tag-for-graph HEAD^:tracked
 	) &&
-	test_config -C notshallow fetch.writeCommitGraph true &&
+	test_config -C notshallow fetch.writecummitGraph true &&
 	(
 	cd notshallow &&
 	git fetch --update-shallow ../shallow/.git refs/heads/*:refs/remotes/shallow/* &&
@@ -211,12 +211,12 @@ test_expect_success POSIXPERM,SANITY 'shallow fetch from a read-only repo' '
 
 test_expect_success '.git/shallow is edited by repack' '
 	git init shallow-server &&
-	test_commit -C shallow-server A &&
-	test_commit -C shallow-server B &&
+	test_cummit -C shallow-server A &&
+	test_cummit -C shallow-server B &&
 	git -C shallow-server checkout -b branch &&
-	test_commit -C shallow-server C &&
-	test_commit -C shallow-server E &&
-	test_commit -C shallow-server D &&
+	test_cummit -C shallow-server C &&
+	test_cummit -C shallow-server E &&
+	test_cummit -C shallow-server D &&
 	d="$(git -C shallow-server rev-parse --verify D^0)" &&
 	git -C shallow-server checkout main &&
 
@@ -245,9 +245,9 @@ test_expect_success 'shallow fetches check connectivity before writing shallow f
 	rm -rf "$REPO" client &&
 
 	git init "$REPO" &&
-	test_commit -C "$REPO" one &&
-	test_commit -C "$REPO" two &&
-	test_commit -C "$REPO" three &&
+	test_cummit -C "$REPO" one &&
+	test_cummit -C "$REPO" two &&
+	test_cummit -C "$REPO" three &&
 
 	git init client &&
 

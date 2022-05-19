@@ -7,12 +7,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success setup '
-	test_commit A &&
-	test_commit B &&
-	test_commit C &&
+	test_cummit A &&
+	test_cummit B &&
+	test_cummit C &&
 	git checkout -b side HEAD^ &&
-	test_commit D &&
-	test_commit E &&
+	test_cummit D &&
+	test_cummit E &&
 	git merge main
 '
 

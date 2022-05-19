@@ -40,26 +40,26 @@ test_expect_success setup '
 	fill 1 2 3 4 5 6 7 8 >one &&
 	fill a b c d e >two &&
 	git add same one two &&
-	git commit -m "Initial A one, A two" &&
+	git cummit -m "Initial A one, A two" &&
 
 	git checkout -b renamer &&
 	rm -f one &&
 	fill 1 3 4 5 6 7 8 >uno &&
 	git add uno &&
 	fill a b c d e f >two &&
-	git commit -a -m "Renamer R one->uno, M two" &&
+	git cummit -a -m "Renamer R one->uno, M two" &&
 
 	git checkout -b side main &&
 	fill 1 2 3 4 5 6 7 >one &&
 	fill A B C D E >three &&
 	rm -f two &&
 	git update-index --add --remove one two three &&
-	git commit -m "Side M one, D two, A three" &&
+	git cummit -m "Side M one, D two, A three" &&
 
 	git checkout -b simple main &&
 	rm -f one &&
 	fill a c e >two &&
-	git commit -a -m "Simple D one, M two" &&
+	git cummit -a -m "Simple D one, M two" &&
 
 	git checkout main
 '
@@ -363,7 +363,7 @@ test_expect_success 'checkout specific path while in subdirectory' '
 	mkdir subs &&
 	>subs/bero &&
 	git add subs/bero &&
-	git commit -m "add subs/bero" &&
+	git cummit -m "add subs/bero" &&
 
 	git checkout main &&
 	mkdir -p subs &&
@@ -633,17 +633,17 @@ test_expect_success 'custom merge driver with checkout -m' '
 	echo neutral >arm &&
 	git add arm .gitattributes &&
 	test_tick &&
-	git commit -m neutral &&
+	git cummit -m neutral &&
 	git branch right &&
 
 	echo left >arm &&
 	test_tick &&
-	git commit -a -m left &&
+	git cummit -a -m left &&
 	git checkout right &&
 
 	echo right >arm &&
 	test_tick &&
-	git commit -a -m right &&
+	git cummit -a -m right &&
 
 	test_must_fail git merge left &&
 	(

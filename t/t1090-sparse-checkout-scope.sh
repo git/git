@@ -12,7 +12,7 @@ test_expect_success 'setup' '
 	echo "initial" >b &&
 	echo "initial" >c &&
 	git add a b c &&
-	git commit -m "initial commit"
+	git cummit -m "initial cummit"
 '
 
 test_expect_success 'create feature branch' '
@@ -20,7 +20,7 @@ test_expect_success 'create feature branch' '
 	echo "modified" >b &&
 	echo "modified" >c &&
 	git add b c &&
-	git commit -m "modification"
+	git cummit -m "modification"
 '
 
 test_expect_success 'perform sparse checkout of main' '
@@ -82,7 +82,7 @@ test_expect_success 'in partial clone, sparse checkout only fetches needed blobs
 	mkdir server/c &&
 	echo ccc >server/c/c &&
 	git -C server add a b c/c &&
-	git -C server commit -m message &&
+	git -C server cummit -m message &&
 
 	test_config -C client core.sparsecheckout 1 &&
 	echo "!/*" >client/.git/info/sparse-checkout &&

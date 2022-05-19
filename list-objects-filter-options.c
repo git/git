@@ -1,5 +1,5 @@
 #include "cache.h"
-#include "commit.h"
+#include "cummit.h"
 #include "config.h"
 #include "revision.h"
 #include "strvec.h"

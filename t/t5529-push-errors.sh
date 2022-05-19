@@ -3,8 +3,8 @@
 test_description='detect some push errors early (before contacting remote)'
 . ./test-lib.sh
 
-test_expect_success 'setup commits' '
-	test_commit one
+test_expect_success 'setup cummits' '
+	test_cummit one
 '
 
 test_expect_success 'setup remote' '

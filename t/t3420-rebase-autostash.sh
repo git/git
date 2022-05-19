@@ -13,27 +13,27 @@ test_expect_success setup '
 	echo hello-world >file0 &&
 	git add . &&
 	test_tick &&
-	git commit -m "initial commit" &&
+	git cummit -m "initial cummit" &&
 	git checkout -b feature-branch &&
 	echo another-hello >file1 &&
 	echo goodbye >file2 &&
 	git add . &&
 	test_tick &&
-	git commit -m "second commit" &&
+	git cummit -m "second cummit" &&
 	echo final-goodbye >file3 &&
 	git add . &&
 	test_tick &&
-	git commit -m "third commit" &&
+	git cummit -m "third cummit" &&
 	git checkout -b unrelated-onto-branch main &&
 	echo unrelated >file4 &&
 	git add . &&
 	test_tick &&
-	git commit -m "unrelated commit" &&
+	git cummit -m "unrelated cummit" &&
 	git checkout -b related-onto-branch main &&
 	echo conflicting-change >file2 &&
 	git add . &&
 	test_tick &&
-	git commit -m "related commit" &&
+	git cummit -m "related cummit" &&
 	remove_progress_re="$(printf "s/.*\\r//")"
 '
 
@@ -41,8 +41,8 @@ create_expected_success_apply () {
 	cat >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
 	First, rewinding head to replay your work on top of it...
-	Applying: second commit
-	Applying: third commit
+	Applying: second cummit
+	Applying: third cummit
 	Applied autostash.
 	EOF
 }
@@ -59,8 +59,8 @@ create_expected_failure_apply () {
 	cat >expected <<-EOF
 	$(grep "^Created autostash: [0-9a-f][0-9a-f]*\$" actual)
 	First, rewinding head to replay your work on top of it...
-	Applying: second commit
-	Applying: third commit
+	Applying: second cummit
+	Applying: third cummit
 	Applying autostash resulted in conflicts.
 	Your changes are safe in the stash.
 	You can run "git stash pop" or "git stash drop" at any time.
@@ -263,7 +263,7 @@ testrebase " --interactive" .git/rebase-merge
 
 test_expect_success 'abort rebase -i with --autostash' '
 	test_when_finished "git reset --hard" &&
-	echo uncommitted-content >file0 &&
+	echo uncummitted-content >file0 &&
 	(
 		write_script abort-editor.sh <<-\EOF &&
 			echo >"$1"
@@ -272,24 +272,24 @@ test_expect_success 'abort rebase -i with --autostash' '
 		test_must_fail git rebase -i --autostash HEAD^ &&
 		rm -f abort-editor.sh
 	) &&
-	echo uncommitted-content >expected &&
+	echo uncummitted-content >expected &&
 	test_cmp expected file0
 '
 
 test_expect_success 'restore autostash on editor failure' '
 	test_when_finished "git reset --hard" &&
-	echo uncommitted-content >file0 &&
+	echo uncummitted-content >file0 &&
 	(
 		test_set_editor "false" &&
 		test_must_fail git rebase -i --autostash HEAD^
 	) &&
-	echo uncommitted-content >expected &&
+	echo uncummitted-content >expected &&
 	test_cmp expected file0
 '
 
 test_expect_success 'autostash is saved on editor failure with conflict' '
 	test_when_finished "git reset --hard" &&
-	echo uncommitted-content >file0 &&
+	echo uncummitted-content >file0 &&
 	(
 		write_script abort-editor.sh <<-\EOF &&
 			echo conflicting-content >file0
@@ -303,7 +303,7 @@ test_expect_success 'autostash is saved on editor failure with conflict' '
 	test_cmp expected file0 &&
 	git checkout file0 &&
 	git stash pop &&
-	echo uncommitted-content >expected &&
+	echo uncummitted-content >expected &&
 	test_cmp expected file0
 '
 
@@ -312,7 +312,7 @@ test_expect_success 'autostash with dirty submodules' '
 	git checkout -b with-submodule &&
 	git submodule add ./ sub &&
 	test_tick &&
-	git commit -m add-submodule &&
+	git cummit -m add-submodule &&
 	echo changed >sub/file0 &&
 	git rebase -i --autostash HEAD
 '

@@ -947,7 +947,7 @@ method _do_clone_checkout {HEAD} {
 			git update-ref HEAD $HEAD^0
 		} err]} {
 		info_popup [strcat \
-			[mc "Cannot resolve %s as a commit." $HEAD^0] \
+			[mc "Cannot resolve %s as a cummit." $HEAD^0] \
 			"\n  $err" \
 			"\n" \
 			[mc "The 'master' branch has not been initialized."] \

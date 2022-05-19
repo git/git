@@ -642,18 +642,18 @@ For `log_type = 0x1`, the `log_data` section follows
 linkgit:git-update-ref[1] logging and includes:
 
 * two object names (old id, new id)
-* varint string of committer's name
-* varint string of committer's email
+* varint string of cummitter's name
+* varint string of cummitter's email
 * varint time in seconds since epoch (Jan 1, 1970)
 * 2-byte timezone offset in minutes (signed)
 * varint string of message
 
-`tz_offset` is the absolute number of minutes from GMT the committer was
+`tz_offset` is the absolute number of minutes from GMT the cummitter was
 at the time of the update. For example `GMT-0800` is encoded in reftable
 as `sint16(-480)` and `GMT+0230` is `sint16(150)`.
 
-The committer email does not contain `<` or `>`, it's the value normally
-found between the `<>` in a git commit object header.
+The cummitter email does not contain `<` or `>`, it's the value normally
+found between the `<>` in a git cummit object header.
 
 The `message_length` may be 0, in which case there was no message
 supplied for the update.

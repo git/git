@@ -29,11 +29,11 @@ test_expect_success 'init depot' '
 	)
 '
 
-# Create an initial clone, with a commit unrelated to the P4 change
+# Create an initial clone, with a cummit unrelated to the P4 change
 # on HEAD
 test_expect_success 'initial clone' '
 	git p4 clone --dest="$git" //depot/@all &&
-    test_commit -C "$git" "unrelated"
+    test_cummit -C "$git" "unrelated"
 '
 
 test_expect_success 'create shelved changelist' '
@@ -51,7 +51,7 @@ test_expect_success 'create shelved changelist' '
 		p4 shelve -i <<EOF
 Change: new
 Description:
-	Test commit
+	Test cummit
 
 	Further description
 Files:
@@ -91,7 +91,7 @@ test_expect_success 'update shelved changelist and re-unshelve' '
 		p4 shelve -i -r <<EOF &&
 Change: $change
 Description:
-	Test commit
+	Test cummit
 
 	Further description
 Files:
@@ -125,7 +125,7 @@ EOF
 # This is the tricky case where the shelved changelist base revision doesn't
 # match git-p4's idea of the base revision
 #
-# We will attempt to unshelve a change that is based on a change one commit
+# We will attempt to unshelve a change that is based on a change one cummit
 # ahead of p4/master
 
 test_expect_success 'create shelved changelist based on p4 change ahead of p4/master' '

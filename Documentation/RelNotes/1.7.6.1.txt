@@ -42,9 +42,9 @@ Fixes since v1.7.6
 
  * "git push --quiet" was not really quiet.
 
- * "git rebase -i -p" incorrectly dropped commits from side branches.
+ * "git rebase -i -p" incorrectly dropped cummits from side branches.
 
- * "git reset [<commit>] paths..." did not reset the index entry correctly
+ * "git reset [<cummit>] paths..." did not reset the index entry correctly
    for unmerged paths.
 
  * "git submodule add" did not allow a relative repository path when

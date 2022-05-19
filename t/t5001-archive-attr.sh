@@ -44,7 +44,7 @@ test_expect_success 'setup' '
 	echo "substfile?" export-subst >>.git/info/attributes &&
 	git add nosubstfile substfile1 substfile2 &&
 
-	git commit -m. &&
+	git cummit -m. &&
 
 	git clone --bare . bare &&
 	cp .git/info/attributes bare/info/attributes
@@ -133,7 +133,7 @@ test_expect_success 'export-subst expands %(describe) once' '
 	echo "\$Format:%(describe)\$" >>substfile3 &&
 	echo "\$Format:%(describe)${LF}%(describe)\$" >substfile4 &&
 	git add substfile[34] &&
-	git commit -m export-subst-describe &&
+	git cummit -m export-subst-describe &&
 	git tag -m export-subst-describe export-subst-describe &&
 	git archive HEAD >archive-describe.tar &&
 	extract_tar_to_dir archive-describe &&

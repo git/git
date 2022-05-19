@@ -11,7 +11,7 @@ test_expect_success 'create config blob' '
 		value = 1
 	EOF
 	git add config &&
-	git commit -m foo
+	git cummit -m foo
 '
 
 test_expect_success 'list config blob contents' '
@@ -60,14 +60,14 @@ test_expect_success 'parse errors in blobs are properly attributed' '
 		value = "
 	EOF
 	git add config &&
-	git commit -m broken &&
+	git cummit -m broken &&
 
 	test_must_fail git config --blob=HEAD:config some.value 2>err &&
 	test_i18ngrep "HEAD:config" err
 '
 
 test_expect_success 'can parse blob ending with CR' '
-	test_commit --printf CR config "[some]key = value\\r" &&
+	test_cummit --printf CR config "[some]key = value\\r" &&
 	echo value >expect &&
 	git config --blob=HEAD:config some.key >actual &&
 	test_cmp expect actual

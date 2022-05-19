@@ -7,7 +7,7 @@ test_description='git mv in subdirs'
 test_expect_success 'mv -f refreshes updated index entry' '
 	echo test >bar &&
 	git add bar &&
-	git commit -m test &&
+	git cummit -m test &&
 
 	echo foo >foo &&
 	git add foo &&
@@ -27,7 +27,7 @@ test_expect_success 'prepare reference tree' '
 	mkdir path0 path1 &&
 	COPYING_test_data >path0/COPYING &&
 	git add path0/COPYING &&
-	git commit -m add -a
+	git cummit -m add -a
 '
 
 test_expect_success 'moving the file out of subdirectory' '
@@ -35,11 +35,11 @@ test_expect_success 'moving the file out of subdirectory' '
 '
 
 # in path0 currently
-test_expect_success 'commiting the change' '
-	git commit -m move-out -a
+test_expect_success 'cummiting the change' '
+	git cummit -m move-out -a
 '
 
-test_expect_success 'checking the commit' '
+test_expect_success 'checking the cummit' '
 	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
 	grep "^R100..*path0/COPYING..*path1/COPYING" actual
 '
@@ -49,11 +49,11 @@ test_expect_success 'moving the file back into subdirectory' '
 '
 
 # in path0 currently
-test_expect_success 'commiting the change' '
-	git commit -m move-in -a
+test_expect_success 'cummiting the change' '
+	git cummit -m move-in -a
 '
 
-test_expect_success 'checking the commit' '
+test_expect_success 'checking the cummit' '
 	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
 	grep "^R100..*path1/COPYING..*path0/COPYING" actual
 '
@@ -129,18 +129,18 @@ test_expect_success 'clean up' '
 test_expect_success 'adding another file' '
 	COPYING_test_data | tr A-Za-z N-ZA-Mn-za-m >path0/README &&
 	git add path0/README &&
-	git commit -m add2 -a
+	git cummit -m add2 -a
 '
 
 test_expect_success 'moving whole subdirectory' '
 	git mv path0 path2
 '
 
-test_expect_success 'commiting the change' '
-	git commit -m dir-move -a
+test_expect_success 'cummiting the change' '
+	git cummit -m dir-move -a
 '
 
-test_expect_success 'checking the commit' '
+test_expect_success 'checking the cummit' '
 	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
 	grep "^R100..*path0/COPYING..*path2/COPYING" actual &&
 	grep "^R100..*path0/README..*path2/README" actual
@@ -154,11 +154,11 @@ test_expect_success 'moving whole subdirectory into subdirectory' '
 	git mv path2 path1
 '
 
-test_expect_success 'commiting the change' '
-	git commit -m dir-move -a
+test_expect_success 'cummiting the change' '
+	git cummit -m dir-move -a
 '
 
-test_expect_success 'checking the commit' '
+test_expect_success 'checking the cummit' '
 	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
 	grep "^R100..*path2/COPYING..*path1/path2/COPYING" actual &&
 	grep "^R100..*path2/README..*path1/path2/README" actual
@@ -199,7 +199,7 @@ test_expect_success "Sergey Vlasov's test case" '
 	date >ab.c &&
 	date >ab/d &&
 	git add ab.c ab &&
-	git commit -m "initial" &&
+	git cummit -m "initial" &&
 	git mv ab a
 '
 
@@ -324,15 +324,15 @@ test_expect_success SYMLINKS 'check moved symlink' '
 rm -f moved symlink
 
 test_expect_success 'setup submodule' '
-	git commit -m initial &&
+	git cummit -m initial &&
 	git reset --hard &&
 	git submodule add ./. sub &&
 	echo content >file &&
 	git add file &&
-	git commit -m "added sub and file" &&
+	git cummit -m "added sub and file" &&
 	mkdir -p deep/directory/hierarchy &&
 	git submodule add ./. deep/directory/hierarchy/sub &&
-	git commit -m "added another submodule" &&
+	git cummit -m "added another submodule" &&
 	git branch submodule
 '
 
@@ -465,9 +465,9 @@ test_expect_success 'mv --dry-run does not touch the submodule or .gitmodules' '
 	git diff-files --quiet -- sub .gitmodules
 '
 
-test_expect_success 'checking out a commit before submodule moved needs manual updates' '
+test_expect_success 'checking out a cummit before submodule moved needs manual updates' '
 	git mv sub sub2 &&
-	git commit -m "moved sub to sub2" &&
+	git cummit -m "moved sub to sub2" &&
 	git checkout -q HEAD^ 2>actual &&
 	test_i18ngrep "^warning: unable to rmdir '\''sub2'\'':" actual &&
 	git status -s sub2 >actual &&
@@ -509,14 +509,14 @@ test_expect_success 'moving a submodule in nested directories' '
 '
 
 test_expect_success 'moving nested submodules' '
-	git commit -am "cleanup commit" &&
+	git cummit -am "cleanup cummit" &&
 	mkdir sub_nested_nested &&
 	(
 		cd sub_nested_nested &&
 		>nested_level2 &&
 		git init &&
 		git add . &&
-		git commit -m "nested level 2"
+		git cummit -m "nested level 2"
 	) &&
 	mkdir sub_nested &&
 	(
@@ -524,12 +524,12 @@ test_expect_success 'moving nested submodules' '
 		>nested_level1 &&
 		git init &&
 		git add . &&
-		git commit -m "nested level 1" &&
+		git cummit -m "nested level 1" &&
 		git submodule add ../sub_nested_nested &&
-		git commit -m "add nested level 2"
+		git cummit -m "add nested level 2"
 	) &&
 	git submodule add ./sub_nested nested_move &&
-	git commit -m "add nested_move" &&
+	git cummit -m "add nested_move" &&
 	git submodule update --init --recursive &&
 	git mv nested_move sub_nested_moved &&
 	git status

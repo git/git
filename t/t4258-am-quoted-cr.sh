@@ -8,9 +8,9 @@ DATA="$TEST_DIRECTORY/t4258"
 
 test_expect_success 'setup' '
 	test_write_lines one two three >text &&
-	test_commit one text &&
+	test_cummit one text &&
 	test_write_lines one owt three >text &&
-	test_commit two text
+	test_cummit two text
 '
 
 test_expect_success 'am warn if quoted-cr is found' '

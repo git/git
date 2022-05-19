@@ -130,7 +130,7 @@ test_expect_success 'test diff.renames unset' '
 test_expect_success 'favour same basenames over different ones' '
 	cp path1 another-path &&
 	git add another-path &&
-	git commit -m 1 &&
+	git cummit -m 1 &&
 	git rm path1 &&
 	mkdir subdir &&
 	git mv another-path subdir/path1 &&
@@ -162,7 +162,7 @@ test_expect_success 'two files with same basename and same content' '
 	cp path1 dir/A/file &&
 	cp path1 dir/B/file &&
 	git add dir &&
-	git commit -m 2 &&
+	git cummit -m 2 &&
 	git mv dir other-dir &&
 	git status >out &&
 	test_i18ngrep "renamed: .*dir/A/file -> other-dir/A/file" out
@@ -179,7 +179,7 @@ test_expect_success 'setup for many rename source candidates' '
 	done &&
 	git add "path??" &&
 	test_tick &&
-	git commit -m "hundred" &&
+	git cummit -m "hundred" &&
 	(cat path1 && echo new) >new-path &&
 	echo old >>path1 &&
 	git add new-path path1 &&
@@ -197,10 +197,10 @@ test_expect_success 'rename pretty print with nothing in common' '
 	mkdir -p a/b/ &&
 	: >a/b/c &&
 	git add a/b/c &&
-	git commit -m "create a/b/c" &&
+	git cummit -m "create a/b/c" &&
 	mkdir -p c/b/ &&
 	git mv a/b/c c/b/a &&
-	git commit -m "a/b/c -> c/b/a" &&
+	git cummit -m "a/b/c -> c/b/a" &&
 	git diff -M --summary HEAD^ HEAD >output &&
 	test_i18ngrep " a/b/c => c/b/a " output &&
 	git diff -M --stat HEAD^ HEAD >output &&
@@ -210,7 +210,7 @@ test_expect_success 'rename pretty print with nothing in common' '
 test_expect_success 'rename pretty print with common prefix' '
 	mkdir -p c/d &&
 	git mv c/b/a c/d/e &&
-	git commit -m "c/b/a -> c/d/e" &&
+	git cummit -m "c/b/a -> c/d/e" &&
 	git diff -M --summary HEAD^ HEAD >output &&
 	test_i18ngrep " c/{b/a => d/e} " output &&
 	git diff -M --stat HEAD^ HEAD >output &&
@@ -220,7 +220,7 @@ test_expect_success 'rename pretty print with common prefix' '
 test_expect_success 'rename pretty print with common suffix' '
 	mkdir d &&
 	git mv c/d/e d/e &&
-	git commit -m "c/d/e -> d/e" &&
+	git cummit -m "c/d/e -> d/e" &&
 	git diff -M --summary HEAD^ HEAD >output &&
 	test_i18ngrep " {c/d => d}/e " output &&
 	git diff -M --stat HEAD^ HEAD >output &&
@@ -230,7 +230,7 @@ test_expect_success 'rename pretty print with common suffix' '
 test_expect_success 'rename pretty print with common prefix and suffix' '
 	mkdir d/f &&
 	git mv d/e d/f/e &&
-	git commit -m "d/e -> d/f/e" &&
+	git cummit -m "d/e -> d/f/e" &&
 	git diff -M --summary HEAD^ HEAD >output &&
 	test_i18ngrep " d/{ => f}/e " output &&
 	git diff -M --stat HEAD^ HEAD >output &&
@@ -240,7 +240,7 @@ test_expect_success 'rename pretty print with common prefix and suffix' '
 test_expect_success 'rename pretty print common prefix and suffix overlap' '
 	mkdir d/f/f &&
 	git mv d/f/e d/f/f/e &&
-	git commit -m "d/f/e d/f/f/e" &&
+	git cummit -m "d/f/e d/f/f/e" &&
 	git diff -M --summary HEAD^ HEAD >output &&
 	test_i18ngrep " d/f/{ => f}/e " output &&
 	git diff -M --stat HEAD^ HEAD >output &&
@@ -250,12 +250,12 @@ test_expect_success 'rename pretty print common prefix and suffix overlap' '
 test_expect_success 'diff-tree -l0 defaults to a big rename limit, not zero' '
 	test_write_lines line1 line2 line3 >myfile &&
 	git add myfile &&
-	git commit -m x &&
+	git cummit -m x &&
 
 	test_write_lines line1 line2 line4 >myotherfile &&
 	git rm myfile &&
 	git add myotherfile &&
-	git commit -m x &&
+	git cummit -m x &&
 
 	git diff-tree -M -l0 HEAD HEAD^ >actual &&
 	# Verify that a rename from myotherfile to myfile was detected
@@ -267,7 +267,7 @@ test_expect_success 'basename similarity vs best similarity' '
 	test_write_lines line1 line2 line3 line4 line5 \
 			 line6 line7 line8 line9 line10 >subdir/file.txt &&
 	git add subdir/file.txt &&
-	git commit -m "base txt" &&
+	git cummit -m "base txt" &&
 
 	git rm subdir/file.txt &&
 	test_write_lines line1 line2 line3 line4 line5 \
@@ -275,7 +275,7 @@ test_expect_success 'basename similarity vs best similarity' '
 	test_write_lines line1 line2 line3 line4 line5 \
 			  line6 line7 line8 line9 >file.md &&
 	git add file.txt file.md &&
-	git commit -a -m "rename" &&
+	git cummit -a -m "rename" &&
 	git diff-tree -r -M --name-status HEAD^ HEAD >actual &&
 	# subdir/file.txt is 88% similar to file.md, 78% similar to file.txt,
 	# but since same basenames are checked first...

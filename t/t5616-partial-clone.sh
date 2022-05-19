@@ -7,7 +7,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-# create a normal "src" repo where we can later create new commits.
+# create a normal "src" repo where we can later create new cummits.
 # expect_1.oids will contain a list of the OIDs of all blobs.
 test_expect_success 'setup normal src repo' '
 	echo "{print \$1}" >print_1.awk &&
@@ -18,7 +18,7 @@ test_expect_success 'setup normal src repo' '
 	do
 		echo "This is file: $n" > src/file.$n.txt &&
 		git -C src add file.$n.txt &&
-		git -C src commit -m "file $n" &&
+		git -C src cummit -m "file $n" &&
 		git -C src ls-files -s file.$n.txt >>temp || return 1
 	done &&
 	awk -f print_2.awk <temp | sort >expect_1.oids &&
@@ -66,15 +66,15 @@ test_expect_success 'verify checkout with dynamic object fetch' '
 	test_line_count = 0 observed
 '
 
-# create new commits in "src" repo to establish a blame history on file.1.txt
+# create new cummits in "src" repo to establish a blame history on file.1.txt
 # and push to "srv.bare".
-test_expect_success 'push new commits to server' '
+test_expect_success 'push new cummits to server' '
 	git -C src remote add srv "file://$(pwd)/srv.bare" &&
 	for x in a b c d e
 	do
 		echo "Mod file.1.txt $x" >>src/file.1.txt &&
 		git -C src add file.1.txt &&
-		git -C src commit -m "mod $x" || return 1
+		git -C src cummit -m "mod $x" || return 1
 	done &&
 	git -C src blame main -- file.1.txt >expect.blame &&
 	git -C src push -u srv main
@@ -109,14 +109,14 @@ test_expect_success 'verify blame causes dynamic object fetch' '
 	test_line_count = 0 observed
 '
 
-# create new commits in "src" repo to establish a history on file.2.txt
+# create new cummits in "src" repo to establish a history on file.2.txt
 # and push to "srv.bare".
-test_expect_success 'push new commits to server for file.2.txt' '
+test_expect_success 'push new cummits to server for file.2.txt' '
 	for x in a b c d e f
 	do
 		echo "Mod file.2.txt $x" >>src/file.2.txt &&
 		git -C src add file.2.txt &&
-		git -C src commit -m "mod $x" || return 1
+		git -C src cummit -m "mod $x" || return 1
 	done &&
 	git -C src push -u srv main
 '
@@ -130,14 +130,14 @@ test_expect_success 'override inherited filter-spec using --no-filter' '
 	test_line_count = 0 observed
 '
 
-# create new commits in "src" repo to establish a history on file.3.txt
+# create new cummits in "src" repo to establish a history on file.3.txt
 # and push to "srv.bare".
-test_expect_success 'push new commits to server for file.3.txt' '
+test_expect_success 'push new cummits to server for file.3.txt' '
 	for x in a b c d e f
 	do
 		echo "Mod file.3.txt $x" >>src/file.3.txt &&
 		git -C src add file.3.txt &&
-		git -C src commit -m "mod $x" || return 1
+		git -C src cummit -m "mod $x" || return 1
 	done &&
 	git -C src push -u srv main
 '
@@ -166,9 +166,9 @@ test_expect_success 'manual prefetch of missing objects' '
 	test_line_count = 0 observed.oids
 '
 
-# create new commits in "src" repo to establish a history on file.4.txt
+# create new cummits in "src" repo to establish a history on file.4.txt
 # and push to "srv.bare".
-test_expect_success 'push new commits to server for file.4.txt' '
+test_expect_success 'push new cummits to server for file.4.txt' '
 	for x in a b c d e f
 	do
 		echo "Mod file.4.txt $x" >src/file.4.txt &&
@@ -179,14 +179,14 @@ test_expect_success 'push new commits to server for file.4.txt' '
 			printf "%20000s" X >>src/file.4.txt
 		fi &&
 		git -C src add file.4.txt &&
-		git -C src commit -m "mod $x" || return 1
+		git -C src cummit -m "mod $x" || return 1
 	done &&
 	git -C src push -u srv main
 '
 
 # Do partial fetch to fetch smaller files; then verify that without --refetch
 # applying a new filter does not refetch missing large objects. Then use
-# --refetch to apply the new filter on existing commits. Test it under both
+# --refetch to apply the new filter on existing cummits. Test it under both
 # protocol v2 & v0.
 test_expect_success 'apply a different filter using --refetch' '
 	git -C pc1 fetch --filter=blob:limit=999 origin &&
@@ -247,14 +247,14 @@ test_expect_success 'fetch --refetch triggers repacking' '
 
 test_expect_success 'partial clone with transfer.fsckobjects=1 works with submodules' '
 	test_create_repo submodule &&
-	test_commit -C submodule mycommit &&
+	test_cummit -C submodule mycummit &&
 
 	test_create_repo src_with_sub &&
 	test_config -C src_with_sub uploadpack.allowfilter 1 &&
 	test_config -C src_with_sub uploadpack.allowanysha1inwant 1 &&
 
 	git -C src_with_sub submodule add "file://$(pwd)/submodule" mysub &&
-	git -C src_with_sub commit -m "commit with submodule" &&
+	git -C src_with_sub cummit -m "cummit with submodule" &&
 
 	git -c transfer.fsckobjects=1 \
 		clone --filter="blob:none" "file://$(pwd)/src_with_sub" dst &&
@@ -263,7 +263,7 @@ test_expect_success 'partial clone with transfer.fsckobjects=1 works with submod
 
 test_expect_success 'partial clone with transfer.fsckobjects=1 uses index-pack --fsck-objects' '
 	git init src &&
-	test_commit -C src x &&
+	test_cummit -C src x &&
 	test_config -C src uploadpack.allowfilter 1 &&
 	test_config -C src uploadpack.allowanysha1inwant 1 &&
 
@@ -273,11 +273,11 @@ test_expect_success 'partial clone with transfer.fsckobjects=1 uses index-pack -
 '
 
 test_expect_success 'use fsck before and after manually fetching a missing subtree' '
-	# push new commit so server has a subtree
+	# push new cummit so server has a subtree
 	mkdir src/dir &&
 	echo "in dir" >src/dir/file.txt &&
 	git -C src add dir/file.txt &&
-	git -C src commit -m "file in dir" &&
+	git -C src cummit -m "file in dir" &&
 	git -C src push -u srv main &&
 	SUBTREE=$(git -C src rev-parse HEAD:dir) &&
 
@@ -285,14 +285,14 @@ test_expect_success 'use fsck before and after manually fetching a missing subtr
 	git clone --no-checkout --filter=tree:0 "file://$(pwd)/srv.bare" dst &&
 	git -C dst fsck &&
 
-	# Make sure we only have commits, and all trees and blobs are missing.
+	# Make sure we only have cummits, and all trees and blobs are missing.
 	git -C dst rev-list --missing=allow-any --objects main \
 		>fetched_objects &&
 	awk -f print_1.awk fetched_objects |
 	xargs -n1 git -C dst cat-file -t >fetched_types &&
 
 	sort -u fetched_types >unique_types.observed &&
-	echo commit >unique_types.expected &&
+	echo cummit >unique_types.expected &&
 	test_cmp unique_types.expected unique_types.observed &&
 
 	# Auto-fetch a tree with cat-file.
@@ -310,7 +310,7 @@ test_expect_success 'use fsck before and after manually fetching a missing subtr
 	xargs -n1 git -C dst cat-file -t >fetched_types &&
 
 	sort -u fetched_types >unique_types.observed &&
-	test_write_lines blob commit tree >unique_types.expected &&
+	test_write_lines blob cummit tree >unique_types.expected &&
 	test_cmp unique_types.expected unique_types.observed
 '
 
@@ -329,7 +329,7 @@ test_expect_success 'implicitly construct combine: filter with repeated flags' '
 
 	xargs -n 1 git -C pc2 cat-file -t <objects >types &&
 	sort -u types >unique_types.actual &&
-	test_write_lines commit tree >unique_types.expected &&
+	test_write_lines cummit tree >unique_types.expected &&
 	test_cmp unique_types.expected unique_types.actual
 '
 
@@ -385,7 +385,7 @@ test_expect_success 'upload-pack limits tree depth filters' '
 test_expect_success 'partial clone fetches blobs pointed to by refs even if normally filtered out' '
 	rm -rf src dst &&
 	git init src &&
-	test_commit -C src x &&
+	test_cummit -C src x &&
 	test_config -C src uploadpack.allowfilter 1 &&
 	test_config -C src uploadpack.allowanysha1inwant 1 &&
 
@@ -401,7 +401,7 @@ test_expect_success 'partial clone fetches blobs pointed to by refs even if norm
 test_expect_success 'fetch what is specified on CLI even if already promised' '
 	rm -rf src dst.git &&
 	git init src &&
-	test_commit -C src foo &&
+	test_cummit -C src foo &&
 	test_config -C src uploadpack.allowfilter 1 &&
 	test_config -C src uploadpack.allowanysha1inwant 1 &&
 
@@ -419,11 +419,11 @@ test_expect_success 'setup src repo for sparse filter' '
 	git init sparse-src &&
 	git -C sparse-src config --local uploadpack.allowfilter 1 &&
 	git -C sparse-src config --local uploadpack.allowanysha1inwant 1 &&
-	test_commit -C sparse-src one &&
-	test_commit -C sparse-src two &&
+	test_cummit -C sparse-src one &&
+	test_cummit -C sparse-src two &&
 	echo /one.t >sparse-src/only-one &&
 	git -C sparse-src add . &&
-	git -C sparse-src commit -m "add sparse checkout files"
+	git -C sparse-src cummit -m "add sparse checkout files"
 '
 
 test_expect_success 'partial clone with sparse filter succeeds' '
@@ -456,9 +456,9 @@ setup_triangle () {
 
 	printf "line %d\n" $(test_seq 1 100) >big-blob.txt &&
 
-	# Create a server with 2 commits: a commit with a big tree and a child
-	# commit with an incremental change. Also, create a partial clone
-	# client that only contains the first commit.
+	# Create a server with 2 cummits: a cummit with a big tree and a child
+	# cummit with an incremental change. Also, create a partial clone
+	# client that only contains the first cummit.
 	git init server &&
 	git -C server config --local uploadpack.allowfilter 1 &&
 	for i in $(test_seq 1 100)
@@ -466,13 +466,13 @@ setup_triangle () {
 		echo "make the tree big" >server/file$i &&
 		git -C server add file$i || return 1
 	done &&
-	git -C server commit -m "initial" &&
+	git -C server cummit -m "initial" &&
 	git clone --bare --filter=tree:0 "file://$(pwd)/server" client &&
 	echo another line >>server/file1 &&
-	git -C server commit -am "incremental change" &&
+	git -C server cummit -am "incremental change" &&
 
 	# Create a promisor remote that only contains the tree and blob from
-	# the first commit.
+	# the first cummit.
 	git init promisor-remote &&
 	git -C server config --local uploadpack.allowanysha1inwant 1 &&
 	TREE_HASH=$(git -C server rev-parse HEAD~1^{tree}) &&
@@ -484,15 +484,15 @@ setup_triangle () {
 	# Set it as the promisor remote of client. Thus, whenever
 	# the client lazy fetches, the lazy fetch will succeed only if it is
 	# for this tree or blob.
-	test_commit -C promisor-remote one && # so that ref advertisement is not empty
+	test_cummit -C promisor-remote one && # so that ref advertisement is not empty
 	git -C promisor-remote config --local uploadpack.allowanysha1inwant 1 &&
 	git -C client remote set-url origin "file://$(pwd)/promisor-remote"
 }
 
 # NEEDSWORK: The tests beginning with "fetch lazy-fetches" below only
-# test that "fetch" avoid fetching trees and blobs, but not commits or
+# test that "fetch" avoid fetching trees and blobs, but not cummits or
 # tags. Revisit this if Git is ever taught to support partial clones
-# with commits and/or tags filtered out.
+# with cummits and/or tags filtered out.
 
 test_expect_success 'fetch lazy-fetches only to resolve deltas' '
 	setup_triangle &&
@@ -537,13 +537,13 @@ test_expect_success 'fetch does not lazy-fetch missing targets of its refs' '
 	test_create_repo server &&
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&
-	test_commit -C server foo &&
+	test_cummit -C server foo &&
 
 	git clone --filter=blob:none "file://$(pwd)/server" client &&
 	# Make all refs point to nothing by deleting all objects.
 	rm client/.git/objects/pack/* &&
 
-	test_commit -C server bar &&
+	test_cummit -C server bar &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch \
 		--no-tags --recurse-submodules=no \
 		origin refs/tags/bar &&
@@ -559,7 +559,7 @@ test_expect_success 'verify fetch succeeds when asking for new tags' '
 	git clone --filter=blob:none "file://$(pwd)/srv.bare" tag-test &&
 	for i in I J K
 	do
-		test_commit -C src $i &&
+		test_cummit -C src $i &&
 		git -C src branch $i || return 1
 	done &&
 	git -C srv.bare fetch --tags origin +refs/heads/*:refs/heads/* &&
@@ -572,7 +572,7 @@ test_expect_success 'verify fetch downloads only one pack when updating refs' '
 	test_line_count = 2 pack-list &&
 	for i in A B C
 	do
-		test_commit -C src $i &&
+		test_cummit -C src $i &&
 		git -C src branch $i || return 1
 	done &&
 	git -C srv.bare fetch origin +refs/heads/*:refs/heads/* &&
@@ -598,12 +598,12 @@ test_expect_success 'fetch from a partial clone, protocol v0' '
 	test_config -C server core.repositoryformatversion 1 &&
 	test_config -C server extensions.partialclone a_remote &&
 	test_config -C server protocol.version 0 &&
-	test_commit -C server foo &&
+	test_cummit -C server foo &&
 
 	# Fetch from the server
 	git init client &&
 	test_config -C client protocol.version 0 &&
-	test_commit -C client bar &&
+	test_cummit -C client bar &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch "file://$(pwd)/server" &&
 	! grep "version 2" trace
 '
@@ -617,12 +617,12 @@ test_expect_success 'fetch from a partial clone, protocol v2' '
 	test_config -C server core.repositoryformatversion 1 &&
 	test_config -C server extensions.partialclone a_remote &&
 	test_config -C server protocol.version 2 &&
-	test_commit -C server foo &&
+	test_cummit -C server foo &&
 
 	# Fetch from the server
 	git init client &&
 	test_config -C client protocol.version 2 &&
-	test_commit -C client bar &&
+	test_cummit -C client bar &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch "file://$(pwd)/server" &&
 	grep "version 2" trace
 '
@@ -667,7 +667,7 @@ test_expect_success 'upon cloning, check that all refs point to objects' '
 	SERVER="$HTTPD_DOCUMENT_ROOT_PATH/server" &&
 	rm -rf "$SERVER" repo &&
 	test_create_repo "$SERVER" &&
-	test_commit -C "$SERVER" foo &&
+	test_cummit -C "$SERVER" foo &&
 	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
 	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1 &&
 
@@ -700,7 +700,7 @@ test_expect_success 'when partial cloning, tolerate server not sending target of
 	SERVER="$HTTPD_DOCUMENT_ROOT_PATH/server" &&
 	rm -rf "$SERVER" repo &&
 	test_create_repo "$SERVER" &&
-	test_commit -C "$SERVER" foo &&
+	test_cummit -C "$SERVER" foo &&
 	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
 	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1 &&
 
@@ -744,14 +744,14 @@ test_expect_success 'tolerate server sending REF_DELTA against missing promisor 
 	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
 	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1 &&
 
-	# Create a commit with 2 blobs to be used as delta bases.
+	# Create a cummit with 2 blobs to be used as delta bases.
 	for i in $(test_seq 10)
 	do
 		echo "this is a line" >>"$SERVER/foo.txt" &&
 		echo "this is another line" >>"$SERVER/have.txt" || return 1
 	done &&
 	git -C "$SERVER" add foo.txt have.txt &&
-	git -C "$SERVER" commit -m bar &&
+	git -C "$SERVER" cummit -m bar &&
 	git -C "$SERVER" rev-parse HEAD:foo.txt >deltabase_missing &&
 	git -C "$SERVER" rev-parse HEAD:have.txt >deltabase_have &&
 
@@ -766,11 +766,11 @@ test_expect_success 'tolerate server sending REF_DELTA against missing promisor 
 		-- $(cat deltabase_missing) >objlist &&
 	test_line_count = 0 objlist &&
 
-	# Another commit. This commit will be fetched by the client.
+	# Another cummit. This cummit will be fetched by the client.
 	echo "abcdefghijklmnopqrstuvwxyz" >>"$SERVER/foo.txt" &&
 	echo "abcdefghijklmnopqrstuvwxyz" >>"$SERVER/have.txt" &&
 	git -C "$SERVER" add foo.txt have.txt &&
-	git -C "$SERVER" commit -m baz &&
+	git -C "$SERVER" cummit -m baz &&
 
 	# Pack a thin pack containing, among other things, HEAD:foo.txt
 	# delta-ed against HEAD^:foo.txt and HEAD:have.txt delta-ed against

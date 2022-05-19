@@ -239,7 +239,7 @@ helpful, as most random changes would actually break the C code.
 But more importantly, git's hashing and checksumming noticed a problem
 that easily could have gone undetected in another system. The result
 still compiled, but would have caused an interesting bug (that would
-have been blamed on some random commit).
+have been blamed on some random cummit).
 
 
 The adventure continues...
@@ -424,7 +424,7 @@ int main(int argc, char **argv)
 #if 0
 		/*
 		 * deletion -- this would not actually work in practice,
-		 * I think, because we've already committed to a
+		 * I think, because we've already cummitted to a
 		 * particular size in the header. Ditto for addition
 		 * below. In those cases, you'd have to do the whole
 		 * sha1 from scratch, or possibly keep three running

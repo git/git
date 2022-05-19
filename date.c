@@ -524,7 +524,7 @@ static int set_date(int year, int month, int day, struct tm *now_tm, time_t now,
 
 		specified = tm_to_time_t(r);
 
-		/* Be it commit time or author time, it does not make
+		/* Be it cummit time or author time, it does not make
 		 * sense to specify timestamp way into the future.  Make
 		 * sure it is not later than ten days from now...
 		 */

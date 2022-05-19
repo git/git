@@ -7,7 +7,7 @@ Fixes since v1.8.2.1
  * Zsh completion forgot that '%' character used to signal untracked
    files needs to be escaped with another '%'.
 
- * A commit object whose author or committer ident are malformed
+ * A cummit object whose author or cummitter ident are malformed
    crashed some code that trusted that a name, an email and an
    timestamp can always be found in it.
 
@@ -36,7 +36,7 @@ Fixes since v1.8.2.1
    based classification the current code uses (i.e. the name appears
    in refs/tags/) to decide when to special case merging of tags.
 
- * "git cherry-pick" and "git revert" can take more than one commit
+ * "git cherry-pick" and "git revert" can take more than one cummit
    on the command line these days, but it was not mentioned on the usage
    text.
 
@@ -57,5 +57,5 @@ Fixes since v1.8.2.1
  * A few bugfixes to "git rerere" working on corner case merge
    conflicts have been applied.
 
- * "git bundle" did not like a bundle created using a commit without
+ * "git bundle" did not like a bundle created using a cummit without
    any message as its one of the prerequisites.

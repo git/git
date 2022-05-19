@@ -14,7 +14,7 @@ test_description="merge cases"
 #
 # To help make it easier to follow the flow of tests, they have been
 # divided into sections and each test will start with a quick explanation
-# of what commits O, A, and B contain.
+# of what cummits O, A, and B contain.
 #
 # Notation:
 #    z/{b,c}   means  files z/b and z/c both exist
@@ -37,7 +37,7 @@ test_setup_numerals () {
 		test_write_lines I II III >numerals &&
 		git add README numerals &&
 		test_tick &&
-		git commit -m "O" &&
+		git cummit -m "O" &&
 
 		git branch O &&
 		git branch A &&
@@ -47,13 +47,13 @@ test_setup_numerals () {
 		test_write_lines I II III IIII >numerals &&
 		git add numerals &&
 		test_tick &&
-		git commit -m "A" &&
+		git cummit -m "A" &&
 
 		git checkout B &&
 		test_write_lines I II III IV >numerals &&
 		git add numerals &&
 		test_tick &&
-		git commit -m "B" &&
+		git cummit -m "B" &&
 
 		cat <<-EOF >expected-index &&
 		H README

@@ -16,7 +16,7 @@ repo=$GIT_DAEMON_DOCUMENT_ROOT_PATH/repo
 
 test_expect_success "create repo served by $VERSION_A" '
 	git.a init "$repo" &&
-	git.a -C "$repo" commit --allow-empty -m one
+	git.a -C "$repo" cummit --allow-empty -m one
 '
 
 test_expect_success "clone with $VERSION_B" '
@@ -27,7 +27,7 @@ test_expect_success "clone with $VERSION_B" '
 '
 
 test_expect_success "fetch with $VERSION_B" '
-	git.a -C "$repo" commit --allow-empty -m two &&
+	git.a -C "$repo" cummit --allow-empty -m two &&
 	(
 		cd child &&
 		git.b fetch

@@ -17,17 +17,17 @@ test_expect_success 'merge with case-changing rename' '
 	test $(git config core.ignorecase) = true &&
 	>TestCase &&
 	git add TestCase &&
-	git commit -m "add TestCase" &&
+	git cummit -m "add TestCase" &&
 	git tag baseline &&
 	git checkout -b with-camel &&
 	>foo &&
 	git add foo &&
-	git commit -m "intervening commit" &&
+	git cummit -m "intervening cummit" &&
 	git checkout main &&
 	git rm TestCase &&
 	>testcase &&
 	git add testcase &&
-	git commit -m "rename to testcase" &&
+	git cummit -m "rename to testcase" &&
 	git checkout with-camel &&
 	git merge main -m "merge" &&
 	test_path_is_file testcase
@@ -39,15 +39,15 @@ test_expect_success 'merge with case-changing rename on both sides' '
 	git branch -D with-camel &&
 	git checkout -b with-camel &&
 	git mv TestCase testcase &&
-	git commit -m "recase on branch" &&
+	git cummit -m "recase on branch" &&
 	>foo &&
 	git add foo &&
-	git commit -m "intervening commit" &&
+	git cummit -m "intervening cummit" &&
 	git checkout main &&
 	git rm TestCase &&
 	>testcase &&
 	git add testcase &&
-	git commit -m "rename to testcase" &&
+	git cummit -m "rename to testcase" &&
 	git checkout with-camel &&
 	git merge main -m "merge" &&
 	test_path_is_file testcase

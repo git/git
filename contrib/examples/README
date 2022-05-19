@@ -1,7 +1,7 @@
 This directory used to contain scripted implementations of builtins
 that have since been rewritten in C.
 
-They have now been removed, but can be retrieved from an older commit
+They have now been removed, but can be retrieved from an older cummit
 that removed them from this directory.
 
 They're interesting for their reference value to any aspiring plumbing

@@ -13,13 +13,13 @@ test_expect_success 'prepare repository' '
 	echo foo > foo &&
 	echo "barQ" | q_to_nul > bar &&
 	git add . &&
-	git commit -m "Initial commit"
+	git cummit -m "Initial cummit"
 '
 
 test_expect_success 'move the files into a "sub" directory' '
 	mkdir sub &&
 	git mv bar foo sub/ &&
-	git commit -m "Moved to sub/"
+	git cummit -m "Moved to sub/"
 '
 
 cat > expected <<\EOF

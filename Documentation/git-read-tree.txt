@@ -49,7 +49,7 @@ OPTIONS
 -i::
 	Usually a merge requires the index file as well as the
 	files in the working tree to be up to date with the
-	current head commit, in order not to lose local
+	current head cummit, in order not to lose local
 	changes.  This flag disables the check with the working
 	tree and is meant to be used when creating a merge of
 	trees that are not directly related to the current
@@ -102,9 +102,9 @@ OPTIONS
 
 --[no-]recurse-submodules::
 	Using --recurse-submodules will update the content of all active
-	submodules according to the commit recorded in the superproject by
+	submodules according to the cummit recorded in the superproject by
 	calling read-tree recursively, also setting the submodules' HEAD to be
-	detached at that commit.
+	detached at that cummit.
 
 --no-sparse-checkout::
 	Disable sparse checkout support even if `core.sparseCheckout`
@@ -150,7 +150,7 @@ Two Tree Merge
 ~~~~~~~~~~~~~~
 
 Typically, this is invoked as `git read-tree -m $H $M`, where $H
-is the head commit of the current repository, and $M is the head
+is the head cummit of the current repository, and $M is the head
 of a foreign tree, which is simply ahead of $H (i.e. we are in a
 fast-forward situation).
 
@@ -166,7 +166,7 @@ In this case, the `git read-tree -m $H $M` command makes sure
 that no local change is lost as the result of this "merge".
 Here are the "carry forward" rules, where "I" denotes the index,
 "clean" means that index and work tree coincide, and "exists"/"nothing"
-refer to the presence of a path in the specified commit:
+refer to the presence of a path in the specified cummit:
 
 ....
 	I                   H        M        Result
@@ -324,8 +324,8 @@ file that does not match stage 2.
 
 This is done to prevent you from losing your work-in-progress
 changes, and mixing your random changes in an unrelated merge
-commit.  To illustrate, suppose you start from what has been
-committed last to your repository:
+cummit.  To illustrate, suppose you start from what has been
+cummitted last to your repository:
 
 ----------------
 $ JC=`git rev-parse --verify "HEAD^0"`
@@ -350,10 +350,10 @@ then does the right thing.  So with the following sequence:
 $ git read-tree -m -u `git merge-base $JC $LT` $JC $LT
 $ git merge-index git-merge-one-file -a
 $ echo "Merge with Linus" | \
-  git commit-tree `git write-tree` -p $JC -p $LT
+  git cummit-tree `git write-tree` -p $JC -p $LT
 ----------------
 
-what you would commit is a pure merge between $JC and $LT without
+what you would cummit is a pure merge between $JC and $LT without
 your work-in-progress changes, and your work tree would be
 updated to the result of the merge.
 

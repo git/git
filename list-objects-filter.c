@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "dir.h"
 #include "tag.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tree.h"
 #include "blob.h"
 #include "diff.h"
@@ -87,9 +87,9 @@ static enum list_objects_filter_result filter_blobs_none(
 		/* always include all tag objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
-	case LOFS_COMMIT:
-		assert(obj->type == OBJ_COMMIT);
-		/* always include all commit objects */
+	case LOFS_cummit:
+		assert(obj->type == OBJ_cummit);
+		/* always include all cummit objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
 	case LOFS_BEGIN_TREE:
@@ -188,9 +188,9 @@ static enum list_objects_filter_result filter_trees_depth(
 		/* always include all tag objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
-	case LOFS_COMMIT:
-		assert(obj->type == OBJ_COMMIT);
-		/* always include all commit objects */
+	case LOFS_cummit:
+		assert(obj->type == OBJ_cummit);
+		/* always include all cummit objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
 	case LOFS_END_TREE:
@@ -292,9 +292,9 @@ static enum list_objects_filter_result filter_blobs_limit(
 		/* always include all tag objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
-	case LOFS_COMMIT:
-		assert(obj->type == OBJ_COMMIT);
-		/* always include all commit objects */
+	case LOFS_cummit:
+		assert(obj->type == OBJ_cummit);
+		/* always include all cummit objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
 	case LOFS_BEGIN_TREE:
@@ -406,9 +406,9 @@ static enum list_objects_filter_result filter_sparse(
 		/* always include all tag objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
-	case LOFS_COMMIT:
-		assert(obj->type == OBJ_COMMIT);
-		/* always include all commit objects */
+	case LOFS_cummit:
+		assert(obj->type == OBJ_cummit);
+		/* always include all cummit objects */
 		return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 
 	case LOFS_BEGIN_TREE:
@@ -574,9 +574,9 @@ static enum list_objects_filter_result filter_object_type(
 			return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 		return LOFR_MARK_SEEN;
 
-	case LOFS_COMMIT:
-		assert(obj->type == OBJ_COMMIT);
-		if (filter_data->object_type == OBJ_COMMIT)
+	case LOFS_cummit:
+		assert(obj->type == OBJ_cummit);
+		if (filter_data->object_type == OBJ_cummit)
 			return LOFR_MARK_SEEN | LOFR_DO_SHOW;
 		return LOFR_MARK_SEEN;
 
@@ -584,10 +584,10 @@ static enum list_objects_filter_result filter_object_type(
 		assert(obj->type == OBJ_TREE);
 
 		/*
-		 * If we only want to show commits or tags, then there is no
+		 * If we only want to show cummits or tags, then there is no
 		 * need to walk down trees.
 		 */
-		if (filter_data->object_type == OBJ_COMMIT ||
+		if (filter_data->object_type == OBJ_cummit ||
 		    filter_data->object_type == OBJ_TAG)
 			return LOFR_SKIP_TREE;
 

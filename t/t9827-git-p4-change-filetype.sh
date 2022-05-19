@@ -33,7 +33,7 @@ test_expect_success SYMLINKS 'change file to symbolic link' '
 		rm file2 &&
 		ln -s file1 file2 &&
 		git add file2 &&
-		git commit -m "symlink file1 to file2" &&
+		git cummit -m "symlink file1 to file2" &&
 		git p4 submit &&
 		p4 filelog -m 1 //depot/file2 >filelog &&
 		grep "(symlink)" filelog
@@ -52,7 +52,7 @@ test_expect_success SYMLINKS 'change symbolic link to file' '
 		This is another content for the second file.
 		EOF
 		git add file2 &&
-		git commit -m "re-write file2" &&
+		git cummit -m "re-write file2" &&
 		git p4 submit &&
 		p4 filelog -m 1 //depot/file2 >filelog &&
 		grep "(text)" filelog

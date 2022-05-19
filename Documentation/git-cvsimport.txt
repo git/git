@@ -12,7 +12,7 @@ SYNOPSIS
 'git cvsimport' [-o <branch-for-HEAD>] [-h] [-v] [-d <CVSROOT>]
 	      [-A <author-conv-file>] [-p <options-for-cvsps>] [-P <file>]
 	      [-C <git-repository>] [-z <fuzz>] [-i] [-k] [-u] [-s <subst>]
-	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <commit-limit>]
+	      [-a] [-m] [-M <regex>] [-S <regex>] [-L <cummit-limit>]
 	      [-r <remote>] [-R] [<CVS-module>]
 
 
@@ -116,12 +116,12 @@ If you need to pass multiple options, separate them with a comma.
 	for debugging or when cvsps is being handled outside cvsimport.
 
 -m::
-	Attempt to detect merges based on the commit message. This option
+	Attempt to detect merges based on the cummit message. This option
 	will enable default regexes that try to capture the source
-	branch name from the commit message.
+	branch name from the cummit message.
 
 -M <regex>::
-	Attempt to detect merges based on the commit message with a custom
+	Attempt to detect merges based on the cummit message with a custom
 	regex. It can be used with `-m` to enable the default regexes
 	as well. You must escape forward slashes.
 +
@@ -133,16 +133,16 @@ This option can be used several times to provide several detection regexes.
 	Skip paths matching the regex.
 
 -a::
-	Import all commits, including recent ones. cvsimport by default
-	skips commits that have a timestamp less than 10 minutes ago.
+	Import all cummits, including recent ones. cvsimport by default
+	skips cummits that have a timestamp less than 10 minutes ago.
 
 -L <limit>::
-	Limit the number of commits imported. Workaround for cases where
+	Limit the number of cummits imported. Workaround for cases where
 	cvsimport leaks memory.
 
 -A <author-conv-file>::
 	CVS by default uses the Unix username when writing its
-	commit logs. Using this option and an author-conv-file
+	cummit logs. Using this option and an author-conv-file
 	maps the name recorded in CVS to author name, e-mail and
 	optional time zone:
 +
@@ -163,11 +163,11 @@ file each time 'git cvsimport' is run.
 +
 It is not recommended to use this feature if you intend to
 export changes back to CVS again later with
-'git cvsexportcommit'.
+'git cvsexportcummit'.
 
 -R::
 	Generate a `$GIT_DIR/cvs-revisions` file containing a mapping from CVS
-	revision numbers to newly-created Git commit IDs.  The generated file
+	revision numbers to newly-created Git cummit IDs.  The generated file
 	will contain one line for each (filename, revision) pair imported;
 	each line will look like
 +
@@ -178,7 +178,7 @@ src/widget.c 1.1 1d862f173cdc7325b6fa6d2ae1cfd61fd1b512b7
 The revision data is appended to the file if it already exists, for use when
 doing incremental imports.
 +
-This option may be useful if you have CVS revision numbers stored in commit
+This option may be useful if you have CVS revision numbers stored in cummit
 messages, bug-tracking systems, email archives, and the like.
 
 -h::
@@ -196,22 +196,22 @@ ISSUES
 ------
 Problems related to timestamps:
 
- * If timestamps of commits in the CVS repository are not stable enough
-   to be used for ordering commits changes may show up in the wrong
+ * If timestamps of cummits in the CVS repository are not stable enough
+   to be used for ordering cummits changes may show up in the wrong
    order.
  * If any files were ever "cvs import"ed more than once (e.g., import of
    more than one vendor release) the HEAD contains the wrong content.
  * If the timestamp order of different files cross the revision order
-   within the commit matching time window the order of commits may be
+   within the cummit matching time window the order of cummits may be
    wrong.
 
 Problems related to branches:
 
- * Branches on which no commits have been made are not imported.
+ * Branches on which no cummits have been made are not imported.
  * All files from the branching point are added to a branch even if
    never added in CVS.
  * This applies to files added to the source branch *after* a daughter
-   branch was created: if previously no commit was made on the daughter
+   branch was created: if previously no cummit was made on the daughter
    branch they will erroneously be added to the daughter branch in git.
 
 Problems related to tags:

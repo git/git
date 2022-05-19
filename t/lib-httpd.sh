@@ -208,7 +208,7 @@ test_http_push_nonff () {
 		cd "$LOCAL_REPO" &&
 		git checkout $BRANCH &&
 		echo "changed" > path2 &&
-		git commit -a -m path2 --amend &&
+		git cummit -a -m path2 --amend &&
 
 		test_must_fail git push -v origin >output 2>&1 &&
 		(cd "$REMOTE_REPO" &&

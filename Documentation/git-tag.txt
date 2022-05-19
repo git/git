@@ -10,12 +10,12 @@ SYNOPSIS
 --------
 [verse]
 'git tag' [-a | -s | -u <keyid>] [-f] [-m <msg> | -F <file>] [-e]
-	<tagname> [<commit> | <object>]
+	<tagname> [<cummit> | <object>]
 'git tag' -d <tagname>...
-'git tag' [-n[<num>]] -l [--contains <commit>] [--no-contains <commit>]
+'git tag' [-n[<num>]] -l [--contains <cummit>] [--no-contains <cummit>]
 	[--points-at <object>] [--column[=<options>] | --no-column]
 	[--create-reflog] [--sort=<key>] [--format=<format>]
-	[--merged <commit>] [--no-merged <commit>] [<pattern>...]
+	[--merged <cummit>] [--no-merged <cummit>] [<pattern>...]
 'git tag' -v [--format=<format>] <tagname>...
 
 DESCRIPTION
@@ -39,14 +39,14 @@ Otherwise, a tag reference that points directly at the given object
 
 A GnuPG signed tag object will be created when `-s` or `-u
 <keyid>` is used.  When `-u <keyid>` is not used, the
-committer identity for the current user is used to find the
+cummitter identity for the current user is used to find the
 GnuPG key for signing. 	The configuration variable `gpg.program`
 is used to specify custom GnuPG binary.
 
 Tag objects (created with `-a`, `-s`, or `-u`) are called "annotated"
 tags; they contain a creation date, the tagger name and e-mail, a
 tagging message, and an optional GnuPG signature. Whereas a
-"lightweight" tag is simply a name for an object (usually a commit
+"lightweight" tag is simply a name for an object (usually a cummit
 object).
 
 Annotated tags are meant for release while lightweight tags are meant
@@ -94,7 +94,7 @@ OPTIONS
 +
 The default is not to print any annotation lines.
 If no number is given to `-n`, only the first line is printed.
-If the tag is not annotated, the commit message is displayed instead.
+If the tag is not annotated, the cummit message is displayed instead.
 
 -l::
 --list::
@@ -139,21 +139,21 @@ options for details.
 +
 This option is only applicable when listing tags without annotation lines.
 
---contains [<commit>]::
-	Only list tags which contain the specified commit (HEAD if not
+--contains [<cummit>]::
+	Only list tags which contain the specified cummit (HEAD if not
 	specified). Implies `--list`.
 
---no-contains [<commit>]::
-	Only list tags which don't contain the specified commit (HEAD if
+--no-contains [<cummit>]::
+	Only list tags which don't contain the specified cummit (HEAD if
 	not specified). Implies `--list`.
 
---merged [<commit>]::
-	Only list tags whose commits are reachable from the specified
-	commit (`HEAD` if not specified).
+--merged [<cummit>]::
+	Only list tags whose cummits are reachable from the specified
+	cummit (`HEAD` if not specified).
 
---no-merged [<commit>]::
-	Only list tags whose commits are not reachable from the specified
-	commit (`HEAD` if not specified).
+--no-merged [<cummit>]::
+	Only list tags whose cummits are not reachable from the specified
+	cummit (`HEAD` if not specified).
 
 --points-at <object>::
 	Only list tags of the given object (HEAD if not
@@ -206,15 +206,15 @@ This option is only applicable when listing tags without annotation lines.
 	linkgit:git-check-ref-format[1].  Some of these checks
 	may restrict the characters allowed in a tag name.
 
-<commit>::
+<cummit>::
 <object>::
-	The object that the new tag will refer to, usually a commit.
+	The object that the new tag will refer to, usually a cummit.
 	Defaults to HEAD.
 
 CONFIGURATION
 -------------
 By default, 'git tag' in sign-with-default mode (-s) will use your
-committer identity (of the form `Your Name <your@email.address>`) to
+cummitter identity (of the form `Your Name <your@email.address>`) to
 find a key.  If you want to use a different default key, you can specify
 it in the repository configuration as follows:
 
@@ -233,7 +233,7 @@ DISCUSSION
 On Re-tagging
 ~~~~~~~~~~~~~
 
-What should you do when you tag a wrong commit and you would
+What should you do when you tag a wrong cummit and you would
 want to re-tag?
 
 If you never pushed anything out, just re-tag it. Use "-f" to
@@ -366,13 +366,13 @@ the tag object affects, for example, the ordering of tags in the
 gitweb interface.
 
 To set the date used in future tag objects, set the environment
-variable GIT_COMMITTER_DATE (see the later discussion of possible
+variable GIT_cummitTER_DATE (see the later discussion of possible
 values; the most common form is "YYYY-MM-DD HH:MM").
 
 For example:
 
 ------------
-$ GIT_COMMITTER_DATE="2006-10-02 10:31" git tag -s v1.0.1
+$ GIT_cummitTER_DATE="2006-10-02 10:31" git tag -s v1.0.1
 ------------
 
 include::date-formats.txt[]

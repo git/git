@@ -19,9 +19,9 @@
 #      works-in-progress. Most workflows would mention
 #      referenced objects in the index, which prune takes
 #      into account. However, many operations don't. For
-#      example, a partial commit with "git commit foo"
+#      example, a partial cummit with "git cummit foo"
 #      will use a temporary index. Or they may not need
-#      an index at all (e.g., creating a new commit
+#      an index at all (e.g., creating a new cummit
 #      to refer to an existing tree).
 
 test_description='check pruning of dependent objects'
@@ -31,15 +31,15 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 # We care about reachability, so we do not want to use
-# the normal test_commit, which creates extra tags.
+# the normal test_cummit, which creates extra tags.
 add () {
 	echo "$1" >"$1" &&
 	git add "$1"
 }
-commit () {
+cummit () {
 	test_tick &&
 	add "$1" &&
-	git commit -m "$1"
+	git cummit -m "$1"
 }
 
 maybe_repack () {
@@ -73,12 +73,12 @@ do
 	'
 
 	test_expect_success "setup basic history ($title)" '
-		commit base
+		cummit base
 	'
 
 	test_expect_success "create and abandon some objects ($title)" '
 		git checkout -b experiment &&
-		commit abandon &&
+		cummit abandon &&
 		maybe_repack &&
 		git checkout main &&
 		git branch -D experiment
@@ -88,7 +88,7 @@ do
 		test-tool chmtime --get -86400 $(find .git/objects -type f)
 	'
 
-	test_expect_success "start writing new commit with old blob ($title)" '
+	test_expect_success "start writing new cummit with old blob ($title)" '
 		tree=$(
 			GIT_INDEX_FILE=index.tmp &&
 			export GIT_INDEX_FILE &&
@@ -103,9 +103,9 @@ do
 		git gc --prune=12.hours.ago
 	'
 
-	test_expect_success "finish writing out commit ($title)" '
-		commit=$(echo foo | git commit-tree -p HEAD $tree) &&
-		git update-ref HEAD $commit
+	test_expect_success "finish writing out cummit ($title)" '
+		cummit=$(echo foo | git cummit-tree -p HEAD $tree) &&
+		git update-ref HEAD $cummit
 	'
 
 	# "abandon" blob should have been rescued by reference from new tree
@@ -118,7 +118,7 @@ do
 		test-tool chmtime --get -86400 $(find .git/objects -type f)
 	'
 
-	test_expect_success "start writing new commit with same tree ($title)" '
+	test_expect_success "start writing new cummit with same tree ($title)" '
 		tree=$(
 			GIT_INDEX_FILE=index.tmp &&
 			export GIT_INDEX_FILE &&
@@ -134,24 +134,24 @@ do
 	'
 
 	# tree should have been refreshed by write-tree
-	test_expect_success "finish writing out commit ($title)" '
-		commit=$(echo foo | git commit-tree -p HEAD $tree) &&
-		git update-ref HEAD $commit
+	test_expect_success "finish writing out cummit ($title)" '
+		cummit=$(echo foo | git cummit-tree -p HEAD $tree) &&
+		git update-ref HEAD $cummit
 	'
 done
 
-test_expect_success 'do not complain about existing broken links (commit)' '
-	cat >broken-commit <<-EOF &&
+test_expect_success 'do not complain about existing broken links (cummit)' '
+	cat >broken-cummit <<-EOF &&
 	tree $(test_oid 001)
 	parent $(test_oid 002)
 	author whatever <whatever@example.com> 1234 -0000
-	committer whatever <whatever@example.com> 1234 -0000
+	cummitter whatever <whatever@example.com> 1234 -0000
 
 	some message
 	EOF
-	commit=$(git hash-object -t commit -w broken-commit) &&
+	cummit=$(git hash-object -t cummit -w broken-cummit) &&
 	git gc -q 2>stderr &&
-	verbose git cat-file -e $commit &&
+	verbose git cat-file -e $cummit &&
 	test_must_be_empty stderr
 '
 
@@ -168,7 +168,7 @@ test_expect_success 'do not complain about existing broken links (tree)' '
 test_expect_success 'do not complain about existing broken links (tag)' '
 	cat >broken-tag <<-EOF &&
 	object $(test_oid 004)
-	type commit
+	type cummit
 	tag broken
 	tagger whatever <whatever@example.com> 1234 -0000
 

@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "config.h"
-#include "commit.h"
+#include "cummit.h"
 #include "color.h"
 #include "graph.h"
 #include "revision.h"
@@ -11,7 +11,7 @@
 /*
  * Output a padding line in the graph.
  * This is similar to graph_next_line().  However, it is guaranteed to
- * never print the current commit line.  Instead, if the commit line is
+ * never print the current cummit line.  Instead, if the cummit line is
  * next, it will simply output a line of vertical padding, extending the
  * branch lines downwards, but leaving them otherwise unchanged.
  */
@@ -27,7 +27,7 @@ static void graph_padding_line(struct git_graph *graph, struct strbuf *sb);
  *
  * Since the first line will not include the graph output, the caller is
  * responsible for printing this line's graph (perhaps via
- * graph_show_commit() or graph_show_oneline()) before calling
+ * graph_show_cummit() or graph_show_oneline()) before calling
  * graph_show_strbuf().
  *
  * Note that unlike some other graph display functions, you must pass the file
@@ -49,9 +49,9 @@ static void graph_show_strbuf(struct git_graph *graph,
 
 struct column {
 	/*
-	 * The parent commit of this column.
+	 * The parent cummit of this column.
 	 */
-	struct commit *commit;
+	struct cummit *cummit;
 	/*
 	 * The color to (optionally) print this column in.  This is an
 	 * index into column_colors.
@@ -62,8 +62,8 @@ struct column {
 enum graph_state {
 	GRAPH_PADDING,
 	GRAPH_SKIP,
-	GRAPH_PRE_COMMIT,
-	GRAPH_COMMIT,
+	GRAPH_PRE_cummit,
+	GRAPH_cummit,
 	GRAPH_POST_MERGE,
 	GRAPH_COLLAPSING
 };
@@ -153,9 +153,9 @@ static void graph_line_write_column(struct graph_line *line, const struct column
 
 struct git_graph {
 	/*
-	 * The commit currently being processed
+	 * The cummit currently being processed
 	 */
-	struct commit *commit;
+	struct cummit *cummit;
 	/* The rev-info used for the current traversal */
 	struct rev_info *revs;
 	/*
@@ -167,14 +167,14 @@ struct git_graph {
 	 */
 	int num_parents;
 	/*
-	 * The width of the graph output for this commit.
-	 * All rows for this commit are padded to this width, so that
+	 * The width of the graph output for this cummit.
+	 * All rows for this cummit are padded to this width, so that
 	 * messages printed after the graph output are aligned.
 	 */
 	int width;
 	/*
 	 * The next expansion row to print
-	 * when state is GRAPH_PRE_COMMIT
+	 * when state is GRAPH_PRE_cummit
 	 */
 	int expansion_row;
 	/*
@@ -185,27 +185,27 @@ struct git_graph {
 	/*
 	 * The output state for the previous line of output.
 	 * This is primarily used to determine how the first merge line
-	 * should appear, based on the last line of the previous commit.
+	 * should appear, based on the last line of the previous cummit.
 	 */
 	enum graph_state prev_state;
 	/*
-	 * The index of the column that refers to this commit.
+	 * The index of the column that refers to this cummit.
 	 *
-	 * If none of the incoming columns refer to this commit,
+	 * If none of the incoming columns refer to this cummit,
 	 * this will be equal to num_columns.
 	 */
-	int commit_index;
+	int cummit_index;
 	/*
-	 * The commit_index for the previously displayed commit.
+	 * The cummit_index for the previously displayed cummit.
 	 *
 	 * This is used to determine how the first line of a merge
 	 * graph output should appear, based on the last line of the
-	 * previous commit.
+	 * previous cummit.
 	 */
-	int prev_commit_index;
+	int prev_cummit_index;
 	/*
-	 * Which layout variant to use to display merge commits. If the
-	 * commit's first parent is known to be in a column to the left of the
+	 * Which layout variant to use to display merge cummits. If the
+	 * cummit's first parent is known to be in a column to the left of the
 	 * merge, then this value is 0 and we use the layout on the left.
 	 * Otherwise, the value is 1 and the layout on the right is used. This
 	 * field tells us how many columns the first parent occupies.
@@ -218,7 +218,7 @@ struct git_graph {
 	 */
 	int merge_layout;
 	/*
-	 * The number of columns added to the graph by the current commit. For
+	 * The number of columns added to the graph by the current cummit. For
 	 * 2-way and octopus merges, this is usually one less than the
 	 * number of parents:
 	 *
@@ -242,7 +242,7 @@ struct git_graph {
 	 *		edges_added: 0		edges_added: 2
 	 *
 	 * This number determines how edges to the right of the merge are
-	 * displayed in commit and post-merge lines; if no columns have been
+	 * displayed in cummit and post-merge lines; if no columns have been
 	 * added then a vertical line should be used where a right-tracking
 	 * line would otherwise be used.
 	 *
@@ -252,8 +252,8 @@ struct git_graph {
 	 */
 	int edges_added;
 	/*
-	 * The number of columns added by the previous commit, which is used to
-	 * smooth edges appearing to the right of a commit in a commit line
+	 * The number of columns added by the previous cummit, which is used to
+	 * smooth edges appearing to the right of a cummit in a cummit line
 	 * following a post-merge line.
 	 */
 	int prev_edges_added;
@@ -276,11 +276,11 @@ struct git_graph {
 	 */
 	int mapping_size;
 	/*
-	 * The column state before we output the current commit.
+	 * The column state before we output the current cummit.
 	 */
 	struct column *columns;
 	/*
-	 * The new column state after we output the current commit.
+	 * The new column state after we output the current cummit.
 	 * Only valid when state is GRAPH_COLLAPSING.
 	 */
 	struct column *new_columns;
@@ -298,9 +298,9 @@ struct git_graph {
 	 */
 	int *mapping;
 	/*
-	 * A copy of the contents of the mapping array from the last commit,
+	 * A copy of the contents of the mapping array from the last cummit,
 	 * which we use to improve the display of columns that are tracking
-	 * from right to left through a commit line.  We also use this to
+	 * from right to left through a cummit line.  We also use this to
 	 * avoid allocating a fresh array when we compute the next mapping.
 	 */
 	int *old_mapping;
@@ -360,14 +360,14 @@ struct git_graph *graph_init(struct rev_info *opt)
 		}
 	}
 
-	graph->commit = NULL;
+	graph->cummit = NULL;
 	graph->revs = opt;
 	graph->num_parents = 0;
 	graph->expansion_row = 0;
 	graph->state = GRAPH_PADDING;
 	graph->prev_state = GRAPH_PADDING;
-	graph->commit_index = 0;
-	graph->prev_commit_index = 0;
+	graph->cummit_index = 0;
+	graph->prev_cummit_index = 0;
 	graph->merge_layout = 0;
 	graph->edges_added = 0;
 	graph->prev_edges_added = 0;
@@ -376,8 +376,8 @@ struct git_graph *graph_init(struct rev_info *opt)
 	graph->mapping_size = 0;
 	/*
 	 * Start the column color at the maximum value, since we'll
-	 * always increment it for the first commit we output.
-	 * This way we start at 0 for the first commit.
+	 * always increment it for the first cummit we output.
+	 * This way we start at 0 for the first cummit.
 	 */
 	graph->default_column_color = column_colors_max - 1;
 
@@ -435,32 +435,32 @@ static void graph_ensure_capacity(struct git_graph *graph, int num_columns)
 }
 
 /*
- * Returns 1 if the commit will be printed in the graph output,
+ * Returns 1 if the cummit will be printed in the graph output,
  * and 0 otherwise.
  */
-static int graph_is_interesting(struct git_graph *graph, struct commit *commit)
+static int graph_is_interesting(struct git_graph *graph, struct cummit *cummit)
 {
 	/*
-	 * If revs->boundary is set, commits whose children have
+	 * If revs->boundary is set, cummits whose children have
 	 * been shown are always interesting, even if they have the
 	 * UNINTERESTING or TREESAME flags set.
 	 */
 	if (graph->revs && graph->revs->boundary) {
-		if (commit->object.flags & CHILD_SHOWN)
+		if (cummit->object.flags & CHILD_SHOWN)
 			return 1;
 	}
 
 	/*
-	 * Otherwise, use get_commit_action() to see if this commit is
+	 * Otherwise, use get_cummit_action() to see if this cummit is
 	 * interesting
 	 */
-	return get_commit_action(graph->revs, commit) == commit_show;
+	return get_cummit_action(graph->revs, cummit) == cummit_show;
 }
 
-static struct commit_list *next_interesting_parent(struct git_graph *graph,
-						   struct commit_list *orig)
+static struct cummit_list *next_interesting_parent(struct git_graph *graph,
+						   struct cummit_list *orig)
 {
-	struct commit_list *list;
+	struct cummit_list *list;
 
 	/*
 	 * If revs->first_parent_only is set, only the first
@@ -470,7 +470,7 @@ static struct commit_list *next_interesting_parent(struct git_graph *graph,
 		return NULL;
 
 	/*
-	 * Return the next interesting commit after orig
+	 * Return the next interesting cummit after orig
 	 */
 	for (list = orig->next; list; list = list->next) {
 		if (graph_is_interesting(graph, list->item))
@@ -480,9 +480,9 @@ static struct commit_list *next_interesting_parent(struct git_graph *graph,
 	return NULL;
 }
 
-static struct commit_list *first_interesting_parent(struct git_graph *graph)
+static struct cummit_list *first_interesting_parent(struct git_graph *graph)
 {
-	struct commit_list *parents = graph->commit->parents;
+	struct cummit_list *parents = graph->cummit->parents;
 
 	/*
 	 * If this commit has no parents, ignore it
@@ -519,43 +519,43 @@ static void graph_increment_column_color(struct git_graph *graph)
 		column_colors_max;
 }
 
-static unsigned short graph_find_commit_color(const struct git_graph *graph,
-					      const struct commit *commit)
+static unsigned short graph_find_cummit_color(const struct git_graph *graph,
+					      const struct cummit *cummit)
 {
 	int i;
 	for (i = 0; i < graph->num_columns; i++) {
-		if (graph->columns[i].commit == commit)
+		if (graph->columns[i].cummit == cummit)
 			return graph->columns[i].color;
 	}
 	return graph_get_current_column_color(graph);
 }
 
-static int graph_find_new_column_by_commit(struct git_graph *graph,
-					   struct commit *commit)
+static int graph_find_new_column_by_cummit(struct git_graph *graph,
+					   struct cummit *cummit)
 {
 	int i;
 	for (i = 0; i < graph->num_new_columns; i++) {
-		if (graph->new_columns[i].commit == commit)
+		if (graph->new_columns[i].cummit == cummit)
 			return i;
 	}
 	return -1;
 }
 
 static void graph_insert_into_new_columns(struct git_graph *graph,
-					  struct commit *commit,
+					  struct cummit *cummit,
 					  int idx)
 {
-	int i = graph_find_new_column_by_commit(graph, commit);
+	int i = graph_find_new_column_by_cummit(graph, cummit);
 	int mapping_idx;
 
 	/*
-	 * If the commit is not already in the new_columns array, then add it
+	 * If the cummit is not already in the new_columns array, then add it
 	 * and record it as being in the final column.
 	 */
 	if (i < 0) {
 		i = graph->num_new_columns++;
-		graph->new_columns[i].commit = commit;
-		graph->new_columns[i].color = graph_find_commit_color(graph, commit);
+		graph->new_columns[i].cummit = cummit;
+		graph->new_columns[i].color = graph_find_cummit_color(graph, cummit);
 	}
 
 	if (graph->num_parents > 1 && idx > -1 && graph->merge_layout == -1) {
@@ -577,7 +577,7 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 
 	} else if (graph->edges_added > 0 && i == graph->mapping[graph->width - 2]) {
 		/*
-		 * If some columns have been added by a merge, but this commit
+		 * If some columns have been added by a merge, but this cummit
 		 * was found in the last existing column, then adjust the
 		 * numbers so that the two edges immediately join, i.e.:
 		 *
@@ -598,17 +598,17 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 
 static void graph_update_columns(struct git_graph *graph)
 {
-	struct commit_list *parent;
+	struct cummit_list *parent;
 	int max_new_columns;
-	int i, seen_this, is_commit_in_columns;
+	int i, seen_this, is_cummit_in_columns;
 
 	/*
 	 * Swap graph->columns with graph->new_columns
-	 * graph->columns contains the state for the previous commit,
-	 * and new_columns now contains the state for our commit.
+	 * graph->columns contains the state for the previous cummit,
+	 * and new_columns now contains the state for our cummit.
 	 *
 	 * We'll re-use the old columns array as storage to compute the new
-	 * columns list for the commit after this one.
+	 * columns list for the cummit after this one.
 	 */
 	SWAP(graph->columns, graph->new_columns);
 	graph->num_columns = graph->num_new_columns;
@@ -616,11 +616,11 @@ static void graph_update_columns(struct git_graph *graph)
 
 	/*
 	 * Now update new_columns and mapping with the information for the
-	 * commit after this one.
+	 * cummit after this one.
 	 *
 	 * First, make sure we have enough room.  At most, there will
 	 * be graph->num_columns + graph->num_parents columns for the next
-	 * commit.
+	 * cummit.
 	 */
 	max_new_columns = graph->num_columns + graph->num_parents;
 	graph_ensure_capacity(graph, max_new_columns);
@@ -639,28 +639,28 @@ static void graph_update_columns(struct git_graph *graph)
 	/*
 	 * Populate graph->new_columns and graph->mapping
 	 *
-	 * Some of the parents of this commit may already be in
+	 * Some of the parents of this cummit may already be in
 	 * graph->columns.  If so, graph->new_columns should only contain a
-	 * single entry for each such commit.  graph->mapping should
+	 * single entry for each such cummit.  graph->mapping should
 	 * contain information about where each current branch line is
 	 * supposed to end up after the collapsing is performed.
 	 */
 	seen_this = 0;
-	is_commit_in_columns = 1;
+	is_cummit_in_columns = 1;
 	for (i = 0; i <= graph->num_columns; i++) {
-		struct commit *col_commit;
+		struct cummit *col_cummit;
 		if (i == graph->num_columns) {
 			if (seen_this)
 				break;
-			is_commit_in_columns = 0;
-			col_commit = graph->commit;
+			is_cummit_in_columns = 0;
+			col_cummit = graph->cummit;
 		} else {
-			col_commit = graph->columns[i].commit;
+			col_cummit = graph->columns[i].cummit;
 		}
 
-		if (col_commit == graph->commit) {
+		if (col_cummit == graph->cummit) {
 			seen_this = 1;
-			graph->commit_index = i;
+			graph->cummit_index = i;
 			graph->merge_layout = -1;
 			for (parent = first_interesting_parent(graph);
 			     parent;
@@ -671,7 +671,7 @@ static void graph_update_columns(struct git_graph *graph)
 				 * color.
 				 */
 				if (graph->num_parents > 1 ||
-				    !is_commit_in_columns) {
+				    !is_cummit_in_columns) {
 					graph_increment_column_color(graph);
 				}
 				graph_insert_into_new_columns(graph, parent->item, i);
@@ -679,13 +679,13 @@ static void graph_update_columns(struct git_graph *graph)
 			/*
 			 * We always need to increment graph->width by at
 			 * least 2, even if it has no interesting parents.
-			 * The current commit always takes up at least 2
+			 * The current cummit always takes up at least 2
 			 * spaces.
 			 */
 			if (graph->num_parents == 0)
 				graph->width += 2;
 		} else {
-			graph_insert_into_new_columns(graph, col_commit, -1);
+			graph_insert_into_new_columns(graph, col_cummit, -1);
 		}
 	}
 
@@ -727,21 +727,21 @@ static int graph_num_expansion_rows(struct git_graph *graph)
 	return graph_num_dashed_parents(graph) * 2;
 }
 
-static int graph_needs_pre_commit_line(struct git_graph *graph)
+static int graph_needs_pre_cummit_line(struct git_graph *graph)
 {
 	return graph->num_parents >= 3 &&
-	       graph->commit_index < (graph->num_columns - 1) &&
+	       graph->cummit_index < (graph->num_columns - 1) &&
 	       graph->expansion_row < graph_num_expansion_rows(graph);
 }
 
-void graph_update(struct git_graph *graph, struct commit *commit)
+void graph_update(struct git_graph *graph, struct cummit *cummit)
 {
-	struct commit_list *parent;
+	struct cummit_list *parent;
 
 	/*
-	 * Set the new commit
+	 * Set the new cummit
 	 */
-	graph->commit = commit;
+	graph->cummit = cummit;
 
 	/*
 	 * Count how many interesting parents this commit has
@@ -755,11 +755,11 @@ void graph_update(struct git_graph *graph, struct commit *commit)
 	}
 
 	/*
-	 * Store the old commit_index in prev_commit_index.
-	 * graph_update_columns() will update graph->commit_index for this
-	 * commit.
+	 * Store the old cummit_index in prev_cummit_index.
+	 * graph_update_columns() will update graph->cummit_index for this
+	 * cummit.
 	 */
-	graph->prev_commit_index = graph->commit_index;
+	graph->prev_cummit_index = graph->cummit_index;
 
 	/*
 	 * Call graph_update_columns() to update
@@ -775,24 +775,24 @@ void graph_update(struct git_graph *graph, struct commit *commit)
 	 * we don't want to update graph->prev_state.  No line for
 	 * graph->state was ever printed.
 	 *
-	 * If the previous commit didn't get to the GRAPH_PADDING state,
+	 * If the previous cummit didn't get to the GRAPH_PADDING state,
 	 * it never finished its output.  Goto GRAPH_SKIP, to print out
 	 * a line to indicate that portion of the graph is missing.
 	 *
 	 * If there are 3 or more parents, we may need to print extra rows
-	 * before the commit, to expand the branch lines around it and make
+	 * before the cummit, to expand the branch lines around it and make
 	 * room for it.  We need to do this only if there is a branch row
-	 * (or more) to the right of this commit.
+	 * (or more) to the right of this cummit.
 	 *
 	 * If there are less than 3 parents, we can immediately print the
-	 * commit line.
+	 * cummit line.
 	 */
 	if (graph->state != GRAPH_PADDING)
 		graph->state = GRAPH_SKIP;
-	else if (graph_needs_pre_commit_line(graph))
-		graph->state = GRAPH_PRE_COMMIT;
+	else if (graph_needs_pre_cummit_line(graph))
+		graph->state = GRAPH_PRE_cummit;
 	else
-		graph->state = GRAPH_COMMIT;
+		graph->state = GRAPH_cummit;
 }
 
 static int graph_is_mapping_correct(struct git_graph *graph)
@@ -824,7 +824,7 @@ static void graph_pad_horizontally(struct git_graph *graph, struct graph_line *l
 	 * lines for a particular commit have the same width.
 	 *
 	 * This way, fields printed to the right of the graph will remain
-	 * aligned for the entire commit.
+	 * aligned for the entire cummit.
 	 */
 	if (line->width < graph->width)
 		graph_line_addchars(line, ' ', graph->width - line->width);
@@ -859,19 +859,19 @@ static void graph_output_skip_line(struct git_graph *graph, struct graph_line *l
 	 */
 	graph_line_addstr(line, "...");
 
-	if (graph_needs_pre_commit_line(graph))
-		graph_update_state(graph, GRAPH_PRE_COMMIT);
+	if (graph_needs_pre_cummit_line(graph))
+		graph_update_state(graph, GRAPH_PRE_cummit);
 	else
-		graph_update_state(graph, GRAPH_COMMIT);
+		graph_update_state(graph, GRAPH_cummit);
 }
 
-static void graph_output_pre_commit_line(struct git_graph *graph,
+static void graph_output_pre_cummit_line(struct git_graph *graph,
 					 struct graph_line *line)
 {
 	int i, seen_this;
 
 	/*
-	 * This function formats a row that increases the space around a commit
+	 * This function formats a row that increases the space around a cummit
 	 * with multiple parents, to make room for it.  It should only be
 	 * called when there are 3 or more parents.
 	 *
@@ -892,22 +892,22 @@ static void graph_output_pre_commit_line(struct git_graph *graph,
 	seen_this = 0;
 	for (i = 0; i < graph->num_columns; i++) {
 		struct column *col = &graph->columns[i];
-		if (col->commit == graph->commit) {
+		if (col->cummit == graph->cummit) {
 			seen_this = 1;
 			graph_line_write_column(line, col, '|');
 			graph_line_addchars(line, ' ', graph->expansion_row);
 		} else if (seen_this && (graph->expansion_row == 0)) {
 			/*
-			 * This is the first line of the pre-commit output.
-			 * If the previous commit was a merge commit and
+			 * This is the first line of the pre-cummit output.
+			 * If the previous cummit was a merge cummit and
 			 * ended in the GRAPH_POST_MERGE state, all branch
-			 * lines after graph->prev_commit_index were
+			 * lines after graph->prev_cummit_index were
 			 * printed as "\" on the previous line.  Continue
 			 * to print them as "\" on this line.  Otherwise,
 			 * print the branch lines as "|".
 			 */
 			if (graph->prev_state == GRAPH_POST_MERGE &&
-			    graph->prev_commit_index < i)
+			    graph->prev_cummit_index < i)
 				graph_line_write_column(line, col, '\\');
 			else
 				graph_line_write_column(line, col, '|');
@@ -921,20 +921,20 @@ static void graph_output_pre_commit_line(struct git_graph *graph,
 
 	/*
 	 * Increment graph->expansion_row,
-	 * and move to state GRAPH_COMMIT if necessary
+	 * and move to state GRAPH_cummit if necessary
 	 */
 	graph->expansion_row++;
-	if (!graph_needs_pre_commit_line(graph))
-		graph_update_state(graph, GRAPH_COMMIT);
+	if (!graph_needs_pre_cummit_line(graph))
+		graph_update_state(graph, GRAPH_cummit);
 }
 
-static void graph_output_commit_char(struct git_graph *graph, struct graph_line *line)
+static void graph_output_cummit_char(struct git_graph *graph, struct graph_line *line)
 {
 	/*
-	 * For boundary commits, print 'o'
-	 * (We should only see boundary commits when revs->boundary is set.)
+	 * For boundary cummits, print 'o'
+	 * (We should only see boundary cummits when revs->boundary is set.)
 	 */
-	if (graph->commit->object.flags & BOUNDARY) {
+	if (graph->cummit->object.flags & BOUNDARY) {
 		assert(graph->revs->boundary);
 		graph_line_addch(line, 'o');
 		return;
@@ -943,7 +943,7 @@ static void graph_output_commit_char(struct git_graph *graph, struct graph_line 
 	/*
 	 * get_revision_mark() handles all other cases without assert()
 	 */
-	graph_line_addstr(line, get_revision_mark(graph->revs, graph->commit));
+	graph_line_addstr(line, get_revision_mark(graph->revs, graph->cummit));
 }
 
 /*
@@ -952,7 +952,7 @@ static void graph_output_commit_char(struct git_graph *graph, struct graph_line 
 static void graph_draw_octopus_merge(struct git_graph *graph, struct graph_line *line)
 {
 	/*
-	 * The parents of a merge commit can be arbitrarily reordered as they
+	 * The parents of a merge cummit can be arbitrarily reordered as they
 	 * are mapped onto display columns, for example this is a valid merge:
 	 *
 	 *	| | *---.
@@ -969,12 +969,12 @@ static void graph_draw_octopus_merge(struct git_graph *graph, struct graph_line 
 	 *
 	 * To find the right color for each dash, we need to consult the
 	 * mapping array, starting from the column 2 places to the right of the
-	 * merge commit, and use that to find out which logical column each
+	 * merge cummit, and use that to find out which logical column each
 	 * edge will collapse to.
 	 *
-	 * Commits are rendered once all edges have collapsed to their correct
-	 * logcial column, so commit_index gives us the right visual offset for
-	 * the merge commit.
+	 * cummits are rendered once all edges have collapsed to their correct
+	 * logcial column, so cummit_index gives us the right visual offset for
+	 * the merge cummit.
 	 */
 
 	int i, j;
@@ -983,7 +983,7 @@ static void graph_draw_octopus_merge(struct git_graph *graph, struct graph_line 
 	int dashed_parents = graph_num_dashed_parents(graph);
 
 	for (i = 0; i < dashed_parents; i++) {
-		j = graph->mapping[(graph->commit_index + i + 2) * 2];
+		j = graph->mapping[(graph->cummit_index + i + 2) * 2];
 		col = &graph->new_columns[j];
 
 		graph_line_write_column(line, col, '-');
@@ -993,33 +993,33 @@ static void graph_draw_octopus_merge(struct git_graph *graph, struct graph_line 
 	return;
 }
 
-static void graph_output_commit_line(struct git_graph *graph, struct graph_line *line)
+static void graph_output_cummit_line(struct git_graph *graph, struct graph_line *line)
 {
 	int seen_this = 0;
 	int i;
 
 	/*
-	 * Output the row containing this commit
+	 * Output the row containing this cummit
 	 * Iterate up to and including graph->num_columns,
-	 * since the current commit may not be in any of the existing
-	 * columns.  (This happens when the current commit doesn't have any
+	 * since the current cummit may not be in any of the existing
+	 * columns.  (This happens when the current cummit doesn't have any
 	 * children that we have already processed.)
 	 */
 	seen_this = 0;
 	for (i = 0; i <= graph->num_columns; i++) {
 		struct column *col = &graph->columns[i];
-		struct commit *col_commit;
+		struct cummit *col_cummit;
 		if (i == graph->num_columns) {
 			if (seen_this)
 				break;
-			col_commit = graph->commit;
+			col_cummit = graph->cummit;
 		} else {
-			col_commit = graph->columns[i].commit;
+			col_cummit = graph->columns[i].cummit;
 		}
 
-		if (col_commit == graph->commit) {
+		if (col_cummit == graph->cummit) {
 			seen_this = 1;
-			graph_output_commit_char(graph, line);
+			graph_output_cummit_char(graph, line);
 
 			if (graph->num_parents > 2)
 				graph_draw_octopus_merge(graph, line);
@@ -1028,21 +1028,21 @@ static void graph_output_commit_line(struct git_graph *graph, struct graph_line 
 		} else if (seen_this && (graph->edges_added == 1)) {
 			/*
 			 * This is either a right-skewed 2-way merge
-			 * commit, or a left-skewed 3-way merge.
-			 * There is no GRAPH_PRE_COMMIT stage for such
+			 * cummit, or a left-skewed 3-way merge.
+			 * There is no GRAPH_PRE_cummit stage for such
 			 * merges, so this is the first line of output
-			 * for this commit.  Check to see what the previous
+			 * for this cummit.  Check to see what the previous
 			 * line of output was.
 			 *
 			 * If it was GRAPH_POST_MERGE, the branch line
-			 * coming into this commit may have been '\',
+			 * coming into this cummit may have been '\',
 			 * and not '|' or '/'.  If so, output the branch
 			 * line as '\' on this line, instead of '|'.  This
 			 * makes the output look nicer.
 			 */
 			if (graph->prev_state == GRAPH_POST_MERGE &&
 			    graph->prev_edges_added > 0 &&
-			    graph->prev_commit_index < i)
+			    graph->prev_cummit_index < i)
 				graph_line_write_column(line, col, '\\');
 			else
 				graph_line_write_column(line, col, '|');
@@ -1074,7 +1074,7 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct graph_l
 	int seen_this = 0;
 	int i, j;
 
-	struct commit_list *first_parent = first_interesting_parent(graph);
+	struct cummit_list *first_parent = first_interesting_parent(graph);
 	struct column *parent_col = NULL;
 
 	/*
@@ -1082,30 +1082,30 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct graph_l
 	 */
 	for (i = 0; i <= graph->num_columns; i++) {
 		struct column *col = &graph->columns[i];
-		struct commit *col_commit;
+		struct cummit *col_cummit;
 		if (i == graph->num_columns) {
 			if (seen_this)
 				break;
-			col_commit = graph->commit;
+			col_cummit = graph->cummit;
 		} else {
-			col_commit = col->commit;
+			col_cummit = col->cummit;
 		}
 
-		if (col_commit == graph->commit) {
+		if (col_cummit == graph->cummit) {
 			/*
-			 * Since the current commit is a merge find
-			 * the columns for the parent commits in
+			 * Since the current cummit is a merge find
+			 * the columns for the parent cummits in
 			 * new_columns and use those to format the
 			 * edges.
 			 */
-			struct commit_list *parents = first_parent;
+			struct cummit_list *parents = first_parent;
 			int par_column;
 			int idx = graph->merge_layout;
 			char c;
 			seen_this = 1;
 
 			for (j = 0; j < graph->num_parents; j++) {
-				par_column = graph_find_new_column_by_commit(graph, parents->item);
+				par_column = graph_find_new_column_by_cummit(graph, parents->item);
 				assert(par_column >= 0);
 
 				c = merge_chars[idx];
@@ -1129,7 +1129,7 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct graph_l
 			graph_line_addch(line, ' ');
 		} else {
 			graph_line_write_column(line, col, '|');
-			if (graph->merge_layout != 0 || i != graph->commit_index - 1) {
+			if (graph->merge_layout != 0 || i != graph->cummit_index - 1) {
 				if (parent_col)
 					graph_line_write_column(
 						line, parent_col, '_');
@@ -1138,7 +1138,7 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct graph_l
 			}
 		}
 
-		if (col_commit == first_parent->item)
+		if (col_cummit == first_parent->item)
 			parent_col = col;
 	}
 
@@ -1221,7 +1221,7 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 			 * There is a branch line to our left
 			 * already, and it is our target.  We
 			 * combine with this line, since we share
-			 * the same parent commit.
+			 * the same parent cummit.
 			 *
 			 * We don't have to add anything to the
 			 * output or mapping, since the
@@ -1306,17 +1306,17 @@ static void graph_output_collapsing_line(struct git_graph *graph, struct graph_l
 
 int graph_next_line(struct git_graph *graph, struct strbuf *sb)
 {
-	int shown_commit_line = 0;
+	int shown_cummit_line = 0;
 	struct graph_line line = { .buf = sb, .width = 0 };
 
 	/*
-	 * We could conceivable be called with a NULL commit
+	 * We could conceivable be called with a NULL cummit
 	 * if our caller has a bug, and invokes graph_next_line()
 	 * immediately after graph_init(), without first calling
 	 * graph_update().  Return without outputting anything in this
 	 * case.
 	 */
-	if (!graph->commit)
+	if (!graph->cummit)
 		return -1;
 
 	switch (graph->state) {
@@ -1326,12 +1326,12 @@ int graph_next_line(struct git_graph *graph, struct strbuf *sb)
 	case GRAPH_SKIP:
 		graph_output_skip_line(graph, &line);
 		break;
-	case GRAPH_PRE_COMMIT:
-		graph_output_pre_commit_line(graph, &line);
+	case GRAPH_PRE_cummit:
+		graph_output_pre_cummit_line(graph, &line);
 		break;
-	case GRAPH_COMMIT:
-		graph_output_commit_line(graph, &line);
-		shown_commit_line = 1;
+	case GRAPH_cummit:
+		graph_output_cummit_line(graph, &line);
+		shown_cummit_line = 1;
 		break;
 	case GRAPH_POST_MERGE:
 		graph_output_post_merge_line(graph, &line);
@@ -1342,7 +1342,7 @@ int graph_next_line(struct git_graph *graph, struct strbuf *sb)
 	}
 
 	graph_pad_horizontally(graph, &line);
-	return shown_commit_line;
+	return shown_cummit_line;
 }
 
 static void graph_padding_line(struct git_graph *graph, struct strbuf *sb)
@@ -1350,16 +1350,16 @@ static void graph_padding_line(struct git_graph *graph, struct strbuf *sb)
 	int i;
 	struct graph_line line = { .buf = sb, .width = 0 };
 
-	if (graph->state != GRAPH_COMMIT) {
+	if (graph->state != GRAPH_cummit) {
 		graph_next_line(graph, sb);
 		return;
 	}
 
 	/*
-	 * Output the row containing this commit
+	 * Output the row containing this cummit
 	 * Iterate up to and including graph->num_columns,
-	 * since the current commit may not be in any of the existing
-	 * columns.  (This happens when the current commit doesn't have any
+	 * since the current cummit may not be in any of the existing
+	 * columns.  (This happens when the current cummit doesn't have any
 	 * children that we have already processed.)
 	 */
 	for (i = 0; i < graph->num_columns; i++) {
@@ -1367,7 +1367,7 @@ static void graph_padding_line(struct git_graph *graph, struct strbuf *sb)
 
 		graph_line_write_column(&line, col, '|');
 
-		if (col->commit == graph->commit && graph->num_parents > 2) {
+		if (col->cummit == graph->cummit && graph->num_parents > 2) {
 			int len = (graph->num_parents - 2) * 2;
 			graph_line_addchars(&line, ' ', len);
 		} else {
@@ -1383,15 +1383,15 @@ static void graph_padding_line(struct git_graph *graph, struct strbuf *sb)
 	graph->prev_state = GRAPH_PADDING;
 }
 
-int graph_is_commit_finished(struct git_graph const *graph)
+int graph_is_cummit_finished(struct git_graph const *graph)
 {
 	return (graph->state == GRAPH_PADDING);
 }
 
-void graph_show_commit(struct git_graph *graph)
+void graph_show_cummit(struct git_graph *graph)
 {
 	struct strbuf msgbuf = STRBUF_INIT;
-	int shown_commit_line = 0;
+	int shown_cummit_line = 0;
 
 	graph_show_line_prefix(default_diffopt);
 
@@ -1403,16 +1403,16 @@ void graph_show_commit(struct git_graph *graph)
 	 * are called once for each parent without graph_update having been
 	 * called.  In this case, simply output a single padding line.
 	 */
-	if (graph_is_commit_finished(graph)) {
+	if (graph_is_cummit_finished(graph)) {
 		graph_show_padding(graph);
-		shown_commit_line = 1;
+		shown_cummit_line = 1;
 	}
 
-	while (!shown_commit_line && !graph_is_commit_finished(graph)) {
-		shown_commit_line = graph_next_line(graph, &msgbuf);
+	while (!shown_cummit_line && !graph_is_cummit_finished(graph)) {
+		shown_cummit_line = graph_next_line(graph, &msgbuf);
 		fwrite(msgbuf.buf, sizeof(char), msgbuf.len,
 			graph->revs->diffopt.file);
-		if (!shown_commit_line) {
+		if (!shown_cummit_line) {
 			putc('\n', graph->revs->diffopt.file);
 			graph_show_line_prefix(&graph->revs->diffopt);
 		}
@@ -1460,7 +1460,7 @@ int graph_show_remainder(struct git_graph *graph)
 	if (!graph)
 		return 0;
 
-	if (graph_is_commit_finished(graph))
+	if (graph_is_cummit_finished(graph))
 		return 0;
 
 	for (;;) {
@@ -1470,7 +1470,7 @@ int graph_show_remainder(struct git_graph *graph)
 		strbuf_setlen(&msgbuf, 0);
 		shown = 1;
 
-		if (!graph_is_commit_finished(graph)) {
+		if (!graph_is_cummit_finished(graph)) {
 			putc('\n', graph->revs->diffopt.file);
 			graph_show_line_prefix(&graph->revs->diffopt);
 		} else {
@@ -1509,14 +1509,14 @@ static void graph_show_strbuf(struct git_graph *graph,
 	}
 }
 
-void graph_show_commit_msg(struct git_graph *graph,
+void graph_show_cummit_msg(struct git_graph *graph,
 			   FILE *file,
 			   struct strbuf const *sb)
 {
 	int newline_terminated;
 
 	/*
-	 * Show the commit message
+	 * Show the cummit message
 	 */
 	graph_show_strbuf(graph, file, sb);
 
@@ -1526,9 +1526,9 @@ void graph_show_commit_msg(struct git_graph *graph,
 	newline_terminated = (sb->len && sb->buf[sb->len - 1] == '\n');
 
 	/*
-	 * If there is more output needed for this commit, show it now
+	 * If there is more output needed for this cummit, show it now
 	 */
-	if (!graph_is_commit_finished(graph)) {
+	if (!graph_is_cummit_finished(graph)) {
 		/*
 		 * If sb doesn't have a terminating newline, print one now,
 		 * so we can start the remainder of the graph output on a

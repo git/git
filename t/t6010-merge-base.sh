@@ -11,11 +11,11 @@ test_description='Merge base and parent list computation.
 M=1130000000
 Z=+0000
 
-GIT_COMMITTER_EMAIL=git@comm.iter.xz
-GIT_COMMITTER_NAME='C O Mmiter'
+GIT_cummitTER_EMAIL=git@comm.iter.xz
+GIT_cummitTER_NAME='C O Mmiter'
 GIT_AUTHOR_NAME='A U Thor'
 GIT_AUTHOR_EMAIL=git@au.thor.xz
-export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
+export GIT_cummitTER_EMAIL GIT_cummitTER_NAME GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 
 doit () {
 	OFFSET=$1 &&
@@ -28,14 +28,14 @@ doit () {
 		PARENTS="${PARENTS}-p $P "
 	done &&
 
-	GIT_COMMITTER_DATE="$(($M + $OFFSET)) $Z" &&
-	GIT_AUTHOR_DATE=$GIT_COMMITTER_DATE &&
-	export GIT_COMMITTER_DATE GIT_AUTHOR_DATE &&
+	GIT_cummitTER_DATE="$(($M + $OFFSET)) $Z" &&
+	GIT_AUTHOR_DATE=$GIT_cummitTER_DATE &&
+	export GIT_cummitTER_DATE GIT_AUTHOR_DATE &&
 
-	commit=$(echo $NAME | git commit-tree $T $PARENTS) &&
+	cummit=$(echo $NAME | git cummit-tree $T $PARENTS) &&
 
-	git update-ref "refs/tags/$NAME" "$commit" &&
-	echo $commit
+	git update-ref "refs/tags/$NAME" "$cummit" &&
+	echo $cummit
 }
 
 test_expect_success 'setup' '
@@ -97,7 +97,7 @@ test_expect_success 'merge-base/show-branch --independent' '
 
 test_expect_success 'unsynchronized clocks' '
 	# This test is to demonstrate that relying on timestamps in a distributed
-	# SCM to provide a _consistent_ partial ordering of commits leads to
+	# SCM to provide a _consistent_ partial ordering of cummits leads to
 	# insanity.
 	#
 	#               Relative
@@ -113,7 +113,7 @@ test_expect_success 'unsynchronized clocks' '
 	#   \ |  /        \ |  /
 	#     S             0
 	#
-	# The left and right chains of commits can be of any length and complexity as
+	# The left and right chains of cummits can be of any length and complexity as
 	# long as all of the timestamps are greater than that of S.
 
 	S=$(doit  0 S) &&
@@ -163,7 +163,7 @@ test_expect_success '--independent with unsynchronized clocks' '
 '
 
 test_expect_success 'merge-base for octopus-step (setup)' '
-	# Another set to demonstrate base between one commit and a merge
+	# Another set to demonstrate base between one cummit and a merge
 	# in the documentation.
 	#
 	# * C (MMC) * B (MMB) * A  (MMA)
@@ -177,23 +177,23 @@ test_expect_success 'merge-base for octopus-step (setup)' '
 	# |/
 	# * root (MMR)
 
-	test_commit MMR &&
-	test_commit MM1 &&
-	test_commit MM-o &&
-	test_commit MM-p &&
-	test_commit MM-q &&
-	test_commit MMA &&
+	test_cummit MMR &&
+	test_cummit MM1 &&
+	test_cummit MM-o &&
+	test_cummit MM-p &&
+	test_cummit MM-q &&
+	test_cummit MMA &&
 	git checkout MM1 &&
-	test_commit MM-r &&
-	test_commit MM-s &&
-	test_commit MM-t &&
-	test_commit MMB &&
+	test_cummit MM-r &&
+	test_cummit MM-s &&
+	test_cummit MM-t &&
+	test_cummit MMB &&
 	git checkout MMR &&
-	test_commit MM-u &&
-	test_commit MM-v &&
-	test_commit MM-w &&
-	test_commit MM-x &&
-	test_commit MMC
+	test_cummit MM-u &&
+	test_cummit MM-v &&
+	test_cummit MM-w &&
+	test_cummit MM-x &&
+	test_cummit MMC
 '
 
 test_expect_success 'merge-base A B C' '
@@ -211,18 +211,18 @@ test_expect_success 'merge-base A B C' '
 
 test_expect_success 'criss-cross merge-base for octopus-step' '
 	git reset --hard MMR &&
-	test_commit CC1 &&
+	test_cummit CC1 &&
 	git reset --hard E &&
-	test_commit CC2 &&
+	test_cummit CC2 &&
 	test_tick &&
-	# E is a root commit unrelated to MMR root on which CC1 is based
+	# E is a root cummit unrelated to MMR root on which CC1 is based
 	git merge -s ours --allow-unrelated-histories CC1 &&
-	test_commit CC-o &&
-	test_commit CCB &&
+	test_cummit CC-o &&
+	test_cummit CCB &&
 	git reset --hard CC1 &&
-	# E is a root commit unrelated to MMR root on which CC1 is based
+	# E is a root cummit unrelated to MMR root on which CC1 is based
 	git merge -s ours --allow-unrelated-histories CC2 &&
-	test_commit CCA &&
+	test_cummit CCA &&
 
 	git rev-parse CC1 CC2 >expected &&
 	git merge-base --all CCB CCA^^ CCA^^2 >actual &&
@@ -239,10 +239,10 @@ test_expect_success 'using reflog to find the fork point' '
 	(
 		for count in 1 2 3
 		do
-			git commit --allow-empty -m "Base commit #$count" &&
+			git cummit --allow-empty -m "Base cummit #$count" &&
 			git rev-parse HEAD >expect$count &&
 			git checkout -B derived &&
-			git commit --allow-empty -m "Derived #$count" &&
+			git cummit --allow-empty -m "Derived #$count" &&
 			git rev-parse HEAD >derived$count &&
 			git checkout -B base $E || exit 1
 		done &&
@@ -285,20 +285,20 @@ test_expect_success 'merge-base --octopus --all for complex tree' '
 	#   \  \ | /   /
 	#    \__\|/___/
 	#        J
-	test_commit J &&
-	test_commit JB &&
+	test_cummit J &&
+	test_cummit JB &&
 	git reset --hard J &&
-	test_commit JC &&
+	test_cummit JC &&
 	git reset --hard J &&
-	test_commit JTEMP1 &&
+	test_cummit JTEMP1 &&
 	test_merge JA JB &&
 	test_merge JAA JC &&
 	git reset --hard J &&
-	test_commit JTEMP2 &&
+	test_cummit JTEMP2 &&
 	test_merge JD JB &&
 	test_merge JDD JC &&
 	git reset --hard J &&
-	test_commit JTEMP3 &&
+	test_cummit JTEMP3 &&
 	test_merge JE JC &&
 	git rev-parse JC >expected &&
 	git merge-base --all --octopus JAA JDD JE >actual &&

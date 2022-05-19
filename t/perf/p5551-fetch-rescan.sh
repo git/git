@@ -24,7 +24,7 @@ test_expect_success 'create parent and child' '
 test_expect_success 'create refs in the parent' '
 	(
 		cd parent &&
-		git commit --allow-empty -m foo &&
+		git cummit --allow-empty -m foo &&
 		head=$(git rev-parse HEAD) &&
 		test_seq 1000 |
 		sed "s,.*,update refs/heads/& $head," |

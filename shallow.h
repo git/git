@@ -14,9 +14,9 @@ int is_repository_shallow(struct repository *r);
 /*
  * Lock for updating the $GIT_DIR/shallow file.
  *
- * Use `commit_shallow_file()` to commit an update, or
+ * Use `cummit_shallow_file()` to cummit an update, or
  * `rollback_shallow_file()` to roll it back. In either case, any
- * in-memory cached information about which commits are shallow will be
+ * in-memory cached information about which cummits are shallow will be
  * appropriately invalidated so that future operations reflect the new
  * state.
  */
@@ -27,16 +27,16 @@ struct shallow_lock {
 	.lock = LOCK_INIT, \
 }
 
-/* commit $GIT_DIR/shallow and reset stat-validity checks */
-int commit_shallow_file(struct repository *r, struct shallow_lock *lk);
+/* cummit $GIT_DIR/shallow and reset stat-validity checks */
+int cummit_shallow_file(struct repository *r, struct shallow_lock *lk);
 /* rollback $GIT_DIR/shallow and reset stat-validity checks */
 void rollback_shallow_file(struct repository *r, struct shallow_lock *lk);
 
-struct commit_list *get_shallow_commits(struct object_array *heads,
+struct cummit_list *get_shallow_cummits(struct object_array *heads,
 					int depth, int shallow_flag, int not_shallow_flag);
-struct commit_list *get_shallow_commits_by_rev_list(
+struct cummit_list *get_shallow_cummits_by_rev_list(
 		int ac, const char **av, int shallow_flag, int not_shallow_flag);
-int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
+int write_shallow_cummits(struct strbuf *out, int use_pack_protocol,
 			  const struct oid_array *extra);
 
 void setup_alternate_shallow(struct shallow_lock *shallow_lock,
@@ -66,14 +66,14 @@ struct shallow_info {
 	int *need_reachability_test;
 	int *reachable;
 	int *shallow_ref;
-	struct commit **commits;
-	int nr_commits;
+	struct cummit **cummits;
+	int nr_cummits;
 };
 
 void prepare_shallow_info(struct shallow_info *, struct oid_array *);
 void clear_shallow_info(struct shallow_info *);
 void remove_nonexistent_theirs_shallow(struct shallow_info *);
-void assign_shallow_commits_to_refs(struct shallow_info *info,
+void assign_shallow_cummits_to_refs(struct shallow_info *info,
 				    uint32_t **used,
 				    int *ref_status);
 int delayed_reachability_test(struct shallow_info *si, int c);

@@ -45,7 +45,7 @@ test_expect_success 'setup' '
 	EOF
 
 	git add A M &&
-	git commit -m "initial has A and M" &&
+	git cummit -m "initial has A and M" &&
 	git branch white &&
 	git branch red &&
 	git branch blue &&
@@ -55,19 +55,19 @@ test_expect_success 'setup' '
 	sed -e "/^G /s/.*/G : colored branch changes a line/" <M >N &&
 	rm -f A M &&
 	git update-index --add --remove A B M N &&
-	git commit -m "white renames A->B, M->N" &&
+	git cummit -m "white renames A->B, M->N" &&
 
 	git checkout red &&
 	echo created by red >R &&
 	git update-index --add R &&
-	git commit -m "red creates R" &&
+	git cummit -m "red creates R" &&
 
 	git checkout blue &&
 	sed -e "/^o /s/.*/g : blue changes a line/" <A >B &&
 	rm -f A &&
 	mv B A &&
 	git update-index A &&
-	git commit -m "blue modify A" &&
+	git cummit -m "blue modify A" &&
 
 	git checkout main
 '

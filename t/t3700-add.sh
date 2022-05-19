@@ -172,7 +172,7 @@ test_expect_success 'git add with filemode=0, symlinks=0 prefers stage 2 over st
 '
 
 test_expect_success 'git add --refresh' '
-	>foo && git add foo && git commit -a -m "commit all" &&
+	>foo && git add foo && git cummit -a -m "cummit all" &&
 	test -z "$(git diff-index HEAD -- foo)" &&
 	git read-tree HEAD &&
 	case "$(git diff-index HEAD -- foo)" in
@@ -303,12 +303,12 @@ test_expect_success '"git add ." in empty repo' '
 	)
 '
 
-test_expect_success 'error on a repository with no commits' '
+test_expect_success 'error on a repository with no cummits' '
 	rm -fr empty &&
 	git init empty &&
 	test_must_fail git add empty >actual 2>&1 &&
 	cat >expect <<-EOF &&
-	error: '"'empty/'"' does not have a commit checked out
+	error: '"'empty/'"' does not have a cummit checked out
 	fatal: adding files failed
 	EOF
 	test_cmp expect actual

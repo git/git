@@ -29,6 +29,6 @@ Fixes since v1.7.12.2
    when run over the smart-http protocol.
 
  * "git status" honored the ignore=dirty settings in .gitmodules but
-   "git commit" didn't.
+   "git cummit" didn't.
 
 Also contains a handful of documentation updates.

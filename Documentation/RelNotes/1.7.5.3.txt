@@ -14,7 +14,7 @@ Fixes since v1.7.5.2
  * The logic to handle "&" (expand to UNIX username) in GECOS field
    miscounted the length of the name it formatted.
 
- * "git cherry-pick -s resolve" failed to cherry-pick a root commit.
+ * "git cherry-pick -s resolve" failed to cherry-pick a root cummit.
 
  * "git diff --word-diff" misbehaved when diff.suppress-blank-empty was
    in effect.

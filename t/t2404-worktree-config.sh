@@ -6,7 +6,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit start
+	test_cummit start
 '
 
 test_expect_success 'config --worktree in single worktree' '

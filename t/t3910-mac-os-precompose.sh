@@ -45,9 +45,9 @@ test_expect_success "detect if nfd needed" '
 test_expect_success "setup" '
 	>x &&
 	git add x &&
-	git commit -m "1st commit" &&
+	git cummit -m "1st cummit" &&
 	git rm x &&
-	git commit -m "rm x"
+	git cummit -m "rm x"
 '
 test_expect_success "setup case mac" '
 	git checkout -b mac_os
@@ -89,7 +89,7 @@ test_expect_success "git diff-index f.Adiar" '
 test_expect_success "add file Adiarnfc" '
 	echo f.Adiarnfc >f.$Adiarnfc &&
 	git add f.$Adiarnfc &&
-	git commit -m "add f.$Adiarnfc"
+	git cummit -m "add f.$Adiarnfc"
 '
 # This will test nfd2nfc in git diff-tree
 test_expect_success "git diff-tree f.Adiar" '
@@ -105,12 +105,12 @@ test_expect_success "stage file d.Adiarnfd/f.Adiarnfd" '
 	mkdir d.$Adiarnfd &&
 	echo d.$Adiarnfd/f.$Adiarnfd >d.$Adiarnfd/f.$Adiarnfd &&
 	git stage d.$Adiarnfd/f.$Adiarnfd &&
-	git commit -m "add d.$Adiarnfd/f.$Adiarnfd"
+	git cummit -m "add d.$Adiarnfd/f.$Adiarnfd"
 '
 test_expect_success "add link Adiarnfc" '
 	ln -s d.$Adiarnfd/f.$Adiarnfd l.$Adiarnfc &&
 	git add l.$Adiarnfc &&
-	git commit -m "add l.Adiarnfc"
+	git cummit -m "add l.Adiarnfc"
 '
 # This will test git log
 test_expect_success "git log f.Adiar" '
@@ -135,7 +135,7 @@ test_expect_success "git mv" '
 	git mv f.$Adiarnfd f.$Odiarnfc &&
 	git mv d.$Adiarnfd d.$Odiarnfc &&
 	git mv l.$Adiarnfd l.$Odiarnfc &&
-	git commit -m "mv Adiarnfd Odiarnfc"
+	git cummit -m "mv Adiarnfd Odiarnfc"
 '
 # Files can be checked out as nfc
 # And the link has been corrected from nfd to nfc
@@ -158,12 +158,12 @@ test_expect_success "setup case mac2" '
 	git reset --hard &&
 	git checkout -b mac_os_2
 '
-# This will test nfd2nfc in git commit
-test_expect_success "commit file d2.Adiarnfd/f.Adiarnfd" '
+# This will test nfd2nfc in git cummit
+test_expect_success "cummit file d2.Adiarnfd/f.Adiarnfd" '
 	mkdir d2.$Adiarnfd &&
 	echo d2.$Adiarnfd/f.$Adiarnfd >d2.$Adiarnfd/f.$Adiarnfd &&
 	git add d2.$Adiarnfd/f.$Adiarnfd &&
-	git commit -m "add d2.$Adiarnfd/f.$Adiarnfd" -- d2.$Adiarnfd/f.$Adiarnfd
+	git cummit -m "add d2.$Adiarnfd/f.$Adiarnfd" -- d2.$Adiarnfd/f.$Adiarnfd
 '
 test_expect_success "setup for long decomposed filename" '
 	git checkout main &&
@@ -173,7 +173,7 @@ test_expect_success "setup for long decomposed filename" '
 test_expect_success "Add long decomposed filename" '
 	echo longd >$Alongd &&
 	git add * &&
-	git commit -m "Long filename"
+	git cummit -m "Long filename"
 '
 test_expect_success "setup for long precomposed filename" '
 	git checkout main &&
@@ -183,13 +183,13 @@ test_expect_success "setup for long precomposed filename" '
 test_expect_success "Add long precomposed filename" '
 	echo longc >$Alongc &&
 	git add * &&
-	git commit -m "Long filename"
+	git cummit -m "Long filename"
 '
 
 test_expect_failure 'handle existing decomposed filenames' '
 	echo content >"verbatim.$Adiarnfd" &&
 	git -c core.precomposeunicode=false add "verbatim.$Adiarnfd" &&
-	git commit -m "existing decomposed file" &&
+	git cummit -m "existing decomposed file" &&
 	git ls-files --exclude-standard -o "verbatim*" >untracked &&
 	test_must_be_empty untracked
 '

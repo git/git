@@ -3,7 +3,7 @@ git-cherry(1)
 
 NAME
 ----
-git-cherry - Find commits yet to be applied to upstream
+git-cherry - Find cummits yet to be applied to upstream
 
 SYNOPSIS
 --------
@@ -12,32 +12,32 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Determine whether there are commits in `<head>..<upstream>` that are
+Determine whether there are cummits in `<head>..<upstream>` that are
 equivalent to those in the range `<limit>..<head>`.
 
 The equivalence test is based on the diff, after removing whitespace
-and line numbers.  git-cherry therefore detects when commits have been
+and line numbers.  git-cherry therefore detects when cummits have been
 "copied" by means of linkgit:git-cherry-pick[1], linkgit:git-am[1] or
 linkgit:git-rebase[1].
 
-Outputs the SHA1 of every commit in `<limit>..<head>`, prefixed with
-`-` for commits that have an equivalent in <upstream>, and `+` for
-commits that do not.
+Outputs the SHA1 of every cummit in `<limit>..<head>`, prefixed with
+`-` for cummits that have an equivalent in <upstream>, and `+` for
+cummits that do not.
 
 OPTIONS
 -------
 -v::
-	Show the commit subjects next to the SHA1s.
+	Show the cummit subjects next to the SHA1s.
 
 <upstream>::
-	Upstream branch to search for equivalent commits.
+	Upstream branch to search for equivalent cummits.
 	Defaults to the upstream branch of HEAD.
 
 <head>::
 	Working branch; defaults to HEAD.
 
 <limit>::
-	Do not report commits up to (and including) limit.
+	Do not report cummits up to (and including) limit.
 
 EXAMPLES
 --------
@@ -52,7 +52,7 @@ create and send a topic branch like this:
 
 ------------
 $ git checkout -b topic origin/master
-# work and create some commits
+# work and create some cummits
 $ git format-patch origin/master
 $ git send-email ... 00*
 ------------
@@ -68,19 +68,19 @@ $ git cherry -v
 Concrete example
 ~~~~~~~~~~~~~~~~
 
-In a situation where topic consisted of three commits, and the
+In a situation where topic consisted of three cummits, and the
 maintainer applied two of them, the situation might look like:
 
 ------------
 $ git log --graph --oneline --decorate --boundary origin/master...topic
-* 7654321 (origin/master) upstream tip commit
-[... snip some other commits ...]
+* 7654321 (origin/master) upstream tip cummit
+[... snip some other cummits ...]
 * cccc111 cherry-pick of C
 * aaaa111 cherry-pick of A
 [... snip a lot more that has happened ...]
-| * cccc000 (topic) commit C
-| * bbbb000 commit B
-| * aaaa000 commit A
+| * cccc000 (topic) cummit C
+| * bbbb000 cummit B
+| * aaaa000 cummit A
 |/
 o 1234567 branch point
 ------------
@@ -90,14 +90,14 @@ be applied:
 
 ------------
 $ git cherry origin/master topic
-- cccc000... commit C
-+ bbbb000... commit B
-- aaaa000... commit A
+- cccc000... cummit C
++ bbbb000... cummit B
+- aaaa000... cummit A
 ------------
 
-Here, we see that the commits A and C (marked with `-`) can be
+Here, we see that the cummits A and C (marked with `-`) can be
 dropped from your `topic` branch when you rebase it on top of
-`origin/master`, while the commit B (marked with `+`) still needs to
+`origin/master`, while the cummit B (marked with `+`) still needs to
 be kept so that it will be sent to be applied to `origin/master`.
 
 
@@ -110,14 +110,14 @@ example, this might look like:
 
 ------------
 $ git log --graph --oneline --decorate --boundary origin/master...topic
-* 7654321 (origin/master) upstream tip commit
-[... snip some other commits ...]
+* 7654321 (origin/master) upstream tip cummit
+[... snip some other cummits ...]
 * cccc111 cherry-pick of C
 * aaaa111 cherry-pick of A
 [... snip a lot more that has happened ...]
-| * cccc000 (topic) commit C
-| * bbbb000 commit B
-| * aaaa000 commit A
+| * cccc000 (topic) cummit C
+| * bbbb000 cummit B
+| * aaaa000 cummit A
 | * 0000fff (base) unpublished stuff F
 [... snip ...]
 | * 0000aaa unpublished stuff A
@@ -125,14 +125,14 @@ $ git log --graph --oneline --decorate --boundary origin/master...topic
 o 1234567 merge-base between upstream and topic
 ------------
 
-By specifying `base` as the limit, you can avoid listing commits
+By specifying `base` as the limit, you can avoid listing cummits
 between `base` and `topic`:
 
 ------------
 $ git cherry origin/master topic base
-- cccc000... commit C
-+ bbbb000... commit B
-- aaaa000... commit A
+- cccc000... cummit C
++ bbbb000... cummit B
+- aaaa000... cummit A
 ------------
 
 

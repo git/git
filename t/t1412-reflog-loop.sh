@@ -1,14 +1,14 @@
 #!/bin/sh
 
-test_description='reflog walk shows repeated commits again'
+test_description='reflog walk shows repeated cummits again'
 . ./test-lib.sh
 
-test_expect_success 'setup commits' '
-	test_commit one file content &&
-	test_commit --append two file content
+test_expect_success 'setup cummits' '
+	test_cummit one file content &&
+	test_cummit --append two file content
 '
 
-test_expect_success 'setup reflog with alternating commits' '
+test_expect_success 'setup reflog with alternating cummits' '
 	git checkout -b topic &&
 	git reset one &&
 	git reset two &&

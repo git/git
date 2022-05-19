@@ -35,13 +35,13 @@ Fixes since v2.10
  * "git fetch http::/site/path" did not die correctly and segfaulted
    instead.
 
- * "git commit-tree" stopped reading commit.gpgsign configuration
-   variable that was meant for Porcelain "git commit" in Git 2.9; we
+ * "git cummit-tree" stopped reading cummit.gpgsign configuration
+   variable that was meant for Porcelain "git cummit" in Git 2.9; we
    forgot to update "git gui" to look at the configuration to match
    this change.
 
- * "git log --cherry-pick" used to include merge commits as candidates
-   to be matched up with other commits, resulting a lot of wasted time.
+ * "git log --cherry-pick" used to include merge cummits as candidates
+   to be matched up with other cummits, resulting a lot of wasted time.
    The patch-id generation logic has been updated to ignore merges to
    avoid the wastage.
 
@@ -60,12 +60,12 @@ Fixes since v2.10
    configuration.
 
  * "git format-patch --base=..." feature that was recently added
-   showed the base commit information after "-- " e-mail signature
+   showed the base cummit information after "-- " e-mail signature
    line, which turned out to be inconvenient.  The base information
    has been moved above the signature line.
 
  * Even when "git pull --rebase=preserve" (and the underlying "git
-   rebase --preserve") can complete without creating any new commit
+   rebase --preserve") can complete without creating any new cummit
    (i.e. fast-forwards), it still insisted on having a usable ident
    information (read: user.email is set correctly), which was less
    than nice.  As the underlying commands used inside "git rebase"

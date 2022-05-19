@@ -9,7 +9,7 @@ git-http-fetch - Download from a remote Git repository via HTTP
 SYNOPSIS
 --------
 [verse]
-'git http-fetch' [-c] [-t] [-a] [-d] [-v] [-w <filename>] [--recover] [--stdin | --packfile=<hash> | <commit>] <URL>
+'git http-fetch' [-c] [-t] [-a] [-d] [-v] [-w <filename>] [--recover] [--stdin | --packfile=<hash> | <cummit>] <URL>
 
 DESCRIPTION
 -----------
@@ -21,7 +21,7 @@ silently ignored.
 
 OPTIONS
 -------
-commit-id::
+cummit-id::
         Either the hash or the filename under [URL]/refs/ to
         pull.
 
@@ -31,17 +31,17 @@ commit-id::
 	Report what is downloaded.
 
 -w <filename>::
-        Writes the commit-id into the filename under $GIT_DIR/refs/<filename> on
+        Writes the cummit-id into the filename under $GIT_DIR/refs/<filename> on
         the local end after the transfer is complete.
 
 --stdin::
-	Instead of a commit id on the command line (which is not expected in this
+	Instead of a cummit id on the command line (which is not expected in this
 	case), 'git http-fetch' expects lines on stdin in the format
 
-		<commit-id>['\t'<filename-as-in--w>]
+		<cummit-id>['\t'<filename-as-in--w>]
 
 --packfile=<hash>::
-	For internal use only. Instead of a commit id on the command
+	For internal use only. Instead of a cummit id on the command
 	line (which is not expected in
 	this case), 'git http-fetch' fetches the packfile directly at the given
 	URL and uses index-pack to generate corresponding .idx and .keep files.

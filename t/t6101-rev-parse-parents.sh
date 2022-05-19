@@ -17,22 +17,22 @@ test_cmp_rev_output () {
 }
 
 test_expect_success 'setup' '
-	test_commit start &&
-	test_commit second &&
+	test_cummit start &&
+	test_cummit second &&
 	git checkout --orphan tmp &&
-	test_commit start2 &&
+	test_cummit start2 &&
 	git checkout main &&
 	git merge -m next --allow-unrelated-histories start2 &&
-	test_commit final &&
+	test_cummit final &&
 
 	test_seq 40 |
 	while read i
 	do
 		git checkout --orphan "b$i" &&
 		test_tick &&
-		git commit --allow-empty -m "$i" &&
-		commit=$(git rev-parse --verify HEAD) &&
-		printf "$commit " >>.git/info/grafts || return 1
+		git cummit --allow-empty -m "$i" &&
+		cummit=$(git rev-parse --verify HEAD) &&
+		printf "$cummit " >>.git/info/grafts || return 1
 	done
 '
 
@@ -120,9 +120,9 @@ test_expect_success 'short SHA-1 works' '
 # rev^- tests; we can use a simpler setup for these
 
 test_expect_success 'setup for rev^- tests' '
-	test_commit one &&
-	test_commit two &&
-	test_commit three &&
+	test_cummit one &&
+	test_cummit two &&
+	test_cummit three &&
 
 	# Merge in a branch for testing rev^-
 	git checkout -b branch &&
@@ -131,7 +131,7 @@ test_expect_success 'setup for rev^- tests' '
 	git checkout -b merge
 '
 
-# The merged branch has 2 commits + the merge
+# The merged branch has 2 cummits + the merge
 test_expect_success 'rev-list --count merge^- = merge^..merge' '
 	git rev-list --count merge^..merge >expect &&
 	echo 3 >actual &&

@@ -19,7 +19,7 @@
 
 struct reset_head_opts {
 	/*
-	 * The commit to checkout/reset to. Defaults to HEAD.
+	 * The cummit to checkout/reset to. Defaults to HEAD.
 	 */
 	const struct object_id *oid;
 	/*

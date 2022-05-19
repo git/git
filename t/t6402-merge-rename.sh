@@ -49,7 +49,7 @@ test_expect_success 'setup' '
 	EOF
 
 	git add A M &&
-	git commit -m "initial has A and M" &&
+	git cummit -m "initial has A and M" &&
 	git branch white &&
 	git branch red &&
 	git branch blue &&
@@ -59,43 +59,43 @@ test_expect_success 'setup' '
 
 	sed -e "/^g /s/.*/g : main changes a line/" <A >A+ &&
 	mv A+ A &&
-	git commit -a -m "main updates A" &&
+	git cummit -a -m "main updates A" &&
 
 	git checkout yellow &&
 	rm -f M &&
-	git commit -a -m "yellow removes M" &&
+	git cummit -a -m "yellow removes M" &&
 
 	git checkout white &&
 	sed -e "/^g /s/.*/g : white changes a line/" <A >B &&
 	sed -e "/^G /s/.*/G : colored branch changes a line/" <M >N &&
 	rm -f A M &&
 	git update-index --add --remove A B M N &&
-	git commit -m "white renames A->B, M->N" &&
+	git cummit -m "white renames A->B, M->N" &&
 
 	git checkout red &&
 	sed -e "/^g /s/.*/g : red changes a line/" <A >B &&
 	sed -e "/^G /s/.*/G : colored branch changes a line/" <M >N &&
 	rm -f A M &&
 	git update-index --add --remove A B M N &&
-	git commit -m "red renames A->B, M->N" &&
+	git cummit -m "red renames A->B, M->N" &&
 
 	git checkout blue &&
 	sed -e "/^g /s/.*/g : blue changes a line/" <A >C &&
 	sed -e "/^G /s/.*/G : colored branch changes a line/" <M >N &&
 	rm -f A M &&
 	git update-index --add --remove A C M N &&
-	git commit -m "blue renames A->C, M->N" &&
+	git cummit -m "blue renames A->C, M->N" &&
 
 	git checkout change &&
 	sed -e "/^g /s/.*/g : changed line/" <A >A+ &&
 	mv A+ A &&
-	git commit -q -a -m "changed" &&
+	git cummit -q -a -m "changed" &&
 
 	git checkout change+rename &&
 	sed -e "/^g /s/.*/g : changed line/" <A >B &&
 	rm A &&
 	git update-index --add B &&
-	git commit -q -a -m "changed and renamed" &&
+	git cummit -q -a -m "changed and renamed" &&
 
 	git checkout main
 '
@@ -266,31 +266,31 @@ test_expect_success 'setup for rename + d/f conflicts' '
 	printf "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n" >sub/file &&
 	echo foo >dir/file-in-the-way &&
 	git add -A &&
-	git commit -m "Common commit" &&
+	git cummit -m "Common cummit" &&
 
 	echo 11 >>sub/file &&
 	echo more >>dir/file-in-the-way &&
 	git add -u &&
-	git commit -m "Commit to merge, with dir in the way" &&
+	git cummit -m "cummit to merge, with dir in the way" &&
 
 	git checkout -b dir-not-in-way &&
 	git reset --soft HEAD^ &&
 	git rm -rf dir &&
-	git commit -m "Commit to merge, with dir removed" -- dir sub/file &&
+	git cummit -m "cummit to merge, with dir removed" -- dir sub/file &&
 
 	git checkout -b renamed-file-has-no-conflicts dir-in-way~1 &&
 	git rm -rf dir &&
 	git rm sub/file &&
 	printf "1\n2\n3\n4\n5555\n6\n7\n8\n9\n10\n" >dir &&
 	git add dir &&
-	git commit -m "Independent change" &&
+	git cummit -m "Independent change" &&
 
 	git checkout -b renamed-file-has-conflicts dir-in-way~1 &&
 	git rm -rf dir &&
 	git mv sub/file dir &&
 	echo 12 >>dir &&
 	git add dir &&
-	git commit -m "Conflicting change"
+	git cummit -m "Conflicting change"
 '
 
 test_expect_success 'Rename+D/F conflict; renamed file merges + dir not in way' '
@@ -469,17 +469,17 @@ test_expect_success 'setup both rename source and destination involved in D/F co
 	mkdir one &&
 	echo stuff >one/file &&
 	git add -A &&
-	git commit -m "Common commit" &&
+	git cummit -m "Common cummit" &&
 
 	git mv one/file destdir &&
-	git commit -m "Renamed to destdir" &&
+	git cummit -m "Renamed to destdir" &&
 
 	git checkout -b source-conflict HEAD~1 &&
 	git rm -rf one &&
 	mkdir destdir &&
 	touch one destdir/foo &&
 	git add -A &&
-	git commit -m "Conflicts in the way"
+	git cummit -m "Conflicts in the way"
 '
 
 test_expect_success 'both rename source and destination involved in D/F conflict' '
@@ -514,17 +514,17 @@ test_expect_success 'setup pair rename to parent of other (D/F conflicts)' '
 	echo stuff >one/file &&
 	echo other >two/file &&
 	git add -A &&
-	git commit -m "Common commit" &&
+	git cummit -m "Common cummit" &&
 
 	git rm -rf one &&
 	git mv two/file one &&
-	git commit -m "Rename two/file -> one" &&
+	git cummit -m "Rename two/file -> one" &&
 
 	git checkout -b rename-one HEAD~1 &&
 	git rm -rf two &&
 	git mv one/file two &&
 	rm -r one &&
-	git commit -m "Rename one/file -> two"
+	git cummit -m "Rename one/file -> two"
 '
 
 if test "$GIT_TEST_MERGE_ALGORITHM" = ort
@@ -603,20 +603,20 @@ test_expect_success 'setup rename of one file to two, with directories in the wa
 
 	echo stuff >original &&
 	git add -A &&
-	git commit -m "Common commit" &&
+	git cummit -m "Common cummit" &&
 
 	mkdir two &&
 	>two/file &&
 	git add two/file &&
 	git mv original one &&
-	git commit -m "Put two/file in the way, rename to one" &&
+	git cummit -m "Put two/file in the way, rename to one" &&
 
 	git checkout -b second-rename HEAD~1 &&
 	mkdir one &&
 	>one/file &&
 	git add one/file &&
 	git mv original two &&
-	git commit -m "Put one/file in the way, rename to two"
+	git cummit -m "Put one/file in the way, rename to two"
 '
 
 test_expect_success 'check handling of differently renamed file with D/F conflicts' '
@@ -657,16 +657,16 @@ test_expect_success 'setup rename one file to two; directories moving out of the
 	mkdir one two &&
 	touch one/file two/file &&
 	git add -A &&
-	git commit -m "Common commit" &&
+	git cummit -m "Common cummit" &&
 
 	git rm -rf one &&
 	git mv original one &&
-	git commit -m "Rename to one" &&
+	git cummit -m "Rename to one" &&
 
 	git checkout -b second-rename-redo HEAD~1 &&
 	git rm -rf two &&
 	git mv original two &&
-	git commit -m "Rename to two"
+	git cummit -m "Rename to two"
 '
 
 test_expect_success 'check handling of differently renamed file with D/F conflicts' '
@@ -692,17 +692,17 @@ test_expect_success 'setup avoid unnecessary update, normal rename' '
 
 	printf "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n" >original &&
 	git add -A &&
-	git commit -m "Common commit" &&
+	git cummit -m "Common cummit" &&
 
 	git mv original rename &&
 	echo 11 >>rename &&
 	git add -u &&
-	git commit -m "Renamed and modified" &&
+	git cummit -m "Renamed and modified" &&
 
 	git checkout -b merge-branch-1 HEAD~1 &&
 	echo "random content" >random-file &&
 	git add -A &&
-	git commit -m "Random, unrelated changes"
+	git cummit -m "Random, unrelated changes"
 '
 
 test_expect_success 'avoid unnecessary update, normal rename' '
@@ -722,19 +722,19 @@ test_expect_success 'setup to test avoiding unnecessary update, with D/F conflic
 	mkdir df &&
 	printf "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n" >df/file &&
 	git add -A &&
-	git commit -m "Common commit" &&
+	git cummit -m "Common cummit" &&
 
 	git mv df/file temp &&
 	rm -rf df &&
 	git mv temp df &&
 	echo 11 >>df &&
 	git add -u &&
-	git commit -m "Renamed and modified" &&
+	git cummit -m "Renamed and modified" &&
 
 	git checkout -b merge-branch-2 HEAD~1 &&
 	>unrelated-change &&
 	git add unrelated-change &&
-	git commit -m "Only unrelated changes"
+	git cummit -m "Only unrelated changes"
 '
 
 test_expect_success 'avoid unnecessary update, with D/F conflict' '
@@ -755,17 +755,17 @@ test_expect_success 'setup avoid unnecessary update, dir->(file,nothing)' '
 	mkdir df &&
 	>df/file &&
 	git add -A &&
-	git commit -mA &&
+	git cummit -mA &&
 
 	git checkout -b side &&
 	git rm -rf df &&
-	git commit -mB &&
+	git cummit -mB &&
 
 	git checkout main &&
 	git rm -rf df &&
 	echo bla >df &&
 	git add -A &&
-	git commit -m "Add a newfile"
+	git cummit -m "Add a newfile"
 '
 
 test_expect_success 'avoid unnecessary update, dir->(file,nothing)' '
@@ -785,16 +785,16 @@ test_expect_success 'setup avoid unnecessary update, modify/delete' '
 	>irrelevant &&
 	>file &&
 	git add -A &&
-	git commit -mA &&
+	git cummit -mA &&
 
 	git checkout -b side &&
 	git rm -f file &&
-	git commit -m "Delete file" &&
+	git cummit -m "Delete file" &&
 
 	git checkout main &&
 	echo bla >file &&
 	git add -A &&
-	git commit -m "Modify file"
+	git cummit -m "Modify file"
 '
 
 test_expect_success 'avoid unnecessary update, modify/delete' '
@@ -813,16 +813,16 @@ test_expect_success 'setup avoid unnecessary update, rename/add-dest' '
 
 	printf "1\n2\n3\n4\n5\n6\n7\n8\n" >file &&
 	git add -A &&
-	git commit -mA &&
+	git cummit -mA &&
 
 	git checkout -b side &&
 	cp file newfile &&
 	git add -A &&
-	git commit -m "Add file copy" &&
+	git cummit -m "Add file copy" &&
 
 	git checkout main &&
 	git mv file newfile &&
-	git commit -m "Rename file"
+	git cummit -m "Rename file"
 '
 
 test_expect_success 'avoid unnecessary update, rename/add-dest' '
@@ -843,13 +843,13 @@ test_expect_success 'setup merge of rename + small change' '
 	git add file &&
 
 	test_tick &&
-	git commit -m Initial &&
+	git cummit -m Initial &&
 	git checkout -b rename_branch &&
 	git mv file renamed_file &&
-	git commit -m Rename &&
+	git cummit -m Rename &&
 	git checkout rename-plus-small-change &&
 	echo NEW-VERSION >file &&
-	git commit -a -m Reformat
+	git cummit -a -m Reformat
 '
 
 test_expect_success 'merge rename + small change' '
@@ -870,18 +870,18 @@ test_expect_success 'setup for use of extended merge markers' '
 
 	printf "1\n2\n3\n4\n5\n6\n7\n8\n" >original_file &&
 	git add original_file &&
-	git commit -mA &&
+	git cummit -mA &&
 
 	git checkout -b rename &&
 	echo 9 >>original_file &&
 	git add original_file &&
 	git mv original_file renamed_file &&
-	git commit -mB &&
+	git cummit -mB &&
 
 	git checkout main &&
 	echo 8.5 >>original_file &&
 	git add original_file &&
-	git commit -mC
+	git cummit -mC
 '
 
 test_expect_success 'merge main into rename has correct extended markers' '
@@ -938,15 +938,15 @@ test_expect_success 'setup spurious "refusing to lose untracked" message' '
 	> irrelevant_file &&
 	printf "1\n2\n3\n4\n5\n6\n7\n8\n" >original_file &&
 	git add irrelevant_file original_file &&
-	git commit -mA &&
+	git cummit -mA &&
 
 	git checkout -b rename &&
 	git mv original_file renamed_file &&
-	git commit -mB &&
+	git cummit -mB &&
 
 	git checkout main &&
 	git rm original_file &&
-	git commit -mC
+	git cummit -mC
 '
 
 test_expect_success 'no spurious "refusing to lose untracked" message' '
@@ -959,13 +959,13 @@ test_expect_success 'do not follow renames for empty files' '
 	git checkout -f -b empty-base &&
 	>empty1 &&
 	git add empty1 &&
-	git commit -m base &&
+	git cummit -m base &&
 	echo content >empty1 &&
 	git add empty1 &&
-	git commit -m fill &&
+	git cummit -m fill &&
 	git checkout -b empty-topic HEAD^ &&
 	git mv empty1 empty2 &&
-	git commit -m rename &&
+	git cummit -m rename &&
 	test_must_fail git merge empty-base &&
 	test_must_be_empty empty2
 '

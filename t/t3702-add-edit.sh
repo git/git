@@ -36,7 +36,7 @@ test_expect_success 'setup' '
 
 	git add file &&
 	test_tick &&
-	git commit -m initial file
+	git cummit -m initial file
 
 '
 

@@ -408,7 +408,7 @@ test_expect_success POSIXPERM 'same mode for index & split index' '
 	git init same-mode &&
 	(
 		cd same-mode &&
-		test_commit A &&
+		test_cummit A &&
 		test_modebits .git/index >index_mode &&
 		test_must_fail git config core.sharedRepository &&
 		git -c core.splitIndex=true status &&
@@ -458,7 +458,7 @@ test_expect_success POSIXPERM,SANITY 'graceful handling when splitting index is 
 	test_create_repo ro &&
 	(
 		cd ro &&
-		test_commit initial &&
+		test_cummit initial &&
 		git update-index --split-index &&
 		test -f .git/sharedindex.*
 	) &&
@@ -476,17 +476,17 @@ test_expect_success POSIXPERM,SANITY 'graceful handling when splitting index is 
 test_expect_success 'writing split index with null sha1 does not write cache tree' '
 	git config core.splitIndex true &&
 	git config splitIndex.maxPercentChange 0 &&
-	git commit -m "commit" &&
+	git cummit -m "cummit" &&
 	{
 		git ls-tree HEAD &&
-		printf "160000 commit $ZERO_OID\\tbroken\\n"
+		printf "160000 cummit $ZERO_OID\\tbroken\\n"
 	} >broken-tree &&
 	echo "add broken entry" >msg &&
 
 	tree=$(git mktree <broken-tree) &&
 	test_tick &&
-	commit=$(git commit-tree $tree -p HEAD <msg) &&
-	git update-ref HEAD "$commit" &&
+	cummit=$(git cummit-tree $tree -p HEAD <msg) &&
+	git update-ref HEAD "$cummit" &&
 	GIT_ALLOW_NULL_SHA1=1 git reset --hard &&
 	test_might_fail test-tool dump-cache-tree >cache-tree.out &&
 	test_line_count = 0 cache-tree.out
@@ -496,12 +496,12 @@ test_expect_success 'do not refresh null base index' '
 	test_create_repo merge &&
 	(
 		cd merge &&
-		test_commit initial &&
+		test_cummit initial &&
 		git checkout -b side-branch &&
-		test_commit extra &&
+		test_cummit extra &&
 		git checkout main &&
 		git update-index --split-index &&
-		test_commit more &&
+		test_cummit more &&
 		# must not write a new shareindex, or we wont catch the problem
 		git -c splitIndex.maxPercentChange=100 merge --no-edit side-branch 2>err &&
 		# i.e. do not expect warnings like

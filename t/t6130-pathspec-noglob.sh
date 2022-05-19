@@ -3,18 +3,18 @@
 test_description='test globbing (and noglob) of pathspec limiting'
 . ./test-lib.sh
 
-test_expect_success 'create commits with glob characters' '
-	test_commit unrelated bar &&
-	test_commit vanilla foo &&
-	# insert file "f*" in the commit, but in a way that avoids
+test_expect_success 'create cummits with glob characters' '
+	test_cummit unrelated bar &&
+	test_cummit vanilla foo &&
+	# insert file "f*" in the cummit, but in a way that avoids
 	# the name "f*" in the worktree, because it is not allowed
 	# on Windows (the tests below do not depend on the presence
 	# of the file in the worktree)
 	git config core.protectNTFS false &&
 	git update-index --add --cacheinfo 100644 "$(git rev-parse HEAD:foo)" "f*" &&
 	test_tick &&
-	git commit -m star &&
-	test_commit bracket "f[o][o]"
+	git cummit -m star &&
+	test_cummit bracket "f[o][o]"
 '
 
 test_expect_success 'vanilla pathspec matches literally' '
@@ -117,7 +117,7 @@ test_expect_success 'blame takes global pathspec flags' '
 
 test_expect_success 'setup xxx/bar' '
 	mkdir xxx &&
-	test_commit xxx xxx/bar
+	test_cummit xxx xxx/bar
 '
 
 test_expect_success '**/ works with :(glob)' '

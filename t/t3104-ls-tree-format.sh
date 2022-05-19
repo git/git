@@ -13,8 +13,8 @@ test_expect_success 'ls-tree --format usage' '
 
 test_expect_success 'setup' '
 	mkdir dir &&
-	test_commit dir/sub-file &&
-	test_commit top-file
+	test_cummit dir/sub-file &&
+	test_cummit top-file
 '
 
 test_ls_tree_format () {

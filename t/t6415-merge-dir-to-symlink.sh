@@ -6,25 +6,25 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-test_expect_success 'create a commit where dir a/b changed to symlink' '
+test_expect_success 'create a cummit where dir a/b changed to symlink' '
 	mkdir -p a/b/c a/b-2/c &&
 	> a/b/c/d &&
 	> a/b-2/c/d &&
 	> a/x &&
 	git add -A &&
-	git commit -m base &&
+	git cummit -m base &&
 	git tag start &&
 	rm -rf a/b &&
 	git add -A &&
 	test_ln_s_add b-2 a/b &&
-	git commit -m "dir to symlink"
+	git cummit -m "dir to symlink"
 '
 
 test_expect_success 'checkout does not clobber untracked symlink' '
 	git checkout HEAD^0 &&
 	git reset --hard main &&
 	git rm --cached a/b &&
-	git commit -m "untracked symlink remains" &&
+	git cummit -m "untracked symlink remains" &&
 	test_must_fail git checkout start^0 &&
 	git clean -fd    # Do not leave the untracked symlink in the way
 '
@@ -33,7 +33,7 @@ test_expect_success 'a/b-2/c/d is kept when clobbering symlink b' '
 	git checkout HEAD^0 &&
 	git reset --hard main &&
 	git rm --cached a/b &&
-	git commit -m "untracked symlink remains" &&
+	git cummit -m "untracked symlink remains" &&
 	git checkout -f start^0 &&
 	test_path_is_file a/b-2/c/d &&
 	git clean -fd    # Do not leave the untracked symlink in the way
@@ -51,7 +51,7 @@ test_expect_success 'setup for merge test' '
 	test_path_is_file a/b-2/c/d &&
 	echo x > a/x &&
 	git add a/x &&
-	git commit -m x &&
+	git cummit -m x &&
 	git tag baseline
 '
 
@@ -137,7 +137,7 @@ test_expect_success 'setup a merge where dir a/b-2 changed to symlink' '
 	rm -rf a/b-2 &&
 	git add -A &&
 	test_ln_s_add b a/b-2 &&
-	git commit -m "dir a/b-2 to symlink" &&
+	git cummit -m "dir a/b-2 to symlink" &&
 	git tag test2
 '
 

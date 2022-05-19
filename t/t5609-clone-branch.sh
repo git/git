@@ -21,9 +21,9 @@ check_file() {
 test_expect_success 'setup' '
 	mkdir parent &&
 	(cd parent && git init &&
-	 echo one >file && git add file && git commit -m one &&
+	 echo one >file && git add file && git cummit -m one &&
 	 git checkout -b two &&
-	 echo two >file && git add file && git commit -m two &&
+	 echo two >file && git add file && git cummit -m two &&
 	 git checkout main) &&
 	mkdir empty &&
 	(cd empty && git init)

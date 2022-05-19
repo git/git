@@ -13,7 +13,7 @@ test_expect_success setup '
 	test_ln_s_add ../i386/boot arch/x86_64/boot &&
 	git add . &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git branch test &&
 
 	rm arch/x86_64/boot &&
@@ -21,7 +21,7 @@ test_expect_success setup '
 	test_write_lines 2 3 4 5 6 >arch/x86_64/boot/Makefile &&
 	git add . &&
 	test_tick &&
-	git commit -a -m second &&
+	git cummit -a -m second &&
 
 	git format-patch --binary -1 --stdout >test.patch
 
@@ -41,7 +41,7 @@ test_expect_success 'check result' '
 	git diff --exit-code main &&
 	git diff --exit-code --cached main &&
 	test_tick &&
-	git commit -m replay &&
+	git cummit -m replay &&
 	T1=$(git rev-parse "main^{tree}") &&
 	T2=$(git rev-parse "HEAD^{tree}") &&
 	test "z$T1" = "z$T2"

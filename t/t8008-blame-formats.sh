@@ -7,12 +7,12 @@ test_expect_success 'setup' '
 	echo a >file &&
 	git add file &&
 	test_tick &&
-	git commit -m one &&
+	git cummit -m one &&
 	echo b >>file &&
 	echo c >>file &&
 	echo d >>file &&
 	test_tick &&
-	git commit -a -m two &&
+	git cummit -a -m two &&
 	ID1=$(git rev-parse HEAD^) &&
 	shortID1="^$(git rev-parse HEAD^ |cut -c 1-17)" &&
 	ID2=$(git rev-parse HEAD) &&
@@ -30,35 +30,35 @@ test_expect_success 'normal blame output' '
 	test_cmp expect actual
 '
 
-COMMIT1="author A U Thor
+cummit1="author A U Thor
 author-mail <author@example.com>
 author-time 1112911993
 author-tz -0700
-committer C O Mitter
-committer-mail <committer@example.com>
-committer-time 1112911993
-committer-tz -0700
+cummitter C O Mitter
+cummitter-mail <cummitter@example.com>
+cummitter-time 1112911993
+cummitter-tz -0700
 summary one
 boundary
 filename file"
-COMMIT2="author A U Thor
+cummit2="author A U Thor
 author-mail <author@example.com>
 author-time 1112912053
 author-tz -0700
-committer C O Mitter
-committer-mail <committer@example.com>
-committer-time 1112912053
-committer-tz -0700
+cummitter C O Mitter
+cummitter-mail <cummitter@example.com>
+cummitter-time 1112912053
+cummitter-tz -0700
 summary two
 previous $ID1 file
 filename file"
 
 cat >expect <<EOF
 $ID1 1 1 1
-$COMMIT1
+$cummit1
 	a
 $ID2 2 2 3
-$COMMIT2
+$cummit2
 	b
 $ID2 3 3
 	c
@@ -72,16 +72,16 @@ test_expect_success 'blame --porcelain output' '
 
 cat >expect <<EOF
 $ID1 1 1 1
-$COMMIT1
+$cummit1
 	a
 $ID2 2 2 3
-$COMMIT2
+$cummit2
 	b
 $ID2 3 3
-$COMMIT2
+$cummit2
 	c
 $ID2 4 4
-$COMMIT2
+$cummit2
 	d
 EOF
 test_expect_success 'blame --line-porcelain output' '
@@ -96,12 +96,12 @@ test_expect_success '--porcelain detects first non-blank line as subject' '
 		echo "This is it" >single-file &&
 		git add single-file &&
 		tree=$(git write-tree) &&
-		commit=$(printf "%s\n%s\n%s\n\n\n  \noneline\n\nbody\n" \
+		cummit=$(printf "%s\n%s\n%s\n\n\n  \noneline\n\nbody\n" \
 			"tree $tree" \
 			"author A <a@b.c> 123456789 +0000" \
-			"committer C <c@d.e> 123456789 +0000" |
-		git hash-object -w -t commit --stdin) &&
-		git blame --porcelain $commit -- single-file >output &&
+			"cummitter C <c@d.e> 123456789 +0000" |
+		git hash-object -w -t cummit --stdin) &&
+		git blame --porcelain $cummit -- single-file >output &&
 		grep "^summary oneline$" output
 	)
 '

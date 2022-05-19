@@ -174,7 +174,7 @@ by doing the following:
      - questionable ones are discarded or applied to near the tip;
 
    - Replacement patches to an existing topic are accepted only
-     for commits not in 'next'.
+     for cummits not in 'next'.
 
    The initial round is done with:
 
@@ -202,13 +202,13 @@ by doing the following:
    may not build even in isolation, or may break the build when
    merged to integration branches due to bugs.  There may already
    be obvious and trivial improvements suggested on the list.  The
-   maintainer often adds an extra commit, with "SQUASH???" in its
+   maintainer often adds an extra cummit, with "SQUASH???" in its
    title, to fix things up, before publishing the integration
    branches to make it usable by other developers for testing.
-   These changes are what the maintainer is not 100% committed to
+   These changes are what the maintainer is not 100% cummitted to
    (trivial typofixes etc. are often squashed directly into the
    patches that need fixing, without being applied as a separate
-   "SQUASH???" commit), so that they can be removed easily as needed.
+   "SQUASH???" cummit), so that they can be removed easily as needed.
 
 
  - Merge maint to master as needed:
@@ -243,7 +243,7 @@ by doing the following:
    branch whose tip is not merged to 'next', one of three things can
    happen:
 
-   - The commits are all next-worthy; merge the topic to next;
+   - The cummits are all next-worthy; merge the topic to next;
    - The new parts are of mixed quality, but earlier ones are
      next-worthy; merge the early parts to next;
    - Nothing is next-worthy; do not do anything.
@@ -329,7 +329,7 @@ by doing the following:
    Topics not listed in the file but are found in master..seen are
    added to the "New topics" section, topics listed in the file that
    are no longer found in master..seen are moved to the "Graduated to
-   master" section, and topics whose commits changed their states
+   master" section, and topics whose cummits changed their states
    (e.g. used to be only in 'seen', now merged to 'next') are updated
    with change markers "<<" and ">>".
 
@@ -374,16 +374,16 @@ Some observations to be made.
 
  * Even when 'next' becomes empty (in other words, all topics
    prove stable and are merged to 'master' and "git diff master
-   next" shows empty), it has tons of merge commits that will
+   next" shows empty), it has tons of merge cummits that will
    never be in 'master'.
 
  * In principle, "git log --first-parent master..next" should
-   show nothing but merges (in practice, there are fixup commits
+   show nothing but merges (in practice, there are fixup cummits
    and reverts that are not merges).
 
- * Commits near the tip of a topic branch that are not in 'next'
+ * cummits near the tip of a topic branch that are not in 'next'
    are fair game to be discarded, replaced or rewritten.
-   Commits already merged to 'next' will not be.
+   cummits already merged to 'next' will not be.
 
  * Being in the 'next' branch is not a guarantee for a topic to
    be included in the next feature release.  Being in the
@@ -422,25 +422,25 @@ the mechanical merge.  In other words,
 is roughly equivalent to this sequence:
 
      $ git merge --rerere-autoupdate $X
-     $ git commit
+     $ git cummit
      $ git cherry-pick -n refs/merge-fix/$X
-     $ git commit --amend
+     $ git cummit --amend
 
 The goal of this "prepare a merge-fix" step is to come up with a
-commit that can be squashed into a result of mechanical merge to
+cummit that can be squashed into a result of mechanical merge to
 correct semantic conflicts.
 
 After finding that the result of merging branch "ai/topic" to an
 integration branch had such a semantic conflict, say seen~4, check the
 problematic merge out on a detached HEAD, edit the working tree to
-fix the semantic conflict, and make a separate commit to record the
+fix the semantic conflict, and make a separate cummit to record the
 fix-up:
 
      $ git checkout seen~4
      $ git show -s --pretty=%s ;# double check
      Merge branch 'ai/topic' to seen
      $ edit
-     $ git commit -m 'merge-fix/ai/topic' -a
+     $ git cummit -m 'merge-fix/ai/topic' -a
 
 Then make a reference "refs/merge-fix/ai/topic" to point at this
 result:

@@ -544,7 +544,7 @@ test_expect_success 'check mixed tabs and spaces in indent' '
 '
 
 test_expect_success 'check with no whitespace errors' '
-	git commit -m "snapshot" &&
+	git cummit -m "snapshot" &&
 	echo "foo();" >x &&
 	git diff --check
 '
@@ -652,20 +652,20 @@ test_expect_success 'check staged with space before tab in indent (diff-index)' 
 
 test_expect_success 'check with no whitespace errors (diff-tree)' '
 	echo "foo();" >x &&
-	git commit -m "new commit" x &&
+	git cummit -m "new cummit" x &&
 	git diff-tree --check HEAD^ HEAD
 '
 
 test_expect_success 'check with trailing whitespace (diff-tree)' '
 	echo "foo(); " >x &&
-	git commit -m "another commit" x &&
+	git cummit -m "another cummit" x &&
 	test_must_fail git diff-tree --check HEAD^ HEAD
 '
 
 test_expect_success 'check with space before tab in indent (diff-tree)' '
 	# indent has space followed by hard tab
 	echo " 	foo();" >x &&
-	git commit -m "yet another" x &&
+	git cummit -m "yet another" x &&
 	test_must_fail git diff-tree --check HEAD^ HEAD
 '
 
@@ -677,7 +677,7 @@ test_expect_success 'check with ignored trailing whitespace attr (diff-tree)' '
 	git add .gitattributes &&
 	echo "foo(); " >x &&
 	git add x &&
-	git commit -m "add trailing space" &&
+	git cummit -m "add trailing space" &&
 
 	# with a worktree diff-tree ignores the whitespace error
 	git diff-tree --root --check HEAD &&
@@ -819,7 +819,7 @@ test_expect_success 'whitespace-only changes not reported (diff)' '
 	git reset --hard &&
 	echo >x "hello world" &&
 	git add x &&
-	git commit -m "hello 1" &&
+	git cummit -m "hello 1" &&
 	echo >x "hello  world" &&
 	git diff -b >actual &&
 	test_must_be_empty actual
@@ -847,7 +847,7 @@ test_expect_success 'whitespace-only changes reported across renames (diffstat)'
 	git reset --hard &&
 	for i in 1 2 3 4 5 6 7 8 9; do echo "$i$i$i$i$i$i" || return 1; done >x &&
 	git add x &&
-	git commit -m "base" &&
+	git cummit -m "base" &&
 	sed -e "5s/^/ /" x >z &&
 	git rm x &&
 	git add z &&
@@ -865,7 +865,7 @@ test_expect_success 'whitespace-only changes reported across renames' '
 	git add x &&
 	hash_x=$(git hash-object x) &&
 	before=$(git rev-parse --short "$hash_x") &&
-	git commit -m "base" &&
+	git cummit -m "base" &&
 	sed -e "5s/^/ /" x >z &&
 	git rm x &&
 	git add z &&
@@ -894,7 +894,7 @@ test_expect_success 'rename empty' '
 	git reset --hard &&
 	>empty &&
 	git add empty &&
-	git commit -m empty &&
+	git cummit -m empty &&
 	git mv empty void &&
 	git diff -w --cached -M >current &&
 	test_cmp expected current
@@ -903,10 +903,10 @@ test_expect_success 'rename empty' '
 test_expect_success 'combined diff with autocrlf conversion' '
 
 	git reset --hard &&
-	test_commit "one side" x hello one-side &&
+	test_cummit "one side" x hello one-side &&
 	git checkout HEAD^ &&
 	echo >x goodbye &&
-	git commit -m "the other side" x &&
+	git cummit -m "the other side" x &&
 	git config core.autocrlf true &&
 	test_must_fail git merge one-side >actual &&
 	test_i18ngrep "Automatic merge failed" actual &&
@@ -926,7 +926,7 @@ test_expect_success 'setup diff colors' '
 	git config color.diff.func normal &&
 	git config color.diff.old red &&
 	git config color.diff.new green &&
-	git config color.diff.commit yellow &&
+	git config color.diff.cummit yellow &&
 	git config color.diff.whitespace blue &&
 
 	git config core.autocrlf false
@@ -938,7 +938,7 @@ test_expect_success 'diff that introduces a line with only tabs' '
 	echo "test" >x &&
 	old_hash_x=$(git hash-object x) &&
 	before=$(git rev-parse --short "$old_hash_x") &&
-	git commit -m "initial" x &&
+	git cummit -m "initial" x &&
 	echo "{NTN}" | tr "NT" "\n\t" >>x &&
 	new_hash_x=$(git hash-object x) &&
 	after=$(git rev-parse --short "$new_hash_x") &&
@@ -968,7 +968,7 @@ test_expect_success 'diff that introduces and removes ws breakages' '
 	} >x &&
 	old_hash_x=$(git hash-object x) &&
 	before=$(git rev-parse --short "$old_hash_x") &&
-	git commit -a --allow-empty -m preimage &&
+	git cummit -a --allow-empty -m preimage &&
 	{
 		echo "0. blank-at-eol " &&
 		echo "1. still-blank-at-eol " &&
@@ -1004,7 +1004,7 @@ test_expect_success 'ws-error-highlight test setup' '
 	} >x &&
 	old_hash_x=$(git hash-object x) &&
 	before=$(git rev-parse --short "$old_hash_x") &&
-	git commit -a --allow-empty -m preimage &&
+	git cummit -a --allow-empty -m preimage &&
 	{
 		echo "0. blank-at-eol " &&
 		echo "1. still-blank-at-eol " &&
@@ -1112,7 +1112,7 @@ test_expect_success 'detect moved code, complete file' '
 	}
 	EOF
 	git add test.c &&
-	git commit -m "add main function" &&
+	git cummit -m "add main function" &&
 	file=$(git rev-parse --short HEAD:test.c) &&
 	git mv test.c main.c &&
 	test_config color.diff.oldMoved "normal red" &&
@@ -1186,7 +1186,7 @@ test_expect_success 'detect malicious moved code, inside file' '
 		}
 	EOF
 	git add main.c test.c &&
-	git commit -m "add main and test file" &&
+	git cummit -m "add main and test file" &&
 	before_main=$(git rev-parse --short HEAD:main.c) &&
 	before_test=$(git rev-parse --short HEAD:test.c) &&
 	cat <<-\EOF >main.c &&
@@ -1340,7 +1340,7 @@ test_expect_success 'detect blocks of moved code' '
 		long line 16
 	EOF
 	git add lines.txt &&
-	git commit -m "add poetry" &&
+	git cummit -m "add poetry" &&
 	cat <<-\EOF >lines.txt &&
 		line 4
 		line 5
@@ -1629,7 +1629,7 @@ test_expect_success 'no effect on diff from --color-moved with --word-diff' '
 	Lorem Ipsum is simply dummy text of the printing and typesetting industry.
 	EOF
 	git add text.txt &&
-	git commit -a -m "clean state" &&
+	git cummit -a -m "clean state" &&
 	cat <<-\EOF >text.txt &&
 	simply Lorem Ipsum dummy is text of the typesetting and printing industry.
 	EOF
@@ -1659,7 +1659,7 @@ test_expect_success 'set up whitespace tests' '
 	long line 9
 	EOF
 	git add lines.txt &&
-	git commit -m "add poetry" &&
+	git cummit -m "add poetry" &&
 	git config color.diff.oldMoved "magenta" &&
 	git config color.diff.newMoved "cyan"
 '
@@ -1866,7 +1866,7 @@ test_expect_success '--color-moved block at end of diff output respects MIN_ALNU
 	line1
 	EOF
 	git add foo bar &&
-	git commit -m x &&
+	git cummit -m x &&
 
 	cat <<-\EOF >bar &&
 	line1
@@ -1903,7 +1903,7 @@ test_expect_success '--color-moved respects MIN_ALNUM_COUNT' '
 	EOF
 	>bar &&
 	git add foo bar &&
-	git commit -m x &&
+	git cummit -m x &&
 
 	cat <<-\EOF >foo &&
 	irrelevant_line
@@ -1944,7 +1944,7 @@ test_expect_success '--color-moved treats adjacent blocks as separate for MIN_AL
 	EOF
 	>bar &&
 	git add foo bar &&
-	git commit -m x &&
+	git cummit -m x &&
 
 	cat <<-\EOF >foo &&
 	irrelevant_line
@@ -2028,11 +2028,11 @@ test_expect_success !SANITIZE_LEAK 'move detection with submodules' '
 	test_create_repo bananas &&
 	echo ripe >bananas/recipe &&
 	git -C bananas add recipe &&
-	test_commit fruit &&
-	test_commit -C bananas recipe &&
+	test_cummit fruit &&
+	test_cummit -C bananas recipe &&
 	git submodule add ./bananas &&
 	git add bananas &&
-	git commit -a -m "bananas are like a heavy library?" &&
+	git cummit -a -m "bananas are like a heavy library?" &&
 	echo foul >bananas/recipe &&
 	echo ripe >fruit.t &&
 
@@ -2059,7 +2059,7 @@ test_expect_success 'only move detection ignores white spaces' '
 		original file
 	EOF
 	git add text.txt &&
-	git commit -m "add text" &&
+	git cummit -m "add text" &&
 	q_to_tab <<-\EOF >text.txt &&
 		Qa long line to exceed per-line minimum
 		Qanother long line to exceed per-line minimum
@@ -2122,7 +2122,7 @@ test_expect_success 'compare whitespace delta across moved blocks' '
 	EOF
 
 	git add text.txt &&
-	git commit -m "add text.txt" &&
+	git cummit -m "add text.txt" &&
 
 	q_to_tab <<-\EOF >text.txt &&
 	QQIndented
@@ -2234,7 +2234,7 @@ test_expect_success 'compare mixed whitespace delta across moved blocks' '
 	EOF
 
 	git add text.txt &&
-	git commit -m "add text.txt" &&
+	git cummit -m "add text.txt" &&
 
 	tr "^|Q_" "\f\v\t " <<-EOF >text.txt &&
 	context

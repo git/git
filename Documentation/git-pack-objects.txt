@@ -64,7 +64,7 @@ base-name::
 	Read the revision arguments from the standard input, instead of
 	individual object names.  The revision arguments are processed
 	the same way as 'git rev-list' with the `--objects` flag
-	uses its `commit` arguments to build the list of objects it
+	uses its `cummit` arguments to build the list of objects it
 	outputs.  The objects on the resulting list are packed.
 	Besides revisions, `--not` or `--shallow <SHA-1>` lines are
 	also accepted.
@@ -212,7 +212,7 @@ depth is 4095.
 	only walks trees that appear in paths that introduce new objects.
 	This can have significant performance benefits when computing
 	a pack to send a small change. However, it is possible that extra
-	objects are added to the pack-file if the included commits contain
+	objects are added to the pack-file if the included cummits contain
 	certain types of direct renames. If this option is not included,
 	it defaults to the value of `pack.useSparse`, which is true unless
 	otherwise specified.

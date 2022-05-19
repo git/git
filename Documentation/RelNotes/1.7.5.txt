@@ -31,18 +31,18 @@ Updates since v1.7.4
  * "git config" used to be also known as "git repo-config", but the old
    name is now officially deprecated.
 
- * "git checkout --detach <commit>" is a more user friendly synonym for
-   "git checkout <commit>^0".
+ * "git checkout --detach <cummit>" is a more user friendly synonym for
+   "git checkout <cummit>^0".
 
  * "git checkout" performed on detached HEAD gives a warning and
-   advice when the commit being left behind will become unreachable from
+   advice when the cummit being left behind will become unreachable from
    any branch or tag.
 
  * "git cherry-pick" and "git revert" can be told to use a custom merge
    strategy, similar to "git rebase".
 
- * "git cherry-pick" remembers which commit failed to apply when it is
-   stopped by conflicts, making it unnecessary to use "commit -c $commit"
+ * "git cherry-pick" remembers which cummit failed to apply when it is
+   stopped by conflicts, making it unnecessary to use "cummit -c $cummit"
    to conclude it.
 
  * "git cvsimport" bails out immediately when the cvs server cannot be

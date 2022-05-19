@@ -3,7 +3,7 @@ git-annotate(1)
 
 NAME
 ----
-git-annotate - Annotate file lines with commit information
+git-annotate - Annotate file lines with cummit information
 
 SYNOPSIS
 --------
@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Annotates each line in the given file with information from the commit
+Annotates each line in the given file with information from the cummit
 which introduced the line. Optionally annotates from a given revision.
 
 The only difference between this command and linkgit:git-blame[1] is that

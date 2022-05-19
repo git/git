@@ -4,7 +4,7 @@
 #include "git-compat-util.h"
 #include "strbuf.h"
 #include "cache.h"
-#include "commit.h"
+#include "cummit.h"
 
 /*
  * builtin API
@@ -134,9 +134,9 @@ int cmd_cherry_pick(int argc, const char **argv, const char *prefix);
 int cmd_clone(int argc, const char **argv, const char *prefix);
 int cmd_clean(int argc, const char **argv, const char *prefix);
 int cmd_column(int argc, const char **argv, const char *prefix);
-int cmd_commit(int argc, const char **argv, const char *prefix);
-int cmd_commit_graph(int argc, const char **argv, const char *prefix);
-int cmd_commit_tree(int argc, const char **argv, const char *prefix);
+int cmd_cummit(int argc, const char **argv, const char *prefix);
+int cmd_cummit_graph(int argc, const char **argv, const char *prefix);
+int cmd_cummit_tree(int argc, const char **argv, const char *prefix);
 int cmd_config(int argc, const char **argv, const char *prefix);
 int cmd_count_objects(int argc, const char **argv, const char *prefix);
 int cmd_credential(int argc, const char **argv, const char *prefix);
@@ -161,7 +161,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix);
 int cmd_fsck(int argc, const char **argv, const char *prefix);
 int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix);
 int cmd_gc(int argc, const char **argv, const char *prefix);
-int cmd_get_tar_commit_id(int argc, const char **argv, const char *prefix);
+int cmd_get_tar_cummit_id(int argc, const char **argv, const char *prefix);
 int cmd_grep(int argc, const char **argv, const char *prefix);
 int cmd_hash_object(int argc, const char **argv, const char *prefix);
 int cmd_help(int argc, const char **argv, const char *prefix);
@@ -236,7 +236,7 @@ int cmd_upload_archive(int argc, const char **argv, const char *prefix);
 int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix);
 int cmd_upload_pack(int argc, const char **argv, const char *prefix);
 int cmd_var(int argc, const char **argv, const char *prefix);
-int cmd_verify_commit(int argc, const char **argv, const char *prefix);
+int cmd_verify_cummit(int argc, const char **argv, const char *prefix);
 int cmd_verify_tag(int argc, const char **argv, const char *prefix);
 int cmd_version(int argc, const char **argv, const char *prefix);
 int cmd_whatchanged(int argc, const char **argv, const char *prefix);

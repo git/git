@@ -29,7 +29,7 @@ test_perf 'repack to disk' '
 test_full_bitmap
 
 test_expect_success 'create partial bitmap state' '
-	# pick a commit to represent the repo tip in the past
+	# pick a cummit to represent the repo tip in the past
 	cutoff=$(git rev-list HEAD~100 -1) &&
 	orig_tip=$(git rev-parse HEAD) &&
 

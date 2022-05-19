@@ -8,11 +8,11 @@ test_description='test show-branch'
 GIT_TEST_DATE_NOW=1251660000; export GIT_TEST_DATE_NOW
 
 test_expect_success 'setup' '
-	test_commit initial &&
+	test_cummit initial &&
 	for i in $(test_seq 1 10)
 	do
 		git checkout -b branch$i initial &&
-		test_commit --no-tag branch$i || return 1
+		test_cummit --no-tag branch$i || return 1
 	done &&
 	git for-each-ref \
 		--sort=version:refname \
@@ -151,8 +151,8 @@ test_expect_success 'show branch --merge-base with N arguments' '
 
 test_expect_success 'show branch --reflog=2' '
 	sed "s/^>	//" >expect <<-\EOF &&
-	>	! [refs/heads/branch10@{0}] (4 years, 5 months ago) commit: branch10
-	>	 ! [refs/heads/branch10@{1}] (4 years, 5 months ago) commit: branch10
+	>	! [refs/heads/branch10@{0}] (4 years, 5 months ago) cummit: branch10
+	>	 ! [refs/heads/branch10@{1}] (4 years, 5 months ago) cummit: branch10
 	>	--
 	>	+  [refs/heads/branch10@{0}] branch10
 	>	++ [refs/heads/branch10@{1}] initial

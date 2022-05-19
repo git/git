@@ -18,14 +18,14 @@ test_expect_success 'setup' '
 	git update-index --add a a_big b b_big c &&
 	cat c >d && echo foo >>d && git update-index --add d &&
 	tree=$(git write-tree) &&
-	commit=$(git commit-tree $tree </dev/null) &&
+	cummit=$(git cummit-tree $tree </dev/null) &&
 	{
 		echo $tree &&
-		echo $commit &&
+		echo $cummit &&
 		git ls-tree $tree | sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"
 	} >obj-list &&
 	{
-		git diff-tree --root -p $commit &&
+		git diff-tree --root -p $cummit &&
 		while read object
 		do
 			t=$(git cat-file -t $object) &&
@@ -36,8 +36,8 @@ test_expect_success 'setup' '
 
 test_expect_success 'setup pack-object <stdin' '
 	git init pack-object-stdin &&
-	test_commit -C pack-object-stdin one &&
-	test_commit -C pack-object-stdin two
+	test_cummit -C pack-object-stdin one &&
+	test_cummit -C pack-object-stdin two
 
 '
 
@@ -211,7 +211,7 @@ check_use_objects () {
 	cp "$1".pack "$1".idx git2/objects/pack &&
 	(
 		cd git2 &&
-		git diff-tree --root -p $commit &&
+		git diff-tree --root -p $cummit &&
 		while read object
 		do
 			t=$(git cat-file -t $object) &&
@@ -550,17 +550,17 @@ test_expect_success 'prefetch objects' '
 
 	echo one >server/one &&
 	git -C server add one &&
-	git -C server commit -m one &&
+	git -C server cummit -m one &&
 	git -C server branch one_branch &&
 
 	echo two_a >server/two_a &&
 	echo two_b >server/two_b &&
 	git -C server add two_a two_b &&
-	git -C server commit -m two &&
+	git -C server cummit -m two &&
 
 	echo three >server/three &&
 	git -C server add three &&
-	git -C server commit -m three &&
+	git -C server cummit -m three &&
 	git -C server branch three_branch &&
 
 	# Clone, fetch "two" with blobs excluded, and re-push it. This requires
@@ -581,9 +581,9 @@ test_expect_success 'setup for --stdin-packs tests' '
 	(
 		cd stdin-packs &&
 
-		test_commit A &&
-		test_commit B &&
-		test_commit C &&
+		test_cummit A &&
+		test_cummit B &&
+		test_cummit C &&
 
 		for id in A B C
 		do
@@ -649,7 +649,7 @@ test_expect_success '--stdin-packs with loose objects' '
 		PACK_B="$(basename .git/objects/pack/pack-B-*.pack)" &&
 		PACK_C="$(basename .git/objects/pack/pack-C-*.pack)" &&
 
-		test_commit D && # loose
+		test_cummit D && # loose
 
 		git pack-objects test2 --stdin-packs --unpacked <<-EOF &&
 		$PACK_A
@@ -678,9 +678,9 @@ test_expect_success '--stdin-packs with broken links' '
 		cd stdin-packs &&
 
 		# make an unreachable object with a bogus parent
-		git cat-file -p HEAD >commit &&
-		sed "s/$(git rev-parse HEAD^)/$(test_oid zero)/" <commit |
-		git hash-object -w -t commit --stdin >in &&
+		git cat-file -p HEAD >cummit &&
+		sed "s/$(git rev-parse HEAD^)/$(test_oid zero)/" <cummit |
+		git hash-object -w -t cummit --stdin >in &&
 
 		git pack-objects .git/objects/pack/pack-D <in &&
 

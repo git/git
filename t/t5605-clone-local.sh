@@ -12,7 +12,7 @@ repo_is_hardlinked() {
 }
 
 test_expect_success 'preparing origin repository' '
-	: >file && git add . && git commit -m1 &&
+	: >file && git add . && git cummit -m1 &&
 	git clone --bare . a.git &&
 	git clone --bare . x &&
 	test "$(cd a.git && git config --bool core.bare)" = true &&
@@ -100,7 +100,7 @@ test_expect_success 'clone empty repository' '
 	(cd empty-clone &&
 	 echo "content" >> foo &&
 	 git add foo &&
-	 git commit -m "Initial commit" &&
+	 git cummit -m "Initial cummit" &&
 	 git push origin main &&
 	 expected=$(git rev-parse main) &&
 	 actual=$(git --git-dir=../empty/.git rev-parse main) &&

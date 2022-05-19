@@ -8,16 +8,16 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'setup' '
 	echo 1 >a &&
 	git add . &&
-	git commit -m first &&
+	git cummit -m first &&
 	echo 2 >b &&
 	git add . &&
-	git commit -a -m second &&
+	git cummit -a -m second &&
 	mkdir -p test-outside/repo && (
 		cd test-outside/repo &&
 		git init &&
 		echo "1 1" >a &&
 		git add . &&
-		git commit -m 1
+		git cummit -m 1
 	) &&
 	mkdir -p test-outside/non/git && (
 		cd test-outside/non/git &&
@@ -71,7 +71,7 @@ test_expect_success 'git diff-index --cached HEAD^' '
 	test_line_count = 0 cnt
 '
 test_expect_success 'git diff-tree -Stext HEAD^ HEAD -- b' '
-	git commit -m "text in b" &&
+	git cummit -m "text in b" &&
 	test_expect_code 1 git diff-tree --quiet -Stext HEAD^ HEAD -- b >cnt &&
 	test_line_count = 0 cnt
 '

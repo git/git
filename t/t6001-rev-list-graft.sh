@@ -12,15 +12,15 @@ test_expect_success setup '
 	echo >fileA fileA &&
 	echo >subdir/fileB fileB &&
 	git add fileA subdir/fileB &&
-	git commit -a -m "Initial in one history." &&
+	git cummit -a -m "Initial in one history." &&
 	A0=$(git rev-parse --verify HEAD) &&
 
 	echo >fileA fileA modified &&
-	git commit -a -m "Second in one history." &&
+	git cummit -a -m "Second in one history." &&
 	A1=$(git rev-parse --verify HEAD) &&
 
 	echo >subdir/fileB fileB modified &&
-	git commit -a -m "Third in one history." &&
+	git cummit -a -m "Third in one history." &&
 	A2=$(git rev-parse --verify HEAD) &&
 
 	git update-ref -d refs/heads/main &&
@@ -29,15 +29,15 @@ test_expect_success setup '
 	echo >fileA fileA again &&
 	echo >subdir/fileB fileB again &&
 	git add fileA subdir/fileB &&
-	git commit -a -m "Initial in alternate history." &&
+	git cummit -a -m "Initial in alternate history." &&
 	B0=$(git rev-parse --verify HEAD) &&
 
 	echo >fileA fileA modified in alternate history &&
-	git commit -a -m "Second in alternate history." &&
+	git cummit -a -m "Second in alternate history." &&
 	B1=$(git rev-parse --verify HEAD) &&
 
 	echo >subdir/fileB fileB modified in alternate history &&
-	git commit -a -m "Third in alternate history." &&
+	git cummit -a -m "Third in alternate history." &&
 	B2=$(git rev-parse --verify HEAD) &&
 	: done
 '
@@ -86,7 +86,7 @@ check () {
 	elif test $type = parents-raw
 	then
 		git rev-list --parents --pretty=raw $arg |
-		sed -n -e 's/^commit //p' >test.actual
+		sed -n -e 's/^cummit //p' >test.actual
 	fi
 	test_cmp test.expect test.actual
 }

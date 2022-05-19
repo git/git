@@ -40,7 +40,7 @@ Fixes since v1.7.10.1
    ref.
 
  * The http-backend (the server side of the smart http transfer) used
-   to overwrite GIT_COMMITTER_NAME and GIT_COMMITTER_EMAIL with the
+   to overwrite GIT_cummitTER_NAME and GIT_cummitTER_EMAIL with the
    value obtained from REMOTE_USER unconditionally, making it
    impossible for the server side site-specific customization to use
    different identity sources to affect the names logged. It now uses
@@ -50,7 +50,7 @@ Fixes since v1.7.10.1
    output had line breaks at wrong places.
 
  * Octopus merge strategy did not reduce heads that are recorded in the
-   final commit correctly.
+   final cummit correctly.
 
  * "git push" over smart-http lost progress output a few releases ago;
    this release resurrects it.
@@ -60,7 +60,7 @@ Fixes since v1.7.10.1
    into three cases, and each is given a separate advice message.
 
  * The insn sheet given by "rebase -i" did not make it clear that the
-   insn lines can be re-ordered to affect the order of the commits in
+   insn lines can be re-ordered to affect the order of the cummits in
    the resulting history.
 
  * "git repack" used to write out unreachable objects as loose objects

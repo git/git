@@ -8,7 +8,7 @@ Fixes since v1.7.9.3
    fallback in "git am" was not prepared to read a patch created with
    a non-standard -p<num> value.
 
- * "git bundle" did not record boundary commits correctly when there
+ * "git bundle" did not record boundary cummits correctly when there
    are many of them.
 
  * "git diff-index" and its friends at the plumbing level showed the

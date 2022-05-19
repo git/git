@@ -11,18 +11,18 @@ test_expect_success setup '
 	echo hello >file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	echo goodbye >file &&
 	git add file &&
 	test_tick &&
-	git commit -m second &&
+	git cummit -m second &&
 	git checkout -b side HEAD^ &&
 	echo world >git &&
 	git add git &&
 	test_tick &&
-	git commit -m side &&
+	git cummit -m side &&
 	git checkout main &&
-	git log --pretty=oneline --abbrev-commit --graph --all &&
+	git log --pretty=oneline --abbrev-cummit --graph --all &&
 	git branch test side
 '
 

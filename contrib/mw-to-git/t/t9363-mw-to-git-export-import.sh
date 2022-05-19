@@ -39,11 +39,11 @@ test_expect_failure 'git push can upload media (File:) files' '
 		cd mw_dir &&
 		echo "hello world" >Foo.txt &&
 		git add Foo.txt &&
-		git commit -m "add a text file" &&
+		git cummit -m "add a text file" &&
 		git push &&
 		"$PERL_PATH" -e "print STDOUT \"binary content: \".chr(255);" >Foo.txt &&
 		git add Foo.txt &&
-		git commit -m "add a text file with binary content" &&
+		git cummit -m "add a text file with binary content" &&
 		git push
 	)
 '
@@ -66,7 +66,7 @@ test_expect_success 'git push can upload media (File:) files containing valid UT
 		cd mw_dir &&
 		"$PERL_PATH" -e "print STDOUT \"UTF-8 content: éèàéê€.\";" >Bar.txt &&
 		git add Bar.txt &&
-		git commit -m "add a text file with UTF-8 content" &&
+		git cummit -m "add a text file with UTF-8 content" &&
 		git push
 	)
 '
@@ -86,9 +86,9 @@ test_expect_success 'git push & pull work with locally renamed media files' '
 		cd mw_dir &&
 		echo "A File" >Foo.txt &&
 		git add Foo.txt &&
-		git commit -m "add a file" &&
+		git cummit -m "add a file" &&
 		git mv Foo.txt Bar.txt &&
-		git commit -m "Rename a file" &&
+		git cummit -m "Rename a file" &&
 		test_git_reimport &&
 		echo "A File" >expect &&
 		test_cmp expect Bar.txt &&
@@ -105,10 +105,10 @@ test_expect_success 'git push can propagate local page deletion' '
 		test_path_is_missing Foo.mw &&
 		echo "hello world" >Foo.mw &&
 		git add Foo.mw &&
-		git commit -m "Add the page Foo" &&
+		git cummit -m "Add the page Foo" &&
 		git push &&
 		rm -f Foo.mw &&
-		git commit -am "Delete the page Foo" &&
+		git cummit -am "Delete the page Foo" &&
 		test_git_reimport &&
 		test_path_is_missing Foo.mw
 	)
@@ -122,9 +122,9 @@ test_expect_success 'git push can propagate local media file deletion' '
 		cd mw_dir &&
 		echo "hello world" >Foo.txt &&
 		git add Foo.txt &&
-		git commit -m "Add the text file Foo" &&
+		git cummit -m "Add the text file Foo" &&
 		git rm Foo.txt &&
-		git commit -m "Delete the file Foo" &&
+		git cummit -m "Delete the file Foo" &&
 		test_git_reimport &&
 		test_path_is_missing Foo.txt
 	)
@@ -142,10 +142,10 @@ test_expect_failure 'git pull correctly imports media file deletion when no page
 		cd mw_dir &&
 		echo "hello world" >Foo.txt &&
 		git add Foo.txt &&
-		git commit -m "Add the text file Foo" &&
+		git cummit -m "Add the text file Foo" &&
 		git push &&
 		git rm Foo.txt &&
-		git commit -m "Delete the file Foo" &&
+		git cummit -m "Delete the file Foo" &&
 		test_git_reimport &&
 		test_path_is_missing Foo.txt
 	)
@@ -159,7 +159,7 @@ test_expect_success 'git push properly warns about insufficient permissions' '
 		cd mw_dir &&
 		echo "A File" >foo.forbidden &&
 		git add foo.forbidden &&
-		git commit -m "add a file" &&
+		git cummit -m "add a file" &&
 		git push 2>actual &&
 		test_i18ngrep "foo.forbidden is not a permitted file" actual
 	)

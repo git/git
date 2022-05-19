@@ -11,7 +11,7 @@ test_expect_success 'git show batches blobs' '
 	echo a >server/a &&
 	echo b >server/b &&
 	git -C server add a b &&
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&
@@ -31,11 +31,11 @@ test_expect_success 'diff batches blobs' '
 	echo a >server/a &&
 	echo b >server/b &&
 	git -C server add a b &&
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 	echo c >server/c &&
 	echo d >server/d &&
 	git -C server add c d &&
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&
@@ -55,10 +55,10 @@ test_expect_success 'diff skips same-OID blobs' '
 	echo a >server/a &&
 	echo b >server/b &&
 	git -C server add a b &&
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 	echo another-a >server/a &&
 	git -C server add a &&
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&
@@ -79,18 +79,18 @@ test_expect_success 'when fetching missing objects, diff skips GITLINKs' '
 	test_when_finished "rm -rf sub server client trace" &&
 
 	test_create_repo sub &&
-	test_commit -C sub first &&
+	test_cummit -C sub first &&
 
 	test_create_repo server &&
 	echo a >server/a &&
 	git -C server add a &&
 	git -C server submodule add "file://$(pwd)/sub" &&
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 
-	test_commit -C server/sub second &&
+	test_cummit -C server/sub second &&
 	echo another-a >server/a &&
 	git -C server add a sub &&
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&
@@ -113,11 +113,11 @@ test_expect_success 'diff with rename detection batches blobs' '
 	echo a >server/a &&
 	printf "b\nb\nb\nb\nb\n" >server/b &&
 	git -C server add a b &&
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 	rm server/b &&
 	printf "b\nb\nb\nb\nbX\n" >server/c &&
 	git -C server add c &&
-	git -C server commit -a -m x &&
+	git -C server cummit -a -m x &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&
@@ -138,10 +138,10 @@ test_expect_success 'diff does not fetch anything if inexact rename detection is
 	echo a >server/a &&
 	printf "b\nb\nb\nb\nb\n" >server/b &&
 	git -C server add a b &&
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 	mv server/b server/c &&
 	git -C server add c &&
-	git -C server commit -a -m x &&
+	git -C server cummit -a -m x &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&
@@ -159,9 +159,9 @@ test_expect_success 'diff --break-rewrites fetches only if necessary, and batche
 	echo a >server/a &&
 	printf "b\nb\nb\nb\nb\n" >server/b &&
 	git -C server add a b &&
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 	printf "c\nc\nc\nc\nc\n" >server/b &&
-	git -C server commit -a -m x &&
+	git -C server cummit -a -m x &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&

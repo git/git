@@ -5,7 +5,7 @@ LONG_USAGE="git-resurrect attempts to find traces of a branch tip
 called <name>, and tries to resurrect it.  Currently, the reflog is
 searched for checkout messages, and with -r also merge messages.  With
 -m and -t, the history of all refs is scanned for Merge <name> into
-other/Merge <other> into <name> (respectively) commit subjects, which
+other/Merge <other> into <name> (respectively) cummit subjects, which
 is rather slow but allows you to resurrect other people's topic
 branches."
 
@@ -162,7 +162,7 @@ fi
 
 echo "** Candidates for $branch **"
 for cmt in $candidates; do
-	git --no-pager log --pretty=tformat:"%ct:%h [%cr] %s" --abbrev-commit -1 $cmt
+	git --no-pager log --pretty=tformat:"%ct:%h [%cr] %s" --abbrev-cummit -1 $cmt
 done \
 | sort -n | cut -d: -f2-
 

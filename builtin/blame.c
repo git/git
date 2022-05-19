@@ -10,7 +10,7 @@
 #include "color.h"
 #include "builtin.h"
 #include "repository.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "revision.h"
 #include "quote.h"
@@ -84,35 +84,35 @@ static const char *nth_line_cb(void *data, long lno)
 }
 
 /*
- * Information on commits, used for output.
+ * Information on cummits, used for output.
  */
-struct commit_info {
+struct cummit_info {
 	struct strbuf author;
 	struct strbuf author_mail;
 	timestamp_t author_time;
 	struct strbuf author_tz;
 
 	/* filled only when asked for details */
-	struct strbuf committer;
-	struct strbuf committer_mail;
-	timestamp_t committer_time;
-	struct strbuf committer_tz;
+	struct strbuf cummitter;
+	struct strbuf cummitter_mail;
+	timestamp_t cummitter_time;
+	struct strbuf cummitter_tz;
 
 	struct strbuf summary;
 };
 
-#define COMMIT_INFO_INIT { \
+#define cummit_INFO_INIT { \
 	.author = STRBUF_INIT, \
 	.author_mail = STRBUF_INIT, \
 	.author_tz = STRBUF_INIT, \
-	.committer = STRBUF_INIT, \
-	.committer_mail = STRBUF_INIT, \
-	.committer_tz = STRBUF_INIT, \
+	.cummitter = STRBUF_INIT, \
+	.cummitter_mail = STRBUF_INIT, \
+	.cummitter_tz = STRBUF_INIT, \
 	.summary = STRBUF_INIT, \
 }
 
 /*
- * Parse author/committer line in the commit object buffer
+ * Parse author/cummitter line in the cummit object buffer
  */
 static void get_ac_line(const char *inbuf, const char *what,
 	struct strbuf *name, struct strbuf *mail,
@@ -170,20 +170,20 @@ static void get_ac_line(const char *inbuf, const char *what,
 	strbuf_add(name, namebuf, namelen);
 }
 
-static void commit_info_destroy(struct commit_info *ci)
+static void cummit_info_destroy(struct cummit_info *ci)
 {
 
 	strbuf_release(&ci->author);
 	strbuf_release(&ci->author_mail);
 	strbuf_release(&ci->author_tz);
-	strbuf_release(&ci->committer);
-	strbuf_release(&ci->committer_mail);
-	strbuf_release(&ci->committer_tz);
+	strbuf_release(&ci->cummitter);
+	strbuf_release(&ci->cummitter_mail);
+	strbuf_release(&ci->cummitter_tz);
 	strbuf_release(&ci->summary);
 }
 
-static void get_commit_info(struct commit *commit,
-			    struct commit_info *ret,
+static void get_cummit_info(struct cummit *cummit,
+			    struct cummit_info *ret,
 			    int detailed)
 {
 	int len;
@@ -191,32 +191,32 @@ static void get_commit_info(struct commit *commit,
 	const char *message;
 
 	encoding = get_log_output_encoding();
-	message = logmsg_reencode(commit, NULL, encoding);
+	message = logmsg_reencode(cummit, NULL, encoding);
 	get_ac_line(message, "\nauthor ",
 		    &ret->author, &ret->author_mail,
 		    &ret->author_time, &ret->author_tz);
 
 	if (!detailed) {
-		unuse_commit_buffer(commit, message);
+		unuse_cummit_buffer(cummit, message);
 		return;
 	}
 
-	get_ac_line(message, "\ncommitter ",
-		    &ret->committer, &ret->committer_mail,
-		    &ret->committer_time, &ret->committer_tz);
+	get_ac_line(message, "\ncummitter ",
+		    &ret->cummitter, &ret->cummitter_mail,
+		    &ret->cummitter_time, &ret->cummitter_tz);
 
-	len = find_commit_subject(message, &subject);
+	len = find_cummit_subject(message, &subject);
 	if (len)
 		strbuf_add(&ret->summary, subject, len);
 	else
-		strbuf_addf(&ret->summary, "(%s)", oid_to_hex(&commit->object.oid));
+		strbuf_addf(&ret->summary, "(%s)", oid_to_hex(&cummit->object.oid));
 
-	unuse_commit_buffer(commit, message);
+	unuse_cummit_buffer(cummit, message);
 }
 
 /*
  * Write out any suspect information which depends on the path. This must be
- * handled separately from emit_one_suspect_detail(), because a given commit
+ * handled separately from emit_one_suspect_detail(), because a given cummit
  * may have changes in multiple paths. So this needs to appear each time
  * we mention a new group.
  *
@@ -227,7 +227,7 @@ static void write_filename_info(struct blame_origin *suspect)
 {
 	if (suspect->previous) {
 		struct blame_origin *prev = suspect->previous;
-		printf("previous %s ", oid_to_hex(&prev->commit->object.oid));
+		printf("previous %s ", oid_to_hex(&prev->cummit->object.oid));
 		write_name_quoted(prev->path, stdout, '\n');
 	}
 	printf("filename ");
@@ -236,32 +236,32 @@ static void write_filename_info(struct blame_origin *suspect)
 
 /*
  * Porcelain/Incremental format wants to show a lot of details per
- * commit.  Instead of repeating this every line, emit it only once,
- * the first time each commit appears in the output (unless the
+ * cummit.  Instead of repeating this every line, emit it only once,
+ * the first time each cummit appears in the output (unless the
  * user has specifically asked for us to repeat).
  */
 static int emit_one_suspect_detail(struct blame_origin *suspect, int repeat)
 {
-	struct commit_info ci = COMMIT_INFO_INIT;
+	struct cummit_info ci = cummit_INFO_INIT;
 
-	if (!repeat && (suspect->commit->object.flags & METAINFO_SHOWN))
+	if (!repeat && (suspect->cummit->object.flags & METAINFO_SHOWN))
 		return 0;
 
-	suspect->commit->object.flags |= METAINFO_SHOWN;
-	get_commit_info(suspect->commit, &ci, 1);
+	suspect->cummit->object.flags |= METAINFO_SHOWN;
+	get_cummit_info(suspect->cummit, &ci, 1);
 	printf("author %s\n", ci.author.buf);
 	printf("author-mail %s\n", ci.author_mail.buf);
 	printf("author-time %"PRItime"\n", ci.author_time);
 	printf("author-tz %s\n", ci.author_tz.buf);
-	printf("committer %s\n", ci.committer.buf);
-	printf("committer-mail %s\n", ci.committer_mail.buf);
-	printf("committer-time %"PRItime"\n", ci.committer_time);
-	printf("committer-tz %s\n", ci.committer_tz.buf);
+	printf("cummitter %s\n", ci.cummitter.buf);
+	printf("cummitter-mail %s\n", ci.cummitter_mail.buf);
+	printf("cummitter-time %"PRItime"\n", ci.cummitter_time);
+	printf("cummitter-tz %s\n", ci.cummitter_tz.buf);
 	printf("summary %s\n", ci.summary.buf);
-	if (suspect->commit->object.flags & UNINTERESTING)
+	if (suspect->cummit->object.flags & UNINTERESTING)
 		printf("boundary\n");
 
-	commit_info_destroy(&ci);
+	cummit_info_destroy(&ci);
 
 	return 1;
 }
@@ -278,7 +278,7 @@ static void found_guilty_entry(struct blame_entry *ent, void *data)
 		struct blame_origin *suspect = ent->suspect;
 
 		printf("%s %d %d %d\n",
-		       oid_to_hex(&suspect->commit->object.oid),
+		       oid_to_hex(&suspect->cummit->object.oid),
 		       ent->s_lno + 1, ent->lno + 1, ent->num_lines);
 		emit_one_suspect_detail(suspect, 0);
 		write_filename_info(suspect);
@@ -332,7 +332,7 @@ static const char *format_time(timestamp_t time, const char *tz_str,
 static void emit_porcelain_details(struct blame_origin *suspect, int repeat)
 {
 	if (emit_one_suspect_detail(suspect, repeat) ||
-	    (suspect->commit->object.flags & MORE_THAN_ONE_PATH))
+	    (suspect->cummit->object.flags & MORE_THAN_ONE_PATH))
 		write_filename_info(suspect);
 }
 
@@ -345,7 +345,7 @@ static void emit_porcelain(struct blame_scoreboard *sb, struct blame_entry *ent,
 	struct blame_origin *suspect = ent->suspect;
 	char hex[GIT_MAX_HEXSZ + 1];
 
-	oid_to_hex_r(hex, &suspect->commit->object.oid);
+	oid_to_hex_r(hex, &suspect->cummit->object.oid);
 	printf("%s %d %d %d\n",
 	       hex,
 	       ent->s_lno + 1,
@@ -421,7 +421,7 @@ static void setup_default_color_by_age(void)
 	parse_color_fields("blue,12 month ago,white,1 month ago,red");
 }
 
-static void determine_line_heat(struct commit_info *ci, const char **dest_color)
+static void determine_line_heat(struct cummit_info *ci, const char **dest_color)
 {
 	int i = 0;
 
@@ -436,13 +436,13 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 	int cnt;
 	const char *cp;
 	struct blame_origin *suspect = ent->suspect;
-	struct commit_info ci = COMMIT_INFO_INIT;
+	struct cummit_info ci = cummit_INFO_INIT;
 	char hex[GIT_MAX_HEXSZ + 1];
 	int show_raw_time = !!(opt & OUTPUT_RAW_TIMESTAMP);
 	const char *default_color = NULL, *color = NULL, *reset = NULL;
 
-	get_commit_info(suspect->commit, &ci, 1);
-	oid_to_hex_r(hex, &suspect->commit->object.oid);
+	get_cummit_info(suspect->cummit, &ci, 1);
+	oid_to_hex_r(hex, &suspect->cummit->object.oid);
 
 	cp = blame_nth_line(sb, ent->lno);
 
@@ -468,7 +468,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 		if (color)
 			fputs(color, stdout);
 
-		if (suspect->commit->object.flags & UNINTERESTING) {
+		if (suspect->cummit->object.flags & UNINTERESTING) {
 			if (blank_boundary)
 				memset(hex, ' ', length);
 			else if (!(opt & OUTPUT_ANNOTATE_COMPAT)) {
@@ -537,7 +537,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 	if (sb->final_buf_size && cp[-1] != '\n')
 		putchar('\n');
 
-	commit_info_destroy(&ci);
+	cummit_info_destroy(&ci);
 }
 
 static void output(struct blame_scoreboard *sb, int option)
@@ -548,12 +548,12 @@ static void output(struct blame_scoreboard *sb, int option)
 		for (ent = sb->ent; ent; ent = ent->next) {
 			int count = 0;
 			struct blame_origin *suspect;
-			struct commit *commit = ent->suspect->commit;
-			if (commit->object.flags & MORE_THAN_ONE_PATH)
+			struct cummit *cummit = ent->suspect->cummit;
+			if (cummit->object.flags & MORE_THAN_ONE_PATH)
 				continue;
-			for (suspect = get_blame_suspects(commit); suspect; suspect = suspect->next) {
+			for (suspect = get_blame_suspects(cummit); suspect; suspect = suspect->next) {
 				if (suspect->guilty && count++) {
-					commit->object.flags |= MORE_THAN_ONE_PATH;
+					cummit->object.flags |= MORE_THAN_ONE_PATH;
 					break;
 				}
 			}
@@ -581,10 +581,10 @@ static int read_ancestry(const char *graft_file)
 	if (!fp)
 		return -1;
 	while (!strbuf_getwholeline(&buf, fp, '\n')) {
-		/* The format is just "Commit Parent1 Parent2 ...\n" */
-		struct commit_graft *graft = read_graft_line(&buf);
+		/* The format is just "cummit Parent1 Parent2 ...\n" */
+		struct cummit_graft *graft = read_graft_line(&buf);
 		if (graft)
-			register_commit_graft(the_repository, graft, 0);
+			register_cummit_graft(the_repository, graft, 0);
 	}
 	fclose(fp);
 	strbuf_release(&buf);
@@ -593,7 +593,7 @@ static int read_ancestry(const char *graft_file)
 
 static int update_auto_abbrev(int auto_abbrev, struct blame_origin *suspect)
 {
-	const char *uniq = find_unique_abbrev(&suspect->commit->object.oid,
+	const char *uniq = find_unique_abbrev(&suspect->cummit->object.oid,
 					      auto_abbrev);
 	int len = strlen(uniq);
 	if (auto_abbrev < len)
@@ -625,17 +625,17 @@ static void find_alignment(struct blame_scoreboard *sb, int *option)
 		num = strlen(suspect->path);
 		if (longest_file < num)
 			longest_file = num;
-		if (!(suspect->commit->object.flags & METAINFO_SHOWN)) {
-			struct commit_info ci = COMMIT_INFO_INIT;
-			suspect->commit->object.flags |= METAINFO_SHOWN;
-			get_commit_info(suspect->commit, &ci, 1);
+		if (!(suspect->cummit->object.flags & METAINFO_SHOWN)) {
+			struct cummit_info ci = cummit_INFO_INIT;
+			suspect->cummit->object.flags |= METAINFO_SHOWN;
+			get_cummit_info(suspect->cummit, &ci, 1);
 			if (*option & OUTPUT_SHOW_EMAIL)
 				num = utf8_strwidth(ci.author_mail.buf);
 			else
 				num = utf8_strwidth(ci.author.buf);
 			if (longest_author < num)
 				longest_author = num;
-			commit_info_destroy(&ci);
+			cummit_info_destroy(&ci);
 		}
 		num = e->s_lno + e->num_lines;
 		if (longest_src_lines < num)
@@ -651,7 +651,7 @@ static void find_alignment(struct blame_scoreboard *sb, int *option)
 	max_score_digits = decimal_width(largest_score);
 
 	if (compute_auto_abbrev)
-		/* one more abbrev length is needed for the boundary commit */
+		/* one more abbrev length is needed for the boundary cummit */
 		abbrev = auto_abbrev + 1;
 }
 
@@ -799,7 +799,7 @@ static int is_a_rev(const char *name)
 	return OBJ_NONE < oid_object_info(the_repository, &oid, NULL);
 }
 
-static int peel_to_commit_oid(struct object_id *oid_ret, void *cbdata)
+static int peel_to_cummit_oid(struct object_id *oid_ret, void *cbdata)
 {
 	struct repository *r = ((struct blame_scoreboard *)cbdata)->repo;
 	struct object_id oid;
@@ -808,7 +808,7 @@ static int peel_to_commit_oid(struct object_id *oid_ret, void *cbdata)
 	while (1) {
 		struct object *obj;
 		int kind = oid_object_info(r, &oid, NULL);
-		if (kind == OBJ_COMMIT) {
+		if (kind == OBJ_cummit) {
 			oidcpy(oid_ret, &oid);
 			return 0;
 		}
@@ -834,11 +834,11 @@ static void build_ignorelist(struct blame_scoreboard *sb,
 			oidset_clear(&sb->ignore_list);
 		else
 			oidset_parse_file_carefully(&sb->ignore_list, i->string,
-						    peel_to_commit_oid, sb);
+						    peel_to_cummit_oid, sb);
 	}
 	for_each_string_list_item(i, ignore_rev_list) {
-		if (get_oid_committish(i->string, &oid) ||
-		    peel_to_commit_oid(&oid, sb))
+		if (get_oid_cummittish(i->string, &oid) ||
+		    peel_to_cummit_oid(&oid, sb))
 			die(_("cannot find revision %s to ignore"), i->string);
 		oidset_insert(&sb->ignore_list, &oid);
 	}
@@ -862,18 +862,18 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	const char *contents_from = NULL;
 	const struct option options[] = {
 		OPT_BOOL(0, "incremental", &incremental, N_("show blame entries as we find them, incrementally")),
-		OPT_BOOL('b', NULL, &blank_boundary, N_("do not show object names of boundary commits (Default: off)")),
-		OPT_BOOL(0, "root", &show_root, N_("do not treat root commits as boundaries (Default: off)")),
+		OPT_BOOL('b', NULL, &blank_boundary, N_("do not show object names of boundary cummits (Default: off)")),
+		OPT_BOOL(0, "root", &show_root, N_("do not treat root cummits as boundaries (Default: off)")),
 		OPT_BOOL(0, "show-stats", &show_stats, N_("show work cost statistics")),
 		OPT_BOOL(0, "progress", &show_progress, N_("force progress reporting")),
 		OPT_BIT(0, "score-debug", &output_option, N_("show output score for blame entries"), OUTPUT_SHOW_SCORE),
 		OPT_BIT('f', "show-name", &output_option, N_("show original filename (Default: auto)"), OUTPUT_SHOW_NAME),
 		OPT_BIT('n', "show-number", &output_option, N_("show original linenumber (Default: off)"), OUTPUT_SHOW_NUMBER),
 		OPT_BIT('p', "porcelain", &output_option, N_("show in a format designed for machine consumption"), OUTPUT_PORCELAIN),
-		OPT_BIT(0, "line-porcelain", &output_option, N_("show porcelain format with per-line commit information"), OUTPUT_PORCELAIN|OUTPUT_LINE_PORCELAIN),
+		OPT_BIT(0, "line-porcelain", &output_option, N_("show porcelain format with per-line cummit information"), OUTPUT_PORCELAIN|OUTPUT_LINE_PORCELAIN),
 		OPT_BIT('c', NULL, &output_option, N_("use the same output mode as git-annotate (Default: off)"), OUTPUT_ANNOTATE_COMPAT),
 		OPT_BIT('t', NULL, &output_option, N_("show raw timestamp (Default: off)"), OUTPUT_RAW_TIMESTAMP),
-		OPT_BIT('l', NULL, &output_option, N_("show long commit SHA1 (Default: off)"), OUTPUT_LONG_OBJECT_NAME),
+		OPT_BIT('l', NULL, &output_option, N_("show long cummit SHA1 (Default: off)"), OUTPUT_LONG_OBJECT_NAME),
 		OPT_BIT('s', NULL, &output_option, N_("suppress author name and timestamp (Default: off)"), OUTPUT_NO_AUTHOR),
 		OPT_BIT('e', "show-email", &output_option, N_("show author email instead of name (Default: off)"), OUTPUT_SHOW_EMAIL),
 		OPT_BIT('w', NULL, &xdl_opts, N_("ignore whitespace differences"), XDF_IGNORE_WHITESPACE),
@@ -907,7 +907,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	revs.diffopt.flags.allow_textconv = 1;
 	revs.diffopt.flags.follow_renames = 1;
 
-	save_commit_buffer = 0;
+	save_cummit_buffer = 0;
 	dashdash_pos = 0;
 	show_progress = -1;
 
@@ -953,7 +953,7 @@ parse_done:
 		show_progress = isatty(2);
 
 	if (0 < abbrev && abbrev < hexsz)
-		/* one more abbrev length is needed for the boundary commit */
+		/* one more abbrev length is needed for the boundary cummit */
 		abbrev++;
 	else if (!abbrev)
 		abbrev = hexsz;
@@ -1069,16 +1069,16 @@ parse_done:
 	revs.disable_stdin = 1;
 	setup_revisions(argc, argv, &revs, NULL);
 	if (!revs.pending.nr && is_bare_repository()) {
-		struct commit *head_commit;
+		struct cummit *head_cummit;
 		struct object_id head_oid;
 
 		if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
 					&head_oid, NULL) ||
-		    !(head_commit = lookup_commit_reference_gently(revs.repo,
+		    !(head_cummit = lookup_cummit_reference_gently(revs.repo,
 							     &head_oid, 1)))
 			die("no such ref: HEAD");
 
-		add_pending_object(&revs, &head_commit->object, "HEAD");
+		add_pending_object(&revs, &head_cummit->object, "HEAD");
 	}
 
 	init_scoreboard(&sb);
@@ -1136,7 +1136,7 @@ parse_done:
 		num_lines = sb.num_lines;
 
 	o->suspects = ent;
-	prio_queue_put(&sb.commits, o->commit);
+	prio_queue_put(&sb.cummits, o->cummit);
 
 	blame_origin_decref(o);
 
@@ -1202,7 +1202,7 @@ parse_done:
 	if (show_stats) {
 		printf("num read blob: %d\n", sb.num_read_blob);
 		printf("num get patch: %d\n", sb.num_get_patch);
-		printf("num commits: %d\n", sb.num_commits);
+		printf("num cummits: %d\n", sb.num_cummits);
 	}
 
 	cleanup_scoreboard(&sb);

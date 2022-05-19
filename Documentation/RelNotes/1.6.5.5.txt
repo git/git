@@ -33,7 +33,7 @@ Fixes since v1.6.5.4
    commands in a wrong way, sometimes producing an incorrect result.
 
  * "git shortlog" did not honor the "encoding" header embedded in the
-   commit object like "git log" did.
+   cummit object like "git log" did.
 
  * Reading progress messages that come from the remote side while running
    "git pull" is given precedence over reading the actual pack data to

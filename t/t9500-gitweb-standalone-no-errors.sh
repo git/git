@@ -16,49 +16,49 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./lib-gitweb.sh
 
 # ----------------------------------------------------------------------
-# no commits (empty, just initialized repository)
+# no cummits (empty, just initialized repository)
 
 test_expect_success \
-	'no commits: projects_list (implicit)' \
+	'no cummits: projects_list (implicit)' \
 	'gitweb_run'
 
 test_expect_success \
-	'no commits: projects_index' \
+	'no cummits: projects_index' \
 	'gitweb_run "a=project_index"'
 
 test_expect_success \
-	'no commits: .git summary (implicit)' \
+	'no cummits: .git summary (implicit)' \
 	'gitweb_run "p=.git"'
 
 test_expect_success \
-	'no commits: .git commit (implicit HEAD)' \
-	'gitweb_run "p=.git;a=commit"'
+	'no cummits: .git cummit (implicit HEAD)' \
+	'gitweb_run "p=.git;a=cummit"'
 
 test_expect_success \
-	'no commits: .git commitdiff (implicit HEAD)' \
-	'gitweb_run "p=.git;a=commitdiff"'
+	'no cummits: .git cummitdiff (implicit HEAD)' \
+	'gitweb_run "p=.git;a=cummitdiff"'
 
 test_expect_success \
-	'no commits: .git tree (implicit HEAD)' \
+	'no cummits: .git tree (implicit HEAD)' \
 	'gitweb_run "p=.git;a=tree"'
 
 test_expect_success \
-	'no commits: .git heads' \
+	'no cummits: .git heads' \
 	'gitweb_run "p=.git;a=heads"'
 
 test_expect_success \
-	'no commits: .git tags' \
+	'no cummits: .git tags' \
 	'gitweb_run "p=.git;a=tags"'
 
 
 # ----------------------------------------------------------------------
-# initial commit
+# initial cummit
 
 test_expect_success \
-	'Make initial commit' \
+	'Make initial cummit' \
 	'echo "Not an empty file." >file &&
 	 git add file &&
-	 git commit -a -m "Initial commit." &&
+	 git cummit -a -m "Initial cummit." &&
 	 git branch b'
 
 test_expect_success \
@@ -74,19 +74,19 @@ test_expect_success \
 	'gitweb_run "p=.git"'
 
 test_expect_success \
-	'.git commit (implicit HEAD)' \
-	'gitweb_run "p=.git;a=commit"'
+	'.git cummit (implicit HEAD)' \
+	'gitweb_run "p=.git;a=cummit"'
 
 test_expect_success \
-	'.git commitdiff (implicit HEAD, root commit)' \
-	'gitweb_run "p=.git;a=commitdiff"'
+	'.git cummitdiff (implicit HEAD, root cummit)' \
+	'gitweb_run "p=.git;a=cummitdiff"'
 
 test_expect_success \
-	'.git commitdiff_plain (implicit HEAD, root commit)' \
-	'gitweb_run "p=.git;a=commitdiff_plain"'
+	'.git cummitdiff_plain (implicit HEAD, root cummit)' \
+	'gitweb_run "p=.git;a=cummitdiff_plain"'
 
 test_expect_success \
-	'.git commit (HEAD)' \
+	'.git cummit (HEAD)' \
 	'gitweb_run "p=.git;a=commit;h=HEAD"'
 
 test_expect_success \
@@ -105,16 +105,16 @@ test_expect_success \
 # nonexistent objects
 
 test_expect_success \
-	'.git commit (non-existent)' \
+	'.git cummit (non-existent)' \
 	'gitweb_run "p=.git;a=commit;h=non-existent"'
 
 test_expect_success \
-	'.git commitdiff (non-existent)' \
-	'gitweb_run "p=.git;a=commitdiff;h=non-existent"'
+	'.git cummitdiff (non-existent)' \
+	'gitweb_run "p=.git;a=cummitdiff;h=non-existent"'
 
 test_expect_success \
-	'.git commitdiff (non-existent vs HEAD)' \
-	'gitweb_run "p=.git;a=commitdiff;hp=non-existent;h=HEAD"'
+	'.git cummitdiff (non-existent vs HEAD)' \
+	'gitweb_run "p=.git;a=cummitdiff;hp=non-existent;h=HEAD"'
 
 test_expect_success \
 	'.git tree (0000000000000000000000000000000000000000)' \
@@ -134,61 +134,61 @@ test_expect_success \
 
 
 # ----------------------------------------------------------------------
-# commitdiff testing (implicit, one implicit tree-ish)
+# cummitdiff testing (implicit, one implicit tree-ish)
 
 test_expect_success \
-	'commitdiff(0): root' \
-	'gitweb_run "p=.git;a=commitdiff"'
+	'cummitdiff(0): root' \
+	'gitweb_run "p=.git;a=cummitdiff"'
 
 test_expect_success \
-	'commitdiff(0): file added' \
+	'cummitdiff(0): file added' \
 	'echo "New file" >new_file &&
 	 git add new_file &&
-	 git commit -a -m "File added." &&
-	 gitweb_run "p=.git;a=commitdiff"'
+	 git cummit -a -m "File added." &&
+	 gitweb_run "p=.git;a=cummitdiff"'
 
 test_expect_success \
-	'commitdiff(0): mode change' \
+	'cummitdiff(0): mode change' \
 	'test_chmod +x new_file &&
-	 git commit -a -m "Mode changed." &&
-	 gitweb_run "p=.git;a=commitdiff"'
+	 git cummit -a -m "Mode changed." &&
+	 gitweb_run "p=.git;a=cummitdiff"'
 
 test_expect_success \
-	'commitdiff(0): file renamed' \
+	'cummitdiff(0): file renamed' \
 	'git mv new_file renamed_file &&
-	 git commit -a -m "File renamed." &&
-	 gitweb_run "p=.git;a=commitdiff"'
+	 git cummit -a -m "File renamed." &&
+	 gitweb_run "p=.git;a=cummitdiff"'
 
 test_expect_success \
-	'commitdiff(0): file to symlink' \
+	'cummitdiff(0): file to symlink' \
 	'rm renamed_file &&
 	 test_ln_s_add file renamed_file &&
-	 git commit -a -m "File to symlink." &&
-	 gitweb_run "p=.git;a=commitdiff"'
+	 git cummit -a -m "File to symlink." &&
+	 gitweb_run "p=.git;a=cummitdiff"'
 
 test_expect_success \
-	'commitdiff(0): file deleted' \
+	'cummitdiff(0): file deleted' \
 	'git rm renamed_file &&
 	 rm -f renamed_file &&
-	 git commit -a -m "File removed." &&
-	 gitweb_run "p=.git;a=commitdiff"'
+	 git cummit -a -m "File removed." &&
+	 gitweb_run "p=.git;a=cummitdiff"'
 
 test_expect_success \
-	'commitdiff(0): file copied / new file' \
+	'cummitdiff(0): file copied / new file' \
 	'cp file file2 &&
 	 git add file2 &&
-	 git commit -a -m "File copied." &&
-	 gitweb_run "p=.git;a=commitdiff"'
+	 git cummit -a -m "File copied." &&
+	 gitweb_run "p=.git;a=cummitdiff"'
 
 test_expect_success \
-	'commitdiff(0): mode change and modified' \
+	'cummitdiff(0): mode change and modified' \
 	'echo "New line" >>file2 &&
 	 test_chmod +x file2 &&
-	 git commit -a -m "Mode change and modification." &&
-	 gitweb_run "p=.git;a=commitdiff"'
+	 git cummit -a -m "Mode change and modification." &&
+	 gitweb_run "p=.git;a=cummitdiff"'
 
 test_expect_success \
-	'commitdiff(0): renamed and modified' \
+	'cummitdiff(0): renamed and modified' \
 	'cat >file2<<EOF &&
 Dominus regit me,
 et nihil mihi deerit.
@@ -198,85 +198,85 @@ animam meam convertit,
 deduxit me super semitas jusitiae,
 propter nomen suum.
 EOF
-	 git commit -a -m "File added." &&
+	 git cummit -a -m "File added." &&
 	 git mv file2 file3 &&
 	 echo "Propter nomen suum." >>file3 &&
-	 git commit -a -m "File rename and modification." &&
-	 gitweb_run "p=.git;a=commitdiff"'
+	 git cummit -a -m "File rename and modification." &&
+	 gitweb_run "p=.git;a=cummitdiff"'
 
 test_expect_success \
-	'commitdiff(0): renamed, mode change and modified' \
+	'cummitdiff(0): renamed, mode change and modified' \
 	'git mv file3 file2 &&
 	 echo "Propter nomen suum." >>file2 &&
 	 test_chmod +x file2 &&
-	 git commit -a -m "File rename, mode change and modification." &&
-	 gitweb_run "p=.git;a=commitdiff"'
+	 git cummit -a -m "File rename, mode change and modification." &&
+	 gitweb_run "p=.git;a=cummitdiff"'
 
 # ----------------------------------------------------------------------
-# commitdiff testing (taken from t4114-apply-typechange.sh)
+# cummitdiff testing (taken from t4114-apply-typechange.sh)
 
-test_expect_success 'setup typechange commits' '
+test_expect_success 'setup typechange cummits' '
 	echo "hello world" >foo &&
 	echo "hi planet" >bar &&
 	git update-index --add foo bar &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git branch initial &&
 	rm -f foo &&
 	test_ln_s_add bar foo &&
-	git commit -m "foo symlinked to bar" &&
+	git cummit -m "foo symlinked to bar" &&
 	git branch foo-symlinked-to-bar &&
 	rm -f foo &&
 	echo "how far is the sun?" >foo &&
 	git update-index foo &&
-	git commit -m "foo back to file" &&
+	git cummit -m "foo back to file" &&
 	git branch foo-back-to-file &&
 	rm -f foo &&
 	git update-index --remove foo &&
 	mkdir foo &&
 	echo "if only I knew" >foo/baz &&
 	git update-index --add foo/baz &&
-	git commit -m "foo becomes a directory" &&
+	git cummit -m "foo becomes a directory" &&
 	git branch "foo-becomes-a-directory" &&
 	echo "hello world" >foo/baz &&
 	git update-index foo/baz &&
-	git commit -m "foo/baz is the original foo" &&
+	git cummit -m "foo/baz is the original foo" &&
 	git branch foo-baz-renamed-from-foo
 	'
 
 test_expect_success \
-	'commitdiff(2): file renamed from foo to foo/baz' \
-	'gitweb_run "p=.git;a=commitdiff;hp=initial;h=foo-baz-renamed-from-foo"'
+	'cummitdiff(2): file renamed from foo to foo/baz' \
+	'gitweb_run "p=.git;a=cummitdiff;hp=initial;h=foo-baz-renamed-from-foo"'
 
 test_expect_success \
-	'commitdiff(2): file renamed from foo/baz to foo' \
-	'gitweb_run "p=.git;a=commitdiff;hp=foo-baz-renamed-from-foo;h=initial"'
+	'cummitdiff(2): file renamed from foo/baz to foo' \
+	'gitweb_run "p=.git;a=cummitdiff;hp=foo-baz-renamed-from-foo;h=initial"'
 
 test_expect_success \
-	'commitdiff(2): directory becomes file' \
-	'gitweb_run "p=.git;a=commitdiff;hp=foo-becomes-a-directory;h=initial"'
+	'cummitdiff(2): directory becomes file' \
+	'gitweb_run "p=.git;a=cummitdiff;hp=foo-becomes-a-directory;h=initial"'
 
 test_expect_success \
-	'commitdiff(2): file becomes directory' \
-	'gitweb_run "p=.git;a=commitdiff;hp=initial;h=foo-becomes-a-directory"'
+	'cummitdiff(2): file becomes directory' \
+	'gitweb_run "p=.git;a=cummitdiff;hp=initial;h=foo-becomes-a-directory"'
 
 test_expect_success \
-	'commitdiff(2): file becomes symlink' \
-	'gitweb_run "p=.git;a=commitdiff;hp=initial;h=foo-symlinked-to-bar"'
+	'cummitdiff(2): file becomes symlink' \
+	'gitweb_run "p=.git;a=cummitdiff;hp=initial;h=foo-symlinked-to-bar"'
 
 test_expect_success \
-	'commitdiff(2): symlink becomes file' \
-	'gitweb_run "p=.git;a=commitdiff;hp=foo-symlinked-to-bar;h=foo-back-to-file"'
+	'cummitdiff(2): symlink becomes file' \
+	'gitweb_run "p=.git;a=cummitdiff;hp=foo-symlinked-to-bar;h=foo-back-to-file"'
 
 test_expect_success \
-	'commitdiff(2): symlink becomes directory' \
-	'gitweb_run "p=.git;a=commitdiff;hp=foo-symlinked-to-bar;h=foo-becomes-a-directory"'
+	'cummitdiff(2): symlink becomes directory' \
+	'gitweb_run "p=.git;a=cummitdiff;hp=foo-symlinked-to-bar;h=foo-becomes-a-directory"'
 
 test_expect_success \
-	'commitdiff(2): directory becomes symlink' \
-	'gitweb_run "p=.git;a=commitdiff;hp=foo-becomes-a-directory;h=foo-symlinked-to-bar"'
+	'cummitdiff(2): directory becomes symlink' \
+	'gitweb_run "p=.git;a=cummitdiff;hp=foo-becomes-a-directory;h=foo-symlinked-to-bar"'
 
 # ----------------------------------------------------------------------
-# commitdiff testing (incomplete lines)
+# cummitdiff testing (incomplete lines)
 
 test_expect_success 'setup incomplete lines' '
 	cat >file<<-\EOF &&
@@ -289,61 +289,61 @@ test_expect_success 'setup incomplete lines' '
 	propter nomen suum.
 	CHANGE_ME
 	EOF
-	git commit -a -m "Preparing for incomplete lines" &&
+	git cummit -a -m "Preparing for incomplete lines" &&
 	echo "incomplete" | tr -d "\\012" >>file &&
-	git commit -a -m "Add incomplete line" &&
+	git cummit -a -m "Add incomplete line" &&
 	git tag incomplete_lines_add &&
 	sed -e s/CHANGE_ME/change_me/ <file >file+ &&
 	mv -f file+ file &&
-	git commit -a -m "Incomplete context line" &&
+	git cummit -a -m "Incomplete context line" &&
 	git tag incomplete_lines_ctx &&
 	echo "Dominus regit me," >file &&
 	echo "incomplete line" | tr -d "\\012" >>file &&
-	git commit -a -m "Change incomplete line" &&
+	git cummit -a -m "Change incomplete line" &&
 	git tag incomplete_lines_chg &&
 	echo "Dominus regit me," >file &&
-	git commit -a -m "Remove incomplete line" &&
+	git cummit -a -m "Remove incomplete line" &&
 	git tag incomplete_lines_rem
 '
 
-test_expect_success 'commitdiff(1): addition of incomplete line' '
-	gitweb_run "p=.git;a=commitdiff;h=incomplete_lines_add"
+test_expect_success 'cummitdiff(1): addition of incomplete line' '
+	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_add"
 '
 
-test_expect_success 'commitdiff(1): incomplete line as context line' '
-	gitweb_run "p=.git;a=commitdiff;h=incomplete_lines_ctx"
+test_expect_success 'cummitdiff(1): incomplete line as context line' '
+	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_ctx"
 '
 
-test_expect_success 'commitdiff(1): change incomplete line' '
-	gitweb_run "p=.git;a=commitdiff;h=incomplete_lines_chg"
+test_expect_success 'cummitdiff(1): change incomplete line' '
+	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_chg"
 '
 
-test_expect_success 'commitdiff(1): removal of incomplete line' '
-	gitweb_run "p=.git;a=commitdiff;h=incomplete_lines_rem"
+test_expect_success 'cummitdiff(1): removal of incomplete line' '
+	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_rem"
 '
 
 # ----------------------------------------------------------------------
-# commit, commitdiff: merge, large
+# cummit, cummitdiff: merge, large
 test_expect_success \
 	'Create a merge' \
 	'git checkout b &&
 	 echo "Branch" >>b &&
 	 git add b &&
-	 git commit -a -m "On branch" &&
+	 git cummit -a -m "On branch" &&
 	 git checkout main &&
 	 git merge b &&
-	 git tag merge_commit'
+	 git tag merge_cummit'
 
 test_expect_success \
-	'commit(0): merge commit' \
-	'gitweb_run "p=.git;a=commit"'
+	'cummit(0): merge cummit' \
+	'gitweb_run "p=.git;a=cummit"'
 
 test_expect_success \
-	'commitdiff(0): merge commit' \
-	'gitweb_run "p=.git;a=commitdiff"'
+	'cummitdiff(0): merge cummit' \
+	'gitweb_run "p=.git;a=cummitdiff"'
 
 test_expect_success \
-	'Prepare large commit' \
+	'Prepare large cummit' \
 	'git checkout b &&
 	 echo "To be changed" >01-change &&
 	 echo "To be renamed" >02-pure-rename-from &&
@@ -353,7 +353,7 @@ test_expect_success \
 	 echo "File to symlink" >06-file-or-symlink &&
 	 echo "To be changed and have mode changed" >07-change-mode-change &&
 	 git add 0* &&
-	 git commit -a -m "Prepare large commit" &&
+	 git cummit -a -m "Prepare large cummit" &&
 	 echo "Changed" >01-change &&
 	 git mv 02-pure-rename-from 02-pure-rename-to &&
 	 git rm 03-delete && rm -f 03-delete &&
@@ -366,38 +366,38 @@ test_expect_success \
 	 test_ln_s_add 01-change 06-file-or-symlink &&
 	 echo "Changed and have mode changed" >07-change-mode-change &&
 	 test_chmod +x 07-change-mode-change &&
-	 git commit -a -m "Large commit" &&
+	 git cummit -a -m "Large cummit" &&
 	 git checkout main'
 
 test_expect_success \
-	'commit(1): large commit' \
+	'cummit(1): large cummit' \
 	'gitweb_run "p=.git;a=commit;h=b"'
 
 test_expect_success \
-	'commitdiff(1): large commit' \
-	'gitweb_run "p=.git;a=commitdiff;h=b"'
+	'cummitdiff(1): large cummit' \
+	'gitweb_run "p=.git;a=cummitdiff;h=b"'
 
 # ----------------------------------------------------------------------
 # side-by-side diff
 
 test_expect_success 'side-by-side: addition of incomplete line' '
-	gitweb_run "p=.git;a=commitdiff;h=incomplete_lines_add;ds=sidebyside"
+	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_add;ds=sidebyside"
 '
 
 test_expect_success 'side-by-side: incomplete line as context line' '
-	gitweb_run "p=.git;a=commitdiff;h=incomplete_lines_ctx;ds=sidebyside"
+	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_ctx;ds=sidebyside"
 '
 
 test_expect_success 'side-by-side: changed incomplete line' '
-	gitweb_run "p=.git;a=commitdiff;h=incomplete_lines_chg;ds=sidebyside"
+	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_chg;ds=sidebyside"
 '
 
 test_expect_success 'side-by-side: removal of incomplete line' '
-	gitweb_run "p=.git;a=commitdiff;h=incomplete_lines_rem;ds=sidebyside"
+	gitweb_run "p=.git;a=cummitdiff;h=incomplete_lines_rem;ds=sidebyside"
 '
 
-test_expect_success 'side-by-side: merge commit' '
-	gitweb_run "p=.git;a=commitdiff;h=merge_commit;ds=sidebyside"
+test_expect_success 'side-by-side: merge cummit' '
+	gitweb_run "p=.git;a=cummitdiff;h=merge_cummit;ds=sidebyside"
 '
 
 # ----------------------------------------------------------------------
@@ -406,24 +406,24 @@ test_expect_success 'side-by-side: merge commit' '
 test_expect_success \
 	'tags: list of different types of tags' \
 	'git checkout main &&
-	 git tag -a -m "Tag commit object" tag-commit HEAD &&
-	 git tag -a -m "" tag-commit-nomessage HEAD &&
-	 git tag -a -m "Tag tag object" tag-tag tag-commit &&
+	 git tag -a -m "Tag cummit object" tag-commit HEAD &&
+	 git tag -a -m "" tag-cummit-nomessage HEAD &&
+	 git tag -a -m "Tag tag object" tag-tag tag-cummit &&
 	 git tag -a -m "Tag tree object" tag-tree HEAD^{tree} &&
 	 git tag -a -m "Tag blob object" tag-blob HEAD:file &&
 	 git tag lightweight/tag-commit HEAD &&
-	 git tag lightweight/tag-tag tag-commit &&
+	 git tag lightweight/tag-tag tag-cummit &&
 	 git tag lightweight/tag-tree HEAD^{tree} &&
 	 git tag lightweight/tag-blob HEAD:file &&
 	 gitweb_run "p=.git;a=tags"'
 
 test_expect_success \
-	'tag: Tag to commit object' \
-	'gitweb_run "p=.git;a=tag;h=tag-commit"'
+	'tag: Tag to cummit object' \
+	'gitweb_run "p=.git;a=tag;h=tag-cummit"'
 
 test_expect_success \
 	'tag: on lightweight tag (invalid)' \
-	'gitweb_run "p=.git;a=tag;h=lightweight/tag-commit"'
+	'gitweb_run "p=.git;a=tag;h=lightweight/tag-cummit"'
 
 # ----------------------------------------------------------------------
 # logs
@@ -449,9 +449,9 @@ test_expect_success \
 	'git checkout main &&
 	 echo "to be deleted" >deleted_file &&
 	 git add deleted_file &&
-	 git commit -m "Add file to be deleted" &&
+	 git cummit -m "Add file to be deleted" &&
 	 git rm deleted_file &&
-	 git commit -m "Delete file" &&
+	 git cummit -m "Delete file" &&
 	 gitweb_run "p=.git;a=history;f=deleted_file"'
 
 # ----------------------------------------------------------------------
@@ -521,25 +521,25 @@ test_expect_success \
 # encoding/decoding
 
 test_expect_success \
-	'encode(commit): utf8' \
+	'encode(cummit): utf8' \
 	'. "$TEST_DIRECTORY"/t3901/utf8.txt &&
 	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
-	 test_when_finished "GIT_COMMITTER_NAME=\"C O Mitter\"" &&
+	 test_when_finished "GIT_cummitTER_NAME=\"C O Mitter\"" &&
 	 echo "UTF-8" >>file &&
 	 git add file &&
-	 git commit -F "$TEST_DIRECTORY"/t3900/1-UTF-8.txt &&
-	 gitweb_run "p=.git;a=commit"'
+	 git cummit -F "$TEST_DIRECTORY"/t3900/1-UTF-8.txt &&
+	 gitweb_run "p=.git;a=cummit"'
 
 test_expect_success \
-	'encode(commit): iso-8859-1' \
+	'encode(cummit): iso-8859-1' \
 	'. "$TEST_DIRECTORY"/t3901/8859-1.txt &&
 	 test_when_finished "GIT_AUTHOR_NAME=\"A U Thor\"" &&
-	 test_when_finished "GIT_COMMITTER_NAME=\"C O Mitter\"" &&
+	 test_when_finished "GIT_cummitTER_NAME=\"C O Mitter\"" &&
 	 echo "ISO-8859-1" >>file &&
 	 git add file &&
-	 test_config i18n.commitencoding ISO-8859-1 &&
-	 git commit -F "$TEST_DIRECTORY"/t3900/ISO8859-1.txt &&
-	 gitweb_run "p=.git;a=commit"'
+	 test_config i18n.cummitencoding ISO-8859-1 &&
+	 git cummit -F "$TEST_DIRECTORY"/t3900/ISO8859-1.txt &&
+	 gitweb_run "p=.git;a=cummit"'
 
 test_expect_success \
 	'encode(log): utf-8 and iso-8859-1' \
@@ -661,15 +661,15 @@ test_expect_success \
 	 echo "2nd MATCH" >>file &&
 	 echo "MATCH" >>bar &&
 	 git add file bar &&
-	 git commit -m "Added MATCH word"'
+	 git cummit -m "Added MATCH word"'
 
 test_expect_success \
-	'search: commit author' \
+	'search: cummit author' \
 	'gitweb_run "p=.git;a=search;h=HEAD;st=author;s=A+U+Thor"'
 
 test_expect_success \
-	'search: commit message' \
-	'gitweb_run "p=.git;a=search;h=HEAD;st=commitr;s=MATCH"'
+	'search: cummit message' \
+	'gitweb_run "p=.git;a=search;h=HEAD;st=cummitr;s=MATCH"'
 
 test_expect_success \
 	'search: grep' \
@@ -719,7 +719,7 @@ test_expect_success HIGHLIGHT \
 	'git config gitweb.highlight yes &&
 	 echo "#!/usr/bin/sh" >test.sh &&
 	 git add test.sh &&
-	 git commit -m "Add test.sh" &&
+	 git cummit -m "Add test.sh" &&
 	 gitweb_run "p=.git;a=blob;f=test.sh"'
 
 test_expect_success HIGHLIGHT \
@@ -727,7 +727,7 @@ test_expect_success HIGHLIGHT \
 	'git config gitweb.highlight yes &&
 	 echo "#!/usr/bin/perl" >test &&
 	 git add test &&
-	 git commit -m "Add test" &&
+	 git cummit -m "Add test" &&
 	 gitweb_run "p=.git;a=blob;f=test"'
 
 # ----------------------------------------------------------------------
@@ -741,7 +741,7 @@ test_expect_success \
 	'forks: prepare' \
 	'git init --bare foo.git &&
 	 git --git-dir=foo.git --work-tree=. add file &&
-	 git --git-dir=foo.git --work-tree=. commit -m "Initial commit" &&
+	 git --git-dir=foo.git --work-tree=. cummit -m "Initial cummit" &&
 	 echo "foo" >foo.git/description &&
 	 mkdir -p foo &&
 	 (cd foo &&

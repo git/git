@@ -12,7 +12,7 @@ test_expect_success 'setup (import history)' '
 '
 
 test_expect_success 'basic command line parsing' '
-	# This may fail due to "no such path a.c in commit", or
+	# This may fail due to "no such path a.c in cummit", or
 	# "-L is incompatible with pathspec", depending on the
 	# order the error is checked.  Either is acceptable.
 	test_must_fail git log -L1,1:a.c -- a.c &&
@@ -133,17 +133,17 @@ test_expect_success '-L with --output' '
 test_expect_success 'range_set_union' '
 	test_seq 500 > c.c &&
 	git add c.c &&
-	git commit -m "many lines" &&
+	git cummit -m "many lines" &&
 	test_seq 1000 > c.c &&
 	git add c.c &&
-	git commit -m "modify many lines" &&
+	git cummit -m "modify many lines" &&
 	git log $(for x in $(test_seq 200); do echo -L $((2*x)),+1:c.c || return 1; done)
 '
 
-test_expect_success '-s shows only line-log commits' '
-	git log --format="commit %s" -L1,24:b.c >expect.raw &&
-	grep ^commit expect.raw >expect &&
-	git log --format="commit %s" -L1,24:b.c -s >actual &&
+test_expect_success '-s shows only line-log cummits' '
+	git log --format="cummit %s" -L1,24:b.c >expect.raw &&
+	grep ^cummit expect.raw >expect &&
+	git log --format="cummit %s" -L1,24:b.c -s >actual &&
 	test_cmp expect actual
 '
 
@@ -165,47 +165,47 @@ test_expect_success 'setup for checking fancy rename following' '
 	printf "%s\n"    22 23 24 25      B C D E   >file-2 &&
 	git add file-1 file-2 &&
 	test_tick &&
-	git commit -m "Add file-1 and file-2" &&
+	git cummit -m "Add file-1 and file-2" &&
 	oid_add_f1_f2=$(git rev-parse --short HEAD) &&
 
 	git checkout -b moves-main &&
 	printf "%s\n" 11 12 13 14 15      b c d e   >file-1 &&
-	git commit -a -m "Modify file-1 on main" &&
+	git cummit -a -m "Modify file-1 on main" &&
 	oid_mod_f1_main=$(git rev-parse --short HEAD) &&
 
 	printf "%s\n" 21 22 23 24 25      B C D E   >file-2 &&
-	git commit -a -m "Modify file-2 on main #1" &&
+	git cummit -a -m "Modify file-2 on main #1" &&
 	oid_mod_f2_main_1=$(git rev-parse --short HEAD) &&
 
 	git mv file-1 renamed-1 &&
-	git commit -m "Rename file-1 to renamed-1 on main" &&
+	git cummit -m "Rename file-1 to renamed-1 on main" &&
 
 	printf "%s\n" 11 12 13 14 15      b c d e f >renamed-1 &&
-	git commit -a -m "Modify renamed-1 on main" &&
+	git cummit -a -m "Modify renamed-1 on main" &&
 	oid_mod_r1_main=$(git rev-parse --short HEAD) &&
 
 	printf "%s\n" 21 22 23 24 25      B C D E F >file-2 &&
-	git commit -a -m "Modify file-2 on main #2" &&
+	git cummit -a -m "Modify file-2 on main #2" &&
 	oid_mod_f2_main_2=$(git rev-parse --short HEAD) &&
 
 	git checkout -b moves-side moves-start &&
 	printf "%s\n"    12 13 14 15 16   b c d e   >file-1 &&
-	git commit -a -m "Modify file-1 on side #1" &&
+	git cummit -a -m "Modify file-1 on side #1" &&
 	oid_mod_f1_side_1=$(git rev-parse --short HEAD) &&
 
 	printf "%s\n"    22 23 24 25 26   B C D E   >file-2 &&
-	git commit -a -m "Modify file-2 on side" &&
+	git cummit -a -m "Modify file-2 on side" &&
 	oid_mod_f2_side=$(git rev-parse --short HEAD) &&
 
 	git mv file-2 renamed-2 &&
-	git commit -m "Rename file-2 to renamed-2 on side" &&
+	git cummit -m "Rename file-2 to renamed-2 on side" &&
 
 	printf "%s\n"    12 13 14 15 16 a b c d e   >file-1 &&
-	git commit -a -m "Modify file-1 on side #2" &&
+	git cummit -a -m "Modify file-1 on side #2" &&
 	oid_mod_f1_side_2=$(git rev-parse --short HEAD) &&
 
 	printf "%s\n"    22 23 24 25 26 A B C D E   >renamed-2 &&
-	git commit -a -m "Modify renamed-2 on side" &&
+	git cummit -a -m "Modify renamed-2 on side" &&
 	oid_mod_r2_side=$(git rev-parse --short HEAD) &&
 
 	git checkout moves-main &&
@@ -239,7 +239,7 @@ test_expect_success 'fancy rename following #2' '
 	test_cmp expect actual
 '
 
-# Create the following linear history, where each commit does what its
+# Create the following linear history, where each cummit does what its
 # subject line promises:
 #
 #   * 66c6410 Modify func2() in file.c
@@ -265,23 +265,23 @@ test_expect_success 'setup for checking line-log and parent oids' '
 	git add file.c &&
 	test_tick &&
 	first_tick=$test_tick &&
-	git commit -m "Add func1() and func2() in file.c" &&
+	git cummit -m "Add func1() and func2() in file.c" &&
 
 	echo 1 >other-file &&
 	git add other-file &&
 	test_tick &&
-	git commit -m "Add other-file" &&
+	git cummit -m "Add other-file" &&
 
 	sed -e "s/F1/F1 + 1/" file.c >tmp &&
 	mv tmp file.c &&
-	git commit -a -m "Modify func1() in file.c" &&
+	git cummit -a -m "Modify func1() in file.c" &&
 
 	echo 2 >other-file &&
-	git commit -a -m "Modify other-file" &&
+	git cummit -a -m "Modify other-file" &&
 
 	sed -e "s/F2/F2 + 2/" file.c >tmp &&
 	mv tmp file.c &&
-	git commit -a -m "Modify func2() in file.c" &&
+	git cummit -a -m "Modify func2() in file.c" &&
 
 	head_oid=$(git rev-parse --short HEAD) &&
 	prev_oid=$(git rev-parse --short HEAD^) &&
@@ -299,7 +299,7 @@ test_expect_success 'parent oids without parent rewriting' '
 '
 
 # Parent oid should be from the most recent ancestor touching func2(),
-# i.e. in this case from the root commit.
+# i.e. in this case from the root cummit.
 test_expect_success 'parent oids with parent rewriting' '
 	cat >expect <<-EOF &&
 	$head_oid $root_oid Modify func2() in file.c

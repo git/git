@@ -10,7 +10,7 @@ test_expect_success setup '
 	echo original >file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag initial &&
 	echo modified >file &&
 	git diff --stat -p >patch-0.txt &&

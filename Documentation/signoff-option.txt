@@ -1,12 +1,12 @@
-ifdef::git-commit[]
+ifdef::git-cummit[]
 -s::
-endif::git-commit[]
+endif::git-cummit[]
 --signoff::
 --no-signoff::
-	Add a `Signed-off-by` trailer by the committer at the end of the commit
+	Add a `Signed-off-by` trailer by the cummitter at the end of the cummit
 	log message.  The meaning of a signoff depends on the project
-	to which you're committing.  For example, it may certify that
-	the committer has the rights to submit the work under the
+	to which you're cummitting.  For example, it may certify that
+	the cummitter has the rights to submit the work under the
 	project's license or agrees to some contributor representation,
 	such as a Developer Certificate of Origin.
 	(See http://developercertificate.org for the one used by the

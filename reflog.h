@@ -16,11 +16,11 @@ struct expire_reflog_policy_cb {
 		UE_ALWAYS,
 		UE_HEAD
 	} unreachable_expire_kind;
-	struct commit_list *mark_list;
+	struct cummit_list *mark_list;
 	unsigned long mark_limit;
 	struct cmd_reflog_expire_cb cmd;
-	struct commit *tip_commit;
-	struct commit_list *tips;
+	struct cummit *tip_cummit;
+	struct cummit_list *tips;
 	unsigned int dry_run:1;
 };
 

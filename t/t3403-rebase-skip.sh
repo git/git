@@ -18,36 +18,36 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success setup '
 	echo hello > hello &&
 	git add hello &&
-	git commit -m "hello" &&
+	git cummit -m "hello" &&
 	git branch skip-reference &&
 	git tag hello &&
 
 	echo world >> hello &&
-	git commit -a -m "hello world" &&
+	git cummit -a -m "hello world" &&
 	echo goodbye >> hello &&
-	git commit -a -m "goodbye" &&
+	git cummit -a -m "goodbye" &&
 	git tag goodbye &&
 
 	git checkout --detach &&
 	git checkout HEAD^ . &&
 	test_tick &&
-	git commit -m reverted-goodbye &&
+	git cummit -m reverted-goodbye &&
 	git tag reverted-goodbye &&
 	git checkout goodbye &&
 	test_tick &&
 	GIT_AUTHOR_NAME="Another Author" \
 		GIT_AUTHOR_EMAIL="another.author@example.com" \
-		git commit --amend --no-edit -m amended-goodbye \
+		git cummit --amend --no-edit -m amended-goodbye \
 			--reset-author &&
 	test_tick &&
 	git tag amended-goodbye &&
 
 	git checkout -f skip-reference &&
 	echo moo > hello &&
-	git commit -a -m "we should skip this" &&
+	git cummit -a -m "we should skip this" &&
 	echo moo > cow &&
 	git add cow &&
-	git commit -m "this should not be skipped" &&
+	git cummit -m "this should not be skipped" &&
 	git branch pre-rebase skip-reference &&
 	git branch skip-merge skip-reference
 	'
@@ -104,27 +104,27 @@ test_expect_success 'skipping final pick removes .git/MERGE_MSG' '
 	test_path_is_missing .git/MERGE_MSG
 '
 
-test_expect_success 'correct advice upon picking empty commit' '
+test_expect_success 'correct advice upon picking empty cummit' '
 	test_when_finished "git rebase --abort" &&
 	test_must_fail git rebase -i --onto goodbye \
 		amended-goodbye^ amended-goodbye 2>err &&
 	test_i18ngrep "previous cherry-pick is now empty" err &&
 	test_i18ngrep "git rebase --skip" err &&
-	test_must_fail git commit &&
+	test_must_fail git cummit &&
 	test_i18ngrep "git rebase --skip" err
 '
 
-test_expect_success 'correct authorship when committing empty pick' '
+test_expect_success 'correct authorship when cummitting empty pick' '
 	test_when_finished "git rebase --abort" &&
 	test_must_fail git rebase -i --onto goodbye \
 		amended-goodbye^ amended-goodbye &&
-	git commit --allow-empty &&
+	git cummit --allow-empty &&
 	git log --pretty=format:"%an <%ae>%n%ad%B" -1 amended-goodbye >expect &&
 	git log --pretty=format:"%an <%ae>%n%ad%B" -1 HEAD >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'correct advice upon rewording empty commit' '
+test_expect_success 'correct advice upon rewording empty cummit' '
 	test_when_finished "git rebase --abort" &&
 	(
 		set_fake_editor &&
@@ -133,11 +133,11 @@ test_expect_success 'correct advice upon rewording empty commit' '
 	) &&
 	test_i18ngrep "previous cherry-pick is now empty" err &&
 	test_i18ngrep "git rebase --skip" err &&
-	test_must_fail git commit &&
+	test_must_fail git cummit &&
 	test_i18ngrep "git rebase --skip" err
 '
 
-test_expect_success 'correct advice upon editing empty commit' '
+test_expect_success 'correct advice upon editing empty cummit' '
 	test_when_finished "git rebase --abort" &&
 	(
 		set_fake_editor &&
@@ -146,11 +146,11 @@ test_expect_success 'correct advice upon editing empty commit' '
 	) &&
 	test_i18ngrep "previous cherry-pick is now empty" err &&
 	test_i18ngrep "git rebase --skip" err &&
-	test_must_fail git commit &&
+	test_must_fail git cummit &&
 	test_i18ngrep "git rebase --skip" err
 '
 
-test_expect_success 'correct advice upon cherry-picking an empty commit during a rebase' '
+test_expect_success 'correct advice upon cherry-picking an empty cummit during a rebase' '
 	test_when_finished "git rebase --abort" &&
 	(
 		set_fake_editor &&
@@ -159,11 +159,11 @@ test_expect_success 'correct advice upon cherry-picking an empty commit during a
 	) &&
 	test_i18ngrep "previous cherry-pick is now empty" err &&
 	test_i18ngrep "git cherry-pick --skip" err &&
-	test_must_fail git commit 2>err &&
+	test_must_fail git cummit 2>err &&
 	test_i18ngrep "git cherry-pick --skip" err
 '
 
-test_expect_success 'correct advice upon multi cherry-pick picking an empty commit during a rebase' '
+test_expect_success 'correct advice upon multi cherry-pick picking an empty cummit during a rebase' '
 	test_when_finished "git rebase --abort" &&
 	(
 		set_fake_editor &&
@@ -172,11 +172,11 @@ test_expect_success 'correct advice upon multi cherry-pick picking an empty comm
 	) &&
 	test_i18ngrep "previous cherry-pick is now empty" err &&
 	test_i18ngrep "git cherry-pick --skip" err &&
-	test_must_fail git commit 2>err &&
+	test_must_fail git cummit 2>err &&
 	test_i18ngrep "git cherry-pick --skip" err
 '
 
-test_expect_success 'fixup that empties commit fails' '
+test_expect_success 'fixup that empties cummit fails' '
 	test_when_finished "git rebase --abort" &&
 	(
 		set_fake_editor &&
@@ -185,7 +185,7 @@ test_expect_success 'fixup that empties commit fails' '
 	)
 '
 
-test_expect_success 'squash that empties commit fails' '
+test_expect_success 'squash that empties cummit fails' '
 	test_when_finished "git rebase --abort" &&
 	(
 		set_fake_editor &&

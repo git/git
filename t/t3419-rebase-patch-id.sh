@@ -21,7 +21,7 @@ scramble () {
 }
 
 test_expect_success 'setup' '
-	git commit --allow-empty -m initial &&
+	git cummit --allow-empty -m initial &&
 	git tag root
 '
 
@@ -31,17 +31,17 @@ test_expect_success 'setup: 500 lines' '
 	git reset --hard root &&
 	test_seq 500 >file &&
 	git add file &&
-	git commit -q -m initial &&
+	git cummit -q -m initial &&
 	git branch -f other &&
 
 	scramble file &&
 	git add file &&
-	git commit -q -m "change big file" &&
+	git cummit -q -m "change big file" &&
 
 	git checkout -q other &&
 	: >newfile &&
 	git add newfile &&
-	git commit -q -m "add small file" &&
+	git cummit -q -m "add small file" &&
 
 	git cherry-pick main >/dev/null 2>&1
 '
@@ -54,7 +54,7 @@ test_expect_success 'detect upstream patch' '
 	git checkout -q main &&
 	scramble file &&
 	git add file &&
-	git commit -q -m "change big file again" &&
+	git cummit -q -m "change big file again" &&
 	git checkout -q other^{} &&
 	git rebase main &&
 	git rev-list main...HEAD~ >revs &&
@@ -65,7 +65,7 @@ test_expect_success 'do not drop patch' '
 	git branch -f squashed main &&
 	git checkout -q -f squashed &&
 	git reset -q --soft HEAD~2 &&
-	git commit -q -m squashed &&
+	git cummit -q -m squashed &&
 	git checkout -q other^{} &&
 	test_must_fail git rebase squashed &&
 	git rebase --quit

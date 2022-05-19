@@ -5,7 +5,7 @@ test_description='checkout --no-overlay <tree-ish> -- <pathspec>'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	git commit --allow-empty -m "initial"
+	git cummit --allow-empty -m "initial"
 '
 
 test_expect_success 'checkout --no-overlay deletes files not in <tree-ish>' '
@@ -29,8 +29,8 @@ test_expect_success 'checkout -p --overlay is disallowed' '
 '
 
 test_expect_success '--no-overlay --theirs with D/F conflict deletes file' '
-	test_commit file1 file1 &&
-	test_commit file2 file2 &&
+	test_cummit file1 file1 &&
+	test_cummit file2 file2 &&
 	git rm --cached file1 &&
 	echo 1234 >file1 &&
 	F1=$(git rev-parse HEAD:file1) &&
@@ -47,8 +47,8 @@ test_expect_success '--no-overlay --theirs with D/F conflict deletes file' '
 test_expect_success 'wildcard pathspec matches file in subdirectory' '
 	git reset --hard &&
 	mkdir subdir &&
-	test_commit file3-1 subdir/file3 &&
-	test_commit file3-2 subdir/file3 &&
+	test_cummit file3-1 subdir/file3 &&
+	test_cummit file3-2 subdir/file3 &&
 
 	git checkout --no-overlay file3-1 "*file3" &&
 	echo file3-1 >expect &&

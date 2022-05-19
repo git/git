@@ -13,10 +13,10 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Shows one or more objects (blobs, trees, tags and commits).
+Shows one or more objects (blobs, trees, tags and cummits).
 
-For commits it shows the log message and textual diff. It also
-presents the merge commit in a special format as produced by
+For cummits it shows the log message and textual diff. It also
+presents the merge cummit in a special format as produced by
 'git diff-tree --cc'.
 
 For tags, it shows the tag message and the referenced objects.
@@ -27,7 +27,7 @@ with --name-only).
 For plain blobs, it shows the plain contents.
 
 The command takes options applicable to the 'git diff-tree' command to
-control how the changes the commit introduces are shown.
+control how the changes the cummit introduces are shown.
 
 This manual page describes only the most frequently used options.
 
@@ -67,13 +67,13 @@ EXAMPLES
 `git show v1.0.0^{tree}`::
 	Shows the tree pointed to by the tag `v1.0.0`.
 
-`git show -s --format=%s v1.0.0^{commit}`::
-	Shows the subject of the commit pointed to by the
+`git show -s --format=%s v1.0.0^{cummit}`::
+	Shows the subject of the cummit pointed to by the
 	tag `v1.0.0`.
 
 `git show next~10:Documentation/README`::
 	Shows the contents of the file `Documentation/README` as
-	they were current in the 10th last commit of the branch
+	they were current in the 10th last cummit of the branch
 	`next`.
 
 `git show master:Makefile master:t/Makefile`::

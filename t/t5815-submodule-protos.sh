@@ -10,12 +10,12 @@ setup_ssh_wrapper
 test_expect_success 'setup repository with submodules' '
 	mkdir remote &&
 	git init remote/repo.git &&
-	(cd remote/repo.git && test_commit one) &&
+	(cd remote/repo.git && test_cummit one) &&
 	# submodule-add should probably trust what we feed it on the cmdline,
 	# but its implementation is overly conservative.
 	GIT_ALLOW_PROTOCOL=ssh git submodule add remote:repo.git ssh-module &&
 	GIT_ALLOW_PROTOCOL=ext git submodule add "ext::fake-remote %S repo.git" ext-module &&
-	git commit -m "add submodules"
+	git cummit -m "add submodules"
 '
 
 test_expect_success 'clone with recurse-submodules fails' '

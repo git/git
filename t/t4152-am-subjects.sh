@@ -9,7 +9,7 @@ make_patches() {
 	test_expect_success "create patches with $type subject" '
 		git reset --hard baseline &&
 		echo $type >file &&
-		git commit -a -m "$subject" &&
+		git cummit -a -m "$subject" &&
 		git format-patch -1 --stdout >$type.patch &&
 		git format-patch -1 --stdout -k >$type-k.patch
 	'
@@ -22,8 +22,8 @@ check_subject() {
 	test_cmp expect actual
 }
 
-test_expect_success 'setup baseline commit' '
-	test_commit baseline file
+test_expect_success 'setup baseline cummit' '
+	test_cummit baseline file
 '
 
 SHORT_SUBJECT='short subject'

@@ -7,11 +7,11 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'create loose objects on import' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
-	commit refs/heads/main
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
+	cummit refs/heads/main
+	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	data <<cummit
 	initial
-	COMMIT
+	cummit
 
 	done
 	INPUT_END
@@ -25,18 +25,18 @@ test_expect_success 'create loose objects on import' '
 test_expect_success 'bigger packs are preserved' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
-	commit refs/heads/main
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
+	cummit refs/heads/main
+	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	data <<cummit
 	incremental should create a pack
-	COMMIT
+	cummit
 	from refs/heads/main^0
 
-	commit refs/heads/branch
-	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-	data <<COMMIT
+	cummit refs/heads/branch
+	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+	data <<cummit
 	branch
-	COMMIT
+	cummit
 
 	done
 	INPUT_END
@@ -49,7 +49,7 @@ test_expect_success 'bigger packs are preserved' '
 
 test_expect_success 'lookups after checkpoint works' '
 	hello_id=$(echo hello | git hash-object --stdin -t blob) &&
-	id="$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE" &&
+	id="$GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE" &&
 	before=$(git rev-parse refs/heads/main^0) &&
 	(
 		cat <<-INPUT_END &&
@@ -58,12 +58,12 @@ test_expect_success 'lookups after checkpoint works' '
 		data 6
 		hello
 
-		commit refs/heads/main
+		cummit refs/heads/main
 		mark :2
-		committer $id
-		data <<COMMIT
+		cummitter $id
+		data <<cummit
 		checkpoint after this
-		COMMIT
+		cummit
 		from refs/heads/main^0
 		M 100644 :1 hello
 
@@ -91,11 +91,11 @@ test_expect_success 'lookups after checkpoint works' '
 			from=$(git rev-parse refs/heads/main^0)
 		done &&
 		cat <<-INPUT_END &&
-		commit refs/heads/main
-		committer $id
-		data <<COMMIT
+		cummit refs/heads/main
+		cummitter $id
+		data <<cummit
 		make sure from "unpacked sha1 reference" works, too
-		COMMIT
+		cummit
 		from $from
 		INPUT_END
 		echo done

@@ -8,7 +8,7 @@
 #include "object-store.h"
 #include "blob.h"
 #include "tree.h"
-#include "commit.h"
+#include "cummit.h"
 #include "quote.h"
 #include "builtin.h"
 #include "parse-options.h"

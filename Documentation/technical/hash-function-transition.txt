@@ -189,7 +189,7 @@ type, length, a nul byte, and the object's SHA-256 content.
 
 Object format
 ~~~~~~~~~~~~~
-The content as a byte sequence of a tag, commit, or tree object named
+The content as a byte sequence of a tag, cummit, or tree object named
 by SHA-1 and SHA-256 differ because an object named by SHA-256 name refers to
 other objects by their SHA-256 names and an object named by SHA-1 name
 refers to other objects by their SHA-1 names.
@@ -333,7 +333,7 @@ loose objects) time. To maintain good performance it will be necessary
 to keep the number of loose objects low. See the "Loose objects and
 unreachable objects" section below for more details.
 
-Since all operations that make new objects (e.g., "git commit") add
+Since all operations that make new objects (e.g., "git cummit") add
 the new objects to the corresponding index, this mapping is possible
 for all objects in the object store.
 
@@ -407,23 +407,23 @@ of each object being pushed can be read as described in the "Reading
 an object's SHA-1 content" section to generate the pack written by git
 send-pack.
 
-Signed Commits
+Signed cummits
 ~~~~~~~~~~~~~~
-We add a new field "gpgsig-sha256" to the commit object format to allow
-signing commits without relying on SHA-1. It is similar to the
+We add a new field "gpgsig-sha256" to the cummit object format to allow
+signing cummits without relying on SHA-1. It is similar to the
 existing "gpgsig" field. Its signed payload is the SHA-256 content of the
-commit object with any "gpgsig" and "gpgsig-sha256" fields removed.
+cummit object with any "gpgsig" and "gpgsig-sha256" fields removed.
 
-This means commits can be signed
+This means cummits can be signed
 
-1. using SHA-1 only, as in existing signed commit objects
+1. using SHA-1 only, as in existing signed cummit objects
 2. using both SHA-1 and SHA-256, by using both gpgsig-sha256 and gpgsig
    fields.
 3. using only SHA-256, by only using the gpgsig-sha256 field.
 
-Old versions of "git verify-commit" can verify the gpgsig signature in
+Old versions of "git verify-cummit" can verify the gpgsig signature in
 cases (1) and (2) without modifications and view case (3) as an
-ordinary unsigned commit.
+ordinary unsigned cummit.
 
 Signed Tags
 ~~~~~~~~~~~
@@ -441,10 +441,10 @@ This means tags can be signed
 
 Mergetag embedding
 ~~~~~~~~~~~~~~~~~~
-The mergetag field in the SHA-1 content of a commit contains the
-SHA-1 content of a tag that was merged by that commit.
+The mergetag field in the SHA-1 content of a cummit contains the
+SHA-1 content of a tag that was merged by that cummit.
 
-The mergetag field in the SHA-256 content of the same commit contains the
+The mergetag field in the SHA-256 content of the same cummit contains the
 SHA-256 content of the same tag.
 
 Submodules
@@ -523,10 +523,10 @@ Invalid objects
 The conversion from SHA-1 content to SHA-256 content retains any
 brokenness in the original object (e.g., tree entry modes encoded with
 leading 0, tree objects whose paths are not sorted correctly, and
-commit objects without an author or committer). This is a deliberate
+cummit objects without an author or cummitter). This is a deliberate
 feature of the design to allow the conversion to round-trip.
 
-More profoundly broken objects (e.g., a commit with a truncated "tree"
+More profoundly broken objects (e.g., a cummit with a truncated "tree"
 header line) cannot be converted but were not usable by current Git
 anyway.
 
@@ -567,7 +567,7 @@ large number of clients would not be expected to bear that cost.
 
 Meaning of signatures
 ~~~~~~~~~~~~~~~~~~~~~
-The signed payload for signed commits and tags does not explicitly
+The signed payload for signed cummits and tags does not explicitly
 name the hash used to identify objects. If some day Git adopts a new
 hash function with the same length as the current SHA-1 (40
 hexadecimal digit) or SHA-256 (64 hexadecimal digit) objects then the
@@ -575,14 +575,14 @@ intent behind the PGP signed payload in an object signature is
 unclear:
 
 	object e7e07d5a4fcc2a203d9873968ad3e6bd4d7419d7
-	type commit
+	type cummit
 	tag v2.12.0
 	tagger Junio C Hamano <gitster@pobox.com> 1487962205 -0800
 
 	Git 2.12
 
-Does this mean Git v2.12.0 is the commit with SHA-1 name
-e7e07d5a4fcc2a203d9873968ad3e6bd4d7419d7 or the commit with
+Does this mean Git v2.12.0 is the cummit with SHA-1 name
+e7e07d5a4fcc2a203d9873968ad3e6bd4d7419d7 or the cummit with
 new-40-digit-hash-name e7e07d5a4fcc2a203d9873968ad3e6bd4d7419d7?
 
 Fortunately SHA-256 and SHA-1 have different lengths. If Git starts
@@ -632,7 +632,7 @@ Some initial steps can be implemented independently of one another:
 
 - adding a hash function API (vtable)
 - teaching fsck to tolerate the gpgsig-sha256 field
-- excluding gpgsig-* from the fields copied by "git commit --amend"
+- excluding gpgsig-* from the fields copied by "git cummit --amend"
 - annotating tests that depend on SHA-1 values with a SHA1 test
   prerequisite
 - using "struct object_id", GIT_MAX_RAWSZ, and GIT_MAX_HEXSZ
@@ -728,7 +728,7 @@ Using hash functions in parallel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 (e.g. https://lore.kernel.org/git/22708.8913.864049.452252@chiark.greenend.org.uk/ )
 Objects newly created would be addressed by the new hash, but inside
-such an object (e.g. commit) it is still possible to address objects
+such an object (e.g. cummit) it is still possible to address objects
 using the old hash function.
 
 * You cannot trust its history (needed for bisectability) in the
@@ -739,7 +739,7 @@ using the old hash function.
 
 Signed objects with multiple hashes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Instead of introducing the gpgsig-sha256 field in commit and tag objects
+Instead of introducing the gpgsig-sha256 field in cummit and tag objects
 for SHA-256 content based signatures, an earlier version of this design
 added "hash sha256 <SHA-256 name>" fields to strengthen the existing
 SHA-1 content based signatures.
@@ -760,7 +760,7 @@ However, it also came with disadvantages:
   translation table is no longer needed for anything else. To support
   this, the design added fields such as "hash sha1 tree <SHA-1 name>"
   and "hash sha1 parent <SHA-1 name>" to the SHA-256 content of a signed
-  commit, complicating the conversion process.
+  cummit, complicating the conversion process.
 * Allowing signed objects without a SHA-1 (for after the transition is
   complete) complicated the design further, requiring a "nohash sha1"
   field to suppress including "hash sha1" fields in the SHA-256 content
@@ -819,7 +819,7 @@ Later history:
 
 * See the history of this file in git.git for the history of subsequent
   edits. This document history is no longer being maintained as it
-  would now be superfluous to the commit log
+  would now be superfluous to the cummit log
 
 References:
 

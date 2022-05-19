@@ -4,16 +4,16 @@ test_description='git status for submodule'
 
 . ./test-lib.sh
 
-test_create_repo_with_commit () {
+test_create_repo_with_cummit () {
 	test_create_repo "$1" &&
 	(
 		cd "$1" &&
 		: >bar &&
 		git add bar &&
-		git commit -m " Add bar" &&
+		git cummit -m " Add bar" &&
 		: >foo &&
 		git add foo &&
-		git commit -m " Add foo"
+		git cummit -m " Add foo"
 	)
 }
 
@@ -28,20 +28,20 @@ sanitize_diff () {
 
 
 test_expect_success 'setup' '
-	test_create_repo_with_commit sub &&
+	test_create_repo_with_cummit sub &&
 	echo output > .gitignore &&
 	git add sub .gitignore &&
-	git commit -m "Add submodule sub"
+	git cummit -m "Add submodule sub"
 '
 
 test_expect_success 'status clean' '
 	git status >output &&
-	test_i18ngrep "nothing to commit" output
+	test_i18ngrep "nothing to cummit" output
 '
 
-test_expect_success 'commit --dry-run -a clean' '
-	test_must_fail git commit --dry-run -a >output &&
-	test_i18ngrep "nothing to commit" output
+test_expect_success 'cummit --dry-run -a clean' '
+	test_must_fail git cummit --dry-run -a >output &&
+	test_i18ngrep "nothing to cummit" output
 '
 
 test_expect_success 'status with modified file in submodule' '
@@ -100,7 +100,7 @@ test_expect_success 'status with untracked file in submodule' '
 
 test_expect_success 'status -uno with untracked file in submodule' '
 	git status -uno >output &&
-	test_i18ngrep "^nothing to commit" output
+	test_i18ngrep "^nothing to cummit" output
 '
 
 test_expect_success 'status with untracked file in submodule (porcelain)' '
@@ -136,10 +136,10 @@ test_expect_success 'status with added and untracked file in submodule (porcelai
 test_expect_success 'status with modified file in modified submodule' '
 	(cd sub && git reset --hard) &&
 	rm sub/new-file &&
-	(cd sub && echo "next change" >foo && git commit -m "next change" foo) &&
+	(cd sub && echo "next change" >foo && git cummit -m "next change" foo) &&
 	echo "changed" >sub/foo &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (new commits, modified content)" output
+	test_i18ngrep "modified:   sub (new cummits, modified content)" output
 '
 
 test_expect_success 'status with modified file in modified submodule (porcelain)' '
@@ -154,7 +154,7 @@ test_expect_success 'status with modified file in modified submodule (porcelain)
 test_expect_success 'status with added file in modified submodule' '
 	(cd sub && git reset --hard && echo >foo && git add foo) &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (new commits, modified content)" output
+	test_i18ngrep "modified:   sub (new cummits, modified content)" output
 '
 
 test_expect_success 'status with added file in modified submodule (porcelain)' '
@@ -169,7 +169,7 @@ test_expect_success 'status with untracked file in modified submodule' '
 	(cd sub && git reset --hard) &&
 	echo "content" >sub/new-file &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (new commits, untracked content)" output
+	test_i18ngrep "modified:   sub (new cummits, untracked content)" output
 '
 
 test_expect_success 'status with untracked file in modified submodule (porcelain)' '
@@ -183,7 +183,7 @@ test_expect_success 'status with added and untracked file in modified submodule'
 	(cd sub && git reset --hard && echo >foo && git add foo) &&
 	echo "content" >sub/new-file &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (new commits, modified content, untracked content)" output
+	test_i18ngrep "modified:   sub (new cummits, modified content, untracked content)" output
 '
 
 test_expect_success 'status with added and untracked file in modified submodule (porcelain)' '
@@ -202,13 +202,13 @@ test_expect_success 'setup .git file for sub' '
 	 mv .git "$REAL" &&
 	 echo "gitdir: $REAL" >.git) &&
 	 echo .real >>.gitignore &&
-	 git commit -m "added .real to .gitignore" .gitignore
+	 git cummit -m "added .real to .gitignore" .gitignore
 '
 
 test_expect_success 'status with added file in modified submodule with .git file' '
 	(cd sub && git reset --hard && echo >foo && git add foo) &&
 	git status >output &&
-	test_i18ngrep "modified:   sub (new commits, modified content)" output
+	test_i18ngrep "modified:   sub (new cummits, modified content)" output
 '
 
 test_expect_success 'status with a lot of untracked files in the submodule' '
@@ -233,12 +233,12 @@ test_expect_success 'rm submodule contents' '
 
 test_expect_success 'status clean (empty submodule dir)' '
 	git status >output &&
-	test_i18ngrep "nothing to commit" output
+	test_i18ngrep "nothing to cummit" output
 '
 
 test_expect_success 'status -a clean (empty submodule dir)' '
-	test_must_fail git commit --dry-run -a >output &&
-	test_i18ngrep "nothing to commit" output
+	test_must_fail git cummit --dry-run -a >output &&
+	test_i18ngrep "nothing to cummit" output
 '
 
 cat >status_expect <<\EOF
@@ -248,18 +248,18 @@ EOF
 
 test_expect_success 'status with merge conflict in .gitmodules' '
 	git clone . super &&
-	test_create_repo_with_commit sub1 &&
+	test_create_repo_with_cummit sub1 &&
 	test_tick &&
-	test_create_repo_with_commit sub2 &&
+	test_create_repo_with_cummit sub2 &&
 	(
 		cd super &&
 		prev=$(git rev-parse HEAD) &&
 		git checkout -b add_sub1 &&
 		git submodule add ../sub1 &&
-		git commit -m "add sub1" &&
+		git cummit -m "add sub1" &&
 		git checkout -b add_sub2 $prev &&
 		git submodule add ../sub2 &&
-		git commit -m "add sub2" &&
+		git cummit -m "add sub2" &&
 		git checkout -b merge_conflict_gitmodules &&
 		test_must_fail git merge add_sub1 &&
 		git status -s >../status_actual 2>&1
@@ -330,18 +330,18 @@ test_expect_success 'setup superproject with untracked file in nested submodule'
 		cd super &&
 		git clean -dfx &&
 		git rm .gitmodules &&
-		git commit -m "remove .gitmodules" &&
+		git cummit -m "remove .gitmodules" &&
 		git submodule add -f ./sub1 &&
 		git submodule add -f ./sub2 &&
 		git submodule add -f ./sub1 sub3 &&
-		git commit -a -m "messy merge in superproject" &&
+		git cummit -a -m "messy merge in superproject" &&
 		(
 			cd sub1 &&
 			git submodule add ../sub2 &&
-			git commit -a -m "add sub2 to sub1"
+			git cummit -a -m "add sub2 to sub1"
 		) &&
 		git add sub1 &&
-		git commit -a -m "update sub1 to contain nested sub"
+		git cummit -a -m "update sub1 to contain nested sub"
 	) &&
 	echo content >super/sub1/sub2/file &&
 	echo content >super/sub2/file &&

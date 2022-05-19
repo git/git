@@ -124,7 +124,7 @@ Read that again, because it is important.
           the name the object was _first_ reached through when
           generating the object list
         - within the same basename, sort by size of the object
-        - but always sort different types separately (commits first).
+        - but always sort different types separately (cummits first).
 
         That's not exactly it, but it's very close.
 
@@ -189,7 +189,7 @@ There!  Did you see it?  It is not '"push" and "pull"'!  How often the
 confusion has started here.  So casually mentioned, too!
 
     <gitster> For push, git-send-pack invokes git-receive-pack on the
-        other end.  The receive-pack says "I have up to these commits".
+        other end.  The receive-pack says "I have up to these cummits".
         send-pack looks at them, and computes what are missing from
         the other end.  So "thin" could be the default there.
 
@@ -215,7 +215,7 @@ Let's return to the previous conversation still in progress.
 
     <njs`> and "basename" means something like "the tail of end of
         path of file objects and dir objects, as per basename(3), and
-        we just declare all commit and tag objects to have the same
+        we just declare all cummit and tag objects to have the same
         basename" or something?
 
 Luckily, that too is a point that gitster clarified for us!

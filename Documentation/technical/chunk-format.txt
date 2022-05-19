@@ -4,9 +4,9 @@ Chunk-based file formats
 Some file formats in Git use a common concept of "chunks" to describe
 sections of the file. This allows structured access to a large file by
 scanning a small "table of contents" for the remaining data. This common
-format is used by the `commit-graph` and `multi-pack-index` files. See
+format is used by the `cummit-graph` and `multi-pack-index` files. See
 link:technical/pack-format.html[the `multi-pack-index` format] and
-link:technical/commit-graph-format.html[the `commit-graph` format] for
+link:technical/cummit-graph-format.html[the `cummit-graph` format] for
 how they use the chunks to describe structured data.
 
 A chunk-based file format begins with some header information custom to
@@ -105,10 +105,10 @@ Examples
 These file formats use the chunk-format API, and can be used as examples
 for future formats:
 
-* *commit-graph:* see `write_commit_graph_file()` and `parse_commit_graph()`
-  in `commit-graph.c` for how the chunk-format API is used to write and
-  parse the commit-graph file format documented in
-  link:technical/commit-graph-format.html[the commit-graph file format].
+* *cummit-graph:* see `write_cummit_graph_file()` and `parse_cummit_graph()`
+  in `cummit-graph.c` for how the chunk-format API is used to write and
+  parse the cummit-graph file format documented in
+  link:technical/cummit-graph-format.html[the cummit-graph file format].
 
 * *multi-pack-index:* see `write_midx_internal()` and `load_multi_pack_index()`
   in `midx.c` for how the chunk-format API is used to write and

@@ -63,7 +63,7 @@ separate lines indicate the old and the new mode.
     linkgit:git-config[1]).
 
 4.  All the `file1` files in the output refer to files before the
-    commit, and all the `file2` files refer to files after the commit.
+    cummit, and all the `file2` files refer to files after the cummit.
     It is incorrect to apply each change to each file sequentially.  For
     example, this patch will swap a and b:
 
@@ -102,18 +102,18 @@ index fabadb8,cc95eb0..4866510
   }
 
 - static void describe(char *arg)
- -static void describe(struct commit *cmit, int last_one)
+ -static void describe(struct cummit *cmit, int last_one)
 ++static void describe(char *arg, int last_one)
   {
  +	unsigned char sha1[20];
- +	struct commit *cmit;
-	struct commit_list *list;
+ +	struct cummit *cmit;
+	struct cummit_list *list;
 	static int initialized = 0;
-	struct commit_name *n;
+	struct cummit_name *n;
 
  +	if (get_sha1(arg, sha1) < 0)
  +		usage(describe_usage);
- +	cmit = lookup_commit_reference(sha1);
+ +	cmit = lookup_cummit_reference(sha1);
  +	if (!cmit)
  +		usage(describe_usage);
  +
@@ -156,7 +156,7 @@ files.
 +
 However, if the --combined-all-paths option is provided, instead of a
 two-line from-file/to-file you get a N+1 line from-file/to-file header,
-where N is the number of parents in the merge commit
+where N is the number of parents in the merge cummit
 
        --- a/file
        --- a/file
@@ -169,7 +169,7 @@ parents.
 
 4.   Chunk header format is modified to prevent people from
      accidentally feeding it to `patch -p1`. Combined diff format
-     was created for review of merge commit changes, and was not
+     was created for review of merge cummit changes, and was not
      meant to be applied. The change is similar to the change in the
      extended 'index' header:
 
@@ -200,7 +200,7 @@ in either file1 or file2).  Also eight other lines are the same
 from file1 but do not appear in file2 (hence prefixed with `+`).
 
 When shown by `git diff-tree -c`, it compares the parents of a
-merge commit with the merge result (i.e. file1..fileN are the
+merge cummit with the merge result (i.e. file1..fileN are the
 parents).  When shown by `git diff-files -c`, it compares the
 two unresolved merge parents with the working tree file
 (i.e. file1 is stage 2 aka "our version", file2 is stage 3 aka

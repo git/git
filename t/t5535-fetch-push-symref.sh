@@ -5,11 +5,11 @@ test_description='avoiding conflicting update through symref aliasing'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit one &&
+	test_cummit one &&
 	git clone . src &&
 	git clone src dst1 &&
 	git clone src dst2 &&
-	test_commit two &&
+	test_cummit two &&
 	( cd src && git pull )
 '
 

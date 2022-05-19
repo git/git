@@ -3248,7 +3248,7 @@ static int read_blob_object(struct strbuf *buf, const struct object_id *oid, uns
 {
 	if (S_ISGITLINK(mode)) {
 		strbuf_grow(buf, 100);
-		strbuf_addf(buf, "Subproject commit %s\n", oid_to_hex(oid));
+		strbuf_addf(buf, "Subproject cummit %s\n", oid_to_hex(oid));
 	} else {
 		enum object_type type;
 		unsigned long sz;
@@ -4062,15 +4062,15 @@ static int preimage_oid_in_gitlink_patch(struct patch *p, struct object_id *oid)
 	/*
 	 * A usable gitlink patch has only one fragment (hunk) that looks like:
 	 * @@ -1 +1 @@
-	 * -Subproject commit <old sha1>
-	 * +Subproject commit <new sha1>
+	 * -Subproject cummit <old sha1>
+	 * +Subproject cummit <new sha1>
 	 * or
 	 * @@ -1 +0,0 @@
-	 * -Subproject commit <old sha1>
+	 * -Subproject cummit <old sha1>
 	 * for a removal patch.
 	 */
 	struct fragment *hunk = p->fragments;
-	static const char heading[] = "-Subproject commit ";
+	static const char heading[] = "-Subproject cummit ";
 	char *preimage;
 
 	if (/* does the patch have only one hunk? */
@@ -4140,7 +4140,7 @@ static int build_fake_ancestor(struct apply_state *state, struct patch *list)
 	}
 
 	hold_lock_file_for_update(&lock, state->fake_ancestor, LOCK_DIE_ON_ERROR);
-	res = write_locked_index(&result, &lock, COMMIT_LOCK);
+	res = write_locked_index(&result, &lock, cummit_LOCK);
 	discard_index(&result);
 
 	if (res)
@@ -4313,7 +4313,7 @@ static int add_index_file(struct apply_state *state,
 	} else if (S_ISGITLINK(mode)) {
 		const char *s;
 
-		if (!skip_prefix(buf, "Subproject commit ", &s) ||
+		if (!skip_prefix(buf, "Subproject cummit ", &s) ||
 		    get_oid_hex(s, &ce->oid)) {
 			discard_cache_entry(ce);
 			return error(_("corrupt patch for submodule %s"), path);
@@ -4970,7 +4970,7 @@ int apply_all_patches(struct apply_state *state,
 	}
 
 	if (state->update_index) {
-		res = write_locked_index(state->repo->index, &state->lock_file, COMMIT_LOCK);
+		res = write_locked_index(state->repo->index, &state->lock_file, cummit_LOCK);
 		if (res) {
 			error(_("Unable to write new index file"));
 			res = -128;

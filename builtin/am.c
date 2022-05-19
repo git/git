@@ -17,7 +17,7 @@
 #include "lockfile.h"
 #include "cache-tree.h"
 #include "refs.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "unpack-trees.h"
@@ -89,9 +89,9 @@ enum show_patch_type {
 };
 
 enum empty_action {
-	STOP_ON_EMPTY_COMMIT = 0,  /* output errors and stop in the middle of an am session */
-	DROP_EMPTY_COMMIT,         /* skip with a notice message, unless "--quiet" has been passed */
-	KEEP_EMPTY_COMMIT,         /* keep recording as empty commits */
+	STOP_ON_EMPTY_cummit = 0,  /* output errors and stop in the middle of an am session */
+	DROP_EMPTY_cummit,         /* skip with a notice message, unless "--quiet" has been passed */
+	KEEP_EMPTY_cummit,         /* keep recording as empty cummits */
 };
 
 struct am_state {
@@ -102,15 +102,15 @@ struct am_state {
 	int cur;
 	int last;
 
-	/* commit metadata and message */
+	/* cummit metadata and message */
 	char *author_name;
 	char *author_email;
 	char *author_date;
 	char *msg;
 	size_t msg_len;
 
-	/* when --rebasing, records the original commit the patch came from */
-	struct object_id orig_commit;
+	/* when --rebasing, records the original cummit the patch came from */
+	struct object_id orig_cummit;
 
 	/* number of digits in patch filename */
 	int prec;
@@ -128,10 +128,10 @@ struct am_state {
 	int empty_type; /* enum empty_action */
 	struct strvec git_apply_opts;
 	const char *resolvemsg;
-	int committer_date_is_author_date;
+	int cummitter_date_is_author_date;
 	int ignore_date;
 	int allow_rerere_autoupdate;
-	const char *sign_commit;
+	const char *sign_cummit;
 	int rebasing;
 };
 
@@ -159,8 +159,8 @@ static void am_state_init(struct am_state *state)
 
 	strvec_init(&state->git_apply_opts);
 
-	if (!git_config_get_bool("commit.gpgsign", &gpgsign))
-		state->sign_commit = gpgsign ? "" : NULL;
+	if (!git_config_get_bool("cummit.gpgsign", &gpgsign))
+		state->sign_cummit = gpgsign ? "" : NULL;
 }
 
 /**
@@ -194,11 +194,11 @@ static int am_option_parse_empty(const struct option *opt,
 	BUG_ON_OPT_NEG(unset);
 
 	if (!strcmp(arg, "stop"))
-		*opt_value = STOP_ON_EMPTY_COMMIT;
+		*opt_value = STOP_ON_EMPTY_cummit;
 	else if (!strcmp(arg, "drop"))
-		*opt_value = DROP_EMPTY_COMMIT;
+		*opt_value = DROP_EMPTY_cummit;
 	else if (!strcmp(arg, "keep"))
-		*opt_value = KEEP_EMPTY_COMMIT;
+		*opt_value = KEEP_EMPTY_cummit;
 	else
 		return error(_("invalid value for '%s': '%s'"), "--empty", arg);
 
@@ -344,19 +344,19 @@ static void write_author_script(const struct am_state *state)
 }
 
 /**
- * Reads the commit message from the state directory's "final-commit" file,
+ * Reads the cummit message from the state directory's "final-cummit" file,
  * setting state->msg to its contents and state->msg_len to the length of its
  * contents in bytes.
  *
  * Returns 0 on success, -1 if the file does not exist.
  */
-static int read_commit_msg(struct am_state *state)
+static int read_cummit_msg(struct am_state *state)
 {
 	struct strbuf sb = STRBUF_INIT;
 
 	assert(!state->msg);
 
-	if (read_state_file(&sb, state, "final-commit", 0) < 0) {
+	if (read_state_file(&sb, state, "final-cummit", 0) < 0) {
 		strbuf_release(&sb);
 		return -1;
 	}
@@ -366,11 +366,11 @@ static int read_commit_msg(struct am_state *state)
 }
 
 /**
- * Saves state->msg in the state directory's "final-commit" file.
+ * Saves state->msg in the state directory's "final-cummit" file.
  */
-static void write_commit_msg(const struct am_state *state)
+static void write_cummit_msg(const struct am_state *state)
 {
-	const char *filename = am_path(state, "final-commit");
+	const char *filename = am_path(state, "final-cummit");
 	write_file_buf(filename, state->msg, state->msg_len);
 }
 
@@ -392,12 +392,12 @@ static void am_load(struct am_state *state)
 	if (read_am_author_script(state) < 0)
 		die(_("could not parse author script"));
 
-	read_commit_msg(state);
+	read_cummit_msg(state);
 
-	if (read_state_file(&sb, state, "original-commit", 1) < 0)
-		oidclr(&state->orig_commit);
-	else if (get_oid_hex(sb.buf, &state->orig_commit) < 0)
-		die(_("could not parse %s"), am_path(state, "original-commit"));
+	if (read_state_file(&sb, state, "original-cummit", 1) < 0)
+		oidclr(&state->orig_cummit);
+	else if (get_oid_hex(sb.buf, &state->orig_cummit) < 0)
+		die(_("could not parse %s"), am_path(state, "original-cummit"));
 
 	read_state_file(&sb, state, "threeway", 1);
 	state->threeway = !strcmp(sb.buf, "t");
@@ -475,13 +475,13 @@ static int run_applypatch_msg_hook(struct am_state *state)
 	int ret;
 
 	assert(state->msg);
-	ret = run_hooks_l("applypatch-msg", am_path(state, "final-commit"), NULL);
+	ret = run_hooks_l("applypatch-msg", am_path(state, "final-cummit"), NULL);
 
 	if (!ret) {
 		FREE_AND_NULL(state->msg);
-		if (read_commit_msg(state) < 0)
+		if (read_cummit_msg(state) < 0)
 			die(_("'%s' was deleted by the applypatch-msg hook"),
-				am_path(state, "final-commit"));
+				am_path(state, "final-cummit"));
 	}
 
 	return ret;
@@ -514,7 +514,7 @@ static int run_post_rewrite_hook(const struct am_state *state)
 
 /**
  * Reads the state directory's "rewritten" file, and copies notes from the old
- * commits listed in the file to their rewritten commits.
+ * cummits listed in the file to their rewritten cummits.
  *
  * Returns 0 on success, -1 on failure.
  */
@@ -648,7 +648,7 @@ static int detect_patch_format(const char **paths)
 		goto done;
 	}
 
-	if (starts_with(l1.buf, "# This series applies on GIT commit")) {
+	if (starts_with(l1.buf, "# This series applies on GIT cummit")) {
 		ret = PATCH_FORMAT_STGIT_SERIES;
 		goto done;
 	}
@@ -1112,10 +1112,10 @@ static void am_next(struct am_state *state)
 	state->msg_len = 0;
 
 	unlink(am_path(state, "author-script"));
-	unlink(am_path(state, "final-commit"));
+	unlink(am_path(state, "final-cummit"));
 
-	oidclr(&state->orig_commit);
-	unlink(am_path(state, "original-commit"));
+	oidclr(&state->orig_cummit);
+	unlink(am_path(state, "original-cummit"));
 	delete_ref(NULL, "REBASE_HEAD", NULL, REF_NO_DEREF);
 
 	if (!get_oid("HEAD", &head))
@@ -1157,7 +1157,7 @@ static void NORETURN die_user_resolve(const struct am_state *state)
 		if (advice_enabled(ADVICE_AM_WORK_DIR) &&
 		    is_empty_or_missing_file(am_path(state, "patch")) &&
 		    !repo_index_has_changes(the_repository, NULL, NULL))
-			printf_ln(_("To record the empty patch as an empty commit, run \"%s --allow-empty\"."), cmdline);
+			printf_ln(_("To record the empty patch as an empty cummit, run \"%s --allow-empty\"."), cmdline);
 
 		printf_ln(_("To restore the original branch and stop patching, run \"%s --abort\"."), cmdline);
 	}
@@ -1200,7 +1200,7 @@ static int parse_mail(struct am_state *state, const char *mail)
 	setup_mailinfo(&mi);
 
 	if (state->utf8)
-		mi.metainfo_charset = get_commit_output_encoding();
+		mi.metainfo_charset = get_cummit_output_encoding();
 	else
 		mi.metainfo_charset = NULL;
 
@@ -1308,10 +1308,10 @@ finish:
 }
 
 /**
- * Sets commit_id to the commit hash where the mail was generated from.
+ * Sets cummit_id to the commit hash where the mail was generated from.
  * Returns 0 on success, -1 on failure.
  */
-static int get_mail_commit_oid(struct object_id *commit_id, const char *mail)
+static int get_mail_cummit_oid(struct object_id *cummit_id, const char *mail)
 {
 	struct strbuf sb = STRBUF_INIT;
 	FILE *fp = xfopen(mail, "r");
@@ -1320,7 +1320,7 @@ static int get_mail_commit_oid(struct object_id *commit_id, const char *mail)
 
 	if (strbuf_getline_lf(&sb, fp) ||
 	    !skip_prefix(sb.buf, "From ", &x) ||
-	    get_oid_hex(x, commit_id) < 0)
+	    get_oid_hex(x, cummit_id) < 0)
 		ret = -1;
 
 	strbuf_release(&sb);
@@ -1330,20 +1330,20 @@ static int get_mail_commit_oid(struct object_id *commit_id, const char *mail)
 
 /**
  * Sets state->msg, state->author_name, state->author_email, state->author_date
- * to the commit's respective info.
+ * to the cummit's respective info.
  */
-static void get_commit_info(struct am_state *state, struct commit *commit)
+static void get_cummit_info(struct am_state *state, struct cummit *cummit)
 {
 	const char *buffer, *ident_line, *msg;
 	size_t ident_len;
 	struct ident_split id;
 
-	buffer = logmsg_reencode(commit, NULL, get_commit_output_encoding());
+	buffer = logmsg_reencode(cummit, NULL, get_cummit_output_encoding());
 
 	ident_line = find_commit_header(buffer, "author", &ident_len);
 	if (!ident_line)
-		die(_("missing author line in commit %s"),
-		      oid_to_hex(&commit->object.oid));
+		die(_("missing author line in cummit %s"),
+		      oid_to_hex(&cummit->object.oid));
 	if (split_ident_line(&id, ident_line, ident_len) < 0)
 		die(_("invalid ident line: %.*s"), (int)ident_len, ident_line);
 
@@ -1367,16 +1367,16 @@ static void get_commit_info(struct am_state *state, struct commit *commit)
 	assert(!state->msg);
 	msg = strstr(buffer, "\n\n");
 	if (!msg)
-		die(_("unable to parse commit %s"), oid_to_hex(&commit->object.oid));
+		die(_("unable to parse cummit %s"), oid_to_hex(&cummit->object.oid));
 	state->msg = xstrdup(msg + 2);
 	state->msg_len = strlen(state->msg);
-	unuse_commit_buffer(commit, buffer);
+	unuse_cummit_buffer(cummit, buffer);
 }
 
 /**
- * Writes `commit` as a patch to the state directory's "patch" file.
+ * Writes `cummit` as a patch to the state directory's "patch" file.
  */
-static void write_commit_patch(const struct am_state *state, struct commit *commit)
+static void write_cummit_patch(const struct am_state *state, struct cummit *cummit)
 {
 	struct rev_info rev_info;
 	FILE *fp;
@@ -1388,15 +1388,15 @@ static void write_commit_patch(const struct am_state *state, struct commit *comm
 	rev_info.disable_stdin = 1;
 	rev_info.show_root_diff = 1;
 	rev_info.diffopt.output_format = DIFF_FORMAT_PATCH;
-	rev_info.no_commit_id = 1;
+	rev_info.no_cummit_id = 1;
 	rev_info.diffopt.flags.binary = 1;
 	rev_info.diffopt.flags.full_index = 1;
 	rev_info.diffopt.use_color = 0;
 	rev_info.diffopt.file = fp;
 	rev_info.diffopt.close_file = 1;
-	add_pending_object(&rev_info, &commit->object, "");
+	add_pending_object(&rev_info, &cummit->object, "");
 	diff_setup_done(&rev_info.diffopt);
-	log_tree_commit(&rev_info, commit);
+	log_tree_cummit(&rev_info, cummit);
 }
 
 /**
@@ -1411,8 +1411,8 @@ static void write_index_patch(const struct am_state *state)
 	FILE *fp;
 
 	if (!get_oid("HEAD", &head)) {
-		struct commit *commit = lookup_commit_or_die(&head, "HEAD");
-		tree = get_commit_tree(commit);
+		struct cummit *cummit = lookup_cummit_or_die(&head, "HEAD");
+		tree = get_cummit_tree(cummit);
 	} else
 		tree = lookup_tree(the_repository,
 				   the_repository->hash_algo->empty_tree);
@@ -1421,7 +1421,7 @@ static void write_index_patch(const struct am_state *state)
 	repo_init_revisions(the_repository, &rev_info, NULL);
 	rev_info.diff = 1;
 	rev_info.disable_stdin = 1;
-	rev_info.no_commit_id = 1;
+	rev_info.no_cummit_id = 1;
 	rev_info.diffopt.output_format = DIFF_FORMAT_PATCH;
 	rev_info.diffopt.use_color = 0;
 	rev_info.diffopt.file = fp;
@@ -1432,31 +1432,31 @@ static void write_index_patch(const struct am_state *state)
 }
 
 /**
- * Like parse_mail(), but parses the mail by looking up its commit ID
+ * Like parse_mail(), but parses the mail by looking up its cummit ID
  * directly. This is used in --rebasing mode to bypass git-mailinfo's munging
  * of patches.
  *
- * state->orig_commit will be set to the original commit ID.
+ * state->orig_cummit will be set to the original cummit ID.
  *
  * Will always return 0 as the patch should never be skipped.
  */
 static int parse_mail_rebase(struct am_state *state, const char *mail)
 {
-	struct commit *commit;
-	struct object_id commit_oid;
+	struct cummit *cummit;
+	struct object_id cummit_oid;
 
-	if (get_mail_commit_oid(&commit_oid, mail) < 0)
+	if (get_mail_cummit_oid(&cummit_oid, mail) < 0)
 		die(_("could not parse %s"), mail);
 
-	commit = lookup_commit_or_die(&commit_oid, mail);
+	cummit = lookup_cummit_or_die(&cummit_oid, mail);
 
-	get_commit_info(state, commit);
+	get_cummit_info(state, cummit);
 
-	write_commit_patch(state, commit);
+	write_cummit_patch(state, cummit);
 
-	oidcpy(&state->orig_commit, &commit_oid);
-	write_state_text(state, "original-commit", oid_to_hex(&commit_oid));
-	update_ref("am", "REBASE_HEAD", &commit_oid,
+	oidcpy(&state->orig_cummit, &cummit_oid);
+	write_state_text(state, "original-cummit", oid_to_hex(&cummit_oid));
+	update_ref("am", "REBASE_HEAD", &cummit_oid,
 		   NULL, REF_NO_DEREF, UPDATE_REFS_DIE_ON_ERR);
 
 	return 0;
@@ -1551,7 +1551,7 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 	struct object_id orig_tree, their_tree, our_tree;
 	const struct object_id *bases[1] = { &orig_tree };
 	struct merge_options o;
-	struct commit *result;
+	struct cummit *result;
 	char *their_tree_name;
 
 	if (get_oid("HEAD", &our_tree) < 0)
@@ -1625,16 +1625,16 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 }
 
 /**
- * Commits the current index with state->msg as the commit message and
+ * cummits the current index with state->msg as the cummit message and
  * state->author_name, state->author_email and state->author_date as the author
  * information.
  */
-static void do_commit(const struct am_state *state)
+static void do_cummit(const struct am_state *state)
 {
-	struct object_id tree, parent, commit;
+	struct object_id tree, parent, cummit;
 	const struct object_id *old_oid;
-	struct commit_list *parents = NULL;
-	const char *reflog_msg, *author, *committer = NULL;
+	struct cummit_list *parents = NULL;
+	const char *reflog_msg, *author, *cummitter = NULL;
 	struct strbuf sb = STRBUF_INIT;
 
 	if (run_hooks("pre-applypatch"))
@@ -1643,9 +1643,9 @@ static void do_commit(const struct am_state *state)
 	if (write_cache_as_tree(&tree, 0, NULL))
 		die(_("git write-tree failed to write a tree"));
 
-	if (!get_oid_commit("HEAD", &parent)) {
+	if (!get_oid_cummit("HEAD", &parent)) {
 		old_oid = &parent;
-		commit_list_insert(lookup_commit(the_repository, &parent),
+		cummit_list_insert(lookup_cummit(the_repository, &parent),
 				   &parents);
 	} else {
 		old_oid = NULL;
@@ -1657,18 +1657,18 @@ static void do_commit(const struct am_state *state)
 			state->ignore_date ? NULL : state->author_date,
 			IDENT_STRICT);
 
-	if (state->committer_date_is_author_date)
-		committer = fmt_ident(getenv("GIT_COMMITTER_NAME"),
-				      getenv("GIT_COMMITTER_EMAIL"),
-				      WANT_COMMITTER_IDENT,
+	if (state->cummitter_date_is_author_date)
+		cummitter = fmt_ident(getenv("GIT_cummitTER_NAME"),
+				      getenv("GIT_cummitTER_EMAIL"),
+				      WANT_cummitTER_IDENT,
 				      state->ignore_date ? NULL
 							 : state->author_date,
 				      IDENT_STRICT);
 
-	if (commit_tree_extended(state->msg, state->msg_len, &tree, parents,
-				 &commit, author, committer, state->sign_commit,
+	if (cummit_tree_extended(state->msg, state->msg_len, &tree, parents,
+				 &cummit, author, cummitter, state->sign_cummit,
 				 NULL))
-		die(_("failed to write commit object"));
+		die(_("failed to write cummit object"));
 
 	reflog_msg = getenv("GIT_REFLOG_ACTION");
 	if (!reflog_msg)
@@ -1677,15 +1677,15 @@ static void do_commit(const struct am_state *state)
 	strbuf_addf(&sb, "%s: %.*s", reflog_msg, linelen(state->msg),
 			state->msg);
 
-	update_ref(sb.buf, "HEAD", &commit, old_oid, 0,
+	update_ref(sb.buf, "HEAD", &cummit, old_oid, 0,
 		   UPDATE_REFS_DIE_ON_ERR);
 
 	if (state->rebasing) {
 		FILE *fp = xfopen(am_path(state, "rewritten"), "a");
 
-		assert(!is_null_oid(&state->orig_commit));
-		fprintf(fp, "%s ", oid_to_hex(&state->orig_commit));
-		fprintf(fp, "%s\n", oid_to_hex(&commit));
+		assert(!is_null_oid(&state->orig_cummit));
+		fprintf(fp, "%s ", oid_to_hex(&state->orig_cummit));
+		fprintf(fp, "%s\n", oid_to_hex(&cummit));
 		fclose(fp);
 	}
 
@@ -1702,7 +1702,7 @@ static void validate_resume_state(const struct am_state *state)
 {
 	if (!state->msg)
 		die(_("cannot resume: %s does not exist."),
-			am_path(state, "final-commit"));
+			am_path(state, "final-cummit"));
 
 	if (!state->author_name || !state->author_email || !state->author_date)
 		die(_("cannot resume: %s does not exist."),
@@ -1723,7 +1723,7 @@ static int do_interactive(struct am_state *state)
 	for (;;) {
 		char reply[64];
 
-		puts(_("Commit Body is:"));
+		puts(_("cummit Body is:"));
 		puts("--------------------------");
 		printf("%s", state->msg);
 		puts("--------------------------");
@@ -1747,7 +1747,7 @@ static int do_interactive(struct am_state *state)
 		} else if (*reply == 'e' || *reply == 'E') {
 			struct strbuf msg = STRBUF_INIT;
 
-			if (!launch_editor(am_path(state, "final-commit"), &msg, NULL)) {
+			if (!launch_editor(am_path(state, "final-cummit"), &msg, NULL)) {
 				free(state->msg);
 				state->msg = strbuf_detach(&msg, &state->msg_len);
 			}
@@ -1770,7 +1770,7 @@ static int do_interactive(struct am_state *state)
  *
  * If `resume` is true, we are "resuming". The "msg" and authorship fields, as
  * well as the state directory's "patch" file is used as-is for applying the
- * patch and committing it.
+ * patch and cummitting it.
  */
 static void am_run(struct am_state *state, int resume)
 {
@@ -1815,7 +1815,7 @@ static void am_run(struct am_state *state, int resume)
 				am_append_signoff(state);
 
 			write_author_script(state);
-			write_commit_msg(state);
+			write_cummit_msg(state);
 		}
 
 		if (state->interactive && do_interactive(state))
@@ -1824,16 +1824,16 @@ static void am_run(struct am_state *state, int resume)
 		to_keep = 0;
 		if (is_empty_or_missing_file(am_path(state, "patch"))) {
 			switch (state->empty_type) {
-			case DROP_EMPTY_COMMIT:
+			case DROP_EMPTY_cummit:
 				say(state, stdout, _("Skipping: %.*s"), linelen(state->msg), state->msg);
 				goto next;
 				break;
-			case KEEP_EMPTY_COMMIT:
+			case KEEP_EMPTY_cummit:
 				to_keep = 1;
-				say(state, stdout, _("Creating an empty commit: %.*s"),
+				say(state, stdout, _("Creating an empty cummit: %.*s"),
 					linelen(state->msg), state->msg);
 				break;
-			case STOP_ON_EMPTY_COMMIT:
+			case STOP_ON_EMPTY_cummit:
 				printf_ln(_("Patch is empty."));
 				die_user_resolve(state);
 				break;
@@ -1843,7 +1843,7 @@ static void am_run(struct am_state *state, int resume)
 		if (run_applypatch_msg_hook(state))
 			exit(1);
 		if (to_keep)
-			goto commit;
+			goto cummit;
 
 		say(state, stdout, _("Applying: %.*s"), linelen(state->msg), state->msg);
 
@@ -1877,8 +1877,8 @@ static void am_run(struct am_state *state, int resume)
 			die_user_resolve(state);
 		}
 
-commit:
-		do_commit(state);
+cummit:
+		do_cummit(state);
 
 next:
 		am_next(state);
@@ -1907,8 +1907,8 @@ next:
 /**
  * Resume the current am session after patch application failure. The user did
  * all the hard work, and we do not have to do any patch application. Just
- * trust and commit what the user has in the index and working tree. If `allow_empty`
- * is true, commit as an empty commit when index has not changed and lacking a patch.
+ * trust and cummit what the user has in the index and working tree. If `allow_empty`
+ * is true, cummit as an empty cummit when index has not changed and lacking a patch.
  */
 static void am_resolve(struct am_state *state, int allow_empty)
 {
@@ -1918,7 +1918,7 @@ static void am_resolve(struct am_state *state, int allow_empty)
 
 	if (!repo_index_has_changes(the_repository, NULL, NULL)) {
 		if (allow_empty && is_empty_or_missing_file(am_path(state, "patch"))) {
-			printf_ln(_("No changes - recorded it as an empty commit."));
+			printf_ln(_("No changes - recorded it as an empty cummit."));
 		} else {
 			printf_ln(_("No changes - did you forget to use 'git add'?\n"
 				    "If there is nothing left to stage, chances are that something else\n"
@@ -1942,7 +1942,7 @@ static void am_resolve(struct am_state *state, int allow_empty)
 
 	repo_rerere(the_repository, 0);
 
-	do_commit(state);
+	do_cummit(state);
 
 next:
 	am_next(state);
@@ -1985,7 +1985,7 @@ static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
 		return -1;
 	}
 
-	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
+	if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
 		die(_("unable to write new index file"));
 
 	return 0;
@@ -2019,7 +2019,7 @@ static int merge_tree(struct tree *tree)
 		return -1;
 	}
 
-	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
+	if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
 		die(_("unable to write new index file"));
 
 	return 0;
@@ -2093,8 +2093,8 @@ static void am_skip(struct am_state *state)
 	if (state->rebasing) {
 		FILE *fp = xfopen(am_path(state, "rewritten"), "a");
 
-		assert(!is_null_oid(&state->orig_commit));
-		fprintf(fp, "%s ", oid_to_hex(&state->orig_commit));
+		assert(!is_null_oid(&state->orig_cummit));
+		fprintf(fp, "%s ", oid_to_hex(&state->orig_cummit));
 		fprintf(fp, "%s\n", oid_to_hex(&head));
 		fclose(fp);
 	}
@@ -2183,12 +2183,12 @@ static int show_patch(struct am_state *state, enum show_patch_type sub_mode)
 	const char *patch_path;
 	int len;
 
-	if (!is_null_oid(&state->orig_commit)) {
+	if (!is_null_oid(&state->orig_cummit)) {
 		const char *av[4] = { "show", NULL, "--", NULL };
 		char *new_oid_str;
 		int ret;
 
-		av[1] = new_oid_str = xstrdup(oid_to_hex(&state->orig_commit));
+		av[1] = new_oid_str = xstrdup(oid_to_hex(&state->orig_cummit));
 		ret = run_command_v_opt(av, RUN_GIT_CMD);
 		free(new_oid_str);
 		return ret;
@@ -2334,7 +2334,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 			N_("allow fall back on 3way merging if needed")),
 		OPT__QUIET(&state.quiet, N_("be quiet")),
 		OPT_SET_INT('s', "signoff", &state.signoff,
-			N_("add a Signed-off-by trailer to the commit message"),
+			N_("add a Signed-off-by trailer to the cummit message"),
 			SIGNOFF_EXPLICIT),
 		OPT_BOOL('u', "utf8", &state.utf8,
 			N_("recode into utf8 (default)")),
@@ -2408,18 +2408,18 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		  PARSE_OPT_CMDMODE | PARSE_OPT_OPTARG | PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP,
 		  parse_opt_show_current_patch, RESUME_SHOW_PATCH },
 		OPT_CMDMODE(0, "allow-empty", &resume.mode,
-			N_("record the empty patch as an empty commit"),
+			N_("record the empty patch as an empty cummit"),
 			RESUME_ALLOW_EMPTY),
-		OPT_BOOL(0, "committer-date-is-author-date",
-			&state.committer_date_is_author_date,
-			N_("lie about committer date")),
+		OPT_BOOL(0, "cummitter-date-is-author-date",
+			&state.cummitter_date_is_author_date,
+			N_("lie about cummitter date")),
 		OPT_BOOL(0, "ignore-date", &state.ignore_date,
 			N_("use current timestamp for author date")),
 		OPT_RERERE_AUTOUPDATE(&state.allow_rerere_autoupdate),
-		{ OPTION_STRING, 'S', "gpg-sign", &state.sign_commit, N_("key-id"),
-		  N_("GPG-sign commits"),
+		{ OPTION_STRING, 'S', "gpg-sign", &state.sign_cummit, N_("key-id"),
+		  N_("GPG-sign cummits"),
 		  PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
-		OPT_CALLBACK_F(STOP_ON_EMPTY_COMMIT, "empty", &state.empty_type, "{stop,drop,keep}",
+		OPT_CALLBACK_F(STOP_ON_EMPTY_cummit, "empty", &state.empty_type, "{stop,drop,keep}",
 		  N_("how to handle empty patches"),
 		  PARSE_OPT_NONEG, am_option_parse_empty),
 		OPT_HIDDEN_BOOL(0, "rebasing", &state.rebasing,
@@ -2444,8 +2444,8 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		fprintf_ln(stderr, _("The -b/--binary option has been a no-op for long time, and\n"
 				"it will be removed. Please do not use it anymore."));
 
-	/* Ensure a valid committer ident can be constructed */
-	git_committer_info(IDENT_STRICT);
+	/* Ensure a valid cummitter ident can be constructed */
+	git_cummitter_info(IDENT_STRICT);
 
 	if (repo_read_index_preload(the_repository, NULL, 0) < 0)
 		die(_("failed to read the index"));

@@ -32,7 +32,7 @@ start building on top of "master":
         $ git diff master..topic >P.diff
         $ git checkout -b topicA master
         ... pick and apply pieces from P.diff to build
-        ... commits on topicA branch.
+        ... cummits on topicA branch.
 
               o---o---o
              /        "topicA"
@@ -40,7 +40,7 @@ start building on top of "master":
              \                    "topic"
               o---o---o---o---o---o
 
-Before doing each commit on "topicA" HEAD, I run "diff HEAD"
+Before doing each cummit on "topicA" HEAD, I run "diff HEAD"
 before update-index the affected paths, or "diff --cached HEAD"
 after.  Also I would run "diff --cached master" to make sure
 that the changes are only the ones related to "topicA".  Usually
@@ -55,7 +55,7 @@ other topic:
         $ git diff -R topic >P.diff ;# --cached also would work fine
         $ git checkout -b topicB master
         ... pick and apply pieces from P.diff to build
-        ... commits on topicB branch.
+        ... cummits on topicB branch.
 
                                 "topicB"
                o---o---o---o---o

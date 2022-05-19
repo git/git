@@ -18,10 +18,10 @@ test_expect_success setup '
 		cd src &&
 		>file &&
 		git add file &&
-		git commit -m initial &&
+		git cummit -m initial &&
 		echo 1 >file &&
 		git add file &&
-		git commit -m updated
+		git cummit -m updated
 	)
 
 '
@@ -75,17 +75,17 @@ test_expect_success 'clone from hooks' '
 
 	test_create_repo r0 &&
 	cd r0 &&
-	test_commit initial &&
+	test_cummit initial &&
 	cd .. &&
 	git init r1 &&
 	cd r1 &&
-	test_hook pre-commit <<-\EOF &&
+	test_hook pre-cummit <<-\EOF &&
 	git clone ../r0 ../r2
 	exit 1
 	EOF
 	: >file &&
 	git add file &&
-	test_must_fail git commit -m invoke-hook &&
+	test_must_fail git cummit -m invoke-hook &&
 	cd .. &&
 	test_cmp r0/.git/HEAD r2/.git/HEAD &&
 	test_cmp r0/initial.t r2/initial.t
@@ -202,7 +202,7 @@ test_expect_success 'clone a void' '
 	git clone "file://$(pwd)/src-0" target-6 2>err-6 &&
 	! grep "fatal:" err-6 &&
 	(
-		cd src-0 && test_commit A
+		cd src-0 && test_cummit A
 	) &&
 	git clone "file://$(pwd)/src-0" target-7 2>err-7 &&
 	! grep "fatal:" err-7 &&
@@ -621,7 +621,7 @@ test_expect_success 'clone on case-insensitive fs' '
 		o=$(git hash-object -w --stdin </dev/null | hex2oct) &&
 		t=$(printf "100644 X\0${o}100644 x\0${o}" |
 			git hash-object -w -t tree --stdin) &&
-		c=$(git commit-tree -m bogus $t) &&
+		c=$(git cummit-tree -m bogus $t) &&
 		git update-ref refs/heads/bogus $c &&
 		git clone -b bogus . bogus 2>warning
 	)
@@ -639,8 +639,8 @@ test_expect_success 'clone with GIT_DEFAULT_HASH' '
 		git init --object-format=sha1 test-sha1 &&
 		git init --object-format=sha256 test-sha256
 	) &&
-	test_commit -C test-sha1 foo &&
-	test_commit -C test-sha256 foo &&
+	test_cummit -C test-sha1 foo &&
+	test_cummit -C test-sha256 foo &&
 	GIT_DEFAULT_HASH=sha1 git clone test-sha256 test-clone-sha256 &&
 	GIT_DEFAULT_HASH=sha256 git clone test-sha1 test-clone-sha1 &&
 	git -C test-clone-sha1 status &&
@@ -652,10 +652,10 @@ partial_clone_server () {
 
 	rm -rf "$SERVER" client &&
 	test_create_repo "$SERVER" &&
-	test_commit -C "$SERVER" one &&
+	test_cummit -C "$SERVER" one &&
 	HASH1=$(git -C "$SERVER" hash-object one.t) &&
 	git -C "$SERVER" revert HEAD &&
-	test_commit -C "$SERVER" two &&
+	test_cummit -C "$SERVER" two &&
 	HASH2=$(git -C "$SERVER" hash-object two.t) &&
 	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
 	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1
@@ -692,7 +692,7 @@ test_expect_success 'partial clone with -o' '
 test_expect_success 'partial clone: warn if server does not support object filtering' '
 	rm -rf server client &&
 	test_create_repo server &&
-	test_commit -C server one &&
+	test_cummit -C server one &&
 
 	git clone --filter=blob:limit=0 "file://$(pwd)/server" client 2> err &&
 
@@ -707,11 +707,11 @@ test_expect_success 'batch missing blob request during checkout' '
 	echo b >server/b &&
 	git -C server add a b &&
 
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 	echo aa >server/a &&
 	echo bb >server/b &&
 	git -C server add a b &&
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&
@@ -729,20 +729,20 @@ test_expect_success 'batch missing blob request does not inadvertently try to fe
 	rm -rf server client &&
 
 	test_create_repo repo_for_submodule &&
-	test_commit -C repo_for_submodule x &&
+	test_cummit -C repo_for_submodule x &&
 
 	test_create_repo server &&
 	echo a >server/a &&
 	echo b >server/b &&
 	git -C server add a b &&
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 
 	echo aa >server/a &&
 	echo bb >server/b &&
 	# Also add a gitlink pointing to an arbitrary repository
 	git -C server submodule add "$(pwd)/repo_for_submodule" c &&
 	git -C server add a b c &&
-	git -C server commit -m x &&
+	git -C server cummit -m x &&
 
 	test_config -C server uploadpack.allowfilter 1 &&
 	test_config -C server uploadpack.allowanysha1inwant 1 &&

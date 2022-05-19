@@ -14,7 +14,7 @@ test_expect_success 'setup repository' '
 	git config push.default matching &&
 	echo content >file &&
 	git add file &&
-	git commit -m one &&
+	git cummit -m one &&
 	git remote add public "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 	git push public main:main
 '

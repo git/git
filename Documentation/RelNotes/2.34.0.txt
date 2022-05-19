@@ -21,13 +21,13 @@ UI, Workflows & Features
  * The userdiff pattern for "java" language has been updated.
 
  * "git rebase" by default skips changes that are equivalent to
-   commits that are already in the history the branch is rebased onto;
+   cummits that are already in the history the branch is rebased onto;
    give messages when this happens to let the users be aware of
-   skipped commits, and also teach them how to tell "rebase" to keep
+   skipped cummits, and also teach them how to tell "rebase" to keep
    duplicated changes.
 
  * The advice message that "git cherry-pick" gives when it asks
-   conflicted replay of a commit to be resolved by the end user has
+   conflicted replay of a cummit to be resolved by the end user has
    been updated.
 
  * After "git clone --recurse-submodules", all submodules are cloned
@@ -91,7 +91,7 @@ UI, Workflows & Features
 Performance, Internal Implementation, Development Support etc.
 
  * "git bisect" spawned "git show-branch" only to pretty-print the
-   title of the commit after checking out the next version to be
+   title of the cummit after checking out the next version to be
    tested; this has been rewritten in C.
 
  * "git add" can work better with the sparse index.
@@ -107,7 +107,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * Loading of ref tips to prepare for common ancestry negotiation in
    "git fetch-pack" has been optimized by taking advantage of the
-   commit graph when available.
+   cummit graph when available.
 
  * Remind developers that the userdiff patterns should be kept simple
    and permissive, assuming that the contents they apply are always
@@ -118,7 +118,7 @@ Performance, Internal Implementation, Development Support etc.
    the use of "if ! test_have_prereq X" in a test script.
 
  * The revision traversal API has been optimized by taking advantage
-   of the commit-graph, when available, to determine if a commit is
+   of the cummit-graph, when available, to determine if a cummit is
    reachable from any of the existing refs.
 
  * "git fetch --quiet" optimization to avoid useless computation of
@@ -213,7 +213,7 @@ Fixes since v2.33
 
  * "git range-diff" code clean-up.
 
- * "git commit --fixup" now works with "--edit" again, after it was
+ * "git cummit --fixup" now works with "--edit" again, after it was
    broken in v2.32.
 
  * Use upload-artifacts v1 (instead of v2) for 32-bit linux, as the
@@ -222,7 +222,7 @@ Fixes since v2.33
  * Checking out all the paths from HEAD during the last conflicted
    step in "git rebase" and continuing would cause the step to be
    skipped (which is expected), but leaves MERGE_MSG file behind in
-   $GIT_DIR and confuses the next "git commit", which has been
+   $GIT_DIR and confuses the next "git cummit", which has been
    corrected.
 
  * Various bugs in "git rebase -r" have been fixed.
@@ -238,7 +238,7 @@ Fixes since v2.33
    even when --quiet and/or --no-progress options were given.
 
  * "git branch -D <branch>" used to refuse to remove a broken branch
-   ref that points at a missing commit, which has been corrected.
+   ref that points at a missing cummit, which has been corrected.
 
  * Build update for Apple clang.
 
@@ -326,7 +326,7 @@ Fixes since v2.33
    (merge c90cfc225b rs/mergesort later to maint).
 
  * An editor session launched during a Git operation (e.g. during 'git
-   commit') can leave the terminal in a funny state.  The code path
+   cummit') can leave the terminal in a funny state.  The code path
    has updated to save the terminal state before, and restore it
    after, it spawns an editor.
    (merge 3d411afabc cm/save-restore-terminal later to maint).
@@ -357,9 +357,9 @@ Fixes since v2.33
  * Stop "git add --dry-run" from creating new blob and tree objects.
    (merge e578d0311d rs/add-dry-run-without-objects later to maint).
 
- * "git commit" gave duplicated error message when the object store
+ * "git cummit" gave duplicated error message when the object store
    was unwritable, which has been corrected.
-   (merge 4ef91a2d79 ab/fix-commit-error-message-upon-unwritable-object-store later to maint).
+   (merge 4ef91a2d79 ab/fix-cummit-error-message-upon-unwritable-object-store later to maint).
 
  * Recent sparse-index addition, namely any use of index_name_pos(),
    can expand sparse index entries and breaks any code that walks
@@ -395,10 +395,10 @@ Fixes since v2.33
  * Fix long-standing shell syntax error in the completion script.
    (merge 46b0585286 re/completion-fix-test-equality later to maint).
 
- * Teach "git commit-graph" command not to allow using replace objects
-   at all, as we do not use the commit-graph at runtime when we see
+ * Teach "git cummit-graph" command not to allow using replace objects
+   at all, as we do not use the cummit-graph at runtime when we see
    object replacement.
-   (merge 095d112f8c ab/ignore-replace-while-working-on-commit-graph later to maint).
+   (merge 095d112f8c ab/ignore-replace-while-working-on-cummit-graph later to maint).
 
  * "git pull --no-verify" did not affect the underlying "git merge".
    (merge 47bfdfb3fd ar/fix-git-pull-no-verify later to maint).

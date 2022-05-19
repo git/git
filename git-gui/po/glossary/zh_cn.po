@@ -19,7 +19,7 @@ msgid ""
 msgstr "注：这个文件是为了帮助翻译人员统一名词术语。最终用户不会关心这个文件。"
 
 #. ""
-#. amend指用户修改最近一次commit的操作，修订？修改？修正？
+#. amend指用户修改最近一次cummit的操作，修订？修改？修正？
 #. [WANG Cong]: 根据我的了解，这个词似乎翻译成“修订”多一些。“修正”也可以，“修改”再次之。
 #. [ZHANG Le]: 修订，感觉一般指对一些大型出版物的大规模升级，比如修订新华字典
 #              修正，其实每次amend的结果也不一定就是最后结果，说不定还需要修改。所以不
@@ -54,11 +54,11 @@ msgid "checkout [verb]"
 msgstr "签出"
 
 #. "A single point in the git history."
-msgid "commit [noun]"
+msgid "cummit [noun]"
 msgstr "提交"
 
 #. "The action of storing a new snapshot of the project's state in the git history."
-msgid "commit [verb]"
+msgid "cummit [verb]"
 msgstr "提交"
 
 #. ""
@@ -85,7 +85,7 @@ msgstr "获取"
 msgid "index (in git-gui: staging area)"
 msgstr "工作缓存？"
 
-#. "A successful merge results in the creation of a new commit representing the result of the merge."
+#. "A successful merge results in the creation of a new cummit representing the result of the merge."
 msgid "merge [noun]"
 msgstr "合并"
 
@@ -94,7 +94,7 @@ msgid "merge [verb]"
 msgstr "合并"
 
 #. ""
-#. message是指commit中的文字信息
+#. message是指cummit中的文字信息
 msgid "message"
 msgstr "描述"
 
@@ -139,7 +139,7 @@ msgstr "提交暂存区"
 msgid "status"
 msgstr "状态"
 
-#. "A ref pointing to a tag or commit object"
+#. "A ref pointing to a tag or cummit object"
 msgid "tag [noun]"
 msgstr "标签"
 

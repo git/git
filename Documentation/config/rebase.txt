@@ -21,14 +21,14 @@ rebase.autoStash::
 	`--autostash` options of linkgit:git-rebase[1].
 	Defaults to false.
 
-rebase.missingCommitsCheck::
+rebase.missingcummitsCheck::
 	If set to "warn", git rebase -i will print a warning if some
-	commits are removed (e.g. a line was deleted), however the
+	cummits are removed (e.g. a line was deleted), however the
 	rebase will still proceed. If set to "error", it will print
 	the previous warning and stop the rebase, 'git rebase
 	--edit-todo' can then be used to correct the error. If set to
 	"ignore", no checking is done.
-	To drop a commit without warning or error, use the `drop`
+	To drop a cummit without warning or error, use the `drop`
 	command in the todo list.
 	Defaults to "ignore".
 
@@ -42,16 +42,16 @@ rebase.abbreviateCommands::
 	todo list resulting in something like this:
 +
 -------------------------------------------
-	p deadbee The oneline of the commit
-	p fa1afe1 The oneline of the next commit
+	p deadbee The oneline of the cummit
+	p fa1afe1 The oneline of the next cummit
 	...
 -------------------------------------------
 +
 instead of:
 +
 -------------------------------------------
-	pick deadbee The oneline of the commit
-	pick fa1afe1 The oneline of the next commit
+	pick deadbee The oneline of the cummit
+	pick fa1afe1 The oneline of the next cummit
 	...
 -------------------------------------------
 +

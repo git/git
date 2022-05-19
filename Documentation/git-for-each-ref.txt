@@ -76,18 +76,18 @@ OPTIONS
 
 --merged[=<object>]::
 	Only list refs whose tips are reachable from the
-	specified commit (HEAD if not specified).
+	specified cummit (HEAD if not specified).
 
 --no-merged[=<object>]::
 	Only list refs whose tips are not reachable from the
-	specified commit (HEAD if not specified).
+	specified cummit (HEAD if not specified).
 
 --contains[=<object>]::
-	Only list refs which contain the specified commit (HEAD if not
+	Only list refs which contain the specified cummit (HEAD if not
 	specified).
 
 --no-contains[=<object>]::
-	Only list refs which don't contain the specified commit (HEAD
+	Only list refs which don't contain the specified cummit (HEAD
 	if not specified).
 
 --ignore-case::
@@ -122,7 +122,7 @@ refname::
 `strip` can be used as a synonym to `lstrip`.
 
 objecttype::
-	The type of the object (`blob`, `tree`, `commit`, `tag`).
+	The type of the object (`blob`, `tree`, `cummit`, `tag`).
 
 objectsize::
 	The size of the object (the same as 'git cat-file -s' reports).
@@ -217,21 +217,21 @@ worktreepath::
 	out, if it is checked out in any linked worktree. Empty string
 	otherwise.
 
-In addition to the above, for commit and tag objects, the header
+In addition to the above, for cummit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can
 be used to specify the value in the header field.
 Fields `tree` and `parent` can also be used with modifier `:short` and
 `:short=<length>` just like `objectname`.
 
-For commit and tag objects, the special `creatordate` and `creator`
+For cummit and tag objects, the special `creatordate` and `creator`
 fields will correspond to the appropriate date or name-email-date tuple
-from the `committer` or `tagger` fields depending on the object type.
+from the `cummitter` or `tagger` fields depending on the object type.
 These are intended for working on a mix of annotated and lightweight tags.
 
 Fields that have name-email-date tuple as its value (`author`,
-`committer`, and `tagger`) can be suffixed with `name`, `email`,
+`cummitter`, and `tagger`) can be suffixed with `name`, `email`,
 and `date` to extract the named component.  For email fields (`authoremail`,
-`committeremail` and `taggeremail`), `:trim` can be appended to get the email
+`cummitteremail` and `taggeremail`), `:trim` can be appended to get the email
 without angle brackets, and `:localpart` to get the part before the `@` symbol
 out of the trimmed email.
 
@@ -244,22 +244,22 @@ Note that `--format=%(raw)` can not be used with `--python`, `--shell`, `--tcl`,
 because such language may not support arbitrary binary data in their string
 variable type.
 
-The message in a commit or a tag object is `contents`, from which
+The message in a cummit or a tag object is `contents`, from which
 `contents:<part>` can be used to extract various parts out of:
 
 contents:size::
-	The size in bytes of the commit or tag message.
+	The size in bytes of the cummit or tag message.
 
 contents:subject::
 	The first paragraph of the message, which typically is a
-	single line, is taken as the "subject" of the commit or the
+	single line, is taken as the "subject" of the cummit or the
 	tag message.
 	Instead of `contents:subject`, field `subject` can also be used to
 	obtain same results. `:sanitize` can be appended to `subject` for
 	subject line suitable for filename.
 
 contents:body::
-	The remainder of the commit or the tag message that follows
+	The remainder of the cummit or the tag message that follows
 	the "subject".
 
 contents:signature::
@@ -274,7 +274,7 @@ are obtained as `trailers[:options]` (or by using the historical alias
 section of linkgit:git-log[1].
 
 For sorting purposes, fields with numeric values sort in numeric order
-(`objectsize`, `authordate`, `committerdate`, `creatordate`, `taggerdate`).
+(`objectsize`, `authordate`, `cummitterdate`, `creatordate`, `taggerdate`).
 All other fields are used to sort in their byte-value order.
 
 There is also an option to sort by versions, this can be done by using
@@ -301,7 +301,7 @@ EXAMPLES
 --------
 
 An example directly producing formatted text.  Show the most recent
-3 tagged commits:
+3 tagged cummits:
 
 ------------
 #!/bin/sh
@@ -362,9 +362,9 @@ fmt='
 		b=%(body)
 	fi
 	echo "$kind $T points at a $t object $o"
-	if test "z$t" = zcommit
+	if test "z$t" = zcummit
 	then
-		echo "The commit was authored by $n $e
+		echo "The cummit was authored by $n $e
 at $d, and titled
 
     $s

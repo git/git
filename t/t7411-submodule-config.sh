@@ -18,16 +18,16 @@ test_expect_success 'submodule config cache setup' '
 		git init &&
 		echo a >a &&
 		git add . &&
-		git commit -ma
+		git cummit -ma
 	) &&
 	mkdir super &&
 	(cd super &&
 		git init &&
 		git submodule add ../submodule &&
 		git submodule add ../submodule a &&
-		git commit -m "add as submodule and as a" &&
+		git cummit -m "add as submodule and as a" &&
 		git mv a b &&
-		git commit -m "move a to b"
+		git cummit -m "move a to b"
 	)
 '
 
@@ -90,7 +90,7 @@ test_expect_success 'error in history of one submodule config lets continue, std
 		echo "	value = \"" >>.gitmodules &&
 		git add .gitmodules &&
 		mv .gitmodules.bak .gitmodules &&
-		git commit -m "add error" &&
+		git cummit -m "add error" &&
 		sha1=$(git rev-parse HEAD) &&
 		test-tool submodule-config \
 			HEAD b \
@@ -107,8 +107,8 @@ test_expect_success 'using different treeishs works' '
 		cd super &&
 		git tag new_tag &&
 		tree=$(git rev-parse HEAD^{tree}) &&
-		commit=$(git rev-parse HEAD^{commit}) &&
-		test-tool submodule-config $commit b >expect &&
+		cummit=$(git rev-parse HEAD^{cummit}) &&
+		test-tool submodule-config $cummit b >expect &&
 		test-tool submodule-config $tree b >actual.1 &&
 		test-tool submodule-config new_tag b >actual.2 &&
 		test_cmp expect actual.1 &&
@@ -125,7 +125,7 @@ test_expect_success 'error in history in fetchrecursesubmodule lets continue' '
 		git add .gitmodules &&
 		git config --unset -f .gitmodules \
 			submodule.submodule.fetchrecursesubmodules &&
-		git commit -m "add error in fetchrecursesubmodules" &&
+		git cummit -m "add error in fetchrecursesubmodules" &&
 		test-tool submodule-config \
 			HEAD b \
 			HEAD submodule \
@@ -179,7 +179,7 @@ test_expect_success 'writeable .gitmodules when it is nowhere in the repository'
 	test_when_finished "git -C super reset --hard $ORIG" &&
 	(cd super &&
 		git rm .gitmodules &&
-		git commit -m "remove .gitmodules from the current branch" &&
+		git cummit -m "remove .gitmodules from the current branch" &&
 		git submodule--helper config --check-writeable
 	)
 '
@@ -230,12 +230,12 @@ test_expect_success 'reading nested submodules config' '
 		git init submodule/nested_submodule &&
 		echo "a" >submodule/nested_submodule/a &&
 		git -C submodule/nested_submodule add a &&
-		git -C submodule/nested_submodule commit -m "add a" &&
+		git -C submodule/nested_submodule cummit -m "add a" &&
 		git -C submodule submodule add ./nested_submodule &&
 		git -C submodule add nested_submodule &&
-		git -C submodule commit -m "added nested_submodule" &&
+		git -C submodule cummit -m "added nested_submodule" &&
 		git add submodule &&
-		git commit -m "updated submodule" &&
+		git cummit -m "updated submodule" &&
 		echo "./nested_submodule" >expect &&
 		test-tool submodule-nested-repo-config \
 			submodule submodule.nested_submodule.url >actual &&

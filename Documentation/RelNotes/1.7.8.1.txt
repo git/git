@@ -10,7 +10,7 @@ Fixes since v1.7.8
  * "git apply --check" did not error out when given an empty input
    without any patch.
 
- * "git archive" mistakenly allowed remote clients to ask for commits
+ * "git archive" mistakenly allowed remote clients to ask for cummits
    that are not at the tip of any ref.
 
  * "git checkout" and "git merge" treated in-tree .gitignore and exclude

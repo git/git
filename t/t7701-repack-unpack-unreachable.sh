@@ -15,20 +15,20 @@ test_expect_success '-A with -d option leaves unreachable objects unpacked' '
 	echo content > file1 &&
 	git add . &&
 	test_tick &&
-	git commit -m initial_commit &&
+	git cummit -m initial_cummit &&
 	# create a transient branch with unique content
 	git checkout -b transient_branch &&
 	echo more content >> file1 &&
-	# record the objects created in the database for file, commit, tree
+	# record the objects created in the database for file, cummit, tree
 	fsha1=$(git hash-object file1) &&
 	test_tick &&
-	git commit -a -m more_content &&
-	csha1=$(git rev-parse HEAD^{commit}) &&
+	git cummit -a -m more_content &&
+	csha1=$(git rev-parse HEAD^{cummit}) &&
 	tsha1=$(git rev-parse HEAD^{tree}) &&
 	git checkout main &&
 	echo even more content >> file1 &&
 	test_tick &&
-	git commit -a -m even_more_content &&
+	git cummit -a -m even_more_content &&
 	# delete the transient branch
 	git branch -D transient_branch &&
 	# pack the repo
@@ -115,7 +115,7 @@ test_expect_success 'do not bother loosening old objects' '
 test_expect_success 'keep packed objects found only in index' '
 	echo my-unique-content >file &&
 	git add file &&
-	git commit -m "make it reachable" &&
+	git cummit -m "make it reachable" &&
 	git gc &&
 	git reset HEAD^ &&
 	git reflog expire --expire=now --all &&

@@ -18,17 +18,17 @@ unnote () {
 }
 
 #
-# Create a test repo with an interesting commit graph:
+# Create a test repo with an interesting cummit graph:
 #
 # A-----B-----G--H--I--K--L
 #  \     \      /     /
 #   \     \    /     /
 #    C--D--E--F     J
 #
-# The commits are laid out from left-to-right starting with
-# the root commit A and terminating at the tip commit L.
+# The cummits are laid out from left-to-right starting with
+# the root cummit A and terminating at the tip cummit L.
 #
-# There are a few places where we adjust the commit date or
+# There are a few places where we adjust the cummit date or
 # author date to make the --topo-order, --date-order, and
 # --author-date-order flags produce different output.
 
@@ -36,7 +36,7 @@ test_expect_success setup '
 	echo "Hi there" >file &&
 	echo "initial" >lost &&
 	git add file lost &&
-	test_tick && git commit -m "Initial file and lost" &&
+	test_tick && git cummit -m "Initial file and lost" &&
 	note A &&
 
 	git branch other-branch &&
@@ -45,14 +45,14 @@ test_expect_success setup '
 	git rm -f "*" &&
 	echo "Unrelated branch" >side &&
 	git add side &&
-	test_tick && git commit -m "Side root" &&
+	test_tick && git cummit -m "Side root" &&
 	note J &&
 	git checkout main &&
 
 	echo "Hello" >file &&
 	echo "second" >lost &&
 	git add file lost &&
-	test_tick && GIT_AUTHOR_DATE=$(($test_tick + 120)) git commit -m "Modified file and lost" &&
+	test_tick && GIT_AUTHOR_DATE=$(($test_tick + 120)) git cummit -m "Modified file and lost" &&
 	note B &&
 
 	git checkout other-branch &&
@@ -60,35 +60,35 @@ test_expect_success setup '
 	echo "Hello" >file &&
 	>lost &&
 	git add file lost &&
-	test_tick && git commit -m "Modified the file identically" &&
+	test_tick && git cummit -m "Modified the file identically" &&
 	note C &&
 
 	echo "This is a stupid example" >another-file &&
 	git add another-file &&
-	test_tick && git commit -m "Add another file" &&
+	test_tick && git cummit -m "Add another file" &&
 	note D &&
 
 	test_tick &&
 	test_must_fail git merge -m "merge" main &&
-	>lost && git commit -a -m "merge" &&
+	>lost && git cummit -a -m "merge" &&
 	note E &&
 
 	echo "Yet another" >elif &&
 	git add elif &&
-	test_tick && git commit -m "Irrelevant change" &&
+	test_tick && git cummit -m "Irrelevant change" &&
 	note F &&
 
 	git checkout main &&
 	echo "Yet another" >elif &&
 	git add elif &&
-	test_tick && git commit -m "Another irrelevant change" &&
+	test_tick && git cummit -m "Another irrelevant change" &&
 	note G &&
 
 	test_tick && git merge -m "merge" other-branch &&
 	note H &&
 
 	echo "Final change" >file &&
-	test_tick && git commit -a -m "Final change" &&
+	test_tick && git cummit -a -m "Final change" &&
 	note I &&
 
 	git checkout main &&
@@ -97,7 +97,7 @@ test_expect_success setup '
 
 	echo "Immaterial" >elif &&
 	git add elif &&
-	test_tick && git commit -m "Last" &&
+	test_tick && git cummit -m "Last" &&
 	note L
 '
 
@@ -186,16 +186,16 @@ test_expect_success 'setup rebuild repo' '
 
 	echo base >file &&
 	git add file &&
-	test_commit I &&
+	test_cummit I &&
 
 	echo A >file &&
 	git add file &&
-	test_commit A &&
+	test_cummit A &&
 
 	git switch -c branchB I &&
 	echo B >file &&
 	git add file &&
-	test_commit B &&
+	test_cummit B &&
 
 	git switch topic &&
 	test_must_fail git merge -m "M" B &&
@@ -207,12 +207,12 @@ test_expect_success 'setup rebuild repo' '
 
 	echo C >other &&
 	git add other &&
-	test_commit C &&
+	test_cummit C &&
 
 	git switch -c branchX I &&
 	echo X >file &&
 	git add file &&
-	test_commit X &&
+	test_cummit X &&
 
 	git switch -c branchR M &&
 	git merge -m R -Xtheirs X &&
@@ -225,12 +225,12 @@ test_expect_success 'setup rebuild repo' '
 	git switch -c branchY M &&
 	echo Y >y &&
 	git add y &&
-	test_commit Y &&
+	test_cummit Y &&
 
 	git switch -c branchZ C &&
 	echo Z >z &&
 	git add z &&
-	test_commit Z &&
+	test_cummit Z &&
 
 	git switch topic &&
 	git merge -m O Z &&

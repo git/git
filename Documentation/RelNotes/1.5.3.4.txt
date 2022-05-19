@@ -5,7 +5,7 @@ Fixes since v1.5.3.3
 --------------------
 
  * Change to "git-ls-files" in v1.5.3.3 that was introduced to support
-   partial commit of removal better had a segfaulting bug, which was
+   partial cummit of removal better had a segfaulting bug, which was
    diagnosed and fixed by Keith and Carl.
 
  * Performance improvements for rename detection has been backported
@@ -13,11 +13,11 @@ Fixes since v1.5.3.3
 
  * "git-for-each-ref --format='%(numparent)'" was not working
    correctly at all, and --format='%(parent)' was not working for
-   merge commits.
+   merge cummits.
 
  * Sample "post-receive-hook" incorrectly sent out push
-   notification e-mails marked as "From: " the committer of the
-   commit that happened to be at the tip of the branch that was
+   notification e-mails marked as "From: " the cummitter of the
+   cummit that happened to be at the tip of the branch that was
    pushed, not from the person who pushed.
 
  * "git-remote" did not exit non-zero status upon error.
@@ -26,7 +26,7 @@ Fixes since v1.5.3.3
    bogus input.
 
  * "git-rebase -i" squash subcommand incorrectly made the
-   author of later commit the author of resulting commit,
+   author of later cummit the author of resulting cummit,
    instead of taking from the first one in the squashed series.
 
  * "git-stash apply --index" was not documented.

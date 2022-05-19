@@ -25,7 +25,7 @@ test_expect_success setup '
 	>file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git gc
 '
 
@@ -83,7 +83,7 @@ test_expect_success 'prune: prune unreachable heads' '
 	git config core.logAllRefUpdates false &&
 	>file2 &&
 	git add file2 &&
-	git commit -m temporary &&
+	git cummit -m temporary &&
 	tmp_head=$(git rev-list -1 HEAD) &&
 	git reset HEAD^ &&
 	git reflog expire --all &&
@@ -93,7 +93,7 @@ test_expect_success 'prune: prune unreachable heads' '
 
 test_expect_success 'prune: do not prune detached HEAD with no reflog' '
 	git checkout --detach --quiet &&
-	git commit --allow-empty -m "detached commit" &&
+	git cummit --allow-empty -m "detached cummit" &&
 	git reflog expire --all &&
 	git prune -n >prune_actual &&
 	test_must_be_empty prune_actual
@@ -110,7 +110,7 @@ test_expect_success 'prune: prune former HEAD after checking out branch' '
 test_expect_success 'prune: do not prune heads listed as an argument' '
 	>file2 &&
 	git add file2 &&
-	git commit -m temporary &&
+	git cummit -m temporary &&
 	tmp_head=$(git rev-list -1 HEAD) &&
 	git reset HEAD^ &&
 	git prune -- $tmp_head &&
@@ -233,7 +233,7 @@ EOF
 '
 
 test_expect_success 'prune .git/shallow' '
-	oid=$(echo hi|git commit-tree HEAD^{tree}) &&
+	oid=$(echo hi|git cummit-tree HEAD^{tree}) &&
 	echo $oid >.git/shallow &&
 	git prune --dry-run >out &&
 	grep $oid .git/shallow &&
@@ -243,7 +243,7 @@ test_expect_success 'prune .git/shallow' '
 '
 
 test_expect_success 'prune .git/shallow when there are no loose objects' '
-	oid=$(echo hi|git commit-tree HEAD^{tree}) &&
+	oid=$(echo hi|git cummit-tree HEAD^{tree}) &&
 	echo $oid >.git/shallow &&
 	git update-ref refs/heads/shallow-tip $oid &&
 	git repack -ad &&
@@ -256,9 +256,9 @@ test_expect_success 'prune .git/shallow when there are no loose objects' '
 
 test_expect_success 'prune: handle alternate object database' '
 	test_create_repo A &&
-	git -C A commit --allow-empty -m "initial commit" &&
+	git -C A cummit --allow-empty -m "initial cummit" &&
 	git clone --shared A B &&
-	git -C B commit --allow-empty -m "next commit" &&
+	git -C B cummit --allow-empty -m "next cummit" &&
 	git -C B prune
 '
 
@@ -275,7 +275,7 @@ test_expect_success 'prune: handle HEAD in multiple worktrees' '
 	git worktree add --detach third-worktree &&
 	echo "new blob for third-worktree" >third-worktree/blob &&
 	git -C third-worktree add blob &&
-	git -C third-worktree commit -m "third" &&
+	git -C third-worktree cummit -m "third" &&
 	rm .git/worktrees/third-worktree/index &&
 	test_must_fail git -C third-worktree show :blob &&
 	git prune --expire=now &&
@@ -290,7 +290,7 @@ test_expect_success 'prune: handle HEAD reflog in multiple worktrees' '
 		cd third-worktree &&
 		cat ../expected >blob &&
 		git add blob &&
-		git commit -m "second commit in third" &&
+		git cummit -m "second cummit in third" &&
 		git clean -f && # Remove untracked left behind by deleting index
 		git reset --hard HEAD^
 	) &&
@@ -326,9 +326,9 @@ test_expect_success 'old reachable-from-recent retained with bitmaps' '
 	test-tool chmtime -86400 .git/objects/$(test_oid_to_path $to_save) &&
 	tree=$(printf "100644 blob $to_save\tfile\n" | git mktree) &&
 	test-tool chmtime -86400 .git/objects/$(test_oid_to_path $tree) &&
-	commit=$(echo foo | git commit-tree $tree) &&
+	cummit=$(echo foo | git cummit-tree $tree) &&
 	git prune --expire=12.hours.ago &&
-	git cat-file -e $commit &&
+	git cat-file -e $cummit &&
 	git cat-file -e $tree &&
 	git cat-file -e $to_save &&
 	test_must_fail git cat-file -e $to_drop

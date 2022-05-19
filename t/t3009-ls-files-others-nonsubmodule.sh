@@ -8,14 +8,14 @@ This test runs git ls-files --others with the following working tree:
       plain directory with no files
     nonrepo-untracked-file/
       plain directory with an untracked file
-    repo-no-commit-no-files/
-      git repository without a commit or a file
-    repo-no-commit-untracked-file/
-      git repository without a commit but with an untracked file
-    repo-with-commit-no-files/
-      git repository with a commit and no untracked files
-    repo-with-commit-untracked-file/
-      git repository with a commit and an untracked file
+    repo-no-cummit-no-files/
+      git repository without a cummit or a file
+    repo-no-cummit-untracked-file/
+      git repository without a cummit but with an untracked file
+    repo-with-cummit-no-files/
+      git repository with a cummit and no untracked files
+    repo-with-cummit-untracked-file/
+      git repository with a cummit and an untracked file
 '
 
 . ./test-lib.sh
@@ -24,14 +24,14 @@ test_expect_success 'setup: directories' '
 	mkdir nonrepo-no-files/ &&
 	mkdir nonrepo-untracked-file &&
 	: >nonrepo-untracked-file/untracked &&
-	git init repo-no-commit-no-files &&
-	git init repo-no-commit-untracked-file &&
-	: >repo-no-commit-untracked-file/untracked &&
-	git init repo-with-commit-no-files &&
-	git -C repo-with-commit-no-files commit --allow-empty -mmsg &&
-	git init repo-with-commit-untracked-file &&
-	test_commit -C repo-with-commit-untracked-file msg &&
-	: >repo-with-commit-untracked-file/untracked
+	git init repo-no-cummit-no-files &&
+	git init repo-no-cummit-untracked-file &&
+	: >repo-no-cummit-untracked-file/untracked &&
+	git init repo-with-cummit-no-files &&
+	git -C repo-with-cummit-no-files cummit --allow-empty -mmsg &&
+	git init repo-with-cummit-untracked-file &&
+	test_cummit -C repo-with-cummit-untracked-file msg &&
+	: >repo-with-cummit-untracked-file/untracked
 '
 
 test_expect_success 'ls-files --others handles untracked git repositories' '
@@ -39,10 +39,10 @@ test_expect_success 'ls-files --others handles untracked git repositories' '
 	cat >expect <<-EOF &&
 	nonrepo-untracked-file/untracked
 	output
-	repo-no-commit-no-files/
-	repo-no-commit-untracked-file/
-	repo-with-commit-no-files/
-	repo-with-commit-untracked-file/
+	repo-no-cummit-no-files/
+	repo-no-cummit-untracked-file/
+	repo-with-cummit-no-files/
+	repo-with-cummit-untracked-file/
 	EOF
 	test_cmp expect output
 '

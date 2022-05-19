@@ -27,16 +27,16 @@ test_expect_success 'setup basic criss-cross + rename with no modifications' '
 		printf "line %d in a sample file\n" $ten >one &&
 		printf "line %d in another sample file\n" $ten >two &&
 		git add one two &&
-		test_tick && git commit -m initial &&
+		test_tick && git cummit -m initial &&
 
 		git branch L1 &&
 		git checkout -b R1 &&
 		git mv one three &&
-		test_tick && git commit -m R1 &&
+		test_tick && git cummit -m R1 &&
 
 		git checkout L1 &&
 		git mv two three &&
-		test_tick && git commit -m L1 &&
+		test_tick && git cummit -m L1 &&
 
 		git checkout L1^0 &&
 		test_tick && git merge -s ours R1 &&
@@ -93,18 +93,18 @@ test_expect_success 'setup criss-cross + rename merges with basic modification' 
 		printf "line %d in a sample file\n" $ten >one &&
 		printf "line %d in another sample file\n" $ten >two &&
 		git add one two &&
-		test_tick && git commit -m initial &&
+		test_tick && git cummit -m initial &&
 
 		git branch L1 &&
 		git checkout -b R1 &&
 		git mv one three &&
 		echo more >>two &&
 		git add two &&
-		test_tick && git commit -m R1 &&
+		test_tick && git cummit -m R1 &&
 
 		git checkout L1 &&
 		git mv two three &&
-		test_tick && git commit -m L1 &&
+		test_tick && git cummit -m L1 &&
 
 		git checkout L1^0 &&
 		test_tick && git merge -s ours R1 &&
@@ -140,14 +140,14 @@ test_expect_success 'merge criss-cross + rename merges with basic modification' 
 '
 
 #
-# For the next test, we start with three commits in two lines of development
+# For the next test, we start with three cummits in two lines of development
 # which setup a rename/add conflict:
-#   Commit A: File 'a' exists
-#   Commit B: Rename 'a' -> 'new_a'
-#   Commit C: Modify 'a', create different 'new_a'
+#   cummit A: File 'a' exists
+#   cummit B: Rename 'a' -> 'new_a'
+#   cummit C: Modify 'a', create different 'new_a'
 # Later, two different people merge and resolve differently:
-#   Commit D: Merge B & C, ignoring separately created 'new_a'
-#   Commit E: Merge B & C making use of some piece of secondary 'new_a'
+#   cummit D: Merge B & C, ignoring separately created 'new_a'
+#   cummit E: Merge B & C making use of some piece of secondary 'new_a'
 # Finally, someone goes to merge D & E.  Does git detect the conflict?
 #
 #      B   D
@@ -166,31 +166,31 @@ test_expect_success 'setup differently handled merges of rename/add conflict' '
 
 		printf "0\n1\n2\n3\n4\n5\n6\n7\n8\n9\n" >a &&
 		git add a &&
-		test_tick && git commit -m A &&
+		test_tick && git cummit -m A &&
 
 		git branch B &&
 		git checkout -b C &&
 		echo 10 >>a &&
 		test_write_lines 0 1 2 3 4 5 6 7 foobar >new_a &&
 		git add a new_a &&
-		test_tick && git commit -m C &&
+		test_tick && git cummit -m C &&
 
 		git checkout B &&
 		git mv a new_a &&
-		test_tick && git commit -m B &&
+		test_tick && git cummit -m B &&
 
 		git checkout B^0 &&
 		test_must_fail git merge C &&
 		git show :2:new_a >new_a &&
 		git add new_a &&
-		test_tick && git commit -m D &&
+		test_tick && git cummit -m D &&
 		git tag D &&
 
 		git checkout C^0 &&
 		test_must_fail git merge B &&
 		test_write_lines 0 1 2 3 4 5 6 7 bad_merge >new_a &&
 		git add -u &&
-		test_tick && git commit -m E &&
+		test_tick && git cummit -m E &&
 		git tag E
 	)
 '
@@ -243,7 +243,7 @@ test_expect_success 'git detects differently handled merges conflict' '
 '
 
 # Repeat the above testcase with precisely the same setup, other than with
-# the two merge bases having different orderings of commit timestamps so
+# the two merge bases having different orderings of cummit timestamps so
 # that they are reversed in the order they are provided to merge-recursive,
 # so that we can improve code coverage.
 test_expect_success 'git detects differently handled merges conflict, swapped' '
@@ -254,7 +254,7 @@ test_expect_success 'git detects differently handled merges conflict, swapped' '
 		git reset --hard &&
 		git clean -fdqx &&
 
-		# Difference #2: Change commit timestamps
+		# Difference #2: Change cummit timestamps
 		btime=$(git log --no-walk --date=raw --format=%cd B | awk "{print \$1}") &&
 		ctime=$(git log --no-walk --date=raw --format=%cd C | awk "{print \$1}") &&
 		newctime=$(($btime+1)) &&
@@ -315,13 +315,13 @@ test_expect_success 'git detects differently handled merges conflict, swapped' '
 #      o---o
 #      C   E
 #
-#   Commit A: file with contents 'A\n'
-#   Commit B: file with contents 'B\n'
-#   Commit C: file not present
-#   Commit D: file with contents 'B\n'
-#   Commit E: file not present
+#   cummit A: file with contents 'A\n'
+#   cummit B: file with contents 'B\n'
+#   cummit C: file not present
+#   cummit D: file with contents 'B\n'
+#   cummit E: file not present
 #
-# Merging commits D & E should result in modify/delete conflict.
+# Merging cummits D & E should result in modify/delete conflict.
 
 test_expect_success 'setup criss-cross + modify/delete resolved differently' '
 	test_create_repo modify-delete &&
@@ -331,33 +331,33 @@ test_expect_success 'setup criss-cross + modify/delete resolved differently' '
 		echo A >file &&
 		git add file &&
 		test_tick &&
-		git commit -m A &&
+		git cummit -m A &&
 
 		git branch B &&
 		git checkout -b C &&
 		git rm file &&
 		test_tick &&
-		git commit -m C &&
+		git cummit -m C &&
 
 		git checkout B &&
 		echo B >file &&
 		git add file &&
 		test_tick &&
-		git commit -m B &&
+		git cummit -m B &&
 
 		git checkout B^0 &&
 		test_must_fail git merge C &&
 		echo B >file &&
 		git add file &&
 		test_tick &&
-		git commit -m D &&
+		git cummit -m D &&
 		git tag D &&
 
 		git checkout C^0 &&
 		test_must_fail git merge B &&
 		git rm file &&
 		test_tick &&
-		git commit -m E &&
+		git cummit -m E &&
 		git tag E
 	)
 '
@@ -408,11 +408,11 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete, rev
 #      SORRY FOR THE SUPER LONG DESCRIPTION, BUT THIS NEXT ONE IS HAIRY
 #
 # criss-cross + d/f conflict via add/add:
-#   Commit A: Neither file 'a' nor directory 'a/' exists.
-#   Commit B: Introduce 'a'
-#   Commit C: Introduce 'a/file'
-#   Commit D1: Merge B & C, keeping 'a'    and deleting 'a/'
-#   Commit E1: Merge B & C, deleting 'a' but keeping 'a/file'
+#   cummit A: Neither file 'a' nor directory 'a/' exists.
+#   cummit B: Introduce 'a'
+#   cummit C: Introduce 'a/file'
+#   cummit D1: Merge B & C, keeping 'a'    and deleting 'a/'
+#   cummit E1: Merge B & C, deleting 'a' but keeping 'a/file'
 #
 #      B   D1 or D2
 #      o---o
@@ -435,7 +435,7 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete, rev
 #
 # So 4 sounds good for this case, but if we were to merge D1 & E3, where E3
 # is defined as:
-#   Commit E3: Merge B & C, keeping modified a, and deleting a/
+#   cummit E3: Merge B & C, keeping modified a, and deleting a/
 # then we'd get an add/add conflict for 'a', which seems suboptimal.  A little
 # creativity leads us to an alternate choice:
 #   5: Keep 'a' as 'a~$UNIQUE' and a/file; results:
@@ -445,14 +445,14 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete, rev
 # So choice 5 at least provides some kind of conflict for the original case,
 # and can merge cleanly as expected with D1 and E3.  It also made things just
 # slightly funny for merging D1 and E4, where E4 is defined as:
-#   Commit E4: Merge B & C, modifying 'a' and renaming to 'a2', and deleting 'a/'
+#   cummit E4: Merge B & C, modifying 'a' and renaming to 'a2', and deleting 'a/'
 # in this case, we'll get a rename/rename(1to2) conflict because a~$UNIQUE
 # gets renamed to 'a' in D1 and to 'a2' in E4.  But that's better than having
 # two files (both 'a' and 'a2') sitting around without the user being notified
 # that we could detect they were related and need to be merged.  Also, choice
 # 5 makes the handling of 'a/file' seem suboptimal.  What if we were to merge
 # D2 and E4, where D2 is:
-#   Commit D2: Merge B & C, renaming 'a'->'a2', keeping 'a/file'
+#   cummit D2: Merge B & C, renaming 'a'->'a2', keeping 'a/file'
 # This would result in a clean merge with 'a2' having three-way merged
 # contents (good), and deleting 'a/' (bad) -- it doesn't detect the
 # conflict in how the different sides treated a/file differently.
@@ -475,7 +475,7 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete, rev
 #
 #
 # Historically, this testcase also used:
-#   Commit E2: Merge B & C, deleting 'a' but keeping slightly modified 'a/file'
+#   cummit E2: Merge B & C, deleting 'a' but keeping slightly modified 'a/file'
 # The merge of D1 & E2 is very similar to D1 & E1 -- it has similar issues for
 # path 'a', but should always result in a modify/delete conflict for path
 # 'a/file'.  These tests ran the two merges
@@ -489,13 +489,13 @@ test_expect_success 'git detects conflict merging criss-cross+modify/delete, rev
 # for good measure, though we only ran those one way because we had pretty
 # good confidence in merge-recursive's directional handling of D/F issues.
 #
-# Just to summarize all the intermediate merge commits:
-#   Commit D1: Merge B & C, keeping a    and deleting a/
-#   Commit D2: Merge B & C, renaming a->a2, keeping a/file
-#   Commit E1: Merge B & C, deleting a but keeping a/file
-#   Commit E2: Merge B & C, deleting a but keeping slightly modified a/file
-#   Commit E3: Merge B & C, keeping modified a, and deleting a/
-#   Commit E4: Merge B & C, modifying 'a' and renaming to 'a2', and deleting 'a/'
+# Just to summarize all the intermediate merge cummits:
+#   cummit D1: Merge B & C, keeping a    and deleting a/
+#   cummit D2: Merge B & C, renaming a->a2, keeping a/file
+#   cummit E1: Merge B & C, deleting a but keeping a/file
+#   cummit E2: Merge B & C, deleting a but keeping slightly modified a/file
+#   cummit E3: Merge B & C, keeping modified a, and deleting a/
+#   cummit E4: Merge B & C, modifying 'a' and renaming to 'a2', and deleting 'a/'
 #
 
 test_expect_success 'setup differently handled merges of directory/file conflict' '
@@ -506,7 +506,7 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 		>ignore-me &&
 		git add ignore-me &&
 		test_tick &&
-		git commit -m A &&
+		git cummit -m A &&
 		git tag A &&
 
 		git branch B &&
@@ -515,13 +515,13 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 		test_write_lines a b c d e f g >a/file &&
 		git add a/file &&
 		test_tick &&
-		git commit -m C &&
+		git cummit -m C &&
 
 		git checkout B &&
 		test_write_lines 1 2 3 4 5 6 7 >a &&
 		git add a &&
 		test_tick &&
-		git commit -m B &&
+		git cummit -m B &&
 
 		git checkout B^0 &&
 		git merge -s ours -m D1 C^0 &&
@@ -540,7 +540,7 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 		fi &&
 		git cat-file -p B:a >a2 &&
 		git add a2 &&
-		git commit -m D2 &&
+		git cummit -m D2 &&
 		git tag D2 &&
 
 		git checkout C^0 &&
@@ -551,7 +551,7 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 		git merge -s ours -m E2 B^0 &&
 		test_write_lines a b c d e f g h >a/file &&
 		git add a/file &&
-		git commit --amend -C HEAD &&
+		git cummit --amend -C HEAD &&
 		git tag E2 &&
 
 		git checkout C^0 &&
@@ -565,7 +565,7 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 		git rm -rf a/ &&
 		test_write_lines 1 2 3 4 5 6 7 8 >a &&
 		git add a &&
-		git commit -m E3 &&
+		git cummit -m E3 &&
 		git tag E3 &&
 
 		git checkout C^0 &&
@@ -581,7 +581,7 @@ test_expect_success 'setup differently handled merges of directory/file conflict
 		fi &&
 		test_write_lines 1 2 3 4 5 6 7 8 >a2 &&
 		git add a2 &&
-		git commit -m E4 &&
+		git cummit -m E4 &&
 		git tag E4
 	)
 '
@@ -839,11 +839,11 @@ test_expect_failure 'merge of D2 & E4 merges a2s & reports conflict for a/file' 
 #      o---o
 #      C   E
 #
-#   Commit A: new file: a
-#   Commit B: rename a->b, modifying by adding a line
-#   Commit C: rename a->c
-#   Commit D: merge B&C, resolving conflict by keeping contents in newname
-#   Commit E: merge B&C, resolving conflict similar to D but adding another line
+#   cummit A: new file: a
+#   cummit B: rename a->b, modifying by adding a line
+#   cummit C: rename a->c
+#   cummit D: merge B&C, resolving conflict by keeping contents in newname
+#   cummit E: merge B&C, resolving conflict similar to D but adding another line
 #
 # There is a conflict merging B & C, but one of filename not of file
 # content.  Whoever created D and E chose specific resolutions for that
@@ -873,31 +873,31 @@ test_expect_success 'setup rename/rename(1to2)/modify followed by what looks lik
 
 		printf "1\n2\n3\n4\n5\n6\n" >a &&
 		git add a &&
-		git commit -m A &&
+		git cummit -m A &&
 		git tag A &&
 
 		git checkout -b B A &&
 		git mv a b &&
 		echo 7 >>b &&
 		git add -u &&
-		git commit -m B &&
+		git cummit -m B &&
 
 		git checkout -b C A &&
 		git mv a c &&
-		git commit -m C &&
+		git cummit -m C &&
 
 		git checkout -q B^0 &&
-		git merge --no-commit -s ours C^0 &&
+		git merge --no-cummit -s ours C^0 &&
 		git mv b newname &&
-		git commit -m "Merge commit C^0 into HEAD" &&
+		git cummit -m "Merge cummit C^0 into HEAD" &&
 		git tag D &&
 
 		git checkout -q C^0 &&
-		git merge --no-commit -s ours B^0 &&
+		git merge --no-cummit -s ours B^0 &&
 		git mv c newname &&
 		printf "7\n8\n" >>newname &&
 		git add -u &&
-		git commit -m "Merge commit B^0 into HEAD" &&
+		git cummit -m "Merge cummit B^0 into HEAD" &&
 		git tag E
 	)
 '
@@ -932,13 +932,13 @@ test_expect_success 'handle rename/rename(1to2)/modify followed by what looks li
 #      o---o
 #      C   E
 #
-#   Commit A: new file: a
-#   Commit B: rename a->b
-#   Commit C: rename a->c, add different a
-#   Commit D: merge B&C, keeping b&c and (new) a modified at beginning
-#   Commit E: merge B&C, keeping b&c and (new) a modified at end
+#   cummit A: new file: a
+#   cummit B: rename a->b
+#   cummit C: rename a->c, add different a
+#   cummit D: merge B&C, keeping b&c and (new) a modified at beginning
+#   cummit E: merge B&C, keeping b&c and (new) a modified at end
 #
-# Merging commits D & E should result in no conflict; doing so correctly
+# Merging cummits D & E should result in no conflict; doing so correctly
 # requires getting the virtual merge base (from merging B&C) right, handling
 # renaming carefully (both in the virtual merge base and later), and getting
 # content merge handled.
@@ -950,36 +950,36 @@ test_expect_success 'setup criss-cross + rename/rename/add-source + modify/modif
 
 		printf "lots\nof\nwords\nand\ncontent\n" >a &&
 		git add a &&
-		git commit -m A &&
+		git cummit -m A &&
 		git tag A &&
 
 		git checkout -b B A &&
 		git mv a b &&
-		git commit -m B &&
+		git cummit -m B &&
 
 		git checkout -b C A &&
 		git mv a c &&
 		printf "2\n3\n4\n5\n6\n7\n" >a &&
 		git add a &&
-		git commit -m C &&
+		git cummit -m C &&
 
 		git checkout B^0 &&
-		git merge --no-commit -s ours C^0 &&
+		git merge --no-cummit -s ours C^0 &&
 		git checkout C -- a c &&
 		mv a old_a &&
 		echo 1 >a &&
 		cat old_a >>a &&
 		rm old_a &&
 		git add -u &&
-		git commit -m "Merge commit C^0 into HEAD" &&
+		git cummit -m "Merge cummit C^0 into HEAD" &&
 		git tag D &&
 
 		git checkout C^0 &&
-		git merge --no-commit -s ours B^0 &&
+		git merge --no-cummit -s ours B^0 &&
 		git checkout B -- b &&
 		echo 8 >>a &&
 		git add -u &&
-		git commit -m "Merge commit B^0 into HEAD" &&
+		git cummit -m "Merge cummit B^0 into HEAD" &&
 		git tag E
 	)
 '
@@ -1022,13 +1022,13 @@ test_expect_failure 'detect rename/rename/add-source for virtual merge-base' '
 #      o---o
 #      C   E
 #
-#   Commit A: new file: a
-#   Commit B: rename a->b, add c
-#   Commit C: rename a->c
-#   Commit D: merge B&C, keeping A:a and B:c
-#   Commit E: merge B&C, keeping A:a and slightly modified c from B
+#   cummit A: new file: a
+#   cummit B: rename a->b, add c
+#   cummit C: rename a->c
+#   cummit D: merge B&C, keeping A:a and B:c
+#   cummit E: merge B&C, keeping A:a and slightly modified c from B
 #
-# Merging commits D & E should result in no conflict.  The virtual merge
+# Merging cummits D & E should result in no conflict.  The virtual merge
 # base of B & C needs to not delete B:c for that to work, though...
 
 test_expect_success 'setup criss-cross+rename/rename/add-dest + simple modify' '
@@ -1038,31 +1038,31 @@ test_expect_success 'setup criss-cross+rename/rename/add-dest + simple modify' '
 
 		>a &&
 		git add a &&
-		git commit -m A &&
+		git cummit -m A &&
 		git tag A &&
 
 		git checkout -b B A &&
 		git mv a b &&
 		printf "1\n2\n3\n4\n5\n6\n7\n" >c &&
 		git add c &&
-		git commit -m B &&
+		git cummit -m B &&
 
 		git checkout -b C A &&
 		git mv a c &&
-		git commit -m C &&
+		git cummit -m C &&
 
 		git checkout B^0 &&
-		git merge --no-commit -s ours C^0 &&
+		git merge --no-cummit -s ours C^0 &&
 		git mv b a &&
-		git commit -m "D is like B but renames b back to a" &&
+		git cummit -m "D is like B but renames b back to a" &&
 		git tag D &&
 
 		git checkout B^0 &&
-		git merge --no-commit -s ours C^0 &&
+		git merge --no-cummit -s ours C^0 &&
 		git mv b a &&
 		echo 8 >>c &&
 		git add c &&
-		git commit -m "E like D but has mod in c" &&
+		git cummit -m "E like D but has mod in c" &&
 		git tag E
 	)
 '
@@ -1101,11 +1101,11 @@ test_expect_success 'virtual merge base handles rename/rename(1to2)/add-dest' '
 #      o---o
 #      C   E
 #
-#   Commit A: simple simlink fickle->lagoon
-#   Commit B: redirect fickle->disneyland
-#   Commit C: redirect fickle->home
-#   Commit D: merge B&C, resolving in favor of B
-#   Commit E: merge B&C, resolving in favor of C
+#   cummit A: simple simlink fickle->lagoon
+#   cummit B: redirect fickle->disneyland
+#   cummit C: redirect fickle->home
+#   cummit D: merge B&C, resolving in favor of B
+#   cummit E: merge B&C, resolving in favor of C
 #
 # This is an obvious modify/modify conflict for the symlink 'fickle'.  Can
 # git detect it?
@@ -1116,19 +1116,19 @@ test_expect_success 'setup symlink modify/modify' '
 		cd symlink-modify-modify &&
 
 		test_ln_s_add lagoon fickle &&
-		git commit -m A &&
+		git cummit -m A &&
 		git tag A &&
 
 		git checkout -b B A &&
 		git rm fickle &&
 		test_ln_s_add disneyland fickle &&
-		git commit -m B &&
+		git cummit -m B &&
 
 		git checkout -b C A &&
 		git rm fickle &&
 		test_ln_s_add home fickle &&
 		git add fickle &&
-		git commit -m C &&
+		git cummit -m C &&
 
 		git checkout -q B^0 &&
 		git merge -s ours -m D C^0 &&
@@ -1168,11 +1168,11 @@ test_expect_merge_algorithm failure success 'check symlink modify/modify' '
 #      o---o
 #      C   E
 #
-#   Commit A: No symlink or path exists yet
-#   Commit B: set up symlink: fickle->disneyland
-#   Commit C: set up symlink: fickle->home
-#   Commit D: merge B&C, resolving in favor of B
-#   Commit E: merge B&C, resolving in favor of C
+#   cummit A: No symlink or path exists yet
+#   cummit B: set up symlink: fickle->disneyland
+#   cummit C: set up symlink: fickle->home
+#   cummit D: merge B&C, resolving in favor of B
+#   cummit E: merge B&C, resolving in favor of C
 #
 # This is an obvious add/add conflict for the symlink 'fickle'.  Can
 # git detect it?
@@ -1184,17 +1184,17 @@ test_expect_success 'setup symlink add/add' '
 
 		touch ignoreme &&
 		git add ignoreme &&
-		git commit -m A &&
+		git cummit -m A &&
 		git tag A &&
 
 		git checkout -b B A &&
 		test_ln_s_add disneyland fickle &&
-		git commit -m B &&
+		git cummit -m B &&
 
 		git checkout -b C A &&
 		test_ln_s_add home fickle &&
 		git add fickle &&
-		git commit -m C &&
+		git cummit -m C &&
 
 		git checkout -q B^0 &&
 		git merge -s ours -m D C^0 &&
@@ -1234,11 +1234,11 @@ test_expect_merge_algorithm failure success 'check symlink add/add' '
 #      o---o
 #      C   E
 #
-#   Commit A: simple submodule repo
-#   Commit B: update repo
-#   Commit C: update repo differently
-#   Commit D: merge B&C, resolving in favor of B
-#   Commit E: merge B&C, resolving in favor of C
+#   cummit A: simple submodule repo
+#   cummit B: update repo
+#   cummit C: update repo differently
+#   cummit D: merge B&C, resolving in favor of B
+#   cummit E: merge B&C, resolving in favor of C
 #
 # This is an obvious modify/modify conflict for the submodule 'repo'.  Can
 # git detect it?
@@ -1253,36 +1253,36 @@ test_expect_success 'setup submodule modify/modify' '
 			cd submod &&
 			touch file-A &&
 			git add file-A &&
-			git commit -m A &&
+			git cummit -m A &&
 			git tag A &&
 
 			git checkout -b B A &&
 			touch file-B &&
 			git add file-B &&
-			git commit -m B &&
+			git cummit -m B &&
 			git tag B &&
 
 			git checkout -b C A &&
 			touch file-C &&
 			git add file-C &&
-			git commit -m C &&
+			git cummit -m C &&
 			git tag C
 		) &&
 
 		git -C submod reset --hard A &&
 		git add submod &&
-		git commit -m A &&
+		git cummit -m A &&
 		git tag A &&
 
 		git checkout -b B A &&
 		git -C submod reset --hard B &&
 		git add submod &&
-		git commit -m B &&
+		git cummit -m B &&
 
 		git checkout -b C A &&
 		git -C submod reset --hard C &&
 		git add submod &&
-		git commit -m C &&
+		git cummit -m C &&
 
 		git checkout -q B^0 &&
 		git merge -s ours -m D C^0 &&
@@ -1322,11 +1322,11 @@ test_expect_merge_algorithm failure success 'check submodule modify/modify' '
 #      o---o
 #      C   E
 #
-#   Commit A: nothing of note
-#   Commit B: introduce submodule repo
-#   Commit C: introduce submodule repo at different commit
-#   Commit D: merge B&C, resolving in favor of B
-#   Commit E: merge B&C, resolving in favor of C
+#   cummit A: nothing of note
+#   cummit B: introduce submodule repo
+#   cummit C: introduce submodule repo at different cummit
+#   cummit D: merge B&C, resolving in favor of B
+#   cummit E: merge B&C, resolving in favor of C
 #
 # This is an obvious add/add conflict for the submodule 'repo'.  Can
 # git detect it?
@@ -1341,36 +1341,36 @@ test_expect_success 'setup submodule add/add' '
 			cd submod &&
 			touch file-A &&
 			git add file-A &&
-			git commit -m A &&
+			git cummit -m A &&
 			git tag A &&
 
 			git checkout -b B A &&
 			touch file-B &&
 			git add file-B &&
-			git commit -m B &&
+			git cummit -m B &&
 			git tag B &&
 
 			git checkout -b C A &&
 			touch file-C &&
 			git add file-C &&
-			git commit -m C &&
+			git cummit -m C &&
 			git tag C
 		) &&
 
 		touch irrelevant-file &&
 		git add irrelevant-file &&
-		git commit -m A &&
+		git cummit -m A &&
 		git tag A &&
 
 		git checkout -b B A &&
 		git -C submod reset --hard B &&
 		git add submod &&
-		git commit -m B &&
+		git cummit -m B &&
 
 		git checkout -b C A &&
 		git -C submod reset --hard C &&
 		git add submod &&
-		git commit -m C &&
+		git cummit -m C &&
 
 		git checkout -q B^0 &&
 		git merge -s ours -m D C^0 &&
@@ -1410,11 +1410,11 @@ test_expect_merge_algorithm failure success 'check submodule add/add' '
 #      o---o
 #      C   E
 #
-#   Commit A: nothing of note
-#   Commit B: introduce submodule 'path'
-#   Commit C: introduce symlink 'path'
-#   Commit D: merge B&C, resolving in favor of B
-#   Commit E: merge B&C, resolving in favor of C
+#   cummit A: nothing of note
+#   cummit B: introduce submodule 'path'
+#   cummit C: introduce symlink 'path'
+#   cummit D: merge B&C, resolving in favor of B
+#   cummit E: merge B&C, resolving in favor of C
 #
 # This is an obvious add/add conflict for 'path'.  Can git detect it?
 
@@ -1428,24 +1428,24 @@ test_expect_success 'setup conflicting entry types (submodule vs symlink)' '
 			cd path &&
 			touch file-B &&
 			git add file-B &&
-			git commit -m B &&
+			git cummit -m B &&
 			git tag B
 		) &&
 
 		touch irrelevant-file &&
 		git add irrelevant-file &&
-		git commit -m A &&
+		git cummit -m A &&
 		git tag A &&
 
 		git checkout -b B A &&
 		git -C path reset --hard B &&
 		git add path &&
-		git commit -m B &&
+		git cummit -m B &&
 
 		git checkout -b C A &&
 		rm -rf path/ &&
 		test_ln_s_add irrelevant-file path &&
-		git commit -m C &&
+		git cummit -m C &&
 
 		git checkout -q B^0 &&
 		git merge -s ours -m D C^0 &&
@@ -1485,11 +1485,11 @@ test_expect_merge_algorithm failure success 'check conflicting entry types (subm
 #      o---o
 #      C   E
 #
-#   Commit A: nothing of note
-#   Commit B: introduce file source_me.bash, not executable
-#   Commit C: introduce file source_me.bash, executable
-#   Commit D: merge B&C, resolving in favor of B
-#   Commit E: merge B&C, resolving in favor of C
+#   cummit A: nothing of note
+#   cummit B: introduce file source_me.bash, not executable
+#   cummit C: introduce file source_me.bash, executable
+#   cummit D: merge B&C, resolving in favor of B
+#   cummit E: merge B&C, resolving in favor of C
 #
 # This is an obvious add/add mode conflict.  Can git detect it?
 
@@ -1500,19 +1500,19 @@ test_expect_success 'setup conflicting modes for regular file' '
 
 		touch irrelevant-file &&
 		git add irrelevant-file &&
-		git commit -m A &&
+		git cummit -m A &&
 		git tag A &&
 
 		git checkout -b B A &&
 		echo "command_to_run" >source_me.bash &&
 		git add source_me.bash &&
-		git commit -m B &&
+		git cummit -m B &&
 
 		git checkout -b C A &&
 		echo "command_to_run" >source_me.bash &&
 		git add source_me.bash &&
 		test_chmod +x source_me.bash &&
-		git commit -m C &&
+		git cummit -m C &&
 
 		git checkout -q B^0 &&
 		git merge -s ours -m D C^0 &&
@@ -1596,14 +1596,14 @@ test_expect_success 'setup nested conflicts' '
 		test_write_lines a a_L2 >>a_L2 &&
 		test_write_lines a a_R2 >>a_R2 &&
 
-		# Setup original commit (or merge-base), consisting of
+		# Setup original cummit (or merge-base), consisting of
 		# files named "b" and "a"
 		cp initial b &&
 		cp initial a &&
 		echo b >>b &&
 		echo a >>a &&
 		git add b a &&
-		test_tick && git commit -m initial &&
+		test_tick && git cummit -m initial &&
 
 		git branch L &&
 		git branch R &&
@@ -1613,7 +1613,7 @@ test_expect_success 'setup nested conflicts' '
 		mv -f b_L1 b &&
 		mv -f a_L1 a &&
 		git add b a &&
-		test_tick && git commit -m "version L1 of files" &&
+		test_tick && git cummit -m "version L1 of files" &&
 		git tag L1 &&
 
 		# Handle the right side
@@ -1621,7 +1621,7 @@ test_expect_success 'setup nested conflicts' '
 		mv -f b_R1 b &&
 		mv -f a_R1 a &&
 		git add b a &&
-		test_tick && git commit -m "version R1 of files" &&
+		test_tick && git cummit -m "version R1 of files" &&
 		git tag R1 &&
 
 		# Create first merge on left side
@@ -1631,7 +1631,7 @@ test_expect_success 'setup nested conflicts' '
 		mv -f a_L2 a &&
 		git add b a &&
 		git mv b m &&
-		test_tick && git commit -m "left merge, rename b->m" &&
+		test_tick && git cummit -m "left merge, rename b->m" &&
 		git tag L2 &&
 
 		# Create first merge on right side
@@ -1641,7 +1641,7 @@ test_expect_success 'setup nested conflicts' '
 		mv -f a_R2 a &&
 		git add b a &&
 		git mv a m &&
-		test_tick && git commit -m "right merge, rename a->m" &&
+		test_tick && git cummit -m "right merge, rename a->m" &&
 		git tag R2
 	)
 '
@@ -1764,9 +1764,9 @@ test_expect_success 'setup virtual merge base with nested conflicts' '
 		# Create some related files now
 		printf "Random base content line %d\n" $(test_seq 1 10) >content &&
 
-		# Setup original commit
+		# Setup original cummit
 		git add content &&
-		test_tick && git commit -m initial &&
+		test_tick && git cummit -m initial &&
 
 		git branch L &&
 		git branch R &&
@@ -1775,42 +1775,42 @@ test_expect_success 'setup virtual merge base with nested conflicts' '
 		git checkout L &&
 		echo left >>content &&
 		git add content &&
-		test_tick && git commit -m "version L1 of content" &&
+		test_tick && git cummit -m "version L1 of content" &&
 		git tag L1 &&
 
 		# Create R1
 		git checkout R &&
 		echo right >>content &&
 		git add content &&
-		test_tick && git commit -m "version R1 of content" &&
+		test_tick && git cummit -m "version R1 of content" &&
 		git tag R1 &&
 
 		# Create L2
 		git checkout L &&
 		test_must_fail git -c merge.conflictstyle=diff3 merge R1 &&
 		git checkout L1 content &&
-		test_tick && git commit -m "version L2 of content" &&
+		test_tick && git cummit -m "version L2 of content" &&
 		git tag L2 &&
 
 		# Create R2
 		git checkout R &&
 		test_must_fail git -c merge.conflictstyle=diff3 merge L1 &&
 		git checkout R1 content &&
-		test_tick && git commit -m "version R2 of content" &&
+		test_tick && git cummit -m "version R2 of content" &&
 		git tag R2 &&
 
 		# Create L3
 		git checkout L &&
 		test_must_fail git -c merge.conflictstyle=diff3 merge R2 &&
 		git checkout L1 content &&
-		test_tick && git commit -m "version L3 of content" &&
+		test_tick && git cummit -m "version L3 of content" &&
 		git tag L3 &&
 
 		# Create R3
 		git checkout R &&
 		test_must_fail git -c merge.conflictstyle=diff3 merge L2 &&
 		git checkout R1 content &&
-		test_tick && git commit -m "version R3 of content" &&
+		test_tick && git cummit -m "version R3 of content" &&
 		git tag R3
 	)
 '

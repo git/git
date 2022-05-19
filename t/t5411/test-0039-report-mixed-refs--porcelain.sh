@@ -28,39 +28,39 @@ test_expect_success "proc-receive: report update of mixed refs ($PROTOCOL/porcel
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	format_and_save_expect <<-EOF &&
 	> remote: # pre-receive hook        Z
-	> remote: pre-receive< <COMMIT-A> <COMMIT-B> refs/heads/main        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/bar        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/baz        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/next/topic2        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/next/topic1        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/heads/foo        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
-	> remote: pre-receive< <ZERO-OID> <COMMIT-A> refs/for/next/topic3        Z
+	> remote: pre-receive< <cummit-A> <cummit-B> refs/heads/main        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/heads/bar        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/heads/baz        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/next/topic2        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/next/topic1        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/heads/foo        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: pre-receive< <ZERO-OID> <cummit-A> refs/for/next/topic3        Z
 	> remote: # proc-receive hook        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/next/topic2        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/next/topic1        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/main/topic        Z
-	> remote: proc-receive< <ZERO-OID> <COMMIT-A> refs/for/next/topic3        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/next/topic2        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/next/topic1        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/main/topic        Z
+	> remote: proc-receive< <ZERO-OID> <cummit-A> refs/for/next/topic3        Z
 	> remote: proc-receive> ok refs/for/next/topic2        Z
 	> remote: proc-receive> ng refs/for/next/topic1 fail to call Web API        Z
 	> remote: proc-receive> ok refs/for/main/topic        Z
 	> remote: proc-receive> option refname refs/for/main/topic        Z
-	> remote: proc-receive> option old-oid <COMMIT-A>        Z
-	> remote: proc-receive> option new-oid <COMMIT-B>        Z
+	> remote: proc-receive> option old-oid <cummit-A>        Z
+	> remote: proc-receive> option new-oid <cummit-B>        Z
 	> remote: # post-receive hook        Z
-	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/heads/main        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/bar        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/baz        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/for/next/topic2        Z
-	> remote: post-receive< <ZERO-OID> <COMMIT-A> refs/heads/foo        Z
-	> remote: post-receive< <COMMIT-A> <COMMIT-B> refs/for/main/topic        Z
+	> remote: post-receive< <cummit-A> <cummit-B> refs/heads/main        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/heads/bar        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/heads/baz        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/for/next/topic2        Z
+	> remote: post-receive< <ZERO-OID> <cummit-A> refs/heads/foo        Z
+	> remote: post-receive< <cummit-A> <cummit-B> refs/for/main/topic        Z
 	> To <URL/of/upstream.git>
-	>  	<COMMIT-B>:refs/heads/main	<COMMIT-A>..<COMMIT-B>
+	>  	<cummit-B>:refs/heads/main	<cummit-A>..<cummit-B>
 	> *	HEAD:refs/heads/bar	[new branch]
 	> *	HEAD:refs/heads/baz	[new branch]
 	> *	HEAD:refs/for/next/topic2	[new reference]
 	> *	HEAD:refs/heads/foo	[new branch]
-	>  	HEAD:refs/for/main/topic	<COMMIT-A>..<COMMIT-B>
+	>  	HEAD:refs/for/main/topic	<cummit-A>..<cummit-B>
 	> !	HEAD:refs/for/next/topic1	[remote rejected] (fail to call Web API)
 	> !	HEAD:refs/for/next/topic3	[remote rejected] (proc-receive failed to report status)
 	> Done
@@ -68,10 +68,10 @@ test_expect_success "proc-receive: report update of mixed refs ($PROTOCOL/porcel
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-EOF
-	<COMMIT-A> refs/heads/bar
-	<COMMIT-A> refs/heads/baz
-	<COMMIT-A> refs/heads/foo
-	<COMMIT-B> refs/heads/main
+	<cummit-A> refs/heads/bar
+	<cummit-A> refs/heads/baz
+	<cummit-A> refs/heads/foo
+	<cummit-B> refs/heads/main
 	EOF
 '
 

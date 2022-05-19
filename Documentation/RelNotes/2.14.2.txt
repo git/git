@@ -20,7 +20,7 @@ Fixes since v2.14.1
  * Numerous bugs in walking of reflogs via "log -g" and friends have
    been fixed.
 
- * "git commit" when seeing an totally empty message said "you did not
+ * "git cummit" when seeing an totally empty message said "you did not
    edit the message", which is clearly wrong.  The message has been
    corrected.
 
@@ -85,7 +85,7 @@ Fixes since v2.14.1
 
  * Killing "git merge --edit" before the editor returns control left
    the repository in a state with MERGE_MSG but without MERGE_HEAD,
-   which incorrectly tells the subsequent "git commit" that there was
+   which incorrectly tells the subsequent "git cummit" that there was
    a squash merge in progress.  This has been fixed.
 
  * "git archive" did not work well with pathspecs and the

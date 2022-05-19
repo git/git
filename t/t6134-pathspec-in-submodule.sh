@@ -8,9 +8,9 @@ test_expect_success 'setup a submodule' '
 	test_create_repo pretzel &&
 	: >pretzel/a &&
 	git -C pretzel add a &&
-	git -C pretzel commit -m "add a file" -- a &&
+	git -C pretzel cummit -m "add a file" -- a &&
 	git submodule add ./pretzel sub &&
-	git commit -a -m "add submodule" &&
+	git cummit -a -m "add submodule" &&
 	git submodule deinit --all
 '
 

@@ -629,7 +629,7 @@ SCRIPT_LIB += git-sh-setup
 
 SCRIPT_PERL += git-add--interactive.perl
 SCRIPT_PERL += git-archimport.perl
-SCRIPT_PERL += git-cvsexportcommit.perl
+SCRIPT_PERL += git-cvsexportcummit.perl
 SCRIPT_PERL += git-cvsimport.perl
 SCRIPT_PERL += git-cvsserver.perl
 SCRIPT_PERL += git-send-email.perl
@@ -673,7 +673,7 @@ SCRIPTS = $(SCRIPT_SH_GEN) \
 
 ETAGS_TARGET = TAGS
 
-FUZZ_OBJS += fuzz-commit-graph.o
+FUZZ_OBJS += fuzz-cummit-graph.o
 FUZZ_OBJS += fuzz-pack-headers.o
 FUZZ_OBJS += fuzz-pack-idx.o
 .PHONY: fuzz-objs
@@ -896,9 +896,9 @@ LIB_OBJS += chunk-format.o
 LIB_OBJS += color.o
 LIB_OBJS += column.o
 LIB_OBJS += combine-diff.o
-LIB_OBJS += commit-graph.o
-LIB_OBJS += commit-reach.o
-LIB_OBJS += commit.o
+LIB_OBJS += cummit-graph.o
+LIB_OBJS += cummit-reach.o
+LIB_OBJS += cummit.o
 LIB_OBJS += compat/obstack.o
 LIB_OBJS += compat/terminal.o
 LIB_OBJS += compat/zlib-uncompress2.o
@@ -1123,9 +1123,9 @@ BUILTIN_OBJS += builtin/checkout.o
 BUILTIN_OBJS += builtin/clean.o
 BUILTIN_OBJS += builtin/clone.o
 BUILTIN_OBJS += builtin/column.o
-BUILTIN_OBJS += builtin/commit-graph.o
-BUILTIN_OBJS += builtin/commit-tree.o
-BUILTIN_OBJS += builtin/commit.o
+BUILTIN_OBJS += builtin/cummit-graph.o
+BUILTIN_OBJS += builtin/cummit-tree.o
+BUILTIN_OBJS += builtin/cummit.o
 BUILTIN_OBJS += builtin/config.o
 BUILTIN_OBJS += builtin/count-objects.o
 BUILTIN_OBJS += builtin/credential-cache--daemon.o
@@ -1149,7 +1149,7 @@ BUILTIN_OBJS += builtin/for-each-repo.o
 BUILTIN_OBJS += builtin/fsck.o
 BUILTIN_OBJS += builtin/fsmonitor--daemon.o
 BUILTIN_OBJS += builtin/gc.o
-BUILTIN_OBJS += builtin/get-tar-commit-id.o
+BUILTIN_OBJS += builtin/get-tar-cummit-id.o
 BUILTIN_OBJS += builtin/grep.o
 BUILTIN_OBJS += builtin/hash-object.o
 BUILTIN_OBJS += builtin/help.o
@@ -1219,7 +1219,7 @@ BUILTIN_OBJS += builtin/update-server-info.o
 BUILTIN_OBJS += builtin/upload-archive.o
 BUILTIN_OBJS += builtin/upload-pack.o
 BUILTIN_OBJS += builtin/var.o
-BUILTIN_OBJS += builtin/verify-commit.o
+BUILTIN_OBJS += builtin/verify-cummit.o
 BUILTIN_OBJS += builtin/verify-pack.o
 BUILTIN_OBJS += builtin/verify-tag.o
 BUILTIN_OBJS += builtin/worktree.o
@@ -2267,7 +2267,7 @@ version.sp version.s version.o: GIT-VERSION-FILE GIT-USER-AGENT
 version.sp version.s version.o: EXTRA_CPPFLAGS = \
 	'-DGIT_VERSION="$(GIT_VERSION)"' \
 	'-DGIT_USER_AGENT=$(GIT_USER_AGENT_CQ_SQ)' \
-	'-DGIT_BUILT_FROM_COMMIT="$(shell \
+	'-DGIT_BUILT_FROM_cummit="$(shell \
 		GIT_CEILING_DIRECTORIES="$(CURDIR)/.." \
 		git rev-parse -q --verify HEAD 2>/dev/null)"'
 
@@ -3257,7 +3257,7 @@ dist-doc: git$X
 	$(MAKE) -C Documentation WEBDOC_DEST=../.doc-tmp-dir install-webdoc
 	./git -C .doc-tmp-dir init
 	./git -C .doc-tmp-dir add .
-	./git -C .doc-tmp-dir commit -m htmldocs
+	./git -C .doc-tmp-dir cummit -m htmldocs
 	./git -C .doc-tmp-dir archive --format=tar --prefix=./ HEAD^{tree} \
 		> $(htmldocs).tar
 	gzip -n -9 -f $(htmldocs).tar
@@ -3271,7 +3271,7 @@ dist-doc: git$X
 		install
 	./git -C .doc-tmp-dir init
 	./git -C .doc-tmp-dir add .
-	./git -C .doc-tmp-dir commit -m manpages
+	./git -C .doc-tmp-dir cummit -m manpages
 	./git -C .doc-tmp-dir archive --format=tar --prefix=./ HEAD^{tree} \
 		> $(manpages).tar
 	gzip -n -9 -f $(manpages).tar

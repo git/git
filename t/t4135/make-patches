@@ -8,7 +8,7 @@ do_filename() {
 	git init file-creation &&
 	(
 		cd file-creation &&
-		git commit --allow-empty -m init &&
+		git cummit --allow-empty -m init &&
 		echo postimage >"$postimage" &&
 		git add -N "$postimage" &&
 		git diff HEAD >"../git-$desc.diff"

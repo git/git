@@ -11,13 +11,13 @@ test_expect_success setup '
 
 	echo A > file &&
 	git add file &&
-	git commit -m First &&
+	git cummit -m First &&
 
 	echo B >> file &&
-	git commit -a -m Second &&
+	git cummit -a -m Second &&
 
 	echo C >> file &&
-	git commit -a -m Third
+	git cummit -a -m Third
 
 '
 

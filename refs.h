@@ -198,27 +198,27 @@ char *repo_default_branch_name(struct repository *r, int quiet);
  *     transaction. This locks all references, checks preconditions,
  *     etc. but doesn't finalize anything. If this step fails, the
  *     transaction has been closed and can only be freed. If this step
- *     succeeds, then `ref_transaction_commit()` is almost certain to
+ *     succeeds, then `ref_transaction_cummit()` is almost certain to
  *     succeed. However, you can still call `ref_transaction_abort()`
- *     if you decide not to commit the transaction after all.
+ *     if you decide not to cummit the transaction after all.
  *
- *   - Call `ref_transaction_commit()` to execute the transaction,
+ *   - Call `ref_transaction_cummit()` to execute the transaction,
  *     make the changes permanent, and release all locks. If you
  *     haven't already called `ref_transaction_prepare()`, then
- *     `ref_transaction_commit()` calls it for you.
+ *     `ref_transaction_cummit()` calls it for you.
  *
  *   Or
  *
- *   - Call `initial_ref_transaction_commit()` if the ref database is
+ *   - Call `initial_ref_transaction_cummit()` if the ref database is
  *     known to be empty and have no other writers (e.g. during
  *     clone). This is likely to be much faster than
- *     `ref_transaction_commit()`. `ref_transaction_prepare()` should
- *     *not* be called before `initial_ref_transaction_commit()`.
+ *     `ref_transaction_cummit()`. `ref_transaction_prepare()` should
+ *     *not* be called before `initial_ref_transaction_cummit()`.
  *
  * - Then finally, call `ref_transaction_free()` to free the
  *   `ref_transaction` data structure.
  *
- * At any time before calling `ref_transaction_commit()`, you can call
+ * At any time before calling `ref_transaction_cummit()`, you can call
  * `ref_transaction_abort()` to abort the transaction, rollback any
  * locks, and free any associated resources (including the
  * `ref_transaction` data structure).
@@ -234,7 +234,7 @@ char *repo_default_branch_name(struct repository *r, int quiet);
  *             ref_transaction_update(...) ||
  *             ref_transaction_create(...) ||
  *             ...etc... ||
- *             ref_transaction_commit(transaction, &err)) {
+ *             ref_transaction_cummit(transaction, &err)) {
  *                 error("%s", err.buf);
  *                 ret = -1;
  *         }
@@ -257,9 +257,9 @@ char *repo_default_branch_name(struct repository *r, int quiet);
  * -------
  *
  * Note that no locks are taken, and no refs are read, until
- * `ref_transaction_prepare()` or `ref_transaction_commit()` is
+ * `ref_transaction_prepare()` or `ref_transaction_cummit()` is
  * called. So, for example, `ref_transaction_verify()` won't report a
- * verification failure until the commit is attempted.
+ * verification failure until the cummit is attempted.
  */
 struct ref_transaction;
 
@@ -463,8 +463,8 @@ int delete_reflog(const char *refname);
  * Callback to process a reflog entry found by the iteration functions (see
  * below).
  *
- * The committer parameter is a single string, in the form
- * "$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" (without double quotes).
+ * The cummitter parameter is a single string, in the form
+ * "$GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>" (without double quotes).
  *
  * The timestamp parameter gives the time when entry was created as the number
  * of seconds since the UNIX epoch.
@@ -487,7 +487,7 @@ int delete_reflog(const char *refname);
  */
 typedef int each_reflog_ent_fn(
 		struct object_id *old_oid, struct object_id *new_oid,
-		const char *committer, timestamp_t timestamp,
+		const char *cummitter, timestamp_t timestamp,
 		int tz, const char *msg, void *cb_data);
 
 /* Iterate over reflog entries in the log for `refname`. */
@@ -724,43 +724,43 @@ int ref_transaction_verify(struct ref_transaction *transaction,
 #define TRANSACTION_GENERIC_ERROR -2
 
 /*
- * Perform the preparatory stages of committing `transaction`. Acquire
+ * Perform the preparatory stages of cummitting `transaction`. Acquire
  * any needed locks, check preconditions, etc.; basically, do as much
  * as possible to ensure that the transaction will be able to go
  * through, stopping just short of making any irrevocable or
  * user-visible changes. The updates that this function prepares can
- * be finished up by calling `ref_transaction_commit()` or rolled back
+ * be finished up by calling `ref_transaction_cummit()` or rolled back
  * by calling `ref_transaction_abort()`.
  *
  * On success, return 0 and leave the transaction in "prepared" state.
  * On failure, abort the transaction, write an error message to `err`,
  * and return one of the `TRANSACTION_*` constants.
  *
- * Callers who don't need such fine-grained control over committing
- * reference transactions should just call `ref_transaction_commit()`.
+ * Callers who don't need such fine-grained control over cummitting
+ * reference transactions should just call `ref_transaction_cummit()`.
  */
 int ref_transaction_prepare(struct ref_transaction *transaction,
 			    struct strbuf *err);
 
 /*
- * Commit all of the changes that have been queued in transaction, as
+ * cummit all of the changes that have been queued in transaction, as
  * atomically as possible. On success, return 0 and leave the
  * transaction in "closed" state. On failure, roll back the
  * transaction, write an error message to `err`, and return one of the
  * `TRANSACTION_*` constants
  */
-int ref_transaction_commit(struct ref_transaction *transaction,
+int ref_transaction_cummit(struct ref_transaction *transaction,
 			   struct strbuf *err);
 
 /*
  * Abort `transaction`, which has been begun and possibly prepared,
- * but not yet committed.
+ * but not yet cummitted.
  */
 int ref_transaction_abort(struct ref_transaction *transaction,
 			  struct strbuf *err);
 
 /*
- * Like ref_transaction_commit(), but optimized for creating
+ * Like ref_transaction_cummit(), but optimized for creating
  * references when originally initializing a repository (e.g., by "git
  * clone"). It writes the new references directly to packed-refs
  * without locking the individual references.
@@ -770,7 +770,7 @@ int ref_transaction_abort(struct ref_transaction *transaction,
  * references that might conflict with the ones being created. All
  * old_oid values must either be absent or null_oid.
  */
-int initial_ref_transaction_commit(struct ref_transaction *transaction,
+int initial_ref_transaction_cummit(struct ref_transaction *transaction,
 				   struct strbuf *err);
 
 /*

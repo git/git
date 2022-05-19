@@ -41,7 +41,7 @@ test_expect_success 'check names' '
 
 test_expect_success 'create innocent subrepo' '
 	git init innocent &&
-	git -C innocent commit --allow-empty -m foo
+	git -C innocent cummit --allow-empty -m foo
 '
 
 test_expect_success 'submodule add refuses invalid names' '
@@ -62,7 +62,7 @@ test_expect_success 'add evil submodule' '
 	git config -f .gitmodules --rename-section \
 		submodule.evil submodule.../../modules/evil &&
 	git add modules &&
-	git commit -am evil
+	git cummit -am evil
 '
 
 # This step seems like it shouldn't be necessary, since the payload is
@@ -73,7 +73,7 @@ test_expect_success 'add evil submodule' '
 test_expect_success 'add other submodule' '
 	git submodule add "$PWD/innocent" another-module &&
 	git add another-module &&
-	git commit -am another
+	git cummit -am another
 '
 
 test_expect_success 'clone evil superproject' '
@@ -100,14 +100,14 @@ test_expect_success 'transfer.fsckObjects detects evil superproject (index)' '
 	test_must_fail git push dst.git HEAD
 '
 
-# Normally our packs contain commits followed by trees followed by blobs. This
+# Normally our packs contain cummits followed by trees followed by blobs. This
 # reverses the order, which requires backtracking to find the context of a
 # blob. We'll start with a fresh gitmodules-only tree to make it simpler.
 test_expect_success 'create oddly ordered pack' '
 	git checkout --orphan odd &&
 	git rm -rf --cached . &&
 	git add .gitmodules &&
-	git commit -m odd &&
+	git cummit -m odd &&
 	{
 		pack_header 3 &&
 		pack_obj $(git rev-parse HEAD:.gitmodules) &&
@@ -228,7 +228,7 @@ test_expect_success 'fsck detects non-blob .gitmodules' '
 		mkdir subdir &&
 		cp ../.gitmodules subdir/file &&
 		git add subdir/file &&
-		git commit -m ok &&
+		git cummit -m ok &&
 		git ls-tree HEAD | sed s/subdir/.gitmodules/ | git mktree &&
 
 		test_must_fail git fsck 2>output &&
@@ -243,7 +243,7 @@ test_expect_success 'fsck detects corrupt .gitmodules' '
 
 		echo "[broken" >.gitmodules &&
 		git add .gitmodules &&
-		git commit -m "broken gitmodules" &&
+		git cummit -m "broken gitmodules" &&
 
 		git fsck 2>output &&
 		test_i18ngrep gitmodulesParse output &&
@@ -259,7 +259,7 @@ test_expect_success WINDOWS 'prevent git~1 squatting on Windows' '
 		touch a/..git &&
 		git add a/..git &&
 		test_tick &&
-		git commit -m initial &&
+		git cummit -m initial &&
 
 		modules="$(test_write_lines \
 			"[submodule \"b.\"]" "url = ." "path = c" \
@@ -277,7 +277,7 @@ test_expect_success WINDOWS 'prevent git~1 squatting on Windows' '
 			--cacheinfo 100644,$hash,d./a/x \
 			--cacheinfo 100644,$hash,d./a/..git &&
 		test_tick &&
-		git -c core.protectNTFS=false commit -m "module"
+		git -c core.protectNTFS=false cummit -m "module"
 	) &&
 	if test_have_prereq MINGW
 	then
@@ -290,7 +290,7 @@ test_expect_success WINDOWS 'prevent git~1 squatting on Windows' '
 
 test_expect_success 'git dirs of sibling submodules must not be nested' '
 	git init nested &&
-	test_commit -C nested nested &&
+	test_cummit -C nested nested &&
 	(
 		cd nested &&
 		cat >.gitmodules <<-EOF &&
@@ -305,7 +305,7 @@ test_expect_success 'git dirs of sibling submodules must not be nested' '
 		git clone . thing2 &&
 		git add .gitmodules thing1 thing2 &&
 		test_tick &&
-		git commit -m nested
+		git cummit -m nested
 	) &&
 	test_must_fail git clone --recurse-submodules nested clone 2>err &&
 	test_i18ngrep "is inside git dir" err

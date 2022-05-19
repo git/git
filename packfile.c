@@ -8,14 +8,14 @@
 #include "delta.h"
 #include "streaming.h"
 #include "hash-lookup.h"
-#include "commit.h"
+#include "cummit.h"
 #include "object.h"
 #include "tag.h"
 #include "tree-walk.h"
 #include "tree.h"
 #include "object-store.h"
 #include "midx.h"
-#include "commit-graph.h"
+#include "cummit-graph.h"
 #include "promisor-remote.h"
 
 char *odb_pack_name(struct strbuf *buf,
@@ -358,7 +358,7 @@ void close_object_store(struct raw_object_store *o)
 		o->multi_pack_index = NULL;
 	}
 
-	close_commit_graph(o);
+	close_cummit_graph(o);
 }
 
 void unlink_pack_path(const char *pack_name, int force_delete)
@@ -1312,7 +1312,7 @@ static enum object_type packed_to_object_type(struct repository *r,
 
 	switch (type) {
 	case OBJ_BAD:
-	case OBJ_COMMIT:
+	case OBJ_cummit:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
@@ -1757,7 +1757,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 		if (data)
 			BUG("unpack_entry: left loop at a valid delta");
 		break;
-	case OBJ_COMMIT:
+	case OBJ_cummit:
 	case OBJ_TREE:
 	case OBJ_BLOB:
 	case OBJ_TAG:
@@ -2221,7 +2221,7 @@ static int add_promisor_object(const struct object_id *oid,
 	oidset_insert(set, oid);
 
 	/*
-	 * If this is a tree, commit, or tag, the objects it refers
+	 * If this is a tree, cummit, or tag, the objects it refers
 	 * to are also promisor objects. (Blobs refer to no objects->)
 	 */
 	if (obj->type == OBJ_TREE) {
@@ -2237,11 +2237,11 @@ static int add_promisor_object(const struct object_id *oid,
 		while (tree_entry_gently(&desc, &entry))
 			oidset_insert(set, &entry.oid);
 		free_tree_buffer(tree);
-	} else if (obj->type == OBJ_COMMIT) {
-		struct commit *commit = (struct commit *) obj;
-		struct commit_list *parents = commit->parents;
+	} else if (obj->type == OBJ_cummit) {
+		struct cummit *cummit = (struct cummit *) obj;
+		struct cummit_list *parents = cummit->parents;
 
-		oidset_insert(set, get_commit_tree_oid(commit));
+		oidset_insert(set, get_cummit_tree_oid(cummit));
 		for (; parents; parents = parents->next)
 			oidset_insert(set, &parents->item->object.oid);
 	} else if (obj->type == OBJ_TAG) {

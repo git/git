@@ -31,13 +31,13 @@ test_pull_autostash_fail () {
 	echo dirty >new_file &&
 	git add new_file &&
 	test_must_fail git pull "$@" . copy 2>err &&
-	test_i18ngrep -E "uncommitted changes.|overwritten by merge:" err
+	test_i18ngrep -E "uncummitted changes.|overwritten by merge:" err
 }
 
 test_expect_success setup '
 	echo file >file &&
 	git add file &&
-	git commit -a -m original
+	git cummit -a -m original
 '
 
 test_expect_success 'pulling into void' '
@@ -115,7 +115,7 @@ test_expect_success 'test . as a remote' '
 	git config branch.copy.remote . &&
 	git config branch.copy.merge refs/heads/main &&
 	echo updated >file &&
-	git commit -a -m updated &&
+	git cummit -a -m updated &&
 	git checkout copy &&
 	echo file >expect &&
 	test_cmp expect file &&
@@ -131,7 +131,7 @@ test_expect_success 'test . as a remote' '
 test_expect_success 'the default remote . should not break explicit pull' '
 	git checkout -b second main^ &&
 	echo modified >file &&
-	git commit -a -m modified &&
+	git cummit -a -m modified &&
 	git checkout copy &&
 	git reset --hard HEAD^ &&
 	echo file >expect &&
@@ -223,7 +223,7 @@ test_expect_success 'fail if the index has unresolved entries' '
 	test_when_finished "git checkout -f copy && git branch -D third" &&
 	echo file >expect &&
 	test_cmp expect file &&
-	test_commit modified2 file &&
+	test_cummit modified2 file &&
 	git ls-files -u >unmerged &&
 	test_must_be_empty unmerged &&
 	test_must_fail git pull --no-rebase . second &&
@@ -269,11 +269,11 @@ test_expect_success 'fast-forward fails with conflicting work tree' '
 test_expect_success '--rebase' '
 	git branch to-rebase &&
 	echo modified again >file &&
-	git commit -m file file &&
+	git cummit -m file file &&
 	git checkout to-rebase &&
 	echo new >file2 &&
 	git add file2 &&
-	git commit -m "new file" &&
+	git cummit -m "new file" &&
 	git tag before-rebase &&
 	git pull --rebase . copy &&
 	test_cmp_rev HEAD^ copy &&
@@ -286,7 +286,7 @@ test_expect_success '--rebase (merge) fast forward' '
 	git reset --hard before-rebase &&
 	git checkout -b ff &&
 	echo another modification >file &&
-	git commit -m third file &&
+	git cummit -m third file &&
 
 	git checkout to-rebase &&
 	git -c rebase.backend=merge pull --rebase . ff &&
@@ -322,7 +322,7 @@ test_expect_success '--rebase --autostash fast forward' '
 	git checkout -b to-rebase-ff &&
 	echo another modification >>file &&
 	git add file &&
-	git commit -m mod &&
+	git cummit -m mod &&
 
 	git checkout behind &&
 	echo dirty >file &&
@@ -333,9 +333,9 @@ test_expect_success '--rebase --autostash fast forward' '
 test_expect_success '--rebase with rebase.autostash succeeds on ff' '
 	test_when_finished "rm -fr src dst actual" &&
 	git init src &&
-	test_commit -C src "initial" file "content" &&
+	test_cummit -C src "initial" file "content" &&
 	git clone src dst &&
-	test_commit -C src --printf "more_content" file "more content\ncontent\n" &&
+	test_cummit -C src --printf "more_content" file "more content\ncontent\n" &&
 	echo "dirty" >>dst/file &&
 	test_config -C dst rebase.autostash true &&
 	git -C dst pull --rebase >actual 2>&1 &&
@@ -349,14 +349,14 @@ test_expect_success '--rebase with conflicts shows advice' '
 	test_seq 5 >seq.txt &&
 	git add seq.txt &&
 	test_tick &&
-	git commit -m "Add seq.txt" &&
+	git cummit -m "Add seq.txt" &&
 	echo 6 >>seq.txt &&
 	test_tick &&
-	git commit -m "Append to seq.txt" seq.txt &&
+	git cummit -m "Append to seq.txt" seq.txt &&
 	git checkout -b with-conflicts HEAD^ &&
 	echo conflicting >>seq.txt &&
 	test_tick &&
-	git commit -m "Create conflict" seq.txt &&
+	git cummit -m "Create conflict" seq.txt &&
 	test_must_fail git pull --rebase . seq 2>err >out &&
 	test_i18ngrep "Resolve all conflicts manually" err
 '
@@ -364,13 +364,13 @@ test_expect_success '--rebase with conflicts shows advice' '
 test_expect_success 'failed --rebase shows advice' '
 	test_when_finished "git rebase --abort; git checkout -f to-rebase" &&
 	git checkout -b diverging &&
-	test_commit attributes .gitattributes "* text=auto" attrs &&
+	test_cummit attributes .gitattributes "* text=auto" attrs &&
 	sha1="$(printf "1\\r\\n" | git hash-object -w --stdin)" &&
 	git update-index --cacheinfo 0644 $sha1 file &&
-	git commit -m v1-with-cr &&
+	git cummit -m v1-with-cr &&
 	# force checkout because `git reset --hard` will not leave clean `file`
 	git checkout -f -b fails-to-rebase HEAD^ &&
-	test_commit v2-without-cr file "2" file2-lf &&
+	test_cummit v2-without-cr file "2" file2-lf &&
 	test_must_fail git pull --rebase . diverging 2>err >out &&
 	test_i18ngrep "Resolve all conflicts manually" err
 '
@@ -517,18 +517,18 @@ test_expect_success 'pull --rebase does not warn on --no-verify-signatures' '
 '
 
 # add a feature branch, keep-merge, that is merged into main, so the
-# test can try preserving the merge commit (or not) with various
+# test can try preserving the merge cummit (or not) with various
 # --rebase flags/pull.rebase settings.
 test_expect_success 'preserve merge setup' '
 	git reset --hard before-rebase &&
 	git checkout -b keep-merge second^ &&
-	test_commit file3 &&
+	test_cummit file3 &&
 	git checkout to-rebase &&
 	git merge keep-merge &&
 	git tag before-preserve-rebase
 '
 
-test_expect_success 'pull.rebase=false create a new merge commit' '
+test_expect_success 'pull.rebase=false create a new merge cummit' '
 	git reset --hard before-preserve-rebase &&
 	test_config pull.rebase false &&
 	git pull . copy &&
@@ -589,7 +589,7 @@ test_expect_success 'pull.rebase=invalid fails' '
 	test_must_fail git pull . copy
 '
 
-test_expect_success '--rebase=false create a new merge commit' '
+test_expect_success '--rebase=false create a new merge cummit' '
 	git reset --hard before-preserve-rebase &&
 	test_config pull.rebase true &&
 	git pull --rebase=false . copy &&
@@ -631,10 +631,10 @@ test_expect_success '--rebase with rebased upstream' '
 	git tag copy-orig &&
 	git reset --hard HEAD^ &&
 	echo conflicting modification >file &&
-	git commit -m conflict file &&
+	git cummit -m conflict file &&
 	git checkout to-rebase &&
 	echo file >file2 &&
-	git commit -m to-rebase file2 &&
+	git cummit -m to-rebase file2 &&
 	git tag to-rebase-orig &&
 	git pull --rebase me copy &&
 	echo "conflicting modification" >expect &&
@@ -732,7 +732,7 @@ test_expect_success 'pull --rebase fails on corrupt HEAD' '
 	git init corrupt &&
 	(
 		cd corrupt &&
-		test_commit one &&
+		test_cummit one &&
 		git rev-parse --verify HEAD >head &&
 		obj=$(sed "s#^..#&/#" head) &&
 		rm -f .git/objects/$obj &&
@@ -742,19 +742,19 @@ test_expect_success 'pull --rebase fails on corrupt HEAD' '
 
 test_expect_success 'setup for detecting upstreamed changes' '
 	test_create_repo src &&
-	test_commit -C src --printf one stuff "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n" &&
+	test_cummit -C src --printf one stuff "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n" &&
 	git clone src dst &&
 	(
 		cd src &&
 		modify s/5/43/ stuff &&
-		git commit -a -m "5->43" &&
+		git cummit -a -m "5->43" &&
 		modify s/6/42/ stuff &&
-		git commit -a -m "Make it bigger"
+		git cummit -a -m "Make it bigger"
 	) &&
 	(
 		cd dst &&
 		modify s/5/43/ stuff &&
-		git commit -a -m "Independent discovery of 5->43"
+		git cummit -a -m "Independent discovery of 5->43"
 	)
 '
 
@@ -779,15 +779,15 @@ test_expect_success 'setup for avoiding reapplying old patches' '
 	(
 		cd dst &&
 		modify s/2/22/ stuff &&
-		git commit -a -m "Change 2" &&
+		git cummit -a -m "Change 2" &&
 		modify s/3/33/ stuff &&
-		git commit -a -m "Change 3" &&
+		git cummit -a -m "Change 3" &&
 		modify s/4/44/ stuff &&
-		git commit -a -m "Change 4" &&
+		git cummit -a -m "Change 4" &&
 		git push &&
 
 		modify s/44/55/ stuff &&
-		git commit --amend -a -m "Modified Change 4"
+		git cummit --amend -a -m "Modified Change 4"
 	)
 '
 

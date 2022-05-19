@@ -8,7 +8,7 @@ git-difftool - Show changes using common diff tools
 SYNOPSIS
 --------
 [verse]
-'git difftool' [<options>] [<commit> [<commit>]] [--] [<path>...]
+'git difftool' [<options>] [<cummit> [<cummit>]] [--] [<path>...]
 
 DESCRIPTION
 -----------
@@ -144,7 +144,7 @@ See the `--trust-exit-code` option above for more details.
 SEE ALSO
 --------
 linkgit:git-diff[1]::
-	 Show changes between commits, commit and working tree, etc
+	 Show changes between cummits, cummit and working tree, etc
 
 linkgit:git-mergetool[1]::
 	Run merge conflict resolution tools to resolve merge conflicts

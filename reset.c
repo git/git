@@ -156,7 +156,7 @@ int reset_head(struct repository *r, const struct reset_head_opts *opts)
 	tree = parse_tree_indirect(oid);
 	prime_cache_tree(r, r->index, tree);
 
-	if (write_locked_index(r->index, &lock, COMMIT_LOCK) < 0) {
+	if (write_locked_index(r->index, &lock, cummit_LOCK) < 0) {
 		ret = error(_("could not write index"));
 		goto leave_reset_head;
 	}

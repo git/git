@@ -464,7 +464,7 @@ extern struct index_state the_index;
 enum object_type {
 	OBJ_BAD = -1,
 	OBJ_NONE = 0,
-	OBJ_COMMIT = 1,
+	OBJ_cummit = 1,
 	OBJ_TREE = 2,
 	OBJ_BLOB = 3,
 	OBJ_TAG = 4,
@@ -478,7 +478,7 @@ enum object_type {
 static inline enum object_type object_type(unsigned int mode)
 {
 	return S_ISDIR(mode) ? OBJ_TREE :
-		S_ISGITLINK(mode) ? OBJ_COMMIT :
+		S_ISGITLINK(mode) ? OBJ_cummit :
 		OBJ_BLOB;
 }
 
@@ -509,7 +509,7 @@ static inline enum object_type object_type(unsigned int mode)
 #define GITMODULES_INDEX ":.gitmodules"
 #define GITMODULES_HEAD "HEAD:.gitmodules"
 #define GIT_NOTES_REF_ENVIRONMENT "GIT_NOTES_REF"
-#define GIT_NOTES_DEFAULT_REF "refs/notes/commits"
+#define GIT_NOTES_DEFAULT_REF "refs/notes/cummits"
 #define GIT_NOTES_DISPLAY_REF_ENVIRONMENT "GIT_NOTES_DISPLAY_REF"
 #define GIT_NOTES_REWRITE_REF_ENVIRONMENT "GIT_NOTES_REWRITE_REF"
 #define GIT_NOTES_REWRITE_MODE_ENVIRONMENT "GIT_NOTES_REWRITE_MODE"
@@ -749,12 +749,12 @@ int is_index_unborn(struct index_state *);
 void ensure_full_index(struct index_state *istate);
 
 /* For use with `write_locked_index()`. */
-#define COMMIT_LOCK		(1 << 0)
+#define cummit_LOCK		(1 << 0)
 #define SKIP_IF_UNCHANGED	(1 << 1)
 
 /*
  * Write the index while holding an already-taken lock. Close the lock,
- * and if `COMMIT_LOCK` is given, commit it.
+ * and if `cummit_LOCK` is given, cummit it.
  *
  * Unless a split index is in use, write the index into the lockfile.
  *
@@ -764,12 +764,12 @@ void ensure_full_index(struct index_state *istate);
  * index cannot be created, fall back to the behavior described in
  * the previous paragraph.
  *
- * With `COMMIT_LOCK`, the lock is always committed or rolled back.
- * Without it, the lock is closed, but neither committed nor rolled
+ * With `cummit_LOCK`, the lock is always cummitted or rolled back.
+ * Without it, the lock is closed, but neither cummitted nor rolled
  * back.
  *
  * If `SKIP_IF_UNCHANGED` is given and the index is unchanged, nothing
- * is written (and the lock is rolled back if `COMMIT_LOCK` is given).
+ * is written (and the lock is rolled back if `cummit_LOCK` is given).
  */
 int write_locked_index(struct index_state *, struct lock_file *lock, unsigned flags);
 
@@ -930,8 +930,8 @@ int refresh_index(struct index_state *, unsigned int flags, const struct pathspe
  * Refresh the index and write it to disk.
  *
  * 'refresh_flags' is passed directly to 'refresh_index()', while
- * 'COMMIT_LOCK | write_flags' is passed to 'write_locked_index()', so
- * the lockfile is always either committed or rolled back.
+ * 'cummit_LOCK | write_flags' is passed to 'write_locked_index()', so
+ * the lockfile is always either cummitted or rolled back.
  *
  * If 'gentle' is passed, errors locking the index are ignored.
  *
@@ -1003,7 +1003,7 @@ enum fsync_component {
 	FSYNC_COMPONENT_LOOSE_OBJECT		= 1 << 0,
 	FSYNC_COMPONENT_PACK			= 1 << 1,
 	FSYNC_COMPONENT_PACK_METADATA		= 1 << 2,
-	FSYNC_COMPONENT_COMMIT_GRAPH		= 1 << 3,
+	FSYNC_COMPONENT_cummit_GRAPH		= 1 << 3,
 	FSYNC_COMPONENT_INDEX			= 1 << 4,
 	FSYNC_COMPONENT_REFERENCE		= 1 << 5,
 };
@@ -1012,22 +1012,22 @@ enum fsync_component {
 				  FSYNC_COMPONENT_PACK)
 
 #define FSYNC_COMPONENTS_DERIVED_METADATA (FSYNC_COMPONENT_PACK_METADATA | \
-					   FSYNC_COMPONENT_COMMIT_GRAPH)
+					   FSYNC_COMPONENT_cummit_GRAPH)
 
 #define FSYNC_COMPONENTS_DEFAULT ((FSYNC_COMPONENTS_OBJECTS | \
 				   FSYNC_COMPONENTS_DERIVED_METADATA) & \
 				  ~FSYNC_COMPONENT_LOOSE_OBJECT)
 
-#define FSYNC_COMPONENTS_COMMITTED (FSYNC_COMPONENTS_OBJECTS | \
+#define FSYNC_COMPONENTS_cummitTED (FSYNC_COMPONENTS_OBJECTS | \
 				    FSYNC_COMPONENT_REFERENCE)
 
-#define FSYNC_COMPONENTS_ADDED (FSYNC_COMPONENTS_COMMITTED | \
+#define FSYNC_COMPONENTS_ADDED (FSYNC_COMPONENTS_cummitTED | \
 				FSYNC_COMPONENT_INDEX)
 
 #define FSYNC_COMPONENTS_ALL (FSYNC_COMPONENT_LOOSE_OBJECT | \
 			      FSYNC_COMPONENT_PACK | \
 			      FSYNC_COMPONENT_PACK_METADATA | \
-			      FSYNC_COMPONENT_COMMIT_GRAPH | \
+			      FSYNC_COMPONENT_cummit_GRAPH | \
 			      FSYNC_COMPONENT_INDEX | \
 			      FSYNC_COMPONENT_REFERENCE)
 
@@ -1430,8 +1430,8 @@ struct object_context {
 };
 
 #define GET_OID_QUIETLY           01
-#define GET_OID_COMMIT            02
-#define GET_OID_COMMITTISH        04
+#define GET_OID_cummit            02
+#define GET_OID_cummitTISH        04
 #define GET_OID_TREE             010
 #define GET_OID_TREEISH          020
 #define GET_OID_BLOB             040
@@ -1441,7 +1441,7 @@ struct object_context {
 #define GET_OID_REQUIRE_PATH  010000
 
 #define GET_OID_DISAMBIGUATORS \
-	(GET_OID_COMMIT | GET_OID_COMMITTISH | \
+	(GET_OID_cummit | GET_OID_cummitTISH | \
 	GET_OID_TREE | GET_OID_TREEISH | \
 	GET_OID_BLOB)
 
@@ -1466,8 +1466,8 @@ enum get_oid_result {
 int repo_get_oid(struct repository *r, const char *str, struct object_id *oid);
 __attribute__((format (printf, 2, 3)))
 int get_oidf(struct object_id *oid, const char *fmt, ...);
-int repo_get_oid_commit(struct repository *r, const char *str, struct object_id *oid);
-int repo_get_oid_committish(struct repository *r, const char *str, struct object_id *oid);
+int repo_get_oid_cummit(struct repository *r, const char *str, struct object_id *oid);
+int repo_get_oid_cummittish(struct repository *r, const char *str, struct object_id *oid);
 int repo_get_oid_tree(struct repository *r, const char *str, struct object_id *oid);
 int repo_get_oid_treeish(struct repository *r, const char *str, struct object_id *oid);
 int repo_get_oid_blob(struct repository *r, const char *str, struct object_id *oid);
@@ -1480,8 +1480,8 @@ enum get_oid_result get_oid_with_context(struct repository *repo, const char *st
 					 struct object_context *oc);
 
 #define get_oid(str, oid)		repo_get_oid(the_repository, str, oid)
-#define get_oid_commit(str, oid)	repo_get_oid_commit(the_repository, str, oid)
-#define get_oid_committish(str, oid)	repo_get_oid_committish(the_repository, str, oid)
+#define get_oid_cummit(str, oid)	repo_get_oid_cummit(the_repository, str, oid)
+#define get_oid_cummittish(str, oid)	repo_get_oid_cummittish(the_repository, str, oid)
 #define get_oid_tree(str, oid)		repo_get_oid_tree(the_repository, str, oid)
 #define get_oid_treeish(str, oid)	repo_get_oid_treeish(the_repository, str, oid)
 #define get_oid_blob(str, oid)		repo_get_oid_blob(the_repository, str, oid)
@@ -1556,7 +1556,7 @@ int get_oid_hex_any(const char *hex, struct object_id *oid);
 int parse_oid_hex_any(const char *hex, struct object_id *oid, const char **end);
 
 /*
- * This reads short-hand syntax that not only evaluates to a commit
+ * This reads short-hand syntax that not only evaluates to a cummit
  * object name, but also can act as if the end user spelled the name
  * of the branch from the command line.
  *
@@ -1628,11 +1628,11 @@ struct object *repo_peel_to_type(struct repository *r,
 enum want_ident {
 	WANT_BLANK_IDENT,
 	WANT_AUTHOR_IDENT,
-	WANT_COMMITTER_IDENT
+	WANT_cummitTER_IDENT
 };
 
 const char *git_author_info(int);
-const char *git_committer_info(int);
+const char *git_cummitter_info(int);
 const char *fmt_ident(const char *name, const char *email,
 		      enum want_ident whose_ident,
 		      const char *date_str, int);
@@ -1738,12 +1738,12 @@ extern int fetch_if_missing;
 int update_server_info(int);
 
 const char *get_log_output_encoding(void);
-const char *get_commit_output_encoding(void);
+const char *get_cummit_output_encoding(void);
 
-int committer_ident_sufficiently_given(void);
+int cummitter_ident_sufficiently_given(void);
 int author_ident_sufficiently_given(void);
 
-extern const char *git_commit_encoding;
+extern const char *git_cummit_encoding;
 extern const char *git_log_output_encoding;
 extern const char *git_mailmap_file;
 extern const char *git_mailmap_blob;
@@ -1866,11 +1866,11 @@ extern struct startup_info *startup_info;
 extern const char *tmp_original_cwd;
 
 /* merge.c */
-struct commit_list;
+struct cummit_list;
 int try_merge_command(struct repository *r,
 		const char *strategy, size_t xopts_nr,
-		const char **xopts, struct commit_list *common,
-		const char *head_arg, struct commit_list *remotes);
+		const char **xopts, struct cummit_list *common,
+		const char *head_arg, struct cummit_list *remotes);
 int checkout_fast_forward(struct repository *r,
 			  const struct object_id *from,
 			  const struct object_id *to,

@@ -26,7 +26,7 @@ perl -MTime::ParseDate -e 0 >/dev/null 2>&1 && test_set_prereq DATE_PARSER
 # snapshot settings
 
 test_expect_success 'setup' "
-	test_commit 'SnapshotTests' 'i can has snapshot'
+	test_cummit 'SnapshotTests' 'i can has snapshot'
 "
 
 
@@ -102,7 +102,7 @@ test_debug 'cat gitweb.output'
 test_expect_success 'snapshots: bad tree-ish id (tagged object)' '
 	echo object > tag-object &&
 	git add tag-object &&
-	test_tick && git commit -m "Object to be tagged" &&
+	test_tick && git cummit -m "Object to be tagged" &&
 	git tag tagged-object $(git hash-object tag-object) &&
 	gitweb_run "p=.git;a=snapshot;h=tagged-object;sf=tgz" &&
 	grep "400 - Object is not a tree-ish" gitweb.output

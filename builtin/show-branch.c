@@ -7,7 +7,7 @@
 #include "strvec.h"
 #include "parse-options.h"
 #include "dir.h"
-#include "commit-slab.h"
+#include "cummit-slab.h"
 #include "date.h"
 
 static const char* show_branch_usage[] = {
@@ -24,7 +24,7 @@ static int showbranch_use_color = -1;
 static struct strvec default_args = STRVEC_INIT;
 
 /*
- * TODO: convert this use of commit->object.flags to commit-slab
+ * TODO: convert this use of cummit->object.flags to cummit-slab
  * instead to store a pointer to ref name directly. Then use the same
  * UNINTERESTING definition from revision.h here.
  */
@@ -49,76 +49,76 @@ static const char *get_color_reset_code(void)
 	return "";
 }
 
-static struct commit *interesting(struct commit_list *list)
+static struct cummit *interesting(struct cummit_list *list)
 {
 	while (list) {
-		struct commit *commit = list->item;
+		struct cummit *cummit = list->item;
 		list = list->next;
-		if (commit->object.flags & UNINTERESTING)
+		if (cummit->object.flags & UNINTERESTING)
 			continue;
-		return commit;
+		return cummit;
 	}
 	return NULL;
 }
 
-struct commit_name {
+struct cummit_name {
 	const char *head_name; /* which head's ancestor? */
 	int generation; /* how many parents away from head_name */
 };
 
-define_commit_slab(commit_name_slab, struct commit_name *);
-static struct commit_name_slab name_slab;
+define_cummit_slab(cummit_name_slab, struct cummit_name *);
+static struct cummit_name_slab name_slab;
 
-static struct commit_name *commit_to_name(struct commit *commit)
+static struct cummit_name *cummit_to_name(struct cummit *cummit)
 {
-	return *commit_name_slab_at(&name_slab, commit);
+	return *cummit_name_slab_at(&name_slab, cummit);
 }
 
 
-/* Name the commit as nth generation ancestor of head_name;
+/* Name the cummit as nth generation ancestor of head_name;
  * we count only the first-parent relationship for naming purposes.
  */
-static void name_commit(struct commit *commit, const char *head_name, int nth)
+static void name_cummit(struct cummit *cummit, const char *head_name, int nth)
 {
-	struct commit_name *name;
+	struct cummit_name *name;
 
-	name = *commit_name_slab_at(&name_slab, commit);
+	name = *cummit_name_slab_at(&name_slab, cummit);
 	if (!name) {
 		name = xmalloc(sizeof(*name));
-		*commit_name_slab_at(&name_slab, commit) = name;
+		*cummit_name_slab_at(&name_slab, cummit) = name;
 	}
 	name->head_name = head_name;
 	name->generation = nth;
 }
 
-/* Parent is the first parent of the commit.  We may name it
+/* Parent is the first parent of the cummit.  We may name it
  * as (n+1)th generation ancestor of the same head_name as
- * commit is nth generation ancestor of, if that generation
+ * cummit is nth generation ancestor of, if that generation
  * number is better than the name it already has.
  */
-static void name_parent(struct commit *commit, struct commit *parent)
+static void name_parent(struct cummit *cummit, struct cummit *parent)
 {
-	struct commit_name *commit_name = commit_to_name(commit);
-	struct commit_name *parent_name = commit_to_name(parent);
-	if (!commit_name)
+	struct cummit_name *cummit_name = cummit_to_name(cummit);
+	struct cummit_name *parent_name = cummit_to_name(parent);
+	if (!cummit_name)
 		return;
 	if (!parent_name ||
-	    commit_name->generation + 1 < parent_name->generation)
-		name_commit(parent, commit_name->head_name,
-			    commit_name->generation + 1);
+	    cummit_name->generation + 1 < parent_name->generation)
+		name_cummit(parent, cummit_name->head_name,
+			    cummit_name->generation + 1);
 }
 
-static int name_first_parent_chain(struct commit *c)
+static int name_first_parent_chain(struct cummit *c)
 {
 	int i = 0;
 	while (c) {
-		struct commit *p;
-		if (!commit_to_name(c))
+		struct cummit *p;
+		if (!cummit_to_name(c))
 			break;
 		if (!c->parents)
 			break;
 		p = c->parents->item;
-		if (!commit_to_name(p)) {
+		if (!cummit_to_name(p)) {
 			name_parent(c, p);
 			i++;
 		}
@@ -129,29 +129,29 @@ static int name_first_parent_chain(struct commit *c)
 	return i;
 }
 
-static void name_commits(struct commit_list *list,
-			 struct commit **rev,
+static void name_cummits(struct cummit_list *list,
+			 struct cummit **rev,
 			 char **ref_name,
 			 int num_rev)
 {
-	struct commit_list *cl;
-	struct commit *c;
+	struct cummit_list *cl;
+	struct cummit *c;
 	int i;
 
 	/* First give names to the given heads */
 	for (cl = list; cl; cl = cl->next) {
 		c = cl->item;
-		if (commit_to_name(c))
+		if (cummit_to_name(c))
 			continue;
 		for (i = 0; i < num_rev; i++) {
 			if (rev[i] == c) {
-				name_commit(c, ref_name[i], 0);
+				name_cummit(c, ref_name[i], 0);
 				break;
 			}
 		}
 	}
 
-	/* Then commits on the first parent ancestry chain */
+	/* Then cummits on the first parent ancestry chain */
 	do {
 		i = 0;
 		for (cl = list; cl; cl = cl->next) {
@@ -159,25 +159,25 @@ static void name_commits(struct commit_list *list,
 		}
 	} while (i);
 
-	/* Finally, any unnamed commits */
+	/* Finally, any unnamed cummits */
 	do {
 		i = 0;
 		for (cl = list; cl; cl = cl->next) {
-			struct commit_list *parents;
-			struct commit_name *n;
+			struct cummit_list *parents;
+			struct cummit_name *n;
 			int nth;
 			c = cl->item;
-			if (!commit_to_name(c))
+			if (!cummit_to_name(c))
 				continue;
-			n = commit_to_name(c);
+			n = cummit_to_name(c);
 			parents = c->parents;
 			nth = 0;
 			while (parents) {
-				struct commit *p = parents->item;
+				struct cummit *p = parents->item;
 				struct strbuf newname = STRBUF_INIT;
 				parents = parents->next;
 				nth++;
-				if (commit_to_name(p))
+				if (cummit_to_name(p))
 					continue;
 				switch (n->generation) {
 				case 0:
@@ -195,7 +195,7 @@ static void name_commits(struct commit_list *list,
 					strbuf_addch(&newname, '^');
 				else
 					strbuf_addf(&newname, "^%d", nth);
-				name_commit(p, strbuf_detach(&newname, NULL), 0);
+				name_cummit(p, strbuf_detach(&newname, NULL), 0);
 				i++;
 				name_first_parent_chain(p);
 			}
@@ -203,77 +203,77 @@ static void name_commits(struct commit_list *list,
 	} while (i);
 }
 
-static int mark_seen(struct commit *commit, struct commit_list **seen_p)
+static int mark_seen(struct cummit *cummit, struct cummit_list **seen_p)
 {
-	if (!commit->object.flags) {
-		commit_list_insert(commit, seen_p);
+	if (!cummit->object.flags) {
+		cummit_list_insert(cummit, seen_p);
 		return 1;
 	}
 	return 0;
 }
 
-static void join_revs(struct commit_list **list_p,
-		      struct commit_list **seen_p,
+static void join_revs(struct cummit_list **list_p,
+		      struct cummit_list **seen_p,
 		      int num_rev, int extra)
 {
 	int all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
 	int all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
 
 	while (*list_p) {
-		struct commit_list *parents;
+		struct cummit_list *parents;
 		int still_interesting = !!interesting(*list_p);
-		struct commit *commit = pop_commit(list_p);
-		int flags = commit->object.flags & all_mask;
+		struct cummit *cummit = pop_cummit(list_p);
+		int flags = cummit->object.flags & all_mask;
 
 		if (!still_interesting && extra <= 0)
 			break;
 
-		mark_seen(commit, seen_p);
+		mark_seen(cummit, seen_p);
 		if ((flags & all_revs) == all_revs)
 			flags |= UNINTERESTING;
-		parents = commit->parents;
+		parents = cummit->parents;
 
 		while (parents) {
-			struct commit *p = parents->item;
+			struct cummit *p = parents->item;
 			int this_flag = p->object.flags;
 			parents = parents->next;
 			if ((this_flag & flags) == flags)
 				continue;
-			parse_commit(p);
+			parse_cummit(p);
 			if (mark_seen(p, seen_p) && !still_interesting)
 				extra--;
 			p->object.flags |= flags;
-			commit_list_insert_by_date(p, list_p);
+			cummit_list_insert_by_date(p, list_p);
 		}
 	}
 
 	/*
 	 * Postprocess to complete well-poisoning.
 	 *
-	 * At this point we have all the commits we have seen in
+	 * At this point we have all the cummits we have seen in
 	 * seen_p list.  Mark anything that can be reached from
-	 * uninteresting commits not interesting.
+	 * uninteresting cummits not interesting.
 	 */
 	for (;;) {
 		int changed = 0;
-		struct commit_list *s;
+		struct cummit_list *s;
 		for (s = *seen_p; s; s = s->next) {
-			struct commit *c = s->item;
-			struct commit_list *parents;
+			struct cummit *c = s->item;
+			struct cummit_list *parents;
 
 			if (((c->object.flags & all_revs) != all_revs) &&
 			    !(c->object.flags & UNINTERESTING))
 				continue;
 
-			/* The current commit is either a merge base or
+			/* The current cummit is either a merge base or
 			 * already uninteresting one.  Mark its parents
-			 * as uninteresting commits _only_ if they are
+			 * as uninteresting cummits _only_ if they are
 			 * already parsed.  No reason to find new ones
 			 * here.
 			 */
 			parents = c->parents;
 			while (parents) {
-				struct commit *p = parents->item;
+				struct cummit *p = parents->item;
 				parents = parents->next;
 				if (!(p->object.flags & UNINTERESTING)) {
 					p->object.flags |= UNINTERESTING;
@@ -286,14 +286,14 @@ static void join_revs(struct commit_list **list_p,
 	}
 }
 
-static void show_one_commit(struct commit *commit, int no_name)
+static void show_one_cummit(struct cummit *cummit, int no_name)
 {
 	struct strbuf pretty = STRBUF_INIT;
 	const char *pretty_str = "(unavailable)";
-	struct commit_name *name = commit_to_name(commit);
+	struct cummit_name *name = cummit_to_name(cummit);
 
-	if (commit->object.parsed) {
-		pp_commit_easy(CMIT_FMT_ONELINE, commit, &pretty);
+	if (cummit->object.parsed) {
+		pp_cummit_easy(CMIT_FMT_ONELINE, cummit, &pretty);
 		pretty_str = pretty.buf;
 	}
 	skip_prefix(pretty_str, "[PATCH] ", &pretty_str);
@@ -311,7 +311,7 @@ static void show_one_commit(struct commit *commit, int no_name)
 		}
 		else
 			printf("[%s] ",
-			       find_unique_abbrev(&commit->object.oid,
+			       find_unique_abbrev(&cummit->object.oid,
 						  DEFAULT_ABBREV));
 	}
 	puts(pretty_str);
@@ -379,11 +379,11 @@ static void sort_ref_range(int bottom, int top)
 static int append_ref(const char *refname, const struct object_id *oid,
 		      int allow_dups)
 {
-	struct commit *commit = lookup_commit_reference_gently(the_repository,
+	struct cummit *cummit = lookup_cummit_reference_gently(the_repository,
 							       oid, 1);
 	int i;
 
-	if (!commit)
+	if (!cummit)
 		return 0;
 
 	if (!allow_dups) {
@@ -493,38 +493,38 @@ static int rev_is_head(const char *head, const char *name)
 	return !strcmp(head, name);
 }
 
-static int show_merge_base(struct commit_list *seen, int num_rev)
+static int show_merge_base(struct cummit_list *seen, int num_rev)
 {
 	int all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
 	int all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
 	int exit_status = 1;
 
 	while (seen) {
-		struct commit *commit = pop_commit(&seen);
-		int flags = commit->object.flags & all_mask;
+		struct cummit *cummit = pop_cummit(&seen);
+		int flags = cummit->object.flags & all_mask;
 		if (!(flags & UNINTERESTING) &&
 		    ((flags & all_revs) == all_revs)) {
-			puts(oid_to_hex(&commit->object.oid));
+			puts(oid_to_hex(&cummit->object.oid));
 			exit_status = 0;
-			commit->object.flags |= UNINTERESTING;
+			cummit->object.flags |= UNINTERESTING;
 		}
 	}
 	return exit_status;
 }
 
-static int show_independent(struct commit **rev,
+static int show_independent(struct cummit **rev,
 			    int num_rev,
 			    unsigned int *rev_mask)
 {
 	int i;
 
 	for (i = 0; i < num_rev; i++) {
-		struct commit *commit = rev[i];
+		struct cummit *cummit = rev[i];
 		unsigned int flag = rev_mask[i];
 
-		if (commit->object.flags == flag)
-			puts(oid_to_hex(&commit->object.oid));
-		commit->object.flags |= UNINTERESTING;
+		if (cummit->object.flags == flag)
+			puts(oid_to_hex(&cummit->object.oid));
+		cummit->object.flags |= UNINTERESTING;
 	}
 	return 0;
 }
@@ -575,18 +575,18 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 	return git_color_default_config(var, value, cb);
 }
 
-static int omit_in_dense(struct commit *commit, struct commit **rev, int n)
+static int omit_in_dense(struct cummit *cummit, struct cummit **rev, int n)
 {
-	/* If the commit is tip of the named branches, do not
+	/* If the cummit is tip of the named branches, do not
 	 * omit it.
 	 * Otherwise, if it is a merge that is reachable from only one
 	 * tip, it is not that interesting.
 	 */
 	int i, flag, count;
 	for (i = 0; i < n; i++)
-		if (rev[i] == commit)
+		if (rev[i] == cummit)
 			return 0;
-	flag = commit->object.flags;
+	flag = cummit->object.flags;
 	for (i = count = 0; i < n; i++) {
 		if (flag & (1u << (i + REV_SHIFT)))
 			count++;
@@ -620,9 +620,9 @@ static int parse_reflog_param(const struct option *opt, const char *arg,
 
 int cmd_show_branch(int ac, const char **av, const char *prefix)
 {
-	struct commit *rev[MAX_REVS], *commit;
+	struct cummit *rev[MAX_REVS], *cummit;
 	char *reflog_msg[MAX_REVS];
-	struct commit_list *list = NULL, *seen = NULL;
+	struct cummit_list *list = NULL, *seen = NULL;
 	unsigned int rev_mask[MAX_REVS];
 	int num_rev, i, extra = 0;
 	int all_heads = 0, all_remotes = 0;
@@ -648,29 +648,29 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		OPT__COLOR(&showbranch_use_color,
 			    N_("color '*!+-' corresponding to the branch")),
 		{ OPTION_INTEGER, 0, "more", &extra, N_("n"),
-			    N_("show <n> more commits after the common ancestor"),
+			    N_("show <n> more cummits after the common ancestor"),
 			    PARSE_OPT_OPTARG, NULL, (intptr_t)1 },
 		OPT_SET_INT(0, "list", &extra, N_("synonym to more=-1"), -1),
 		OPT_BOOL(0, "no-name", &no_name, N_("suppress naming strings")),
 		OPT_BOOL(0, "current", &with_current_branch,
 			 N_("include the current branch")),
 		OPT_BOOL(0, "sha1-name", &sha1_name,
-			 N_("name commits with their object names")),
+			 N_("name cummits with their object names")),
 		OPT_BOOL(0, "merge-base", &merge_base,
 			 N_("show possible merge bases")),
 		OPT_BOOL(0, "independent", &independent,
 			    N_("show refs unreachable from any other ref")),
 		OPT_SET_INT(0, "topo-order", &sort_order,
-			    N_("show commits in topological order"),
+			    N_("show cummits in topological order"),
 			    REV_SORT_IN_GRAPH_ORDER),
 		OPT_BOOL(0, "topics", &topics,
-			 N_("show only commits not on the first branch")),
+			 N_("show only cummits not on the first branch")),
 		OPT_SET_INT(0, "sparse", &dense,
 			    N_("show merges reachable from only one tip"), 0),
 		OPT_SET_INT(0, "date-order", &sort_order,
 			    N_("topologically sort, maintaining date order "
 			       "where possible"),
-			    REV_SORT_BY_COMMIT_DATE),
+			    REV_SORT_BY_cummit_DATE),
 		OPT_CALLBACK_F('g', "reflog", &reflog_base, N_("<n>[,<base>]"),
 			    N_("show <n> most recent ref-log entries starting at "
 			       "base"),
@@ -679,7 +679,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		OPT_END()
 	};
 
-	init_commit_name_slab(&name_slab);
+	init_cummit_name_slab(&name_slab);
 
 	git_config(git_show_branch_config, NULL);
 
@@ -833,21 +833,21 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			       MAX_REVS), MAX_REVS);
 		if (get_oid(ref_name[num_rev], &revkey))
 			die(_("'%s' is not a valid ref."), ref_name[num_rev]);
-		commit = lookup_commit_reference(the_repository, &revkey);
-		if (!commit)
-			die(_("cannot find commit %s (%s)"),
+		cummit = lookup_cummit_reference(the_repository, &revkey);
+		if (!cummit)
+			die(_("cannot find cummit %s (%s)"),
 			    ref_name[num_rev], oid_to_hex(&revkey));
-		parse_commit(commit);
-		mark_seen(commit, &seen);
+		parse_cummit(cummit);
+		mark_seen(cummit, &seen);
 
 		/* rev#0 uses bit REV_SHIFT, rev#1 uses bit REV_SHIFT+1,
 		 * and so on.  REV_SHIFT bits from bit 0 are used for
 		 * internal bookkeeping.
 		 */
-		commit->object.flags |= flag;
-		if (commit->object.flags == flag)
-			commit_list_insert_by_date(commit, &list);
-		rev[num_rev] = commit;
+		cummit->object.flags |= flag;
+		if (cummit->object.flags == flag)
+			cummit_list_insert_by_date(cummit, &list);
+		rev[num_rev] = cummit;
 	}
 	for (i = 0; i < num_rev; i++)
 		rev_mask[i] = rev[i]->object.flags;
@@ -855,7 +855,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	if (0 <= extra)
 		join_revs(&list, &seen, num_rev, extra);
 
-	commit_list_sort_by_date(&seen);
+	cummit_list_sort_by_date(&seen);
 
 	if (merge_base)
 		return show_merge_base(seen, num_rev);
@@ -883,7 +883,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 
 			if (!reflog) {
 				/* header lines never need name */
-				show_one_commit(rev[i], 1);
+				show_one_cummit(rev[i], 1);
 			}
 			else
 				puts(reflog_msg[i]);
@@ -903,29 +903,29 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	/* Sort topologically */
 	sort_in_topological_order(&seen, sort_order);
 
-	/* Give names to commits */
+	/* Give names to cummits */
 	if (!sha1_name && !no_name)
-		name_commits(seen, rev, ref_name, num_rev);
+		name_cummits(seen, rev, ref_name, num_rev);
 
 	all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
 	all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
 
 	while (seen) {
-		struct commit *commit = pop_commit(&seen);
-		int this_flag = commit->object.flags;
+		struct cummit *cummit = pop_cummit(&seen);
+		int this_flag = cummit->object.flags;
 		int is_merge_point = ((this_flag & all_revs) == all_revs);
 
 		shown_merge_point |= is_merge_point;
 
 		if (1 < num_rev) {
-			int is_merge = !!(commit->parents &&
-					  commit->parents->next);
+			int is_merge = !!(cummit->parents &&
+					  cummit->parents->next);
 			if (topics &&
 			    !is_merge_point &&
 			    (this_flag & (1u << REV_SHIFT)))
 				continue;
 			if (dense && is_merge &&
-			    omit_in_dense(commit, rev, num_rev))
+			    omit_in_dense(cummit, rev, num_rev))
 				continue;
 			for (i = 0; i < num_rev; i++) {
 				int mark;
@@ -946,7 +946,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			}
 			putchar(' ');
 		}
-		show_one_commit(commit, no_name);
+		show_one_cummit(cummit, no_name);
 
 		if (shown_merge_point && --extra < 0)
 			break;

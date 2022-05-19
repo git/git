@@ -16,9 +16,9 @@ prepare_dst () {
 }
 
 test_expect_success setup '
-	# main, ff and noff branches pointing at the same commit
+	# main, ff and noff branches pointing at the same cummit
 	test_tick &&
-	git commit --allow-empty -m initial &&
+	git cummit --allow-empty -m initial &&
 
 	git checkout -b noop &&
 	git checkout -b ff &&
@@ -26,11 +26,11 @@ test_expect_success setup '
 
 	# noop stays the same, ff advances, noff rewrites
 	test_tick &&
-	git commit --allow-empty --amend -m rewritten &&
+	git cummit --allow-empty --amend -m rewritten &&
 	git checkout ff &&
 
 	test_tick &&
-	git commit --allow-empty -m second
+	git cummit --allow-empty -m second
 '
 
 test_expect_success 'unsigned push does not send push certificate' '
@@ -115,7 +115,7 @@ test_expect_success GPG 'signed push sends push certificate' '
 
 	(
 		cat <<-\EOF &&
-		SIGNER=C O Mitter <committer@example.com>
+		SIGNER=C O Mitter <cummitter@example.com>
 		KEY=13B6F51ECDDE430D
 		STATUS=G
 		NONCE_STATUS=OK
@@ -238,15 +238,15 @@ test_expect_success GPG 'fail without key and heed user.signingkey' '
 
 	test_config user.email hasnokey@nowhere.com &&
 	(
-		sane_unset GIT_COMMITTER_EMAIL &&
+		sane_unset GIT_cummitTER_EMAIL &&
 		test_must_fail git push --signed dst noop ff +noff
 	) &&
-	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	test_config user.signingkey $GIT_cummitTER_EMAIL &&
 	git push --signed dst noop ff +noff &&
 
 	(
 		cat <<-\EOF &&
-		SIGNER=C O Mitter <committer@example.com>
+		SIGNER=C O Mitter <cummitter@example.com>
 		KEY=13B6F51ECDDE430D
 		STATUS=G
 		NONCE_STATUS=OK
@@ -288,10 +288,10 @@ test_expect_success GPGSM 'fail without key and heed user.signingkey x509' '
 	test_config user.email hasnokey@nowhere.com &&
 	test_config user.signingkey "" &&
 	(
-		sane_unset GIT_COMMITTER_EMAIL &&
+		sane_unset GIT_cummitTER_EMAIL &&
 		test_must_fail git push --signed dst noop ff +noff
 	) &&
-	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	test_config user.signingkey $GIT_cummitTER_EMAIL &&
 	git push --signed dst noop ff +noff &&
 
 	(
@@ -342,7 +342,7 @@ test_expect_success GPGSSH 'fail without key and heed user.signingkey ssh' '
 	test_config gpg.format ssh &&
 	test_config user.signingkey "" &&
 	(
-		sane_unset GIT_COMMITTER_EMAIL &&
+		sane_unset GIT_cummitTER_EMAIL &&
 		test_must_fail git push --signed dst noop ff +noff
 	) &&
 	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&

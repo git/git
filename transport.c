@@ -410,7 +410,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	else if (data->version <= protocol_v1)
 		die_if_server_options(transport);
 
-	if (data->options.acked_commits) {
+	if (data->options.acked_cummits) {
 		if (data->version < protocol_v2) {
 			warning(_("--negotiate-only requires protocol v2"));
 			ret = -1;
@@ -422,7 +422,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 					      transport->server_options,
 					      transport->stateless_rpc,
 					      data->fd,
-					      data->options.acked_commits);
+					      data->options.acked_cummits);
 			ret = 0;
 		}
 		goto cleanup;
@@ -1335,25 +1335,25 @@ int transport_push(struct repository *r,
 			      TRANSPORT_RECURSE_SUBMODULES_ONLY)) &&
 		    !is_bare_repository()) {
 			struct ref *ref = remote_refs;
-			struct oid_array commits = OID_ARRAY_INIT;
+			struct oid_array cummits = OID_ARRAY_INIT;
 
 			trace2_region_enter("transport_push", "push_submodules", r);
 			for (; ref; ref = ref->next)
 				if (!is_null_oid(&ref->new_oid))
-					oid_array_append(&commits,
+					oid_array_append(&cummits,
 							  &ref->new_oid);
 
 			if (!push_unpushed_submodules(r,
-						      &commits,
+						      &cummits,
 						      transport->remote,
 						      rs,
 						      transport->push_options,
 						      pretend)) {
-				oid_array_clear(&commits);
+				oid_array_clear(&cummits);
 				trace2_region_leave("transport_push", "push_submodules", r);
 				die(_("failed to push all needed submodules"));
 			}
-			oid_array_clear(&commits);
+			oid_array_clear(&cummits);
 			trace2_region_leave("transport_push", "push_submodules", r);
 		}
 
@@ -1363,24 +1363,24 @@ int transport_push(struct repository *r,
 		      !pretend)) && !is_bare_repository()) {
 			struct ref *ref = remote_refs;
 			struct string_list needs_pushing = STRING_LIST_INIT_DUP;
-			struct oid_array commits = OID_ARRAY_INIT;
+			struct oid_array cummits = OID_ARRAY_INIT;
 
 			trace2_region_enter("transport_push", "check_submodules", r);
 			for (; ref; ref = ref->next)
 				if (!is_null_oid(&ref->new_oid))
-					oid_array_append(&commits,
+					oid_array_append(&cummits,
 							  &ref->new_oid);
 
 			if (find_unpushed_submodules(r,
-						     &commits,
+						     &cummits,
 						     transport->remote->name,
 						     &needs_pushing)) {
-				oid_array_clear(&commits);
+				oid_array_clear(&cummits);
 				trace2_region_leave("transport_push", "check_submodules", r);
 				die_with_unpushed_submodules(&needs_pushing);
 			}
 			string_list_clear(&needs_pushing, 0);
-			oid_array_clear(&commits);
+			oid_array_clear(&cummits);
 			trace2_region_leave("transport_push", "check_submodules", r);
 		}
 

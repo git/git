@@ -887,7 +887,7 @@ set default_config(gui.copyblamethreshold) 40
 set default_config(gui.blamehistoryctx) 7
 set default_config(gui.diffcontext) 5
 set default_config(gui.diffopts) {}
-set default_config(gui.commitmsgwidth) 75
+set default_config(gui.cummitmsgwidth) 75
 set default_config(gui.newbranchtemplate) {}
 set default_config(gui.spellingdictionary) {}
 set default_config(gui.fontui) [font configure font_ui]
@@ -895,7 +895,7 @@ set default_config(gui.fontdiff) [font configure font_diff]
 # TODO: this option should be added to the git-config documentation
 set default_config(gui.maxfilesdisplayed) 5000
 set default_config(gui.usettk) 1
-set default_config(gui.warndetachedcommit) 1
+set default_config(gui.warndetachedcummit) 1
 set default_config(gui.tabsize) 8
 set font_descs {
 	{fontui   font_ui   {mc "Main Font"}}
@@ -1175,7 +1175,7 @@ if {$subcommand eq {gui} && [llength $argv] > 0} {
 	set argv [lrange $argv 1 end]
 }
 
-enable_option multicommit
+enable_option multicummit
 enable_option branch
 enable_option transport
 disable_option bare
@@ -1185,15 +1185,15 @@ browser -
 blame {
 	enable_option bare
 
-	disable_option multicommit
+	disable_option multicummit
 	disable_option branch
 	disable_option transport
 }
 citool {
-	enable_option singlecommit
+	enable_option singlecummit
 	enable_option retcode
 
-	disable_option multicommit
+	disable_option multicummit
 	disable_option branch
 	disable_option transport
 
@@ -1203,12 +1203,12 @@ citool {
 		--amend {
 			enable_option initialamend
 		}
-		--nocommit {
-			enable_option nocommit
-			enable_option nocommitmsg
+		--nocummit {
+			enable_option nocummit
+			enable_option nocummitmsg
 		}
-		--commitmsg {
-			disable_option nocommitmsg
+		--cummitmsg {
+			disable_option nocummitmsg
 		}
 		default {
 			break
@@ -1340,8 +1340,8 @@ set diff_actions [list]
 set HEAD {}
 set PARENT {}
 set MERGE_HEAD [list]
-set commit_type {}
-set commit_type_is_amend 0
+set cummit_type {}
+set cummit_type_is_amend 0
 set empty_tree {}
 set current_branch {}
 set is_detached 0
@@ -1437,21 +1437,21 @@ proc PARENT {} {
 }
 
 proc force_amend {} {
-	global commit_type_is_amend
-	global HEAD PARENT MERGE_HEAD commit_type
+	global cummit_type_is_amend
+	global HEAD PARENT MERGE_HEAD cummit_type
 
 	repository_state newType newHEAD newMERGE_HEAD
 	set HEAD $newHEAD
 	set PARENT $newHEAD
 	set MERGE_HEAD $newMERGE_HEAD
-	set commit_type $newType
+	set cummit_type $newType
 
-	set commit_type_is_amend 1
-	do_select_commit_type
+	set cummit_type_is_amend 1
+	do_select_cummit_type
 }
 
 proc rescan {after {honor_trustmtime 1}} {
-	global HEAD PARENT MERGE_HEAD commit_type
+	global HEAD PARENT MERGE_HEAD cummit_type
 	global ui_index ui_workdir ui_comm
 	global rescan_active file_states
 	global repo_config
@@ -1459,14 +1459,14 @@ proc rescan {after {honor_trustmtime 1}} {
 	if {$rescan_active > 0 || ![lock_index read]} return
 
 	repository_state newType newHEAD newMERGE_HEAD
-	if {[string match amend* $commit_type]
+	if {[string match amend* $cummit_type]
 		&& $newType eq {normal}
 		&& $newHEAD eq $HEAD} {
 	} else {
 		set HEAD $newHEAD
 		set PARENT $newHEAD
 		set MERGE_HEAD $newMERGE_HEAD
-		set commit_type $newType
+		set cummit_type $newType
 	}
 
 	array unset file_states
@@ -1474,12 +1474,12 @@ proc rescan {after {honor_trustmtime 1}} {
 	if {!$::GITGUI_BCK_exists &&
 		(![$ui_comm edit modified]
 		|| [string trim [$ui_comm get 0.0 end]] eq {})} {
-		if {[string match amend* $commit_type]} {
+		if {[string match amend* $cummit_type]} {
 		} elseif {[load_message GITGUI_MSG utf-8]} {
-		} elseif {[run_prepare_commit_msg_hook]} {
+		} elseif {[run_prepare_cummit_msg_hook]} {
 		} elseif {[load_message MERGE_MSG]} {
 		} elseif {[load_message SQUASH_MSG]} {
-		} elseif {[load_message [get_config commit.template]]} {
+		} elseif {[load_message [get_config cummit.template]]} {
 		}
 		$ui_comm edit reset
 		$ui_comm edit modified false
@@ -1593,14 +1593,14 @@ proc load_message {file {encoding {}}} {
 	return 0
 }
 
-proc run_prepare_commit_msg_hook {} {
+proc run_prepare_cummit_msg_hook {} {
 	global pch_error
 
-	# prepare-commit-msg requires PREPARE_COMMIT_MSG exist.  From git-gui
+	# prepare-cummit-msg requires PREPARE_cummit_MSG exist.  From git-gui
 	# it will be .git/MERGE_MSG (merge), .git/SQUASH_MSG (squash), or an
 	# empty file but existent file.
 
-	set fd_pcm [open [gitdir PREPARE_COMMIT_MSG] a]
+	set fd_pcm [open [gitdir PREPARE_cummit_MSG] a]
 
 	if {[file isfile [gitdir MERGE_MSG]]} {
 		set pcm_source "merge"
@@ -1614,9 +1614,9 @@ proc run_prepare_commit_msg_hook {} {
 		fconfigure $fd_sm -encoding utf-8
 		puts -nonewline $fd_pcm [read $fd_sm]
 		close $fd_sm
-	} elseif {[file isfile [get_config commit.template]]} {
+	} elseif {[file isfile [get_config cummit.template]]} {
 		set pcm_source "template"
-		set fd_sm [open [get_config commit.template] r]
+		set fd_sm [open [get_config cummit.template] r]
 		fconfigure $fd_sm -encoding utf-8
 		puts -nonewline $fd_pcm [read $fd_sm]
 		close $fd_sm
@@ -1626,43 +1626,43 @@ proc run_prepare_commit_msg_hook {} {
 
 	close $fd_pcm
 
-	set fd_ph [githook_read prepare-commit-msg \
-			[gitdir PREPARE_COMMIT_MSG] $pcm_source]
+	set fd_ph [githook_read prepare-cummit-msg \
+			[gitdir PREPARE_cummit_MSG] $pcm_source]
 	if {$fd_ph eq {}} {
-		catch {file delete [gitdir PREPARE_COMMIT_MSG]}
+		catch {file delete [gitdir PREPARE_cummit_MSG]}
 		return 0;
 	}
 
-	ui_status [mc "Calling prepare-commit-msg hook..."]
+	ui_status [mc "Calling prepare-cummit-msg hook..."]
 	set pch_error {}
 
 	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
 	fileevent $fd_ph readable \
-		[list prepare_commit_msg_hook_wait $fd_ph]
+		[list prepare_cummit_msg_hook_wait $fd_ph]
 
 	return 1;
 }
 
-proc prepare_commit_msg_hook_wait {fd_ph} {
+proc prepare_cummit_msg_hook_wait {fd_ph} {
 	global pch_error
 
 	append pch_error [read $fd_ph]
 	fconfigure $fd_ph -blocking 1
 	if {[eof $fd_ph]} {
 		if {[catch {close $fd_ph}]} {
-			ui_status [mc "Commit declined by prepare-commit-msg hook."]
-			hook_failed_popup prepare-commit-msg $pch_error
-			catch {file delete [gitdir PREPARE_COMMIT_MSG]}
+			ui_status [mc "cummit declined by prepare-cummit-msg hook."]
+			hook_failed_popup prepare-cummit-msg $pch_error
+			catch {file delete [gitdir PREPARE_cummit_MSG]}
 			exit 1
 		} else {
-			load_message PREPARE_COMMIT_MSG
+			load_message PREPARE_cummit_MSG
 		}
 		set pch_error {}
-		catch {file delete [gitdir PREPARE_COMMIT_MSG]}
+		catch {file delete [gitdir PREPARE_cummit_MSG]}
 		return
 	}
 	fconfigure $fd_ph -blocking 0
-	catch {file delete [gitdir PREPARE_COMMIT_MSG]}
+	catch {file delete [gitdir PREPARE_cummit_MSG]}
 }
 
 proc read_diff_index {fd after} {
@@ -2098,21 +2098,21 @@ foreach i {
 		{__ {mc "Unmodified"}}
 
 		{_M {mc "Modified, not staged"}}
-		{M_ {mc "Staged for commit"}}
-		{MM {mc "Portions staged for commit"}}
-		{MD {mc "Staged for commit, missing"}}
+		{M_ {mc "Staged for cummit"}}
+		{MM {mc "Portions staged for cummit"}}
+		{MD {mc "Staged for cummit, missing"}}
 
 		{_T {mc "File type changed, not staged"}}
-		{MT {mc "File type changed, old type staged for commit"}}
-		{AT {mc "File type changed, old type staged for commit"}}
+		{MT {mc "File type changed, old type staged for cummit"}}
+		{AT {mc "File type changed, old type staged for cummit"}}
 		{T_ {mc "File type changed, staged"}}
 		{TM {mc "File type change staged, modification not staged"}}
 		{TD {mc "File type change staged, file missing"}}
 
 		{_O {mc "Untracked, not staged"}}
-		{A_ {mc "Staged for commit"}}
-		{AM {mc "Portions staged for commit"}}
-		{AD {mc "Staged for commit, missing"}}
+		{A_ {mc "Staged for cummit"}}
+		{AM {mc "Portions staged for cummit"}}
+		{AD {mc "Staged for cummit, missing"}}
 
 		{_D {mc "Missing"}}
 		{D_ {mc "Staged for removal"}}
@@ -2294,7 +2294,7 @@ proc terminate_me {win} {
 }
 
 proc do_quit {{rc {1}}} {
-	global ui_comm is_quitting repo_config commit_type
+	global ui_comm is_quitting repo_config cummit_type
 	global GITGUI_BCK_exists GITGUI_BCK_i
 	global ui_comm_spell
 	global ret_code use_ttk
@@ -2303,7 +2303,7 @@ proc do_quit {{rc {1}}} {
 	set is_quitting 1
 
 	if {[winfo exists $ui_comm]} {
-		# -- Stash our current commit buffer.
+		# -- Stash our current cummit buffer.
 		#
 		set save [gitdir GITGUI_MSG]
 		if {$GITGUI_BCK_exists && ![$ui_comm edit modified]} {
@@ -2312,7 +2312,7 @@ proc do_quit {{rc {1}}} {
 		} elseif {[$ui_comm edit modified]} {
 			set msg [string trim [$ui_comm get 0.0 end]]
 			regsub -all -line {[ \r\t]+$} $msg {} msg
-			if {![string match amend* $commit_type]
+			if {![string match amend* $cummit_type]
 				&& $msg ne {}} {
 				catch {
 					set fd [open $save w]
@@ -2387,8 +2387,8 @@ proc ui_do_rescan {} {
 	rescan {force_first_diff ui_ready}
 }
 
-proc do_commit {} {
-	commit_tree
+proc do_cummit {} {
+	cummit_tree
 }
 
 proc next_diff {{after {}}} {
@@ -2604,7 +2604,7 @@ proc toggle_or_diff {mode w args} {
 
 		if {$w eq $ui_index} {
 			update_indexinfo \
-				"Unstaging [short_path $path] from commit" \
+				"Unstaging [short_path $path] from cummit" \
 				[list $path] \
 				[concat $after {ui_ready;}]
 		} elseif {$w eq $ui_workdir} {
@@ -2710,10 +2710,10 @@ proc focus_widget {widget} {
 	}
 }
 
-proc toggle_commit_type {} {
-	global commit_type_is_amend
-	set commit_type_is_amend [expr !$commit_type_is_amend]
-	do_select_commit_type
+proc toggle_cummit_type {} {
+	global cummit_type_is_amend
+	set cummit_type_is_amend [expr !$cummit_type_is_amend]
+	do_select_cummit_type
 }
 
 ######################################################################
@@ -2736,14 +2736,14 @@ if {[is_MacOSX]} {
 if {[is_enabled branch]} {
 	.mbar add cascade -label [mc Branch] -menu .mbar.branch
 }
-if {[is_enabled multicommit] || [is_enabled singlecommit]} {
-	.mbar add cascade -label [mc Commit@@noun] -menu .mbar.commit
+if {[is_enabled multicummit] || [is_enabled singlecummit]} {
+	.mbar add cascade -label [mc cummit@@noun] -menu .mbar.cummit
 }
 if {[is_enabled transport]} {
 	.mbar add cascade -label [mc Merge] -menu .mbar.merge
 	.mbar add cascade -label [mc Remote] -menu .mbar.remote
 }
-if {[is_enabled multicommit] || [is_enabled singlecommit]} {
+if {[is_enabled multicummit] || [is_enabled singlecummit]} {
 	.mbar add cascade -label [mc Tools] -menu .mbar.tools
 }
 
@@ -2803,7 +2803,7 @@ proc current_branch_write {args} {
 }
 trace add variable current_branch write current_branch_write
 
-if {[is_enabled multicommit]} {
+if {[is_enabled multicummit]} {
 	.mbar.repository add command -label [mc "Database Statistics"] \
 		-command do_stats
 
@@ -2898,84 +2898,84 @@ if {[is_enabled branch]} {
 		[.mbar.branch index last] -state]
 }
 
-# -- Commit Menu
+# -- cummit Menu
 #
-proc commit_btn_caption {} {
-	if {[is_enabled nocommit]} {
+proc cummit_btn_caption {} {
+	if {[is_enabled nocummit]} {
 		return [mc "Done"]
 	} else {
-		return [mc Commit@@verb]
+		return [mc cummit@@verb]
 	}
 }
 
-if {[is_enabled multicommit] || [is_enabled singlecommit]} {
-	menu .mbar.commit
+if {[is_enabled multicummit] || [is_enabled singlecummit]} {
+	menu .mbar.cummit
 
-	if {![is_enabled nocommit]} {
-		.mbar.commit add checkbutton \
-			-label [mc "Amend Last Commit"] \
+	if {![is_enabled nocummit]} {
+		.mbar.cummit add checkbutton \
+			-label [mc "Amend Last cummit"] \
 			-accelerator $M1T-E \
-			-variable commit_type_is_amend \
-			-command do_select_commit_type
+			-variable cummit_type_is_amend \
+			-command do_select_cummit_type
 		lappend disable_on_lock \
-			[list .mbar.commit entryconf [.mbar.commit index last] -state]
+			[list .mbar.cummit entryconf [.mbar.cummit index last] -state]
 
-		.mbar.commit add separator
+		.mbar.cummit add separator
 	}
 
-	.mbar.commit add command -label [mc Rescan] \
+	.mbar.cummit add command -label [mc Rescan] \
 		-command ui_do_rescan \
 		-accelerator F5
 	lappend disable_on_lock \
-		[list .mbar.commit entryconf [.mbar.commit index last] -state]
+		[list .mbar.cummit entryconf [.mbar.cummit index last] -state]
 
-	.mbar.commit add command -label [mc "Stage To Commit"] \
+	.mbar.cummit add command -label [mc "Stage To cummit"] \
 		-command do_add_selection \
 		-accelerator $M1T-T
 	lappend disable_on_lock \
-		[list .mbar.commit entryconf [.mbar.commit index last] -state]
+		[list .mbar.cummit entryconf [.mbar.cummit index last] -state]
 
-	.mbar.commit add command -label [mc "Stage Changed Files To Commit"] \
+	.mbar.cummit add command -label [mc "Stage Changed Files To cummit"] \
 		-command do_add_all \
 		-accelerator $M1T-I
 	lappend disable_on_lock \
-		[list .mbar.commit entryconf [.mbar.commit index last] -state]
+		[list .mbar.cummit entryconf [.mbar.cummit index last] -state]
 
-	.mbar.commit add command -label [mc "Unstage From Commit"] \
+	.mbar.cummit add command -label [mc "Unstage From cummit"] \
 		-command do_unstage_selection \
 		-accelerator $M1T-U
 	lappend disable_on_lock \
-		[list .mbar.commit entryconf [.mbar.commit index last] -state]
+		[list .mbar.cummit entryconf [.mbar.cummit index last] -state]
 
-	.mbar.commit add command -label [mc "Revert Changes"] \
+	.mbar.cummit add command -label [mc "Revert Changes"] \
 		-command do_revert_selection \
 		-accelerator $M1T-J
 	lappend disable_on_lock \
-		[list .mbar.commit entryconf [.mbar.commit index last] -state]
+		[list .mbar.cummit entryconf [.mbar.cummit index last] -state]
 
-	.mbar.commit add separator
+	.mbar.cummit add separator
 
-	.mbar.commit add command -label [mc "Show Less Context"] \
+	.mbar.cummit add command -label [mc "Show Less Context"] \
 		-command show_less_context \
 		-accelerator $M1T-\-
 
-	.mbar.commit add command -label [mc "Show More Context"] \
+	.mbar.cummit add command -label [mc "Show More Context"] \
 		-command show_more_context \
 		-accelerator $M1T-=
 
-	.mbar.commit add separator
+	.mbar.cummit add separator
 
-	if {![is_enabled nocommitmsg]} {
-		.mbar.commit add command -label [mc "Sign Off"] \
+	if {![is_enabled nocummitmsg]} {
+		.mbar.cummit add command -label [mc "Sign Off"] \
 			-command do_signoff \
 			-accelerator $M1T-S
 	}
 
-	.mbar.commit add command -label [commit_btn_caption] \
-		-command do_commit \
+	.mbar.cummit add command -label [cummit_btn_caption] \
+		-command do_cummit \
 		-accelerator $M1T-Return
 	lappend disable_on_lock \
-		[list .mbar.commit entryconf [.mbar.commit index last] -state]
+		[list .mbar.cummit entryconf [.mbar.cummit index last] -state]
 }
 
 # -- Merge Menu
@@ -3023,7 +3023,7 @@ if {[is_MacOSX]} {
 
 # -- Tools Menu
 #
-if {[is_enabled multicommit] || [is_enabled singlecommit]} {
+if {[is_enabled multicummit] || [is_enabled singlecummit]} {
 	set tools_menubar .mbar.tools
 	menu $tools_menubar
 	$tools_menubar add separator
@@ -3127,7 +3127,7 @@ proc normalize_relpath {path} {
 	return [eval file join $elements]
 }
 
-# -- Not a normal commit type invocation?  Do that instead!
+# -- Not a normal cummit type invocation?  Do that instead!
 #
 switch -- $subcommand {
 browser -
@@ -3231,7 +3231,7 @@ gui {
 	if {[llength $argv] != 0} {
 		usage
 	}
-	# fall through to setup UI for commits
+	# fall through to setup UI for cummits
 }
 default {
 	set err "[mc usage:] $argv0 \[{blame|browser|citool}\]"
@@ -3298,7 +3298,7 @@ pack $ui_workdir -side left -fill both -expand 1
 #
 textframe .vpane.files.index -height 100 -width 200
 tlabel .vpane.files.index.title \
-	-text [mc "Staged Changes (Will Commit)"] \
+	-text [mc "Staged Changes (Will cummit)"] \
 	-background lightgreen -foreground black
 ttext $ui_index \
 	-borderwidth 0 \
@@ -3342,7 +3342,7 @@ foreach i [list $ui_index $ui_workdir] {
 }
 unset i
 
-# -- Diff and Commit Area
+# -- Diff and cummit Area
 #
 if {$have_tk85} {
 	${NS}::panedwindow .vpane.lower -orient vertical
@@ -3368,7 +3368,7 @@ if {$have_tk85} {
 	.vpane paneconfigure .vpane.lower -sticky nsew
 }
 
-# -- Commit Area Buttons
+# -- cummit Area Buttons
 #
 ${NS}::frame .vpane.lower.commarea.buttons
 ${NS}::label .vpane.lower.commarea.buttons.l -text {} \
@@ -3389,36 +3389,36 @@ pack .vpane.lower.commarea.buttons.incall -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.incall conf -state}
 
-if {![is_enabled nocommitmsg]} {
+if {![is_enabled nocummitmsg]} {
 	${NS}::button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
 		-command do_signoff
 	pack .vpane.lower.commarea.buttons.signoff -side top -fill x
 }
 
-${NS}::button .vpane.lower.commarea.buttons.commit -text [commit_btn_caption] \
-	-command do_commit
-pack .vpane.lower.commarea.buttons.commit -side top -fill x
+${NS}::button .vpane.lower.commarea.buttons.cummit -text [cummit_btn_caption] \
+	-command do_cummit
+pack .vpane.lower.commarea.buttons.cummit -side top -fill x
 lappend disable_on_lock \
-	{.vpane.lower.commarea.buttons.commit conf -state}
+	{.vpane.lower.commarea.buttons.cummit conf -state}
 
-if {![is_enabled nocommit]} {
+if {![is_enabled nocummit]} {
 	${NS}::button .vpane.lower.commarea.buttons.push -text [mc Push] \
 		-command do_push_anywhere
 	pack .vpane.lower.commarea.buttons.push -side top -fill x
 }
 
-# -- Commit Message Buffer
+# -- cummit Message Buffer
 #
 ${NS}::frame .vpane.lower.commarea.buffer
 ${NS}::frame .vpane.lower.commarea.buffer.header
 set ui_comm .vpane.lower.commarea.buffer.frame.t
 set ui_coml .vpane.lower.commarea.buffer.header.l
 
-if {![is_enabled nocommit]} {
+if {![is_enabled nocummit]} {
 	${NS}::checkbutton .vpane.lower.commarea.buffer.header.amend \
-		-text [mc "Amend Last Commit"] \
-		-variable commit_type_is_amend \
-		-command do_select_commit_type
+		-text [mc "Amend Last cummit"] \
+		-variable cummit_type_is_amend \
+		-command do_select_cummit_type
 	lappend disable_on_lock \
 		[list .vpane.lower.commarea.buffer.header.amend conf -state]
 }
@@ -3426,22 +3426,22 @@ if {![is_enabled nocommit]} {
 ${NS}::label $ui_coml \
 	-anchor w \
 	-justify left
-proc trace_commit_type {varname args} {
-	global ui_coml commit_type
-	switch -glob -- $commit_type {
-	initial       {set txt [mc "Initial Commit Message:"]}
-	amend         {set txt [mc "Amended Commit Message:"]}
-	amend-initial {set txt [mc "Amended Initial Commit Message:"]}
-	amend-merge   {set txt [mc "Amended Merge Commit Message:"]}
-	merge         {set txt [mc "Merge Commit Message:"]}
-	*             {set txt [mc "Commit Message:"]}
+proc trace_cummit_type {varname args} {
+	global ui_coml cummit_type
+	switch -glob -- $cummit_type {
+	initial       {set txt [mc "Initial cummit Message:"]}
+	amend         {set txt [mc "Amended cummit Message:"]}
+	amend-initial {set txt [mc "Amended Initial cummit Message:"]}
+	amend-merge   {set txt [mc "Amended Merge cummit Message:"]}
+	merge         {set txt [mc "Merge cummit Message:"]}
+	*             {set txt [mc "cummit Message:"]}
 	}
 	$ui_coml conf -text $txt
 }
-trace add variable commit_type write trace_commit_type
+trace add variable cummit_type write trace_cummit_type
 pack $ui_coml -side left -fill x
 
-if {![is_enabled nocommit]} {
+if {![is_enabled nocummit]} {
 	pack .vpane.lower.commarea.buffer.header.amend -side right
 }
 
@@ -3454,7 +3454,7 @@ ttext $ui_comm \
 	-takefocus 1 \
 	-highlightthickness 1 \
 	-relief sunken \
-	-width $repo_config(gui.commitmsgwidth) -height 9 -wrap none \
+	-width $repo_config(gui.cummitmsgwidth) -height 9 -wrap none \
 	-font font_diff \
 	-xscrollcommand {.vpane.lower.commarea.buffer.frame.sbx set} \
 	-yscrollcommand {.vpane.lower.commarea.buffer.frame.sby set}
@@ -3472,7 +3472,7 @@ pack .vpane.lower.commarea.buffer.header -side top -fill x
 pack .vpane.lower.commarea.buffer.frame -side left -fill y
 pack .vpane.lower.commarea.buffer -side left -fill y
 
-# -- Commit Message Buffer Context Menu
+# -- cummit Message Buffer Context Menu
 #
 set ctxm .vpane.lower.commarea.buffer.ctxm
 menu $ctxm -tearoff 0
@@ -3809,25 +3809,25 @@ proc popup_diff_menu {ctxm ctxmmg ctxmsm x y X Y} {
 		set has_range [expr {[$::ui_diff tag nextrange sel 0.0] != {}}]
 		set u [mc "Undo Last Revert"]
 		if {$::ui_index eq $::current_diff_side} {
-			set l [mc "Unstage Hunk From Commit"]
+			set l [mc "Unstage Hunk From cummit"]
 			set h [mc "Revert Hunk"]
 
 			if {$has_range} {
-				set t [mc "Unstage Lines From Commit"]
+				set t [mc "Unstage Lines From cummit"]
 				set r [mc "Revert Lines"]
 			} else {
-				set t [mc "Unstage Line From Commit"]
+				set t [mc "Unstage Line From cummit"]
 				set r [mc "Revert Line"]
 			}
 		} else {
-			set l [mc "Stage Hunk For Commit"]
+			set l [mc "Stage Hunk For cummit"]
 			set h [mc "Revert Hunk"]
 
 			if {$has_range} {
-				set t [mc "Stage Lines For Commit"]
+				set t [mc "Stage Lines For cummit"]
 				set r [mc "Revert Lines"]
 			} else {
-				set t [mc "Stage Line For Commit"]
+				set t [mc "Stage Line For cummit"]
 				set r [mc "Revert Line"]
 			}
 		}
@@ -3923,7 +3923,7 @@ if {[info exists repo_config(gui.wmstate)]} {
 
 # -- Key Bindings
 #
-bind $ui_comm <$M1B-Key-Return> {do_commit;break}
+bind $ui_comm <$M1B-Key-Return> {do_cummit;break}
 bind $ui_comm <$M1B-Key-t> {do_add_selection;break}
 bind $ui_comm <$M1B-Key-T> {do_add_selection;break}
 bind $ui_comm <$M1B-Key-u> {do_unstage_selection;break}
@@ -3996,15 +3996,15 @@ bind .   <$M1B-Key-j> do_revert_selection
 bind .   <$M1B-Key-J> do_revert_selection
 bind .   <$M1B-Key-i> do_add_all
 bind .   <$M1B-Key-I> do_add_all
-bind .   <$M1B-Key-e> toggle_commit_type
-bind .   <$M1B-Key-E> toggle_commit_type
+bind .   <$M1B-Key-e> toggle_cummit_type
+bind .   <$M1B-Key-E> toggle_cummit_type
 bind .   <$M1B-Key-minus> {show_less_context;break}
 bind .   <$M1B-Key-KP_Subtract> {show_less_context;break}
 bind .   <$M1B-Key-equal> {show_more_context;break}
 bind .   <$M1B-Key-plus> {show_more_context;break}
 bind .   <$M1B-Key-KP_Add> {show_more_context;break}
-bind .   <$M1B-Key-Return> do_commit
-bind .   <$M1B-Key-KP_Enter> do_commit
+bind .   <$M1B-Key-Return> do_cummit
+bind .   <$M1B-Key-KP_Enter> do_cummit
 foreach i [list $ui_index $ui_workdir] {
 	bind $i <Button-1>       { toggle_or_diff click %W %x %y; break }
 	bind $i <$M1B-Button-1>  { add_one_to_selection %W %x %y; break }
@@ -4052,11 +4052,11 @@ by %s:
 		{^GIT_PAGER$} -
 		{^GIT_TRACE$} -
 		{^GIT_CONFIG$} -
-		{^GIT_(AUTHOR|COMMITTER)_DATE$} {
+		{^GIT_(AUTHOR|cummitTER)_DATE$} {
 			append msg " - $name\n"
 			incr ignored_env
 		}
-		{^GIT_(AUTHOR|COMMITTER)_(NAME|EMAIL)$} {
+		{^GIT_(AUTHOR|cummitTER)_(NAME|EMAIL)$} {
 			append msg " - $name\n"
 			incr ignored_env
 			set suggest_user $name
@@ -4119,7 +4119,7 @@ if {[winfo exists $ui_comm]} {
 		unset m
 	}
 
-	proc backup_commit_buffer {} {
+	proc backup_cummit_buffer {} {
 		global ui_comm GITGUI_BCK_exists
 
 		set m [$ui_comm edit modified]
@@ -4145,13 +4145,13 @@ if {[winfo exists $ui_comm]} {
 			$ui_comm edit modified false
 		}
 
-		set ::GITGUI_BCK_i [after 2000 backup_commit_buffer]
+		set ::GITGUI_BCK_i [after 2000 backup_cummit_buffer]
 	}
 
-	backup_commit_buffer
+	backup_cummit_buffer
 
 	# -- If the user has aspell available we can drive it
-	#    in pipe mode to spellcheck the commit message.
+	#    in pipe mode to spellcheck the cummit message.
 	#
 	set spell_cmd [list |]
 	set spell_dict [get_config gui.spellingdictionary]
@@ -4186,11 +4186,11 @@ after 1 {
 		do_rescan
 	}
 
-	if {[is_enabled nocommitmsg]} {
+	if {[is_enabled nocummitmsg]} {
 		$ui_comm configure -state disabled -background gray
 	}
 }
-if {[is_enabled multicommit] && ![is_config_false gui.gcwarning]} {
+if {[is_enabled multicummit] && ![is_config_false gui.gcwarning]} {
 	after 1000 hint_gc
 }
 if {[is_enabled retcode]} {

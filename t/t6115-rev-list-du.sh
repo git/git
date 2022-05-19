@@ -6,12 +6,12 @@ test_description='basic tests of rev-list --disk-usage'
 # we want a mix of reachable and unreachable, as well as
 # objects in the bitmapped pack and some outside of it
 test_expect_success 'set up repository' '
-	test_commit --no-tag one &&
-	test_commit --no-tag two &&
+	test_cummit --no-tag one &&
+	test_cummit --no-tag two &&
 	git repack -adb &&
 	git reset --hard HEAD^ &&
-	test_commit --no-tag three &&
-	test_commit --no-tag four &&
+	test_cummit --no-tag three &&
+	test_cummit --no-tag four &&
 	git reset --hard HEAD^
 '
 

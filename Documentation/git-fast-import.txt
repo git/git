@@ -36,8 +36,8 @@ OPTIONS
 
 --force::
 	Force updating modified existing branches, even if doing
-	so would cause commits to be lost (as the new commit does
-	not contain the old commit).
+	so would cause cummits to be lost (as the new cummit does
+	not contain the old cummit).
 
 --quiet::
 	Disable the output shown by --stats, making fast-import usually
@@ -77,7 +77,7 @@ Options for Frontends
 
 --date-format=<fmt>::
 	Specify the type of dates the frontend will supply to
-	fast-import within `author`, `committer` and `tagger` commands.
+	fast-import within `author`, `cummitter` and `tagger` commands.
 	See ``Date Formats'' below for details about which formats
 	are supported, and their syntax.
 
@@ -162,10 +162,10 @@ Performance and Compression Tuning
 --export-pack-edges=<file>::
 	After creating a packfile, print a line of data to
 	<file> listing the filename of the packfile and the last
-	commit on each branch that was written to that packfile.
+	cummit on each branch that was written to that packfile.
 	This information may be useful after importing projects
 	whose total object set exceeds the 4 GiB packfile limit,
-	as these commits can be used as edge points during calls
+	as these cummits can be used as edge points during calls
 	to 'git pack-objects'.
 
 --max-pack-size=<n>::
@@ -181,7 +181,7 @@ The design of fast-import allows it to import large projects in a minimum
 amount of memory usage and processing time.  Assuming the frontend
 is able to keep up with fast-import and feed it a constant stream of data,
 import times for projects holding 10+ years of history and containing
-100,000+ individual commits are generally completed in just 1-2
+100,000+ individual cummits are generally completed in just 1-2
 hours on quite modest (~$2,000 USD) hardware.
 
 Most bottlenecks appear to be in foreign source data access (the
@@ -211,8 +211,8 @@ are never used by fast-import).
 fast-import does not lock the branch or tag refs it is actively importing.
 After the import, during its ref update phase, fast-import tests each
 existing branch ref to verify the update will be a fast-forward
-update (the commit stored in the ref is contained in the new
-history of the commit to be written).  If the update is not a
+update (the cummit stored in the ref is contained in the new
+history of the cummit to be written).  If the update is not a
 fast-forward update, fast-import will skip updating that ref and instead
 prints a warning message.  fast-import will always attempt to update all
 branch refs, and does not stop on the first failure.
@@ -226,9 +226,9 @@ TECHNICAL DISCUSSION
 --------------------
 fast-import tracks a set of branches in memory.  Any branch can be created
 or modified at any point during the import process by sending a
-`commit` command on the input stream.  This design allows a frontend
+`cummit` command on the input stream.  This design allows a frontend
 program to process an unlimited number of branches simultaneously,
-generating commits in the order they are available from the source
+generating cummits in the order they are available from the source
 data.  It also simplifies the frontend programs considerably.
 
 fast-import does not use or alter the current working directory, or any
@@ -341,15 +341,15 @@ created by fast-import.  There is no way to specify a different time or
 time zone.
 +
 This particular format is supplied as it's short to implement and
-may be useful to a process that wants to create a new commit
+may be useful to a process that wants to create a new cummit
 right now, without needing to use a working directory or
 'git update-index'.
 +
-If separate `author` and `committer` commands are used in a `commit`
+If separate `author` and `cummitter` commands are used in a `cummit`
 the timestamps may not match, as the system clock will be polled
 twice (once for each command).  The only way to ensure that both
-author and committer identity information has the same timestamp
-is to omit `author` (thus copying from `committer`) or to use a
+author and cummitter identity information has the same timestamp
+is to omit `author` (thus copying from `cummitter`) or to use a
 date format other than `now`.
 
 Commands
@@ -358,13 +358,13 @@ fast-import accepts several commands to update the current repository
 and control the current import process.  More detailed discussion
 (with examples) of each command follows later.
 
-`commit`::
+`cummit`::
 	Creates a new branch or updates an existing branch by
-	creating a new commit and updating the branch to point at
-	the newly created commit.
+	creating a new cummit and updating the branch to point at
+	the newly created cummit.
 
 `tag`::
-	Creates an annotated tag object from an existing commit or
+	Creates an annotated tag object from an existing cummit or
 	branch.  Lightweight tags are not supported by this command,
 	as they are not recommended for recording meaningful points
 	in time.
@@ -372,18 +372,18 @@ and control the current import process.  More detailed discussion
 `reset`::
 	Reset an existing branch (or a new branch) to a specific
 	revision.  This command must be used to change a branch to
-	a specific revision without making a commit on it.
+	a specific revision without making a cummit on it.
 
 `blob`::
 	Convert raw file data into a blob, for future use in a
-	`commit` command.  This command is optional and is not
+	`cummit` command.  This command is optional and is not
 	needed to perform an import.
 
 `alias`::
 	Record that a mark refers to a given object without first
 	creating any new object.  Using --import-marks and referring
 	to missing marks will cause fast-import to fail, so aliases
-	can provide a way to set otherwise pruned commits to a valid
+	can provide a way to set otherwise pruned cummits to a valid
 	value (e.g. the nearest non-pruned ancestor).
 
 `checkpoint`::
@@ -426,26 +426,26 @@ and control the current import process.  More detailed discussion
 	change stream semantic to suit the frontend's needs. This
 	command is optional and is not needed to perform an import.
 
-`commit`
+`cummit`
 ~~~~~~~~
-Create or update a branch with a new commit, recording one logical
+Create or update a branch with a new cummit, recording one logical
 change to the project.
 
 ....
-	'commit' SP <ref> LF
+	'cummit' SP <ref> LF
 	mark?
 	original-oid?
 	('author' (SP <name>)? SP LT <email> GT SP <when> LF)?
-	'committer' (SP <name>)? SP LT <email> GT SP <when> LF
+	'cummitter' (SP <name>)? SP LT <email> GT SP <when> LF
 	('encoding' SP <encoding>)?
 	data
-	('from' SP <commit-ish> LF)?
-	('merge' SP <commit-ish> LF)*
+	('from' SP <cummit-ish> LF)?
+	('merge' SP <cummit-ish> LF)*
 	(filemodify | filedelete | filecopy | filerename | filedeleteall | notemodify)*
 	LF?
 ....
 
-where `<ref>` is the name of the branch to make the commit on.
+where `<ref>` is the name of the branch to make the cummit on.
 Typically branch names are prefixed with `refs/heads/` in
 Git, so importing the CVS branch symbol `RELENG-1_0` would use
 `refs/heads/RELENG-1_0` for the value of `<ref>`.  The value of
@@ -453,27 +453,27 @@ Git, so importing the CVS branch symbol `RELENG-1_0` would use
 a Git refname, no quoting or escaping syntax is supported here.
 
 A `mark` command may optionally appear, requesting fast-import to save a
-reference to the newly created commit for future use by the frontend
+reference to the newly created cummit for future use by the frontend
 (see below for format).  It is very common for frontends to mark
-every commit they create, thereby allowing future branch creation
-from any imported commit.
+every cummit they create, thereby allowing future branch creation
+from any imported cummit.
 
-The `data` command following `committer` must supply the commit
+The `data` command following `cummitter` must supply the cummit
 message (see below for `data` command syntax).  To import an empty
-commit message use a 0 length data.  Commit messages are free-form
+cummit message use a 0 length data.  cummit messages are free-form
 and are not interpreted by Git.  Currently they must be encoded in
 UTF-8, as fast-import does not permit other encodings to be specified.
 
 Zero or more `filemodify`, `filedelete`, `filecopy`, `filerename`,
 `filedeleteall` and `notemodify` commands
 may be included to update the contents of the branch prior to
-creating the commit.  These commands may be supplied in any order.
+creating the cummit.  These commands may be supplied in any order.
 However it is recommended that a `filedeleteall` command precede
 all `filemodify`, `filecopy`, `filerename` and `notemodify` commands in
-the same commit, as `filedeleteall` wipes the branch clean (see below).
+the same cummit, as `filedeleteall` wipes the branch clean (see below).
 
 The `LF` after the command is optional (it used to be required).  Note
-that for reasons of backward compatibility, if the commit ends with a
+that for reasons of backward compatibility, if the cummit ends with a
 `data` command (i.e. it has no `from`, `merge`, `filemodify`,
 `filedelete`, `filecopy`, `filerename`, `filedeleteall` or
 `notemodify` commands) then two `LF` commands may appear at the end of
@@ -482,14 +482,14 @@ the command instead of just one.
 `author`
 ^^^^^^^^
 An `author` command may optionally appear, if the author information
-might differ from the committer information.  If `author` is omitted
-then fast-import will automatically use the committer's information for
-the author portion of the commit.  See below for a description of
-the fields in `author`, as they are identical to `committer`.
+might differ from the cummitter information.  If `author` is omitted
+then fast-import will automatically use the cummitter's information for
+the author portion of the cummit.  See below for a description of
+the fields in `author`, as they are identical to `cummitter`.
 
-`committer`
+`cummitter`
 ^^^^^^^^^^^
-The `committer` command indicates who made this commit, and when
+The `cummitter` command indicates who made this cummit, and when
 they made it.
 
 Here `<name>` is the person's display name (for example
@@ -507,32 +507,32 @@ their syntax.
 
 `encoding`
 ^^^^^^^^^^
-The optional `encoding` command indicates the encoding of the commit
-message.  Most commits are UTF-8 and the encoding is omitted, but this
-allows importing commit messages into git without first reencoding them.
+The optional `encoding` command indicates the encoding of the cummit
+message.  Most cummits are UTF-8 and the encoding is omitted, but this
+allows importing cummit messages into git without first reencoding them.
 
 `from`
 ^^^^^^
-The `from` command is used to specify the commit to initialize
+The `from` command is used to specify the cummit to initialize
 this branch from.  This revision will be the first ancestor of the
-new commit.  The state of the tree built at this commit will begin
-with the state at the `from` commit, and be altered by the content
-modifications in this commit.
+new cummit.  The state of the tree built at this cummit will begin
+with the state at the `from` cummit, and be altered by the content
+modifications in this cummit.
 
-Omitting the `from` command in the first commit of a new branch
-will cause fast-import to create that commit with no ancestor. This
-tends to be desired only for the initial commit of a project.
+Omitting the `from` command in the first cummit of a new branch
+will cause fast-import to create that cummit with no ancestor. This
+tends to be desired only for the initial cummit of a project.
 If the frontend creates all files from scratch when making a new
 branch, a `merge` command may be used instead of `from` to start
-the commit with an empty tree.
+the cummit with an empty tree.
 Omitting the `from` command on existing branches is usually desired,
-as the current commit on that branch is automatically assumed to
-be the first ancestor of the new commit.
+as the current cummit on that branch is automatically assumed to
+be the first ancestor of the new cummit.
 
 As `LF` is not valid in a Git refname or SHA-1 expression, no
-quoting or escaping syntax is supported within `<commit-ish>`.
+quoting or escaping syntax is supported within `<cummit-ish>`.
 
-Here `<commit-ish>` is any of the following:
+Here `<cummit-ish>` is any of the following:
 
 * The name of an existing branch already in fast-import's internal branch
   table.  If fast-import doesn't know the name, it's treated as a SHA-1
@@ -548,9 +548,9 @@ consist only of base-10 digits.
 +
 Marks must be declared (via `mark`) before they can be used.
 
-* A complete 40 byte or abbreviated commit SHA-1 in hex.
+* A complete 40 byte or abbreviated cummit SHA-1 in hex.
 
-* Any valid Git SHA-1 expression that resolves to a commit.  See
+* Any valid Git SHA-1 expression that resolves to a cummit.  See
   ``SPECIFYING REVISIONS'' in linkgit:gitrevisions[7] for details.
 
 * The special null SHA-1 (40 zeros) specifies that the branch is to be
@@ -564,26 +564,26 @@ current branch value should be written as:
 The `^0` suffix is necessary as fast-import does not permit a branch to
 start from itself, and the branch is created in memory before the
 `from` command is even read from the input.  Adding `^0` will force
-fast-import to resolve the commit through Git's revision parsing library,
+fast-import to resolve the cummit through Git's revision parsing library,
 rather than its internal branch table, thereby loading in the
 existing value of the branch.
 
 `merge`
 ^^^^^^^
-Includes one additional ancestor commit.  The additional ancestry
-link does not change the way the tree state is built at this commit.
+Includes one additional ancestor cummit.  The additional ancestry
+link does not change the way the tree state is built at this cummit.
 If the `from` command is
-omitted when creating a new branch, the first `merge` commit will be
-the first ancestor of the current commit, and the branch will start
+omitted when creating a new branch, the first `merge` cummit will be
+the first ancestor of the current cummit, and the branch will start
 out with no files.  An unlimited number of `merge` commands per
-commit are permitted by fast-import, thereby establishing an n-way merge.
+cummit are permitted by fast-import, thereby establishing an n-way merge.
 
-Here `<commit-ish>` is any of the commit specification expressions
+Here `<cummit-ish>` is any of the cummit specification expressions
 also accepted by `from` (see above).
 
 `filemodify`
 ^^^^^^^^^^^^
-Included in a `commit` command to add a new file or change the
+Included in a `cummit` command to add a new file or change the
 content of an existing file.  This command has two different means
 of specifying the content of the file.
 
@@ -621,9 +621,9 @@ in octal.  Git only supports the following modes:
   what you want.
 * `100755` or `755`: A normal, but executable, file.
 * `120000`: A symlink, the content of the file will be the link target.
-* `160000`: A gitlink, SHA-1 of the object refers to a commit in
+* `160000`: A gitlink, SHA-1 of the object refers to a cummit in
   another repository. Git links can only be specified by SHA or through
-  a commit mark. They are used to implement submodules.
+  a cummit mark. They are used to implement submodules.
 * `040000`: A subdirectory.  Subdirectories can only be specified by
   SHA or through a tree mark set with `--import-marks`.
 
@@ -655,7 +655,7 @@ It is recommended that `<path>` always be encoded using UTF-8.
 
 `filedelete`
 ^^^^^^^^^^^^
-Included in a `commit` command to remove a file or recursively
+Included in a `cummit` command to remove a file or recursively
 delete an entire directory from the branch.  If the file or directory
 removal makes its parent directory empty, the parent directory will
 be automatically removed too.  This cascades up the tree until the
@@ -721,7 +721,7 @@ rename information and don't want bother with decomposing it into a
 
 `filedeleteall`
 ^^^^^^^^^^^^^^^
-Included in a `commit` command to remove all files (and also all
+Included in a `cummit` command to remove all files (and also all
 directories) from the branch.  This command resets the internal
 branch structure to have no files in it, allowing the frontend
 to subsequently add all interesting files from scratch.
@@ -741,13 +741,13 @@ as sending only the needed `filemodify` and `filedelete` commands.
 The `filedeleteall` approach may however require fast-import to use slightly
 more memory per active branch (less than 1 MiB for even most large
 projects); so frontends that can easily obtain only the affected
-paths for a commit are encouraged to do so.
+paths for a cummit are encouraged to do so.
 
 `notemodify`
 ^^^^^^^^^^^^
-Included in a `commit` `<notes_ref>` command to add a new note
-annotating a `<commit-ish>` or change this annotation contents.
-Internally it is similar to filemodify 100644 on `<commit-ish>`
+Included in a `cummit` `<notes_ref>` command to add a new note
+annotating a `<cummit-ish>` or change this annotation contents.
+Internally it is similar to filemodify 100644 on `<cummit-ish>`
 path (maybe split into subdirectories). It's not advised to
 use any other commands to write to the `<notes_ref>` tree except
 `filedeleteall` to delete all existing notes in this tree.
@@ -757,10 +757,10 @@ of the note.
 External data format::
 	The data content for the note was already supplied by a prior
 	`blob` command.  The frontend just needs to connect it to the
-	commit that is to be annotated.
+	cummit that is to be annotated.
 +
 ....
-	'N' SP <dataref> SP <commit-ish> LF
+	'N' SP <dataref> SP <cummit-ish> LF
 ....
 +
 Here `<dataref>` can be either a mark reference (`:<idnum>`)
@@ -773,13 +773,13 @@ Inline data format::
 	command.
 +
 ....
-	'N' SP 'inline' SP <commit-ish> LF
+	'N' SP 'inline' SP <cummit-ish> LF
 	data
 ....
 +
 See below for a detailed description of the `data` command.
 
-In both formats `<commit-ish>` is any of the commit specification
+In both formats `<cummit-ish>` is any of the cummit specification
 expressions also accepted by `from` (see above).
 
 `mark`
@@ -787,8 +787,8 @@ expressions also accepted by `from` (see above).
 Arranges for fast-import to save a reference to the current object, allowing
 the frontend to recall this object at a future point in time, without
 knowing its SHA-1.  Here the current object is the object creation
-command the `mark` command appears within.  This can be `commit`,
-`tag`, and `blob`, but `commit` is the most common usage.
+command the `mark` command appears within.  This can be `cummit`,
+`tag`, and `blob`, but `cummit` is the most common usage.
 
 ....
 	'mark' SP ':' <idnum> LF
@@ -818,13 +818,13 @@ where `<object-identifier>` is any string not containing LF.
 
 `tag`
 ~~~~~
-Creates an annotated tag referring to a specific commit.  To create
+Creates an annotated tag referring to a specific cummit.  To create
 lightweight (non-annotated) tags see the `reset` command below.
 
 ....
 	'tag' SP <name> LF
 	mark?
-	'from' SP <commit-ish> LF
+	'from' SP <cummit-ish> LF
 	original-oid?
 	'tagger' (SP <name>)? SP LT <email> GT SP <when> LF
 	data
@@ -841,11 +841,11 @@ The value of `<name>` must be a valid refname in Git and therefore
 may contain forward slashes.  As `LF` is not valid in a Git refname,
 no quoting or escaping syntax is supported here.
 
-The `from` command is the same as in the `commit` command; see
+The `from` command is the same as in the `cummit` command; see
 above for details.
 
-The `tagger` command uses the same format as `committer` within
-`commit`; again see above for details.
+The `tagger` command uses the same format as `cummitter` within
+`cummit`; again see above for details.
 
 The `data` command following `tagger` must supply the annotated tag
 message (see below for `data` command syntax).  To import an empty
@@ -866,16 +866,16 @@ with the standard 'git tag' process.
 Creates (or recreates) the named branch, optionally starting from
 a specific revision.  The reset command allows a frontend to issue
 a new `from` command for an existing branch, or to create a new
-branch from an existing commit without creating a new commit.
+branch from an existing cummit without creating a new cummit.
 
 ....
 	'reset' SP <ref> LF
-	('from' SP <commit-ish> LF)?
+	('from' SP <cummit-ish> LF)?
 	LF?
 ....
 
-For a detailed description of `<ref>` and `<commit-ish>` see above
-under `commit` and `from`.
+For a detailed description of `<ref>` and `<cummit-ish>` see above
+under `cummit` and `from`.
 
 The `LF` after the command is optional (it used to be required).
 
@@ -888,13 +888,13 @@ The `reset` command can also be used to create lightweight
 ====
 
 would create the lightweight tag `refs/tags/938` referring to
-whatever commit mark `:938` references.
+whatever cummit mark `:938` references.
 
 `blob`
 ~~~~~~
 Requests writing one file revision to the packfile.  The revision
-is not connected to any commit; this connection must be formed in
-a subsequent `commit` command by referencing the blob through an
+is not connected to any cummit; this connection must be formed in
+a subsequent `cummit` command by referencing the blob through an
 assigned mark.
 
 ....
@@ -906,12 +906,12 @@ assigned mark.
 
 The mark command is optional here as some frontends have chosen
 to generate the Git SHA-1 for the blob on their own, and feed that
-directly to `commit`.  This is typically more work than it's worth
+directly to `cummit`.  This is typically more work than it's worth
 however, as marks are inexpensive to store and easy to use.
 
 `data`
 ~~~~~~
-Supplies raw data (for use as blob/file content, commit messages, or
+Supplies raw data (for use as blob/file content, cummit messages, or
 annotated tag messages) to fast-import.  Data can be supplied using an exact
 byte count or delimited with a terminating line.  Real frontends
 intended for production-quality conversions should always use the
@@ -971,11 +971,11 @@ new object.
 ....
 	'alias' LF
 	mark
-	'to' SP <commit-ish> LF
+	'to' SP <cummit-ish> LF
 	LF?
 ....
 
-For a detailed description of `<commit-ish>` see above under `from`.
+For a detailed description of `<cummit-ish>` see above under `from`.
 
 
 `checkpoint`
@@ -1036,8 +1036,8 @@ can safely access the refs that fast-import updated.
 Causes fast-import to print the SHA-1 corresponding to a mark to
 stdout or to the file descriptor previously arranged with the
 `--cat-blob-fd` argument. The command otherwise has no impact on the
-current import; its purpose is to retrieve SHA-1s that later commits
-might want to refer to in their commit messages.
+current import; its purpose is to retrieve SHA-1s that later cummits
+might want to refer to in their cummit messages.
 
 ....
 	'get-mark' SP ':' <idnum> LF
@@ -1070,7 +1070,7 @@ Output uses the same format as `git cat-file --batch`:
 ====
 
 This command can be used where a `filemodify` directive can appear,
-allowing it to be used in the middle of a commit.  For a `filemodify`
+allowing it to be used in the middle of a cummit.  For a `filemodify`
 using an inline directive, it can also appear right before the `data`
 directive.
 
@@ -1081,17 +1081,17 @@ this output safely.
 ~~~~
 Prints information about the object at a path to a file descriptor
 previously arranged with the `--cat-blob-fd` argument.  This allows
-printing a blob from the active commit (with `cat-blob`) or copying a
-blob or tree from a previous commit for use in the current one (with
+printing a blob from the active cummit (with `cat-blob`) or copying a
+blob or tree from a previous cummit for use in the current one (with
 `filemodify`).
 
 The `ls` command can also be used where a `filemodify` directive can
-appear, allowing it to be used in the middle of a commit.
+appear, allowing it to be used in the middle of a cummit.
 
-Reading from the active commit::
-	This form can only be used in the middle of a `commit`.
+Reading from the active cummit::
+	This form can only be used in the middle of a `cummit`.
 	The path names a directory entry within fast-import's
-	active commit.  The path must be quoted in this case.
+	active cummit.  The path must be quoted in this case.
 +
 ....
 	'ls' SP <path> LF
@@ -1099,7 +1099,7 @@ Reading from the active commit::
 
 Reading from a named tree::
 	The `<dataref>` can be a mark reference (`:<idnum>`) or the
-	full 40-byte SHA-1 of a Git tag, commit, or tree object,
+	full 40-byte SHA-1 of a Git tag, cummit, or tree object,
 	preexisting or waiting to be written.
 	The path is relative to the top level of the tree
 	named by `<dataref>`.
@@ -1113,10 +1113,10 @@ See `filemodify` above for a detailed description of `<path>`.
 Output uses the same format as `git ls-tree <tree> -- <path>`:
 
 ====
-	<mode> SP ('blob' | 'tree' | 'commit') SP <dataref> HT <path> LF
+	<mode> SP ('blob' | 'tree' | 'cummit') SP <dataref> HT <path> LF
 ====
 
-The <dataref> represents the blob, tree, or commit object at <path>
+The <dataref> represents the blob, tree, or cummit object at <path>
 and can be used in later 'get-mark', 'cat-blob', 'filemodify', or
 'ls' commands.
 
@@ -1173,7 +1173,7 @@ ls::
 
 notes::
 	Require that the backend support the 'notemodify' (N)
-	subcommand to the 'commit' command.
+	subcommand to the 'cummit' command.
 	Versions of fast-import not supporting notes will exit
 	with a message indicating so.
 
@@ -1261,7 +1261,7 @@ recent commands that lead up to the crash.
 
 All recent commands (including stream comments, file changes and
 progress commands) are shown in the command history within the crash
-report, but raw file data and commit messages are excluded from the
+report, but raw file data and cummit messages are excluded from the
 crash report.  This exclusion saves space within the report file
 and reduces the amount of buffering that fast-import must perform
 during execution.
@@ -1278,12 +1278,12 @@ An example crash:
 
 ====
 	$ cat >in <<END_OF_INPUT
-	# my very first test commit
-	commit refs/heads/master
-	committer Shawn O. Pearce <spearce> 19283 -0400
+	# my very first test cummit
+	cummit refs/heads/master
+	cummitter Shawn O. Pearce <spearce> 19283 -0400
 	# who is that guy anyway?
 	data <<EOF
-	this is my commit
+	this is my cummit
 	EOF
 	M 644 inline .gitignore
 	data <<EOF
@@ -1306,9 +1306,9 @@ An example crash:
 
 	Most Recent Commands Before Crash
 	---------------------------------
-	  # my very first test commit
-	  commit refs/heads/master
-	  committer Shawn O. Pearce <spearce> 19283 -0400
+	  # my very first test cummit
+	  cummit refs/heads/master
+	  cummitter Shawn O. Pearce <spearce> 19283 -0400
 	  # who is that guy anyway?
 	  data <<EOF
 	  M 644 inline .gitignore
@@ -1327,10 +1327,10 @@ An example crash:
 	-----------------
 	refs/heads/master:
 	  status      : active loaded dirty
-	  tip commit  : 0000000000000000000000000000000000000000
+	  tip cummit  : 0000000000000000000000000000000000000000
 	  old tree    : 0000000000000000000000000000000000000000
 	  cur tree    : 0000000000000000000000000000000000000000
-	  commit clock: 0
+	  cummit clock: 0
 	  last pack   :
 
 
@@ -1343,15 +1343,15 @@ TIPS AND TRICKS
 The following tips and tricks have been collected from various
 users of fast-import, and are offered here as suggestions.
 
-Use One Mark Per Commit
+Use One Mark Per cummit
 ~~~~~~~~~~~~~~~~~~~~~~~
-When doing a repository conversion, use a unique mark per commit
+When doing a repository conversion, use a unique mark per cummit
 (`mark :<n>`) and supply the --export-marks option on the command
 line.  fast-import will dump a file which lists every mark and the Git
 object SHA-1 that corresponds to it.  If the frontend can tie
 the marks back to the source repository, it is easy to verify the
 accuracy and completeness of the import by comparing each Git
-commit to the corresponding source revision.
+cummit to the corresponding source revision.
 
 Coming from a system such as Perforce or Subversion this should be
 quite simple, as the fast-import mark can also be the Perforce changeset
@@ -1371,21 +1371,21 @@ between branches has virtually no impact on import performance.
 Handling Renames
 ~~~~~~~~~~~~~~~~
 When importing a renamed file or directory, simply delete the old
-name(s) and modify the new name(s) during the corresponding commit.
+name(s) and modify the new name(s) during the corresponding cummit.
 Git performs rename detection after-the-fact, rather than explicitly
-during a commit.
+during a cummit.
 
 Use Tag Fixup Branches
 ~~~~~~~~~~~~~~~~~~~~~~
 Some other SCM systems let the user create a tag from multiple
-files which are not from the same commit/changeset.  Or to create
+files which are not from the same cummit/changeset.  Or to create
 tags which are a subset of the files available in the repository.
 
 Importing these tags as-is in Git is impossible without making at
-least one commit which ``fixes up'' the files to match the content
+least one cummit which ``fixes up'' the files to match the content
 of the tag.  Use fast-import's `reset` command to reset a dummy branch
-outside of your normal branch space to the base commit for the tag,
-then commit one or more file fixup commits, and finally tag the
+outside of your normal branch space to the base cummit for the tag,
+then cummit one or more file fixup cummits, and finally tag the
 dummy branch.
 
 For example since all normal branches are stored under `refs/heads/`
@@ -1394,8 +1394,8 @@ the fixup branch used by the importer to have namespace conflicts
 with real branches imported from the source (the name `TAG_FIXUP`
 is not `refs/heads/TAG_FIXUP`).
 
-When committing fixups, consider using `merge` to connect the
-commit(s) which are supplying file revisions to the fixup branch.
+When cummitting fixups, consider using `merge` to connect the
+cummit(s) which are supplying file revisions to the fixup branch.
 Doing so will allow tools such as 'git blame' to track
 through the real commit history and properly annotate the source
 files.
@@ -1407,7 +1407,7 @@ Import Now, Repack Later
 ~~~~~~~~~~~~~~~~~~~~~~~~
 As soon as fast-import completes the Git repository is completely valid
 and ready for use.  Typically this takes only a very short time,
-even for considerably large projects (100,000+ commits).
+even for considerably large projects (100,000+ cummits).
 
 However repacking the repository is necessary to improve data
 locality and access performance.  It can also take hours on extremely
@@ -1435,7 +1435,7 @@ Include Some Progress Messages
 Every once in a while have your frontend emit a `progress` message
 to fast-import.  The contents of the messages are entirely free-form,
 so one suggestion would be to output the current month and year
-each time the current commit date moves into the next month.
+each time the current cummit date moves into the next month.
 Your users will feel better knowing how much of the data stream
 has been processed.
 
@@ -1454,13 +1454,13 @@ to supply all revisions of that file as a sequence of consecutive
 `blob` commands.  This allows fast-import to deltify the different file
 revisions against each other, saving space in the final packfile.
 Marks can be used to later identify individual file revisions during
-a sequence of `commit` commands.
+a sequence of `cummit` commands.
 
 The packfile(s) created by fast-import do not encourage good disk access
 patterns.  This is caused by fast-import writing the data in the order
 it is received on standard input, while Git typically organizes
 data within packfiles to make the most recent (current tip) data
-appear before historical data.  Git also clusters commits together,
+appear before historical data.  Git also clusters cummits together,
 speeding up revision traversal through better cache locality.
 
 For this reason it is strongly recommended that users repack the
@@ -1524,7 +1524,7 @@ Active branches have the same overhead as inactive branches, but
 also contain copies of every tree that has been recently modified on
 that branch.  If subtree `include` has not been modified since the
 branch became active, its contents will not be loaded into memory,
-but if subtree `src` has been modified by a commit since the branch
+but if subtree `src` has been modified by a cummit since the branch
 became active, then its contents will be loaded in memory.
 
 As active branches store metadata about the files contained on that
@@ -1533,7 +1533,7 @@ branch, their in-memory storage size can grow to a considerable size
 
 fast-import automatically moves active branches to inactive status based on
 a simple least-recently-used algorithm.  The LRU chain is updated on
-each `commit` command.  The maximum number of active branches can be
+each `cummit` command.  The maximum number of active branches can be
 increased or decreased on the command line with --active-branches=.
 
 per active tree

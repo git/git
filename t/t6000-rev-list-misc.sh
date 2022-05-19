@@ -12,7 +12,7 @@ test_expect_success setup '
 	echo content2 >unwanted_file &&
 	git add wanted_file unwanted_file &&
 	test_tick &&
-	git commit -m one
+	git cummit -m one
 '
 
 test_expect_success 'rev-list --objects heeds pathspecs' '
@@ -26,7 +26,7 @@ test_expect_success 'rev-list --objects with pathspecs and deeper paths' '
 	>foo/file &&
 	git add foo/file &&
 	test_tick &&
-	git commit -m two &&
+	git cummit -m two &&
 
 	git rev-list --objects HEAD -- foo >output &&
 	grep foo/file output &&
@@ -45,7 +45,7 @@ test_expect_success 'rev-list --objects with pathspecs and copied files' '
 	cp one two/three &&
 	git add one two/three &&
 	test_tick &&
-	git commit -m that &&
+	git cummit -m that &&
 
 	ONE=$(git rev-parse HEAD:one) &&
 	git rev-list --objects HEAD two >output &&
@@ -75,7 +75,7 @@ test_expect_success '--no-object-names and --object-names are last-one-wins' '
 
 test_expect_success 'rev-list A..B and rev-list ^A B are the same' '
 	test_tick &&
-	git commit --allow-empty -m another &&
+	git cummit --allow-empty -m another &&
 	git tag -a -m "annotated" v1.0 &&
 	git rev-list --objects ^v1.0^ v1.0 >expect &&
 	git rev-list --objects v1.0^..v1.0 >actual &&
@@ -105,7 +105,7 @@ test_expect_success 'rev-list can show index objects' '
 	#     same blob as "one", and we show objects only once
 	#
 	#   - we do show the tree "two", because it has a valid cache tree
-	#     from the last commit
+	#     from the last cummit
 	#
 	#   - we do not show the root tree; since we updated the index, it
 	#     does not have a valid cache tree
@@ -135,9 +135,9 @@ test_expect_success '--bisect and --first-parent can be combined' '
 	git rev-list --bisect --first-parent HEAD
 '
 
-test_expect_success '--header shows a NUL after each commit' '
+test_expect_success '--header shows a NUL after each cummit' '
 	# We know that there is no Q in the true payload; names and
-	# addresses of the authors and the committers do not have
+	# addresses of the authors and the cummitters do not have
 	# any, and object names or header names do not, either.
 	git rev-list --header --max-count=2 HEAD |
 	nul_to_q |

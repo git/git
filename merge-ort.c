@@ -21,8 +21,8 @@
 #include "attr.h"
 #include "blob.h"
 #include "cache-tree.h"
-#include "commit.h"
-#include "commit-reach.h"
+#include "cummit.h"
+#include "cummit-reach.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
@@ -247,16 +247,16 @@ struct rename_info {
 	 * merge-ort doesn't think the path is relevant, then we just won't
 	 * cache anything for that path.  But there's a slight problem in
 	 * that merge-ort can think a path is RELEVANT_LOCATION, but due to
-	 * commit 9bd342137e ("diffcore-rename: determine which
+	 * cummit 9bd342137e ("diffcore-rename: determine which
 	 * relevant_sources are no longer relevant", 2021-03-13),
 	 * diffcore-rename can downgrade the path to RELEVANT_NO_MORE.  To
 	 * avoid excessive calls to diffcore_rename_extended() we still need
 	 * to cache such paths, though we cannot record them as either
 	 * renames or deletes.  So we cache them here as a "turned out to be
-	 * irrelevant *for this commit*" as they are often also irrelevant
-	 * for subsequent commits, though we will have to do some extra
+	 * irrelevant *for this cummit*" as they are often also irrelevant
+	 * for subsequent cummits, though we will have to do some extra
 	 * checking to see whether such paths become relevant for rename
-	 * detection when cherry-picking/rebasing subsequent commits.
+	 * detection when cherry-picking/rebasing subsequent cummits.
 	 */
 	struct strset cached_irrelevant[3];
 
@@ -607,23 +607,23 @@ static int err(struct merge_options *opt, const char *err, ...)
 	return -1;
 }
 
-static void format_commit(struct strbuf *sb,
+static void format_cummit(struct strbuf *sb,
 			  int indent,
 			  struct repository *repo,
-			  struct commit *commit)
+			  struct cummit *cummit)
 {
 	struct merge_remote_desc *desc;
 	struct pretty_print_context ctx = {0};
 	ctx.abbrev = DEFAULT_ABBREV;
 
 	strbuf_addchars(sb, ' ', indent);
-	desc = merge_remote_util(commit);
+	desc = merge_remote_util(cummit);
 	if (desc) {
 		strbuf_addf(sb, "virtual %s\n", desc->name);
 		return;
 	}
 
-	repo_format_commit_message(repo, commit, "%h %s", sb, &ctx);
+	repo_format_cummit_message(repo, cummit, "%h %s", sb, &ctx);
 	strbuf_addch(sb, '\n');
 }
 
@@ -917,7 +917,7 @@ static void add_pair(struct merge_options *opt,
 
 		/*
 		 * If pathname is found in cached_irrelevant[side] due to
-		 * previous pick but for this commit content is relevant,
+		 * previous pick but for this cummit content is relevant,
 		 * then we need to remove it from cached_irrelevant.
 		 */
 		if (content_relevant)
@@ -1484,7 +1484,7 @@ static int handle_deferred_entries(struct merge_options *opt,
 		 * performance boost.  I suspect that redoing is a wash
 		 * somewhere near a value of 2, and below that redoing will
 		 * slow things down.  I applied a fudge factor and picked
-		 * 3; see the commit message when this was introduced for
+		 * 3; see the cummit message when this was introduced for
 		 * back of the envelope calculations for this ratio.
 		 */
 		const int wanted_factor = 3;
@@ -1537,13 +1537,13 @@ static int collect_merge_info(struct merge_options *opt,
 
 static int find_first_merges(struct repository *repo,
 			     const char *path,
-			     struct commit *a,
-			     struct commit *b,
+			     struct cummit *a,
+			     struct cummit *b,
 			     struct object_array *result)
 {
 	int i, j;
 	struct object_array merges = OBJECT_ARRAY_INIT;
-	struct commit *commit;
+	struct cummit *cummit;
 	int contains_another;
 
 	char merged_revision[GIT_MAX_HEXSZ + 2];
@@ -1555,7 +1555,7 @@ static int find_first_merges(struct repository *repo,
 	memset(result, 0, sizeof(struct object_array));
 	memset(&rev_opts, 0, sizeof(rev_opts));
 
-	/* get all revisions that merge commit a */
+	/* get all revisions that merge cummit a */
 	xsnprintf(merged_revision, sizeof(merged_revision), "^%s",
 		  oid_to_hex(&a->object.oid));
 	repo_init_revisions(repo, &revs, NULL);
@@ -1566,9 +1566,9 @@ static int find_first_merges(struct repository *repo,
 	/* save all revisions from the above list that contain b */
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
-	while ((commit = get_revision(&revs)) != NULL) {
-		struct object *o = &(commit->object);
-		if (repo_in_merge_bases(repo, b, commit))
+	while ((cummit = get_revision(&revs)) != NULL) {
+		struct object *o = &(cummit->object);
+		if (repo_in_merge_bases(repo, b, cummit))
 			add_object_array(o, NULL, &merges);
 	}
 	reset_revision_walk();
@@ -1578,11 +1578,11 @@ static int find_first_merges(struct repository *repo,
 	 * result.
 	 */
 	for (i = 0; i < merges.nr; i++) {
-		struct commit *m1 = (struct commit *) merges.objects[i].item;
+		struct cummit *m1 = (struct cummit *) merges.objects[i].item;
 
 		contains_another = 0;
 		for (j = 0; j < merges.nr; j++) {
-			struct commit *m2 = (struct commit *) merges.objects[j].item;
+			struct cummit *m2 = (struct cummit *) merges.objects[j].item;
 			if (i != j && repo_in_merge_bases(repo, m2, m1)) {
 				contains_another = 1;
 				break;
@@ -1607,7 +1607,7 @@ static int merge_submodule(struct merge_options *opt,
 	struct repository subrepo;
 	struct strbuf sb = STRBUF_INIT;
 	int ret = 0;
-	struct commit *commit_o, *commit_a, *commit_b;
+	struct cummit *cummit_o, *cummit_a, *cummit_b;
 	int parent_count;
 	struct object_array merges;
 
@@ -1632,27 +1632,27 @@ static int merge_submodule(struct merge_options *opt,
 		return 0;
 	}
 
-	if (!(commit_o = lookup_commit_reference(&subrepo, o)) ||
-	    !(commit_a = lookup_commit_reference(&subrepo, a)) ||
-	    !(commit_b = lookup_commit_reference(&subrepo, b))) {
+	if (!(cummit_o = lookup_cummit_reference(&subrepo, o)) ||
+	    !(cummit_a = lookup_cummit_reference(&subrepo, a)) ||
+	    !(cummit_b = lookup_cummit_reference(&subrepo, b))) {
 		path_msg(opt, path, 0,
-			 _("Failed to merge submodule %s (commits not present)"),
+			 _("Failed to merge submodule %s (cummits not present)"),
 			 path);
 		goto cleanup;
 	}
 
 	/* check whether both changes are forward */
-	if (!repo_in_merge_bases(&subrepo, commit_o, commit_a) ||
-	    !repo_in_merge_bases(&subrepo, commit_o, commit_b)) {
+	if (!repo_in_merge_bases(&subrepo, cummit_o, cummit_a) ||
+	    !repo_in_merge_bases(&subrepo, cummit_o, cummit_b)) {
 		path_msg(opt, path, 0,
 			 _("Failed to merge submodule %s "
-			   "(commits don't follow merge-base)"),
+			   "(cummits don't follow merge-base)"),
 			 path);
 		goto cleanup;
 	}
 
 	/* Case #1: a is contained in b or vice versa */
-	if (repo_in_merge_bases(&subrepo, commit_a, commit_b)) {
+	if (repo_in_merge_bases(&subrepo, cummit_a, cummit_b)) {
 		oidcpy(result, b);
 		path_msg(opt, path, 1,
 			 _("Note: Fast-forwarding submodule %s to %s"),
@@ -1660,7 +1660,7 @@ static int merge_submodule(struct merge_options *opt,
 		ret = 1;
 		goto cleanup;
 	}
-	if (repo_in_merge_bases(&subrepo, commit_b, commit_a)) {
+	if (repo_in_merge_bases(&subrepo, cummit_b, cummit_a)) {
 		oidcpy(result, a);
 		path_msg(opt, path, 1,
 			 _("Note: Fast-forwarding submodule %s to %s"),
@@ -1680,8 +1680,8 @@ static int merge_submodule(struct merge_options *opt,
 	if (!search)
 		goto cleanup;
 
-	/* find commit which merges them */
-	parent_count = find_first_merges(&subrepo, path, commit_a, commit_b,
+	/* find cummit which merges them */
+	parent_count = find_first_merges(&subrepo, path, cummit_a, cummit_b,
 					 &merges);
 	switch (parent_count) {
 	case 0:
@@ -1689,8 +1689,8 @@ static int merge_submodule(struct merge_options *opt,
 		break;
 
 	case 1:
-		format_commit(&sb, 4, &subrepo,
-			      (struct commit *)merges.objects[0].item);
+		format_cummit(&sb, 4, &subrepo,
+			      (struct cummit *)merges.objects[0].item);
 		path_msg(opt, path, 0,
 			 _("Failed to merge submodule %s, but a possible merge "
 			   "resolution exists:\n%s\n"),
@@ -1706,8 +1706,8 @@ static int merge_submodule(struct merge_options *opt,
 		break;
 	default:
 		for (i = 0; i < merges.nr; i++)
-			format_commit(&sb, 4, &subrepo,
-				      (struct commit *)merges.objects[i].item);
+			format_cummit(&sb, 4, &subrepo,
+				      (struct cummit *)merges.objects[i].item);
 		path_msg(opt, path, 0,
 			 _("Failed to merge submodule %s, but multiple "
 			   "possible merges exist:\n%s"), path, sb.buf);
@@ -2285,7 +2285,7 @@ static char *check_for_directory_rename(struct merge_options *opt,
 	 * implicit rename into a directory we renamed on our side, because
 	 * that will result in a spurious rename/rename(1to2) conflict.  An
 	 * example:
-	 *   Base commit: dumbdir/afile, otherdir/bfile
+	 *   Base cummit: dumbdir/afile, otherdir/bfile
 	 *   Side 1:      smrtdir/afile, otherdir/bfile
 	 *   Side 2:      dumbdir/afile, dumbdir/bfile
 	 * Here, while working on Side 1, we could notice that otherdir was
@@ -4366,21 +4366,21 @@ static struct tree *shift_tree_object(struct repository *repo,
 	return lookup_tree(repo, &shifted);
 }
 
-static inline void set_commit_tree(struct commit *c, struct tree *t)
+static inline void set_cummit_tree(struct cummit *c, struct tree *t)
 {
 	c->maybe_tree = t;
 }
 
-static struct commit *make_virtual_commit(struct repository *repo,
+static struct cummit *make_virtual_cummit(struct repository *repo,
 					  struct tree *tree,
 					  const char *comment)
 {
-	struct commit *commit = alloc_commit_node(repo);
+	struct cummit *cummit = alloc_cummit_node(repo);
 
-	set_merge_remote_desc(commit, comment, (struct object *)commit);
-	set_commit_tree(commit, tree);
-	commit->object.parsed = 1;
-	return commit;
+	set_merge_remote_desc(cummit, comment, (struct object *)cummit);
+	set_cummit_tree(cummit, tree);
+	cummit->object.parsed = 1;
+	return cummit;
 }
 
 static void merge_start(struct merge_options *opt, struct merge_result *result)
@@ -4623,29 +4623,29 @@ redo:
  * Originally from merge_recursive_internal(); somewhat adapted, though.
  */
 static void merge_ort_internal(struct merge_options *opt,
-			       struct commit_list *merge_bases,
-			       struct commit *h1,
-			       struct commit *h2,
+			       struct cummit_list *merge_bases,
+			       struct cummit *h1,
+			       struct cummit *h2,
 			       struct merge_result *result)
 {
-	struct commit *next;
-	struct commit *merged_merge_bases;
+	struct cummit *next;
+	struct cummit *merged_merge_bases;
 	const char *ancestor_name;
 	struct strbuf merge_base_abbrev = STRBUF_INIT;
 
 	if (!merge_bases) {
 		merge_bases = get_merge_bases(h1, h2);
 		/* See merge-ort.h:merge_incore_recursive() declaration NOTE */
-		merge_bases = reverse_commit_list(merge_bases);
+		merge_bases = reverse_cummit_list(merge_bases);
 	}
 
-	merged_merge_bases = pop_commit(&merge_bases);
+	merged_merge_bases = pop_cummit(&merge_bases);
 	if (merged_merge_bases == NULL) {
 		/* if there is no common ancestor, use an empty tree */
 		struct tree *tree;
 
 		tree = lookup_tree(opt->repo, opt->repo->hash_algo->empty_tree);
-		merged_merge_bases = make_virtual_commit(opt->repo, tree,
+		merged_merge_bases = make_virtual_cummit(opt->repo, tree,
 							 "ancestor");
 		ancestor_name = "empty tree";
 	} else if (merge_bases) {
@@ -4657,10 +4657,10 @@ static void merge_ort_internal(struct merge_options *opt,
 		ancestor_name = merge_base_abbrev.buf;
 	}
 
-	for (next = pop_commit(&merge_bases); next;
-	     next = pop_commit(&merge_bases)) {
+	for (next = pop_cummit(&merge_bases); next;
+	     next = pop_cummit(&merge_bases)) {
 		const char *saved_b1, *saved_b2;
-		struct commit *prev = merged_merge_bases;
+		struct cummit *prev = merged_merge_bases;
 
 		opt->priv->call_depth++;
 		/*
@@ -4668,7 +4668,7 @@ static void merge_ort_internal(struct merge_options *opt,
 		 * with conflict markers. The cleanness flag is
 		 * ignored (unless indicating an error), it was never
 		 * actually used, as result of merge_trees has always
-		 * overwritten it: the committed "conflicts" were
+		 * overwritten it: the cummitted "conflicts" were
 		 * already resolved.
 		 */
 		saved_b1 = opt->branch1;
@@ -4682,21 +4682,21 @@ static void merge_ort_internal(struct merge_options *opt,
 		opt->branch2 = saved_b2;
 		opt->priv->call_depth--;
 
-		merged_merge_bases = make_virtual_commit(opt->repo,
+		merged_merge_bases = make_virtual_cummit(opt->repo,
 							 result->tree,
 							 "merged tree");
-		commit_list_insert(prev, &merged_merge_bases->parents);
-		commit_list_insert(next, &merged_merge_bases->parents->next);
+		cummit_list_insert(prev, &merged_merge_bases->parents);
+		cummit_list_insert(next, &merged_merge_bases->parents->next);
 
 		clear_or_reinit_internal_opts(opt->priv, 1);
 	}
 
 	opt->ancestor = ancestor_name;
 	merge_ort_nonrecursive_internal(opt,
-					repo_get_commit_tree(opt->repo,
+					repo_get_cummit_tree(opt->repo,
 							     merged_merge_bases),
-					repo_get_commit_tree(opt->repo, h1),
-					repo_get_commit_tree(opt->repo, h2),
+					repo_get_cummit_tree(opt->repo, h1),
+					repo_get_cummit_tree(opt->repo, h2),
 					result);
 	strbuf_release(&merge_base_abbrev);
 	opt->ancestor = NULL;  /* avoid accidental re-use of opt->ancestor */
@@ -4729,9 +4729,9 @@ void merge_incore_nonrecursive(struct merge_options *opt,
 }
 
 void merge_incore_recursive(struct merge_options *opt,
-			    struct commit_list *merge_bases,
-			    struct commit *side1,
-			    struct commit *side2,
+			    struct cummit_list *merge_bases,
+			    struct cummit *side1,
+			    struct cummit *side2,
 			    struct merge_result *result)
 {
 	trace2_region_enter("merge", "incore_recursive", opt->repo);

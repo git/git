@@ -21,13 +21,13 @@ higher level wrapper of this command, instead.
 
 Invokes 'git-upload-pack' on a possibly remote repository
 and asks it to send objects missing from this repository, to
-update the named heads.  The list of commits available locally
+update the named heads.  The list of cummits available locally
 is found out by scanning the local refs/ hierarchy and sent to
 'git-upload-pack' running on the other end.
 
 This command degenerates to download everything to complete the
 asked refs from the remote side when the local side does not
-have a common ancestor commit.
+have a common ancestor cummit.
 
 
 OPTIONS
@@ -89,20 +89,20 @@ be in a separate packet, and the list must end with a flush packet.
 
 --shallow-since=<date>::
 	Deepen or shorten the history of a shallow repository to
-	include all reachable commits after <date>.
+	include all reachable cummits after <date>.
 
 --shallow-exclude=<revision>::
 	Deepen or shorten the history of a shallow repository to
-	exclude commits reachable from a specified remote branch or tag.
+	exclude cummits reachable from a specified remote branch or tag.
 	This option can be specified multiple times.
 
 --deepen-relative::
-	Argument --depth specifies the number of commits from the
+	Argument --depth specifies the number of cummits from the
 	current shallow boundary instead of from the tip of each
 	remote branch history.
 
 --refetch::
-	Skips negotiating commits with the server in order to fetch all matching
+	Skips negotiating cummits with the server in order to fetch all matching
 	objects. Use to reapply a new partial clone blob/tree filter.
 
 --no-progress::

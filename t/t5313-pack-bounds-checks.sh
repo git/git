@@ -59,7 +59,7 @@ test_expect_success 'set up base packfile and variables' '
 	# makes some later computations much simpler
 	echo $(test_oid oidfff) >file &&
 	git add file &&
-	git commit -m base &&
+	git cummit -m base &&
 	git repack -ad &&
 	base=$(echo .git/objects/pack/*) &&
 	chmod +w $base &&

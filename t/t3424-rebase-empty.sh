@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git rebase of commits that start or become empty'
+test_description='git rebase of cummits that start or become empty'
 
 . ./test-lib.sh
 
@@ -8,7 +8,7 @@ test_expect_success 'setup test repository' '
 	test_write_lines 1 2 3 4 5 6 7 8 9 10 >numbers &&
 	test_write_lines A B C D E F G H I J >letters &&
 	git add numbers letters &&
-	git commit -m A &&
+	git cummit -m A &&
 
 	git branch upstream &&
 	git branch localmods &&
@@ -16,28 +16,28 @@ test_expect_success 'setup test repository' '
 	git checkout upstream &&
 	test_write_lines A B C D E >letters &&
 	git add letters &&
-	git commit -m B &&
+	git cummit -m B &&
 
 	test_write_lines 1 2 3 4 five 6 7 8 9 ten >numbers &&
 	git add numbers &&
-	git commit -m C &&
+	git cummit -m C &&
 
 	git checkout localmods &&
 	test_write_lines 1 2 3 4 five 6 7 8 9 10 >numbers &&
 	git add numbers &&
-	git commit -m C2 &&
+	git cummit -m C2 &&
 
-	git commit --allow-empty -m D &&
+	git cummit --allow-empty -m D &&
 
 	test_write_lines A B C D E >letters &&
 	git add letters &&
-	git commit -m "Five letters ought to be enough for anybody"
+	git cummit -m "Five letters ought to be enough for anybody"
 '
 
 test_expect_failure 'rebase (apply-backend)' '
 	test_when_finished "git rebase --abort" &&
 	git checkout -B testing localmods &&
-	# rebase (--apply) should not drop commits that start empty
+	# rebase (--apply) should not drop cummits that start empty
 	git rebase --apply upstream &&
 
 	test_write_lines D C B A >expect &&

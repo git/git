@@ -15,7 +15,7 @@ Fixes since v2.14.2
 
  * Fix regression to "gitk --bisect" by a recent update.
 
- * Unlike "git commit-tree < file", "git commit-tree -F file" did not
+ * Unlike "git cummit-tree < file", "git cummit-tree -F file" did not
    pass the contents of the file verbatim and instead completed an
    incomplete line at the end, if exists.  The latter has been updated
    to match the behaviour of the former.

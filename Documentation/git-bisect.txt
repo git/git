@@ -3,7 +3,7 @@ git-bisect(1)
 
 NAME
 ----
-git-bisect - Use binary search to find the commit that introduced a bug
+git-bisect - Use binary search to find the cummit that introduced a bug
 
 
 SYNOPSIS
@@ -22,25 +22,25 @@ on the subcommand:
  git bisect (good|old|<term-old>) [<rev>...]
  git bisect terms [--term-good | --term-bad]
  git bisect skip [(<rev>|<range>)...]
- git bisect reset [<commit>]
+ git bisect reset [<cummit>]
  git bisect (visualize|view)
  git bisect replay <logfile>
  git bisect log
  git bisect run <cmd>...
  git bisect help
 
-This command uses a binary search algorithm to find which commit in
+This command uses a binary search algorithm to find which cummit in
 your project's history introduced a bug. You use it by first telling
-it a "bad" commit that is known to contain the bug, and a "good"
-commit that is known to be before the bug was introduced. Then `git
-bisect` picks a commit between those two endpoints and asks you
-whether the selected commit is "good" or "bad". It continues narrowing
-down the range until it finds the exact commit that introduced the
+it a "bad" cummit that is known to contain the bug, and a "good"
+cummit that is known to be before the bug was introduced. Then `git
+bisect` picks a cummit between those two endpoints and asks you
+whether the selected cummit is "good" or "bad". It continues narrowing
+down the range until it finds the exact cummit that introduced the
 change.
 
-In fact, `git bisect` can be used to find the commit that changed
-*any* property of your project; e.g., the commit that fixed a bug, or
-the commit that caused a benchmark's performance to improve. To
+In fact, `git bisect` can be used to find the cummit that changed
+*any* property of your project; e.g., the cummit that fixed a bug, or
+the cummit that caused a benchmark's performance to improve. To
 support this more general usage, the terms "old" and "new" can be used
 in place of "good" and "bad", or you can choose your own terms. See
 section "Alternate terms" below for more information.
@@ -48,7 +48,7 @@ section "Alternate terms" below for more information.
 Basic bisect commands: start, bad, good
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-As an example, suppose you are trying to find the commit that broke a
+As an example, suppose you are trying to find the cummit that broke a
 feature that was known to work in version `v2.6.13-rc2` of your
 project. You start a bisect session as follows:
 
@@ -58,8 +58,8 @@ $ git bisect bad                 # Current version is bad
 $ git bisect good v2.6.13-rc2    # v2.6.13-rc2 is known to be good
 ------------------------------------------------
 
-Once you have specified at least one bad and one good commit, `git
-bisect` selects a commit in the middle of that range of history,
+Once you have specified at least one bad and one good cummit, `git
+bisect` selects a cummit in the middle of that range of history,
 checks it out, and outputs something similar to the following:
 
 ------------------------------------------------
@@ -87,11 +87,11 @@ Bisecting: 337 revisions left to test after this (roughly 9 steps)
 
 Keep repeating the process: compile the tree, test it, and depending
 on whether it is good or bad run `git bisect good` or `git bisect bad`
-to ask for the next commit that needs testing.
+to ask for the next cummit that needs testing.
 
 Eventually there will be no more revisions left to inspect, and the
-command will print out a description of the first bad commit. The
-reference `refs/bisect/bad` will be left pointing at that commit.
+command will print out a description of the first bad cummit. The
+reference `refs/bisect/bad` will be left pointing at that cummit.
 
 
 Bisect reset
@@ -104,30 +104,30 @@ the original HEAD, issue the following command:
 $ git bisect reset
 ------------------------------------------------
 
-By default, this will return your tree to the commit that was checked
+By default, this will return your tree to the cummit that was checked
 out before `git bisect start`.  (A new `git bisect start` will also do
 that, as it cleans up the old bisection state.)
 
-With an optional argument, you can return to a different commit
+With an optional argument, you can return to a different cummit
 instead:
 
 ------------------------------------------------
-$ git bisect reset <commit>
+$ git bisect reset <cummit>
 ------------------------------------------------
 
 For example, `git bisect reset bisect/bad` will check out the first
 bad revision, while `git bisect reset HEAD` will leave you on the
-current bisection commit and avoid switching commits at all.
+current bisection cummit and avoid switching cummits at all.
 
 
 Alternate terms
 ~~~~~~~~~~~~~~~
 
-Sometimes you are not looking for the commit that introduced a
-breakage, but rather for a commit that caused a change between some
+Sometimes you are not looking for the cummit that introduced a
+breakage, but rather for a cummit that caused a change between some
 other "old" state and "new" state. For example, you might be looking
-for the commit that introduced a particular fix. Or you might be
-looking for the first commit in which the source-code filenames were
+for the cummit that introduced a particular fix. Or you might be
+looking for the first cummit in which the source-code filenames were
 finally all converted to your company's naming standard. Or whatever.
 
 In such cases it can be very confusing to use the terms "good" and
@@ -137,21 +137,21 @@ respectively, in place of "good" and "bad". (But note that you cannot
 mix "good" and "bad" with "old" and "new" in a single session.)
 
 In this more general usage, you provide `git bisect` with a "new"
-commit that has some property and an "old" commit that doesn't have that
-property. Each time `git bisect` checks out a commit, you test if that
-commit has the property. If it does, mark the commit as "new";
+cummit that has some property and an "old" cummit that doesn't have that
+property. Each time `git bisect` checks out a cummit, you test if that
+commit has the property. If it does, mark the cummit as "new";
 otherwise, mark it as "old". When the bisection is done, `git bisect`
-will report which commit introduced the property.
+will report which cummit introduced the property.
 
 To use "old" and "new" instead of "good" and bad, you must run `git
-bisect start` without commits as argument and then run the following
-commands to add the commits:
+bisect start` without cummits as argument and then run the following
+commands to add the cummits:
 
 ------------------------------------------------
 git bisect old [<rev>]
 ------------------------------------------------
 
-to indicate that a commit was before the sought change, or
+to indicate that a cummit was before the sought change, or
 
 ------------------------------------------------
 git bisect new [<rev>...]
@@ -177,21 +177,21 @@ bisection using
 git bisect start --term-old <term-old> --term-new <term-new>
 ------------------------------------------------
 
-For example, if you are looking for a commit that introduced a
+For example, if you are looking for a cummit that introduced a
 performance regression, you might use
 
 ------------------------------------------------
 git bisect start --term-old fast --term-new slow
 ------------------------------------------------
 
-Or if you are looking for the commit that fixed a bug, you might use
+Or if you are looking for the cummit that fixed a bug, you might use
 
 ------------------------------------------------
 git bisect start --term-new fixed --term-old broken
 ------------------------------------------------
 
 Then, use `git bisect <term-old>` and `git bisect <term-new>` instead
-of `git bisect good` and `git bisect bad` to mark commits.
+of `git bisect good` and `git bisect bad` to mark cummits.
 
 Bisect visualize/view
 ~~~~~~~~~~~~~~~~~~~~~
@@ -232,13 +232,13 @@ $ git bisect reset
 $ git bisect replay that-file
 ------------
 
-Avoiding testing a commit
+Avoiding testing a cummit
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If, in the middle of a bisect session, you know that the suggested
 revision is not a good one to test (e.g. it fails to build and you
 know that the failure does not have anything to do with the bug you
-are chasing), you can manually select a nearby commit and test that
+are chasing), you can manually select a nearby cummit and test that
 one instead.
 
 For example:
@@ -257,35 +257,35 @@ the revision as good or bad in the usual manner.
 Bisect skip
 ~~~~~~~~~~~
 
-Instead of choosing a nearby commit by yourself, you can ask Git to do
+Instead of choosing a nearby cummit by yourself, you can ask Git to do
 it for you by issuing the command:
 
 ------------
 $ git bisect skip                 # Current version cannot be tested
 ------------
 
-However, if you skip a commit adjacent to the one you are looking for,
-Git will be unable to tell exactly which of those commits was the
+However, if you skip a cummit adjacent to the one you are looking for,
+Git will be unable to tell exactly which of those cummits was the
 first bad one.
 
-You can also skip a range of commits, instead of just one commit,
+You can also skip a range of cummits, instead of just one cummit,
 using range notation. For example:
 
 ------------
 $ git bisect skip v2.5..v2.6
 ------------
 
-This tells the bisect process that no commit after `v2.5`, up to and
+This tells the bisect process that no cummit after `v2.5`, up to and
 including `v2.6`, should be tested.
 
-Note that if you also want to skip the first commit of the range you
+Note that if you also want to skip the first cummit of the range you
 would issue the command:
 
 ------------
 $ git bisect skip v2.5 v2.5..v2.6
 ------------
 
-This tells the bisect process that the commits between `v2.5` and
+This tells the bisect process that the cummits between `v2.5` and
 `v2.6` (inclusive) should be skipped.
 
 
@@ -300,9 +300,9 @@ path parameters when issuing the `bisect start` command:
 $ git bisect start -- arch/i386 include/asm-i386
 ------------
 
-If you know beforehand more than one good commit, you can narrow the
-bisect space down by specifying all of the good commits immediately after
-the bad commit when issuing the `bisect start` command:
+If you know beforehand more than one good cummit, you can narrow the
+bisect space down by specifying all of the good cummits immediately after
+the bad cummit when issuing the `bisect start` command:
 
 ------------
 $ git bisect start v2.6.20-rc6 v2.6.20-rc4 v2.6.20-rc1 --
@@ -340,7 +340,7 @@ details do not matter, as they are normal errors in the script, as far as
 
 You may often find that during a bisect session you want to have
 temporary modifications (e.g. s/#define DEBUG 0/#define DEBUG 1/ in a
-header file, or "revision that does not have this commit needs this
+header file, or "revision that does not have this cummit needs this
 patch applied to work around another problem this bisection is not
 interested in") applied to the revision being tested.
 
@@ -358,7 +358,7 @@ OPTIONS
 +
 Do not checkout the new working tree at each iteration of the bisection
 process. Instead just update a special reference named `BISECT_HEAD` to make
-it point to the commit that should be tested.
+it point to the cummit that should be tested.
 +
 This option may be useful when the test you would perform in each step
 does not require a checked out tree.
@@ -367,14 +367,14 @@ If the repository is bare, `--no-checkout` is assumed.
 
 --first-parent::
 +
-Follow only the first parent commit upon seeing a merge commit.
+Follow only the first parent cummit upon seeing a merge cummit.
 +
 In detecting regressions introduced through the merging of a branch, the merge
-commit will be identified as introduction of the bug and its ancestors will be
+cummit will be identified as introduction of the bug and its ancestors will be
 ignored.
 +
 This option is particularly useful in avoiding false positives when a merged
-branch contained broken or non-buildable commits, but the merge itself was OK.
+branch contained broken or non-buildable cummits, but the merge itself was OK.
 
 EXAMPLES
 --------
@@ -408,7 +408,7 @@ $ git bisect reset                   # quit the bisect session
 ------------
 +
 Here we use a `test.sh` custom script. In this script, if `make`
-fails, we skip the current commit.
+fails, we skip the current cummit.
 `check_test_case.sh` should `exit 0` if the test case passes,
 and `exit 1` otherwise.
 +
@@ -424,7 +424,7 @@ $ cat ~/test.sh
 
 # tweak the working tree by merging the hot-fix branch
 # and then attempt a build
-if	git merge --no-commit --no-ff hot-fix &&
+if	git merge --no-cummit --no-ff hot-fix &&
 	make
 then
 	# run project specific test and report its status
@@ -435,7 +435,7 @@ else
 	status=125
 fi
 
-# undo the tweak to allow clean flipping to the next commit
+# undo the tweak to allow clean flipping to the next cummit
 git reset --hard
 
 # return control
@@ -445,7 +445,7 @@ exit $status
 This applies modifications from a hot-fix branch before each test run,
 e.g. in case your build or test environment changed so that older
 revisions may need a fix which newer ones have already. (Make sure the
-hot-fix branch is based off a commit which is contained in all revisions
+hot-fix branch is based off a cummit which is contained in all revisions
 which you are bisecting, so that the merge does not pull in too much, or
 use `git cherry-pick` instead of `git merge`.)
 
@@ -463,7 +463,7 @@ on a single line.
 * Locate a good region of the object graph in a damaged repository
 +
 ------------
-$ git bisect start HEAD <known-good-commit> [ <boundary-commit> ... ] --no-checkout
+$ git bisect start HEAD <known-good-cummit> [ <boundary-cummit> ... ] --no-checkout
 $ git bisect run sh -c '
 	GOOD=$(git for-each-ref "--format=%(objectname)" refs/bisect/good-*) &&
 	git rev-list --objects BISECT_HEAD --not $GOOD >tmp.$$ &&
@@ -475,7 +475,7 @@ $ git bisect run sh -c '
 $ git bisect reset                   # quit the bisect session
 ------------
 +
-In this case, when 'git bisect run' finishes, bisect/bad will refer to a commit that
+In this case, when 'git bisect run' finishes, bisect/bad will refer to a cummit that
 has at least one parent whose reachable graph is fully traversable in the sense
 required by 'git pack objects'.
 
@@ -483,8 +483,8 @@ required by 'git pack objects'.
 +
 ------------
 $ git bisect start
-$ git bisect new HEAD    # current commit is marked as new
-$ git bisect old HEAD~10 # the tenth commit from now is marked as old
+$ git bisect new HEAD    # current cummit is marked as new
+$ git bisect old HEAD~10 # the tenth cummit from now is marked as old
 ------------
 +
 or:

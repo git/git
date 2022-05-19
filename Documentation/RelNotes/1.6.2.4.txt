@@ -16,7 +16,7 @@ Fixes since v1.6.2.3
 * "git-checkout <tree-ish> <submodule>" did not update the index entry at
   the named path; it now does.
 
-* "git-fast-export" choked when seeing a tag that does not point at commit.
+* "git-fast-export" choked when seeing a tag that does not point at cummit.
 
 * "git init" segfaulted when given an overlong template location via
   the --template= option.

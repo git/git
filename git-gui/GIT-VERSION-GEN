@@ -26,9 +26,9 @@ tree_search ()
 # (At least one package manager is doing this.)
 #
 # We may be a subproject, so try looking for the merge
-# commit that supplied this directory content if we are
+# cummit that supplied this directory content if we are
 # not at the toplevel.  We probably will always be the
-# second parent in the commit, but we shouldn't rely on
+# second parent in the cummit, but we shouldn't rely on
 # that fact.
 #
 # If we are at the toplevel or the merge assumption fails

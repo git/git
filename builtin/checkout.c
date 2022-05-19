@@ -5,7 +5,7 @@
 #include "branch.h"
 #include "cache-tree.h"
 #include "checkout.h"
-#include "commit.h"
+#include "cummit.h"
 #include "config.h"
 #include "diff.h"
 #include "dir.h"
@@ -94,9 +94,9 @@ struct checkout_opts {
 struct branch_info {
 	char *name; /* The short name used */
 	char *path; /* The full name of a real branch */
-	struct commit *commit; /* The named commit */
+	struct cummit *cummit; /* The named cummit */
 	char *refname; /* The full name of the ref being checked out. */
-	struct object_id oid; /* The object ID of the commit being checked out. */
+	struct object_id oid; /* The object ID of the cummit being checked out. */
 	/*
 	 * if not null the branch is detached because it's already
 	 * checked out in this checkout
@@ -112,15 +112,15 @@ static void branch_info_release(struct branch_info *info)
 	free(info->checkout);
 }
 
-static int post_checkout_hook(struct commit *old_commit, struct commit *new_commit,
+static int post_checkout_hook(struct cummit *old_cummit, struct cummit *new_cummit,
 			      int changed)
 {
 	return run_hooks_l("post-checkout",
-			   oid_to_hex(old_commit ? &old_commit->object.oid : null_oid()),
-			   oid_to_hex(new_commit ? &new_commit->object.oid : null_oid()),
+			   oid_to_hex(old_cummit ? &old_cummit->object.oid : null_oid()),
+			   oid_to_hex(new_cummit ? &new_cummit->object.oid : null_oid()),
 			   changed ? "1" : "0", NULL);
-	/* "new_commit" can be NULL when checking out from the index before
-	   a commit exists. */
+	/* "new_cummit" can be NULL when checking out from the index before
+	   a cummit exists. */
 
 }
 
@@ -383,7 +383,7 @@ static int checkout_worktree(const struct checkout_opts *opts,
 	mem_pool_init(&ce_mem_pool, 0);
 	get_parallel_checkout_configs(&pc_workers, &pc_threshold);
 	init_checkout_metadata(&state.meta, info->refname,
-			       info->commit ? &info->commit->object.oid : &info->oid,
+			       info->cummit ? &info->cummit->object.oid : &info->oid,
 			       NULL);
 
 	enable_delayed_checkout(&state);
@@ -448,7 +448,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	int pos;
 	static char *ps_matched;
 	struct object_id rev;
-	struct commit *head;
+	struct cummit *head;
 	int errs = 0;
 	struct lock_file lock_file = LOCK_INIT;
 	int checkout_index;
@@ -505,15 +505,15 @@ static int checkout_paths(const struct checkout_opts *opts,
 		/*
 		 * Since rev can be in the form of `<a>...<b>` (which is not
 		 * recognized by diff-index), we will always replace the name
-		 * with the hex of the commit (whether it's in `...` form or
+		 * with the hex of the cummit (whether it's in `...` form or
 		 * not) for the run_add_interactive() machinery to work
 		 * properly. However, there is special logic for the HEAD case
 		 * so we mustn't replace that.  Also, when we were given a
-		 * tree-object, new_branch_info->commit would be NULL, but we
+		 * tree-object, new_branch_info->cummit would be NULL, but we
 		 * do not have to do any replacement, either.
 		 */
-		if (rev && new_branch_info->commit && strcmp(rev, "HEAD"))
-			rev = oid_to_hex_r(rev_oid, &new_branch_info->commit->object.oid);
+		if (rev && new_branch_info->cummit && strcmp(rev, "HEAD"))
+			rev = oid_to_hex_r(rev_oid, &new_branch_info->cummit->object.oid);
 
 		if (opts->checkout_index && opts->checkout_worktree)
 			patch_mode = "--patch=checkout";
@@ -583,7 +583,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	if (errs)
 		return 1;
 
-	/* Now we are committed to check them out */
+	/* Now we are cummitted to check them out */
 	if (opts->checkout_worktree)
 		errs |= checkout_worktree(opts, new_branch_info);
 	else
@@ -599,7 +599,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 		checkout_index = opts->checkout_index;
 
 	if (checkout_index) {
-		if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
+		if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
 			die(_("unable to write new index file"));
 	} else {
 		/*
@@ -612,7 +612,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	}
 
 	read_ref_full("HEAD", 0, &rev, NULL);
-	head = lookup_commit_reference_gently(the_repository, &rev, 1);
+	head = lookup_cummit_reference_gently(the_repository, &rev, 1);
 
 	errs |= post_checkout_hook(head, head, 0);
 	return errs;
@@ -632,18 +632,18 @@ static void show_local_changes(struct object *head,
 	object_array_clear(&rev.pending);
 }
 
-static void describe_detached_head(const char *msg, struct commit *commit)
+static void describe_detached_head(const char *msg, struct cummit *cummit)
 {
 	struct strbuf sb = STRBUF_INIT;
 
-	if (!parse_commit(commit))
-		pp_commit_easy(CMIT_FMT_ONELINE, commit, &sb);
+	if (!parse_cummit(cummit))
+		pp_cummit_easy(CMIT_FMT_ONELINE, cummit, &sb);
 	if (print_sha1_ellipsis()) {
 		fprintf(stderr, "%s %s... %s\n", msg,
-			find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV), sb.buf);
+			find_unique_abbrev(&cummit->object.oid, DEFAULT_ABBREV), sb.buf);
 	} else {
 		fprintf(stderr, "%s %s %s\n", msg,
-			find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV), sb.buf);
+			find_unique_abbrev(&cummit->object.oid, DEFAULT_ABBREV), sb.buf);
 	}
 	strbuf_release(&sb);
 }
@@ -668,7 +668,7 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
 	init_checkout_metadata(&opts.meta, info->refname,
-			       info->commit ? &info->commit->object.oid : null_oid(),
+			       info->cummit ? &info->cummit->object.oid : null_oid(),
 			       NULL);
 	parse_tree(tree);
 	init_tree_desc(&tree_desc, tree->buffer, tree->size);
@@ -698,7 +698,7 @@ static void setup_branch_path(struct branch_info *branch)
 	 * expression.  Failure here is okay.
 	 */
 	if (!dwim_ref(branch->name, strlen(branch->name), &branch->oid, &branch->refname, 0))
-		repo_get_oid_committish(the_repository, branch->name, &branch->oid);
+		repo_get_oid_cummittish(the_repository, branch->name, &branch->oid);
 
 	strbuf_branchname(&buf, branch->name, INTERPRET_BRANCH_LOCAL);
 	if (strcmp(buf.buf, branch->name)) {
@@ -725,11 +725,11 @@ static int merge_working_tree(const struct checkout_opts *opts,
 
 	resolve_undo_clear();
 	if (opts->new_orphan_branch && opts->orphan_from_empty_tree) {
-		if (new_branch_info->commit)
-			BUG("'switch --orphan' should never accept a commit as starting point");
+		if (new_branch_info->cummit)
+			BUG("'switch --orphan' should never accept a cummit as starting point");
 		new_tree = parse_tree_indirect(the_hash_algo->empty_tree);
 	} else
-		new_tree = get_commit_tree(new_branch_info->commit);
+		new_tree = get_cummit_tree(new_branch_info->cummit);
 	if (opts->discard_changes) {
 		ret = reset_tree(new_tree, opts, 1, writeout_error, new_branch_info);
 		if (ret)
@@ -738,7 +738,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		struct tree_desc trees[2];
 		struct tree *tree;
 		struct unpack_trees_options topts;
-		const struct object_id *old_commit_oid;
+		const struct object_id *old_cummit_oid;
 
 		memset(&topts, 0, sizeof(topts));
 		topts.head_idx = -1;
@@ -758,22 +758,22 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		topts.initial_checkout = is_cache_unborn();
 		topts.update = 1;
 		topts.merge = 1;
-		topts.quiet = opts->merge && old_branch_info->commit;
+		topts.quiet = opts->merge && old_branch_info->cummit;
 		topts.verbose_update = opts->show_progress;
 		topts.fn = twoway_merge;
 		init_checkout_metadata(&topts.meta, new_branch_info->refname,
-				       new_branch_info->commit ?
-				       &new_branch_info->commit->object.oid :
+				       new_branch_info->cummit ?
+				       &new_branch_info->cummit->object.oid :
 				       &new_branch_info->oid, NULL);
 		topts.preserve_ignored = !opts->overwrite_ignore;
 
-		old_commit_oid = old_branch_info->commit ?
-			&old_branch_info->commit->object.oid :
+		old_cummit_oid = old_branch_info->cummit ?
+			&old_branch_info->cummit->object.oid :
 			the_hash_algo->empty_tree;
-		tree = parse_tree_indirect(old_commit_oid);
+		tree = parse_tree_indirect(old_cummit_oid);
 		if (!tree)
-			die(_("unable to parse commit %s"),
-				oid_to_hex(old_commit_oid));
+			die(_("unable to parse cummit %s"),
+				oid_to_hex(old_cummit_oid));
 
 		init_tree_desc(&trees[0], tree->buffer, tree->size);
 		parse_tree(new_tree);
@@ -792,18 +792,18 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			struct tree *old_tree;
 			struct merge_options o;
 			struct strbuf sb = STRBUF_INIT;
-			struct strbuf old_commit_shortname = STRBUF_INIT;
+			struct strbuf old_cummit_shortname = STRBUF_INIT;
 
 			if (!opts->merge)
 				return 1;
 
 			/*
-			 * Without old_branch_info->commit, the below is the same as
+			 * Without old_branch_info->cummit, the below is the same as
 			 * the two-tree unpack we already tried and failed.
 			 */
-			if (!old_branch_info->commit)
+			if (!old_branch_info->cummit)
 				return 1;
-			old_tree = get_commit_tree(old_branch_info->commit);
+			old_tree = get_cummit_tree(old_branch_info->cummit);
 
 			if (repo_index_has_changes(the_repository, old_tree, &sb))
 				die(_("cannot continue with staged changes in "
@@ -835,10 +835,10 @@ static int merge_working_tree(const struct checkout_opts *opts,
 				return ret;
 			o.ancestor = old_branch_info->name;
 			if (old_branch_info->name == NULL) {
-				strbuf_add_unique_abbrev(&old_commit_shortname,
-							 &old_branch_info->commit->object.oid,
+				strbuf_add_unique_abbrev(&old_cummit_shortname,
+							 &old_branch_info->cummit->object.oid,
 							 DEFAULT_ABBREV);
-				o.ancestor = old_commit_shortname.buf;
+				o.ancestor = old_cummit_shortname.buf;
 			}
 			o.branch1 = new_branch_info->name;
 			o.branch2 = "local";
@@ -852,7 +852,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 					 opts, 0,
 					 writeout_error, new_branch_info);
 			strbuf_release(&o.obuf);
-			strbuf_release(&old_commit_shortname);
+			strbuf_release(&old_cummit_shortname);
 			if (ret)
 				return ret;
 		}
@@ -861,11 +861,11 @@ static int merge_working_tree(const struct checkout_opts *opts,
 	if (!cache_tree_fully_valid(active_cache_tree))
 		cache_tree_update(&the_index, WRITE_TREE_SILENT | WRITE_TREE_REPAIR);
 
-	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
+	if (write_locked_index(&the_index, &lock_file, cummit_LOCK))
 		die(_("unable to write new index file"));
 
-	if (!opts->discard_changes && !opts->quiet && new_branch_info->commit)
-		show_local_changes(&new_branch_info->commit->object, &opts->diff_options);
+	if (!opts->discard_changes && !opts->quiet && new_branch_info->cummit)
+		show_local_changes(&new_branch_info->cummit->object, &opts->diff_options);
 
 	return 0;
 }
@@ -925,8 +925,8 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 	}
 
 	old_desc = old_branch_info->name;
-	if (!old_desc && old_branch_info->commit)
-		old_desc = oid_to_hex(&old_branch_info->commit->object.oid);
+	if (!old_desc && old_branch_info->cummit)
+		old_desc = oid_to_hex(&old_branch_info->cummit->object.oid);
 
 	reflog_msg = getenv("GIT_REFLOG_ACTION");
 	if (!reflog_msg)
@@ -938,13 +938,13 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 	if (!strcmp(new_branch_info->name, "HEAD") && !new_branch_info->path && !opts->force_detach) {
 		/* Nothing to do. */
 	} else if (opts->force_detach || !new_branch_info->path) {	/* No longer on any branch. */
-		update_ref(msg.buf, "HEAD", &new_branch_info->commit->object.oid, NULL,
+		update_ref(msg.buf, "HEAD", &new_branch_info->cummit->object.oid, NULL,
 			   REF_NO_DEREF, UPDATE_REFS_DIE_ON_ERR);
 		if (!opts->quiet) {
 			if (old_branch_info->path &&
 			    advice_enabled(ADVICE_DETACHED_HEAD) && !opts->force_detach)
 				detach_advice(new_branch_info->name);
-			describe_detached_head(_("HEAD is now at"), new_branch_info->commit);
+			describe_detached_head(_("HEAD is now at"), new_branch_info->cummit);
 		}
 	} else if (new_branch_info->path) {	/* Switch branches. */
 		if (create_symref("HEAD", new_branch_info->path, msg.buf) < 0)
@@ -987,20 +987,20 @@ static int add_pending_uninteresting_ref(const char *refname,
 	return 0;
 }
 
-static void describe_one_orphan(struct strbuf *sb, struct commit *commit)
+static void describe_one_orphan(struct strbuf *sb, struct cummit *cummit)
 {
 	strbuf_addstr(sb, "  ");
-	strbuf_add_unique_abbrev(sb, &commit->object.oid, DEFAULT_ABBREV);
+	strbuf_add_unique_abbrev(sb, &cummit->object.oid, DEFAULT_ABBREV);
 	strbuf_addch(sb, ' ');
-	if (!parse_commit(commit))
-		pp_commit_easy(CMIT_FMT_ONELINE, commit, sb);
+	if (!parse_cummit(cummit))
+		pp_cummit_easy(CMIT_FMT_ONELINE, cummit, sb);
 	strbuf_addch(sb, '\n');
 }
 
 #define ORPHAN_CUTOFF 4
-static void suggest_reattach(struct commit *commit, struct rev_info *revs)
+static void suggest_reattach(struct cummit *cummit, struct rev_info *revs)
 {
-	struct commit *c, *last = NULL;
+	struct cummit *c, *last = NULL;
 	struct strbuf sb = STRBUF_INIT;
 	int lost = 0;
 	while ((c = get_revision(revs)) != NULL) {
@@ -1020,12 +1020,12 @@ static void suggest_reattach(struct commit *commit, struct rev_info *revs)
 	fprintf(stderr,
 		Q_(
 		/* The singular version */
-		"Warning: you are leaving %d commit behind, "
+		"Warning: you are leaving %d cummit behind, "
 		"not connected to\n"
 		"any of your branches:\n\n"
 		"%s\n",
 		/* The plural version */
-		"Warning: you are leaving %d commits behind, "
+		"Warning: you are leaving %d cummits behind, "
 		"not connected to\n"
 		"any of your branches:\n\n"
 		"%s\n",
@@ -1048,18 +1048,18 @@ static void suggest_reattach(struct commit *commit, struct rev_info *revs)
 			" git branch <new-branch-name> %s\n\n",
 			/* Give ngettext() the count */
 			lost),
-			find_unique_abbrev(&commit->object.oid, DEFAULT_ABBREV));
+			find_unique_abbrev(&cummit->object.oid, DEFAULT_ABBREV));
 }
 
 /*
- * We are about to leave commit that was at the tip of a detached
+ * We are about to leave cummit that was at the tip of a detached
  * HEAD.  If it is not reachable from any ref, this is the last chance
  * for the user to do so without resorting to reflog.
  */
-static void orphaned_commit_warning(struct commit *old_commit, struct commit *new_commit)
+static void orphaned_cummit_warning(struct cummit *old_cummit, struct cummit *new_cummit)
 {
 	struct rev_info revs;
-	struct object *object = &old_commit->object;
+	struct object *object = &old_cummit->object;
 
 	repo_init_revisions(the_repository, &revs, NULL);
 	setup_revisions(0, NULL, &revs, NULL);
@@ -1068,20 +1068,20 @@ static void orphaned_commit_warning(struct commit *old_commit, struct commit *ne
 	add_pending_object(&revs, object, oid_to_hex(&object->oid));
 
 	for_each_ref(add_pending_uninteresting_ref, &revs);
-	if (new_commit)
+	if (new_cummit)
 		add_pending_oid(&revs, "HEAD",
-				&new_commit->object.oid,
+				&new_cummit->object.oid,
 				UNINTERESTING);
 
 	if (prepare_revision_walk(&revs))
 		die(_("internal error in revision walk"));
-	if (!(old_commit->object.flags & UNINTERESTING))
-		suggest_reattach(old_commit, &revs);
+	if (!(old_cummit->object.flags & UNINTERESTING))
+		suggest_reattach(old_cummit, &revs);
 	else
-		describe_detached_head(_("Previous HEAD position was"), old_commit);
+		describe_detached_head(_("Previous HEAD position was"), old_cummit);
 
 	/* Clean up objects used, as they will be reused. */
-	repo_clear_commit_marks(the_repository, ALL_REV_FLAGS);
+	repo_clear_cummit_marks(the_repository, ALL_REV_FLAGS);
 }
 
 static int switch_branches(const struct checkout_opts *opts,
@@ -1098,7 +1098,7 @@ static int switch_branches(const struct checkout_opts *opts,
 	memset(&old_branch_info, 0, sizeof(old_branch_info));
 	old_branch_info.path = resolve_refdup("HEAD", 0, &rev, &flag);
 	if (old_branch_info.path)
-		old_branch_info.commit = lookup_commit_reference_gently(the_repository, &rev, 1);
+		old_branch_info.cummit = lookup_cummit_reference_gently(the_repository, &rev, 1);
 	if (!(flag & REF_ISSYMREF))
 		FREE_AND_NULL(old_branch_info.path);
 
@@ -1111,18 +1111,18 @@ static int switch_branches(const struct checkout_opts *opts,
 
 	if (opts->new_orphan_branch && opts->orphan_from_empty_tree) {
 		if (new_branch_info->name)
-			BUG("'switch --orphan' should never accept a commit as starting point");
-		new_branch_info->commit = NULL;
+			BUG("'switch --orphan' should never accept a cummit as starting point");
+		new_branch_info->cummit = NULL;
 		new_branch_info->name = xstrdup("(empty)");
 		do_merge = 1;
 	}
 
 	if (!new_branch_info->name) {
 		new_branch_info->name = xstrdup("HEAD");
-		new_branch_info->commit = old_branch_info.commit;
-		if (!new_branch_info->commit)
+		new_branch_info->cummit = old_branch_info.cummit;
+		if (!new_branch_info->cummit)
 			die(_("You are on a branch yet to be born"));
-		parse_commit_or_die(new_branch_info->commit);
+		parse_cummit_or_die(new_branch_info->cummit);
 
 		if (opts->only_merge_on_switching_branches)
 			do_merge = 0;
@@ -1136,12 +1136,12 @@ static int switch_branches(const struct checkout_opts *opts,
 		}
 	}
 
-	if (!opts->quiet && !old_branch_info.path && old_branch_info.commit && new_branch_info->commit != old_branch_info.commit)
-		orphaned_commit_warning(old_branch_info.commit, new_branch_info->commit);
+	if (!opts->quiet && !old_branch_info.path && old_branch_info.cummit && new_branch_info->cummit != old_branch_info.cummit)
+		orphaned_cummit_warning(old_branch_info.cummit, new_branch_info->cummit);
 
 	update_refs_for_switch(opts, &old_branch_info, new_branch_info);
 
-	ret = post_checkout_hook(old_branch_info.commit, new_branch_info->commit, 1);
+	ret = post_checkout_hook(old_branch_info.cummit, new_branch_info->cummit, 1);
 	branch_info_release(&old_branch_info);
 
 	return ret || writeout_error;
@@ -1185,13 +1185,13 @@ static void setup_new_branch_info_and_source_tree(
 		/* not an existing branch */
 		FREE_AND_NULL(new_branch_info->path);
 
-	new_branch_info->commit = lookup_commit_reference_gently(the_repository, rev, 1);
-	if (!new_branch_info->commit) {
-		/* not a commit */
+	new_branch_info->cummit = lookup_cummit_reference_gently(the_repository, rev, 1);
+	if (!new_branch_info->cummit) {
+		/* not a cummit */
 		*source_tree = parse_tree_indirect(rev);
 	} else {
-		parse_commit_or_die(new_branch_info->commit);
-		*source_tree = get_commit_tree(new_branch_info->commit);
+		parse_cummit_or_die(new_branch_info->cummit);
+		*source_tree = get_cummit_tree(new_branch_info->cummit);
 	}
 }
 
@@ -1252,13 +1252,13 @@ static int parse_branchname_arg(int argc, const char **argv,
 	 *
 	 * case 3: git checkout <something> [--]
 	 *
-	 *   (a) If <something> is a commit, that is to
+	 *   (a) If <something> is a cummit, that is to
 	 *       switch to the branch or detach HEAD at it.  As a special case,
 	 *       if <something> is A...B (missing A or B means HEAD but you can
 	 *       omit at most one side), and if there is a unique merge base
 	 *       between A and B, A...B names that merge base.
 	 *
-	 *   (b) If <something> is _not_ a commit, either "--" is present
+	 *   (b) If <something> is _not_ a cummit, either "--" is present
 	 *       or <something> is not a path, no -t or -b was given, and
 	 *       and there is a tracking branch whose name is <something>
 	 *       in one and only one remote (or if the branch exists on the
@@ -1312,7 +1312,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 	if (get_oid_mb(arg, rev)) {
 		/*
 		 * Either case (3) or (4), with <something> not being
-		 * a commit, or an attempt to use case (1) with an
+		 * a cummit, or an attempt to use case (1) with an
 		 * invalid ref.
 		 *
 		 * It's likely an error, but we need to find out if
@@ -1416,17 +1416,17 @@ static void die_expecting_a_branch(const struct branch_info *branch_info)
 		else
 			code = die_message(_("a branch is expected, got '%s'"), ref);
 	}
-	else if (branch_info->commit)
-		code = die_message(_("a branch is expected, got commit '%s'"), branch_info->name);
+	else if (branch_info->cummit)
+		code = die_message(_("a branch is expected, got cummit '%s'"), branch_info->name);
 	else
 		/*
 		 * This case should never happen because we already die() on
-		 * non-commit, but just in case.
+		 * non-cummit, but just in case.
 		 */
 		code = die_message(_("a branch is expected, got '%s'"), branch_info->name);
 
 	if (advice_enabled(ADVICE_SUGGEST_DETACHING_HEAD))
-		advise(_("If you want to detach HEAD at the commit, try again with the --detach option."));
+		advise(_("If you want to detach HEAD at the cummit, try again with the --detach option."));
 
 	exit(code);
 }
@@ -1501,15 +1501,15 @@ static int checkout_branch(struct checkout_opts *opts,
 	} else if (opts->track == BRANCH_TRACK_UNSPECIFIED)
 		opts->track = git_branch_track;
 
-	if (new_branch_info->name && !new_branch_info->commit)
-		die(_("Cannot switch branch to a non-commit '%s'"),
+	if (new_branch_info->name && !new_branch_info->cummit)
+		die(_("Cannot switch branch to a non-cummit '%s'"),
 		    new_branch_info->name);
 
 	if (!opts->switch_branch_doing_nothing_is_ok &&
 	    !new_branch_info->name &&
 	    !opts->new_branch &&
 	    !opts->force_detach)
-		die(_("missing branch or commit argument"));
+		die(_("missing branch or cummit argument"));
 
 	if (!opts->implicit_detach &&
 	    !opts->force_detach &&
@@ -1532,7 +1532,7 @@ static int checkout_branch(struct checkout_opts *opts,
 		free(head_ref);
 	}
 
-	if (!new_branch_info->commit && opts->new_branch) {
+	if (!new_branch_info->cummit && opts->new_branch) {
 		struct object_id rev;
 		int flag;
 
@@ -1566,7 +1566,7 @@ static struct option *add_common_switch_branch_options(
 	struct checkout_opts *opts, struct option *prevopts)
 {
 	struct option options[] = {
-		OPT_BOOL('d', "detach", &opts->force_detach, N_("detach HEAD at named commit")),
+		OPT_BOOL('d', "detach", &opts->force_detach, N_("detach HEAD at named cummit")),
 		OPT_CALLBACK_F('t', "track",  &opts->track, "(direct|inherit)",
 			N_("set branch tracking configuration"),
 			PARSE_OPT_OPTARG,
@@ -1756,8 +1756,8 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 		 * Try to give more helpful suggestion.
 		 * new_branch && argc > 1 will be caught later.
 		 */
-		if (opts->new_branch && argc == 1 && !new_branch_info->commit)
-			die(_("'%s' is not a commit and a branch '%s' cannot be created from it"),
+		if (opts->new_branch && argc == 1 && !new_branch_info->cummit)
+			die(_("'%s' is not a cummit and a branch '%s' cannot be created from it"),
 				argv[0], opts->new_branch);
 
 		if (opts->force_detach)

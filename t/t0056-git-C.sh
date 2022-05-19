@@ -8,7 +8,7 @@ test_expect_success '"git -C <path>" runs git from the directory <path>' '
 	test_create_repo dir1 &&
 	echo 1 >dir1/a.txt &&
 	msg="initial in dir1" &&
-	(cd dir1 && git add a.txt && git commit -m "$msg") &&
+	(cd dir1 && git add a.txt && git cummit -m "$msg") &&
 	echo "$msg" >expected &&
 	git -C dir1 log --format=%s >actual &&
 	test_cmp expected actual
@@ -30,7 +30,7 @@ test_expect_success 'Multiple -C options: "-C dir1 -C dir2" is equivalent to "-C
 	git -C dir1/dir2 add b.txt &&
 	msg="initial in dir1/dir2" &&
 	echo "$msg" >expected &&
-	git -C dir1/dir2 commit -m "$msg" &&
+	git -C dir1/dir2 cummit -m "$msg" &&
 	git -C dir1 -C dir2 log --format=%s >actual &&
 	test_cmp expected actual
 '
@@ -42,7 +42,7 @@ test_expect_success 'Effect on --git-dir option: "-C c --git-dir=a.git" is equiv
 	(cd c/a.git && git init --bare) &&
 	echo 1 >c/a/a.txt &&
 	git --git-dir c/a.git --work-tree=c/a add a.txt &&
-	git --git-dir c/a.git --work-tree=c/a commit -m "initial" &&
+	git --git-dir c/a.git --work-tree=c/a cummit -m "initial" &&
 	git --git-dir=c/a.git log -1 --format=%s >expected &&
 	git -C c --git-dir=a.git log -1 --format=%s >actual &&
 	test_cmp expected actual

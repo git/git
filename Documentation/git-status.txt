@@ -14,12 +14,12 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Displays paths that have differences between the index file and the
-current HEAD commit, paths that have differences between the working
+current HEAD cummit, paths that have differences between the working
 tree and the index file, and paths in the working tree that are not
 tracked by Git (and are not ignored by linkgit:gitignore[5]). The first
-are what you _would_ commit by running `git commit`; the second and
-third are what you _could_ commit by running 'git add' before running
-`git commit`.
+are what you _would_ cummit by running `git cummit`; the second and
+third are what you _could_ cummit by running 'git add' before running
+`git cummit`.
 
 OPTIONS
 -------
@@ -50,7 +50,7 @@ This is optional and defaults to the original version 'v1' format.
 -v::
 --verbose::
 	In addition to the names of files that have been changed, also
-	show the textual changes that are staged to be committed
+	show the textual changes that are staged to be cummitted
 	(i.e., like the output of `git diff --cached`). If `-v` is specified
 	twice, then also show the changes in the working tree that
 	have not yet been staged (i.e., like the output of `git diff`).
@@ -88,13 +88,13 @@ configuration variable documented in linkgit:git-config[1].
 	Ignore changes to submodules when looking for changes. <when> can be
 	either "none", "untracked", "dirty" or "all", which is the default.
 	Using "none" will consider the submodule modified when it either contains
-	untracked or modified files or its HEAD differs from the commit recorded
+	untracked or modified files or its HEAD differs from the cummit recorded
 	in the superproject and can be used to override any settings of the
 	'ignore' option in linkgit:git-config[1] or linkgit:gitmodules[5]. When
 	"untracked" is used submodules are not considered dirty when they only
 	contain untracked content (but they are still scanned for modified
 	content). Using "dirty" ignores all changes to the work tree of submodules,
-	only changes to the commits stored in the superproject are shown (this was
+	only changes to the cummits stored in the superproject are shown (this was
 	the behavior before 1.7.0). Using "all" hides all changes to submodules
 	(and suppresses the output of submodule summaries when the config option
 	`status.submoduleSummary` is set).
@@ -154,7 +154,7 @@ ignored, then the directory is not shown, but all contents are shown.
 
 OUTPUT
 ------
-The output from this command is designed to be used as a commit
+The output from this command is designed to be used as a cummit
 template comment.
 The default, long format, is designed to be human readable,
 verbose and descriptive.  Its contents and format are subject to change
@@ -250,7 +250,7 @@ Submodules have more state and instead report
 		m    the submodule has modified content
 		?    the submodule has untracked files
 since modified content or untracked files in a submodule cannot be added
-via `git add` in the superproject to prepare a commit.
+via `git add` in the superproject to prepare a cummit.
 
 'm' and '?' are applied recursively. For example if a nested submodule
 in a submodule contains an untracked file, this is reported as '?' as well.
@@ -306,11 +306,11 @@ information about the current branch.
 ....
 Line                                     Notes
 ------------------------------------------------------------
-# branch.oid <commit> | (initial)        Current commit.
+# branch.oid <cummit> | (initial)        Current cummit.
 # branch.head <branch> | (detached)      Current branch.
 # branch.upstream <upstream_branch>      If upstream is set.
 # branch.ab +<ahead> -<behind>           If upstream is set and
-					 the commit is present.
+					 the cummit is present.
 ------------------------------------------------------------
 ....
 
@@ -349,7 +349,7 @@ Field       Meaning
 <sub>       A 4 character field describing the submodule state.
 	    "N..." when the entry is not a submodule.
 	    "S<c><m><u>" when the entry is a submodule.
-	    <c> is "C" if the commit changed; otherwise ".".
+	    <c> is "C" if the cummit changed; otherwise ".".
 	    <m> is "M" if it has tracked changes; otherwise ".".
 	    <u> is "U" if there are untracked changes; otherwise ".".
 <mH>        The octal file mode in HEAD.
@@ -365,7 +365,7 @@ Field       Meaning
 <sep>       When the `-z` option is used, the 2 pathnames are separated
 	    with a NUL (ASCII 0x00) byte; otherwise, a tab (ASCII 0x09)
 	    byte separates them.
-<origPath>  The pathname in the commit at HEAD or in the index.
+<origPath>  The pathname in the cummit at HEAD or in the index.
 	    This is only present in a renamed/copied entry, and
 	    tells where the renamed/copied contents came from.
 --------------------------------------------------------
@@ -435,7 +435,7 @@ directory.
 
 If `status.submoduleSummary` is set to a non zero number or true (identical
 to -1 or an unlimited number), the submodule summary will be enabled for
-the long format and a summary of commits for modified submodules will be
+the long format and a summary of cummits for modified submodules will be
 shown (see --summary-limit option of linkgit:git-submodule[1]). Please note
 that the summary output from the status command will be suppressed for all
 submodules when `diff.ignoreSubmodules` is set to 'all' or only for those

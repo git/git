@@ -260,8 +260,8 @@ tr.dark:hover {
 	background-color: #edece6;
 }
 
-/* boundary commits in 'blame' view */
-/* and commits without "previous" */
+/* boundary cummits in 'blame' view */
+/* and cummits without "previous" */
 tr.boundary td.sha1,
 tr.no-previous td.linenr {
 	font-weight: bold;
@@ -325,7 +325,7 @@ table.diff_tree span.file_status.copied {
   color: #70a070;
 }
 
-/* noage: "No commits" */
+/* noage: "No cummits" */
 table.project_list td.noage {
 	color: #808080;
 	font-style: italic;
@@ -387,7 +387,7 @@ td.size {
 	text-align: right;
 }
 
-/* styling of diffs (patchsets): commitdiff and blobdiff views */
+/* styling of diffs (patchsets): cummitdiff and blobdiff views */
 div.diff.header,
 div.diff.extended_header {
 	white-space: normal;

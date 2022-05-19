@@ -1,7 +1,7 @@
 #include "cache.h"
 #include "config.h"
 #include "tag.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tree.h"
 #include "blob.h"
 #include "tree-walk.h"
@@ -14,10 +14,10 @@
 #include "repository.h"
 #include "submodule.h"
 #include "midx.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 #include "date.h"
 
-static int get_oid_oneline(struct repository *r, const char *, struct object_id *, struct commit_list *);
+static int get_oid_oneline(struct repository *r, const char *, struct object_id *, struct cummit_list *);
 
 typedef int (*disambiguate_hint_fn)(struct repository *, const struct object_id *, void *);
 
@@ -221,15 +221,15 @@ static int finish_object_disambiguation(struct disambiguate_state *ds,
 	return 0;
 }
 
-static int disambiguate_commit_only(struct repository *r,
+static int disambiguate_cummit_only(struct repository *r,
 				    const struct object_id *oid,
 				    void *cb_data_unused)
 {
 	int kind = oid_object_info(r, oid, NULL);
-	return kind == OBJ_COMMIT;
+	return kind == OBJ_cummit;
 }
 
-static int disambiguate_committish_only(struct repository *r,
+static int disambiguate_cummittish_only(struct repository *r,
 					const struct object_id *oid,
 					void *cb_data_unused)
 {
@@ -237,14 +237,14 @@ static int disambiguate_committish_only(struct repository *r,
 	int kind;
 
 	kind = oid_object_info(r, oid, NULL);
-	if (kind == OBJ_COMMIT)
+	if (kind == OBJ_cummit)
 		return 1;
 	if (kind != OBJ_TAG)
 		return 0;
 
 	/* We need to do this the hard way... */
 	obj = deref_tag(r, parse_object(r, oid), NULL, 0);
-	if (obj && obj->type == OBJ_COMMIT)
+	if (obj && obj->type == OBJ_cummit)
 		return 1;
 	return 0;
 }
@@ -265,14 +265,14 @@ static int disambiguate_treeish_only(struct repository *r,
 	int kind;
 
 	kind = oid_object_info(r, oid, NULL);
-	if (kind == OBJ_TREE || kind == OBJ_COMMIT)
+	if (kind == OBJ_TREE || kind == OBJ_cummit)
 		return 1;
 	if (kind != OBJ_TAG)
 		return 0;
 
 	/* We need to do this the hard way... */
 	obj = deref_tag(r, parse_object(r, oid), NULL, 0);
-	if (obj && (obj->type == OBJ_TREE || obj->type == OBJ_COMMIT))
+	if (obj && (obj->type == OBJ_TREE || obj->type == OBJ_cummit))
 		return 1;
 	return 0;
 }
@@ -294,8 +294,8 @@ int set_disambiguate_hint_config(const char *var, const char *value)
 		disambiguate_hint_fn fn;
 	} hints[] = {
 		{ "none", NULL },
-		{ "commit", disambiguate_commit_only },
-		{ "committish", disambiguate_committish_only },
+		{ "cummit", disambiguate_cummit_only },
+		{ "cummittish", disambiguate_cummittish_only },
 		{ "tree", disambiguate_tree_only },
 		{ "treeish", disambiguate_treeish_only },
 		{ "blob", disambiguate_blob_only }
@@ -383,28 +383,28 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 		goto out;
 	}
 
-	assert(type == OBJ_TREE || type == OBJ_COMMIT ||
+	assert(type == OBJ_TREE || type == OBJ_cummit ||
 	       type == OBJ_BLOB || type == OBJ_TAG);
 
-	if (type == OBJ_COMMIT) {
+	if (type == OBJ_cummit) {
 		struct strbuf date = STRBUF_INIT;
 		struct strbuf msg = STRBUF_INIT;
-		struct commit *commit = lookup_commit(ds->repo, oid);
+		struct cummit *cummit = lookup_cummit(ds->repo, oid);
 
-		if (commit) {
+		if (cummit) {
 			struct pretty_print_context pp = {0};
 			pp.date_mode.type = DATE_SHORT;
-			format_commit_message(commit, "%ad", &date, &pp);
-			format_commit_message(commit, "%s", &msg, &pp);
+			format_cummit_message(cummit, "%ad", &date, &pp);
+			format_cummit_message(cummit, "%s", &msg, &pp);
 		}
 
 		/*
-		 * TRANSLATORS: This is a line of ambiguous commit
+		 * TRANSLATORS: This is a line of ambiguous cummit
 		 * object output. E.g.:
 		 *
-		 *    "deadbeef commit 2021-01-01 - Some Commit Message"
+		 *    "deadbeef cummit 2021-01-01 - Some cummit Message"
 		 */
-		strbuf_addf(sb, _("%s commit %s - %s"), hash, date.buf,
+		strbuf_addf(sb, _("%s cummit %s - %s"), hash, date.buf,
 			    msg.buf);
 
 		strbuf_release(&date);
@@ -496,13 +496,13 @@ static int sort_ambiguous(const void *a, const void *b, void *ctx)
 		return oidcmp(a, b);
 
 	/*
-	 * Between object types show tags, then commits, and finally
+	 * Between object types show tags, then cummits, and finally
 	 * trees and blobs.
 	 *
-	 * The object_type enum is commit, tree, blob, tag, but we
-	 * want tag, commit, tree blob. Cleverly (perhaps too
+	 * The object_type enum is cummit, tree, blob, tag, but we
+	 * want tag, cummit, tree blob. Cleverly (perhaps too
 	 * cleverly) do that with modulus, since the enum assigns 1 to
-	 * commit, so tag becomes 0.
+	 * cummit, so tag becomes 0.
 	 */
 	a_type_sort = a_type % 4;
 	b_type_sort = b_type % 4;
@@ -529,10 +529,10 @@ static enum get_oid_result get_short_oid(struct repository *r,
 	if (HAS_MULTI_BITS(flags & GET_OID_DISAMBIGUATORS))
 		BUG("multiple get_short_oid disambiguator flags");
 
-	if (flags & GET_OID_COMMIT)
-		ds.fn = disambiguate_commit_only;
-	else if (flags & GET_OID_COMMITTISH)
-		ds.fn = disambiguate_committish_only;
+	if (flags & GET_OID_cummit)
+		ds.fn = disambiguate_cummit_only;
+	else if (flags & GET_OID_cummitTISH)
+		ds.fn = disambiguate_cummittish_only;
 	else if (flags & GET_OID_TREE)
 		ds.fn = disambiguate_tree_only;
 	else if (flags & GET_OID_TREEISH)
@@ -1029,20 +1029,20 @@ static enum get_oid_result get_parent(struct repository *r,
 {
 	struct object_id oid;
 	enum get_oid_result ret = get_oid_1(r, name, len, &oid,
-					    GET_OID_COMMITTISH);
-	struct commit *commit;
-	struct commit_list *p;
+					    GET_OID_cummitTISH);
+	struct cummit *cummit;
+	struct cummit_list *p;
 
 	if (ret)
 		return ret;
-	commit = lookup_commit_reference(r, &oid);
-	if (parse_commit(commit))
+	cummit = lookup_cummit_reference(r, &oid);
+	if (parse_cummit(cummit))
 		return MISSING_OBJECT;
 	if (!idx) {
-		oidcpy(result, &commit->object.oid);
+		oidcpy(result, &cummit->object.oid);
 		return FOUND;
 	}
-	p = commit->parents;
+	p = cummit->parents;
 	while (p) {
 		if (!--idx) {
 			oidcpy(result, &p->item->object.oid);
@@ -1059,22 +1059,22 @@ static enum get_oid_result get_nth_ancestor(struct repository *r,
 					    int generation)
 {
 	struct object_id oid;
-	struct commit *commit;
+	struct cummit *cummit;
 	int ret;
 
-	ret = get_oid_1(r, name, len, &oid, GET_OID_COMMITTISH);
+	ret = get_oid_1(r, name, len, &oid, GET_OID_cummitTISH);
 	if (ret)
 		return ret;
-	commit = lookup_commit_reference(r, &oid);
-	if (!commit)
+	cummit = lookup_cummit_reference(r, &oid);
+	if (!cummit)
 		return MISSING_OBJECT;
 
 	while (generation--) {
-		if (parse_commit(commit) || !commit->parents)
+		if (parse_cummit(cummit) || !cummit->parents)
 			return MISSING_OBJECT;
-		commit = commit->parents->item;
+		cummit = cummit->parents->item;
 	}
-	oidcpy(result, &commit->object.oid);
+	oidcpy(result, &cummit->object.oid);
 	return FOUND;
 }
 
@@ -1090,8 +1090,8 @@ struct object *repo_peel_to_type(struct repository *r, const char *name, int nam
 			return o;
 		if (o->type == OBJ_TAG)
 			o = ((struct tag*) o)->tagged;
-		else if (o->type == OBJ_COMMIT)
-			o = &(repo_get_commit_tree(r, ((struct commit *)o))->object);
+		else if (o->type == OBJ_cummit)
+			o = &(repo_get_cummit_tree(r, ((struct cummit *)o))->object);
 		else {
 			if (name)
 				error("%.*s: expected %s type, but the object "
@@ -1116,8 +1116,8 @@ static int peel_onion(struct repository *r, const char *name, int len,
 	 * dereference anymore, or you get an object of given type,
 	 * whichever comes first.  "ref^{}" means just dereference
 	 * tags until you get a non-tag.  "ref^0" is a shorthand for
-	 * "ref^{commit}".  "commit^{tree}" could be used to find the
-	 * top-level tree of the given commit.
+	 * "ref^{cummit}".  "cummit^{tree}" could be used to find the
+	 * top-level tree of the given cummit.
 	 */
 	if (len < 4 || name[len-1] != '}')
 		return -1;
@@ -1131,8 +1131,8 @@ static int peel_onion(struct repository *r, const char *name, int len,
 		return -1;
 
 	sp++; /* beginning of type name, or closing brace for empty */
-	if (starts_with(sp, "commit}"))
-		expected_type = OBJ_COMMIT;
+	if (starts_with(sp, "cummit}"))
+		expected_type = OBJ_cummit;
 	else if (starts_with(sp, "tag}"))
 		expected_type = OBJ_TAG;
 	else if (starts_with(sp, "tree}"))
@@ -1144,13 +1144,13 @@ static int peel_onion(struct repository *r, const char *name, int len,
 	else if (sp[0] == '}')
 		expected_type = OBJ_NONE;
 	else if (sp[0] == '/')
-		expected_type = OBJ_COMMIT;
+		expected_type = OBJ_cummit;
 	else
 		return -1;
 
 	lookup_flags &= ~GET_OID_DISAMBIGUATORS;
-	if (expected_type == OBJ_COMMIT)
-		lookup_flags |= GET_OID_COMMITTISH;
+	if (expected_type == OBJ_cummit)
+		lookup_flags |= GET_OID_cummitTISH;
 	else if (expected_type == OBJ_TREE)
 		lookup_flags |= GET_OID_TREEISH;
 
@@ -1179,20 +1179,20 @@ static int peel_onion(struct repository *r, const char *name, int len,
 
 	oidcpy(oid, &o->oid);
 	if (sp[0] == '/') {
-		/* "$commit^{/foo}" */
+		/* "$cummit^{/foo}" */
 		char *prefix;
 		int ret;
-		struct commit_list *list = NULL;
+		struct cummit_list *list = NULL;
 
 		/*
-		 * $commit^{/}. Some regex implementation may reject.
+		 * $cummit^{/}. Some regex implementation may reject.
 		 * We don't need regex anyway. '' pattern always matches.
 		 */
 		if (sp[1] == '}')
 			return 0;
 
 		prefix = xstrndup(sp + 1, name + len - 1 - (sp + 1));
-		commit_list_insert((struct commit *)o, &list);
+		cummit_list_insert((struct cummit *)o, &list);
 		ret = get_oid_oneline(r, prefix, oid, list);
 		free(prefix);
 		return ret;
@@ -1205,7 +1205,7 @@ static int get_describe_name(struct repository *r,
 			     struct object_id *oid)
 {
 	const char *cp;
-	unsigned flags = GET_OID_QUIETLY | GET_OID_COMMIT;
+	unsigned flags = GET_OID_QUIETLY | GET_OID_cummit;
 
 	for (cp = name + len - 1; name + 2 <= cp; cp--) {
 		char ch = *cp;
@@ -1286,7 +1286,7 @@ static enum get_oid_result get_oid_1(struct repository *r,
 
 /*
  * This interprets names like ':/Initial revision of "git"' by searching
- * through history and returning the first commit whose message starts
+ * through history and returning the first cummit whose message starts
  * the given regular expression.
  *
  * For negative-matching, prefix the pattern-part with '!-', like: ':/!-WIP'.
@@ -1302,14 +1302,14 @@ static enum get_oid_result get_oid_1(struct repository *r,
 
 struct handle_one_ref_cb {
 	struct repository *repo;
-	struct commit_list **list;
+	struct cummit_list **list;
 };
 
 static int handle_one_ref(const char *path, const struct object_id *oid,
 			  int flag, void *cb_data)
 {
 	struct handle_one_ref_cb *cb = cb_data;
-	struct commit_list **list = cb->list;
+	struct cummit_list **list = cb->list;
 	struct object *object = parse_object(cb->repo, oid);
 	if (!object)
 		return 0;
@@ -1319,17 +1319,17 @@ static int handle_one_ref(const char *path, const struct object_id *oid,
 		if (!object)
 			return 0;
 	}
-	if (object->type != OBJ_COMMIT)
+	if (object->type != OBJ_cummit)
 		return 0;
-	commit_list_insert((struct commit *)object, list);
+	cummit_list_insert((struct cummit *)object, list);
 	return 0;
 }
 
 static int get_oid_oneline(struct repository *r,
 			   const char *prefix, struct object_id *oid,
-			   struct commit_list *list)
+			   struct cummit_list *list)
 {
-	struct commit_list *backup = NULL, *l;
+	struct cummit_list *backup = NULL, *l;
 	int found = 0;
 	int negative = 0;
 	regex_t regex;
@@ -1350,32 +1350,32 @@ static int get_oid_oneline(struct repository *r,
 
 	for (l = list; l; l = l->next) {
 		l->item->object.flags |= ONELINE_SEEN;
-		commit_list_insert(l->item, &backup);
+		cummit_list_insert(l->item, &backup);
 	}
 	while (list) {
 		const char *p, *buf;
-		struct commit *commit;
+		struct cummit *cummit;
 		int matches;
 
-		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
-		if (!parse_object(r, &commit->object.oid))
+		cummit = pop_most_recent_cummit(&list, ONELINE_SEEN);
+		if (!parse_object(r, &cummit->object.oid))
 			continue;
-		buf = get_commit_buffer(commit, NULL);
+		buf = get_cummit_buffer(cummit, NULL);
 		p = strstr(buf, "\n\n");
 		matches = negative ^ (p && !regexec(&regex, p + 2, 0, NULL, 0));
-		unuse_commit_buffer(commit, buf);
+		unuse_cummit_buffer(cummit, buf);
 
 		if (matches) {
-			oidcpy(oid, &commit->object.oid);
+			oidcpy(oid, &cummit->object.oid);
 			found = 1;
 			break;
 		}
 	}
 	regfree(&regex);
-	free_commit_list(list);
+	free_cummit_list(list);
 	for (l = backup; l; l = l->next)
-		clear_commit_marks(l->item, ONELINE_SEEN);
-	free_commit_list(backup);
+		clear_cummit_marks(l->item, ONELINE_SEEN);
+	free_cummit_list(backup);
 	return found ? 0 : -1;
 }
 
@@ -1449,8 +1449,8 @@ int repo_get_oid_mb(struct repository *r,
 		    const char *name,
 		    struct object_id *oid)
 {
-	struct commit *one, *two;
-	struct commit_list *mbs;
+	struct cummit *one, *two;
+	struct cummit_list *mbs;
 	struct object_id oid_tmp;
 	const char *dots;
 	int st;
@@ -1464,18 +1464,18 @@ int repo_get_oid_mb(struct repository *r,
 		struct strbuf sb;
 		strbuf_init(&sb, dots - name);
 		strbuf_add(&sb, name, dots - name);
-		st = repo_get_oid_committish(r, sb.buf, &oid_tmp);
+		st = repo_get_oid_cummittish(r, sb.buf, &oid_tmp);
 		strbuf_release(&sb);
 	}
 	if (st)
 		return st;
-	one = lookup_commit_reference_gently(r, &oid_tmp, 0);
+	one = lookup_cummit_reference_gently(r, &oid_tmp, 0);
 	if (!one)
 		return -1;
 
-	if (repo_get_oid_committish(r, dots[3] ? (dots + 3) : "HEAD", &oid_tmp))
+	if (repo_get_oid_cummittish(r, dots[3] ? (dots + 3) : "HEAD", &oid_tmp))
 		return -1;
-	two = lookup_commit_reference_gently(r, &oid_tmp, 0);
+	two = lookup_cummit_reference_gently(r, &oid_tmp, 0);
 	if (!two)
 		return -1;
 	mbs = repo_get_merge_bases(r, one, two);
@@ -1485,7 +1485,7 @@ int repo_get_oid_mb(struct repository *r,
 		st = 0;
 		oidcpy(oid, &mbs->item->object.oid);
 	}
-	free_commit_list(mbs);
+	free_cummit_list(mbs);
 	return st;
 }
 
@@ -1722,21 +1722,21 @@ int get_oidf(struct object_id *oid, const char *fmt, ...)
 }
 
 /*
- * Many callers know that the user meant to name a commit-ish by
+ * Many callers know that the user meant to name a cummit-ish by
  * syntactical positions where the object name appears.  Calling this
  * function allows the machinery to disambiguate shorter-than-unique
- * abbreviated object names between commit-ish and others.
+ * abbreviated object names between cummit-ish and others.
  *
  * Note that this does NOT error out when the named object is not a
- * commit-ish. It is merely to give a hint to the disambiguation
+ * cummit-ish. It is merely to give a hint to the disambiguation
  * machinery.
  */
-int repo_get_oid_committish(struct repository *r,
+int repo_get_oid_cummittish(struct repository *r,
 			    const char *name,
 			    struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(r, name, GET_OID_COMMITTISH,
+	return get_oid_with_context(r, name, GET_OID_cummitTISH,
 				    oid, &unused);
 }
 
@@ -1749,12 +1749,12 @@ int repo_get_oid_treeish(struct repository *r,
 				    oid, &unused);
 }
 
-int repo_get_oid_commit(struct repository *r,
+int repo_get_oid_cummit(struct repository *r,
 			const char *name,
 			struct object_id *oid)
 {
 	struct object_context unused;
-	return get_oid_with_context(r, name, GET_OID_COMMIT,
+	return get_oid_with_context(r, name, GET_OID_cummit,
 				    oid, &unused);
 }
 
@@ -1907,7 +1907,7 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 	 * :path -> object name of absolute path in index
 	 * :./path -> object name of path relative to cwd in index
 	 * :[0-3]:path -> object name of path in index at stage
-	 * :/foo -> recent commit matching foo
+	 * :/foo -> recent cummit matching foo
 	 */
 	if (name[0] == ':') {
 		int stage = 0;
@@ -1916,13 +1916,13 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 		int pos;
 		if (!only_to_die && namelen > 2 && name[1] == '/') {
 			struct handle_one_ref_cb cb;
-			struct commit_list *list = NULL;
+			struct cummit_list *list = NULL;
 
 			cb.repo = repo;
 			cb.list = &list;
 			refs_for_each_ref(get_main_ref_store(repo), handle_one_ref, &cb);
 			refs_head_ref(get_main_ref_store(repo), handle_one_ref, &cb);
-			commit_list_sort_by_date(&list);
+			cummit_list_sort_by_date(&list);
 			return get_oid_oneline(repo, name + 2, oid, list);
 		}
 		if (namelen < 3 ||

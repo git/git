@@ -9,7 +9,7 @@
 #include "config.h"
 #include "blob.h"
 #include "tree.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "tree-walk.h"
 #include "builtin.h"
@@ -494,7 +494,7 @@ static int grep_submodule(struct grep_opt *opt,
 
 		init_tree_desc(&tree, data, size);
 		hit = grep_tree(&subopt, pathspec, &tree, &base, base.len,
-				object_type == OBJ_COMMIT);
+				object_type == OBJ_cummit);
 		strbuf_release(&base);
 		free(data);
 	} else {
@@ -645,7 +645,7 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 {
 	if (obj->type == OBJ_BLOB)
 		return grep_oid(opt, &obj->oid, name, 0, path);
-	if (obj->type == OBJ_COMMIT || obj->type == OBJ_TREE) {
+	if (obj->type == OBJ_cummit || obj->type == OBJ_TREE) {
 		struct tree_desc tree;
 		void *data;
 		unsigned long size;
@@ -666,7 +666,7 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		}
 		init_tree_desc(&tree, data, size);
 		hit = grep_tree(opt, pathspec, &tree, &base, base.len,
-				obj->type == OBJ_COMMIT);
+				obj->type == OBJ_cummit);
 		strbuf_release(&base);
 		free(data);
 		return hit;

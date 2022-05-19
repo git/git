@@ -8,7 +8,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'setup' "
 	echo 'binaryQfileQm[*]cQ*æQð' | q_to_nul >a &&
 	git add a &&
-	git commit -m.
+	git cummit -m.
 "
 
 test_expect_success 'git grep ina a' '
@@ -95,7 +95,7 @@ test_expect_success 'grep --cached respects binary diff attribute (2)' '
 '
 
 test_expect_success 'grep revision respects binary diff attribute' '
-	git commit -m new &&
+	git cummit -m new &&
 	echo "Binary file HEAD:t matches" >expect &&
 	git grep text HEAD -- t >actual &&
 	test_when_finished "git reset HEAD^" &&

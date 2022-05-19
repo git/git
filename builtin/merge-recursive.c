@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "builtin.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "merge-recursive.h"
 #include "xdiff-interface.h"
@@ -28,7 +28,7 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
 	struct object_id h1, h2;
 	struct merge_options o;
 	char *better1, *better2;
-	struct commit *result;
+	struct cummit *result;
 
 	init_merge_options(&o, the_repository);
 	if (argv[0] && ends_with(argv[0], "-subtree"))

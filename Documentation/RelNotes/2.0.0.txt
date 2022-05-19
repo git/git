@@ -24,7 +24,7 @@ example.  Read the documentation for other possibilities.
 
 When "git add -u" and "git add -A" are run inside a subdirectory
 without specifying which paths to add on the command line, they
-operate on the entire tree for consistency with "git commit -a" and
+operate on the entire tree for consistency with "git cummit -a" and
 other commands (these commands used to operate only on the current
 subdirectory).  Say "git add -u ." or "git add -A ." if you want to
 limit the operation to the current directory.
@@ -78,7 +78,7 @@ UI, Workflows & Features
  * "git rebase" learned to interpret a lone "-" as "@{-1}", the
    branch that we were previously on.
 
- * "git commit --cleanup=<mode>" learned a new mode, scissors.
+ * "git cummit --cleanup=<mode>" learned a new mode, scissors.
 
  * "git tag --list" output can be sorted using "version sort" with
    "--sort=version:refname".
@@ -132,11 +132,11 @@ UI, Workflows & Features
    speaking, this is a backward-incompatible change, but very unlikely
    to bite any sane user and adjusting should be obvious and easy.
 
- * Many commands that create commits, e.g. "pull" and "rebase",
+ * Many commands that create cummits, e.g. "pull" and "rebase",
    learned to take the "--gpg-sign" option on the command line.
 
- * "git commit" can be told to always GPG sign the resulting commit
-   by setting the "commit.gpgsign" configuration variable to "true"
+ * "git cummit" can be told to always GPG sign the resulting cummit
+   by setting the "cummit.gpgsign" configuration variable to "true"
    (the command-line option "--no-gpg-sign" should override it).
 
  * "git pull" can be told to only accept fast-forward by setting the
@@ -237,12 +237,12 @@ notes for details).
  * A stray environment variable $prefix could have leaked into and
    affected the behaviour of the "subtree" script (in contrib/).
 
- * When it is not necessary to edit a commit log message (e.g. "git
-   commit -m" is given a message without specifying "-e"), we used to
+ * When it is not necessary to edit a cummit log message (e.g. "git
+   cummit -m" is given a message without specifying "-e"), we used to
    disable the spawning of the editor by overriding GIT_EDITOR, but
    this means all the uses of the editor, other than to edit the
-   commit log message, are also affected.
-   (merge b549be0 bp/commit-p-editor later to maint).
+   cummit log message, are also affected.
+   (merge b549be0 bp/cummit-p-editor later to maint).
 
  * "git mv" that moves a submodule forgot to adjust the array that
    uses to keep track of which submodules were to be moved to update
@@ -262,7 +262,7 @@ notes for details).
    error message when the file cannot be written or closed.
    (merge de983a0 nd/index-pack-error-message later to maint).
 
- * "rebase -i" produced a broken insn sheet when the title of a commit
+ * "rebase -i" produced a broken insn sheet when the title of a cummit
    happened to contain '\n' (or ended with '\c') due to a careless use
    of 'echo'.
    (merge cb1aefd us/printf-not-echo later to maint).
@@ -301,9 +301,9 @@ notes for details).
    by mistake.
    (merge 98b406f jk/remote-pushremote-config-reading later to maint).
 
- * Code paths that parse timestamps in commit objects have been
+ * Code paths that parse timestamps in cummit objects have been
    tightened.
-   (merge f80d1f9 jk/commit-dates-parsing-fix later to maint).
+   (merge f80d1f9 jk/cummit-dates-parsing-fix later to maint).
 
  * "git diff --external-diff" incorrectly fed the submodule directory
    in the working tree to the external diff driver when it knew that it
@@ -349,7 +349,7 @@ notes for details).
  * Attempting to deepen a shallow repository by fetching over smart
    HTTP transport failed in the protocol exchange, when the no-done
    extension was used.  The fetching side waited for the list of
-   shallow boundary commits after the sending side stopped talking to
+   shallow boundary cummits after the sending side stopped talking to
    it.
    (merge 0232852 nd/http-fetch-shallow-fix later to maint.)
 

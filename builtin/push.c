@@ -277,8 +277,8 @@ static const char message_advice_ref_already_exists[] =
 	N_("Updates were rejected because the tag already exists in the remote.");
 
 static const char message_advice_ref_needs_force[] =
-	N_("You cannot update a remote ref that points at a non-commit object,\n"
-	   "or update a remote ref to make it point at a non-commit object,\n"
+	N_("You cannot update a remote ref that points at a non-cummit object,\n"
+	   "or update a remote ref to make it point at a non-cummit object,\n"
 	   "without using the '--force' option.\n");
 
 static const char message_advice_ref_needs_update[] =

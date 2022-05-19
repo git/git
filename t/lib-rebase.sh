@@ -2,11 +2,11 @@
 
 # After setting the fake editor with this function, you can
 #
-# - override the commit message with $FAKE_COMMIT_MESSAGE
-# - amend the commit message with $FAKE_COMMIT_AMEND
-# - copy the original commit message to a file with $FAKE_MESSAGE_COPY
-# - check that non-commit messages have a certain line count with $EXPECT_COUNT
-# - check the commit count in the commit message header with $EXPECT_HEADER_COUNT
+# - override the cummit message with $FAKE_cummit_MESSAGE
+# - amend the cummit message with $FAKE_cummit_AMEND
+# - copy the original cummit message to a file with $FAKE_MESSAGE_COPY
+# - check that non-cummit messages have a certain line count with $EXPECT_COUNT
+# - check the cummit count in the cummit message header with $EXPECT_HEADER_COUNT
 # - rewrite a rebase -i script as directed by $FAKE_LINES.
 #   $FAKE_LINES consists of a sequence of words separated by spaces.
 #   The following word combinations are possible:
@@ -28,12 +28,12 @@
 set_fake_editor () {
 	write_script fake-editor.sh <<-\EOF
 	case "$1" in
-	*/COMMIT_EDITMSG)
+	*/cummit_EDITMSG)
 		test -z "$EXPECT_HEADER_COUNT" ||
-			test "$EXPECT_HEADER_COUNT" = "$(sed -n '1s/^# This is a combination of \(.*\) commits\./\1/p' < "$1")" ||
+			test "$EXPECT_HEADER_COUNT" = "$(sed -n '1s/^# This is a combination of \(.*\) cummits\./\1/p' < "$1")" ||
 			exit
-		test -z "$FAKE_COMMIT_MESSAGE" || echo "$FAKE_COMMIT_MESSAGE" > "$1"
-		test -z "$FAKE_COMMIT_AMEND" || echo "$FAKE_COMMIT_AMEND" >> "$1"
+		test -z "$FAKE_cummit_MESSAGE" || echo "$FAKE_cummit_MESSAGE" > "$1"
+		test -z "$FAKE_cummit_AMEND" || echo "$FAKE_cummit_AMEND" >> "$1"
 		test -z "$FAKE_MESSAGE_COPY" || cat "$1" >"$FAKE_MESSAGE_COPY"
 		exit
 		;;
@@ -63,7 +63,7 @@ set_fake_editor () {
 			action="badcmd";;
 		fakesha)
 			test \& != "$action" || action=pick
-			echo "$action XXXXXXX False commit" >> "$1"
+			echo "$action XXXXXXX False cummit" >> "$1"
 			action=pick;;
 		*)
 			sed -n "${line}s/^[a-z][a-z]*/$action/p" < "$1".tmp >> "$1"
@@ -109,18 +109,18 @@ reset_rebase () {
 
 cherry_pick () {
 	git cherry-pick -n "$2" &&
-	git commit -m "$1" &&
+	git cummit -m "$1" &&
 	git tag "$1"
 }
 
 revert () {
 	git revert -n "$2" &&
-	git commit -m "$1" &&
+	git cummit -m "$1" &&
 	git tag "$1"
 }
 
 make_empty () {
-	git commit --allow-empty -m "$1" &&
+	git cummit --allow-empty -m "$1" &&
 	git tag "$1"
 }
 
@@ -131,8 +131,8 @@ test_editor_unchanged () {
 	# We're only interested in exported variables hence 'sh -c'
 	sh -c 'cat >actual <<-EOF
 	EDITOR=$EDITOR
-	FAKE_COMMIT_AMEND=$FAKE_COMMIT_AMEND
-	FAKE_COMMIT_MESSAGE=$FAKE_COMMIT_MESSAGE
+	FAKE_cummit_AMEND=$FAKE_cummit_AMEND
+	FAKE_cummit_MESSAGE=$FAKE_cummit_MESSAGE
 	FAKE_LINES=$FAKE_LINES
 	GIT_EDITOR=$GIT_EDITOR
 	GIT_SEQUENCE_EDITOR=$GIT_SEQUENCE_EDITOR
@@ -141,8 +141,8 @@ test_editor_unchanged () {
 	EOF'
 	cat >expect <<-\EOF
 	EDITOR=:
-	FAKE_COMMIT_AMEND=
-	FAKE_COMMIT_MESSAGE=
+	FAKE_cummit_AMEND=
+	FAKE_cummit_MESSAGE=
 	FAKE_LINES=
 	GIT_EDITOR=
 	GIT_SEQUENCE_EDITOR=
@@ -153,7 +153,7 @@ test_editor_unchanged () {
 }
 
 # Set up an editor for testing reword commands
-# Checks that there are no uncommitted changes when rewording and that the
+# Checks that there are no uncummitted changes when rewording and that the
 # todo-list is reread after each
 set_reword_editor () {
 	>reword-actual &&
@@ -172,7 +172,7 @@ set_reword_editor () {
 	EOF
 
 	write_script reword-editor.sh <<-EOF &&
-	# Save the oid of the first reworded commit so we can check rebase
+	# Save the oid of the first reworded cummit so we can check rebase
 	# fast-forwards to it. Also check that we do not write .git/MERGE_MSG
 	# when fast-forwarding
 	if ! test -s reword-oid
@@ -184,7 +184,7 @@ set_reword_editor () {
 			exit 1
 		fi
 	fi &&
-	# There should be no uncommited changes
+	# There should be no uncummited changes
 	git diff --exit-code HEAD &&
 	# The todo-list should be re-read after a reword
 	GIT_SEQUENCE_EDITOR="\"$PWD/reword-sequence-editor.sh\"" \
@@ -196,10 +196,10 @@ set_reword_editor () {
 }
 
 # Check the results of a rebase after calling set_reword_editor
-# Pass the commits that were reworded in the order that they were picked
+# Pass the cummits that were reworded in the order that they were picked
 # Expects the first pick to be a fast-forward
-check_reworded_commits () {
-	test_cmp_rev "$(cat reword-oid)" "$1^{commit}" &&
+check_reworded_cummits () {
+	test_cmp_rev "$(cat reword-oid)" "$1^{cummit}" &&
 	git log --format="%an <%ae> %at%n%B%nedited%n" --no-walk=unsorted "$@" \
 		>reword-expected &&
 	test_cmp reword-expected reword-actual &&

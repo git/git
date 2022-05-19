@@ -4,13 +4,13 @@ test_description='am --interactive tests'
 . ./test-lib.sh
 
 test_expect_success 'set up patches to apply' '
-	test_commit unrelated &&
-	test_commit no-conflict &&
-	test_commit conflict-patch file patch &&
+	test_cummit unrelated &&
+	test_cummit no-conflict &&
+	test_cummit conflict-patch file patch &&
 	git format-patch --stdout -2 >mbox &&
 
 	git reset --hard unrelated &&
-	test_commit conflict-main file main base
+	test_cummit conflict-main file main base
 '
 
 # Sanity check our setup.

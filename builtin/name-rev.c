@@ -2,14 +2,14 @@
 #include "cache.h"
 #include "repository.h"
 #include "config.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "refs.h"
 #include "parse-options.h"
 #include "prio-queue.h"
 #include "hash-lookup.h"
-#include "commit-slab.h"
-#include "commit-graph.h"
+#include "cummit-slab.h"
+#include "cummit-graph.h"
 
 /*
  * One day.  See the 'name a rev shortly after epoch' test in t6120 when
@@ -25,11 +25,11 @@ struct rev_name {
 	int from_tag;
 };
 
-define_commit_slab(commit_rev_name, struct rev_name);
+define_cummit_slab(cummit_rev_name, struct rev_name);
 
 static timestamp_t generation_cutoff = GENERATION_NUMBER_INFINITY;
 static timestamp_t cutoff = TIME_MAX;
-static struct commit_rev_name rev_names;
+static struct cummit_rev_name rev_names;
 
 /* Disable the cutoff checks entirely */
 static void disable_cutoff(void)
@@ -38,23 +38,23 @@ static void disable_cutoff(void)
 	cutoff = 0;
 }
 
-/* Cutoff searching any commits older than this one */
-static void set_commit_cutoff(struct commit *commit)
+/* Cutoff searching any cummits older than this one */
+static void set_cummit_cutoff(struct cummit *cummit)
 {
 
-	if (cutoff > commit->date)
-		cutoff = commit->date;
+	if (cutoff > cummit->date)
+		cutoff = cummit->date;
 
 	if (generation_cutoff) {
-		timestamp_t generation = commit_graph_generation(commit);
+		timestamp_t generation = cummit_graph_generation(cummit);
 
 		if (generation_cutoff > generation)
 			generation_cutoff = generation;
 	}
 }
 
-/* adjust the commit date cutoff with a slop to allow for slightly incorrect
- * commit timestamps in case of clock skew.
+/* adjust the cummit date cutoff with a slop to allow for slightly incorrect
+ * cummit timestamps in case of clock skew.
  */
 static void adjust_cutoff_timestamp_for_slop(void)
 {
@@ -67,16 +67,16 @@ static void adjust_cutoff_timestamp_for_slop(void)
 	}
 }
 
-/* Check if a commit is before the cutoff. Prioritize generation numbers
- * first, but use the commit timestamp if we lack generation data.
+/* Check if a cummit is before the cutoff. Prioritize generation numbers
+ * first, but use the cummit timestamp if we lack generation data.
  */
-static int commit_is_before_cutoff(struct commit *commit)
+static int cummit_is_before_cutoff(struct cummit *cummit)
 {
 	if (generation_cutoff < GENERATION_NUMBER_INFINITY)
 		return generation_cutoff &&
-			commit_graph_generation(commit) < generation_cutoff;
+			cummit_graph_generation(cummit) < generation_cutoff;
 
-	return commit->date < cutoff;
+	return cummit->date < cutoff;
 }
 
 /* How many generations are maximally preferred over _one_ merge traversal? */
@@ -87,9 +87,9 @@ static int is_valid_rev_name(const struct rev_name *name)
 	return name && name->tip_name;
 }
 
-static struct rev_name *get_commit_rev_name(const struct commit *commit)
+static struct rev_name *get_cummit_rev_name(const struct cummit *cummit)
 {
-	struct rev_name *name = commit_rev_name_peek(&rev_names, commit);
+	struct rev_name *name = cummit_rev_name_peek(&rev_names, cummit);
 
 	return is_valid_rev_name(name) ? name : NULL;
 }
@@ -139,12 +139,12 @@ static int is_better_name(struct rev_name *name,
 	return 0;
 }
 
-static struct rev_name *create_or_update_name(struct commit *commit,
+static struct rev_name *create_or_update_name(struct cummit *cummit,
 					      timestamp_t taggerdate,
 					      int generation, int distance,
 					      int from_tag)
 {
-	struct rev_name *name = commit_rev_name_at(&rev_names, commit);
+	struct rev_name *name = cummit_rev_name_at(&rev_names, cummit);
 
 	if (is_valid_rev_name(name) &&
 	    !is_better_name(name, taggerdate, generation, distance, from_tag))
@@ -179,21 +179,21 @@ static char *get_parent_name(const struct rev_name *name, int parent_number)
 	return strbuf_detach(&sb, NULL);
 }
 
-static void name_rev(struct commit *start_commit,
+static void name_rev(struct cummit *start_cummit,
 		const char *tip_name, timestamp_t taggerdate,
 		int from_tag, int deref)
 {
 	struct prio_queue queue;
-	struct commit *commit;
-	struct commit **parents_to_queue = NULL;
+	struct cummit *cummit;
+	struct cummit **parents_to_queue = NULL;
 	size_t parents_to_queue_nr, parents_to_queue_alloc = 0;
 	struct rev_name *start_name;
 
-	parse_commit(start_commit);
-	if (commit_is_before_cutoff(start_commit))
+	parse_cummit(start_cummit);
+	if (cummit_is_before_cutoff(start_cummit))
 		return;
 
-	start_name = create_or_update_name(start_commit, taggerdate, 0, 0,
+	start_name = create_or_update_name(start_cummit, taggerdate, 0, 0,
 					   from_tag);
 	if (!start_name)
 		return;
@@ -203,24 +203,24 @@ static void name_rev(struct commit *start_commit,
 		start_name->tip_name = xstrdup(tip_name);
 
 	memset(&queue, 0, sizeof(queue)); /* Use the prio_queue as LIFO */
-	prio_queue_put(&queue, start_commit);
+	prio_queue_put(&queue, start_cummit);
 
-	while ((commit = prio_queue_get(&queue))) {
-		struct rev_name *name = get_commit_rev_name(commit);
-		struct commit_list *parents;
+	while ((cummit = prio_queue_get(&queue))) {
+		struct rev_name *name = get_cummit_rev_name(cummit);
+		struct cummit_list *parents;
 		int parent_number = 1;
 
 		parents_to_queue_nr = 0;
 
-		for (parents = commit->parents;
+		for (parents = cummit->parents;
 				parents;
 				parents = parents->next, parent_number++) {
-			struct commit *parent = parents->item;
+			struct cummit *parent = parents->item;
 			struct rev_name *parent_name;
 			int generation, distance;
 
-			parse_commit(parent);
-			if (commit_is_before_cutoff(parent))
+			parse_cummit(parent);
+			if (cummit_is_before_cutoff(parent))
 				continue;
 
 			if (parent_number > 1) {
@@ -295,7 +295,7 @@ static struct tip_table {
 	struct tip_table_entry {
 		struct object_id oid;
 		const char *refname;
-		struct commit *commit;
+		struct cummit *cummit;
 		timestamp_t taggerdate;
 		unsigned int from_tag:1;
 		unsigned int deref:1;
@@ -306,7 +306,7 @@ static struct tip_table {
 } tip_table;
 
 static void add_to_tip_table(const struct object_id *oid, const char *refname,
-			     int shorten_unambiguous, struct commit *commit,
+			     int shorten_unambiguous, struct cummit *cummit,
 			     timestamp_t taggerdate, int from_tag, int deref)
 {
 	refname = name_ref_abbrev(refname, shorten_unambiguous);
@@ -314,7 +314,7 @@ static void add_to_tip_table(const struct object_id *oid, const char *refname,
 	ALLOC_GROW(tip_table.table, tip_table.nr + 1, tip_table.alloc);
 	oidcpy(&tip_table.table[tip_table.nr].oid, oid);
 	tip_table.table[tip_table.nr].refname = xstrdup(refname);
-	tip_table.table[tip_table.nr].commit = commit;
+	tip_table.table[tip_table.nr].cummit = cummit;
 	tip_table.table[tip_table.nr].taggerdate = taggerdate;
 	tip_table.table[tip_table.nr].from_tag = from_tag;
 	tip_table.table[tip_table.nr].deref = deref;
@@ -351,7 +351,7 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 	int can_abbreviate_output = data->tags_only && data->name_only;
 	int deref = 0;
 	int from_tag = 0;
-	struct commit *commit = NULL;
+	struct cummit *cummit = NULL;
 	timestamp_t taggerdate = TIME_MAX;
 
 	if (data->tags_only && !starts_with(path, "refs/tags/"))
@@ -408,14 +408,14 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 		deref = 1;
 		taggerdate = t->date;
 	}
-	if (o && o->type == OBJ_COMMIT) {
-		commit = (struct commit *)o;
+	if (o && o->type == OBJ_cummit) {
+		cummit = (struct cummit *)o;
 		from_tag = starts_with(path, "refs/tags/");
 		if (taggerdate == TIME_MAX)
-			taggerdate = commit->date;
+			taggerdate = cummit->date;
 	}
 
-	add_to_tip_table(oid, path, can_abbreviate_output, commit, taggerdate,
+	add_to_tip_table(oid, path, can_abbreviate_output, cummit, taggerdate,
 			 from_tag, deref);
 	return 0;
 }
@@ -431,8 +431,8 @@ static void name_tips(void)
 	QSORT(tip_table.table, tip_table.nr, cmp_by_tag_and_age);
 	for (i = 0; i < tip_table.nr; i++) {
 		struct tip_table_entry *e = &tip_table.table[i];
-		if (e->commit) {
-			name_rev(e->commit, e->refname, e->taggerdate,
+		if (e->cummit) {
+			name_rev(e->cummit, e->refname, e->taggerdate,
 				 e->from_tag, e->deref);
 		}
 	}
@@ -467,12 +467,12 @@ static const char *get_exact_ref_match(const struct object *o)
 static const char *get_rev_name(const struct object *o, struct strbuf *buf)
 {
 	struct rev_name *n;
-	const struct commit *c;
+	const struct cummit *c;
 
-	if (o->type != OBJ_COMMIT)
+	if (o->type != OBJ_cummit)
 		return get_exact_ref_match(o);
-	c = (const struct commit *) o;
-	n = get_commit_rev_name(c);
+	c = (const struct cummit *) o;
+	n = get_cummit_rev_name(c);
 	if (!n)
 		return NULL;
 
@@ -510,7 +510,7 @@ static void show_name(const struct object *obj,
 }
 
 static char const * const name_rev_usage[] = {
-	N_("git name-rev [<options>] <commit>..."),
+	N_("git name-rev [<options>] <cummit>..."),
 	N_("git name-rev [<options>] --all"),
 	N_("git name-rev [<options>] --annotate-stdin"),
 	NULL
@@ -570,18 +570,18 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 	struct name_ref_data data = { 0, 0, STRING_LIST_INIT_NODUP, STRING_LIST_INIT_NODUP };
 	struct option opts[] = {
 		OPT_BOOL(0, "name-only", &data.name_only, N_("print only ref-based names (no object names)")),
-		OPT_BOOL(0, "tags", &data.tags_only, N_("only use tags to name the commits")),
+		OPT_BOOL(0, "tags", &data.tags_only, N_("only use tags to name the cummits")),
 		OPT_STRING_LIST(0, "refs", &data.ref_filters, N_("pattern"),
 				   N_("only use refs matching <pattern>")),
 		OPT_STRING_LIST(0, "exclude", &data.exclude_filters, N_("pattern"),
 				   N_("ignore refs matching <pattern>")),
 		OPT_GROUP(""),
-		OPT_BOOL(0, "all", &all, N_("list all commits reachable from all refs")),
+		OPT_BOOL(0, "all", &all, N_("list all cummits reachable from all refs")),
 		OPT_BOOL(0, "stdin", &transform_stdin, N_("deprecated: use annotate-stdin instead")),
 		OPT_BOOL(0, "annotate-stdin", &annotate_stdin, N_("annotate text from stdin")),
 		OPT_BOOL(0, "undefined", &allow_undefined, N_("allow to print `undefined` names (default)")),
 		OPT_BOOL(0, "always",     &always,
-			   N_("show abbreviated commit object as fallback")),
+			   N_("show abbreviated cummit object as fallback")),
 		{
 			/* A Hidden OPT_BOOL */
 			OPTION_SET_INT, 0, "peel-tag", &peel_tag, NULL,
@@ -591,7 +591,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		OPT_END(),
 	};
 
-	init_commit_rev_name(&rev_names);
+	init_cummit_rev_name(&rev_names);
 	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, opts, name_rev_usage, 0);
 
@@ -612,7 +612,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 	for (; argc; argc--, argv++) {
 		struct object_id oid;
 		struct object *object;
-		struct commit *commit;
+		struct cummit *cummit;
 
 		if (get_oid(*argv, &oid)) {
 			fprintf(stderr, "Could not get sha1 for %s. Skipping.\n",
@@ -620,13 +620,13 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 
-		commit = NULL;
+		cummit = NULL;
 		object = parse_object(the_repository, &oid);
 		if (object) {
 			struct object *peeled = deref_tag(the_repository,
 							  object, *argv, 0);
-			if (peeled && peeled->type == OBJ_COMMIT)
-				commit = (struct commit *)peeled;
+			if (peeled && peeled->type == OBJ_cummit)
+				cummit = (struct cummit *)peeled;
 		}
 
 		if (!object) {
@@ -635,16 +635,16 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 
-		if (commit)
-			set_commit_cutoff(commit);
+		if (cummit)
+			set_cummit_cutoff(cummit);
 
 		if (peel_tag) {
-			if (!commit) {
-				fprintf(stderr, "Could not get commit for %s. Skipping.\n",
+			if (!cummit) {
+				fprintf(stderr, "Could not get cummit for %s. Skipping.\n",
 					*argv);
 				continue;
 			}
-			object = (struct object *)commit;
+			object = (struct object *)cummit;
 		}
 		add_object_array(object, *argv, &revs);
 	}
@@ -668,7 +668,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 		max = get_max_object_index();
 		for (i = 0; i < max; i++) {
 			struct object *obj = get_indexed_object(i);
-			if (!obj || obj->type != OBJ_COMMIT)
+			if (!obj || obj->type != OBJ_cummit)
 				continue;
 			show_name(obj, NULL,
 				  always, allow_undefined, data.name_only);

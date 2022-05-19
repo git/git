@@ -27,32 +27,32 @@ compare_msg () {
 }
 
 test_expect_success setup '
-	test_commit one &&
+	test_cummit one &&
 	git branch first &&
-	test_commit two &&
+	test_cummit two &&
 	git switch first &&
-	test_commit three &&
+	test_cummit three &&
 	git branch second &&
-	test_commit four &&
+	test_cummit four &&
 	git switch second &&
-	test_commit five &&
-	test_commit six
+	test_cummit five &&
+	test_cummit six
 '
 
 test_expect_success 'rebase --rebase-merges update encoding eucJP to UTF-8' '
 	git switch -c merge-eucJP-UTF-8 first &&
-	git config i18n.commitencoding eucJP &&
+	git config i18n.cummitencoding eucJP &&
 	git merge -F "$TEST_DIRECTORY/t3434/eucJP.txt" second &&
-	git config i18n.commitencoding UTF-8 &&
+	git config i18n.cummitencoding UTF-8 &&
 	git rebase --rebase-merges main &&
 	compare_msg eucJP.txt eucJP UTF-8
 '
 
 test_expect_success 'rebase --rebase-merges update encoding eucJP to ISO-2022-JP' '
 	git switch -c merge-eucJP-ISO-2022-JP first &&
-	git config i18n.commitencoding eucJP &&
+	git config i18n.cummitencoding eucJP &&
 	git merge -F "$TEST_DIRECTORY/t3434/eucJP.txt" second &&
-	git config i18n.commitencoding ISO-2022-JP &&
+	git config i18n.cummitencoding ISO-2022-JP &&
 	git rebase --rebase-merges main &&
 	compare_msg eucJP.txt eucJP ISO-2022-JP
 '
@@ -66,16 +66,16 @@ test_rebase_continue_update_encode () {
 		git switch -c conflict-$old-$new one &&
 		echo for-conflict >two.t &&
 		git add two.t &&
-		git config i18n.commitencoding $old &&
-		git commit -F "$TEST_DIRECTORY/t3434/$msgfile" &&
-		git config i18n.commitencoding $new &&
+		git config i18n.cummitencoding $old &&
+		git cummit -F "$TEST_DIRECTORY/t3434/$msgfile" &&
+		git config i18n.cummitencoding $new &&
 		test_must_fail git rebase -m main &&
 		test -f .git/rebase-merge/message &&
 		git stripspace <.git/rebase-merge/message >two.t &&
 		git add two.t &&
 		git rebase --continue &&
 		compare_msg $msgfile $old $new &&
-		: git-commit assume invalid utf-8 is latin1 &&
+		: git-cummit assume invalid utf-8 is latin1 &&
 		test_cmp expect two.t
 	'
 }

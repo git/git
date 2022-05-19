@@ -10,23 +10,23 @@ test_expect_success 'Initialize repository' '
 	mkdir a &&
 	>a/f &&
 	git add a &&
-	git commit -m a
+	git cummit -m a
 '
 
 test_expect_success 'Setup rename across paths each below D/F conflicts' '
 	mkdir b &&
 	test_ln_s_add ../a b/a &&
-	git commit -m b &&
+	git cummit -m b &&
 
 	git checkout -b branch &&
 	rm b/a &&
 	git mv a b/a &&
 	test_ln_s_add b/a a &&
-	git commit -m swap &&
+	git cummit -m swap &&
 
 	>f1 &&
 	git add f1 &&
-	git commit -m f1
+	git cummit -m f1
 '
 
 test_expect_success 'Cherry-pick succeeds with rename across D/F conflicts' '
@@ -41,18 +41,18 @@ test_expect_success 'Setup rename with file on one side matching directory name 
 
 	>empty &&
 	git add empty &&
-	git commit -m "Empty file" &&
+	git cummit -m "Empty file" &&
 
 	git checkout -b simple &&
 	mv empty file &&
 	mkdir empty &&
 	mv file empty &&
 	git add empty/file &&
-	git commit -m "Empty file under empty dir" &&
+	git cummit -m "Empty file under empty dir" &&
 
 	echo content >newfile &&
 	git add newfile &&
-	git commit -m "New file"
+	git cummit -m "New file"
 '
 
 test_expect_success 'Cherry-pick succeeds with was_a_dir/file -> was_a_dir (resolve)' '
@@ -77,16 +77,16 @@ test_expect_success 'Setup rename with file on one side matching different dirna
 	echo content > sub/file &&
 	echo foo > othersub/whatever &&
 	git add -A &&
-	git commit -m "Common commit" &&
+	git cummit -m "Common cummit" &&
 
 	git rm -rf othersub &&
 	git mv sub/file othersub &&
-	git commit -m "Commit to merge" &&
+	git cummit -m "cummit to merge" &&
 
 	git checkout -b newhead mergeme~1 &&
 	>independent-change &&
 	git add independent-change &&
-	git commit -m "Completely unrelated change"
+	git cummit -m "Completely unrelated change"
 '
 
 test_expect_success 'Cherry-pick with rename to different D/F conflict succeeds (resolve)' '

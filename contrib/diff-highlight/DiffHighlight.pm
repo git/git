@@ -66,7 +66,7 @@ sub handle_line {
 	my $orig = shift;
 	local $_ = $orig;
 
-	# match a graph line that begins a commit
+	# match a graph line that begins a cummit
 	if (/^(?:$COLOR?\|$COLOR?[ ])* # zero or more leading "|" with space
 	         $COLOR?\*$COLOR?[ ]   # a "*" with its trailing space
 	      (?:$COLOR?\|$COLOR?[ ])* # zero or more trailing "|"
@@ -75,7 +75,7 @@ sub handle_line {
 		my $graph_prefix = $&;
 
 		# We must flush before setting graph indent, since the
-		# new commit may be indented differently from what we
+		# new cummit may be indented differently from what we
 		# queued.
 		flush();
 		$graph_indent = visible_width($graph_prefix);
@@ -106,8 +106,8 @@ sub handle_line {
 
 	# Most of the time there is enough output to keep things streaming,
 	# but for something like "git log -Sfoo", you can get one early
-	# commit and then many seconds of nothing. We want to show
-	# that one commit as soon as possible.
+	# cummit and then many seconds of nothing. We want to show
+	# that one cummit as soon as possible.
 	#
 	# Since we can receive arbitrary input, there's no optimal
 	# place to flush. Flushing on a blank line is a heuristic that

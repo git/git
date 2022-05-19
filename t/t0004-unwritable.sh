@@ -10,7 +10,7 @@ test_expect_success setup '
 	>file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	echo >file &&
 	git add file
 
@@ -31,19 +31,19 @@ test_expect_success WRITE_TREE_OUT 'write-tree output on unwritable repository' 
 	test_cmp expect out.write-tree
 '
 
-test_expect_success POSIXPERM,SANITY,!SANITIZE_LEAK 'commit should notice unwritable repository' '
+test_expect_success POSIXPERM,SANITY,!SANITIZE_LEAK 'cummit should notice unwritable repository' '
 	test_when_finished "chmod 775 .git/objects .git/objects/??" &&
 	chmod a-w .git/objects .git/objects/?? &&
-	test_must_fail git commit -m second 2>out.commit
+	test_must_fail git cummit -m second 2>out.cummit
 '
 
-test_lazy_prereq COMMIT_OUT 'test -e "$TRASH_DIRECTORY"/out.commit'
-test_expect_success COMMIT_OUT 'commit output on unwritable repository' '
+test_lazy_prereq cummit_OUT 'test -e "$TRASH_DIRECTORY"/out.cummit'
+test_expect_success cummit_OUT 'cummit output on unwritable repository' '
 	cat >expect <<-\EOF &&
 	error: insufficient permission for adding an object to repository database .git/objects
 	error: Error building trees
 	EOF
-	test_cmp expect out.commit
+	test_cmp expect out.cummit
 '
 
 test_expect_success POSIXPERM,SANITY 'update-index should notice unwritable repository' '

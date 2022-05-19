@@ -4,8 +4,8 @@ test_description='various @{whatever} syntax tests'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit one &&
-	test_commit two
+	test_cummit one &&
+	test_cummit two
 '
 
 check_at() {
@@ -26,7 +26,7 @@ test_expect_success '@{now} shows current' '
 	check_at @{now} two
 '
 
-test_expect_success '@{2001-09-17} (before the first commit) shows old' '
+test_expect_success '@{2001-09-17} (before the first cummit) shows old' '
 	check_at @{2001-09-17} one
 '
 

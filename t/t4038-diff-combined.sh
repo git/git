@@ -18,7 +18,7 @@ setup_helper () {
 	done >file &&
 	git add file &&
 	test_tick &&
-	git commit -m $branch &&
+	git cummit -m $branch &&
 	git checkout $side &&
 	for l in $one two three quatro
 	do
@@ -26,7 +26,7 @@ setup_helper () {
 	done >file &&
 	git add file &&
 	test_tick &&
-	git commit -m $side &&
+	git cummit -m $side &&
 	test_must_fail git merge $branch &&
 	for l in $one three four
 	do
@@ -34,7 +34,7 @@ setup_helper () {
 	done >file &&
 	git add file &&
 	test_tick &&
-	git commit -m "merge $branch into $side"
+	git cummit -m "merge $branch into $side"
 }
 
 verify_helper () {
@@ -63,7 +63,7 @@ test_expect_success setup '
 	>file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	git branch withone &&
 	git branch sansone &&
@@ -88,7 +88,7 @@ test_expect_success 'check combined output (2)' '
 test_expect_success 'diagnose truncated file' '
 	>file &&
 	git add file &&
-	git commit --amend -C HEAD &&
+	git cummit --amend -C HEAD &&
 	git show >out &&
 	grep "diff --cc file" out
 '
@@ -121,7 +121,7 @@ test_expect_success 'setup combined ignore spaces' '
 	git checkout main &&
 	>test &&
 	git add test &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	tr -d Q <<-\EOF >test &&
 	always coalesce
@@ -132,7 +132,7 @@ test_expect_success 'setup combined ignore spaces' '
 	space  change
 	all spa ces
 	EOF
-	git commit -m "test space change" -a &&
+	git cummit -m "test space change" -a &&
 
 	git checkout -b side HEAD^ &&
 	tr -d Q <<-\EOF >test &&
@@ -144,7 +144,7 @@ test_expect_success 'setup combined ignore spaces' '
 	space change
 	all spaces
 	EOF
-	git commit -m "test other space changes" -a &&
+	git cummit -m "test other space changes" -a &&
 
 	test_must_fail git merge main &&
 	tr -d Q <<-\EOF >test &&
@@ -152,7 +152,7 @@ test_expect_success 'setup combined ignore spaces' '
 	space  change
 	all spa ces
 	EOF
-	git commit -m merged -a
+	git cummit -m merged -a
 '
 
 test_expect_success 'check combined output (no ignore space)' '
@@ -230,16 +230,16 @@ test_expect_success 'check combined output (ignore all spaces)' '
 test_expect_success 'combine diff coalesce simple' '
 	>test &&
 	git add test &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	test_seq 4 >test &&
-	git commit -a -m empty1 &&
+	git cummit -a -m empty1 &&
 	git branch side1 &&
 	git checkout HEAD^ &&
 	test_seq 5 >test &&
-	git commit -a -m empty2 &&
+	git cummit -a -m empty2 &&
 	test_must_fail git merge side1 &&
 	>test &&
-	git commit -a -m merge &&
+	git cummit -a -m merge &&
 	git show >actual.tmp &&
 	sed -e "1,/^@@@/d" < actual.tmp >actual &&
 	tr -d Q <<-\EOF >expected &&
@@ -255,7 +255,7 @@ test_expect_success 'combine diff coalesce simple' '
 test_expect_success 'combine diff coalesce tricky' '
 	>test &&
 	git add test &&
-	git commit -m initial --allow-empty &&
+	git cummit -m initial --allow-empty &&
 	cat <<-\EOF >test &&
 	3
 	1
@@ -263,7 +263,7 @@ test_expect_success 'combine diff coalesce tricky' '
 	3
 	4
 	EOF
-	git commit -a -m empty1 &&
+	git cummit -a -m empty1 &&
 	git branch -f side1 &&
 	git checkout HEAD^ &&
 	cat <<-\EOF >test &&
@@ -272,11 +272,11 @@ test_expect_success 'combine diff coalesce tricky' '
 	5
 	4
 	EOF
-	git commit -a -m empty2 &&
+	git cummit -a -m empty2 &&
 	git branch -f side2 &&
 	test_must_fail git merge side1 &&
 	>test &&
-	git commit -a -m merge &&
+	git cummit -a -m merge &&
 	git show >actual.tmp &&
 	sed -e "1,/^@@@/d" < actual.tmp >actual &&
 	tr -d Q <<-\EOF >expected &&
@@ -291,7 +291,7 @@ test_expect_success 'combine diff coalesce tricky' '
 	git checkout -f side1 &&
 	test_must_fail git merge side2 &&
 	>test &&
-	git commit -a -m merge &&
+	git cummit -a -m merge &&
 	git show >actual.tmp &&
 	sed -e "1,/^@@@/d" < actual.tmp >actual &&
 	tr -d Q <<-\EOF >expected &&
@@ -308,7 +308,7 @@ test_expect_success 'combine diff coalesce tricky' '
 test_expect_failure 'combine diff coalesce three parents' '
 	>test &&
 	git add test &&
-	git commit -m initial --allow-empty &&
+	git cummit -m initial --allow-empty &&
 	cat <<-\EOF >test &&
 	3
 	1
@@ -316,7 +316,7 @@ test_expect_failure 'combine diff coalesce three parents' '
 	3
 	4
 	EOF
-	git commit -a -m empty1 &&
+	git cummit -a -m empty1 &&
 	git checkout -B side1 &&
 	git checkout HEAD^ &&
 	cat <<-\EOF >test &&
@@ -326,7 +326,7 @@ test_expect_failure 'combine diff coalesce three parents' '
 	5
 	4
 	EOF
-	git commit -a -m empty2 &&
+	git cummit -a -m empty2 &&
 	git branch -f side2 &&
 	git checkout HEAD^ &&
 	cat <<-\EOF >test &&
@@ -336,12 +336,12 @@ test_expect_failure 'combine diff coalesce three parents' '
 	5
 	4
 	EOF
-	git commit -a -m empty3 &&
+	git cummit -a -m empty3 &&
 	>test &&
 	git add test &&
 	TREE=$(git write-tree) &&
-	COMMIT=$(git commit-tree -p HEAD -p side1 -p side2 -m merge $TREE) &&
-	git show $COMMIT >actual.tmp &&
+	cummit=$(git cummit-tree -p HEAD -p side1 -p side2 -m merge $TREE) &&
+	git show $cummit >actual.tmp &&
 	sed -e "1,/^@@@/d" < actual.tmp >actual &&
 	tr -d Q <<-\EOF >expected &&
 	-- 3
@@ -361,7 +361,7 @@ test_expect_failure 'combine diff coalesce three parents' '
 # where a delete lines were missing from combined diff output when they
 # occurred exactly before the context lines of a later change.
 test_expect_success 'combine diff missing delete bug' '
-	git commit -m initial --allow-empty &&
+	git cummit -m initial --allow-empty &&
 	cat <<-\EOF >test &&
 	1
 	2
@@ -369,7 +369,7 @@ test_expect_success 'combine diff missing delete bug' '
 	4
 	EOF
 	git add test &&
-	git commit -a -m side1 &&
+	git cummit -a -m side1 &&
 	git checkout -B side1 &&
 	git checkout HEAD^ &&
 	cat <<-\EOF >test &&
@@ -380,9 +380,9 @@ test_expect_success 'combine diff missing delete bug' '
 	4modified
 	EOF
 	git add test &&
-	git commit -m side2 &&
+	git cummit -m side2 &&
 	git branch -f side2 &&
-	test_must_fail git merge --no-commit side1 &&
+	test_must_fail git merge --no-cummit side1 &&
 	cat <<-\EOF >test &&
 	1
 	2
@@ -390,7 +390,7 @@ test_expect_success 'combine diff missing delete bug' '
 	4modified
 	EOF
 	git add test &&
-	git commit -a -m merge &&
+	git cummit -a -m merge &&
 	git diff-tree -c -p HEAD >actual.tmp &&
 	sed -e "1,/^@@@/d" < actual.tmp >actual &&
 	tr -d Q <<-\EOF >expected &&
@@ -413,18 +413,18 @@ test_expect_success 'combine diff gets tree sorting right' '
 	echo base >foo/two &&
 	echo base >foo.ext &&
 	git add foo foo.ext &&
-	git commit -m base &&
+	git cummit -m base &&
 
 	# one side modifies a file in the directory, along with the root
 	# file...
 	echo main >foo/one &&
 	echo main >foo.ext &&
-	git commit -a -m main &&
+	git cummit -a -m main &&
 
 	# the other side modifies the other file in the directory
 	git checkout -b other HEAD^ &&
 	echo other >foo/two &&
-	git commit -a -m other &&
+	git cummit -a -m other &&
 
 	# And now we merge. The files in the subdirectory will resolve cleanly,
 	# meaning that a combined diff will not find them interesting. But it
@@ -445,21 +445,21 @@ test_expect_success 'setup for --combined-all-paths' '
 	test_seq 1 10 >filename-side1c &&
 	side1cf=$(git hash-object filename-side1c) &&
 	git add filename-side1c &&
-	git commit -m with &&
+	git cummit -m with &&
 	git checkout side2c &&
 	test_seq 1 9 >filename-side2c &&
 	echo ten >>filename-side2c &&
 	side2cf=$(git hash-object filename-side2c) &&
 	git add filename-side2c &&
-	git commit -m iam &&
+	git cummit -m iam &&
 	git checkout -b mergery side1c &&
-	git merge --no-commit side2c &&
+	git merge --no-cummit side2c &&
 	git rm filename-side1c &&
 	echo eleven >>filename-side2c &&
 	git mv filename-side2c filename-merged &&
 	mergedf=$(git hash-object filename-merged) &&
 	git add filename-merged &&
-	git commit
+	git cummit
 '
 
 test_expect_success '--combined-all-paths and --raw' '
@@ -489,21 +489,21 @@ test_expect_success FUNNYNAMES 'setup for --combined-all-paths with funny names'
 	test_seq 1 10 >"$(printf "file\twith\ttabs")" &&
 	git add file* &&
 	side1df=$(git hash-object *tabs) &&
-	git commit -m with &&
+	git cummit -m with &&
 	git checkout side2d &&
 	test_seq 1 9 >"$(printf "i\tam\ttabbed")" &&
 	echo ten >>"$(printf "i\tam\ttabbed")" &&
 	git add *tabbed &&
 	side2df=$(git hash-object *tabbed) &&
-	git commit -m iam &&
+	git cummit -m iam &&
 	git checkout -b funny-names-mergery side1d &&
-	git merge --no-commit side2d &&
+	git merge --no-cummit side2d &&
 	git rm *tabs &&
 	echo eleven >>"$(printf "i\tam\ttabbed")" &&
 	git mv "$(printf "i\tam\ttabbed")" "$(printf "fickle\tnaming")" &&
 	git add fickle* &&
 	headf=$(git hash-object fickle*) &&
-	git commit &&
+	git cummit &&
 	head=$(git rev-parse HEAD)
 '
 

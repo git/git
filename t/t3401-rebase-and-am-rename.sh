@@ -16,7 +16,7 @@ test_expect_success 'setup testcase where directory rename should be detected' '
 		test_seq 21 30 >x/c &&
 		test_write_lines a b c d e f g h i >l &&
 		git add x l &&
-		git commit -m "Initial" &&
+		git cummit -m "Initial" &&
 
 		git branch O &&
 		git branch A &&
@@ -25,13 +25,13 @@ test_expect_success 'setup testcase where directory rename should be detected' '
 		git checkout A &&
 		git mv x y &&
 		git mv l letters &&
-		git commit -m "Rename x to y, l to letters" &&
+		git cummit -m "Rename x to y, l to letters" &&
 
 		git checkout B &&
 		echo j >>l &&
 		test_seq 31 40 >x/d &&
 		git add l x/d &&
-		git commit -m "Modify l, add x/d"
+		git cummit -m "Modify l, add x/d"
 	)
 '
 
@@ -113,7 +113,7 @@ test_expect_success 'setup testcase where directory rename should NOT be detecte
 		test_seq 21 30 >x/c &&
 		echo original >project_info &&
 		git add x project_info &&
-		git commit -m "Initial" &&
+		git cummit -m "Initial" &&
 
 		git branch O &&
 		git branch A &&
@@ -122,14 +122,14 @@ test_expect_success 'setup testcase where directory rename should NOT be detecte
 		git checkout A &&
 		echo v2 >project_info &&
 		git add project_info &&
-		git commit -m "Modify project_info" &&
+		git cummit -m "Modify project_info" &&
 
 		git checkout B &&
 		mkdir y &&
 		git mv x/c y/c &&
 		echo v1 >project_info &&
 		git add project_info &&
-		git commit -m "Rename x/c to y/c, modify project_info"
+		git cummit -m "Rename x/c to y/c, modify project_info"
 	)
 '
 

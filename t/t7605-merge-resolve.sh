@@ -9,21 +9,21 @@ Testing the resolve strategy.'
 test_expect_success 'setup' '
 	echo c0 > c0.c &&
 	git add c0.c &&
-	git commit -m c0 &&
+	git cummit -m c0 &&
 	git tag c0 &&
 	echo c1 > c1.c &&
 	git add c1.c &&
-	git commit -m c1 &&
+	git cummit -m c1 &&
 	git tag c1 &&
 	git reset --hard c0 &&
 	echo c2 > c2.c &&
 	git add c2.c &&
-	git commit -m c2 &&
+	git cummit -m c2 &&
 	git tag c2 &&
 	git reset --hard c0 &&
 	echo c3 > c2.c &&
 	git add c2.c &&
-	git commit -m c3 &&
+	git cummit -m c3 &&
 	git tag c3
 '
 

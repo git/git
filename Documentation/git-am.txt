@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8]
-	 [--[no-]3way] [--interactive] [--committer-date-is-author-date]
+	 [--[no-]3way] [--interactive] [--cummitter-date-is-author-date]
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
@@ -22,7 +22,7 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Splits mail messages in a mailbox into commit log message,
+Splits mail messages in a mailbox into cummit log message,
 authorship information and patches, and applies them to the
 current branch.
 
@@ -35,9 +35,9 @@ OPTIONS
 
 -s::
 --signoff::
-	Add a `Signed-off-by` trailer to the commit message, using
-	the committer identity of yourself.
-	See the signoff option in linkgit:git-commit[1] for more information.
+	Add a `Signed-off-by` trailer to the cummit message, using
+	the cummitter identity of yourself.
+	See the signoff option in linkgit:git-cummit[1] for more information.
 
 -k::
 --keep::
@@ -69,18 +69,18 @@ OPTIONS
 	errors out on an input e-mail message lacking a patch
 	and stops into the middle of the current am session. When this
 	option is set to 'drop', skip such an e-mail message instead.
-	When this option is set to 'keep', create an empty commit,
+	When this option is set to 'keep', create an empty cummit,
 	recording the contents of the e-mail message as its log.
 
 -m::
 --message-id::
 	Pass the `-m` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]),
-	so that the Message-ID header is added to the commit message.
+	so that the Message-ID header is added to the cummit message.
 	The `am.messageid` configuration variable can be used to specify
 	the default behaviour.
 
 --no-message-id::
-	Do not add the Message-ID header to the commit message.
+	Do not add the Message-ID header to the cummit message.
 	`no-message-id` is useful to override `am.messageid`.
 
 -q::
@@ -90,9 +90,9 @@ OPTIONS
 -u::
 --utf8::
 	Pass `-u` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
-	The proposed commit log message taken from the e-mail
+	The proposed cummit log message taken from the e-mail
 	is re-coded into UTF-8 encoding (configuration variable
-	`i18n.commitEncoding` can be used to specify project's
+	`i18n.cummitEncoding` can be used to specify project's
 	preferred encoding if it is not UTF-8).
 +
 This was optional in prior versions of git, but now it is the
@@ -141,19 +141,19 @@ default.   You can use `--no-utf8` to override this.
 --interactive::
 	Run interactively.
 
---committer-date-is-author-date::
+--cummitter-date-is-author-date::
 	By default the command records the date from the e-mail
-	message as the commit author date, and uses the time of
-	commit creation as the committer date. This allows the
-	user to lie about the committer date by using the same
+	message as the cummit author date, and uses the time of
+	cummit creation as the cummitter date. This allows the
+	user to lie about the cummitter date by using the same
 	value as the author date.
 
 --ignore-date::
 	By default the command records the date from the e-mail
-	message as the commit author date, and uses the time of
-	commit creation as the committer date. This allows the
+	message as the cummit author date, and uses the time of
+	cummit creation as the cummitter date. This allows the
 	user to lie about the author date by using the same
-	value as the committer date.
+	value as the cummitter date.
 
 --skip::
 	Skip the current patch.  This is only meaningful when
@@ -162,10 +162,10 @@ default.   You can use `--no-utf8` to override this.
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
 --no-gpg-sign::
-	GPG-sign commits. The `keyid` argument is optional and
-	defaults to the committer identity; if specified, it must be
+	GPG-sign cummits. The `keyid` argument is optional and
+	defaults to the cummitter identity; if specified, it must be
 	stuck to the option without a space. `--no-gpg-sign` is useful to
-	countermand both `commit.gpgSign` configuration variable, and
+	countermand both `cummit.gpgSign` configuration variable, and
 	earlier `--gpg-sign`.
 
 --continue::
@@ -174,7 +174,7 @@ default.   You can use `--no-utf8` to override this.
 	After a patch failure (e.g. attempting to apply
 	conflicting patch), the user has applied it by hand and
 	the index file stores the result of the application.
-	Make a commit using the authorship and commit log
+	Make a cummit using the authorship and cummit log
 	extracted from the e-mail message and the current index
 	file, and continue.
 
@@ -202,23 +202,23 @@ default.   You can use `--no-utf8` to override this.
 
 --allow-empty::
 	After a patch failure on an input e-mail message lacking a patch,
-	create an empty commit with the contents of the e-mail message
+	create an empty cummit with the contents of the e-mail message
 	as its log message.
 
 DISCUSSION
 ----------
 
-The commit author name is taken from the "From: " line of the
-message, and commit author date is taken from the "Date: " line
+The cummit author name is taken from the "From: " line of the
+message, and cummit author date is taken from the "Date: " line
 of the message.  The "Subject: " line is used as the title of
-the commit, after stripping common prefix "[PATCH <anything>]".
+the cummit, after stripping common prefix "[PATCH <anything>]".
 The "Subject: " line is supposed to concisely describe what the
-commit is about in one line of text.
+cummit is about in one line of text.
 
 "From: ", "Date: ", and "Subject: " lines starting the body override the
-respective commit author name and title values taken from the headers.
+respective cummit author name and title values taken from the headers.
 
-The commit message is formed by the title taken from the
+The cummit message is formed by the title taken from the
 "Subject: ", a blank line and the body of the message up to
 where the patch begins.  Excess whitespace at the end of each
 line is automatically stripped.
@@ -230,7 +230,7 @@ message.  Any line that is of the form:
 * a line that begins with "diff -", or
 * a line that begins with "Index: "
 
-is taken as the beginning of a patch, and the commit log message
+is taken as the beginning of a patch, and the cummit log message
 is terminated before the first occurrence of such a line.
 
 When initially invoking `git am`, you give it the names of the mailboxes
@@ -251,8 +251,8 @@ names.
 
 Before any patches are applied, ORIG_HEAD is set to the tip of the
 current branch.  This is useful if you have problems with multiple
-commits, like running 'git am' on the wrong branch or an error in the
-commits that is more easily fixed by changing the mailbox (e.g.
+cummits, like running 'git am' on the wrong branch or an error in the
+cummits that is more easily fixed by changing the mailbox (e.g.
 errors in the "From:" lines).
 
 HOOKS

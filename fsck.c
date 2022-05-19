@@ -5,7 +5,7 @@
 #include "blob.h"
 #include "tree.h"
 #include "tree-walk.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "fsck.h"
 #include "refs.h"
@@ -344,29 +344,29 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 	return res;
 }
 
-static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_options *options)
+static int fsck_walk_cummit(struct cummit *cummit, void *data, struct fsck_options *options)
 {
 	int counter = 0, generation = 0, name_prefix_len = 0;
-	struct commit_list *parents;
+	struct cummit_list *parents;
 	int res;
 	int result;
 	const char *name;
 
-	if (parse_commit(commit))
+	if (parse_cummit(cummit))
 		return -1;
 
-	name = fsck_get_object_name(options, &commit->object.oid);
+	name = fsck_get_object_name(options, &cummit->object.oid);
 	if (name)
-		fsck_put_object_name(options, get_commit_tree_oid(commit),
+		fsck_put_object_name(options, get_cummit_tree_oid(cummit),
 				     "%s:", name);
 
-	result = options->walk((struct object *)get_commit_tree(commit),
+	result = options->walk((struct object *)get_cummit_tree(cummit),
 			       OBJ_TREE, data, options);
 	if (result < 0)
 		return result;
 	res = result;
 
-	parents = commit->parents;
+	parents = cummit->parents;
 	if (name && parents) {
 		int len = strlen(name), power;
 
@@ -403,7 +403,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 			else
 				fsck_put_object_name(options, oid, "%s^", name);
 		}
-		result = options->walk((struct object *)parents->item, OBJ_COMMIT, data, options);
+		result = options->walk((struct object *)parents->item, OBJ_cummit, data, options);
 		if (result < 0)
 			return result;
 		if (!res)
@@ -437,8 +437,8 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 		return 0;
 	case OBJ_TREE:
 		return fsck_walk_tree((struct tree *)obj, data, options);
-	case OBJ_COMMIT:
-		return fsck_walk_commit((struct commit *)obj, data, options);
+	case OBJ_cummit:
+		return fsck_walk_cummit((struct cummit *)obj, data, options);
 	case OBJ_TAG:
 		return fsck_walk_tag((struct tag *)obj, data, options);
 	default:
@@ -786,28 +786,28 @@ static int fsck_ident(const char **ident,
 		(*ident)++;
 
 	if (*p == '<')
-		return report(options, oid, type, FSCK_MSG_MISSING_NAME_BEFORE_EMAIL, "invalid author/committer line - missing space before email");
+		return report(options, oid, type, FSCK_MSG_MISSING_NAME_BEFORE_EMAIL, "invalid author/cummitter line - missing space before email");
 	p += strcspn(p, "<>\n");
 	if (*p == '>')
-		return report(options, oid, type, FSCK_MSG_BAD_NAME, "invalid author/committer line - bad name");
+		return report(options, oid, type, FSCK_MSG_BAD_NAME, "invalid author/cummitter line - bad name");
 	if (*p != '<')
-		return report(options, oid, type, FSCK_MSG_MISSING_EMAIL, "invalid author/committer line - missing email");
+		return report(options, oid, type, FSCK_MSG_MISSING_EMAIL, "invalid author/cummitter line - missing email");
 	if (p[-1] != ' ')
-		return report(options, oid, type, FSCK_MSG_MISSING_SPACE_BEFORE_EMAIL, "invalid author/committer line - missing space before email");
+		return report(options, oid, type, FSCK_MSG_MISSING_SPACE_BEFORE_EMAIL, "invalid author/cummitter line - missing space before email");
 	p++;
 	p += strcspn(p, "<>\n");
 	if (*p != '>')
-		return report(options, oid, type, FSCK_MSG_BAD_EMAIL, "invalid author/committer line - bad email");
+		return report(options, oid, type, FSCK_MSG_BAD_EMAIL, "invalid author/cummitter line - bad email");
 	p++;
 	if (*p != ' ')
-		return report(options, oid, type, FSCK_MSG_MISSING_SPACE_BEFORE_DATE, "invalid author/committer line - missing space before date");
+		return report(options, oid, type, FSCK_MSG_MISSING_SPACE_BEFORE_DATE, "invalid author/cummitter line - missing space before date");
 	p++;
 	if (*p == '0' && p[1] != ' ')
-		return report(options, oid, type, FSCK_MSG_ZERO_PADDED_DATE, "invalid author/committer line - zero-padded date");
+		return report(options, oid, type, FSCK_MSG_ZERO_PADDED_DATE, "invalid author/cummitter line - zero-padded date");
 	if (date_overflows(parse_timestamp(p, &end, 10)))
-		return report(options, oid, type, FSCK_MSG_BAD_DATE_OVERFLOW, "invalid author/committer line - date causes integer overflow");
+		return report(options, oid, type, FSCK_MSG_BAD_DATE_OVERFLOW, "invalid author/cummitter line - date causes integer overflow");
 	if ((end == p || *end != ' '))
-		return report(options, oid, type, FSCK_MSG_BAD_DATE, "invalid author/committer line - bad date");
+		return report(options, oid, type, FSCK_MSG_BAD_DATE, "invalid author/cummitter line - bad date");
 	p = end + 1;
 	if ((*p != '+' && *p != '-') ||
 	    !isdigit(p[1]) ||
@@ -815,12 +815,12 @@ static int fsck_ident(const char **ident,
 	    !isdigit(p[3]) ||
 	    !isdigit(p[4]) ||
 	    (p[5] != '\n'))
-		return report(options, oid, type, FSCK_MSG_BAD_TIMEZONE, "invalid author/committer line - bad time zone");
+		return report(options, oid, type, FSCK_MSG_BAD_TIMEZONE, "invalid author/cummitter line - bad time zone");
 	p += 6;
 	return 0;
 }
 
-static int fsck_commit(const struct object_id *oid,
+static int fsck_cummit(const struct object_id *oid,
 		       const char *buffer, unsigned long size,
 		       struct fsck_options *options)
 {
@@ -830,20 +830,20 @@ static int fsck_commit(const struct object_id *oid,
 	const char *buffer_begin = buffer;
 	const char *p;
 
-	if (verify_headers(buffer, size, oid, OBJ_COMMIT, options))
+	if (verify_headers(buffer, size, oid, OBJ_cummit, options))
 		return -1;
 
 	if (!skip_prefix(buffer, "tree ", &buffer))
-		return report(options, oid, OBJ_COMMIT, FSCK_MSG_MISSING_TREE, "invalid format - expected 'tree' line");
+		return report(options, oid, OBJ_cummit, FSCK_MSG_MISSING_TREE, "invalid format - expected 'tree' line");
 	if (parse_oid_hex(buffer, &tree_oid, &p) || *p != '\n') {
-		err = report(options, oid, OBJ_COMMIT, FSCK_MSG_BAD_TREE_SHA1, "invalid 'tree' line format - bad sha1");
+		err = report(options, oid, OBJ_cummit, FSCK_MSG_BAD_TREE_SHA1, "invalid 'tree' line format - bad sha1");
 		if (err)
 			return err;
 	}
 	buffer = p + 1;
 	while (skip_prefix(buffer, "parent ", &buffer)) {
 		if (parse_oid_hex(buffer, &parent_oid, &p) || *p != '\n') {
-			err = report(options, oid, OBJ_COMMIT, FSCK_MSG_BAD_PARENT_SHA1, "invalid 'parent' line format - bad sha1");
+			err = report(options, oid, OBJ_cummit, FSCK_MSG_BAD_PARENT_SHA1, "invalid 'parent' line format - bad sha1");
 			if (err)
 				return err;
 		}
@@ -852,24 +852,24 @@ static int fsck_commit(const struct object_id *oid,
 	author_count = 0;
 	while (skip_prefix(buffer, "author ", &buffer)) {
 		author_count++;
-		err = fsck_ident(&buffer, oid, OBJ_COMMIT, options);
+		err = fsck_ident(&buffer, oid, OBJ_cummit, options);
 		if (err)
 			return err;
 	}
 	if (author_count < 1)
-		err = report(options, oid, OBJ_COMMIT, FSCK_MSG_MISSING_AUTHOR, "invalid format - expected 'author' line");
+		err = report(options, oid, OBJ_cummit, FSCK_MSG_MISSING_AUTHOR, "invalid format - expected 'author' line");
 	else if (author_count > 1)
-		err = report(options, oid, OBJ_COMMIT, FSCK_MSG_MULTIPLE_AUTHORS, "invalid format - multiple 'author' lines");
+		err = report(options, oid, OBJ_cummit, FSCK_MSG_MULTIPLE_AUTHORS, "invalid format - multiple 'author' lines");
 	if (err)
 		return err;
-	if (!skip_prefix(buffer, "committer ", &buffer))
-		return report(options, oid, OBJ_COMMIT, FSCK_MSG_MISSING_COMMITTER, "invalid format - expected 'committer' line");
-	err = fsck_ident(&buffer, oid, OBJ_COMMIT, options);
+	if (!skip_prefix(buffer, "cummitter ", &buffer))
+		return report(options, oid, OBJ_cummit, FSCK_MSG_MISSING_cummitTER, "invalid format - expected 'cummitter' line");
+	err = fsck_ident(&buffer, oid, OBJ_cummit, options);
 	if (err)
 		return err;
 	if (memchr(buffer_begin, '\0', size)) {
-		err = report(options, oid, OBJ_COMMIT, FSCK_MSG_NUL_IN_COMMIT,
-			     "NUL byte in the commit object body");
+		err = report(options, oid, OBJ_cummit, FSCK_MSG_NUL_IN_cummit,
+			     "NUL byte in the cummit object body");
 		if (err)
 			return err;
 	}
@@ -1214,8 +1214,8 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 		return fsck_blob(&obj->oid, data, size, options);
 	if (obj->type == OBJ_TREE)
 		return fsck_tree(&obj->oid, data, size, options);
-	if (obj->type == OBJ_COMMIT)
-		return fsck_commit(&obj->oid, data, size, options);
+	if (obj->type == OBJ_cummit)
+		return fsck_cummit(&obj->oid, data, size, options);
 	if (obj->type == OBJ_TAG)
 		return fsck_tag(&obj->oid, data, size, options);
 

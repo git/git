@@ -13,7 +13,7 @@ create_files () {
 	echo "$1" >c/Makefile &&
 	echo "$1" >d.txt &&
 	git add a.h b.c c/Makefile d.txt &&
-	git commit -m"$1"
+	git cummit -m"$1"
 }
 
 test_expect_success 'setup' '
@@ -110,7 +110,7 @@ test_expect_success 'setup for testing combine-diff order' '
 	git checkout -b tmp HEAD~ &&
 	create_files 3 &&
 	git checkout main &&
-	git merge --no-commit -s ours tmp &&
+	git merge --no-cummit -s ours tmp &&
 	create_files 5
 '
 
@@ -135,11 +135,11 @@ test_expect_success 'rotate and skip setup' '
 	>sample3.t &&
 	>sample4.t &&
 	git add sample[1234].t &&
-	git commit -m "added" sample[1234].t &&
+	git cummit -m "added" sample[1234].t &&
 	echo modified >>sample1.t &&
 	echo modified >>sample2.t &&
 	echo modified >>sample4.t &&
-	git commit -m "updated" sample[1234].t
+	git cummit -m "updated" sample[1234].t
 '
 
 test_expect_success 'diff --rotate-to' '
@@ -162,15 +162,15 @@ test_expect_success 'diff --rotate/skip-to error condition' '
 test_expect_success 'log --rotate-to' '
 	git log --rotate-to=sample3.t --raw HEAD~2.. >raw &&
 	# just distill the commit header and paths
-	sed -n -e "s/^commit.*/commit/p" \
+	sed -n -e "s/^cummit.*/cummit/p" \
 	       -e "/^:/s/^.*	//p" raw >actual &&
 
 	cat >expect <<-\EOF &&
-	commit
+	cummit
 	sample4.t
 	sample1.t
 	sample2.t
-	commit
+	cummit
 	sample3.t
 	sample4.t
 	sample1.t
@@ -183,13 +183,13 @@ test_expect_success 'log --rotate-to' '
 test_expect_success 'log --skip-to' '
 	git log --skip-to=sample3.t --raw HEAD~2.. >raw &&
 	# just distill the commit header and paths
-	sed -n -e "s/^commit.*/commit/p" \
+	sed -n -e "s/^cummit.*/cummit/p" \
 	       -e "/^:/s/^.*	//p" raw >actual &&
 
 	cat >expect <<-\EOF &&
-	commit
+	cummit
 	sample4.t
-	commit
+	cummit
 	sample3.t
 	sample4.t
 	EOF

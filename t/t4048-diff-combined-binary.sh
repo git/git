@@ -9,17 +9,17 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success 'setup binary merge conflict' '
 	echo oneQ1 | q_to_nul >binary &&
 	git add binary &&
-	git commit -m one &&
+	git cummit -m one &&
 	echo twoQ2 | q_to_nul >binary &&
-	git commit -a -m two &&
+	git cummit -a -m two &&
 	two=$(git rev-parse --short HEAD:binary) &&
 	git checkout -b branch-binary HEAD^ &&
 	echo threeQ3 | q_to_nul >binary &&
-	git commit -a -m three &&
+	git cummit -a -m three &&
 	three=$(git rev-parse --short HEAD:binary) &&
 	test_must_fail git merge main &&
 	echo resolvedQhooray | q_to_nul >binary &&
-	git commit -a -m resolved &&
+	git cummit -a -m resolved &&
 	res=$(git rev-parse --short HEAD:binary)
 '
 
@@ -66,14 +66,14 @@ test_expect_success 'diff --cc indicates binary-ness' '
 
 test_expect_success 'setup non-binary with binary attribute' '
 	git checkout main &&
-	test_commit one text &&
-	test_commit two text &&
+	test_cummit one text &&
+	test_cummit two text &&
 	two=$(git rev-parse --short HEAD:text) &&
 	git checkout -b branch-text HEAD^ &&
-	test_commit three text &&
+	test_cummit three text &&
 	three=$(git rev-parse --short HEAD:text) &&
 	test_must_fail git merge main &&
-	test_commit resolved text &&
+	test_cummit resolved text &&
 	res=$(git rev-parse --short HEAD:text) &&
 	echo text -diff >.gitattributes
 '

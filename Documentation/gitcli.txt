@@ -15,7 +15,7 @@ DESCRIPTION
 
 This manual describes the convention used throughout Git CLI.
 
-Many commands take revisions (most often "commits", but sometimes
+Many commands take revisions (most often "cummits", but sometimes
 "tree-ish", depending on the context and command) and paths as their
 arguments.  Here are the rules:
 
@@ -38,7 +38,7 @@ arguments.  Here are the rules:
    E.g. `git diff -- HEAD` is, "I have a file called HEAD in my work
    tree.  Please show changes between the version I staged in the index
    and what I have in the work tree for that file", not "show difference
-   between the HEAD commit and the work tree as a whole".  You can say
+   between the HEAD cummit and the work tree as a whole".  You can say
    `git diff HEAD --` to ask for the latter.
 
  * Without disambiguating `--`, Git makes a reasonable guess, but errors
@@ -125,10 +125,10 @@ couple of magic command-line options:
 +
 ---------------------------------------------
 $ git describe -h
-usage: git describe [<options>] <commit-ish>*
+usage: git describe [<options>] <cummit-ish>*
    or: git describe [<options>] --dirty
 
-    --contains            find the tag that comes after the commit
+    --contains            find the tag that comes after the cummit
     --debug               debug search strategy on stderr
     --all                 use any ref
     --tags                use any tag, even unannotated
@@ -166,10 +166,10 @@ Abbreviating long options
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 Commands that support the enhanced option parser accepts unique
 prefix of a long option as if it is fully spelled out, but use this
-with a caution.  For example, `git commit --amen` behaves as if you
-typed `git commit --amend`, but that is true only until a later version
+with a caution.  For example, `git cummit --amen` behaves as if you
+typed `git cummit --amend`, but that is true only until a later version
 of Git introduces another option that shares the same prefix,
-e.g. `git commit --amenity` option.
+e.g. `git cummit --amenity` option.
 
 
 Separating argument from the option
@@ -206,7 +206,7 @@ different things.
  * The `--cached` option is used to ask a command that
    usually works on files in the working tree to *only* work
    with the index.  For example, `git grep`, when used
-   without a commit to specify from which commit to look for
+   without a cummit to specify from which cummit to look for
    strings in, usually works on files in the working tree,
    but with the `--cached` option, it looks for strings in
    the index.

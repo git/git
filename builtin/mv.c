@@ -334,7 +334,7 @@ remove_entry:
 		stage_updated_gitmodules(&the_index);
 
 	if (write_locked_index(&the_index, &lock_file,
-			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
+			       cummit_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 
 	string_list_clear(&src_for_dst, 0);

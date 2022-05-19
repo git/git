@@ -52,7 +52,7 @@ gpg.ssh.allowedSignersFile::
 SSH has no concept of trust levels like gpg does. To be able to differentiate
 between valid signatures and trusted signatures the trust level of a signature
 verification is set to `fully` when the public key is present in the allowedSignersFile.
-Otherwise the trust level is `undefined` and git verify-commit/tag will fail.
+Otherwise the trust level is `undefined` and git verify-cummit/tag will fail.
 +
 This file can be set to a location outside of the repository and every developer
 maintains their own trust store. A central repository server could generate this
@@ -60,9 +60,9 @@ file automatically from ssh keys with push access to verify the code against.
 In a corporate setting this file is probably generated at a global location
 from automation that already handles developer ssh keys.
 +
-A repository that only allows signed commits can store the file
+A repository that only allows signed cummits can store the file
 in the repository itself using a path relative to the top-level of the working tree.
-This way only committers with an already valid key can add or change keys in the keyring.
+This way only cummitters with an already valid key can add or change keys in the keyring.
 +
 Since OpensSSH 8.8 this file allows specifying a key lifetime using valid-after &
 valid-before options. Git will mark signatures as valid if the signing key was

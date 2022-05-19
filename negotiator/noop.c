@@ -1,14 +1,14 @@
 #include "cache.h"
 #include "noop.h"
-#include "../commit.h"
+#include "../cummit.h"
 #include "../fetch-negotiator.h"
 
-static void known_common(struct fetch_negotiator *n, struct commit *c)
+static void known_common(struct fetch_negotiator *n, struct cummit *c)
 {
 	/* do nothing */
 }
 
-static void add_tip(struct fetch_negotiator *n, struct commit *c)
+static void add_tip(struct fetch_negotiator *n, struct cummit *c)
 {
 	/* do nothing */
 }
@@ -18,13 +18,13 @@ static const struct object_id *next(struct fetch_negotiator *n)
 	return NULL;
 }
 
-static int ack(struct fetch_negotiator *n, struct commit *c)
+static int ack(struct fetch_negotiator *n, struct cummit *c)
 {
 	/*
-	 * This negotiator does not emit any commits, so there is no commit to
+	 * This negotiator does not emit any cummits, so there is no cummit to
 	 * be acknowledged. If there is any ack, there is a bug.
 	 */
-	BUG("ack with noop negotiator, which does not emit any commits");
+	BUG("ack with noop negotiator, which does not emit any cummits");
 	return 0;
 }
 

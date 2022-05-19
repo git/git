@@ -40,9 +40,9 @@ test_expect_success 'atomic push works for a single branch' '
 	mk_repo_pair &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git push --mirror up &&
-		test_commit two &&
+		test_cummit two &&
 		git push --atomic up main
 	) &&
 	test_refs main main
@@ -52,12 +52,12 @@ test_expect_success 'atomic push works for two branches' '
 	mk_repo_pair &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git branch second &&
 		git push --mirror up &&
-		test_commit two &&
+		test_cummit two &&
 		git checkout second &&
-		test_commit three &&
+		test_cummit three &&
 		git push --atomic up main second
 	) &&
 	test_refs main main &&
@@ -68,9 +68,9 @@ test_expect_success 'atomic push works in combination with --mirror' '
 	mk_repo_pair &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git checkout -b second &&
-		test_commit two &&
+		test_cummit two &&
 		git push --atomic --mirror up
 	) &&
 	test_refs main main &&
@@ -81,17 +81,17 @@ test_expect_success 'atomic push works in combination with --force' '
 	mk_repo_pair &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git branch second main &&
-		test_commit two_a &&
+		test_cummit two_a &&
 		git checkout second &&
-		test_commit two_b &&
-		test_commit three_b &&
-		test_commit four &&
+		test_cummit two_b &&
+		test_cummit three_b &&
+		test_cummit four &&
 		git push --mirror up &&
 		# The actual test is below
 		git checkout main &&
-		test_commit three_a &&
+		test_cummit three_a &&
 		git checkout second &&
 		git reset --hard HEAD^ &&
 		git push --force --atomic up main second
@@ -107,16 +107,16 @@ test_expect_success 'atomic push fails if one branch fails' '
 	mk_repo_pair &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git checkout -b second main &&
-		test_commit two &&
-		test_commit three &&
-		test_commit four &&
+		test_cummit two &&
+		test_cummit three &&
+		test_cummit four &&
 		git push --mirror up &&
 		git reset --hard HEAD~2 &&
-		test_commit five &&
+		test_cummit five &&
 		git checkout main &&
-		test_commit six &&
+		test_cummit six &&
 		test_must_fail git push --atomic --all up
 	) &&
 	test_refs main HEAD@{7} &&
@@ -128,9 +128,9 @@ test_expect_success 'atomic push fails if one tag fails remotely' '
 	mk_repo_pair &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git checkout -b second main &&
-		test_commit two &&
+		test_cummit two &&
 		git push --mirror up
 	) &&
 	# a third party modifies the server side:
@@ -143,9 +143,9 @@ test_expect_success 'atomic push fails if one tag fails remotely' '
 	(
 		cd workbench &&
 		git checkout main &&
-		test_commit three &&
+		test_cummit three &&
 		git checkout second &&
-		test_commit four &&
+		test_cummit four &&
 		git tag test_tag &&
 		test_must_fail git push --tags --atomic up main second
 	) &&
@@ -157,9 +157,9 @@ test_expect_success 'atomic push obeys update hook preventing a branch to be pus
 	mk_repo_pair &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git checkout -b second main &&
-		test_commit two &&
+		test_cummit two &&
 		git push --mirror up
 	) &&
 	test_hook -C upstream update <<-\EOF &&
@@ -169,9 +169,9 @@ test_expect_success 'atomic push obeys update hook preventing a branch to be pus
 	(
 		cd workbench &&
 		git checkout main &&
-		test_commit three &&
+		test_cummit three &&
 		git checkout second &&
-		test_commit four &&
+		test_cummit four &&
 		test_must_fail git push --atomic up main second
 	) &&
 	test_refs main HEAD@{3} &&
@@ -186,9 +186,9 @@ test_expect_success 'atomic push is not advertised if configured' '
 	) &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git push --mirror up &&
-		test_commit two &&
+		test_cummit two &&
 		test_must_fail git push --atomic up main
 	) &&
 	test_refs main HEAD@{1}
@@ -201,7 +201,7 @@ test_expect_success 'atomic push reports (reject by update hook)' '
 	mk_repo_pair &&
 	(
 		cd workbench &&
-		test_commit one &&
+		test_cummit one &&
 		git branch foo &&
 		git push up main one foo &&
 		git tag -d one
@@ -221,7 +221,7 @@ test_expect_success 'atomic push reports (reject by update hook)' '
 	) &&
 	(
 		cd workbench &&
-		test_commit two &&
+		test_cummit two &&
 		git branch bar
 	) &&
 	test_must_fail git -C workbench \

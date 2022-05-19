@@ -131,7 +131,7 @@ test_expect_success 'mailinfo unescapes with --mboxrd' '
 	cat >sp <<-INPUT_END &&
 	From mboxrd Mon Sep 17 00:00:00 2001
 	From: trailing spacer <sp@example.com>
-	Subject: [PATCH] a commit with trailing space
+	Subject: [PATCH] a cummit with trailing space
 
 	From$sp
 	>From$sp

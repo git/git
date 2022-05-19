@@ -12,5 +12,5 @@ tab_width = 8
 indent_style = space
 indent_size = 4
 
-[COMMIT_EDITMSG]
+[cummit_EDITMSG]
 max_line_length = 72

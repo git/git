@@ -8,7 +8,7 @@ Abstract
 --------
 
 "git bisect" enables software users and developers to easily find the
-commit that introduced a regression. We show why it is important to
+cummit that introduced a regression. We show why it is important to
 have good tools to fight regressions. We describe how "git bisect"
 works from the outside and the algorithms it uses inside. Then we
 explain how to take advantage of "git bisect" to improve current
@@ -24,26 +24,26 @@ Torvalds and maintained by Junio Hamano.
 
 In Git like in many other Version Control Systems (VCS), the different
 states of the data that is managed by the system are called
-commits. And, as VCS are mostly used to manage software source code,
+cummits. And, as VCS are mostly used to manage software source code,
 sometimes "interesting" changes of behavior in the software are
-introduced in some commits.
+introduced in some cummits.
 
-In fact people are specially interested in commits that introduce a
+In fact people are specially interested in cummits that introduce a
 "bad" behavior, called a bug or a regression. They are interested in
-these commits because a commit (hopefully) contains a very small set
+these cummits because a cummit (hopefully) contains a very small set
 of source code changes. And it's much easier to understand and
 properly fix a problem when you only need to check a very small set of
 changes, than when you don't know where look in the first place.
 
-So to help people find commits that introduce a "bad" behavior, the
+So to help people find cummits that introduce a "bad" behavior, the
 "git bisect" set of commands was invented. And it follows of course
-that in "git bisect" parlance, commits where the "interesting
-behavior" is present are called "bad" commits, while other commits are
-called "good" commits. And a commit that introduce the behavior we are
-interested in is called a "first bad commit". Note that there could be
-more than one "first bad commit" in the commit space we are searching.
+that in "git bisect" parlance, cummits where the "interesting
+behavior" is present are called "bad" cummits, while other cummits are
+called "good" cummits. And a cummit that introduce the behavior we are
+interested in is called a "first bad cummit". Note that there could be
+more than one "first bad cummit" in the cummit space we are searching.
 
-So "git bisect" is designed to help find a "first bad commit". And to
+So "git bisect" is designed to help find a "first bad cummit". And to
 be as efficient as possible, it tries to perform a binary search.
 
 
@@ -156,14 +156,14 @@ test suites and tools similar as "git bisect".
 
 Test suites are very nice. But when they are used alone, they are
 supposed to be used so that all the tests are checked after each
-commit. This means that they are not very efficient, because many
+cummit. This means that they are not very efficient, because many
 tests are run for no interesting result, and they suffer from
 combinatorial explosion.
 
 In fact the problem is that big software often has many different
 configuration options and that each test case should pass for each
-configuration after each commit. So if you have for each release: N
-configurations, M commits and T test cases, you should perform:
+configuration after each cummit. So if you have for each release: N
+configurations, M cummits and T test cases, you should perform:
 
 -------------
 N * M * T tests
@@ -177,7 +177,7 @@ And if some bugs slip through your test suite, then you can add a test
 to your test suite. But if you want to use your new improved test
 suite to find where the bug slipped in, then you will either have to
 emulate a bisection process or you will perhaps bluntly test each
-commit backward starting from the "bad" commit you have which may be
+cummit backward starting from the "bad" cummit you have which may be
 very wasteful.
 
 "git bisect" overview
@@ -187,9 +187,9 @@ Starting a bisection
 ~~~~~~~~~~~~~~~~~~~~
 
 The first "git bisect" subcommand to use is "git bisect start" to
-start the search. Then bounds must be set to limit the commit
+start the search. Then bounds must be set to limit the cummit
 space. This is done usually by giving one "bad" and at least one
-"good" commit. They can be passed in the initial call to "git bisect
+"good" cummit. They can be passed in the initial call to "git bisect
 start" like this:
 
 -------------
@@ -199,19 +199,19 @@ $ git bisect start [BAD [GOOD...]]
 or they can be set using:
 
 -------------
-$ git bisect bad [COMMIT]
+$ git bisect bad [cummit]
 -------------
 
 and:
 
 -------------
-$ git bisect good [COMMIT...]
+$ git bisect good [cummit...]
 -------------
 
-where BAD, GOOD and COMMIT are all names that can be resolved to a
-commit.
+where BAD, GOOD and cummit are all names that can be resolved to a
+cummit.
 
-Then "git bisect" will checkout a commit of its choosing and ask the
+Then "git bisect" will checkout a cummit of its choosing and ask the
 user to test it, like this:
 
 -------------
@@ -221,10 +221,10 @@ Bisecting: 10928 revisions left to test after this (roughly 14 steps)
 -------------
 
 Note that the example that we will use is really a toy example, we
-will be looking for the first commit that has a version like
-"2.6.26-something", that is the commit that has a "SUBLEVEL = 26" line
+will be looking for the first cummit that has a version like
+"2.6.26-something", that is the cummit that has a "SUBLEVEL = 26" line
 in the top level Makefile. This is a toy example because there are
-better ways to find this commit with Git than using "git bisect" (for
+better ways to find this cummit with Git than using "git bisect" (for
 example "git blame" or "git log -S<string>").
 
 Driving a bisection manually
@@ -235,7 +235,7 @@ be driven manually by the user or it can be driven automatically by a
 script or a command.
 
 If the user is driving it, then at each step of the search, the user
-will have to test the current commit and say if it is "good" or "bad"
+will have to test the current cummit and say if it is "good" or "bad"
 using the "git bisect good" or "git bisect bad" commands respectively
 that have been described above. For example:
 
@@ -246,12 +246,12 @@ Bisecting: 5480 revisions left to test after this (roughly 13 steps)
 -------------
 
 And after a few more steps like that, "git bisect" will eventually
-find a first bad commit:
+find a first bad cummit:
 
 -------------
 $ git bisect bad
-2ddcca36c8bcfa251724fe342c8327451988be0d is the first bad commit
-commit 2ddcca36c8bcfa251724fe342c8327451988be0d
+2ddcca36c8bcfa251724fe342c8327451988be0d is the first bad cummit
+cummit 2ddcca36c8bcfa251724fe342c8327451988be0d
 Author: Linus Torvalds <torvalds@linux-foundation.org>
 Date:   Sat May 3 11:59:44 2008 -0700
 
@@ -260,12 +260,12 @@ Date:   Sat May 3 11:59:44 2008 -0700
 :100644 100644 5cf82581... 4492984e... M      Makefile
 -------------
 
-At this point we can see what the commit does, check it out (if it's
+At this point we can see what the cummit does, check it out (if it's
 not already checked out) or tinker with it, for example:
 
 -------------
 $ git show HEAD
-commit 2ddcca36c8bcfa251724fe342c8327451988be0d
+cummit 2ddcca36c8bcfa251724fe342c8327451988be0d
 Author: Linus Torvalds <torvalds@linux-foundation.org>
 Date:   Sat May 3 11:59:44 2008 -0700
 
@@ -302,7 +302,7 @@ Driving a bisection automatically
 
 The other way to drive the bisection process is to tell "git bisect"
 to launch a script or command at each bisection step to know if the
-current commit is "good" or "bad". To do that, we use the "git bisect
+current cummit is "good" or "bad". To do that, we use the "git bisect
 run" command. For example:
 
 -------------
@@ -324,8 +324,8 @@ running grep ^SUBLEVEL = 25 Makefile
 Bisecting: 0 revisions left to test after this (roughly 0 steps)
 [2ddcca36c8bcfa251724fe342c8327451988be0d] Linux 2.6.26-rc1
 running grep ^SUBLEVEL = 25 Makefile
-2ddcca36c8bcfa251724fe342c8327451988be0d is the first bad commit
-commit 2ddcca36c8bcfa251724fe342c8327451988be0d
+2ddcca36c8bcfa251724fe342c8327451988be0d is the first bad cummit
+cummit 2ddcca36c8bcfa251724fe342c8327451988be0d
 Author: Linus Torvalds <torvalds@linux-foundation.org>
 Date:   Sat May 3 11:59:44 2008 -0700
 
@@ -351,13 +351,13 @@ can kill it with a signal and it will stop the bisection process.
 It can also be useful in scripts passed to "git bisect run" to "exit
 255" if some very abnormal situation is detected.
 
-Avoiding untestable commits
+Avoiding untestable cummits
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sometimes it happens that the current state cannot be tested, for
 example if it does not compile because there was a bug preventing it
 at that time. This is what the special exit code 125 is for. It tells
-"git bisect run" that the current commit should be marked as
+"git bisect run" that the current cummit should be marked as
 untestable and that another one should be chosen and checked out.
 
 If the bisection process is driven manually, you can use "git bisect
@@ -369,17 +369,17 @@ for example "git bisect visualize". It will launch gitk (or "git log"
 if the `DISPLAY` environment variable is not set) to help you find a
 better bisection point.
 
-Either way, if you have a string of untestable commits, it might
+Either way, if you have a string of untestable cummits, it might
 happen that the regression you are looking for has been introduced by
-one of these untestable commits. In this case it's not possible to
-tell for sure which commit introduced the regression.
+one of these untestable cummits. In this case it's not possible to
+tell for sure which cummit introduced the regression.
 
 So if you used "git bisect skip" (or the run script exited with
 special code 125) you could get a result like this:
 
 -------------
-There are only 'skip'ped commits left to test.
-The first bad commit could be any of:
+There are only 'skip'ped cummits left to test.
+The first bad cummit could be any of:
 15722f2fa328eaba97022898a305ffc8172db6b1
 78e86cf3e850bd755bb71831f42e200626fbd1e0
 e15b73ad3db9b48d7d1ade32f8cd23a751fe0ace
@@ -410,20 +410,20 @@ $ git bisect replay bisect_log.txt
 Bisection algorithm
 ~~~~~~~~~~~~~~~~~~~
 
-As the Git commits form a directed acyclic graph (DAG), finding the
-best bisection commit to test at each step is not so simple. Anyway
+As the Git cummits form a directed acyclic graph (DAG), finding the
+best bisection cummit to test at each step is not so simple. Anyway
 Linus found and implemented a "truly stupid" algorithm, later improved
 by Junio Hamano, that works quite well.
 
 So the algorithm used by "git bisect" to find the best bisection
-commit when there are no skipped commits is the following:
+cummit when there are no skipped cummits is the following:
 
-1) keep only the commits that:
+1) keep only the cummits that:
 
-a) are ancestor of the "bad" commit (including the "bad" commit itself),
-b) are not ancestor of a "good" commit (excluding the "good" commits).
+a) are ancestor of the "bad" cummit (including the "bad" cummit itself),
+b) are not ancestor of a "good" cummit (excluding the "good" cummits).
 
-This means that we get rid of the uninteresting commits in the DAG.
+This means that we get rid of the uninteresting cummits in the DAG.
 
 For example if we start with a graph like this:
 
@@ -439,8 +439,8 @@ Y-Y     X-X-X-X
 -> time goes this way ->
 -------------
 
-where B is the "bad" commit, "G" are "good" commits and W, X, and Y
-are other commits, we will get the following graph after this first
+where B is the "bad" cummit, "G" are "good" cummits and W, X, and Y
+are other cummits, we will get the following graph after this first
 step:
 
 -------------
@@ -451,19 +451,19 @@ W-W-W
 W---W
 -------------
 
-So only the W and B commits will be kept. Because commits X and Y will
-have been removed by rules a) and b) respectively, and because commits
+So only the W and B cummits will be kept. Because cummits X and Y will
+have been removed by rules a) and b) respectively, and because cummits
 G are removed by rule b) too.
 
-Note for Git users, that it is equivalent as keeping only the commit
+Note for Git users, that it is equivalent as keeping only the cummit
 given by:
 
 -------------
 git rev-list BAD --not GOOD1 GOOD2...
 -------------
 
-Also note that we don't require the commits that are kept to be
-descendants of a "good" commit. So in the following example, commits W
+Also note that we don't require the cummits that are kept to be
+descendants of a "good" cummit. So in the following example, cummits W
 and Z will be kept:
 
 -------------
@@ -473,10 +473,10 @@ Z-Z
 -------------
 
 2) starting from the "good" ends of the graph, associate to each
-   commit the number of ancestors it has plus one
+   cummit the number of ancestors it has plus one
 
-For example with the following graph where H is the "bad" commit and A
-and D are some parents of some "good" commits:
+For example with the following graph where H is the "bad" cummit and A
+and D are some parents of some "good" cummits:
 
 -------------
 A-B-C
@@ -497,10 +497,10 @@ A-B-C
 D---E
 -------------
 
-3) associate to each commit: min(X, N - X)
+3) associate to each cummit: min(X, N - X)
 
-where X is the value associated to the commit in step 2) and N is the
-total number of commits in the graph.
+where X is the value associated to the cummit in step 2) and N is the
+total number of cummits in the graph.
 
 In the above example we have N = 8, so this will give:
 
@@ -513,24 +513,24 @@ A-B-C
 D---E
 -------------
 
-4) the best bisection point is the commit with the highest associated
+4) the best bisection point is the cummit with the highest associated
    number
 
-So in the above example the best bisection point is commit C.
+So in the above example the best bisection point is cummit C.
 
 5) note that some shortcuts are implemented to speed up the algorithm
 
 As we know N from the beginning, we know that min(X, N - X) can't be
 greater than N/2. So during steps 2) and 3), if we would associate N/2
-to a commit, then we know this is the best bisection point. So in this
-case we can just stop processing any other commit and return the
-current commit.
+to a cummit, then we know this is the best bisection point. So in this
+case we can just stop processing any other cummit and return the
+current cummit.
 
 Bisection algorithm debugging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For any commit graph, you can see the number associated with each
-commit using "git rev-list --bisect-all".
+For any cummit graph, you can see the number associated with each
+cummit using "git rev-list --bisect-all".
 
 For example, for the above graph, a command like:
 
@@ -554,12 +554,12 @@ a41baa717dd74f1180abf55e9341bc7a0bb9d556 (dist=1)
 Bisection algorithm discussed
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-First let's define "best bisection point". We will say that a commit X
-is a best bisection point or a best bisection commit if knowing its
+First let's define "best bisection point". We will say that a cummit X
+is a best bisection point or a best bisection cummit if knowing its
 state ("good" or "bad") gives as much information as possible whether
 the state of the commit happens to be "good" or "bad".
 
-This means that the best bisection commits are the commits where the
+This means that the best bisection cummits are the cummits where the
 following function is maximum:
 
 -------------
@@ -569,21 +569,21 @@ f(X) = min(information_if_good(X), information_if_bad(X))
 where information_if_good(X) is the information we get if X is good
 and information_if_bad(X) is the information we get if X is bad.
 
-Now we will suppose that there is only one "first bad commit". This
-means that all its descendants are "bad" and all the other commits are
-"good". And we will suppose that all commits have an equal probability
-of being good or bad, or of being the first bad commit, so knowing the
-state of c commits gives always the same amount of information
-wherever these c commits are on the graph and whatever c is. (So we
-suppose that these commits being for example on a branch or near a
-good or a bad commit does not give more or less information).
+Now we will suppose that there is only one "first bad cummit". This
+means that all its descendants are "bad" and all the other cummits are
+"good". And we will suppose that all cummits have an equal probability
+of being good or bad, or of being the first bad cummit, so knowing the
+state of c cummits gives always the same amount of information
+wherever these c cummits are on the graph and whatever c is. (So we
+suppose that these cummits being for example on a branch or near a
+good or a bad cummit does not give more or less information).
 
 Let's also suppose that we have a cleaned up graph like one after step
 1) in the bisection algorithm above. This means that we can measure
-   the information we get in terms of number of commit we can remove
+   the information we get in terms of number of cummit we can remove
    from the graph..
 
-And let's take a commit X in the graph.
+And let's take a cummit X in the graph.
 
 If X is found to be "good", then we know that its ancestors are all
 "good", so we want to say that:
@@ -593,7 +593,7 @@ information_if_good(X) = number_of_ancestors(X)  (TRUE)
 -------------
 
 And this is true because at step 1) b) we remove the ancestors of the
-"good" commits.
+"good" cummits.
 
 If X is found to be "bad", then we know that its descendants are all
 "bad", so we want to say that:
@@ -603,24 +603,24 @@ information_if_bad(X) = number_of_descendants(X)  (WRONG)
 -------------
 
 But this is wrong because at step 1) a) we keep only the ancestors of
-the bad commit. So we get more information when a commit is marked as
+the bad cummit. So we get more information when a cummit is marked as
 "bad", because we also know that the ancestors of the previous "bad"
-commit that are not ancestors of the new "bad" commit are not the
-first bad commit. We don't know if they are good or bad, but we know
-that they are not the first bad commit because they are not ancestor
-of the new "bad" commit.
+cummit that are not ancestors of the new "bad" cummit are not the
+first bad cummit. We don't know if they are good or bad, but we know
+that they are not the first bad cummit because they are not ancestor
+of the new "bad" cummit.
 
-So when a commit is marked as "bad" we know we can remove all the
-commits in the graph except those that are ancestors of the new "bad"
-commit. This means that:
+So when a cummit is marked as "bad" we know we can remove all the
+cummits in the graph except those that are ancestors of the new "bad"
+cummit. This means that:
 
 -------------
 information_if_bad(X) = N - number_of_ancestors(X)  (TRUE)
 -------------
 
-where N is the number of commits in the (cleaned up) graph.
+where N is the number of cummits in the (cleaned up) graph.
 
-So in the end this means that to find the best bisection commits we
+So in the end this means that to find the best bisection cummits we
 should maximize the function:
 
 -------------
@@ -673,7 +673,7 @@ A-B-C-D-E-F         O
 So we chose G, H, K or L as the best bisection point, which is better
 than F. Because if for example L is bad, then we will know not only
 that L, M and N are bad but also that G, H, I and J are not the first
-bad commit (since we suppose that there is only one first bad commit
+bad cummit (since we suppose that there is only one first bad cummit
 and it must be an ancestor of L).
 
 So the current algorithm seems to be the best possible given what we
@@ -682,16 +682,16 @@ initially supposed.
 Skip algorithm
 ~~~~~~~~~~~~~~
 
-When some commits have been skipped (using "git bisect skip"), then
+When some cummits have been skipped (using "git bisect skip"), then
 the bisection algorithm is the same for step 1) to 3). But then we use
 roughly the following steps:
 
-6) sort the commit by decreasing associated value
+6) sort the cummit by decreasing associated value
 
 7) if the first commit has not been skipped, we can return it and stop
    here
 
-8) otherwise filter out all the skipped commits in the sorted list
+8) otherwise filter out all the skipped cummits in the sorted list
 
 9) use a pseudo random number generator (PRNG) to generate a random
    number between 0 and 1
@@ -699,10 +699,10 @@ roughly the following steps:
 10) multiply this random number with its square root to bias it toward
     0
 
-11) multiply the result by the number of commits in the filtered list
+11) multiply the result by the number of cummits in the filtered list
     to get an index into this list
 
-12) return the commit at the computed index
+12) return the cummit at the computed index
 
 Skip algorithm discussed
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -715,37 +715,37 @@ Git version 1.6.4 (released July 29th 2009).
 
 But Ingo Molnar and H. Peter Anvin (another well known linux kernel
 developer) both complained that sometimes the best bisection points
-all happened to be in an area where all the commits are
+all happened to be in an area where all the cummits are
 untestable. And in this case the user was asked to test many
-untestable commits, which could be very inefficient.
+untestable cummits, which could be very inefficient.
 
-Indeed untestable commits are often untestable because a breakage was
+Indeed untestable cummits are often untestable because a breakage was
 introduced at one time, and that breakage was fixed only after many
-other commits were introduced.
+other cummits were introduced.
 
 This breakage is of course most of the time unrelated to the breakage
-we are trying to locate in the commit graph. But it prevents us to
+we are trying to locate in the cummit graph. But it prevents us to
 know if the interesting "bad behavior" is present or not.
 
-So it is a fact that commits near an untestable commit have a high
+So it is a fact that cummits near an untestable commit have a high
 probability of being untestable themselves. And the best bisection
-commits are often found together too (due to the bisection algorithm).
+cummits are often found together too (due to the bisection algorithm).
 
 This is why it is a bad idea to just chose the next best unskipped
-bisection commit when the first one has been skipped.
+bisection cummit when the first one has been skipped.
 
-We found that most commits on the graph may give quite a lot of
-information when they are tested. And the commits that will not on
+We found that most cummits on the graph may give quite a lot of
+information when they are tested. And the cummits that will not on
 average give a lot of information are the one near the good and bad
-commits.
+cummits.
 
-So using a PRNG with a bias to favor commits away from the good and
-bad commits looked like a good choice.
+So using a PRNG with a bias to favor cummits away from the good and
+bad cummits looked like a good choice.
 
 One obvious improvement to this algorithm would be to look for a
-commit that has an associated value near the one of the best bisection
-commit, and that is on another branch, before using the PRNG. Because
-if such a commit exists, then it is not very likely to be untestable
+cummit that has an associated value near the one of the best bisection
+cummit, and that is on another branch, before using the PRNG. Because
+if such a cummit exists, then it is not very likely to be untestable
 too, so it will probably give more information than a nearly randomly
 chosen one.
 
@@ -755,20 +755,20 @@ Checking merge bases
 There is another tweak in the bisection algorithm that has not been
 described in the "bisection algorithm" above.
 
-We supposed in the previous examples that the "good" commits were
-ancestors of the "bad" commit. But this is not a requirement of "git
+We supposed in the previous examples that the "good" cummits were
+ancestors of the "bad" cummit. But this is not a requirement of "git
 bisect".
 
-Of course the "bad" commit cannot be an ancestor of a "good" commit,
-because the ancestors of the good commits are supposed to be
-"good". And all the "good" commits must be related to the bad commit.
+Of course the "bad" cummit cannot be an ancestor of a "good" cummit,
+because the ancestors of the good cummits are supposed to be
+"good". And all the "good" cummits must be related to the bad cummit.
 They cannot be on a branch that has no link with the branch of the
-"bad" commit. But it is possible for a good commit to be related to a
-bad commit and yet not be neither one of its ancestor nor one of its
+"bad" cummit. But it is possible for a good cummit to be related to a
+bad cummit and yet not be neither one of its ancestor nor one of its
 descendants.
 
 For example, there can be a "main" branch, and a "dev" branch that was
-forked of the main branch at a commit named "D" like this:
+forked of the main branch at a cummit named "D" like this:
 
 -------------
 A-B-C-D-E-F-G  <--main
@@ -776,15 +776,15 @@ A-B-C-D-E-F-G  <--main
         H-I-J  <--dev
 -------------
 
-The commit "D" is called a "merge base" for branch "main" and "dev"
+The cummit "D" is called a "merge base" for branch "main" and "dev"
 because it's the best common ancestor for these branches for a merge.
 
-Now let's suppose that commit J is bad and commit G is good and that
+Now let's suppose that cummit J is bad and cummit G is good and that
 we apply the bisection algorithm like it has been previously
 described.
 
 As described in step 1) b) of the bisection algorithm, we remove all
-the ancestors of the good commits because they are supposed to be good
+the ancestors of the good cummits because they are supposed to be good
 too.
 
 So we would be left with only:
@@ -793,11 +793,11 @@ So we would be left with only:
 H-I-J
 -------------
 
-But what happens if the first bad commit is "B" and if it has been
-fixed in the "main" branch by commit "F"?
+But what happens if the first bad cummit is "B" and if it has been
+fixed in the "main" branch by cummit "F"?
 
 The result of such a bisection would be that we would find that H is
-the first bad commit, when in fact it's B. So that would be wrong!
+the first bad cummit, when in fact it's B. So that would be wrong!
 
 And yes it can happen in practice that people working on one branch
 are not aware that people working on another branch fixed a bug! It
@@ -816,9 +816,9 @@ $ git bisect start dev main
 -------------
 
 To enable that additional nice feature, when a bisection is started
-and when some good commits are not ancestors of the bad commit, we
-first compute the merge bases between the bad and the good commits and
-we chose these merge bases as the first commits that will be checked
+and when some good cummits are not ancestors of the bad cummit, we
+first compute the merge bases between the bad and the good cummits and
+we chose these merge bases as the first cummits that will be checked
 out and tested.
 
 If it happens that one merge base is bad, then the bisection process
@@ -830,7 +830,7 @@ This means the bug has been fixed between BBBBBB and [GGGGGG,...].
 -------------
 
 where BBBBBB is the sha1 hash of the bad merge base and [GGGGGG,...]
-is a comma separated list of the sha1 of the good commits.
+is a comma separated list of the sha1 of the good cummits.
 
 If some of the merge bases are skipped, then the bisection process
 continues, but the following message is printed for each skipped merge
@@ -838,13 +838,13 @@ base:
 
 -------------
 Warning: the merge base between BBBBBB and [GGGGGG,...] must be skipped.
-So we cannot be sure the first bad commit is between MMMMMM and BBBBBB.
+So we cannot be sure the first bad cummit is between MMMMMM and BBBBBB.
 We continue anyway.
 -------------
 
-where BBBBBB is the sha1 hash of the bad commit, MMMMMM is the sha1
+where BBBBBB is the sha1 hash of the bad cummit, MMMMMM is the sha1
 hash of the merge base that is skipped and [GGGGGG,...]  is a comma
-separated list of the sha1 of the good commits.
+separated list of the sha1 of the good cummits.
 
 So if there is no bad merge base, the bisection process continues as
 usual after this step.
@@ -856,7 +856,7 @@ Using test suites and git bisect together
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you both have a test suite and use git bisect, then it becomes less
-important to check that all tests pass after each commit. Though of
+important to check that all tests pass after each cummit. Though of
 course it is probably a good idea to have some checks to avoid
 breaking too many things because it could make bisecting other bugs
 more difficult.
@@ -871,13 +871,13 @@ c * N * T + b * M * log2(M) tests
 -------------
 
 where c is the number of rounds of test (so a small constant) and b is
-the ratio of bug per commit (hopefully a small constant too).
+the ratio of bug per cummit (hopefully a small constant too).
 
 So of course it's much better as it's O(N * T) vs O(N * T * M) if
-you would test everything after each commit.
+you would test everything after each cummit.
 
 This means that test suites are good to prevent some bugs from being
-committed and they are also quite good to tell you that you have some
+cummitted and they are also quite good to tell you that you have some
 bugs. But they are not so good to tell you where some bugs have been
 introduced. To tell you that efficiently, git bisect is needed.
 
@@ -925,7 +925,7 @@ Finding performance regressions
 Here is an example script that comes slightly modified from a real
 world script used by Junio Hamano <<4>>.
 
-This script can be passed to "git bisect run" to find the commit that
+This script can be passed to "git bisect run" to find the cummit that
 introduced a performance regression:
 
 -------------
@@ -961,19 +961,19 @@ fi
 Following general best practices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-It is obviously a good idea not to have commits with changes that
-knowingly break things, even if some other commits later fix the
+It is obviously a good idea not to have cummits with changes that
+knowingly break things, even if some other cummits later fix the
 breakage.
 
 It is also a good idea when using any VCS to have only one small
-logical change in each commit.
+logical change in each cummit.
 
-The smaller the changes in your commit, the most effective "git
+The smaller the changes in your cummit, the most effective "git
 bisect" will be. And you will probably need "git bisect" less in the
 first place, as small changes are easier to review even if they are
-only reviewed by the committer.
+only reviewed by the cummitter.
 
-Another good idea is to have good commit messages. They can be very
+Another good idea is to have good cummit messages. They can be very
 helpful to understand why some changes were made.
 
 These general best practices are very helpful if you bisect often.
@@ -992,7 +992,7 @@ other branch add more calls to the same function.
 This is made much worse if many files have to be fixed to resolve
 conflicts. That's why such merges are called "evil merges". They can
 make regressions very difficult to track down. It can even be
-misleading to know the first bad commit if it happens to be such a
+misleading to know the first bad cummit if it happens to be such a
 merge, because people might think that the bug comes from bad conflict
 resolution when it comes from a semantic change in one branch.
 
@@ -1016,9 +1016,9 @@ A special work-flow to process regressions can give great results.
 Here is an example of a work-flow used by Andreas Ericsson:
 
 * write, in the test suite, a test script that exposes the regression
-* use "git bisect run" to find the commit that introduced it
+* use "git bisect run" to find the cummit that introduced it
 * fix the bug that is often made obvious by the previous step
-* commit both the fix and the test script (and if needed more tests)
+* cummit both the fix and the test script (and if needed more tests)
 
 And here is what Andreas said about this work-flow <<5>>:
 
@@ -1038,8 +1038,8 @@ and "git bisect". In fact it makes it the standard procedure to deal
 with regression.
 
 In other messages Andreas says that they also use the "best practices"
-described above: small logical commits, topic branches, no evil
-merge,... These practices all improve the bisectability of the commit
+described above: small logical cummits, topic branches, no evil
+merge,... These practices all improve the bisectability of the cummit
 graph, by making it easier and more useful to bisect.
 
 So a good work-flow should be designed around the above points. That
@@ -1111,7 +1111,7 @@ For example some test suites could be run automatically at night with
 some unusual (or even random) configurations. And if a regression is
 found by a test suite, then "git bisect" can be automatically
 launched, and its result can be emailed to the author of the first bad
-commit found by "git bisect", and perhaps other people too. And a new
+cummit found by "git bisect", and perhaps other people too. And a new
 entry in the bug tracking system could be automatically created too.
 
 
@@ -1122,15 +1122,15 @@ The future of bisecting
 ~~~~~~~~~~~~~
 
 We saw earlier that "git bisect skip" is now using a PRNG to try to
-avoid areas in the commit graph where commits are untestable. The
-problem is that sometimes the first bad commit will be in an
+avoid areas in the cummit graph where cummits are untestable. The
+problem is that sometimes the first bad cummit will be in an
 untestable area.
 
 To simplify the discussion we will suppose that the untestable area is
-a simple string of commits and that it was created by a breakage
-introduced by one commit (let's call it BBC for bisect breaking
-commit) and later fixed by another one (let's call it BFC for bisect
-fixing commit).
+a simple string of cummits and that it was created by a breakage
+introduced by one cummit (let's call it BBC for bisect breaking
+cummit) and later fixed by another one (let's call it BFC for bisect
+fixing cummit).
 
 For example:
 
@@ -1142,10 +1142,10 @@ where we know that Y is good and BFC is bad, and where BBC and X1 to
 X6 are untestable.
 
 In this case if you are bisecting manually, what you can do is create
-a special branch that starts just before the BBC. The first commit in
+a special branch that starts just before the BBC. The first cummit in
 this branch should be the BBC with the BFC squashed into it. And the
-other commits in the branch should be the commits between BBC and BFC
-rebased on the first commit of the branch and then the commit after
+other cummits in the branch should be the cummits between BBC and BFC
+rebased on the first cummit of the branch and then the cummit after
 BFC also rebased on.
 
 For example:
@@ -1156,7 +1156,7 @@ For example:
 ...-Y-BBC-X1-X2-X3-X4-X5-X6-BFC-Z-...
 -------------
 
-where commits quoted with ' have been rebased.
+where cummits quoted with ' have been rebased.
 
 You can easily create such a branch with Git using interactive rebase.
 
@@ -1169,7 +1169,7 @@ $ git rebase -i Y Z
 and then moving BFC after BBC and squashing it.
 
 After that you can start bisecting as usual in the new branch and you
-should eventually find the first bad commit.
+should eventually find the first bad cummit.
 
 For example:
 
@@ -1181,9 +1181,9 @@ If you are using "git bisect run", you can use the same manual fix up
 as above, and then start another "git bisect run" in the special
 branch. Or as the "git bisect" man page says, the script passed to
 "git bisect run" can apply a patch before it compiles and test the
-software <<8>>. The patch should turn a current untestable commits
+software <<8>>. The patch should turn a current untestable cummits
 into a testable one. So the testing will result in "good" or "bad" and
-"git bisect" will be able to find the first bad commit. And the script
+"git bisect" will be able to find the first bad cummit. And the script
 should not forget to remove the patch once the testing is done before
 exiting from the script.
 
@@ -1201,7 +1201,7 @@ automatically, you have to add special code in your script to restart
 bisection in the special branches.
 
 Anyway one can notice in the above special branch example that the Z'
-and Z commits should point to the same source code state (the same
+and Z cummits should point to the same source code state (the same
 "tree" in git parlance). That's because Z' result from applying the
 same changes as Z just in a slightly different order.
 
@@ -1224,7 +1224,7 @@ stores replacements "refs" in the "refs/replace/" hierarchy. These
 automatically be shared like branches or tags among developers.
 
 "git replace" is a very powerful mechanism. It can be used to fix
-commits in already released history, for example to change the commit
+cummits in already released history, for example to change the cummit
 message or the author. And it can also be used instead of git "grafts"
 to link a repository with another old repository.
 
@@ -1251,9 +1251,9 @@ called sporadic bugs do not appear in all the kernel builds because
 they are very dependent on the compiler output.
 
 The idea is that every 3 test for example, "git bisect" could ask the
-user to test a commit that has already been found to be "good" or
+user to test a cummit that has already been found to be "good" or
 "bad" (because one of its descendants or one of its ancestors has been
-found to be "good" or "bad" respectively). If it happens that a commit
+found to be "good" or "bad" respectively). If it happens that a cummit
 has been previously incorrectly classified then the bisection can be
 aborted early, hopefully before too many mistakes have been made. Then
 the user will have to look at what happened and then restart the
@@ -1296,7 +1296,7 @@ a _lot_.
 About ten years ago did i do my first 'bisection' of a Linux patch
 queue. That was prior the Git (and even prior the BitKeeper) days. I
 literally days spent sorting out patches, creating what in essence
-were standalone commits that i guessed to be related to that bug.
+were standalone cummits that i guessed to be related to that bug.
 
 It was a tool of absolute last resort. I'd rather spend days looking
 at printk output than do a manual 'patch bisection'.
@@ -1341,7 +1341,7 @@ another when I worked on Git, especially to Andreas Ericsson, Johannes
 Schindelin, H. Peter Anvin, Daniel Barkalow, Bill Lear, John Hawley,
 Shawn O. Pierce, Jeff King, Sam Vilain, Jon Seymour.
 
-Many thanks to the Linux-Kongress program committee for choosing the
+Many thanks to the Linux-Kongress program cummittee for choosing the
 author to given a talk and for publishing this paper.
 
 References

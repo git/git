@@ -27,8 +27,8 @@ UI, Workflows & Features
    more experience.
 
  * "git stash list -p" used to be almost always a no-op because each
-   stash entry is represented as a merge commit.  It learned to show
-   the difference between the base commit version and the working tree
+   stash entry is represented as a merge cummit.  It learned to show
+   the difference between the base cummit version and the working tree
    version, which is in line with what "git stash show" gives.
 
  * Sometimes users want to report a bug they experience on their
@@ -75,7 +75,7 @@ UI, Workflows & Features
    to result in intermittent errors in "git push").
 
  * The pretty-format specifier "%d", which expands to " (tagname)"
-   for a tagged commit, gained a cousin "%D" that just gives the
+   for a tagged cummit, gained a cousin "%D" that just gives the
    "tagname" without frills.
 
  * "git push" learned "--signed" push, that allows a push (i.e.
@@ -83,11 +83,11 @@ UI, Workflows & Features
    history, together with the transmission of necessary objects) to be
    signed, so that it can be verified and audited, using the GPG
    signature of the person who pushed, that the tips of branches at a
-   public repository really point the commits the pusher wanted to,
+   public repository really point the cummits the pusher wanted to,
    without having to "trust" the server.
 
  * "git interpret-trailers" is a new filter to programmatically edit
-   the tail end of the commit log messages, e.g. "Signed-off-by:".
+   the tail end of the cummit log messages, e.g. "Signed-off-by:".
 
  * "git help everyday" shows the "Everyday Git in 20 commands or so"
    document, whose contents have been updated to match more modern
@@ -122,7 +122,7 @@ Performance, Internal Implementation, Development Support etc.
    to update the file again while still holding the lock; now the
    lockfile API has support for such an access pattern.
 
- * The API to allocate the structure to keep track of commit
+ * The API to allocate the structure to keep track of cummit
    decoration has been updated to make it less cumbersome to use.
 
  * An in-core caching layer to let us avoid reading the same
@@ -136,9 +136,9 @@ Performance, Internal Implementation, Development Support etc.
    core are involved in their operation have been taught to punt
    instead, by e.g. marking a too-large blob as not to be diffed.
 
- * A few more code paths in "commit" and "checkout" have been taught
+ * A few more code paths in "cummit" and "checkout" have been taught
    to repopulate the cache-tree in the index, to help speed up later
-   "write-tree" (used in "commit") and "diff-index --cached" (used in
+   "write-tree" (used in "cummit") and "diff-index --cached" (used in
    "status").
 
  * A common programming mistake to assign the same short option name

@@ -35,7 +35,7 @@ UI, Workflows & Features
  * "git rebase --rebase-merges" learned to drive different merge
    strategies and pass strategy specific options to them.
 
- * A new "pre-merge-commit" hook has been introduced.
+ * A new "pre-merge-cummit" hook has been introduced.
 
  * Command line completion updates for "git -c var.name=val" have been
    added.
@@ -62,9 +62,9 @@ UI, Workflows & Features
    variant "git rebase -x").
 
    The command also has learned to fast-forward in more cases where it
-   can instead of replaying to recreate identical commits.
+   can instead of replaying to recreate identical cummits.
 
- * A configuration variable tells "git fetch" to write the commit
+ * A configuration variable tells "git fetch" to write the cummit
    graph after finishing.
 
  * "git add -i" has been taught to show the total number of hunks and
@@ -80,7 +80,7 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, Development Support etc.
 
- * The code to write commit-graph over given commit object names has
+ * The code to write cummit-graph over given cummit object names has
    been made a bit more robust.
 
  * The first line of verbose output from each test piece now carries
@@ -124,7 +124,7 @@ Performance, Internal Implementation, Development Support etc.
    attempting to see if a tree object it computed already exists in
    the repository.
 
- * The code to parse and use the commit-graph file has been made more
+ * The code to parse and use the cummit-graph file has been made more
    robust against corrupted input.
 
  * The hg-to-git script (in contrib/) has been updated to work with
@@ -189,7 +189,7 @@ Fixes since v2.23
    (merge 71d41ff651 rs/pax-extended-header-length-fix later to maint).
 
  * On-demand object fetching in lazy clone incorrectly tried to fetch
-   commits from submodule projects, while still working in the
+   cummits from submodule projects, while still working in the
    superproject, which has been corrected.
    (merge a63694f523 jt/diff-lazy-fetch-submodule-fix later to maint).
 
@@ -255,7 +255,7 @@ Fixes since v2.23
    (merge 0cc7380d88 rs/simplify-by-deco-with-deco-refs-exclude later to maint).
 
  * The "upload-pack" (the counterpart of "git fetch") needs to disable
-   commit-graph when responding to a shallow clone/fetch request, but
+   cummit-graph when responding to a shallow clone/fetch request, but
    the way this was done made Git panic, which has been corrected.
 
  * The object traversal machinery has been optimized not to load tree
@@ -353,7 +353,7 @@ Fixes since v2.23
    (merge e770fbfeff jc/test-cleanup later to maint).
    (merge 1fd881d404 rs/trace2-dst-warning later to maint).
    (merge 7e92756751 mh/http-urlmatch-cleanup later to maint).
-   (merge 9784f97321 mh/release-commit-memory-fix later to maint).
+   (merge 9784f97321 mh/release-cummit-memory-fix later to maint).
    (merge 60d198d022 tb/banned-vsprintf-namefix later to maint).
    (merge 80e3658647 rs/help-unknown-ref-does-not-return later to maint).
    (merge 0a8bc7068f dt/remote-helper-doc-re-lock-option later to maint).
@@ -361,10 +361,10 @@ Fixes since v2.23
    (merge 502c386ff9 sg/clean-nested-repo-with-ignored later to maint).
    (merge 26e3d1cbea am/mailmap-andrey-mazo later to maint).
    (merge 47b27c96fa ss/get-time-cleanup later to maint).
-   (merge dd2e50a84e jk/commit-graph-cleanup later to maint).
+   (merge dd2e50a84e jk/cummit-graph-cleanup later to maint).
    (merge 4fd39c76e6 cs/pretty-formats-doc-typofix later to maint).
    (merge 40e747e89d dl/submodule-set-branch later to maint).
-   (merge 689a146c91 rs/commit-graph-use-list-count later to maint).
+   (merge 689a146c91 rs/cummit-graph-use-list-count later to maint).
    (merge 0eb7c37a8a js/doc-patch-text later to maint).
    (merge 4b3aa170d1 rs/nth-switch-code-simplification later to maint).
    (merge 0d4304c124 ah/doc-submodule-ignore-submodules later to maint).

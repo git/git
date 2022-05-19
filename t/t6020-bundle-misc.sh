@@ -11,8 +11,8 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bundle.sh
 
-# Create a commit or tag and set the variable with the object ID.
-test_commit_setvar () {
+# Create a cummit or tag and set the variable with the object ID.
+test_cummit_setvar () {
 	notick=
 	signoff=
 	indir=
@@ -51,7 +51,7 @@ test_commit_setvar () {
 	done
 	if test $# -lt 2
 	then
-		echo >&2 "error: test_commit_setvar must have at least 2 arguments"
+		echo >&2 "error: test_cummit_setvar must have at least 2 arguments"
 		return 1
 	fi
 	var=$1
@@ -74,7 +74,7 @@ test_commit_setvar () {
 		file=${2:-"$1.t"} &&
 		echo "${3-$1}" >"$indir$file" &&
 		git ${indir:+ -C "$indir"} add "$file" &&
-		git ${indir:+ -C "$indir"} commit $signoff -m "$1" &&
+		git ${indir:+ -C "$indir"} cummit $signoff -m "$1" &&
 		oid=$(git ${indir:+ -C "$indir"} rev-parse HEAD)
 	fi &&
 	eval $var=$oid
@@ -94,25 +94,25 @@ get_abbrev_oid () {
 
 # Format the output of git commands to make a user-friendly and stable
 # text.  We can easily prepare the expect text without having to worry
-# about future changes of the commit ID.
+# about future changes of the cummit ID.
 make_user_friendly_and_stable_output () {
 	sed \
-		-e "s/$(get_abbrev_oid $A)[0-9a-f]*/<COMMIT-A>/g" \
-		-e "s/$(get_abbrev_oid $B)[0-9a-f]*/<COMMIT-B>/g" \
-		-e "s/$(get_abbrev_oid $C)[0-9a-f]*/<COMMIT-C>/g" \
-		-e "s/$(get_abbrev_oid $D)[0-9a-f]*/<COMMIT-D>/g" \
-		-e "s/$(get_abbrev_oid $E)[0-9a-f]*/<COMMIT-E>/g" \
-		-e "s/$(get_abbrev_oid $F)[0-9a-f]*/<COMMIT-F>/g" \
-		-e "s/$(get_abbrev_oid $G)[0-9a-f]*/<COMMIT-G>/g" \
+		-e "s/$(get_abbrev_oid $A)[0-9a-f]*/<cummit-A>/g" \
+		-e "s/$(get_abbrev_oid $B)[0-9a-f]*/<cummit-B>/g" \
+		-e "s/$(get_abbrev_oid $C)[0-9a-f]*/<cummit-C>/g" \
+		-e "s/$(get_abbrev_oid $D)[0-9a-f]*/<cummit-D>/g" \
+		-e "s/$(get_abbrev_oid $E)[0-9a-f]*/<cummit-E>/g" \
+		-e "s/$(get_abbrev_oid $F)[0-9a-f]*/<cummit-F>/g" \
+		-e "s/$(get_abbrev_oid $G)[0-9a-f]*/<cummit-G>/g" \
 		-e "s/$(get_abbrev_oid $H)[0-9a-f]*/<COMMIT-H>/g" \
-		-e "s/$(get_abbrev_oid $I)[0-9a-f]*/<COMMIT-I>/g" \
-		-e "s/$(get_abbrev_oid $J)[0-9a-f]*/<COMMIT-J>/g" \
-		-e "s/$(get_abbrev_oid $K)[0-9a-f]*/<COMMIT-K>/g" \
-		-e "s/$(get_abbrev_oid $L)[0-9a-f]*/<COMMIT-L>/g" \
-		-e "s/$(get_abbrev_oid $M)[0-9a-f]*/<COMMIT-M>/g" \
-		-e "s/$(get_abbrev_oid $N)[0-9a-f]*/<COMMIT-N>/g" \
-		-e "s/$(get_abbrev_oid $O)[0-9a-f]*/<COMMIT-O>/g" \
-		-e "s/$(get_abbrev_oid $P)[0-9a-f]*/<COMMIT-P>/g" \
+		-e "s/$(get_abbrev_oid $I)[0-9a-f]*/<cummit-I>/g" \
+		-e "s/$(get_abbrev_oid $J)[0-9a-f]*/<cummit-J>/g" \
+		-e "s/$(get_abbrev_oid $K)[0-9a-f]*/<cummit-K>/g" \
+		-e "s/$(get_abbrev_oid $L)[0-9a-f]*/<cummit-L>/g" \
+		-e "s/$(get_abbrev_oid $M)[0-9a-f]*/<cummit-M>/g" \
+		-e "s/$(get_abbrev_oid $N)[0-9a-f]*/<cummit-N>/g" \
+		-e "s/$(get_abbrev_oid $O)[0-9a-f]*/<cummit-O>/g" \
+		-e "s/$(get_abbrev_oid $P)[0-9a-f]*/<cummit-P>/g" \
 		-e "s/$(get_abbrev_oid $TAG1)[0-9a-f]*/<TAG-1>/g" \
 		-e "s/$(get_abbrev_oid $TAG2)[0-9a-f]*/<TAG-2>/g" \
 		-e "s/$(get_abbrev_oid $TAG3)[0-9a-f]*/<TAG-3>/g"
@@ -135,53 +135,53 @@ HASH_MESSAGE="The bundle uses this hash algorithm: $GIT_DEFAULT_HASH"
 # (A)   (B)  (E, tag:v1) (I)  (J)                  (K)       (O)   (P)
 #
 test_expect_success 'setup' '
-	# Try to make a stable fixed width for abbreviated commit ID,
+	# Try to make a stable fixed width for abbreviated cummit ID,
 	# this fixed-width oid will be replaced with "<OID>".
 	git config core.abbrev 7 &&
 
-	# branch main: commit A & B
-	test_commit_setvar A "Commit A" main.txt &&
-	test_commit_setvar B "Commit B" main.txt &&
+	# branch main: cummit A & B
+	test_cummit_setvar A "cummit A" main.txt &&
+	test_cummit_setvar B "cummit B" main.txt &&
 
-	# branch topic/1: commit C & D, refs/pull/1/head
+	# branch topic/1: cummit C & D, refs/pull/1/head
 	git checkout -b topic/1 &&
-	test_commit_setvar C "Commit C" topic-1.txt &&
-	test_commit_setvar D "Commit D" topic-1.txt &&
+	test_cummit_setvar C "cummit C" topic-1.txt &&
+	test_cummit_setvar D "cummit D" topic-1.txt &&
 	git update-ref refs/pull/1/head HEAD &&
 
-	# branch topic/1: commit E, tag v1
+	# branch topic/1: cummit E, tag v1
 	git checkout main &&
-	test_commit_setvar E "Commit E" main.txt &&
-	test_commit_setvar --tag TAG1 v1 &&
+	test_cummit_setvar E "cummit E" main.txt &&
+	test_cummit_setvar --tag TAG1 v1 &&
 
-	# branch topic/2: commit F & G, refs/pull/2/head
+	# branch topic/2: cummit F & G, refs/pull/2/head
 	git checkout -b topic/2 &&
-	test_commit_setvar F "Commit F" topic-2.txt &&
-	test_commit_setvar G "Commit G" topic-2.txt &&
+	test_cummit_setvar F "cummit F" topic-2.txt &&
+	test_cummit_setvar G "cummit G" topic-2.txt &&
 	git update-ref refs/pull/2/head HEAD &&
-	test_commit_setvar H "Commit H" topic-2.txt &&
+	test_cummit_setvar H "Commit H" topic-2.txt &&
 
-	# branch main: merge commit I & J
+	# branch main: merge cummit I & J
 	git checkout main &&
-	test_commit_setvar --merge I topic/1 "Merge commit I" &&
-	test_commit_setvar --merge J refs/pull/2/head "Merge commit J" &&
+	test_cummit_setvar --merge I topic/1 "Merge cummit I" &&
+	test_cummit_setvar --merge J refs/pull/2/head "Merge cummit J" &&
 
-	# branch main: commit K
+	# branch main: cummit K
 	git checkout main &&
-	test_commit_setvar K "Commit K" main.txt &&
+	test_cummit_setvar K "cummit K" main.txt &&
 
 	# branch release:
 	git checkout -b release &&
-	test_commit_setvar L "Commit L" release.txt &&
-	test_commit_setvar M "Commit M" release.txt &&
-	test_commit_setvar --tag TAG2 v2 &&
-	test_commit_setvar N "Commit N" release.txt &&
-	test_commit_setvar --tag TAG3 v3 &&
+	test_cummit_setvar L "cummit L" release.txt &&
+	test_cummit_setvar M "cummit M" release.txt &&
+	test_cummit_setvar --tag TAG2 v2 &&
+	test_cummit_setvar N "cummit N" release.txt &&
+	test_cummit_setvar --tag TAG3 v3 &&
 
-	# branch main: merge commit O, commit P
+	# branch main: merge cummit O, cummit P
 	git checkout main &&
-	test_commit_setvar --merge O tags/v2 "Merge commit O" &&
-	test_commit_setvar P "Commit P" main.txt
+	test_cummit_setvar --merge O tags/v2 "Merge cummit O" &&
+	test_cummit_setvar P "cummit P" main.txt
 '
 
 test_expect_success 'create bundle from special rev: main^!' '
@@ -190,7 +190,7 @@ test_expect_success 'create bundle from special rev: main^!' '
 	git bundle list-heads special-rev.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
-	<COMMIT-P> refs/heads/main
+	<cummit-P> refs/heads/main
 	EOF
 	test_cmp expect actual &&
 
@@ -198,9 +198,9 @@ test_expect_success 'create bundle from special rev: main^!' '
 		make_user_friendly_and_stable_output >actual &&
 	format_and_save_expect <<-EOF &&
 	The bundle contains this ref:
-	<COMMIT-P> refs/heads/main
+	<cummit-P> refs/heads/main
 	The bundle requires this ref:
-	<COMMIT-O> Z
+	<cummit-O> Z
 	$HASH_MESSAGE
 	EOF
 	test_cmp expect actual &&
@@ -220,10 +220,10 @@ test_expect_success 'create bundle with --max-count option' '
 		make_user_friendly_and_stable_output >actual &&
 	format_and_save_expect <<-EOF &&
 	The bundle contains these 2 refs:
-	<COMMIT-P> refs/heads/main
+	<cummit-P> refs/heads/main
 	<TAG-1> refs/tags/v1
 	The bundle requires this ref:
-	<COMMIT-O> Z
+	<cummit-O> Z
 	$HASH_MESSAGE
 	EOF
 	test_cmp expect actual &&
@@ -246,14 +246,14 @@ test_expect_success 'create bundle with --since option' '
 		make_user_friendly_and_stable_output >actual &&
 	format_and_save_expect <<-EOF &&
 	The bundle contains these 5 refs:
-	<COMMIT-P> refs/heads/main
-	<COMMIT-N> refs/heads/release
+	<cummit-P> refs/heads/main
+	<cummit-N> refs/heads/release
 	<TAG-2> refs/tags/v2
 	<TAG-3> refs/tags/v3
-	<COMMIT-P> HEAD
+	<cummit-P> HEAD
 	The bundle requires these 2 refs:
-	<COMMIT-M> Z
-	<COMMIT-K> Z
+	<cummit-M> Z
+	<cummit-K> Z
 	$HASH_MESSAGE
 	EOF
 	test_cmp expect actual &&
@@ -274,7 +274,7 @@ test_expect_success 'create bundle 1 - no prerequisites' '
 
 	format_and_save_expect <<-EOF &&
 	The bundle contains these 2 refs:
-	<COMMIT-D> refs/heads/topic/1
+	<cummit-D> refs/heads/topic/1
 	<COMMIT-H> refs/heads/topic/2
 	The bundle records a complete history.
 	$HASH_MESSAGE
@@ -316,11 +316,11 @@ test_expect_success 'create bundle 2 - has prerequisites' '
 
 	format_and_save_expect <<-EOF &&
 	The bundle contains this ref:
-	<COMMIT-N> refs/heads/release
+	<cummit-N> refs/heads/release
 	The bundle requires these 3 refs:
-	<COMMIT-D> Z
-	<COMMIT-E> Z
-	<COMMIT-G> Z
+	<cummit-D> Z
+	<cummit-E> Z
+	<cummit-G> Z
 	$HASH_MESSAGE
 	EOF
 
@@ -340,10 +340,10 @@ test_expect_success 'fail to verify bundle without prerequisites' '
 	git init --bare test1.git &&
 
 	format_and_save_expect <<-\EOF &&
-	error: Repository lacks these prerequisite commits:
-	error: <COMMIT-D> Z
-	error: <COMMIT-E> Z
-	error: <COMMIT-G> Z
+	error: Repository lacks these prerequisite cummits:
+	error: <cummit-D> Z
+	error: <cummit-E> Z
+	error: <cummit-G> Z
 	EOF
 
 	test_must_fail git -C test1.git bundle verify ../2.bdl 2>&1 |
@@ -376,11 +376,11 @@ test_expect_success 'create bundle 3 - two refs, same object' '
 
 	format_and_save_expect <<-EOF &&
 	The bundle contains these 2 refs:
-	<COMMIT-P> refs/heads/main
-	<COMMIT-P> HEAD
+	<cummit-P> refs/heads/main
+	<cummit-P> HEAD
 	The bundle requires these 2 refs:
-	<COMMIT-M> Z
-	<COMMIT-K> Z
+	<cummit-M> Z
+	<cummit-K> Z
 	$HASH_MESSAGE
 	EOF
 
@@ -443,7 +443,7 @@ test_expect_success 'clone from bundle' '
 	git -C mirror.git show-ref |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
-	<COMMIT-D> refs/heads/topic/1
+	<cummit-D> refs/heads/topic/1
 	<COMMIT-H> refs/heads/topic/2
 	EOF
 	test_cmp expect actual &&
@@ -452,8 +452,8 @@ test_expect_success 'clone from bundle' '
 	git -C mirror.git show-ref |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
-	<COMMIT-N> refs/heads/release
-	<COMMIT-D> refs/heads/topic/1
+	<cummit-N> refs/heads/release
+	<cummit-D> refs/heads/topic/1
 	<COMMIT-H> refs/heads/topic/2
 	EOF
 	test_cmp expect actual &&
@@ -462,9 +462,9 @@ test_expect_success 'clone from bundle' '
 	git -C mirror.git show-ref |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
-	<COMMIT-P> refs/heads/main
-	<COMMIT-N> refs/heads/release
-	<COMMIT-D> refs/heads/topic/1
+	<cummit-P> refs/heads/main
+	<cummit-N> refs/heads/release
+	<cummit-D> refs/heads/topic/1
 	<COMMIT-H> refs/heads/topic/2
 	EOF
 	test_cmp expect actual &&
@@ -473,9 +473,9 @@ test_expect_success 'clone from bundle' '
 	git -C mirror.git show-ref |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
-	<COMMIT-P> refs/heads/main
-	<COMMIT-N> refs/heads/release
-	<COMMIT-D> refs/heads/topic/1
+	<cummit-P> refs/heads/main
+	<cummit-N> refs/heads/release
+	<cummit-D> refs/heads/topic/1
 	<COMMIT-H> refs/heads/topic/2
 	<TAG-1> refs/tags/v1
 	<TAG-2> refs/tags/v2
@@ -509,16 +509,16 @@ do
 
 		cat >expect <<-EOF &&
 		The bundle contains these 10 refs:
-		<COMMIT-P> refs/heads/main
-		<COMMIT-N> refs/heads/release
-		<COMMIT-D> refs/heads/topic/1
+		<cummit-P> refs/heads/main
+		<cummit-N> refs/heads/release
+		<cummit-D> refs/heads/topic/1
 		<COMMIT-H> refs/heads/topic/2
-		<COMMIT-D> refs/pull/1/head
-		<COMMIT-G> refs/pull/2/head
+		<cummit-D> refs/pull/1/head
+		<cummit-G> refs/pull/2/head
 		<TAG-1> refs/tags/v1
 		<TAG-2> refs/tags/v2
 		<TAG-3> refs/tags/v3
-		<COMMIT-P> HEAD
+		<cummit-P> HEAD
 		The bundle records a complete history.
 		$HASH_MESSAGE
 		The bundle uses this filter: $filter

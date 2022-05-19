@@ -14,9 +14,9 @@ git log --pretty=short | 'git shortlog' [<options>]
 DESCRIPTION
 -----------
 Summarizes 'git log' output in a format suitable for inclusion
-in release announcements. Each commit will be grouped by author and title.
+in release announcements. Each cummit will be grouped by author and title.
 
-Additionally, "[PATCH]" will be stripped from the commit description.
+Additionally, "[PATCH]" will be stripped from the cummit description.
 
 If no revisions are passed on the command line and either standard input
 is not a terminal or there is no current branch, 'git shortlog' will
@@ -28,42 +28,42 @@ OPTIONS
 
 -n::
 --numbered::
-	Sort output according to the number of commits per author instead
+	Sort output according to the number of cummits per author instead
 	of author alphabetic order.
 
 -s::
 --summary::
-	Suppress commit description and provide a commit count summary only.
+	Suppress cummit description and provide a cummit count summary only.
 
 -e::
 --email::
 	Show the email address of each author.
 
 --format[=<format>]::
-	Instead of the commit subject, use some other information to
-	describe each commit.  '<format>' can be any string accepted
+	Instead of the cummit subject, use some other information to
+	describe each cummit.  '<format>' can be any string accepted
 	by the `--format` option of 'git log', such as '* [%h] %s'.
 	(See the "PRETTY FORMATS" section of linkgit:git-log[1].)
 
-	Each pretty-printed commit will be rewrapped before it is shown.
+	Each pretty-printed cummit will be rewrapped before it is shown.
 
 --group=<type>::
-	Group commits based on `<type>`. If no `--group` option is
+	Group cummits based on `<type>`. If no `--group` option is
 	specified, the default is `author`. `<type>` is one of:
 +
 --
- - `author`, commits are grouped by author
- - `committer`, commits are grouped by committer (the same as `-c`)
+ - `author`, cummits are grouped by author
+ - `cummitter`, cummits are grouped by cummitter (the same as `-c`)
  - `trailer:<field>`, the `<field>` is interpreted as a case-insensitive
-   commit message trailer (see linkgit:git-interpret-trailers[1]). For
+   cummit message trailer (see linkgit:git-interpret-trailers[1]). For
    example, if your project uses `Reviewed-by` trailers, you might want
    to see who has been reviewing with
    `git shortlog -ns --group=trailer:reviewed-by`.
 +
-Note that commits that do not include the trailer will not be counted.
-Likewise, commits with multiple trailers (e.g., multiple signoffs) may
+Note that cummits that do not include the trailer will not be counted.
+Likewise, cummits with multiple trailers (e.g., multiple signoffs) may
 be counted more than once (but only once per unique trailer value in
-that commit).
+that cummit).
 +
 Shortlog will attempt to parse each trailer value as a `name <email>`
 identity. If successful, the mailmap is applied and the email is omitted
@@ -71,14 +71,14 @@ unless the `--email` option is specified. If the value cannot be parsed
 as an identity, it will be taken literally and completely.
 --
 +
-If `--group` is specified multiple times, commits are counted under each
-value (but again, only once per unique value in that commit). For
+If `--group` is specified multiple times, cummits are counted under each
+value (but again, only once per unique value in that cummit). For
 example, `git shortlog --group=author --group=trailer:co-authored-by`
 counts both authors and co-authors.
 
 -c::
---committer::
-	This is an alias for `--group=committer`.
+--cummitter::
+	This is an alias for `--group=cummitter`.
 
 -w[<width>[,<indent1>[,<indent2>]]]::
 	Linewrap the output by wrapping each line at `width`.  The first
@@ -90,16 +90,16 @@ If width is `0` (zero) then indent the lines of the output without wrapping
 them.
 
 <revision-range>::
-	Show only commits in the specified revision range.  When no
+	Show only cummits in the specified revision range.  When no
 	<revision-range> is specified, it defaults to `HEAD` (i.e. the
-	whole history leading to the current commit).  `origin..HEAD`
-	specifies all the commits reachable from the current commit
+	whole history leading to the current cummit).  `origin..HEAD`
+	specifies all the cummits reachable from the current cummit
 	(i.e. `HEAD`), but not from `origin`. For a complete list of
 	ways to spell <revision-range>, see the "Specifying Ranges"
 	section of linkgit:gitrevisions[7].
 
 [--] <path>...::
-	Consider only commits that are enough to explain how the files
+	Consider only cummits that are enough to explain how the files
 	that match the specified paths came to be.
 +
 Paths may need to be prefixed with `--` to separate them from

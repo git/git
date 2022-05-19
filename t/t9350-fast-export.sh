@@ -17,21 +17,21 @@ test_expect_success 'setup' '
 	echo Wohlauf > file &&
 	git add file &&
 	test_tick &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	echo die Luft > file &&
 	echo geht frisch > file2 &&
 	git add file file2 &&
 	test_tick &&
-	git commit -m second &&
+	git cummit -m second &&
 	echo und > file2 &&
 	test_tick &&
-	git commit -m third file2 &&
+	git cummit -m third file2 &&
 	test_tick &&
 	git tag rein &&
 	git checkout -b wer HEAD^ &&
 	echo lange > file2 &&
 	test_tick &&
-	git commit -m sitzt file2 &&
+	git cummit -m sitzt file2 &&
 	test_tick &&
 	git tag -a -m valentin muss &&
 	git merge -s ours main
@@ -56,11 +56,11 @@ test_expect_success 'fast-export | fast-import' '
 
 '
 
-test_expect_success 'fast-export ^muss^{commit} muss' '
-	git fast-export --tag-of-filtered-object=rewrite ^muss^{commit} muss >actual &&
+test_expect_success 'fast-export ^muss^{cummit} muss' '
+	git fast-export --tag-of-filtered-object=rewrite ^muss^{cummit} muss >actual &&
 	cat >expected <<-EOF &&
 	tag muss
-	from $(git rev-parse --verify muss^{commit})
+	from $(git rev-parse --verify muss^{cummit})
 	$(git cat-file tag muss | grep tagger)
 	data 9
 	valentin
@@ -69,12 +69,12 @@ test_expect_success 'fast-export ^muss^{commit} muss' '
 	test_cmp expected actual
 '
 
-test_expect_success 'fast-export --mark-tags ^muss^{commit} muss' '
-	git fast-export --mark-tags --tag-of-filtered-object=rewrite ^muss^{commit} muss >actual &&
+test_expect_success 'fast-export --mark-tags ^muss^{cummit} muss' '
+	git fast-export --mark-tags --tag-of-filtered-object=rewrite ^muss^{cummit} muss >actual &&
 	cat >expected <<-EOF &&
 	tag muss
 	mark :1
-	from $(git rev-parse --verify muss^{commit})
+	from $(git rev-parse --verify muss^{cummit})
 	$(git cat-file tag muss | grep tagger)
 	data 9
 	valentin
@@ -99,8 +99,8 @@ test_expect_success 'fast-export main~2..main' '
 test_expect_success 'fast-export --reference-excluded-parents main~2..main' '
 
 	git fast-export --reference-excluded-parents main~2..main >actual &&
-	grep commit.refs/heads/main actual >commit-count &&
-	test_line_count = 2 commit-count &&
+	grep cummit.refs/heads/main actual >cummit-count &&
+	test_line_count = 2 cummit-count &&
 	sed "s/main/rewrite/" actual |
 		(cd new &&
 		 git fast-import &&
@@ -112,8 +112,8 @@ test_expect_success 'fast-export --show-original-ids' '
 	git fast-export --show-original-ids main >output &&
 	grep ^original-oid output| sed -e s/^original-oid.// | sort >actual &&
 	git rev-list --objects main muss >objects-and-names &&
-	awk "{print \$1}" objects-and-names | sort >commits-trees-blobs &&
-	comm -23 actual commits-trees-blobs >unfound &&
+	awk "{print \$1}" objects-and-names | sort >cummits-trees-blobs &&
+	comm -23 actual cummits-trees-blobs >unfound &&
 	test_must_be_empty unfound
 '
 
@@ -127,54 +127,54 @@ test_expect_success 'fast-export --show-original-ids | git fast-import' '
 test_expect_success 'reencoding iso-8859-7' '
 
 	test_when_finished "git reset --hard HEAD~1" &&
-	test_config i18n.commitencoding iso-8859-7 &&
+	test_config i18n.cummitencoding iso-8859-7 &&
 	test_tick &&
 	echo rosten >file &&
-	git commit -s -F "$TEST_DIRECTORY/t9350/simple-iso-8859-7-commit-message.txt" file &&
+	git cummit -s -F "$TEST_DIRECTORY/t9350/simple-iso-8859-7-cummit-message.txt" file &&
 	git fast-export --reencode=yes wer^..wer >iso-8859-7.fi &&
 	sed "s/wer/i18n/" iso-8859-7.fi |
 		(cd new &&
 		 git fast-import &&
-		 # The commit object, if not re-encoded, would be 200 bytes plus hash.
+		 # The cummit object, if not re-encoded, would be 200 bytes plus hash.
 		 # Removing the "encoding iso-8859-7\n" header drops 20 bytes.
 		 # Re-encoding the Pi character from \xF0 (\360) in iso-8859-7
 		 # to \xCF\x80 (\317\200) in UTF-8 adds a byte.  Check for
 		 # the expected size.
 		 test $(($(test_oid hexsz) + 181)) -eq "$(git cat-file -s i18n)" &&
 		 # ...and for the expected translation of bytes.
-		 git cat-file commit i18n >actual &&
+		 git cat-file cummit i18n >actual &&
 		 grep $(printf "\317\200") actual &&
-		 # Also make sure the commit does not have the "encoding" header
+		 # Also make sure the cummit does not have the "encoding" header
 		 ! grep ^encoding actual)
 '
 
 test_expect_success 'aborting on iso-8859-7' '
 
 	test_when_finished "git reset --hard HEAD~1" &&
-	test_config i18n.commitencoding iso-8859-7 &&
+	test_config i18n.cummitencoding iso-8859-7 &&
 	echo rosten >file &&
-	git commit -s -F "$TEST_DIRECTORY/t9350/simple-iso-8859-7-commit-message.txt" file &&
+	git cummit -s -F "$TEST_DIRECTORY/t9350/simple-iso-8859-7-cummit-message.txt" file &&
 	test_must_fail git fast-export --reencode=abort wer^..wer >iso-8859-7.fi
 '
 
 test_expect_success 'preserving iso-8859-7' '
 
 	test_when_finished "git reset --hard HEAD~1" &&
-	test_config i18n.commitencoding iso-8859-7 &&
+	test_config i18n.cummitencoding iso-8859-7 &&
 	echo rosten >file &&
-	git commit -s -F "$TEST_DIRECTORY/t9350/simple-iso-8859-7-commit-message.txt" file &&
+	git cummit -s -F "$TEST_DIRECTORY/t9350/simple-iso-8859-7-cummit-message.txt" file &&
 	git fast-export --reencode=no wer^..wer >iso-8859-7.fi &&
 	sed "s/wer/i18n-no-recoding/" iso-8859-7.fi |
 		(cd new &&
 		 git fast-import &&
-		 # The commit object, if not re-encoded, is 200 bytes plus hash.
+		 # The cummit object, if not re-encoded, is 200 bytes plus hash.
 		 # Removing the "encoding iso-8859-7\n" header would drops 20
 		 # bytes.  Re-encoding the Pi character from \xF0 (\360) in
 		 # iso-8859-7 to \xCF\x80 (\317\200) in UTF-8 adds a byte.
 		 # Check for the expected size...
 		 test $(($(test_oid hexsz) + 200)) -eq "$(git cat-file -s i18n-no-recoding)" &&
 		 # ...as well as the expected byte.
-		 git cat-file commit i18n-no-recoding >actual &&
+		 git cat-file cummit i18n-no-recoding >actual &&
 		 grep $(printf "\360") actual &&
 		 # Also make sure the commit has the "encoding" header
 		 grep ^encoding actual)
@@ -183,15 +183,15 @@ test_expect_success 'preserving iso-8859-7' '
 test_expect_success 'encoding preserved if reencoding fails' '
 
 	test_when_finished "git reset --hard HEAD~1" &&
-	test_config i18n.commitencoding iso-8859-7 &&
+	test_config i18n.cummitencoding iso-8859-7 &&
 	echo rosten >file &&
-	git commit -s -F "$TEST_DIRECTORY/t9350/broken-iso-8859-7-commit-message.txt" file &&
+	git cummit -s -F "$TEST_DIRECTORY/t9350/broken-iso-8859-7-cummit-message.txt" file &&
 	git fast-export --reencode=yes wer^..wer >iso-8859-7.fi &&
 	sed "s/wer/i18n-invalid/" iso-8859-7.fi |
 		(cd new &&
 		 git fast-import &&
-		 git cat-file commit i18n-invalid >actual &&
-		 # Make sure the commit still has the encoding header
+		 git cat-file cummit i18n-invalid >actual &&
+		 # Make sure the cummit still has the encoding header
 		 grep ^encoding actual &&
 		 # Verify that the commit has the expected size; i.e.
 		 # that no bytes were re-encoded to a different encoding.
@@ -209,12 +209,12 @@ test_expect_success 'import/export-marks' '
 	test_line_count = 3 tmp-marks &&
 	git fast-export --import-marks=tmp-marks \
 		--export-marks=tmp-marks HEAD >actual &&
-	test $(grep ^commit actual | wc -l) -eq 0 &&
+	test $(grep ^cummit actual | wc -l) -eq 0 &&
 	echo change > file &&
-	git commit -m "last commit" file &&
+	git cummit -m "last cummit" file &&
 	git fast-export --import-marks=tmp-marks \
 		--export-marks=tmp-marks HEAD >actual &&
-	test $(grep ^commit\  actual | wc -l) -eq 1 &&
+	test $(grep ^cummit\  actual | wc -l) -eq 1 &&
 	test_line_count = 4 tmp-marks
 
 '
@@ -222,7 +222,7 @@ test_expect_success 'import/export-marks' '
 cat > signed-tag-import << EOF
 tag sign-your-name
 from $(git rev-parse HEAD)
-tagger C O Mitter <committer@example.com> 1112911993 -0700
+tagger C O Mitter <cummitter@example.com> 1112911993 -0700
 data 210
 A message for a sign
 -----BEGIN PGP SIGNATURE-----
@@ -275,19 +275,19 @@ test_expect_success 'setup submodule' '
 		git init  &&
 		echo test file > file &&
 		git add file &&
-		git commit -m sub_initial
+		git cummit -m sub_initial
 	) &&
 	git submodule add "$(pwd)/sub" sub &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	test_tick &&
 	(
 		cd sub &&
 		echo more data >> file &&
 		git add file &&
-		git commit -m sub_second
+		git cummit -m sub_second
 	) &&
 	git add sub &&
-	git commit -m second
+	git cummit -m second
 
 '
 
@@ -311,32 +311,32 @@ test_expect_success 'submodule fast-export | fast-import' '
 '
 
 GIT_AUTHOR_NAME='A U Thor'; export GIT_AUTHOR_NAME
-GIT_COMMITTER_NAME='C O Mitter'; export GIT_COMMITTER_NAME
+GIT_cummitTER_NAME='C O Mitter'; export GIT_cummitTER_NAME
 
 test_expect_success 'setup copies' '
 
 	git checkout -b copy rein &&
 	git mv file file3 &&
-	git commit -m move1 &&
+	git cummit -m move1 &&
 	test_tick &&
 	cp file2 file4 &&
 	git add file4 &&
 	git mv file2 file5 &&
-	git commit -m copy1 &&
+	git cummit -m copy1 &&
 	test_tick &&
 	cp file3 file6 &&
 	git add file6 &&
-	git commit -m copy2 &&
+	git cummit -m copy2 &&
 	test_tick &&
 	echo more text >> file6 &&
 	echo even more text >> file6 &&
 	git add file6 &&
-	git commit -m modify &&
+	git cummit -m modify &&
 	test_tick &&
 	cp file6 file7 &&
 	echo test >> file7 &&
 	git add file7 &&
-	git commit -m copy_modify
+	git cummit -m copy_modify
 
 '
 
@@ -365,7 +365,7 @@ test_expect_success 'fast-export | fast-import when main is tagged' '
 
 cat > tag-content << EOF
 object $(git rev-parse HEAD)
-type commit
+type cummit
 tag rosten
 EOF
 
@@ -390,14 +390,14 @@ test_expect_success 'setup for limiting exports by PATH' '
 		git init &&
 		echo hi > there &&
 		git add there &&
-		git commit -m "First file" &&
+		git cummit -m "First file" &&
 		echo foo > bar &&
 		git add bar &&
-		git commit -m "Second file" &&
+		git cummit -m "Second file" &&
 		git tag -a -m msg mytag &&
 		echo morefoo >> bar &&
 		git add bar &&
-		git commit -m "Change to second file"
+		git cummit -m "Change to second file"
 	)
 '
 
@@ -408,10 +408,10 @@ data 3
 hi
 
 reset refs/tags/mytag
-commit refs/tags/mytag
+cummit refs/tags/mytag
 mark :2
 author A U Thor <author@example.com> 1112912713 -0700
-committer C O Mitter <committer@example.com> 1112912713 -0700
+cummitter C O Mitter <cummitter@example.com> 1112912713 -0700
 data 11
 First file
 M 100644 :1 there
@@ -429,7 +429,7 @@ test_expect_success 'dropping tag of filtered out object' '
 cat >> limit-by-paths/expected << EOF
 tag mytag
 from :2
-tagger C O Mitter <committer@example.com> 1112912713 -0700
+tagger C O Mitter <cummitter@example.com> 1112912713 -0700
 data 4
 msg
 
@@ -448,11 +448,11 @@ test_expect_success 'rewrite tag predating pathspecs to nothing' '
 	(
 		cd rewrite_tag_predating_pathspecs &&
 
-		test_commit initial &&
+		test_cummit initial &&
 
 		git tag -a -m "Some old tag" v0.0.0.0.0.0.1 &&
 
-		test_commit bar &&
+		test_cummit bar &&
 
 		git fast-export --tag-of-filtered-object=rewrite --all -- bar.t >output &&
 		grep from.$ZERO_OID output
@@ -471,10 +471,10 @@ data 3
 hi
 
 reset refs/heads/main
-commit refs/heads/main
+cummit refs/heads/main
 mark :3
 author A U Thor <author@example.com> 1112912713 -0700
-committer C O Mitter <committer@example.com> 1112912713 -0700
+cummitter C O Mitter <cummitter@example.com> 1112912713 -0700
 data 12
 Second file
 M 100644 :1 bar
@@ -495,7 +495,7 @@ test_expect_success 'path limiting with import-marks does not lose unmodified fi
 	git fast-export --export-marks=marks simple -- file > /dev/null &&
 	echo more content >> file &&
 	test_tick &&
-	git commit -mnext file &&
+	git cummit -mnext file &&
 	git fast-export --import-marks=marks simple -- file file0 >actual &&
 	grep file0 actual
 '
@@ -512,16 +512,16 @@ test_expect_success 'avoid corrupt stream with non-existent mark' '
 	(
 		cd avoid_non_existent_mark &&
 
-		test_commit important-path &&
+		test_cummit important-path &&
 
-		test_commit ignored &&
+		test_cummit ignored &&
 
 		git branch A &&
 		git branch B &&
 
 		echo foo >>important-path.t &&
 		git add important-path.t &&
-		test_commit more changes &&
+		test_cummit more changes &&
 
 		git fast-export --all -- important-path.t | git fast-import --force
 	)
@@ -569,7 +569,7 @@ test_expect_success 'handling tags of blobs' '
 
 	tag blobtag
 	from :1
-	tagger $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+	tagger $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
 	data 14
 	Tag of a blob
 
@@ -595,10 +595,10 @@ test_expect_success 'directory becomes symlink'        '
 		echo hello > foo/world &&
 		echo hello > bar/world &&
 		git add foo/world bar/world &&
-		git commit -q -mone &&
+		git cummit -q -mone &&
 		git rm -r foo &&
 		test_ln_s_add bar foo &&
-		git commit -q -mtwo
+		git cummit -q -mtwo
 	) &&
 	(
 		cd dirtosymlink &&
@@ -618,13 +618,13 @@ test_expect_success 'fast-export quotes pathnames' '
 		--cacheinfo 100644 $blob "path with \"quote\"" \
 		--cacheinfo 100644 $blob "path with \\backslash" \
 		--cacheinfo 100644 $blob "path with space" &&
-	 git commit -m addition &&
+	 git cummit -m addition &&
 	 git ls-files -z -s | perl -0pe "s{\\t}{$&subdir/}" >index &&
 	 git read-tree --empty &&
 	 git update-index -z --index-info <index &&
-	 git commit -m rename &&
+	 git cummit -m rename &&
 	 git read-tree --empty &&
-	 git commit -m deletion &&
+	 git cummit -m deletion &&
 	 git fast-export -M HEAD >export.out &&
 	 git rev-list HEAD >expect &&
 	 git init result &&
@@ -642,7 +642,7 @@ test_expect_success 'test bidirectionality' '
 	(cd marks-test &&
 	git reset --hard &&
 	echo Wohlauf > file &&
-	git commit -a -m "back in time") &&
+	git cummit -a -m "back in time") &&
 	git --git-dir=marks-test/.git fast-export --export-marks=marks-new --import-marks-if-exists=marks-new --branches | \
 	git fast-import --export-marks=marks-cur --import-marks-if-exists=marks-cur
 '
@@ -653,10 +653,10 @@ mark :13
 data 5
 bump
 
-commit refs/heads/main
+cummit refs/heads/main
 mark :14
 author A U Thor <author@example.com> 1112912773 -0700
-committer C O Mitter <committer@example.com> 1112912773 -0700
+cummitter C O Mitter <cummitter@example.com> 1112912773 -0700
 data 5
 bump
 from :12
@@ -671,7 +671,7 @@ test_expect_success 'avoid uninteresting refs' '
 	git tag v1.0 &&
 	git branch uninteresting &&
 	echo bump > file &&
-	git commit -a -m bump &&
+	git cummit -a -m bump &&
 	git fast-export --import-marks=tmp-marks \
 		--export-marks=tmp-marks ^uninteresting ^v1.0 main > actual &&
 	test_cmp expected actual
@@ -683,7 +683,7 @@ from :14
 
 EOF
 
-test_expect_success 'refs are updated even if no commits need to be exported' '
+test_expect_success 'refs are updated even if no cummits need to be exported' '
 	> tmp-marks &&
 	git fast-export --import-marks=tmp-marks \
 		--export-marks=tmp-marks main > /dev/null &&
@@ -694,8 +694,8 @@ test_expect_success 'refs are updated even if no commits need to be exported' '
 
 test_expect_success 'use refspec' '
 	git fast-export --refspec refs/heads/main:refs/heads/foobar main >actual2 &&
-	grep "^commit " actual2 | sort | uniq >actual &&
-	echo "commit refs/heads/foobar" > expected &&
+	grep "^cummit " actual2 | sort | uniq >actual &&
+	echo "cummit refs/heads/foobar" > expected &&
 	test_cmp expected actual
 '
 
@@ -724,12 +724,12 @@ test_expect_success 'when using -C, do not declare copy when source of copy is a
 	test_create_repo src &&
 	echo a_line >src/file.txt &&
 	git -C src add file.txt &&
-	git -C src commit -m 1st_commit &&
+	git -C src cummit -m 1st_cummit &&
 
 	cp src/file.txt src/file2.txt &&
 	echo another_line >>src/file.txt &&
 	git -C src add file.txt file2.txt &&
-	git -C src commit -m 2nd_commit &&
+	git -C src cummit -m 2nd_cummit &&
 
 	test_create_repo dst &&
 	git -C src fast-export --all -C >actual &&
@@ -739,15 +739,15 @@ test_expect_success 'when using -C, do not declare copy when source of copy is a
 	test_cmp expected actual
 '
 
-test_expect_success 'merge commit gets exported with --import-marks' '
+test_expect_success 'merge cummit gets exported with --import-marks' '
 	test_create_repo merging &&
 	(
 		cd merging &&
-		test_commit initial &&
+		test_cummit initial &&
 		git checkout -b topic &&
-		test_commit on-topic &&
+		test_cummit on-topic &&
 		git checkout main &&
-		test_commit on-main &&
+		test_cummit on-main &&
 		test_tick &&
 		git merge --no-ff -m Yeah topic &&
 
@@ -762,18 +762,18 @@ test_expect_success 'fast-export --first-parent outputs all revisions output by 
 	git init first-parent &&
 	(
 		cd first-parent &&
-		test_commit A &&
+		test_cummit A &&
 		git checkout -b topic1 &&
-		test_commit B &&
+		test_cummit B &&
 		git checkout main &&
 		git merge --no-ff topic1 &&
 
 		git checkout -b topic2 &&
-		test_commit C &&
+		test_cummit C &&
 		git checkout main &&
 		git merge --no-ff topic2 &&
 
-		test_commit D &&
+		test_cummit D &&
 
 		git fast-export main -- --first-parent >first-parent-export &&
 		git fast-export main -- --first-parent --reverse >first-parent-reverse-export &&

@@ -6,8 +6,8 @@ test_description='send-pack --stdin tests'
 create_ref () {
 	tree=$(git write-tree) &&
 	test_tick &&
-	commit=$(echo "$1" | git commit-tree $tree) &&
-	git update-ref "$1" $commit
+	cummit=$(echo "$1" | git cummit-tree $tree) &&
+	git update-ref "$1" $cummit
 }
 
 clear_remote () {

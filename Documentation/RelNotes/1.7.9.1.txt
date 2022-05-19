@@ -17,7 +17,7 @@ Fixes since v1.7.9
    to completion even when the top-level process was killed.
 
  * "git add -e" learned not to show a diff for an otherwise unmodified
-   submodule that only has uncommitted local changes in the patch
+   submodule that only has uncummitted local changes in the patch
    prepared by for the user to edit.
 
  * Typo in "git branch --edit-description my-tpoic" was not diagnosed.
@@ -47,7 +47,7 @@ Fixes since v1.7.9
  * When "git push" fails to update any refs, the client side did not
    report an error correctly to the end user.
 
- * "rebase" and "commit --amend" failed to work on commits with ancient
+ * "rebase" and "cummit --amend" failed to work on cummits with ancient
    timestamps near year 1970.
 
  * When asking for a tag to be pulled, "request-pull" did not show the

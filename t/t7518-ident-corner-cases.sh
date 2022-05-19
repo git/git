@@ -14,14 +14,14 @@ test_expect_success 'empty name and missing email' '
 	(
 		sane_unset GIT_AUTHOR_EMAIL &&
 		GIT_AUTHOR_NAME= &&
-		test_must_fail git commit --allow-empty -m foo 2>err &&
+		test_must_fail git cummit --allow-empty -m foo 2>err &&
 		test_i18ngrep ! "(null)" err
 	)
 '
 
-test_expect_success 'commit rejects all-crud name' '
+test_expect_success 'cummit rejects all-crud name' '
 	test_must_fail env GIT_AUTHOR_NAME=" .;<>" \
-		git commit --allow-empty -m foo
+		git cummit --allow-empty -m foo
 '
 
 # We must test the actual error message here, as an unwanted
@@ -30,19 +30,19 @@ test_expect_success 'empty configured name does not auto-detect' '
 	(
 		sane_unset GIT_AUTHOR_NAME &&
 		test_must_fail \
-			git -c user.name= commit --allow-empty -m foo 2>err &&
+			git -c user.name= cummit --allow-empty -m foo 2>err &&
 		test_i18ngrep "empty ident name" err &&
 		test_i18ngrep "Author identity unknown" err
 	)
 '
 
-test_expect_success 'empty configured name does not auto-detect for committer' '
+test_expect_success 'empty configured name does not auto-detect for cummitter' '
 	(
-		sane_unset GIT_COMMITTER_NAME &&
+		sane_unset GIT_cummitTER_NAME &&
 		test_must_fail \
-			git -c user.name= commit --allow-empty -m foo 2>err &&
+			git -c user.name= cummit --allow-empty -m foo 2>err &&
 		test_i18ngrep "empty ident name" err &&
-		test_i18ngrep "Committer identity unknown" err
+		test_i18ngrep "cummitter identity unknown" err
 	)
 '
 

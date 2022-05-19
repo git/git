@@ -16,7 +16,7 @@ test_expect_success 'setup' '
 	echo build >.gitignore &&
 	echo \*.o >>.gitignore &&
 	git add . &&
-	git commit -m setup &&
+	git cummit -m setup &&
 	touch src/part2.c README &&
 	git add .
 
@@ -434,7 +434,7 @@ test_expect_success 'nested git work tree' '
 	(
 		cd foo &&
 		git init &&
-		test_commit nested hello.world
+		test_cummit nested hello.world
 	) &&
 	(
 		cd bar &&
@@ -443,7 +443,7 @@ test_expect_success 'nested git work tree' '
 	(
 		cd baz/boo &&
 		git init &&
-		test_commit deeply.nested deeper.world
+		test_cummit deeply.nested deeper.world
 	) &&
 	git clean -f -d &&
 	test -f foo/.git/index &&
@@ -478,13 +478,13 @@ test_expect_success 'should not clean submodules' '
 	(
 		cd repo &&
 		git init &&
-		test_commit msg hello.world
+		test_cummit msg hello.world
 	) &&
 	git submodule add ./repo/.git sub1 &&
-	git commit -m "sub1" &&
+	git cummit -m "sub1" &&
 	git branch before_sub2 &&
 	git submodule add ./repo/.git sub2 &&
-	git commit -m "sub2" &&
+	git cummit -m "sub2" &&
 	git checkout before_sub2 &&
 	>to_clean/should_clean.this &&
 	git clean -f -d &&
@@ -556,7 +556,7 @@ test_expect_success 'giving path in nested git work tree will NOT remove it' '
 		cd repo &&
 		git init &&
 		mkdir -p bar/baz &&
-		test_commit msg bar/baz/hello.world
+		test_cummit msg bar/baz/hello.world
 	) &&
 	git clean -f -d repo/bar/baz &&
 	test_path_is_file repo/.git/HEAD &&
@@ -570,7 +570,7 @@ test_expect_success 'giving path to nested .git will not remove it' '
 	(
 		cd repo &&
 		git init &&
-		test_commit msg hello.world
+		test_cummit msg hello.world
 	) &&
 	git clean -f -d repo/.git &&
 	test_path_is_file repo/.git/HEAD &&
@@ -585,7 +585,7 @@ test_expect_success 'giving path to nested .git/ will NOT remove contents' '
 	(
 		cd repo &&
 		git init &&
-		test_commit msg hello.world
+		test_cummit msg hello.world
 	) &&
 	git clean -f -d repo/.git/ &&
 	test_path_is_dir repo/.git &&
@@ -599,7 +599,7 @@ test_expect_success 'force removal of nested git work tree' '
 	(
 		cd foo &&
 		git init &&
-		test_commit nested hello.world
+		test_cummit nested hello.world
 	) &&
 	(
 		cd bar &&
@@ -608,7 +608,7 @@ test_expect_success 'force removal of nested git work tree' '
 	(
 		cd baz/boo &&
 		git init &&
-		test_commit deeply.nested deeper.world
+		test_cummit deeply.nested deeper.world
 	) &&
 	git clean -f -f -d &&
 	! test -d foo &&
@@ -679,7 +679,7 @@ test_expect_success 'git clean -d skips nested repo containing ignored files' '
 		cd nested-repo-with-ignored-file &&
 		>file &&
 		git add file &&
-		git commit -m Initial &&
+		git cummit -m Initial &&
 
 		# This file is ignored by a .gitignore rule in the outer repo
 		# added in the previous test.

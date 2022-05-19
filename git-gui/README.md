@@ -1,9 +1,9 @@
 # Git GUI - A graphical user interface for Git
 
 Git GUI allows you to use the [Git source control management
-tools](https://git-scm.com/) via a GUI. This includes staging, committing,
+tools](https://git-scm.com/) via a GUI. This includes staging, cummitting,
 adding, pushing, etc. It can also be used as a blame viewer, a tree browser,
-and a citool (make exactly one commit before exiting and returning to shell).
+and a citool (make exactly one cummit before exiting and returning to shell).
 More details about Git GUI can be found in its manual page by either running
 `man git-gui`, or by visiting the [online manual
 page](https://git-scm.com/docs/git-gui).
@@ -54,19 +54,19 @@ be found [here](https://git.wiki.kernel.org/index.php/GitCommunity).
 
 ## Sending your changes
 
-Since the development happens over email, you need to send in your commits in
-text format. Commits can be converted to emails via the two tools provided by
+Since the development happens over email, you need to send in your cummits in
+text format. cummits can be converted to emails via the two tools provided by
 Git: `git-send-email` and `git-format-patch`.
 
 You can use `git-format-patch` to generate patches in mbox format from your
-commits that can then be sent via email. Let's say you are working on a branch
+cummits that can then be sent via email. Let's say you are working on a branch
 called 'foo' that was created on top of 'master'. You can run:
 
 ```
 git format-patch -o output_dir master..foo
 ```
 
-to convert all the extra commits in 'foo' into a set of patches saved in the
+to convert all the extra cummits in 'foo' into a set of patches saved in the
 folder `output_dir`.
 
 If you are sending multiple patches, it is recommended to include a cover
@@ -93,7 +93,7 @@ A pretty good guide to configuring and using `git-send-email` can be found
 ### Using your email client
 
 If your email client supports sending mbox format emails, you can use
-`git-format-patch` to get an mbox file for each commit, and then send them. If
+`git-format-patch` to get an mbox file for each cummit, and then send them. If
 there is more than one patch in the series, then all patches after the first
 patch (or the cover letter) need to be sent as replies to the first.
 `git-send-email` does this by default.
@@ -133,7 +133,7 @@ Then create a new branch based on git-gui/master:
 git checkout -b <your-branch-name> git-gui/master
 ```
 
-Make whatever commits you need to, push them to your fork, and then head over
+Make whatever cummits you need to, push them to your fork, and then head over
 to https://github.com/gitgitgadget/git/pulls and open a Pull Request targeting
 git-gui/master.
 
@@ -141,12 +141,12 @@ GitGitGadget will welcome you with a (hopefully) helpful message.
 
 ## Signing off
 
-You need to sign off your commits before sending them to the list. You can do
-that by passing the `-s` option to `git-commit`. You can also use the "Sign
+You need to sign off your cummits before sending them to the list. You can do
+that by passing the `-s` option to `git-cummit`. You can also use the "Sign
 Off" option in Git GUI.
 
 A sign-off is a simple 'Signed-off-by: A U Thor \<author@example.com\>' line at
-the end of the commit message, after your explanation of the commit.
+the end of the cummit message, after your explanation of the cummit.
 
 A sign-off means that you are legally allowed to send the code, and it serves
 as a certificate of origin. More information can be found at

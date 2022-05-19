@@ -37,7 +37,7 @@ case "$UNCPATH" in
 esac
 
 test_expect_success setup '
-	test_commit initial
+	test_cummit initial
 '
 
 test_expect_success clone '
@@ -65,7 +65,7 @@ test_expect_success push '
 	(
 		cd clone &&
 		git checkout -b to-push &&
-		test_commit to-push &&
+		test_cummit to-push &&
 		git push origin HEAD
 	) &&
 	rev="$(git -C clone rev-parse --verify refs/heads/to-push)" &&

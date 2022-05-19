@@ -39,7 +39,7 @@ test_expect_success setup '
 				git add file-$j || exit
 			done &&
 			test_tick &&
-			git commit -m $i || exit
+			git cummit -m $i || exit
 		done &&
 		for i in $them
 		do
@@ -47,7 +47,7 @@ test_expect_success setup '
 			echo updated $i >file-$i &&
 			git add file-$i &&
 			test_tick &&
-			git commit -m side-$i || exit
+			git cummit -m side-$i || exit
 		done
 	)
 '

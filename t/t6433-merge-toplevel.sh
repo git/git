@@ -14,16 +14,16 @@ t3033_reset () {
 }
 
 test_expect_success setup '
-	test_commit one &&
+	test_cummit one &&
 	git branch left &&
 	git branch right &&
-	test_commit two &&
+	test_cummit two &&
 	git checkout left &&
-	test_commit three &&
+	test_cummit three &&
 	git checkout right &&
-	test_commit four &&
+	test_cummit four &&
 	git checkout --orphan newroot &&
-	test_commit five &&
+	test_cummit five &&
 	git checkout main
 '
 

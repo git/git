@@ -77,7 +77,7 @@ test_expect_success SYMLINKS 'p4 client root symlink should stay symbolic' '
 		EOF
 		git p4 clone --dest="$git" //depot &&
 		cd "$git" &&
-		test_commit file2 &&
+		test_cummit file2 &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit
 	)

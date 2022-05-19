@@ -11,7 +11,7 @@ test_expect_success setup '
 	export GIT_OBJECT_DIRECTORY &&
 	touch a &&
 	git add a &&
-	git commit -m 1 &&
+	git cummit -m 1 &&
 	git repack -adl &&
 	echo "$(pwd)"/.git/objects/../objects >.git/objects/info/alternates
 '

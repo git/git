@@ -1,6 +1,6 @@
 #include "cache.h"
 #include "repository.h"
-#include "commit.h"
+#include "cummit.h"
 #include "walker.h"
 #include "http.h"
 #include "list.h"

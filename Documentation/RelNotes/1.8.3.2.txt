@@ -14,7 +14,7 @@ Fixes since v1.8.3.1
    updated to correctly take existing remote definitions into account.
 
  * "git fetch" into a shallow repository from a repository that does
-   not know about the shallow boundary commits (e.g. a different fork
+   not know about the shallow boundary cummits (e.g. a different fork
    from the repository the current shallow repository was cloned from)
    did not work correctly.
 
@@ -32,7 +32,7 @@ Fixes since v1.8.3.1
    incorrectly when your previous branch was "frotz" (it should be
    rewritten to "git merge frotz~22" instead).
 
- * "git commit --allow-empty-message -m ''" should not start an
+ * "git cummit --allow-empty-message -m ''" should not start an
    editor.
 
  * "git push --[no-]verify" was not documented.

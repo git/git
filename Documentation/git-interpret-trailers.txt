@@ -3,7 +3,7 @@ git-interpret-trailers(1)
 
 NAME
 ----
-git-interpret-trailers - Add or parse structured information in commit messages
+git-interpret-trailers - Add or parse structured information in cummit messages
 
 SYNOPSIS
 --------
@@ -14,20 +14,20 @@ SYNOPSIS
 DESCRIPTION
 -----------
 Help parsing or adding 'trailers' lines, that look similar to RFC 822 e-mail
-headers, at the end of the otherwise free-form part of a commit
+headers, at the end of the otherwise free-form part of a cummit
 message.
 
-This command reads some patches or commit messages from either the
+This command reads some patches or cummit messages from either the
 <file> arguments or the standard input if no <file> is specified. If
 `--parse` is specified, the output consists of the parsed trailers.
 
 Otherwise, this command applies the arguments passed using the
-`--trailer` option, if any, to the commit message part of each input
+`--trailer` option, if any, to the cummit message part of each input
 file. The result is emitted on the standard output.
 
 Some configuration variables control the way the `--trailer` arguments
-are applied to each commit message and the way any existing trailer in
-the commit message is changed. They also make it possible to
+are applied to each cummit message and the way any existing trailer in
+the cummit message is changed. They also make it possible to
 automatically add some trailers.
 
 By default, a '<token>=<value>' or '<token>:<value>' argument given
@@ -46,8 +46,8 @@ This means that the trimmed <token> and <value> will be separated by
 
 By default the new trailer will appear at the end of all the existing
 trailers. If there is no existing trailer, the new trailer will appear
-after the commit message part of the output, and, if there is no line
-with only spaces at the end of the commit message part, one blank line
+after the cummit message part of the output, and, if there is no line
+with only spaces at the end of the cummit message part, one blank line
 will be added before the new trailer.
 
 Existing trailers are extracted from the input message by looking for
@@ -127,8 +127,8 @@ OPTIONS
 	--unfold`.
 
 --no-divider::
-	Do not treat `---` as the end of the commit message. Use this
-	when you know your input contains just the commit message itself
+	Do not treat `---` as the end of the cummit message. Use this
+	when you know your input contains just the cummit message itself
 	(and not an email or the output of `git format-patch`).
 
 CONFIGURATION VARIABLES
@@ -305,7 +305,7 @@ Signed-off-by: Bob <bob@example.com>
 Acked-by: Alice <alice@example.com>
 ------------
 
-* Extract the last commit as a patch, and add a 'Cc' and a
+* Extract the last cummit as a patch, and add a 'Cc' and a
   'Reviewed-by' trailer to it:
 +
 ------------
@@ -372,7 +372,7 @@ Helped-by: Christian Couder <christian.couder@gmail.com>
 ------------
 
 * Configure a 'ref' trailer with a cmd use a script `glog-grep`
-  to grep last relevant commit from git log in the git repository
+  to grep last relevant cummit from git log in the git repository
   and show how it works:
 +
 ------------
@@ -396,13 +396,13 @@ Reference-to: 8bc9a0c769 (Add copyright notices., 2005-04-07)
 ------------
 
 * Configure a 'see' trailer with a command to show the subject of a
-  commit that is related, and show how it works:
+  cummit that is related, and show how it works:
 +
 ------------
 $ git config trailer.see.key "See-also: "
 $ git config trailer.see.ifExists "replace"
 $ git config trailer.see.ifMissing "doNothing"
-$ git config trailer.see.command "git log -1 --oneline --format=\"%h (%s)\" --abbrev-commit --abbrev=14 \$ARG"
+$ git config trailer.see.command "git log -1 --oneline --format=\"%h (%s)\" --abbrev-cummit --abbrev=14 \$ARG"
 $ git interpret-trailers <<EOF
 > subject
 > 
@@ -414,17 +414,17 @@ subject
 
 message
 
-See-also: fe3187489d69c4 (subject of related commit)
+See-also: fe3187489d69c4 (subject of related cummit)
 ------------
 
-* Configure a commit template with some trailers with empty values
+* Configure a cummit template with some trailers with empty values
   (using sed to show and keep the trailing spaces at the end of the
-  trailers), then configure a commit-msg hook that uses
+  trailers), then configure a cummit-msg hook that uses
   'git interpret-trailers' to remove trailers with empty values and
   to add a 'git-version' trailer:
 +
 ------------
-$ sed -e 's/ Z$/ /' >commit_template.txt <<EOF
+$ sed -e 's/ Z$/ /' >cummit_template.txt <<EOF
 > ***subject***
 > 
 > ***message***
@@ -434,18 +434,18 @@ $ sed -e 's/ Z$/ /' >commit_template.txt <<EOF
 > Reviewed-by: Z
 > Signed-off-by: Z
 > EOF
-$ git config commit.template commit_template.txt
-$ cat >.git/hooks/commit-msg <<EOF
+$ git config cummit.template cummit_template.txt
+$ cat >.git/hooks/cummit-msg <<EOF
 > #!/bin/sh
 > git interpret-trailers --trim-empty --trailer "git-version: \$(git describe)" "\$1" > "\$1.new"
 > mv "\$1.new" "\$1"
 > EOF
-$ chmod +x .git/hooks/commit-msg
+$ chmod +x .git/hooks/cummit-msg
 ------------
 
 SEE ALSO
 --------
-linkgit:git-commit[1], linkgit:git-format-patch[1], linkgit:git-config[1]
+linkgit:git-cummit[1], linkgit:git-format-patch[1], linkgit:git-config[1]
 
 GIT
 ---

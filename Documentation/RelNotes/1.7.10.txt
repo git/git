@@ -6,12 +6,12 @@ Compatibility Notes
 
  * From this release on, the "git merge" command in an interactive
    session will start an editor when it automatically resolves the
-   merge for the user to explain the resulting commit, just like the
-   "git commit" command does when it wasn't given a commit message.
+   merge for the user to explain the resulting cummit, just like the
+   "git cummit" command does when it wasn't given a cummit message.
 
    If you have a script that runs "git merge" and keeps its standard
    input and output attached to the user's terminal, and if you do not
-   want the user to explain the resulting merge commits, you can
+   want the user to explain the resulting merge cummits, you can
    export GIT_MERGE_AUTOEDIT environment variable set to "no", like
    this:
 
@@ -20,7 +20,7 @@ Compatibility Notes
 	export GIT_MERGE_AUTOEDIT
 
    to disable this behavior (if you want your users to explain their
-   merge commits, you do not have to do anything).  Alternatively, you
+   merge cummits, you do not have to do anything).  Alternatively, you
    can give the "--no-edit" option to individual invocations of the
    "git merge" command if you know everybody who uses your script has
    Git v1.7.8 or newer.
@@ -53,7 +53,7 @@ UI, Workflows & Features
    - make "git-describe" output in the log message into a clickable link
    - avoid matching the UNIX timestamp part when searching all fields
    - give preference to symbolic font names like sans & monospace
-   - allow comparing two commits using a mark
+   - allow comparing two cummits using a mark
    - "gitk" honors log.showroot configuration.
 
  * Teams for localizing the messages from the Porcelain layer of
@@ -71,8 +71,8 @@ UI, Workflows & Features
    now optionally be marked as "required".
 
  * Options whose names begin with "--no-" (e.g. the "--no-verify"
-   option of the "git commit" command) can be negated by omitting
-   "no-" from its name, e.g. "git commit --verify".
+   option of the "git cummit" command) can be negated by omitting
+   "no-" from its name, e.g. "git cummit --verify".
 
  * "git am" learned to pass "-b" option to underlying "git mailinfo", so
    that a bracketed string other than "PATCH" at the beginning can be kept.
@@ -103,7 +103,7 @@ UI, Workflows & Features
    option.  With "-i", "log -G" ignores the case when finding patch
    hunks that introduce or remove a string that matches the given
    pattern.  Similarly with "-i", "log -S" ignores the case when
-   finding the commit the given block of text appears or disappears
+   finding the cummit the given block of text appears or disappears
    from the file.
 
  * "git merge" in an interactive session learned to spawn the editor

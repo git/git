@@ -8,22 +8,22 @@ test_description='Test notes merging with auto-resolving strategies'
 . ./test-lib.sh
 
 # Set up a notes merge scenario with all kinds of potential conflicts
-test_expect_success 'setup commits' '
-	test_commit 1st &&
-	test_commit 2nd &&
-	test_commit 3rd &&
-	test_commit 4th &&
-	test_commit 5th &&
-	test_commit 6th &&
-	test_commit 7th &&
-	test_commit 8th &&
-	test_commit 9th &&
-	test_commit 10th &&
-	test_commit 11th &&
-	test_commit 12th &&
-	test_commit 13th &&
-	test_commit 14th &&
-	test_commit 15th &&
+test_expect_success 'setup cummits' '
+	test_cummit 1st &&
+	test_cummit 2nd &&
+	test_cummit 3rd &&
+	test_cummit 4th &&
+	test_cummit 5th &&
+	test_cummit 6th &&
+	test_cummit 7th &&
+	test_cummit 8th &&
+	test_cummit 9th &&
+	test_cummit 10th &&
+	test_cummit 11th &&
+	test_cummit 12th &&
+	test_cummit 13th &&
+	test_cummit 14th &&
+	test_cummit 15th &&
 
 	test_oid_cache <<-EOF
 	hash15a sha1:457a85d6c814ea208550f15fcc48f804ac8dc023
@@ -86,21 +86,21 @@ test_expect_success 'setup commits' '
 	EOF
 '
 
-commit_sha1=$(git rev-parse 1st^{commit})
-commit_sha2=$(git rev-parse 2nd^{commit})
-commit_sha3=$(git rev-parse 3rd^{commit})
-commit_sha4=$(git rev-parse 4th^{commit})
-commit_sha5=$(git rev-parse 5th^{commit})
-commit_sha6=$(git rev-parse 6th^{commit})
-commit_sha7=$(git rev-parse 7th^{commit})
-commit_sha8=$(git rev-parse 8th^{commit})
-commit_sha9=$(git rev-parse 9th^{commit})
-commit_sha10=$(git rev-parse 10th^{commit})
-commit_sha11=$(git rev-parse 11th^{commit})
-commit_sha12=$(git rev-parse 12th^{commit})
-commit_sha13=$(git rev-parse 13th^{commit})
-commit_sha14=$(git rev-parse 14th^{commit})
-commit_sha15=$(git rev-parse 15th^{commit})
+cummit_sha1=$(git rev-parse 1st^{cummit})
+cummit_sha2=$(git rev-parse 2nd^{cummit})
+cummit_sha3=$(git rev-parse 3rd^{cummit})
+cummit_sha4=$(git rev-parse 4th^{cummit})
+cummit_sha5=$(git rev-parse 5th^{cummit})
+cummit_sha6=$(git rev-parse 6th^{cummit})
+cummit_sha7=$(git rev-parse 7th^{cummit})
+cummit_sha8=$(git rev-parse 8th^{cummit})
+cummit_sha9=$(git rev-parse 9th^{cummit})
+cummit_sha10=$(git rev-parse 10th^{cummit})
+cummit_sha11=$(git rev-parse 11th^{cummit})
+cummit_sha12=$(git rev-parse 12th^{cummit})
+cummit_sha13=$(git rev-parse 13th^{cummit})
+cummit_sha14=$(git rev-parse 14th^{cummit})
+cummit_sha15=$(git rev-parse 15th^{cummit})
 
 verify_notes () {
 	notes_ref="$1"
@@ -115,71 +115,71 @@ verify_notes () {
 
 test_expect_success 'setup merge base (x)' '
 	git config core.notesRef refs/notes/x &&
-	git notes add -m "x notes on 6th commit" 6th &&
-	git notes add -m "x notes on 7th commit" 7th &&
-	git notes add -m "x notes on 8th commit" 8th &&
-	git notes add -m "x notes on 9th commit" 9th &&
-	git notes add -m "x notes on 10th commit" 10th &&
-	git notes add -m "x notes on 11th commit" 11th &&
-	git notes add -m "x notes on 12th commit" 12th &&
-	git notes add -m "x notes on 13th commit" 13th &&
-	git notes add -m "x notes on 14th commit" 14th &&
-	git notes add -m "x notes on 15th commit" 15th
+	git notes add -m "x notes on 6th cummit" 6th &&
+	git notes add -m "x notes on 7th cummit" 7th &&
+	git notes add -m "x notes on 8th cummit" 8th &&
+	git notes add -m "x notes on 9th cummit" 9th &&
+	git notes add -m "x notes on 10th cummit" 10th &&
+	git notes add -m "x notes on 11th cummit" 11th &&
+	git notes add -m "x notes on 12th cummit" 12th &&
+	git notes add -m "x notes on 13th cummit" 13th &&
+	git notes add -m "x notes on 14th cummit" 14th &&
+	git notes add -m "x notes on 15th cummit" 15th
 '
 
 cat <<EOF | sort >expect_notes_x
-$(test_oid hash15a) $commit_sha15
-$(test_oid hash14a) $commit_sha14
-$(test_oid hash13a) $commit_sha13
-$(test_oid hash12a) $commit_sha12
-$(test_oid hash11a) $commit_sha11
-$(test_oid hash10a) $commit_sha10
-$(test_oid hash09a) $commit_sha9
-$(test_oid hash08a) $commit_sha8
-$(test_oid hash07a) $commit_sha7
-$(test_oid hash06a) $commit_sha6
+$(test_oid hash15a) $cummit_sha15
+$(test_oid hash14a) $cummit_sha14
+$(test_oid hash13a) $cummit_sha13
+$(test_oid hash12a) $cummit_sha12
+$(test_oid hash11a) $cummit_sha11
+$(test_oid hash10a) $cummit_sha10
+$(test_oid hash09a) $cummit_sha9
+$(test_oid hash08a) $cummit_sha8
+$(test_oid hash07a) $cummit_sha7
+$(test_oid hash06a) $cummit_sha6
 EOF
 
 cat >expect_log_x <<EOF
-$commit_sha15 15th
-x notes on 15th commit
+$cummit_sha15 15th
+x notes on 15th cummit
 
-$commit_sha14 14th
-x notes on 14th commit
+$cummit_sha14 14th
+x notes on 14th cummit
 
-$commit_sha13 13th
-x notes on 13th commit
+$cummit_sha13 13th
+x notes on 13th cummit
 
-$commit_sha12 12th
-x notes on 12th commit
+$cummit_sha12 12th
+x notes on 12th cummit
 
-$commit_sha11 11th
-x notes on 11th commit
+$cummit_sha11 11th
+x notes on 11th cummit
 
-$commit_sha10 10th
-x notes on 10th commit
+$cummit_sha10 10th
+x notes on 10th cummit
 
-$commit_sha9 9th
-x notes on 9th commit
+$cummit_sha9 9th
+x notes on 9th cummit
 
-$commit_sha8 8th
-x notes on 8th commit
+$cummit_sha8 8th
+x notes on 8th cummit
 
-$commit_sha7 7th
-x notes on 7th commit
+$cummit_sha7 7th
+x notes on 7th cummit
 
-$commit_sha6 6th
-x notes on 6th commit
+$cummit_sha6 6th
+x notes on 6th cummit
 
-$commit_sha5 5th
+$cummit_sha5 5th
 
-$commit_sha4 4th
+$cummit_sha4 4th
 
-$commit_sha3 3rd
+$cummit_sha3 3rd
 
-$commit_sha2 2nd
+$cummit_sha2 2nd
 
-$commit_sha1 1st
+$cummit_sha1 1st
 
 EOF
 
@@ -188,71 +188,71 @@ test_expect_success 'verify state of merge base (x)' 'verify_notes x x'
 test_expect_success 'setup local branch (y)' '
 	git update-ref refs/notes/y refs/notes/x &&
 	git config core.notesRef refs/notes/y &&
-	git notes add -f -m "y notes on 3rd commit" 3rd &&
-	git notes add -f -m "y notes on 4th commit" 4th &&
-	git notes add -f -m "y notes on 5th commit" 5th &&
+	git notes add -f -m "y notes on 3rd cummit" 3rd &&
+	git notes add -f -m "y notes on 4th cummit" 4th &&
+	git notes add -f -m "y notes on 5th cummit" 5th &&
 	git notes remove 6th &&
 	git notes remove 7th &&
 	git notes remove 8th &&
-	git notes add -f -m "y notes on 12th commit" 12th &&
-	git notes add -f -m "y notes on 13th commit" 13th &&
-	git notes add -f -m "y notes on 14th commit" 14th &&
-	git notes add -f -m "y notes on 15th commit" 15th
+	git notes add -f -m "y notes on 12th cummit" 12th &&
+	git notes add -f -m "y notes on 13th cummit" 13th &&
+	git notes add -f -m "y notes on 14th cummit" 14th &&
+	git notes add -f -m "y notes on 15th cummit" 15th
 '
 
 cat <<EOF | sort >expect_notes_y
-$(test_oid hash15b) $commit_sha15
-$(test_oid hash14b) $commit_sha14
-$(test_oid hash13b) $commit_sha13
-$(test_oid hash12b) $commit_sha12
-$(test_oid hash11a) $commit_sha11
-$(test_oid hash10a) $commit_sha10
-$(test_oid hash09a) $commit_sha9
-$(test_oid hash05b) $commit_sha5
-$(test_oid hash04b) $commit_sha4
-$(test_oid hash03b) $commit_sha3
+$(test_oid hash15b) $cummit_sha15
+$(test_oid hash14b) $cummit_sha14
+$(test_oid hash13b) $cummit_sha13
+$(test_oid hash12b) $cummit_sha12
+$(test_oid hash11a) $cummit_sha11
+$(test_oid hash10a) $cummit_sha10
+$(test_oid hash09a) $cummit_sha9
+$(test_oid hash05b) $cummit_sha5
+$(test_oid hash04b) $cummit_sha4
+$(test_oid hash03b) $cummit_sha3
 EOF
 
 cat >expect_log_y <<EOF
-$commit_sha15 15th
-y notes on 15th commit
+$cummit_sha15 15th
+y notes on 15th cummit
 
-$commit_sha14 14th
-y notes on 14th commit
+$cummit_sha14 14th
+y notes on 14th cummit
 
-$commit_sha13 13th
-y notes on 13th commit
+$cummit_sha13 13th
+y notes on 13th cummit
 
-$commit_sha12 12th
-y notes on 12th commit
+$cummit_sha12 12th
+y notes on 12th cummit
 
-$commit_sha11 11th
-x notes on 11th commit
+$cummit_sha11 11th
+x notes on 11th cummit
 
-$commit_sha10 10th
-x notes on 10th commit
+$cummit_sha10 10th
+x notes on 10th cummit
 
-$commit_sha9 9th
-x notes on 9th commit
+$cummit_sha9 9th
+x notes on 9th cummit
 
-$commit_sha8 8th
+$cummit_sha8 8th
 
-$commit_sha7 7th
+$cummit_sha7 7th
 
-$commit_sha6 6th
+$cummit_sha6 6th
 
-$commit_sha5 5th
-y notes on 5th commit
+$cummit_sha5 5th
+y notes on 5th cummit
 
-$commit_sha4 4th
-y notes on 4th commit
+$cummit_sha4 4th
+y notes on 4th cummit
 
-$commit_sha3 3rd
-y notes on 3rd commit
+$cummit_sha3 3rd
+y notes on 3rd cummit
 
-$commit_sha2 2nd
+$cummit_sha2 2nd
 
-$commit_sha1 1st
+$cummit_sha1 1st
 
 EOF
 
@@ -261,71 +261,71 @@ test_expect_success 'verify state of local branch (y)' 'verify_notes y y'
 test_expect_success 'setup remote branch (z)' '
 	git update-ref refs/notes/z refs/notes/x &&
 	git config core.notesRef refs/notes/z &&
-	git notes add -f -m "z notes on 2nd commit" 2nd &&
-	git notes add -f -m "y notes on 4th commit" 4th &&
-	git notes add -f -m "z notes on 5th commit" 5th &&
+	git notes add -f -m "z notes on 2nd cummit" 2nd &&
+	git notes add -f -m "y notes on 4th cummit" 4th &&
+	git notes add -f -m "z notes on 5th cummit" 5th &&
 	git notes remove 6th &&
-	git notes add -f -m "z notes on 8th commit" 8th &&
+	git notes add -f -m "z notes on 8th cummit" 8th &&
 	git notes remove 9th &&
-	git notes add -f -m "z notes on 11th commit" 11th &&
+	git notes add -f -m "z notes on 11th cummit" 11th &&
 	git notes remove 12th &&
-	git notes add -f -m "y notes on 14th commit" 14th &&
-	git notes add -f -m "z notes on 15th commit" 15th
+	git notes add -f -m "y notes on 14th cummit" 14th &&
+	git notes add -f -m "z notes on 15th cummit" 15th
 '
 
 cat <<EOF | sort >expect_notes_z
-$(test_oid hash15c) $commit_sha15
-$(test_oid hash14b) $commit_sha14
-$(test_oid hash13a) $commit_sha13
-$(test_oid hash11c) $commit_sha11
-$(test_oid hash10a) $commit_sha10
-$(test_oid hash08c) $commit_sha8
-$(test_oid hash07a) $commit_sha7
-$(test_oid hash05c) $commit_sha5
-$(test_oid hash04b) $commit_sha4
-$(test_oid hash02c) $commit_sha2
+$(test_oid hash15c) $cummit_sha15
+$(test_oid hash14b) $cummit_sha14
+$(test_oid hash13a) $cummit_sha13
+$(test_oid hash11c) $cummit_sha11
+$(test_oid hash10a) $cummit_sha10
+$(test_oid hash08c) $cummit_sha8
+$(test_oid hash07a) $cummit_sha7
+$(test_oid hash05c) $cummit_sha5
+$(test_oid hash04b) $cummit_sha4
+$(test_oid hash02c) $cummit_sha2
 EOF
 
 cat >expect_log_z <<EOF
-$commit_sha15 15th
-z notes on 15th commit
+$cummit_sha15 15th
+z notes on 15th cummit
 
-$commit_sha14 14th
-y notes on 14th commit
+$cummit_sha14 14th
+y notes on 14th cummit
 
-$commit_sha13 13th
-x notes on 13th commit
+$cummit_sha13 13th
+x notes on 13th cummit
 
-$commit_sha12 12th
+$cummit_sha12 12th
 
-$commit_sha11 11th
-z notes on 11th commit
+$cummit_sha11 11th
+z notes on 11th cummit
 
-$commit_sha10 10th
-x notes on 10th commit
+$cummit_sha10 10th
+x notes on 10th cummit
 
-$commit_sha9 9th
+$cummit_sha9 9th
 
-$commit_sha8 8th
-z notes on 8th commit
+$cummit_sha8 8th
+z notes on 8th cummit
 
-$commit_sha7 7th
-x notes on 7th commit
+$cummit_sha7 7th
+x notes on 7th cummit
 
-$commit_sha6 6th
+$cummit_sha6 6th
 
-$commit_sha5 5th
-z notes on 5th commit
+$cummit_sha5 5th
+z notes on 5th cummit
 
-$commit_sha4 4th
-y notes on 4th commit
+$cummit_sha4 4th
+y notes on 4th cummit
 
-$commit_sha3 3rd
+$cummit_sha3 3rd
 
-$commit_sha2 2nd
-z notes on 2nd commit
+$cummit_sha2 2nd
+z notes on 2nd cummit
 
-$commit_sha1 1st
+$cummit_sha1 1st
 
 EOF
 
@@ -333,7 +333,7 @@ test_expect_success 'verify state of remote branch (z)' 'verify_notes z z'
 
 # At this point, before merging z into y, we have the following status:
 #
-# commit | base/x  | local/y | remote/z | diff from x to y/z         | result
+# cummit | base/x  | local/y | remote/z | diff from x to y/z         | result
 # -------|---------|---------|----------|----------------------------|-------
 # 1st    | [none]  | [none]  | [none]   | unchanged / unchanged      | [none]
 # 2nd    | [none]  | [none]  | 283b482  | unchanged / added          | 283b482
@@ -366,58 +366,58 @@ test_expect_success 'merge z into y with invalid configuration option => Fail/No
 '
 
 cat <<EOF | sort >expect_notes_ours
-$(test_oid hash15b) $commit_sha15
-$(test_oid hash14b) $commit_sha14
-$(test_oid hash13b) $commit_sha13
-$(test_oid hash12b) $commit_sha12
-$(test_oid hash11c) $commit_sha11
-$(test_oid hash10a) $commit_sha10
-$(test_oid hash05b) $commit_sha5
-$(test_oid hash04b) $commit_sha4
-$(test_oid hash03b) $commit_sha3
-$(test_oid hash02c) $commit_sha2
+$(test_oid hash15b) $cummit_sha15
+$(test_oid hash14b) $cummit_sha14
+$(test_oid hash13b) $cummit_sha13
+$(test_oid hash12b) $cummit_sha12
+$(test_oid hash11c) $cummit_sha11
+$(test_oid hash10a) $cummit_sha10
+$(test_oid hash05b) $cummit_sha5
+$(test_oid hash04b) $cummit_sha4
+$(test_oid hash03b) $cummit_sha3
+$(test_oid hash02c) $cummit_sha2
 EOF
 
 cat >expect_log_ours <<EOF
-$commit_sha15 15th
-y notes on 15th commit
+$cummit_sha15 15th
+y notes on 15th cummit
 
-$commit_sha14 14th
-y notes on 14th commit
+$cummit_sha14 14th
+y notes on 14th cummit
 
-$commit_sha13 13th
-y notes on 13th commit
+$cummit_sha13 13th
+y notes on 13th cummit
 
-$commit_sha12 12th
-y notes on 12th commit
+$cummit_sha12 12th
+y notes on 12th cummit
 
-$commit_sha11 11th
-z notes on 11th commit
+$cummit_sha11 11th
+z notes on 11th cummit
 
-$commit_sha10 10th
-x notes on 10th commit
+$cummit_sha10 10th
+x notes on 10th cummit
 
-$commit_sha9 9th
+$cummit_sha9 9th
 
-$commit_sha8 8th
+$cummit_sha8 8th
 
-$commit_sha7 7th
+$cummit_sha7 7th
 
-$commit_sha6 6th
+$cummit_sha6 6th
 
-$commit_sha5 5th
-y notes on 5th commit
+$cummit_sha5 5th
+y notes on 5th cummit
 
-$commit_sha4 4th
-y notes on 4th commit
+$cummit_sha4 4th
+y notes on 4th cummit
 
-$commit_sha3 3rd
-y notes on 3rd commit
+$cummit_sha3 3rd
+y notes on 3rd cummit
 
-$commit_sha2 2nd
-z notes on 2nd commit
+$cummit_sha2 2nd
+z notes on 2nd cummit
 
-$commit_sha1 1st
+$cummit_sha1 1st
 
 EOF
 
@@ -455,58 +455,58 @@ test_expect_success 'reset to pre-merge state (y)' '
 '
 
 cat <<EOF | sort >expect_notes_theirs
-$(test_oid hash15c) $commit_sha15
-$(test_oid hash14b) $commit_sha14
-$(test_oid hash13b) $commit_sha13
-$(test_oid hash11c) $commit_sha11
-$(test_oid hash10a) $commit_sha10
-$(test_oid hash08c) $commit_sha8
-$(test_oid hash05c) $commit_sha5
-$(test_oid hash04b) $commit_sha4
-$(test_oid hash03b) $commit_sha3
-$(test_oid hash02c) $commit_sha2
+$(test_oid hash15c) $cummit_sha15
+$(test_oid hash14b) $cummit_sha14
+$(test_oid hash13b) $cummit_sha13
+$(test_oid hash11c) $cummit_sha11
+$(test_oid hash10a) $cummit_sha10
+$(test_oid hash08c) $cummit_sha8
+$(test_oid hash05c) $cummit_sha5
+$(test_oid hash04b) $cummit_sha4
+$(test_oid hash03b) $cummit_sha3
+$(test_oid hash02c) $cummit_sha2
 EOF
 
 cat >expect_log_theirs <<EOF
-$commit_sha15 15th
-z notes on 15th commit
+$cummit_sha15 15th
+z notes on 15th cummit
 
-$commit_sha14 14th
-y notes on 14th commit
+$cummit_sha14 14th
+y notes on 14th cummit
 
-$commit_sha13 13th
-y notes on 13th commit
+$cummit_sha13 13th
+y notes on 13th cummit
 
-$commit_sha12 12th
+$cummit_sha12 12th
 
-$commit_sha11 11th
-z notes on 11th commit
+$cummit_sha11 11th
+z notes on 11th cummit
 
-$commit_sha10 10th
-x notes on 10th commit
+$cummit_sha10 10th
+x notes on 10th cummit
 
-$commit_sha9 9th
+$cummit_sha9 9th
 
-$commit_sha8 8th
-z notes on 8th commit
+$cummit_sha8 8th
+z notes on 8th cummit
 
-$commit_sha7 7th
+$cummit_sha7 7th
 
-$commit_sha6 6th
+$cummit_sha6 6th
 
-$commit_sha5 5th
-z notes on 5th commit
+$cummit_sha5 5th
+z notes on 5th cummit
 
-$commit_sha4 4th
-y notes on 4th commit
+$cummit_sha4 4th
+y notes on 4th cummit
 
-$commit_sha3 3rd
-y notes on 3rd commit
+$cummit_sha3 3rd
+y notes on 3rd cummit
 
-$commit_sha2 2nd
-z notes on 2nd commit
+$cummit_sha2 2nd
+z notes on 2nd cummit
 
-$commit_sha1 1st
+$cummit_sha1 1st
 
 EOF
 
@@ -533,64 +533,64 @@ test_expect_success 'reset to pre-merge state (y)' '
 '
 
 cat <<EOF | sort >expect_notes_union
-$(test_oid hash15d) $commit_sha15
-$(test_oid hash14b) $commit_sha14
-$(test_oid hash13b) $commit_sha13
-$(test_oid hash12b) $commit_sha12
-$(test_oid hash11c) $commit_sha11
-$(test_oid hash10a) $commit_sha10
-$(test_oid hash08c) $commit_sha8
-$(test_oid hash05d) $commit_sha5
-$(test_oid hash04b) $commit_sha4
-$(test_oid hash03b) $commit_sha3
-$(test_oid hash02c) $commit_sha2
+$(test_oid hash15d) $cummit_sha15
+$(test_oid hash14b) $cummit_sha14
+$(test_oid hash13b) $cummit_sha13
+$(test_oid hash12b) $cummit_sha12
+$(test_oid hash11c) $cummit_sha11
+$(test_oid hash10a) $cummit_sha10
+$(test_oid hash08c) $cummit_sha8
+$(test_oid hash05d) $cummit_sha5
+$(test_oid hash04b) $cummit_sha4
+$(test_oid hash03b) $cummit_sha3
+$(test_oid hash02c) $cummit_sha2
 EOF
 
 cat >expect_log_union <<EOF
-$commit_sha15 15th
-y notes on 15th commit
+$cummit_sha15 15th
+y notes on 15th cummit
 
-z notes on 15th commit
+z notes on 15th cummit
 
-$commit_sha14 14th
-y notes on 14th commit
+$cummit_sha14 14th
+y notes on 14th cummit
 
-$commit_sha13 13th
-y notes on 13th commit
+$cummit_sha13 13th
+y notes on 13th cummit
 
-$commit_sha12 12th
-y notes on 12th commit
+$cummit_sha12 12th
+y notes on 12th cummit
 
-$commit_sha11 11th
-z notes on 11th commit
+$cummit_sha11 11th
+z notes on 11th cummit
 
-$commit_sha10 10th
-x notes on 10th commit
+$cummit_sha10 10th
+x notes on 10th cummit
 
-$commit_sha9 9th
+$cummit_sha9 9th
 
-$commit_sha8 8th
-z notes on 8th commit
+$cummit_sha8 8th
+z notes on 8th cummit
 
-$commit_sha7 7th
+$cummit_sha7 7th
 
-$commit_sha6 6th
+$cummit_sha6 6th
 
-$commit_sha5 5th
-y notes on 5th commit
+$cummit_sha5 5th
+y notes on 5th cummit
 
-z notes on 5th commit
+z notes on 5th cummit
 
-$commit_sha4 4th
-y notes on 4th commit
+$cummit_sha4 4th
+y notes on 4th cummit
 
-$commit_sha3 3rd
-y notes on 3rd commit
+$cummit_sha3 3rd
+y notes on 3rd cummit
 
-$commit_sha2 2nd
-z notes on 2nd commit
+$cummit_sha2 2nd
+z notes on 2nd cummit
 
-$commit_sha1 1st
+$cummit_sha1 1st
 
 EOF
 
@@ -634,64 +634,64 @@ test_expect_success 'merge z into y with "manual" per-ref only checks specific r
 '
 
 cat <<EOF | sort >expect_notes_union2
-$(test_oid hash15e) $commit_sha15
-$(test_oid hash14b) $commit_sha14
-$(test_oid hash13b) $commit_sha13
-$(test_oid hash12b) $commit_sha12
-$(test_oid hash11c) $commit_sha11
-$(test_oid hash10a) $commit_sha10
-$(test_oid hash08c) $commit_sha8
-$(test_oid hash05e) $commit_sha5
-$(test_oid hash04b) $commit_sha4
-$(test_oid hash03b) $commit_sha3
-$(test_oid hash02c) $commit_sha2
+$(test_oid hash15e) $cummit_sha15
+$(test_oid hash14b) $cummit_sha14
+$(test_oid hash13b) $cummit_sha13
+$(test_oid hash12b) $cummit_sha12
+$(test_oid hash11c) $cummit_sha11
+$(test_oid hash10a) $cummit_sha10
+$(test_oid hash08c) $cummit_sha8
+$(test_oid hash05e) $cummit_sha5
+$(test_oid hash04b) $cummit_sha4
+$(test_oid hash03b) $cummit_sha3
+$(test_oid hash02c) $cummit_sha2
 EOF
 
 cat >expect_log_union2 <<EOF
-$commit_sha15 15th
-z notes on 15th commit
+$cummit_sha15 15th
+z notes on 15th cummit
 
-y notes on 15th commit
+y notes on 15th cummit
 
-$commit_sha14 14th
-y notes on 14th commit
+$cummit_sha14 14th
+y notes on 14th cummit
 
-$commit_sha13 13th
-y notes on 13th commit
+$cummit_sha13 13th
+y notes on 13th cummit
 
-$commit_sha12 12th
-y notes on 12th commit
+$cummit_sha12 12th
+y notes on 12th cummit
 
-$commit_sha11 11th
-z notes on 11th commit
+$cummit_sha11 11th
+z notes on 11th cummit
 
-$commit_sha10 10th
-x notes on 10th commit
+$cummit_sha10 10th
+x notes on 10th cummit
 
-$commit_sha9 9th
+$cummit_sha9 9th
 
-$commit_sha8 8th
-z notes on 8th commit
+$cummit_sha8 8th
+z notes on 8th cummit
 
-$commit_sha7 7th
+$cummit_sha7 7th
 
-$commit_sha6 6th
+$cummit_sha6 6th
 
-$commit_sha5 5th
-z notes on 5th commit
+$cummit_sha5 5th
+z notes on 5th cummit
 
-y notes on 5th commit
+y notes on 5th cummit
 
-$commit_sha4 4th
-y notes on 4th commit
+$cummit_sha4 4th
+y notes on 4th cummit
 
-$commit_sha3 3rd
-y notes on 3rd commit
+$cummit_sha3 3rd
+y notes on 3rd cummit
 
-$commit_sha2 2nd
-z notes on 2nd commit
+$cummit_sha2 2nd
+z notes on 2nd cummit
 
-$commit_sha1 1st
+$cummit_sha1 1st
 
 EOF
 
@@ -708,62 +708,62 @@ test_expect_success 'reset to pre-merge state (z)' '
 '
 
 cat <<EOF | sort >expect_notes_cat_sort_uniq
-$(test_oid hash15f) $commit_sha15
-$(test_oid hash14b) $commit_sha14
-$(test_oid hash13b) $commit_sha13
-$(test_oid hash12b) $commit_sha12
-$(test_oid hash11c) $commit_sha11
-$(test_oid hash10a) $commit_sha10
-$(test_oid hash08c) $commit_sha8
-$(test_oid hash05f) $commit_sha5
-$(test_oid hash04b) $commit_sha4
-$(test_oid hash03b) $commit_sha3
-$(test_oid hash02c) $commit_sha2
+$(test_oid hash15f) $cummit_sha15
+$(test_oid hash14b) $cummit_sha14
+$(test_oid hash13b) $cummit_sha13
+$(test_oid hash12b) $cummit_sha12
+$(test_oid hash11c) $cummit_sha11
+$(test_oid hash10a) $cummit_sha10
+$(test_oid hash08c) $cummit_sha8
+$(test_oid hash05f) $cummit_sha5
+$(test_oid hash04b) $cummit_sha4
+$(test_oid hash03b) $cummit_sha3
+$(test_oid hash02c) $cummit_sha2
 EOF
 
 cat >expect_log_cat_sort_uniq <<EOF
-$commit_sha15 15th
-y notes on 15th commit
-z notes on 15th commit
+$cummit_sha15 15th
+y notes on 15th cummit
+z notes on 15th cummit
 
-$commit_sha14 14th
-y notes on 14th commit
+$cummit_sha14 14th
+y notes on 14th cummit
 
-$commit_sha13 13th
-y notes on 13th commit
+$cummit_sha13 13th
+y notes on 13th cummit
 
-$commit_sha12 12th
-y notes on 12th commit
+$cummit_sha12 12th
+y notes on 12th cummit
 
-$commit_sha11 11th
-z notes on 11th commit
+$cummit_sha11 11th
+z notes on 11th cummit
 
-$commit_sha10 10th
-x notes on 10th commit
+$cummit_sha10 10th
+x notes on 10th cummit
 
-$commit_sha9 9th
+$cummit_sha9 9th
 
-$commit_sha8 8th
-z notes on 8th commit
+$cummit_sha8 8th
+z notes on 8th cummit
 
-$commit_sha7 7th
+$cummit_sha7 7th
 
-$commit_sha6 6th
+$cummit_sha6 6th
 
-$commit_sha5 5th
-y notes on 5th commit
-z notes on 5th commit
+$cummit_sha5 5th
+y notes on 5th cummit
+z notes on 5th cummit
 
-$commit_sha4 4th
-y notes on 4th commit
+$cummit_sha4 4th
+y notes on 4th cummit
 
-$commit_sha3 3rd
-y notes on 3rd commit
+$cummit_sha3 3rd
+y notes on 3rd cummit
 
-$commit_sha2 2nd
-z notes on 2nd commit
+$cummit_sha2 2nd
+z notes on 2nd cummit
 
-$commit_sha1 1st
+$cummit_sha1 1st
 
 EOF
 

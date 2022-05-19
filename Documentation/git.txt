@@ -257,16 +257,16 @@ Reset, restore and revert
 There are three commands with similar names: `git reset`,
 `git restore` and `git revert`.
 
-* linkgit:git-revert[1] is about making a new commit that reverts the
-  changes made by other commits.
+* linkgit:git-revert[1] is about making a new cummit that reverts the
+  changes made by other cummits.
 
 * linkgit:git-restore[1] is about restoring files in the working tree
-  from either the index or another commit. This command does not
+  from either the index or another cummit. This command does not
   update your branch. The command can also be used to restore files in
-  the index from another commit.
+  the index from another cummit.
 
 * linkgit:git-reset[1] is about updating your branch, moving the tip
-  in order to add or remove commits from the branch. This operation
+  in order to add or remove cummits from the branch. This operation
   changes the commit history.
 +
 `git reset` can also be used to restore the index, overlapping with
@@ -378,24 +378,24 @@ Identifier Terminology
 <tree>::
 	Indicates a tree object name.
 
-<commit>::
-	Indicates a commit object name.
+<cummit>::
+	Indicates a cummit object name.
 
 <tree-ish>::
-	Indicates a tree, commit or tag object name.  A
+	Indicates a tree, cummit or tag object name.  A
 	command that takes a <tree-ish> argument ultimately wants to
 	operate on a <tree> object but automatically dereferences
-	<commit> and <tag> objects that point at a <tree>.
+	<cummit> and <tag> objects that point at a <tree>.
 
-<commit-ish>::
-	Indicates a commit or tag object name.  A
-	command that takes a <commit-ish> argument ultimately wants to
-	operate on a <commit> object but automatically dereferences
-	<tag> objects that point at a <commit>.
+<cummit-ish>::
+	Indicates a cummit or tag object name.  A
+	command that takes a <cummit-ish> argument ultimately wants to
+	operate on a <cummit> object but automatically dereferences
+	<tag> objects that point at a <cummit>.
 
 <type>::
 	Indicates that an object type is required.
-	Currently one of: `blob`, `tree`, `commit`, or `tag`.
+	Currently one of: `blob`, `tree`, `cummit`, or `tag`.
 
 <file>::
 	Indicates a filename - almost always relative to the
@@ -533,38 +533,38 @@ double-quotes and respecting backslash escapes. E.g., the value
 	is used instead. The default is "sha1". THIS VARIABLE IS
 	EXPERIMENTAL! See `--object-format` in linkgit:git-init[1].
 
-Git Commits
+Git cummits
 ~~~~~~~~~~~
 `GIT_AUTHOR_NAME`::
-	The human-readable name used in the author identity when creating commit or
+	The human-readable name used in the author identity when creating cummit or
 	tag objects, or when writing reflogs. Overrides the `user.name` and
 	`author.name` configuration settings.
 
 `GIT_AUTHOR_EMAIL`::
-	The email address used in the author identity when creating commit or
+	The email address used in the author identity when creating cummit or
 	tag objects, or when writing reflogs. Overrides the `user.email` and
 	`author.email` configuration settings.
 
 `GIT_AUTHOR_DATE`::
-	The date used for the author identity when creating commit or tag objects, or
-	when writing reflogs. See linkgit:git-commit[1] for valid formats.
+	The date used for the author identity when creating cummit or tag objects, or
+	when writing reflogs. See linkgit:git-cummit[1] for valid formats.
 
-`GIT_COMMITTER_NAME`::
-	The human-readable name used in the committer identity when creating commit or
+`GIT_cummitTER_NAME`::
+	The human-readable name used in the cummitter identity when creating cummit or
 	tag objects, or when writing reflogs. Overrides the `user.name` and
-	`committer.name` configuration settings.
+	`cummitter.name` configuration settings.
 
-`GIT_COMMITTER_EMAIL`::
-	The email address used in the author identity when creating commit or
+`GIT_cummitTER_EMAIL`::
+	The email address used in the author identity when creating cummit or
 	tag objects, or when writing reflogs. Overrides the `user.email` and
-	`committer.email` configuration settings.
+	`cummitter.email` configuration settings.
 
-`GIT_COMMITTER_DATE`::
-	The date used for the committer identity when creating commit or tag objects, or
-	when writing reflogs. See linkgit:git-commit[1] for valid formats.
+`GIT_cummitTER_DATE`::
+	The date used for the cummitter identity when creating cummit or tag objects, or
+	when writing reflogs. See linkgit:git-cummit[1] for valid formats.
 
 `EMAIL`::
-	The email address used in the author and committer identities if no other
+	The email address used in the author and cummitter identities if no other
 	relevant environment variable or configuration setting has been set.
 
 Git Diffs
@@ -840,7 +840,7 @@ for full details.
 	Setting this variable to `1` will cause Git to treat all
 	pathspecs literally, rather than as glob patterns. For example,
 	running `GIT_LITERAL_PATHSPECS=1 git log -- '*.c'` will search
-	for commits that touch the path `*.c`, not any paths that the
+	for cummits that touch the path `*.c`, not any paths that the
 	glob `*.c` matches. You might want this if you are feeding
 	literal paths to Git (e.g., paths previously given to you by
 	`git ls-tree`, `--raw` diff output, etc).
@@ -967,18 +967,18 @@ as tags and branch heads.
 
 The object database contains objects of three main types: blobs, which
 hold file data; trees, which point to blobs and other trees to build up
-directory hierarchies; and commits, which each reference a single tree
-and some number of parent commits.
+directory hierarchies; and cummits, which each reference a single tree
+and some number of parent cummits.
 
-The commit, equivalent to what other systems call a "changeset" or
+The cummit, equivalent to what other systems call a "changeset" or
 "version", represents a step in the project's history, and each parent
-represents an immediately preceding step.  Commits with more than one
+represents an immediately preceding step.  cummits with more than one
 parent represent merges of independent lines of development.
 
 All objects are named by the SHA-1 hash of their contents, normally
 written as a string of 40 hex digits.  Such names are globally unique.
-The entire history leading up to a commit can be vouched for by signing
-just that commit.  A fourth object type, the tag, is provided for this
+The entire history leading up to a cummit can be vouched for by signing
+just that cummit.  A fourth object type, the tag, is provided for this
 purpose.
 
 When first created, objects are stored in individual files, but for
@@ -987,7 +987,7 @@ efficiency may later be compressed together into "pack files".
 Named pointers called refs mark interesting points in history.  A ref
 may contain the SHA-1 name of an object or the name of another ref.  Refs
 with names beginning `ref/head/` contain the SHA-1 name of the most
-recent commit (or "head") of a branch under development.  SHA-1 names of
+recent cummit (or "head") of a branch under development.  SHA-1 names of
 tags of interest are stored under `ref/tags/`.  A special ref named
 `HEAD` contains the name of the currently checked-out branch.
 
@@ -997,7 +997,7 @@ the contents of the file as of the head of the current branch.  The
 attributes (last modified time, size, etc.) are taken from the
 corresponding file in the working tree.  Subsequent changes to the
 working tree can be found by comparing these attributes.  The index may
-be updated with new content, and new commits may be created from the
+be updated with new content, and new cummits may be created from the
 content stored in the index.
 
 The index is also capable of storing multiple entries (called "stages")

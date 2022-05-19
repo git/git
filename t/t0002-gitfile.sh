@@ -60,8 +60,8 @@ test_expect_success 'check write-tree' '
 	test_path_is_file "$REAL/objects/$(objpath $SHA)"
 '
 
-test_expect_success 'check commit-tree' '
-	SHA=$(echo "commit bar" | git commit-tree $SHA) &&
+test_expect_success 'check cummit-tree' '
+	SHA=$(echo "cummit bar" | git cummit-tree $SHA) &&
 	test_path_is_file "$REAL/objects/$(objpath $SHA)"
 '
 
@@ -94,7 +94,7 @@ test_expect_success 'enter_repo non-strict mode' '
 	(
 		cd enter_repo &&
 		test_tick &&
-		test_commit foo &&
+		test_cummit foo &&
 		mv .git .realgit &&
 		echo "gitdir: .realgit" >.git
 	) &&

@@ -52,7 +52,7 @@ test_expect_success 'setup' '
 	echo ignored by ignored dir >one-level-lower/two-levels-lower/ignored-only-if-dir/ignored-by-ignored-dir &&
 	git add one-level-lower &&
 
-	git commit -m. &&
+	git cummit -m. &&
 
 	git clone --bare . bare &&
 	cp .git/info/attributes bare/info/attributes

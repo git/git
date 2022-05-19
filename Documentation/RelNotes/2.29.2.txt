@@ -7,6 +7,6 @@ This release is primarily to fix brown-paper-bag breakages in the
 Fixes since v2.29.1
 -------------------
 
- * In 2.29, "--committer-date-is-author-date" option of "rebase" and
+ * In 2.29, "--cummitter-date-is-author-date" option of "rebase" and
    "am" subcommands lost the e-mail address by mistake, which has been
    corrected.

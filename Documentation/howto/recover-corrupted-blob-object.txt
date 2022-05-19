@@ -55,7 +55,7 @@ Let's see what that tells us:
 > missing blob 4b9458b3786228369c63936db65827de3cc06200
 -----------------------------------------------------------
 
-Ok, I removed the "dangling commit" messages, because they are just
+Ok, I removed the "dangling cummit" messages, because they are just
 messages about the fact that you probably have rebased etc, so they're not
 at all interesting. But what remains is still very useful. In particular,
 we now know which tree points to it!
@@ -103,14 +103,14 @@ the tree you had may not be the top-level tree, so you need to figure out
 which subdirectory it was in on your own), and because you're asking for
 raw output, you'll now get something like
 
-	commit abc
+	cummit abc
 	Author:
 	Date:
 	  ..
 	:100644 100644 4b9458b... newsha... M  somedirectory/my-magic-file
 
 
-	commit xyz
+	cummit xyz
 	Author:
 	Date:
 
@@ -119,7 +119,7 @@ raw output, you'll now get something like
 
 and this actually tells you what the *previous* and *subsequent* versions
 of that file were! So now you can look at those ("oldsha" and "newsha"
-respectively), and hopefully you have done commits often, and can
+respectively), and hopefully you have done cummits often, and can
 re-create the missing my-magic-file version by looking at those older and
 newer versions!
 
@@ -137,7 +137,7 @@ and just looked for the sha of the missing object (4b9458b..) in that
 whole thing. It's up to you - Git does *have* a lot of information, it is
 just missing one particular blob version.
 
-Trying to recreate trees and especially commits is *much* harder. So you
+Trying to recreate trees and especially cummits is *much* harder. So you
 were lucky that it's a blob. It's quite possible that you can recreate the
 thing.
 

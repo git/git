@@ -59,7 +59,7 @@ By resolving this conflict, to leave line D, the user declares:
     line A into line D is the best thing to do that is compatible with
     what AB and AC wanted to do.
 
-As branch AC2 refers to the same commit as AC, the above implies that
+As branch AC2 refers to the same cummit as AC, the above implies that
 this is also compatible what AB and AC2 wanted to do.
 
 By extension, this means that rerere should recognize that the above

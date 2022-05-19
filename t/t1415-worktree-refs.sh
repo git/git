@@ -5,9 +5,9 @@ test_description='per-worktree refs'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit initial &&
-	test_commit wt1 &&
-	test_commit wt2 &&
+	test_cummit initial &&
+	test_cummit wt1 &&
+	test_cummit wt2 &&
 	git worktree add wt1 wt1 &&
 	git worktree add wt2 wt2 &&
 	git checkout initial &&
@@ -80,7 +80,7 @@ test_expect_success 'reflog of worktrees/xx/HEAD' '
 test_expect_success 'for-each-ref from main worktree' '
 	mkdir fer1 &&
 	git -C fer1 init repo &&
-	test_commit -C fer1/repo initial &&
+	test_cummit -C fer1/repo initial &&
 	git -C fer1/repo worktree add ../second &&
 	git -C fer1/repo update-ref refs/bisect/first HEAD &&
 	git -C fer1/repo update-ref refs/rewritten/first HEAD &&
@@ -97,7 +97,7 @@ test_expect_success 'for-each-ref from main worktree' '
 test_expect_success 'for-each-ref from linked worktree' '
 	mkdir fer2 &&
 	git -C fer2 init repo &&
-	test_commit -C fer2/repo initial &&
+	test_cummit -C fer2/repo initial &&
 	git -C fer2/repo worktree add ../second &&
 	git -C fer2/second update-ref refs/bisect/second HEAD &&
 	git -C fer2/second update-ref refs/rewritten/second HEAD &&

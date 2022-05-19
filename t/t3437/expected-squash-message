@@ -1,15 +1,15 @@
-# This is a combination of 6 commits.
-# The 1st commit message will be skipped:
+# This is a combination of 6 cummits.
+# The 1st cummit message will be skipped:
 
 # B
 #
-# Signed-off-by: Rebase Committer <rebase.committer@example.com>
+# Signed-off-by: Rebase cummitter <rebase.cummitter@example.com>
 
-# The commit message #2 will be skipped:
+# The cummit message #2 will be skipped:
 
 # fixup! B
 
-# The commit message #3 will be skipped:
+# The cummit message #3 will be skipped:
 
 # amend! B
 #
@@ -17,9 +17,9 @@
 #
 # edited 1
 #
-# Signed-off-by: Rebase Committer <rebase.committer@example.com>
+# Signed-off-by: Rebase cummitter <rebase.cummitter@example.com>
 
-# This is the commit message #4:
+# This is the cummit message #4:
 
 # amend! amend! B
 
@@ -29,15 +29,15 @@ edited 1
 
 edited 2
 
-Signed-off-by: Rebase Committer <rebase.committer@example.com>
+Signed-off-by: Rebase cummitter <rebase.cummitter@example.com>
 
-# This is the commit message #5:
+# This is the cummit message #5:
 
 # squash! amend! amend! B
 
 edited squash
 
-# This is the commit message #6:
+# This is the cummit message #6:
 
 # amend! amend! amend! B
 

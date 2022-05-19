@@ -476,7 +476,7 @@ Content-length: 197
 K 7
 svn:log
 V 33
-try a deep --rmdir with a commit
+try a deep --rmdir with a cummit
 
 K 10
 svn:author

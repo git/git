@@ -12,7 +12,7 @@
 #include "object.h"
 #include "blob.h"
 #include "tree.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "alloc.h"
 
@@ -22,7 +22,7 @@ union any_object {
 	struct object object;
 	struct blob blob;
 	struct tree tree;
-	struct commit commit;
+	struct cummit cummit;
 	struct tag tag;
 };
 
@@ -98,25 +98,25 @@ void *alloc_object_node(struct repository *r)
 }
 
 /*
- * The returned count is to be used as an index into commit slabs,
+ * The returned count is to be used as an index into cummit slabs,
  * that are *NOT* maintained per repository, and that is why a single
  * global counter is used.
  */
-static unsigned int alloc_commit_index(void)
+static unsigned int alloc_cummit_index(void)
 {
-	static unsigned int parsed_commits_count;
-	return parsed_commits_count++;
+	static unsigned int parsed_cummits_count;
+	return parsed_cummits_count++;
 }
 
-void init_commit_node(struct commit *c)
+void init_cummit_node(struct cummit *c)
 {
-	c->object.type = OBJ_COMMIT;
-	c->index = alloc_commit_index();
+	c->object.type = OBJ_cummit;
+	c->index = alloc_cummit_index();
 }
 
-void *alloc_commit_node(struct repository *r)
+void *alloc_cummit_node(struct repository *r)
 {
-	struct commit *c = alloc_node(r->parsed_objects->commit_state, sizeof(struct commit));
-	init_commit_node(c);
+	struct cummit *c = alloc_node(r->parsed_objects->cummit_state, sizeof(struct cummit));
+	init_cummit_node(c);
 	return c;
 }

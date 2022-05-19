@@ -29,30 +29,30 @@ test_expect_success setup '
 	 echo original > file &&
 	 git add file &&
 	 test_tick &&
-	 git commit -m sub-root) &&
+	 git cummit -m sub-root) &&
 	git add sub &&
 	test_tick &&
-	git commit -m root &&
+	git cummit -m root &&
 
 	git checkout -b a main &&
 	(cd sub &&
 	 echo A > file &&
 	 git add file &&
 	 test_tick &&
-	 git commit -m sub-a) &&
+	 git cummit -m sub-a) &&
 	git add sub &&
 	test_tick &&
-	git commit -m a &&
+	git cummit -m a &&
 
 	git checkout -b b main &&
 	(cd sub &&
 	 echo B > file &&
 	 git add file &&
 	 test_tick &&
-	 git commit -m sub-b) &&
+	 git cummit -m sub-b) &&
 	git add sub &&
 	test_tick &&
-	git commit -m b &&
+	git cummit -m b &&
 
 	git checkout -b c a &&
 	git merge -s ours b &&
@@ -81,12 +81,12 @@ test_expect_success 'setup for merge search' '
 	 git init &&
 	 echo "file-a" > file-a &&
 	 git add file-a &&
-	 git commit -m "sub-a" &&
+	 git cummit -m "sub-a" &&
 	 git branch sub-a) &&
-	git commit --allow-empty -m init &&
+	git cummit --allow-empty -m init &&
 	git branch init &&
 	git add sub &&
-	git commit -m "a" &&
+	git cummit -m "a" &&
 	git branch a &&
 
 	git checkout -b b &&
@@ -94,29 +94,29 @@ test_expect_success 'setup for merge search' '
 	 git checkout -b sub-b &&
 	 echo "file-b" > file-b &&
 	 git add file-b &&
-	 git commit -m "sub-b") &&
-	git commit -a -m "b" &&
+	 git cummit -m "sub-b") &&
+	git cummit -a -m "b" &&
 
 	git checkout -b c a &&
 	(cd sub &&
 	 git checkout -b sub-c sub-a &&
 	 echo "file-c" > file-c &&
 	 git add file-c &&
-	 git commit -m "sub-c") &&
-	git commit -a -m "c" &&
+	 git cummit -m "sub-c") &&
+	git cummit -a -m "c" &&
 
 	git checkout -b d a &&
 	(cd sub &&
 	 git checkout -b sub-d sub-b &&
 	 git merge sub-c) &&
-	git commit -a -m "d" &&
+	git cummit -a -m "d" &&
 	git branch test b &&
 
 	git checkout -b g init &&
 	(cd sub &&
 	 git checkout -b sub-g sub-c) &&
 	git add sub &&
-	git commit -a -m "g")
+	git cummit -a -m "g")
 '
 
 test_expect_success 'merge with one side as a fast-forward of the other' '
@@ -185,24 +185,24 @@ test_expect_success 'merging should fail for ambiguous common parent' '
 #    f (sub-d)
 #
 # A merge between e and f should fail because one of the submodule
-# commits (sub-a) does not descend from the submodule merge-base (sub-b).
+# cummits (sub-a) does not descend from the submodule merge-base (sub-b).
 #
 test_expect_success 'merging should fail for changes that are backwards' '
 	(cd merge-search &&
 	git checkout -b bb a &&
 	(cd sub &&
 	 git checkout sub-b) &&
-	git commit -a -m "bb" &&
+	git cummit -a -m "bb" &&
 
 	git checkout -b e bb &&
 	(cd sub &&
 	 git checkout sub-a) &&
-	git commit -a -m "e" &&
+	git cummit -a -m "e" &&
 
 	git checkout -b f bb &&
 	(cd sub &&
 	 git checkout sub-d) &&
-	git commit -a -m "f" &&
+	git cummit -a -m "f" &&
 
 	git checkout -b test-backward e &&
 	test_must_fail git merge f)
@@ -260,36 +260,36 @@ test_expect_success 'setup for recursive merge with submodule' '
 	 mkdir sub &&
 	 (cd sub &&
 	  git init &&
-	  test_commit a &&
+	  test_cummit a &&
 	  git checkout -b sub-b main &&
-	  test_commit b &&
+	  test_cummit b &&
 	  git checkout -b sub-c main &&
-	  test_commit c &&
+	  test_cummit c &&
 	  git checkout -b sub-bc sub-b &&
 	  git merge sub-c &&
 	  git checkout -b sub-cb sub-c &&
 	  git merge sub-b &&
 	  git checkout main) &&
 	 git add sub &&
-	 git commit -m a &&
+	 git cummit -m a &&
 	 git checkout -b top-b main &&
 	 (cd sub && git checkout sub-b) &&
 	 git add sub &&
-	 git commit -m b &&
+	 git cummit -m b &&
 	 git checkout -b top-c main &&
 	 (cd sub && git checkout sub-c) &&
 	 git add sub &&
-	 git commit -m c &&
+	 git cummit -m c &&
 	 git checkout -b top-bc top-b &&
-	 git merge -s ours --no-commit top-c &&
+	 git merge -s ours --no-cummit top-c &&
 	 (cd sub && git checkout sub-bc) &&
 	 git add sub &&
-	 git commit -m bc &&
+	 git cummit -m bc &&
 	 git checkout -b top-cb top-c &&
-	 git merge -s ours --no-commit top-b &&
+	 git merge -s ours --no-cummit top-b &&
 	 (cd sub && git checkout sub-cb) &&
 	 git add sub &&
-	 git commit -m cb)
+	 git cummit -m cb)
 '
 
 # merge should leave submodule unmerged in index
@@ -304,9 +304,9 @@ test_expect_success 'recursive merge with submodule' '
 '
 
 # File/submodule conflict
-#   Commit O: <empty>
-#   Commit A: path (submodule)
-#   Commit B: path
+#   cummit O: <empty>
+#   cummit A: path (submodule)
+#   cummit B: path
 #   Expected: path/ is submodule and file contents for B's path are somewhere
 
 test_expect_success 'setup file/submodule conflict' '
@@ -314,7 +314,7 @@ test_expect_success 'setup file/submodule conflict' '
 	(
 		cd file-submodule &&
 
-		git commit --allow-empty -m O &&
+		git cummit --allow-empty -m O &&
 
 		git branch A &&
 		git branch B &&
@@ -322,13 +322,13 @@ test_expect_success 'setup file/submodule conflict' '
 		git checkout B &&
 		echo content >path &&
 		git add path &&
-		git commit -m B &&
+		git cummit -m B &&
 
 		git checkout A &&
 		test_create_repo path &&
-		test_commit -C path world &&
+		test_cummit -C path world &&
 		git submodule add ./path &&
-		git commit -m A
+		git cummit -m A
 	)
 '
 
@@ -371,13 +371,13 @@ test_expect_success 'file/submodule conflict; merge --abort works afterward' '
 '
 
 # Directory/submodule conflict
-#   Commit O: <empty>
-#   Commit A: path (submodule), with sole tracked file named 'world'
-#   Commit B1: path/file
-#   Commit B2: path/world
+#   cummit O: <empty>
+#   cummit A: path (submodule), with sole tracked file named 'world'
+#   cummit B1: path/file
+#   cummit B2: path/world
 #
 #   Expected from merge of A & B1:
-#     Contents under path/ from commit B1 are renamed elsewhere; we do not
+#     Contents under path/ from cummit B1 are renamed elsewhere; we do not
 #     want to write files from one of our tracked directories into a submodule
 #
 #   Expected from merge of A & B2:
@@ -389,7 +389,7 @@ test_expect_success 'setup directory/submodule conflict' '
 	(
 		cd directory-submodule &&
 
-		git commit --allow-empty -m O &&
+		git cummit --allow-empty -m O &&
 
 		git branch A &&
 		git branch B1 &&
@@ -399,19 +399,19 @@ test_expect_success 'setup directory/submodule conflict' '
 		mkdir path &&
 		echo contents >path/file &&
 		git add path/file &&
-		git commit -m B1 &&
+		git cummit -m B1 &&
 
 		git checkout B2 &&
 		mkdir path &&
 		echo contents >path/world &&
 		git add path/world &&
-		git commit -m B2 &&
+		git cummit -m B2 &&
 
 		git checkout A &&
 		test_create_repo path &&
-		test_commit -C path hello world &&
+		test_cummit -C path hello world &&
 		git submodule add ./path &&
-		git commit -m A
+		git cummit -m A
 	)
 '
 

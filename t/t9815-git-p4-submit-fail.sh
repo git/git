@@ -18,7 +18,7 @@ test_expect_success 'init depot' '
 	)
 '
 
-test_expect_success 'conflict on one commit' '
+test_expect_success 'conflict on one cummit' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
@@ -28,18 +28,18 @@ test_expect_success 'conflict on one commit' '
 		p4 submit -d "line2 in file1"
 	) &&
 	(
-		# now this commit should cause a conflict
+		# now this cummit should cause a conflict
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
 		echo line3 >>file1 &&
 		git add file1 &&
-		git commit -m "line3 in file1 will conflict" &&
+		git cummit -m "line3 in file1 will conflict" &&
 		test_expect_code 1 git p4 submit >out &&
-		test_i18ngrep "No commits applied" out
+		test_i18ngrep "No cummits applied" out
 	)
 '
 
-test_expect_success 'conflict on second of two commits' '
+test_expect_success 'conflict on second of two cummits' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
@@ -51,18 +51,18 @@ test_expect_success 'conflict on second of two commits' '
 	(
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
-		# this commit is okay
-		test_commit "first_commit_okay" &&
+		# this cummit is okay
+		test_cummit "first_cummit_okay" &&
 		# now this submit should cause a conflict
 		echo line4 >>file1 &&
 		git add file1 &&
-		git commit -m "line4 in file1 will conflict" &&
+		git cummit -m "line4 in file1 will conflict" &&
 		test_expect_code 1 git p4 submit >out &&
-		test_i18ngrep "Applied only the commits" out
+		test_i18ngrep "Applied only the cummits" out
 	)
 '
 
-test_expect_success 'conflict on first of two commits, skip' '
+test_expect_success 'conflict on first of two cummits, skip' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
@@ -77,15 +77,15 @@ test_expect_success 'conflict on first of two commits, skip' '
 		# this submit should cause a conflict
 		echo line5 >>file1 &&
 		git add file1 &&
-		git commit -m "line5 in file1 will conflict" &&
-		# but this commit is okay
-		test_commit "okay_commit_after_skip" &&
+		git cummit -m "line5 in file1 will conflict" &&
+		# but this cummit is okay
+		test_cummit "okay_cummit_after_skip" &&
 		echo s | test_expect_code 1 git p4 submit >out &&
-		test_i18ngrep "Applied only the commits" out
+		test_i18ngrep "Applied only the cummits" out
 	)
 '
 
-test_expect_success 'conflict on first of two commits, quit' '
+test_expect_success 'conflict on first of two cummits, quit' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
@@ -100,11 +100,11 @@ test_expect_success 'conflict on first of two commits, quit' '
 		# this submit should cause a conflict
 		echo line8 >>file1 &&
 		git add file1 &&
-		git commit -m "line8 in file1 will conflict" &&
-		# but this commit is okay
-		test_commit "okay_commit_after_quit" &&
+		git cummit -m "line8 in file1 will conflict" &&
+		# but this cummit is okay
+		test_cummit "okay_cummit_after_quit" &&
 		echo q | test_expect_code 1 git p4 submit >out &&
-		test_i18ngrep "No commits applied" out
+		test_i18ngrep "No cummits applied" out
 	)
 '
 
@@ -125,7 +125,7 @@ test_expect_success 'conflict cli and config options' '
 	)
 '
 
-test_expect_success 'conflict on first of two commits, --conflict=skip' '
+test_expect_success 'conflict on first of two cummits, --conflict=skip' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
@@ -140,15 +140,15 @@ test_expect_success 'conflict on first of two commits, --conflict=skip' '
 		# this submit should cause a conflict
 		echo line10 >>file1 &&
 		git add file1 &&
-		git commit -m "line10 in file1 will conflict" &&
-		# but this commit is okay
-		test_commit "okay_commit_after_auto_skip" &&
+		git cummit -m "line10 in file1 will conflict" &&
+		# but this cummit is okay
+		test_cummit "okay_cummit_after_auto_skip" &&
 		test_expect_code 1 git p4 submit --conflict=skip >out &&
-		test_i18ngrep "Applied only the commits" out
+		test_i18ngrep "Applied only the cummits" out
 	)
 '
 
-test_expect_success 'conflict on first of two commits, --conflict=quit' '
+test_expect_success 'conflict on first of two cummits, --conflict=quit' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
@@ -163,11 +163,11 @@ test_expect_success 'conflict on first of two commits, --conflict=quit' '
 		# this submit should cause a conflict
 		echo line12 >>file1 &&
 		git add file1 &&
-		git commit -m "line12 in file1 will conflict" &&
-		# but this commit is okay
-		test_commit "okay_commit_after_auto_quit" &&
+		git cummit -m "line12 in file1 will conflict" &&
+		# but this cummit is okay
+		test_cummit "okay_cummit_after_auto_quit" &&
 		test_expect_code 1 git p4 submit --conflict=quit >out &&
-		test_i18ngrep "No commits applied" out
+		test_i18ngrep "No cummits applied" out
 	)
 '
 
@@ -219,7 +219,7 @@ test_expect_success 'cleanup edit after submit fail' '
 		cd "$git" &&
 		echo another line >>text &&
 		git add text &&
-		git commit -m "conflict" &&
+		git cummit -m "conflict" &&
 		test_expect_code 1 git p4 submit
 	) &&
 	(
@@ -235,7 +235,7 @@ test_expect_success 'cleanup add after submit fail' '
 		cd "$git" &&
 		echo new file >textnew &&
 		git add textnew &&
-		git commit -m "conflict" &&
+		git cummit -m "conflict" &&
 		test_expect_code 1 git p4 submit
 	) &&
 	(
@@ -254,7 +254,7 @@ test_expect_success 'cleanup delete after submit fail' '
 	(
 		cd "$git" &&
 		git rm text+x &&
-		git commit -m "conflict" &&
+		git cummit -m "conflict" &&
 		test_expect_code 1 git p4 submit
 	) &&
 	(
@@ -271,7 +271,7 @@ test_expect_success 'cleanup copy after submit fail' '
 		cd "$git" &&
 		cp text text2 &&
 		git add text2 &&
-		git commit -m "conflict" &&
+		git cummit -m "conflict" &&
 		git config git-p4.detectCopies true &&
 		git config git-p4.detectCopiesHarder true &&
 		# make sure setup is okay
@@ -290,7 +290,7 @@ test_expect_success 'cleanup rename after submit fail' '
 	(
 		cd "$git" &&
 		git mv text text2 &&
-		git commit -m "conflict" &&
+		git cummit -m "conflict" &&
 		git config git-p4.detectRenames true &&
 		# make sure setup is okay
 		git diff-tree -r -M HEAD | grep text2 | grep R100 &&
@@ -316,7 +316,7 @@ test_expect_success 'cleanup edit after submit cancel' '
 		cd "$git" &&
 		echo line >>text &&
 		git add text &&
-		git commit -m text &&
+		git cummit -m text &&
 		echo n | test_expect_code 1 git p4 submit &&
 		git reset --hard HEAD^
 	) &&
@@ -334,7 +334,7 @@ test_expect_success 'cleanup add after submit cancel' '
 		cd "$git" &&
 		echo line >textnew &&
 		git add textnew &&
-		git commit -m textnew &&
+		git cummit -m textnew &&
 		echo n | test_expect_code 1 git p4 submit
 	) &&
 	(
@@ -350,7 +350,7 @@ test_expect_success 'cleanup delete after submit cancel' '
 	(
 		cd "$git" &&
 		git rm text &&
-		git commit -m "rm text" &&
+		git cummit -m "rm text" &&
 		echo n | test_expect_code 1 git p4 submit
 	) &&
 	(
@@ -367,7 +367,7 @@ test_expect_success 'cleanup copy after submit cancel' '
 		cd "$git" &&
 		cp text text2 &&
 		git add text2 &&
-		git commit -m text2 &&
+		git cummit -m text2 &&
 		git config git-p4.detectCopies true &&
 		git config git-p4.detectCopiesHarder true &&
 		git diff-tree -r -C --find-copies-harder HEAD | grep text2 | grep C100 &&
@@ -386,7 +386,7 @@ test_expect_success 'cleanup rename after submit cancel' '
 	(
 		cd "$git" &&
 		git mv text text2 &&
-		git commit -m text2 &&
+		git cummit -m text2 &&
 		git config git-p4.detectRenames true &&
 		git diff-tree -r -M HEAD | grep text2 | grep R100 &&
 		echo n | test_expect_code 1 git p4 submit
@@ -408,7 +408,7 @@ test_expect_success 'cleanup chmod after submit cancel' '
 		test_chmod +x text &&
 		test_chmod -x text+x &&
 		git add text text+x &&
-		git commit -m "chmod texts" &&
+		git cummit -m "chmod texts" &&
 		echo n | test_expect_code 1 git p4 submit
 	) &&
 	(

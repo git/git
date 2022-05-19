@@ -17,16 +17,16 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 # C was formerly part of main but main was rewound to remove C
 #
 test_expect_success setup '
-	test_commit A &&
-	test_commit B &&
-	test_commit C &&
+	test_cummit A &&
+	test_cummit B &&
+	test_cummit C &&
 	git branch -t side &&
 	git reset --hard HEAD^ &&
-	test_commit D &&
-	test_commit E &&
+	test_cummit D &&
+	test_cummit E &&
 	git checkout side &&
-	test_commit F &&
-	test_commit G
+	test_cummit F &&
+	test_cummit G
 '
 
 do_test_rebase () {

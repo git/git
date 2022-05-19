@@ -11,7 +11,7 @@ Fixes since v1.6.2.2
 * A fairly large and trivial memory leak while rev-list shows list of
   reachable objects has been identified and plugged.
 
-* "git-commit --interactive" did not abort when underlying "git-add -i"
+* "git-cummit --interactive" did not abort when underlying "git-add -i"
   signaled a failure.
 
 * git-repack (invoked from git-gc) did not work as nicely as it should in

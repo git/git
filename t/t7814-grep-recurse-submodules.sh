@@ -16,14 +16,14 @@ test_expect_success 'setup directory structure and submodule' '
 	mkdir b &&
 	echo "(3|4)" >b/b &&
 	git add a b &&
-	git commit -m "add a and b" &&
+	git cummit -m "add a and b" &&
 	test_tick &&
 	git init submodule &&
 	echo "(1|2)d(3|4)" >submodule/a &&
 	git -C submodule add a &&
-	git -C submodule commit -m "add a" &&
+	git -C submodule cummit -m "add a" &&
 	git submodule add ./submodule &&
-	git commit -m "added submodule" &&
+	git cummit -m "added submodule" &&
 	test_tick
 '
 
@@ -69,14 +69,14 @@ test_expect_success 'grep and nested submodules' '
 	git init submodule/sub &&
 	echo "(1|2)d(3|4)" >submodule/sub/a &&
 	git -C submodule/sub add a &&
-	git -C submodule/sub commit -m "add a" &&
+	git -C submodule/sub cummit -m "add a" &&
 	test_tick &&
 	git -C submodule submodule add ./sub &&
 	git -C submodule add sub &&
-	git -C submodule commit -m "added sub" &&
+	git -C submodule cummit -m "added sub" &&
 	test_tick &&
 	git add submodule &&
-	git commit -m "updated submodule" &&
+	git cummit -m "updated submodule" &&
 	test_tick &&
 
 	cat >expect <<-\EOF &&
@@ -186,18 +186,18 @@ test_expect_success !MINGW 'grep recurse submodule colon in name' '
 	test_when_finished "rm -rf parent" &&
 	echo "(1|2)d(3|4)" >"parent/fi:le" &&
 	git -C parent add "fi:le" &&
-	git -C parent commit -m "add fi:le" &&
+	git -C parent cummit -m "add fi:le" &&
 	test_tick &&
 
 	git init "su:b" &&
 	test_when_finished "rm -rf su:b" &&
 	echo "(1|2)d(3|4)" >"su:b/fi:le" &&
 	git -C "su:b" add "fi:le" &&
-	git -C "su:b" commit -m "add fi:le" &&
+	git -C "su:b" cummit -m "add fi:le" &&
 	test_tick &&
 
 	git -C parent submodule add "../su:b" "su:b" &&
-	git -C parent commit -m "add submodule" &&
+	git -C parent cummit -m "add submodule" &&
 	test_tick &&
 
 	cat >expect <<-\EOF &&
@@ -220,18 +220,18 @@ test_expect_success 'grep history with moved submoules' '
 	test_when_finished "rm -rf parent" &&
 	echo "(1|2)d(3|4)" >parent/file &&
 	git -C parent add file &&
-	git -C parent commit -m "add file" &&
+	git -C parent cummit -m "add file" &&
 	test_tick &&
 
 	git init sub &&
 	test_when_finished "rm -rf sub" &&
 	echo "(1|2)d(3|4)" >sub/file &&
 	git -C sub add file &&
-	git -C sub commit -m "add file" &&
+	git -C sub cummit -m "add file" &&
 	test_tick &&
 
 	git -C parent submodule add ../sub dir/sub &&
-	git -C parent commit -m "add submodule" &&
+	git -C parent cummit -m "add submodule" &&
 	test_tick &&
 
 	cat >expect <<-\EOF &&
@@ -242,7 +242,7 @@ test_expect_success 'grep history with moved submoules' '
 	test_cmp expect actual &&
 
 	git -C parent mv dir/sub sub-moved &&
-	git -C parent commit -m "moved submodule" &&
+	git -C parent cummit -m "moved submodule" &&
 	test_tick &&
 
 	cat >expect <<-\EOF &&
@@ -265,7 +265,7 @@ test_expect_success 'grep using relative path' '
 	git init sub &&
 	echo "(1|2)d(3|4)" >sub/file &&
 	git -C sub add file &&
-	git -C sub commit -m "add file" &&
+	git -C sub cummit -m "add file" &&
 	test_tick &&
 
 	git init parent &&
@@ -275,7 +275,7 @@ test_expect_success 'grep using relative path' '
 	echo "(1|2)d(3|4)" >parent/src/file2 &&
 	git -C parent add src/file2 &&
 	git -C parent submodule add ../sub &&
-	git -C parent commit -m "add files and submodule" &&
+	git -C parent cummit -m "add files and submodule" &&
 	test_tick &&
 
 	# From top works
@@ -309,7 +309,7 @@ test_expect_success 'grep from a subdir' '
 	git init sub &&
 	echo "(1|2)d(3|4)" >sub/file &&
 	git -C sub add file &&
-	git -C sub commit -m "add file" &&
+	git -C sub cummit -m "add file" &&
 	test_tick &&
 
 	git init parent &&
@@ -318,7 +318,7 @@ test_expect_success 'grep from a subdir' '
 	git -C parent add src/file &&
 	git -C parent submodule add ../sub src/sub &&
 	git -C parent submodule add ../sub sub &&
-	git -C parent commit -m "add files and submodules" &&
+	git -C parent cummit -m "add files and submodules" &&
 	test_tick &&
 
 	# Verify grep from root works
@@ -550,17 +550,17 @@ test_expect_success 'grep partially-cloned submodule' '
 	git init super/sub &&
 	(
 		cd super &&
-		test_commit --no-tag "Add file in superproject" \
+		test_cummit --no-tag "Add file in superproject" \
 			super-file "Some content for super-file" &&
-		test_commit -C sub --no-tag "Add file in submodule" \
+		test_cummit -C sub --no-tag "Add file in submodule" \
 			sub-file "Some content for sub-file" &&
 		git submodule add ./sub &&
-		git commit -m "Add other as submodule sub" &&
+		git cummit -m "Add other as submodule sub" &&
 		test_tick &&
-		test_commit -C sub --no-tag --append "Update file in submodule" \
+		test_cummit -C sub --no-tag --append "Update file in submodule" \
 			sub-file "Some more content for sub-file" &&
 		git add sub &&
-		git commit -m "Update submodule" &&
+		git cummit -m "Update submodule" &&
 		test_tick &&
 		git config --local uploadpack.allowfilter 1 &&
 		git config --local uploadpack.allowanysha1inwant 1 &&

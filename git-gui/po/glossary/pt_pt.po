@@ -57,11 +57,11 @@ msgid "clone [verb]"
 msgstr "clonar"
 
 #. "A single point in the git history."
-msgid "commit [noun]"
-msgstr "commit"
+msgid "cummit [noun]"
+msgstr "cummit"
 
 #. "The action of storing a new snapshot of the project's state in the git history."
-msgid "commit [verb]"
+msgid "cummit [verb]"
 msgstr "submeter"
 
 #. ""
@@ -88,7 +88,7 @@ msgstr "excerto"
 msgid "index (in git-gui: staging area)"
 msgstr "índice"
 
-#. "A successful merge results in the creation of a new commit representing the result of the merge."
+#. "A successful merge results in the creation of a new cummit representing the result of the merge."
 msgid "merge [noun]"
 msgstr "integração"
 
@@ -148,7 +148,7 @@ msgstr "área de estágio"
 msgid "status"
 msgstr "estado"
 
-#. "A ref pointing to a tag or commit object"
+#. "A ref pointing to a tag or cummit object"
 msgid "tag [noun]"
 msgstr "tag"
 
@@ -176,7 +176,7 @@ msgstr "verificar"
 msgid "working copy, working tree"
 msgstr "cópia de trabalho, árvore de trabalho"
 
-#. "a commit that succeeds the current one in git's graph of commits (not necessarily directly)"
+#. "a cummit that succeeds the current one in git's graph of cummits (not necessarily directly)"
 msgid "ancestor"
 msgstr "antecessor"
 
@@ -196,11 +196,11 @@ msgstr "base"
 msgid "blame"
 msgstr "culpar"
 
-#. "to select and apply a single commit without merging"
+#. "to select and apply a single cummit without merging"
 msgid "cherry-pick"
 msgstr "efetuar cherry-pick (escolher-a-dedo?, selecionar?)"
 
-#. "a commit that directly succeeds the current one in git's graph of commits"
+#. "a cummit that directly succeeds the current one in git's graph of cummits"
 msgid "child"
 msgstr "filho"
 
@@ -208,11 +208,11 @@ msgstr "filho"
 msgid "cleanup"
 msgstr "limpar"
 
-#. "a message that gets attached with any commit"
-msgid "commit message"
-msgstr "mensagem de commit"
+#. "a message that gets attached with any cummit"
+msgid "cummit message"
+msgstr "mensagem de cummit"
 
-#. "a commit that precedes the current one in git's graph of commits (not necessarily directly)"
+#. "a cummit that precedes the current one in git's graph of cummits (not necessarily directly)"
 msgid "descendant"
 msgstr "descendente"
 
@@ -260,7 +260,7 @@ msgstr "pacote"
 msgid "packed object"
 msgstr "objeto compactado"
 
-#. "a commit that directly precedes the current one in git's graph of commits"
+#. "a cummit that directly precedes the current one in git's graph of cummits"
 msgid "parent"
 msgstr "pai"
 
@@ -280,11 +280,11 @@ msgstr "reverter alterações"
 msgid "revision expression"
 msgstr "expressão de revisão"
 
-#. "add some content of files and directories to the staging area in preparation for a commit"
+#. "add some content of files and directories to the staging area in preparation for a cummit"
 msgid "stage/unstage"
 msgstr "preparar/retirar"
 
-#. "temporarily save changes in a stack without committing"
+#. "temporarily save changes in a stack without cummitting"
 msgid "stash"
 msgstr "empilhar"
 

@@ -15,10 +15,10 @@ test_expect_success 'setup repo with a git repo inside it' '
 		> .git/a &&
 		echo a > a &&
 		svn_cmd add .git a &&
-		svn_cmd commit -m "create a nested git repo" &&
+		svn_cmd cummit -m "create a nested git repo" &&
 		svn_cmd up &&
 		echo hi >> .git/a &&
-		svn_cmd commit -m "modify .git/a" &&
+		svn_cmd cummit -m "modify .git/a" &&
 		svn_cmd up
 	)
 '
@@ -33,7 +33,7 @@ test_expect_success 'SVN-side change outside of .git' '
 	(
 		cd s &&
 		echo b >> a &&
-		svn_cmd commit -m "SVN-side change outside of .git" &&
+		svn_cmd cummit -m "SVN-side change outside of .git" &&
 		svn_cmd up &&
 		svn_cmd log -v | fgrep "SVN-side change outside of .git"
 	)
@@ -54,10 +54,10 @@ test_expect_success 'SVN-side change inside of .git' '
 	(
 		cd s &&
 		git add a &&
-		git commit -m "add a inside an SVN repo" &&
+		git cummit -m "add a inside an SVN repo" &&
 		git log &&
 		svn_cmd add --force .git &&
-		svn_cmd commit -m "SVN-side change inside of .git" &&
+		svn_cmd cummit -m "SVN-side change inside of .git" &&
 		svn_cmd up &&
 		svn_cmd log -v | fgrep "SVN-side change inside of .git"
 	)
@@ -79,8 +79,8 @@ test_expect_success 'SVN-side change in and out of .git' '
 		cd s &&
 		echo c >> a &&
 		git add a &&
-		git commit -m "add a inside an SVN repo" &&
-		svn_cmd commit -m "SVN-side change in and out of .git" &&
+		git cummit -m "add a inside an SVN repo" &&
+		svn_cmd cummit -m "SVN-side change in and out of .git" &&
 		svn_cmd up &&
 		svn_cmd log -v | fgrep "SVN-side change in and out of .git"
 	)

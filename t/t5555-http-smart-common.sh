@@ -6,7 +6,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit --no-tag initial
+	test_cummit --no-tag initial
 '
 
 test_expect_success 'git upload-pack --http-backend-info-refs and --advertise-refs are aliased' '

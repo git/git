@@ -7,8 +7,8 @@ image create photo ::blame::img_back_arrow -data {R0lGODlhGAAYAIUAAPwCBEzKXFTSZI
 
 # Persistent data (survives loads)
 #
-field history {}; # viewer history: {commit path}
-field header    ; # array commit,key -> header field
+field history {}; # viewer history: {cummit path}
+field header    ; # array cummit,key -> header field
 
 # Tk UI control paths
 #
@@ -20,7 +20,7 @@ field w_line     ; # text column: all line numbers
 field w_amov     ; # text column: annotations + move tracking
 field w_asim     ; # text column: annotations (simple computation)
 field w_file     ; # text column: actual file data
-field w_cviewer  ; # pane showing commit message
+field w_cviewer  ; # pane showing cummit message
 field finder     ; # find mini-dialog frame
 field gotoline   ; # line goto mini-dialog frame
 field status     ; # status mega-widget instance
@@ -39,20 +39,20 @@ variable group_colors {
 
 # Current blame data; cleared/reset on each load
 #
-field commit               ; # input commit to blame
-field path                 ; # input filename to view in $commit
+field cummit               ; # input cummit to blame
+field path                 ; # input filename to view in $cummit
 
 field current_fd        {} ; # background process running
 field highlight_line    -1 ; # current line selected
-field highlight_column  {} ; # current commit column selected
-field highlight_commit  {} ; # sha1 of commit selected
+field highlight_column  {} ; # current cummit column selected
+field highlight_cummit  {} ; # sha1 of cummit selected
 
 field total_lines       0  ; # total length of file
 field blame_lines       0  ; # number of lines computed
-field amov_data            ; # list of {commit origfile origline}
-field asim_data            ; # list of {commit origfile origline}
+field amov_data            ; # list of {cummit origfile origline}
+field asim_data            ; # list of {cummit origfile origline}
 
-field r_commit             ; # commit currently being parsed
+field r_cummit             ; # cummit currently being parsed
 field r_orig_line          ; # original line number
 field r_final_line         ; # final line number
 field r_line_count         ; # lines in this region
@@ -60,14 +60,14 @@ field r_line_count         ; # lines in this region
 field tooltip_wm        {} ; # Current tooltip toplevel, if open
 field tooltip_t         {} ; # Text widget in $tooltip_wm
 field tooltip_timer     {} ; # Current timer event for our tooltip
-field tooltip_commit    {} ; # Commit(s) in tooltip
+field tooltip_cummit    {} ; # cummit(s) in tooltip
 
-constructor new {i_commit i_path i_jump} {
+constructor new {i_cummit i_path i_jump} {
 	global cursor_ptr M1B M1T have_tk85 use_ttk NS
 	variable active_color
 	variable group_colors
 
-	set commit $i_commit
+	set cummit $i_cummit
 	set path   $i_path
 
 	make_toplevel top w
@@ -76,13 +76,13 @@ constructor new {i_commit i_path i_jump} {
 	set font_w [font measure font_diff "0"]
 
 	gold_frame $w.header
-	tlabel $w.header.commit_l \
-		-text [mc "Commit:"] \
+	tlabel $w.header.cummit_l \
+		-text [mc "cummit:"] \
 		-background gold \
 		-foreground black \
 		-anchor w \
 		-justify left
-	set w_back $w.header.commit_b
+	set w_back $w.header.cummit_b
 	tlabel $w_back \
 		-image ::blame::img_back_arrow \
 		-borderwidth 0 \
@@ -96,8 +96,8 @@ constructor new {i_commit i_path i_jump} {
 			[cb _history_menu]
 		}
 		"
-	tlabel $w.header.commit \
-		-textvariable @commit \
+	tlabel $w.header.cummit \
+		-textvariable @cummit \
 		-background gold \
 		-foreground black \
 		-anchor w \
@@ -114,9 +114,9 @@ constructor new {i_commit i_path i_jump} {
 		-foreground black \
 		-anchor w \
 		-justify left
-	pack $w.header.commit_l -side left
+	pack $w.header.cummit_l -side left
 	pack $w_back -side left
-	pack $w.header.commit -side left
+	pack $w.header.cummit -side left
 	pack $w_path -fill x -side right
 	pack $w.header.path_l -side right
 
@@ -163,11 +163,11 @@ constructor new {i_commit i_path i_jump} {
 		-width 5 \
 		-font font_diff
 	$w_amov tag conf author_abbr -justify right -rmargin 5
-	$w_amov tag conf curr_commit
-	$w_amov tag conf prior_commit -foreground blue -underline 1
-	$w_amov tag bind prior_commit \
+	$w_amov tag conf curr_cummit
+	$w_amov tag conf prior_cummit -foreground blue -underline 1
+	$w_amov tag bind prior_cummit \
 		<Button-1> \
-		"[cb _load_commit $w_amov @amov_data @%x,%y];break"
+		"[cb _load_cummit $w_amov @amov_data @%x,%y];break"
 
 	set w_asim $w.file_pane.out.asimple_t
 	text $w_asim \
@@ -183,11 +183,11 @@ constructor new {i_commit i_path i_jump} {
 		-width 4 \
 		-font font_diff
 	$w_asim tag conf author_abbr -justify right
-	$w_asim tag conf curr_commit
-	$w_asim tag conf prior_commit -foreground blue -underline 1
-	$w_asim tag bind prior_commit \
+	$w_asim tag conf curr_cummit
+	$w_asim tag conf prior_cummit -foreground blue -underline 1
+	$w_asim tag bind prior_cummit \
 		<Button-1> \
-		"[cb _load_commit $w_asim @asim_data @%x,%y];break"
+		"[cb _load_cummit $w_asim @asim_data @%x,%y];break"
 
 	set w_file $w.file_pane.out.file_t
 	text $w_file \
@@ -279,8 +279,8 @@ constructor new {i_commit i_path i_jump} {
 
 	menu $w.ctxm -tearoff 0
 	$w.ctxm add command \
-		-label [mc "Copy Commit"] \
-		-command [cb _copycommit]
+		-label [mc "Copy cummit"] \
+		-command [cb _copycummit]
 	$w.ctxm add separator
 	$w.ctxm add command \
 		-label [mc "Find Text..."] \
@@ -301,9 +301,9 @@ constructor new {i_commit i_path i_jump} {
 	$w.ctxm add separator
 	$w.ctxm add command \
 		-label [mc "Show History Context"] \
-		-command [cb _gitkcommit]
+		-command [cb _gitkcummit]
 	$w.ctxm add command \
-		-label [mc "Blame Parent Commit"] \
+		-label [mc "Blame Parent cummit"] \
 		-command [cb _blameparent]
 
 	foreach i $w_columns {
@@ -449,7 +449,7 @@ method _load {jump} {
 
 		set highlight_line -1
 		set highlight_column {}
-		set highlight_commit {}
+		set highlight_cummit {}
 		set total_lines 0
 	}
 
@@ -466,7 +466,7 @@ method _load {jump} {
 	set amov_data [list [list]]
 	set asim_data [list [list]]
 
-	$status show [mc "Reading %s..." "$commit:[escape_path $path]"]
+	$status show [mc "Reading %s..." "$cummit:[escape_path $path]"]
 	$w_path conf -text [escape_path $path]
 
 	set do_textconv 0
@@ -477,7 +477,7 @@ method _load {jump} {
 			set do_textconv 1
 		}
 	}
-	if {$commit eq {}} {
+	if {$cummit eq {}} {
 		if {$do_textconv ne 0} {
 			set fd [open_cmd_pipe $textconv $path]
 		} else {
@@ -486,9 +486,9 @@ method _load {jump} {
 		fconfigure $fd -eofchar {}
 	} else {
 		if {$do_textconv ne 0} {
-			set fd [git_read cat-file --textconv "$commit:$path"]
+			set fd [git_read cat-file --textconv "$cummit:$path"]
 		} else {
-			set fd [git_read cat-file blob "$commit:$path"]
+			set fd [git_read cat-file blob "$cummit:$path"]
 		}
 	}
 	fconfigure $fd \
@@ -537,7 +537,7 @@ method _history_menu {} {
 method _goback {i} {
 	set dat [lindex $history $i]
 	set history [lrange $history 0 [expr {$i - 1}]]
-	set commit [lindex $dat 0]
+	set cummit [lindex $dat 0]
 	set path [lindex $dat 1]
 	_load $this [lrange $dat 2 5]
 }
@@ -600,10 +600,10 @@ method _read_file {fd jump} {
 
 method _exec_blame {cur_w cur_d options cur_s} {
 	lappend options --incremental --encoding=utf-8
-	if {$commit eq {}} {
+	if {$cummit eq {}} {
 		lappend options --contents $path
 	} else {
-		lappend options $commit
+		lappend options $cummit
 	}
 
 	# We may recurse in from another call to _exec_blame and already have
@@ -637,7 +637,7 @@ method _read_blame {fd cur_w cur_d} {
 	while {[gets $fd line] >= 0} {
 		if {[regexp {^([a-z0-9]{40}) (\d+) (\d+) (\d+)$} $line line \
 			cmit original_line final_line line_count]} {
-			set r_commit     $cmit
+			set r_cummit     $cmit
 			set r_orig_line  $original_line
 			set r_final_line $final_line
 			set r_line_count $line_count
@@ -646,17 +646,17 @@ method _read_blame {fd cur_w cur_d} {
 			set n    $r_line_count
 			set lno  $r_final_line
 			set oln  $r_orig_line
-			set cmit $r_commit
+			set cmit $r_cummit
 
 			if {[regexp {^0{40}$} $cmit]} {
-				set commit_abbr work
-				set commit_type curr_commit
-			} elseif {$cmit eq $commit} {
-				set commit_abbr this
-				set commit_type curr_commit
+				set cummit_abbr work
+				set cummit_type curr_cummit
+			} elseif {$cmit eq $cummit} {
+				set cummit_abbr this
+				set cummit_type curr_cummit
 			} else {
-				set commit_type prior_commit
-				set commit_abbr [string range $cmit 0 3]
+				set cummit_type prior_cummit
+				set cummit_abbr [string range $cmit 0 3]
 			}
 
 			set author_abbr {}
@@ -726,7 +726,7 @@ method _read_blame {fd cur_w cur_d} {
 
 				$cur_w delete $lno.0 "$lno.0 lineend"
 				if {$lno == $first_lno} {
-					$cur_w insert $lno.0 $commit_abbr $commit_type
+					$cur_w insert $lno.0 $cummit_abbr $cummit_type
 				} elseif {$lno == [expr {$first_lno + 1}]} {
 					$cur_w insert $lno.0 $author_abbr author_abbr
 				} else {
@@ -752,7 +752,7 @@ method _read_blame {fd cur_w cur_d} {
 						set highlight_line $lno
 					}
 					if {$highlight_line == $lno} {
-						_showcommit $this $cur_w $lno
+						_showcummit $this $cur_w $lno
 					}
 				}
 
@@ -769,7 +769,7 @@ method _read_blame {fd cur_w cur_d} {
 				$cur_w delete $lno.0 "$lno.0 lineend"
 
 				if {$lno == $first_lno} {
-					$cur_w insert $lno.0 $commit_abbr $commit_type
+					$cur_w insert $lno.0 $cummit_abbr $cummit_type
 				} elseif {$lno == [expr {$first_lno + 1}]} {
 					$cur_w insert $lno.0 $author_abbr author_abbr
 				} else {
@@ -791,7 +791,7 @@ method _read_blame {fd cur_w cur_d} {
 			}
 
 		} elseif {[regexp {^([a-z-]+) (.*)$} $line line key data]} {
-			set header($r_commit,$key) $data
+			set header($r_cummit,$key) $data
 		}
 	}
 	$cur_w conf -state disabled
@@ -824,15 +824,15 @@ method _read_blame {fd cur_w cur_d} {
 	}
 } ifdeleted { catch {close $fd} }
 
-method _find_commit_bound {data_list start_idx delta} {
+method _find_cummit_bound {data_list start_idx delta} {
 	upvar #0 $data_list line_data
 	set pos $start_idx
 	set limit       [expr {[llength $line_data] - 1}]
-	set base_commit [lindex $line_data $pos 0]
+	set base_cummit [lindex $line_data $pos 0]
 
 	while {$pos > 0 && $pos < $limit} {
 		set new_pos [expr {$pos + $delta}]
-		if {[lindex $line_data $new_pos 0] ne $base_commit} {
+		if {[lindex $line_data $new_pos 0] ne $base_cummit} {
 			return $pos
 		}
 
@@ -864,10 +864,10 @@ method _fullcopyblame {} {
 	# Find the line range
 	set pos @$::cursorX,$::cursorY
 	set lno [lindex [split [$::cursorW index $pos] .] 0]
-	set min_amov_lno [_find_commit_bound $this @amov_data $lno -1]
-	set max_amov_lno [_find_commit_bound $this @amov_data $lno 1]
-	set min_asim_lno [_find_commit_bound $this @asim_data $lno -1]
-	set max_asim_lno [_find_commit_bound $this @asim_data $lno 1]
+	set min_amov_lno [_find_cummit_bound $this @amov_data $lno -1]
+	set max_amov_lno [_find_cummit_bound $this @amov_data $lno 1]
+	set min_asim_lno [_find_cummit_bound $this @asim_data $lno -1]
+	set max_asim_lno [_find_cummit_bound $this @asim_data $lno 1]
 
 	if {$min_asim_lno < $min_amov_lno} {
 		set min_amov_lno $min_asim_lno
@@ -892,7 +892,7 @@ method _fullcopyblame {} {
 
 method _click {cur_w pos} {
 	set lno [lindex [split [$cur_w index $pos] .] 0]
-	_showcommit $this $cur_w $lno
+	_showcummit $this $cur_w $lno
 }
 
 method _setencoding {enc} {
@@ -905,40 +905,40 @@ method _setencoding {enc} {
 		]
 }
 
-method _load_commit {cur_w cur_d pos} {
+method _load_cummit {cur_w cur_d pos} {
 	upvar #0 $cur_d line_data
 	set lno [lindex [split [$cur_w index $pos] .] 0]
 	set dat [lindex $line_data $lno]
 	if {$dat ne {}} {
-		_load_new_commit $this  \
+		_load_new_cummit $this  \
 			[lindex $dat 0] \
 			[lindex $dat 1] \
 			[list [lindex $dat 2]]
 	}
 }
 
-method _load_new_commit {new_commit new_path jump} {
+method _load_new_cummit {new_cummit new_path jump} {
 	lappend history [list \
-		$commit $path \
+		$cummit $path \
 		$highlight_column \
 		$highlight_line \
 		[lindex [$w_file xview] 0] \
 		[lindex [$w_file yview] 0] \
 		]
 
-	set commit $new_commit
+	set cummit $new_cummit
 	set path   $new_path
 	_load $this $jump
 }
 
-method _showcommit {cur_w lno} {
+method _showcummit {cur_w lno} {
 	global repo_config
 	variable active_color
 
-	if {$highlight_commit ne {}} {
+	if {$highlight_cummit ne {}} {
 		foreach i $w_columns {
-			$i tag conf g$highlight_commit -background {}
-			$i tag lower g$highlight_commit
+			$i tag conf g$highlight_cummit -background {}
+			$i tag lower g$highlight_cummit
 		}
 	}
 
@@ -976,19 +976,19 @@ method _showcommit {cur_w lno} {
 		catch {set author_email $header($cmit,author-mail)}
 		catch {set author_time [format_date $header($cmit,author-time)]}
 
-		set committer_name {}
-		set committer_email {}
-		set committer_time {}
-		catch {set committer_name $header($cmit,committer)}
-		catch {set committer_email $header($cmit,committer-mail)}
-		catch {set committer_time [format_date $header($cmit,committer-time)]}
+		set cummitter_name {}
+		set cummitter_email {}
+		set cummitter_time {}
+		catch {set cummitter_name $header($cmit,cummitter)}
+		catch {set cummitter_email $header($cmit,cummitter-mail)}
+		catch {set cummitter_time [format_date $header($cmit,cummitter-time)]}
 
 		if {[catch {set msg $header($cmit,message)}]} {
 			set msg {}
 			catch {
-				set fd [git_read cat-file commit $cmit]
+				set fd [git_read cat-file cummit $cmit]
 				fconfigure $fd -encoding binary -translation lf
-				# By default commits are assumed to be in utf-8
+				# By default cummits are assumed to be in utf-8
 				set enc utf-8
 				while {[gets $fd line] > 0} {
 					if {[string match {encoding *} $line]} {
@@ -1007,14 +1007,14 @@ method _showcommit {cur_w lno} {
 			set header($cmit,message) $msg
 		}
 
-		$w_cviewer insert end "commit $cmit\n" header_key
+		$w_cviewer insert end "cummit $cmit\n" header_key
 		$w_cviewer insert end [strcat [mc "Author:"] "\t"] header_key
 		$w_cviewer insert end "$author_name $author_email" header_val
 		$w_cviewer insert end "  $author_time\n" header_val
 
-		$w_cviewer insert end [strcat [mc "Committer:"] "\t"] header_key
-		$w_cviewer insert end "$committer_name $committer_email" header_val
-		$w_cviewer insert end "  $committer_time\n" header_val
+		$w_cviewer insert end [strcat [mc "cummitter:"] "\t"] header_key
+		$w_cviewer insert end "$cummitter_name $cummitter_email" header_val
+		$w_cviewer insert end "  $cummitter_time\n" header_val
 
 		if {$file ne $path} {
 			$w_cviewer insert end [strcat [mc "Original File:"] "\t"] header_key
@@ -1026,9 +1026,9 @@ method _showcommit {cur_w lno} {
 	$w_cviewer conf -state disabled
 
 	set highlight_line $lno
-	set highlight_commit $cmit
+	set highlight_cummit $cmit
 
-	if {[lsearch -exact $tooltip_commit $highlight_commit] != -1} {
+	if {[lsearch -exact $tooltip_cummit $highlight_cummit] != -1} {
 		_hide_tooltip $this
 	}
 }
@@ -1039,7 +1039,7 @@ method _get_click_amov_info {} {
 	return [lindex $amov_data $lno]
 }
 
-method _copycommit {} {
+method _copycummit {} {
 	set dat [_get_click_amov_info $this]
 	if {$dat ne {}} {
 		clipboard clear
@@ -1055,7 +1055,7 @@ method _format_offset_date {base offset} {
 	return [clock format $exval -format {%Y-%m-%d}]
 }
 
-method _gitkcommit {} {
+method _gitkcummit {} {
 	global nullid
 
 	set dat [_get_click_amov_info $this]
@@ -1065,27 +1065,27 @@ method _gitkcommit {} {
 		# If the line belongs to the working copy, use HEAD instead
 		if {$cmit eq $nullid} {
 			if {[catch {set cmit [git rev-parse --verify HEAD]} err]} {
-				error_popup [strcat [mc "Cannot find HEAD commit:"] "\n\n$err"]
+				error_popup [strcat [mc "Cannot find HEAD cummit:"] "\n\n$err"]
 				return;
 			}
 		}
 
 		set radius [get_config gui.blamehistoryctx]
-		set cmdline [list --select-commit=$cmit]
+		set cmdline [list --select-cummit=$cmit]
 
 		if {$radius > 0} {
 			set author_time {}
-			set committer_time {}
+			set cummitter_time {}
 
 			catch {set author_time $header($cmit,author-time)}
-			catch {set committer_time $header($cmit,committer-time)}
+			catch {set cummitter_time $header($cmit,cummitter-time)}
 
-			if {$committer_time eq {}} {
-				set committer_time $author_time
+			if {$cummitter_time eq {}} {
+				set cummitter_time $author_time
 			}
 
-			set after_time [_format_offset_date $this $committer_time [expr {-$radius}]]
-			set before_time [_format_offset_date $this $committer_time $radius]
+			set after_time [_format_offset_date $this $cummitter_time [expr {-$radius}]]
+			set before_time [_format_offset_date $this $cummitter_time $radius]
 
 			lappend cmdline --after=$after_time --before=$before_time
 		}
@@ -1093,8 +1093,8 @@ method _gitkcommit {} {
 		lappend cmdline $cmit
 
 		set base_rev "HEAD"
-		if {$commit ne {}} {
-			set base_rev $commit
+		if {$cummit ne {}} {
+			set base_rev $cummit
 		}
 
 		if {$base_rev ne $cmit} {
@@ -1120,13 +1120,13 @@ method _blameparent {} {
 			set parent_ref "$cmit^"
 		}
 		if {[catch {set cparent [git rev-parse --verify $parent_ref]} err]} {
-			error_popup [strcat [mc "Cannot find parent commit:"] "\n\n$err"]
+			error_popup [strcat [mc "Cannot find parent cummit:"] "\n\n$err"]
 			return;
 		}
 
 		_kill $this
 
-		# Generate a diff between the commit and its parent,
+		# Generate a diff between the cummit and its parent,
 		# and use the hunks to update the line number.
 		# Request zero context to simplify calculations.
 		if {$cmit eq $nullid} {
@@ -1146,13 +1146,13 @@ method _blameparent {} {
 			-blocking 0 \
 			-encoding binary \
 			-translation binary
-		fileevent $fd readable [cb _read_diff_load_commit \
+		fileevent $fd readable [cb _read_diff_load_cummit \
 			$fd $cparent $new_path $r_orig_line]
 		set current_fd $fd
 	}
 }
 
-method _read_diff_load_commit {fd cparent new_path tline} {
+method _read_diff_load_cummit {fd cparent new_path tline} {
 	if {$fd ne $current_fd} {
 		catch {close $fd}
 		return
@@ -1184,7 +1184,7 @@ method _read_diff_load_commit {fd cparent new_path tline} {
 		close $fd
 		set current_fd {}
 
-		_load_new_commit $this  \
+		_load_new_cummit $this  \
 			$cparent        \
 			$new_path       \
 			[list $r_orig_line]
@@ -1249,7 +1249,7 @@ method _open_tooltip {cur_w} {
 	}
 
 	set cmit [lindex $dat 0]
-	set tooltip_commit [list $cmit]
+	set tooltip_cummit [list $cmit]
 
 	set author_name {}
 	set summary     {}
@@ -1258,7 +1258,7 @@ method _open_tooltip {cur_w} {
 	catch {set summary     $header($cmit,summary)}
 	catch {set author_time [format_date $header($cmit,author-time)]}
 
-	$tooltip_t insert end "commit $cmit\n"
+	$tooltip_t insert end "cummit $cmit\n"
 	$tooltip_t insert end "$author_name  $author_time\n"
 	$tooltip_t insert end "$summary"
 
@@ -1268,7 +1268,7 @@ method _open_tooltip {cur_w} {
 
 		set cmit [lindex $org 0]
 		set file [lindex $org 1]
-		lappend tooltip_commit $cmit
+		lappend tooltip_cummit $cmit
 
 		set author_name {}
 		set summary     {}
@@ -1278,7 +1278,7 @@ method _open_tooltip {cur_w} {
 		catch {set author_time [format_date $header($cmit,author-time)]}
 
 		$tooltip_t insert end [strcat [mc "Originally By:"] "\n"] section_header
-		$tooltip_t insert end "commit $cmit\n"
+		$tooltip_t insert end "cummit $cmit\n"
 		$tooltip_t insert end "$author_name  $author_time\n"
 		$tooltip_t insert end "$summary\n"
 
@@ -1338,7 +1338,7 @@ method _hide_tooltip {} {
 	if {$tooltip_wm ne {}} {
 		destroy $tooltip_wm
 		set tooltip_wm {}
-		set tooltip_commit {}
+		set tooltip_cummit {}
 	}
 	if {$tooltip_timer ne {}} {
 		after cancel $tooltip_timer

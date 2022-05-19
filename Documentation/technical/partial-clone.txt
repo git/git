@@ -7,7 +7,7 @@ The goal of this work is to allow Git better handle extremely large
 repositories.
 
 During clone and fetch operations, Git downloads the complete contents
-and history of the repository.  This includes all commits, trees, and
+and history of the repository.  This includes all cummits, trees, and
 blobs for the complete life of the repository.  For extremely large
 repositories, clones can take hours (or days) and consume 100+GiB of disk
 space.
@@ -16,7 +16,7 @@ Often in these repositories there are many blobs and trees that the user
 does not need such as:
 
   1. files outside of the user's work area in the tree.  For example, in
-     a repository with 500K directories and 3.5M files in every commit,
+     a repository with 500K directories and 3.5M files in every cummit,
      we can avoid downloading many objects if the user only needs a
      narrow "cone" of the source tree.
 
@@ -50,9 +50,9 @@ Non-Goals
 ---------
 
 Partial clone is a mechanism to limit the number of blobs and trees downloaded
-*within* a given range of commits -- and is therefore independent of and not
+*within* a given range of cummits -- and is therefore independent of and not
 intended to conflict with existing DAG-level mechanisms to limit the set of
-requested commits (i.e. shallow clone, single branch, or fetch '<refspec>').
+requested cummits (i.e. shallow clone, single branch, or fetch '<refspec>').
 
 
 Design Overview
@@ -94,7 +94,7 @@ These filtered packfiles are *incomplete* in the traditional sense because
 they may contain objects that reference objects not contained in the
 packfile and that the client doesn't already have.  For example, the
 filtered packfile may contain trees or tags that reference missing blobs
-or commits that reference missing trees.
+or cummits that reference missing trees.
 
 - On the client these incomplete packfiles are marked as "promisor packfiles"
   and treated differently by various commands.

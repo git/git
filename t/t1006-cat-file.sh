@@ -283,21 +283,21 @@ tree_pretty_content="100644 blob $hello_sha1	hello"
 
 run_tests 'tree' $tree_sha1 $tree_size "" "$tree_pretty_content"
 
-commit_message="Initial commit"
-commit_sha1=$(echo_without_newline "$commit_message" | git commit-tree $tree_sha1)
-commit_size=$(($(test_oid hexsz) + 137))
-commit_content="tree $tree_sha1
+cummit_message="Initial cummit"
+cummit_sha1=$(echo_without_newline "$cummit_message" | git cummit-tree $tree_sha1)
+cummit_size=$(($(test_oid hexsz) + 137))
+cummit_content="tree $tree_sha1
 author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> 0000000000 +0000
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 0000000000 +0000
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> 0000000000 +0000
 
-$commit_message"
+$cummit_message"
 
-run_tests 'commit' $commit_sha1 $commit_size "$commit_content" "$commit_content" 1
+run_tests 'cummit' $cummit_sha1 $cummit_size "$cummit_content" "$cummit_content" 1
 
 tag_header_without_timestamp="object $hello_sha1
 type blob
 tag hellotag
-tagger $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
+tagger $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>"
 tag_description="This is a tag"
 tag_content="$tag_header_without_timestamp 0000000000 +0000
 
@@ -379,7 +379,7 @@ test_expect_success 'empty --batch-check notices missing object' '
 '
 
 batch_input="$hello_sha1
-$commit_sha1
+$cummit_sha1
 $tag_sha1
 deadbeef
 
@@ -387,8 +387,8 @@ deadbeef
 
 batch_output="$hello_sha1 blob $hello_size
 $hello_content
-$commit_sha1 commit $commit_size
-$commit_content
+$cummit_sha1 cummit $cummit_size
+$cummit_content
 $tag_sha1 tag $tag_size
 $tag_content
 deadbeef missing
@@ -400,7 +400,7 @@ test_expect_success '--batch with multiple sha1s gives correct format' '
 
 batch_check_input="$hello_sha1
 $tree_sha1
-$commit_sha1
+$cummit_sha1
 $tag_sha1
 deadbeef
 
@@ -408,7 +408,7 @@ deadbeef
 
 batch_check_output="$hello_sha1 blob $hello_size
 $tree_sha1 tree $tree_size
-$commit_sha1 commit $commit_size
+$cummit_sha1 cummit $cummit_size
 $tag_sha1 tag $tag_size
 deadbeef missing
  missing"
@@ -422,7 +422,7 @@ test_expect_success '--batch-command with multiple info calls gives correct form
 	cat >expect <<-EOF &&
 	$hello_sha1 blob $hello_size
 	$tree_sha1 tree $tree_size
-	$commit_sha1 commit $commit_size
+	$cummit_sha1 cummit $cummit_size
 	$tag_sha1 tag $tag_size
 	deadbeef missing
 	EOF
@@ -430,7 +430,7 @@ test_expect_success '--batch-command with multiple info calls gives correct form
 	git cat-file --batch-command --buffer >actual <<-EOF &&
 	info $hello_sha1
 	info $tree_sha1
-	info $commit_sha1
+	info $cummit_sha1
 	info $tag_sha1
 	info deadbeef
 	EOF
@@ -442,8 +442,8 @@ test_expect_success '--batch-command with multiple command calls gives correct f
 	remove_timestamp >expect <<-EOF &&
 	$hello_sha1 blob $hello_size
 	$hello_content
-	$commit_sha1 commit $commit_size
-	$commit_content
+	$cummit_sha1 cummit $cummit_size
+	$cummit_content
 	$tag_sha1 tag $tag_size
 	$tag_content
 	deadbeef missing
@@ -451,7 +451,7 @@ test_expect_success '--batch-command with multiple command calls gives correct f
 
 	git cat-file --batch-command --buffer >actual_raw <<-EOF &&
 	contents $hello_sha1
-	contents $commit_sha1
+	contents $cummit_sha1
 	contents $tag_sha1
 	contents deadbeef
 	flush
@@ -465,7 +465,7 @@ test_expect_success 'setup blobs which are likely to delta' '
 	test-tool genrandom foo 10240 >foo &&
 	{ cat foo && echo plus; } >foo-plus &&
 	git add foo foo-plus &&
-	git commit -m foo &&
+	git cummit -m foo &&
 	cat >blobs <<-\EOF
 	HEAD:foo
 	HEAD:foo-plus
@@ -636,7 +636,7 @@ test_expect_success 'the --allow-unknown-type option does not consider replaceme
 	test-tool ref-store main update-ref msg "refs/replace/$bogus_short_sha1" $head $ZERO_OID REF_SKIP_OID_VERIFICATION &&
 
 	cat >expect <<-EOF &&
-	commit
+	cummit
 	EOF
 	git cat-file -t --allow-unknown-type $bogus_short_sha1 >actual &&
 	test_cmp expect actual
@@ -761,7 +761,7 @@ test_expect_success 'prep for symlink tests' '
 	test_ln_s_add loop1 loop2 &&
 	test_ln_s_add loop2 loop1 &&
 	git add morx dir/subdir/ind2 dir/ind1 &&
-	git commit -am "test" &&
+	git cummit -am "test" &&
 	echo $hello_sha1 blob $hello_size >found
 '
 
@@ -935,7 +935,7 @@ test_expect_success 'cat-file --batch-all-objects shows all objects' '
 		cd all-one &&
 		echo content >file &&
 		git add file &&
-		git commit -qm base &&
+		git cummit -qm base &&
 		git rev-parse HEAD HEAD^{tree} HEAD:file &&
 		git repack -ad &&
 		echo not-cloned | git hash-object -w --stdin
@@ -988,12 +988,12 @@ test_expect_success 'cat-file --batch="batman" with --batch-all-objects will wor
 
 test_expect_success 'set up replacement object' '
 	orig=$(git rev-parse HEAD) &&
-	git cat-file commit $orig >orig &&
+	git cat-file cummit $orig >orig &&
 	{
 		cat orig &&
 		echo extra
 	} >fake &&
-	fake=$(git hash-object -t commit -w fake) &&
+	fake=$(git hash-object -t cummit -w fake) &&
 	orig_size=$(git cat-file -s $orig) &&
 	fake_size=$(git cat-file -s $fake) &&
 	git replace $orig $fake
@@ -1004,7 +1004,7 @@ test_expect_success 'cat-file --batch respects replace objects' '
 	$orig
 	EOF
 	{
-		echo "$orig commit $fake_size" &&
+		echo "$orig cummit $fake_size" &&
 		cat fake &&
 		echo
 	} >expect &&
@@ -1015,7 +1015,7 @@ test_expect_success 'cat-file --batch-check respects replace objects' '
 	git cat-file --batch-check >actual <<-EOF &&
 	$orig
 	EOF
-	echo "$orig commit $fake_size" >expect &&
+	echo "$orig cummit $fake_size" >expect &&
 	test_cmp expect actual
 '
 
@@ -1038,7 +1038,7 @@ test_expect_success 'cat-file --batch-all-objects --batch ignores replace' '
 	git cat-file --batch-all-objects --batch >actual.raw &&
 	extract_batch_output $orig <actual.raw >actual &&
 	{
-		echo "$orig commit $orig_size" &&
+		echo "$orig cummit $orig_size" &&
 		cat orig &&
 		echo
 	} >expect &&
@@ -1048,7 +1048,7 @@ test_expect_success 'cat-file --batch-all-objects --batch ignores replace' '
 test_expect_success 'cat-file --batch-all-objects --batch-check ignores replace' '
 	git cat-file --batch-all-objects --batch-check >actual.raw &&
 	grep ^$orig actual.raw >actual &&
-	echo "$orig commit $orig_size" >expect &&
+	echo "$orig cummit $orig_size" >expect &&
 	test_cmp expect actual
 '
 test_expect_success 'batch-command empty command' '

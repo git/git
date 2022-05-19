@@ -14,7 +14,7 @@ Fixes since v2.4.7
    encounters a broken ref.  The lack of object whose name is 0{40} is
    not the problem; the ref being broken is.
 
- * "git commit --cleanup=scissors" was not careful enough to protect
+ * "git cummit --cleanup=scissors" was not careful enough to protect
    against getting fooled by a line that looked like scissors.
 
 Also contains typofixes, documentation updates and trivial code

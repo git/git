@@ -128,10 +128,10 @@ test_expect_success 'packsize limit' '
 '
 
 test_expect_success 'diff --raw' '
-	git commit -q -m initial &&
+	git cummit -q -m initial &&
 	echo modified >>large1 &&
 	git add large1 &&
-	git commit -q -m modified &&
+	git cummit -q -m modified &&
 	git diff --raw HEAD^
 '
 

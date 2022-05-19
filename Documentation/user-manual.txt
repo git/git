@@ -78,7 +78,7 @@ about the history of the project.
 Git is best thought of as a tool for storing the history of a collection
 of files.  It stores the history as a compressed collection of
 interrelated snapshots of the project's contents.  In Git each such
-version is called a <<def_commit,commit>>.
+version is called a <<def_cummit,cummit>>.
 
 Those snapshots aren't necessarily all arranged in a single line from
 oldest to newest; instead, work may simultaneously proceed along
@@ -87,7 +87,7 @@ merge and diverge.
 
 A single Git repository can track development on multiple branches.  It
 does this by keeping a list of <<def_head,heads>> which reference the
-latest commit on each branch; the linkgit:git-branch[1] command shows
+latest cummit on each branch; the linkgit:git-branch[1] command shows
 you the list of branch heads:
 
 ------------------------------------------------
@@ -149,16 +149,16 @@ particular point in history, then resetting that branch may leave you
 with no way to find the history it used to point to; so use this command
 carefully.
 
-[[understanding-commits]]
-=== Understanding History: Commits
+[[understanding-cummits]]
+=== Understanding History: cummits
 
-Every change in the history of a project is represented by a commit.
-The linkgit:git-show[1] command shows the most recent commit on the
+Every change in the history of a project is represented by a cummit.
+The linkgit:git-show[1] command shows the most recent cummit on the
 current branch:
 
 ------------------------------------------------
 $ git show
-commit 17cf781661e6d38f737f15f53ab552f1e95960d7
+cummit 17cf781661e6d38f737f15f53ab552f1e95960d7
 Author: Linus Torvalds <torvalds@ppc970.osdl.org.(none)>
 Date:   Tue Apr 19 14:11:06 2005 -0700
 
@@ -181,18 +181,18 @@ index 65898fa..b002dc6 100644
  	if (mkdir(".git", 0755) < 0) {
 ------------------------------------------------
 
-As you can see, a commit shows who made the latest change, what they
+As you can see, a cummit shows who made the latest change, what they
 did, and why.
 
 Every commit has a 40-hexdigit id, sometimes called the "object name" or the
 "SHA-1 id", shown on the first line of the `git show` output.  You can usually
-refer to a commit by a shorter name, such as a tag or a branch name, but this
+refer to a cummit by a shorter name, such as a tag or a branch name, but this
 longer name can also be useful.  Most importantly, it is a globally unique
-name for this commit: so if you tell somebody else the object name (for
+name for this cummit: so if you tell somebody else the object name (for
 example in email), then you are guaranteed that name will refer to the same
-commit in their repository that it does in yours (assuming their repository
-has that commit at all).  Since the object name is computed as a hash over the
-contents of the commit, you are guaranteed that the commit can never change
+cummit in their repository that it does in yours (assuming their repository
+has that cummit at all).  Since the object name is computed as a hash over the
+contents of the cummit, you are guaranteed that the cummit can never change
 without its name also changing.
 
 In fact, in <<git-concepts>> we shall see that everything stored in Git
@@ -200,34 +200,34 @@ history, including file data and directory contents, is stored in an object
 with a name that is a hash of its contents.
 
 [[understanding-reachability]]
-==== Understanding history: commits, parents, and reachability
+==== Understanding history: cummits, parents, and reachability
 
-Every commit (except the very first commit in a project) also has a
-parent commit which shows what happened before this commit.
+Every cummit (except the very first cummit in a project) also has a
+parent cummit which shows what happened before this cummit.
 Following the chain of parents will eventually take you back to the
 beginning of the project.
 
-However, the commits do not form a simple list; Git allows lines of
+However, the cummits do not form a simple list; Git allows lines of
 development to diverge and then reconverge, and the point where two
-lines of development reconverge is called a "merge".  The commit
+lines of development reconverge is called a "merge".  The cummit
 representing a merge can therefore have more than one parent, with
-each parent representing the most recent commit on one of the lines
+each parent representing the most recent cummit on one of the lines
 of development leading to that point.
 
 The best way to see how this works is using the linkgit:gitk[1]
 command; running gitk now on a Git repository and looking for merge
-commits will help understand how Git organizes history.
+cummits will help understand how Git organizes history.
 
-In the following, we say that commit X is "reachable" from commit Y
-if commit X is an ancestor of commit Y.  Equivalently, you could say
+In the following, we say that cummit X is "reachable" from cummit Y
+if cummit X is an ancestor of cummit Y.  Equivalently, you could say
 that Y is a descendant of X, or that there is a chain of parents
-leading from commit Y to commit X.
+leading from cummit Y to cummit X.
 
 [[history-diagrams]]
 ==== Understanding history: History diagrams
 
 We will sometimes represent Git history using diagrams like the one
-below.  Commits are shown as "o", and the links between them with
+below.  cummits are shown as "o", and the links between them with
 lines drawn with - / and \.  Time goes left to right:
 
 
@@ -239,7 +239,7 @@ lines drawn with - / and \.  Time goes left to right:
          o--o--o <-- Branch B
 ................................................
 
-If we need to talk about a particular commit, the character "o" may
+If we need to talk about a particular cummit, the character "o" may
 be replaced with another letter or number.
 
 [[what-is-a-branch]]
@@ -247,9 +247,9 @@ be replaced with another letter or number.
 
 When we need to be precise, we will use the word "branch" to mean a line
 of development, and "branch head" (or just "head") to mean a reference
-to the most recent commit on a branch.  In the example above, the branch
-head named "A" is a pointer to one particular commit, but we refer to
-the line of three commits leading up to that point as all being part of
+to the most recent cummit on a branch.  In the example above, the branch
+head named "A" is a pointer to one particular cummit, but we refer to
+the line of three cummits leading up to that point as all being part of
 "branch A".
 
 However, when no confusion will result, we often just use the term
@@ -296,18 +296,18 @@ ref: refs/heads/master
 === Examining an old version without creating a new branch
 
 The `git switch` command normally expects a branch head, but will also
-accept an arbitrary commit when invoked with --detach; for example,
-you can check out the commit referenced by a tag:
+accept an arbitrary cummit when invoked with --detach; for example,
+you can check out the cummit referenced by a tag:
 
 ------------------------------------------------
 $ git switch --detach v2.6.17
 Note: checking out 'v2.6.17'.
 
 You are in 'detached HEAD' state. You can look around, make experimental
-changes and commit them, and you can discard any commits you make in this
+changes and cummit them, and you can discard any cummits you make in this
 state without impacting any branches by performing another switch.
 
-If you want to create a new branch to retain commits you create, you may
+If you want to create a new branch to retain cummits you create, you may
 do so (now or later) by using -c with the switch command again. Example:
 
   git switch -c new_branch_name
@@ -315,7 +315,7 @@ do so (now or later) by using -c with the switch command again. Example:
 HEAD is now at 427abfa Linux v2.6.17
 ------------------------------------------------
 
-The HEAD then refers to the SHA-1 of the commit instead of to a branch,
+The HEAD then refers to the SHA-1 of the cummit instead of to a branch,
 and git branch shows that you are no longer on a branch:
 
 ------------------------------------------------
@@ -378,7 +378,7 @@ to refer to the repository that you cloned from.
 === Naming branches, tags, and other references
 
 Branches, remote-tracking branches, and tags are all references to
-commits.  All references are named with a slash-separated path name
+cummits.  All references are named with a slash-separated path name
 starting with `refs`; the names we've been using so far are actually
 shorthand:
 
@@ -406,7 +406,7 @@ REVISIONS" section of linkgit:gitrevisions[7].
 [[Updating-a-repository-With-git-fetch]]
 === Updating a repository with git fetch
 
-After you clone a repository and commit a few changes of your own, you
+After you clone a repository and cummit a few changes of your own, you
 may wish to check the original repository for updates.
 
 The `git-fetch` command, with no arguments, will update all of the
@@ -467,14 +467,14 @@ linkgit:git-config[1] for details.)
 
 Git is best thought of as a tool for storing the history of a
 collection of files.  It does this by storing compressed snapshots of
-the contents of a file hierarchy, together with "commits" which show
+the contents of a file hierarchy, together with "cummits" which show
 the relationships between these snapshots.
 
 Git provides extremely flexible and fast tools for exploring the
 history of a project.
 
 We start with one specialized tool that is useful for finding the
-commit that introduced a bug into a project.
+cummit that introduced a bug into a project.
 
 [[using-bisect]]
 === How to use bisect to find a regression
@@ -482,7 +482,7 @@ commit that introduced a bug into a project.
 Suppose version 2.6.18 of your project worked, but the version at
 "master" crashes.  Sometimes the best way to find the cause of such a
 regression is to perform a brute-force search through the project's
-history to find the particular commit that caused the problem.  The
+history to find the particular cummit that caused the problem.  The
 linkgit:git-bisect[1] command can help you do this:
 
 -------------------------------------------------
@@ -495,7 +495,7 @@ Bisecting: 3537 revisions left to test after this
 
 If you run `git branch` at this point, you'll see that Git has
 temporarily moved you in "(no branch)". HEAD is now detached from any
-branch and points directly to a commit (with commit id 65934) that
+branch and points directly to a cummit (with cummit id 65934) that
 is reachable from "master" but not from v2.6.18. Compile and test it,
 and see whether it crashes. Assume it does crash. Then:
 
@@ -510,10 +510,10 @@ stage whether the version it gives you is good or bad, and notice
 that the number of revisions left to test is cut approximately in
 half each time.
 
-After about 13 tests (in this case), it will output the commit id of
-the guilty commit.  You can then examine the commit with
+After about 13 tests (in this case), it will output the cummit id of
+the guilty cummit.  You can then examine the cummit with
 linkgit:git-show[1], find out who wrote it, and mail them your bug
-report with the commit id.  Finally, run
+report with the cummit id.  Finally, run
 
 -------------------------------------------------
 $ git bisect reset
@@ -524,15 +524,15 @@ to return you to the branch you were on before.
 Note that the version which `git bisect` checks out for you at each
 point is just a suggestion, and you're free to try a different
 version if you think it would be a good idea.  For example,
-occasionally you may land on a commit that broke something unrelated;
+occasionally you may land on a cummit that broke something unrelated;
 run
 
 -------------------------------------------------
 $ git bisect visualize
 -------------------------------------------------
 
-which will run gitk and label the commit it chose with a marker that
-says "bisect".  Choose a safe-looking commit nearby, note its commit
+which will run gitk and label the cummit it chose with a marker that
+says "bisect".  Choose a safe-looking cummit nearby, note its cummit
 id, and check it out with:
 
 -------------------------------------------------
@@ -544,29 +544,29 @@ continue.
 
 Instead of `git bisect visualize` and then `git reset --hard
 fb47ddb2db`, you might just want to tell Git that you want to skip
-the current commit:
+the current cummit:
 
 -------------------------------------------------
 $ git bisect skip
 -------------------------------------------------
 
 In this case, though, Git may not eventually be able to tell the first
-bad one between some first skipped commits and a later bad commit.
+bad one between some first skipped cummits and a later bad cummit.
 
 There are also ways to automate the bisecting process if you have a
-test script that can tell a good from a bad commit. See
+test script that can tell a good from a bad cummit. See
 linkgit:git-bisect[1] for more information about this and other `git
 bisect` features.
 
-[[naming-commits]]
-=== Naming commits
+[[naming-cummits]]
+=== Naming cummits
 
-We have seen several ways of naming commits already:
+We have seen several ways of naming cummits already:
 
 	- 40-hexdigit object name
-	- branch name: refers to the commit at the head of the given
+	- branch name: refers to the cummit at the head of the given
 	  branch
-	- tag name: refers to the commit pointed to by the given tag
+	- tag name: refers to the cummit pointed to by the given tag
 	  (we've seen branches and tags are special cases of
 	  <<how-git-stores-references,references>>).
 	- HEAD: refers to the head of the current branch
@@ -578,13 +578,13 @@ name revisions.  Some examples:
 -------------------------------------------------
 $ git show fb47ddb2 # the first few characters of the object name
 		    # are usually enough to specify it uniquely
-$ git show HEAD^    # the parent of the HEAD commit
+$ git show HEAD^    # the parent of the HEAD cummit
 $ git show HEAD^^   # the grandparent
 $ git show HEAD~4   # the great-great-grandparent
 -------------------------------------------------
 
-Recall that merge commits may have more than one parent; by default,
-`^` and `~` follow the first parent listed in the commit, but you can
+Recall that merge cummits may have more than one parent; by default,
+`^` and `~` follow the first parent listed in the cummit, but you can
 also choose:
 
 -------------------------------------------------
@@ -593,10 +593,10 @@ $ git show HEAD^2   # show the second parent of HEAD
 -------------------------------------------------
 
 In addition to HEAD, there are several other special names for
-commits:
+cummits:
 
 Merges (to be discussed later), as well as operations such as
-`git reset`, which change the currently checked-out commit, generally
+`git reset`, which change the currently checked-out cummit, generally
 set ORIG_HEAD to the value HEAD had before the current operation.
 
 The `git fetch` operation always stores the head of the last fetched
@@ -607,15 +607,15 @@ specifying a local branch as the target of the operation
 $ git fetch git://example.com/proj.git theirbranch
 -------------------------------------------------
 
-the fetched commits will still be available from FETCH_HEAD.
+the fetched cummits will still be available from FETCH_HEAD.
 
 When we discuss merges we'll also see the special name MERGE_HEAD,
 which refers to the other branch that we're merging in to the current
 branch.
 
 The linkgit:git-rev-parse[1] command is a low-level command that is
-occasionally useful for translating some name for a commit to the object
-name for that commit:
+occasionally useful for translating some name for a cummit to the object
+name for that cummit:
 
 -------------------------------------------------
 $ git rev-parse origin
@@ -625,14 +625,14 @@ e05db0fd4f31dde7005f075a84f96b360d05984b
 [[creating-tags]]
 === Creating tags
 
-We can also create a tag to refer to a particular commit; after
+We can also create a tag to refer to a particular cummit; after
 running
 
 -------------------------------------------------
 $ git tag stable-1 1b2e1d63ff
 -------------------------------------------------
 
-You can use `stable-1` to refer to the commit 1b2e1d63ff.
+You can use `stable-1` to refer to the cummit 1b2e1d63ff.
 
 This creates a "lightweight" tag.  If you would also like to include a
 comment with the tag, and possibly sign it cryptographically, then you
@@ -642,25 +642,25 @@ for details.
 [[browsing-revisions]]
 === Browsing revisions
 
-The linkgit:git-log[1] command can show lists of commits.  On its
-own, it shows all commits reachable from the parent commit; but you
+The linkgit:git-log[1] command can show lists of cummits.  On its
+own, it shows all cummits reachable from the parent cummit; but you
 can also make more specific requests:
 
 -------------------------------------------------
-$ git log v2.5..	# commits since (not reachable from) v2.5
-$ git log test..master	# commits reachable from master but not test
+$ git log v2.5..	# cummits since (not reachable from) v2.5
+$ git log test..master	# cummits reachable from master but not test
 $ git log master..test	# ...reachable from test but not master
 $ git log master...test	# ...reachable from either test or master,
 			#    but not both
-$ git log --since="2 weeks ago" # commits from the last 2 weeks
-$ git log Makefile      # commits which modify Makefile
+$ git log --since="2 weeks ago" # cummits from the last 2 weeks
+$ git log Makefile      # cummits which modify Makefile
 $ git log fs/		# ... which modify any file under fs/
-$ git log -S'foo()'	# commits which add or remove any file data
+$ git log -S'foo()'	# cummits which add or remove any file data
 			# matching the string 'foo()'
 -------------------------------------------------
 
 And of course you can combine all of these; the following finds
-commits since v2.5 which touch the `Makefile` or any file under `fs`:
+cummits since v2.5 which touch the `Makefile` or any file under `fs`:
 
 -------------------------------------------------
 $ git log v2.5.. Makefile fs/
@@ -675,10 +675,10 @@ $ git log -p
 See the `--pretty` option in the linkgit:git-log[1] man page for more
 display options.
 
-Note that git log starts with the most recent commit and works
+Note that git log starts with the most recent cummit and works
 backwards through the parents; however, since Git history can contain
 multiple independent lines of development, the particular order that
-commits are listed in may be somewhat arbitrary.
+cummits are listed in may be somewhat arbitrary.
 
 [[generating-diffs]]
 === Generating diffs
@@ -705,7 +705,7 @@ use linkgit:git-format-patch[1]:
 $ git format-patch master..test
 -------------------------------------------------
 
-will generate a file with a patch for each commit reachable from test
+will generate a file with a patch for each cummit reachable from test
 but not from master.
 
 [[viewing-old-file-versions]]
@@ -720,16 +720,16 @@ anything out; this command does that:
 $ git show v2.5:fs/locks.c
 -------------------------------------------------
 
-Before the colon may be anything that names a commit, and after it
+Before the colon may be anything that names a cummit, and after it
 may be any path to a file tracked by Git.
 
 [[history-examples]]
 === Examples
 
-[[counting-commits-on-a-branch]]
-==== Counting the number of commits on a branch
+[[counting-cummits-on-a-branch]]
+==== Counting the number of cummits on a branch
 
-Suppose you want to know how many commits you've made on `mybranch`
+Suppose you want to know how many cummits you've made on `mybranch`
 since it diverged from `origin`:
 
 -------------------------------------------------
@@ -738,7 +738,7 @@ $ git log --pretty=oneline origin..mybranch | wc -l
 
 Alternatively, you may often see this sort of thing done with the
 lower-level command linkgit:git-rev-list[1], which just lists the SHA-1's
-of all the given commits:
+of all the given cummits:
 
 -------------------------------------------------
 $ git rev-list origin..mybranch | wc -l
@@ -766,7 +766,7 @@ $ git rev-list master
 e05db0fd4f31dde7005f075a84f96b360d05984b
 -------------------------------------------------
 
-Or you could recall that the `...` operator selects all commits
+Or you could recall that the `...` operator selects all cummits
 reachable from either one reference or the other but not
 both; so
 
@@ -774,27 +774,27 @@ both; so
 $ git log origin...master
 -------------------------------------------------
 
-will return no commits when the two branches are equal.
+will return no cummits when the two branches are equal.
 
 [[finding-tagged-descendants]]
 ==== Find first tagged version including a given fix
 
-Suppose you know that the commit e05db0fd fixed a certain problem.
+Suppose you know that the cummit e05db0fd fixed a certain problem.
 You'd like to find the earliest tagged release that contains that
 fix.
 
 Of course, there may be more than one answer--if the history branched
-after commit e05db0fd, then there could be multiple "earliest" tagged
+after cummit e05db0fd, then there could be multiple "earliest" tagged
 releases.
 
-You could just visually inspect the commits since e05db0fd:
+You could just visually inspect the cummits since e05db0fd:
 
 -------------------------------------------------
 $ gitk e05db0fd..
 -------------------------------------------------
 
-or you can use linkgit:git-name-rev[1], which will give the commit a
-name based on any tag it finds pointing to one of the commit's
+or you can use linkgit:git-name-rev[1], which will give the cummit a
+name based on any tag it finds pointing to one of the cummit's
 descendants:
 
 -------------------------------------------------
@@ -803,7 +803,7 @@ e05db0fd tags/v1.5.0-rc1^0~23
 -------------------------------------------------
 
 The linkgit:git-describe[1] command does the opposite, naming the
-revision using a tag on which the given commit is based:
+revision using a tag on which the given cummit is based:
 
 -------------------------------------------------
 $ git describe e05db0fd
@@ -811,17 +811,17 @@ v1.5.0-rc0-260-ge05db0f
 -------------------------------------------------
 
 but that may sometimes help you guess which tags might come after the
-given commit.
+given cummit.
 
 If you just want to verify whether a given tagged version contains a
-given commit, you could use linkgit:git-merge-base[1]:
+given cummit, you could use linkgit:git-merge-base[1]:
 
 -------------------------------------------------
 $ git merge-base e05db0fd v1.5.0-rc1
 e05db0fd4f31dde7005f075a84f96b360d05984b
 -------------------------------------------------
 
-The merge-base command finds a common ancestor of the given commits,
+The merge-base command finds a common ancestor of the given cummits,
 and always returns one or the other in the case where one is a
 descendant of the other; so the above output shows that e05db0fd
 actually is an ancestor of v1.5.0-rc1.
@@ -833,11 +833,11 @@ $ git log v1.5.0-rc1..e05db0fd
 -------------------------------------------------
 
 will produce empty output if and only if v1.5.0-rc1 includes e05db0fd,
-because it outputs only commits that are not reachable from v1.5.0-rc1.
+because it outputs only cummits that are not reachable from v1.5.0-rc1.
 
 As yet another alternative, the linkgit:git-show-branch[1] command lists
-the commits reachable from its arguments with a display on the left-hand
-side that indicates which arguments that commit is reachable from.
+the cummits reachable from its arguments with a display on the left-hand
+side that indicates which arguments that cummit is reachable from.
 So, if you run something like
 
 -------------------------------------------------
@@ -860,10 +860,10 @@ available
 shows that e05db0fd is reachable from itself, from v1.5.0-rc1,
 and from v1.5.0-rc2, and not from v1.5.0-rc0.
 
-[[showing-commits-unique-to-a-branch]]
-==== Showing commits unique to a given branch
+[[showing-cummits-unique-to-a-branch]]
+==== Showing cummits unique to a given branch
 
-Suppose you would like to see all the commits reachable from the branch
+Suppose you would like to see all the cummits reachable from the branch
 head named `master` but not from any other head in your repository.
 
 We can list all the heads in this repository with
@@ -889,7 +889,7 @@ refs/heads/tutorial-2
 refs/heads/tutorial-fixes
 -------------------------------------------------
 
-And then we can ask to see all the commits reachable from master
+And then we can ask to see all the cummits reachable from master
 but not from these other heads:
 
 -------------------------------------------------
@@ -898,13 +898,13 @@ $ gitk master --not $( git show-ref --heads | cut -d' ' -f2 |
 -------------------------------------------------
 
 Obviously, endless variations are possible; for example, to see all
-commits reachable from some head but not from any tag in the repository:
+cummits reachable from some head but not from any tag in the repository:
 
 -------------------------------------------------
 $ gitk $( git show-ref --heads ) --not  $( git show-ref --tags )
 -------------------------------------------------
 
-(See linkgit:gitrevisions[7] for explanations of commit-selecting
+(See linkgit:gitrevisions[7] for explanations of cummit-selecting
 syntax such as `--not`.)
 
 [[making-a-release]]
@@ -958,12 +958,12 @@ echo "git diff --stat --summary -M v$last v$new > ../diffstat-$new"
 and then he just cut-and-pastes the output commands after verifying that
 they look OK.
 
-[[Finding-commits-With-given-Content]]
-==== Finding commits referencing a file with given content
+[[Finding-cummits-With-given-Content]]
+==== Finding cummits referencing a file with given content
 
-Somebody hands you a copy of a file, and asks which commits modified a
+Somebody hands you a copy of a file, and asks which cummits modified a
 file such that it contained the given content either before or after the
-commit.  You can find out with this:
+cummit.  You can find out with this:
 
 -------------------------------------------------
 $  git log --raw --abbrev=40 --pretty=oneline |
@@ -980,7 +980,7 @@ linkgit:git-hash-object[1] man pages may prove helpful.
 [[telling-git-your-name]]
 === Telling Git your name
 
-Before creating any commits, you should introduce yourself to Git.
+Before creating any cummits, you should introduce yourself to Git.
 The easiest way to do so is to use linkgit:git-config[1]:
 
 ------------------------------------------------
@@ -1019,23 +1019,23 @@ If you have some initial content (say, a tarball):
 $ tar xzvf project.tar.gz
 $ cd project
 $ git init
-$ git add . # include everything below ./ in the first commit:
-$ git commit
+$ git add . # include everything below ./ in the first cummit:
+$ git cummit
 -------------------------------------------------
 
-[[how-to-make-a-commit]]
-=== How to make a commit
+[[how-to-make-a-cummit]]
+=== How to make a cummit
 
-Creating a new commit takes three steps:
+Creating a new cummit takes three steps:
 
 	1. Making some changes to the working directory using your
 	   favorite editor.
 	2. Telling Git about your changes.
-	3. Creating the commit using the content you told Git about
+	3. Creating the cummit using the content you told Git about
 	   in step 2.
 
 In practice, you can interleave and repeat steps 1 and 2 as many
-times as you want: in order to keep track of what you want committed
+times as you want: in order to keep track of what you want cummitted
 at step 3, Git maintains a snapshot of the tree's contents in a
 special staging area called "the index."
 
@@ -1065,7 +1065,7 @@ $ git diff --cached
 -------------------------------------------------
 
 always shows the difference between the HEAD and the index file--this
-is what you'd commit if you created the commit now--and that
+is what you'd cummit if you created the cummit now--and that
 
 -------------------------------------------------
 $ git diff
@@ -1080,11 +1080,11 @@ you run `git add` on the file again.
 When you're ready, just run
 
 -------------------------------------------------
-$ git commit
+$ git cummit
 -------------------------------------------------
 
-and Git will prompt you for a commit message and then create the new
-commit.  Check to make sure it looks like what you expected with
+and Git will prompt you for a cummit message and then create the new
+cummit.  Check to make sure it looks like what you expected with
 
 -------------------------------------------------
 $ git show
@@ -1093,42 +1093,42 @@ $ git show
 As a special shortcut,
 
 -------------------------------------------------
-$ git commit -a
+$ git cummit -a
 -------------------------------------------------
 
 will update the index with any files that you've modified or removed
-and create a commit, all in one step.
+and create a cummit, all in one step.
 
 A number of commands are useful for keeping track of what you're
-about to commit:
+about to cummit:
 
 -------------------------------------------------
 $ git diff --cached # difference between HEAD and the index; what
-		    # would be committed if you ran "commit" now.
+		    # would be cummitted if you ran "cummit" now.
 $ git diff	    # difference between the index file and your
 		    # working directory; changes that would not
-		    # be included if you ran "commit" now.
+		    # be included if you ran "cummit" now.
 $ git diff HEAD	    # difference between HEAD and working tree; what
-		    # would be committed if you ran "commit -a" now.
+		    # would be cummitted if you ran "cummit -a" now.
 $ git status	    # a brief per-file summary of the above.
 -------------------------------------------------
 
-You can also use linkgit:git-gui[1] to create commits, view changes in
+You can also use linkgit:git-gui[1] to create cummits, view changes in
 the index and the working tree files, and individually select diff hunks
 for inclusion in the index (by right-clicking on the diff hunk and
-choosing "Stage Hunk For Commit").
+choosing "Stage Hunk For cummit").
 
-[[creating-good-commit-messages]]
-=== Creating good commit messages
+[[creating-good-cummit-messages]]
+=== Creating good cummit messages
 
-Though not required, it's a good idea to begin the commit message
+Though not required, it's a good idea to begin the cummit message
 with a single short (less than 50 character) line summarizing the
 change, followed by a blank line and then a more thorough
-description.  The text up to the first blank line in a commit
-message is treated as the commit title, and that title is used
+description.  The text up to the first blank line in a cummit
+message is treated as the cummit title, and that title is used
 throughout Git.  For example, linkgit:git-format-patch[1] turns a
-commit into email, and it uses the title on the Subject line and the
-rest of the commit in the body.
+cummit into email, and it uses the title on the Subject line and the
+rest of the cummit in the body.
 
 
 [[ignoring-files]]
@@ -1162,7 +1162,7 @@ See linkgit:gitignore[5] for a detailed explanation of the syntax.  You can
 also place .gitignore files in other directories in your working tree, and they
 will apply to those directories and their subdirectories.  The `.gitignore`
 files can be added to your repository like any other files (just run `git add
-.gitignore` and `git commit`, as usual), which is convenient when the exclude
+.gitignore` and `git cummit`, as usual), which is convenient when the exclude
 patterns (such as patterns matching build output files) would also make sense
 for other users who clone your repository.
 
@@ -1187,18 +1187,18 @@ merges the development in the branch `branchname` into the current
 branch.
 
 A merge is made by combining the changes made in `branchname` and the
-changes made up to the latest commit in your current branch since
+changes made up to the latest cummit in your current branch since
 their histories forked. The work tree is overwritten by the result of
 the merge when this combining is done cleanly, or overwritten by a
 half-merged results when this combining results in conflicts.
-Therefore, if you have uncommitted changes touching the same files as
+Therefore, if you have uncummitted changes touching the same files as
 the ones impacted by the merge, Git will refuse to proceed. Most of
-the time, you will want to commit your changes before you can merge,
+the time, you will want to cummit your changes before you can merge,
 and if you don't, then linkgit:git-stash[1] can take these changes
 away while you're doing the merge, and reapply them afterwards.
 
 If the changes are independent enough, Git will automatically complete
-the merge and commit the result (or reuse an existing commit in case
+the merge and cummit the result (or reuse an existing cummit in case
 of <<fast-forwards,fast-forward>>, see below). On the other hand,
 if there are conflicts--for example, if the same file is
 modified in two different ways in the remote branch and the local
@@ -1209,15 +1209,15 @@ $ git merge next
  100% (4/4) done
 Auto-merged file.txt
 CONFLICT (content): Merge conflict in file.txt
-Automatic merge failed; fix conflicts and then commit the result.
+Automatic merge failed; fix conflicts and then cummit the result.
 -------------------------------------------------
 
 Conflict markers are left in the problematic files, and after
 you resolve the conflicts manually, you can update the index
-with the contents and run Git commit, as you normally would when
+with the contents and run Git cummit, as you normally would when
 creating a new file.
 
-If you examine the resulting commit using gitk, you will see that it
+If you examine the resulting cummit using gitk, you will see that it
 has two parents, one pointing to the top of the current branch, and
 one to the top of the other branch.
 
@@ -1229,11 +1229,11 @@ the working tree in a special state that gives you all the
 information you need to help resolve the merge.
 
 Files with conflicts are marked specially in the index, so until you
-resolve the problem and update the index, linkgit:git-commit[1] will
+resolve the problem and update the index, linkgit:git-cummit[1] will
 fail:
 
 -------------------------------------------------
-$ git commit
+$ git cummit
 file.txt: needs merge
 -------------------------------------------------
 
@@ -1252,10 +1252,10 @@ All you need to do is edit the files to resolve the conflicts, and then
 
 -------------------------------------------------
 $ git add file.txt
-$ git commit
+$ git cummit
 -------------------------------------------------
 
-Note that the commit message will already be filled in for you with
+Note that the cummit message will already be filled in for you with
 some information about the merge.  Normally you can just use this
 default message unchanged, but you may add additional commentary of
 your own if desired.
@@ -1284,7 +1284,7 @@ index 802992c,2b60207..0000000
 ++>>>>>>> 77976da35a11db4580b80ae27e8d65caf5208086:file.txt
 -------------------------------------------------
 
-Recall that the commit which will be committed after we resolve this
+Recall that the cummit which will be cummitted after we resolve this
 conflict will have two parents instead of the usual one: one parent
 will be HEAD, the tip of the current branch; the other will be the
 tip of the other branch, which is stored temporarily in MERGE_HEAD.
@@ -1351,7 +1351,7 @@ $ git log --merge
 $ gitk --merge
 -------------------------------------------------
 
-These will display all commits which exist only on HEAD or on
+These will display all cummits which exist only on HEAD or on
 MERGE_HEAD, and which touch an unmerged file.
 
 You may also use linkgit:git-mergetool[1], which lets you merge the
@@ -1376,14 +1376,14 @@ away, you can always return to the pre-merge state with
 $ git merge --abort
 -------------------------------------------------
 
-Or, if you've already committed the merge that you want to throw away,
+Or, if you've already cummitted the merge that you want to throw away,
 
 -------------------------------------------------
 $ git reset --hard ORIG_HEAD
 -------------------------------------------------
 
 However, this last command can be dangerous in some cases--never
-throw away a commit you have already committed if that commit may
+throw away a cummit you have already cummitted if that cummit may
 itself have been merged into another branch, as doing so may confuse
 further merges.
 
@@ -1391,53 +1391,53 @@ further merges.
 === Fast-forward merges
 
 There is one special case not mentioned above, which is treated
-differently.  Normally, a merge results in a merge commit, with two
+differently.  Normally, a merge results in a merge cummit, with two
 parents, one pointing at each of the two lines of development that
 were merged.
 
-However, if the current branch is an ancestor of the other--so every commit
+However, if the current branch is an ancestor of the other--so every cummit
 present in the current branch is already contained in the other branch--then Git
 just performs a "fast-forward"; the head of the current branch is moved forward
-to point at the head of the merged-in branch, without any new commits being
+to point at the head of the merged-in branch, without any new cummits being
 created.
 
 [[fixing-mistakes]]
 === Fixing mistakes
 
-If you've messed up the working tree, but haven't yet committed your
-mistake, you can return the entire working tree to the last committed
+If you've messed up the working tree, but haven't yet cummitted your
+mistake, you can return the entire working tree to the last cummitted
 state with
 
 -------------------------------------------------
 $ git restore --staged --worktree :/
 -------------------------------------------------
 
-If you make a commit that you later wish you hadn't, there are two
+If you make a cummit that you later wish you hadn't, there are two
 fundamentally different ways to fix the problem:
 
-	1. You can create a new commit that undoes whatever was done
-	by the old commit.  This is the correct thing if your
+	1. You can create a new cummit that undoes whatever was done
+	by the old cummit.  This is the correct thing if your
 	mistake has already been made public.
 
-	2. You can go back and modify the old commit.  You should
+	2. You can go back and modify the old cummit.  You should
 	never do this if you have already made the history public;
 	Git does not normally expect the "history" of a project to
 	change, and cannot correctly perform repeated merges from
 	a branch that has had its history changed.
 
-[[reverting-a-commit]]
-==== Fixing a mistake with a new commit
+[[reverting-a-cummit]]
+==== Fixing a mistake with a new cummit
 
-Creating a new commit that reverts an earlier change is very easy;
+Creating a new cummit that reverts an earlier change is very easy;
 just pass the linkgit:git-revert[1] command a reference to the bad
-commit; for example, to revert the most recent commit:
+cummit; for example, to revert the most recent cummit:
 
 -------------------------------------------------
 $ git revert HEAD
 -------------------------------------------------
 
-This will create a new commit which undoes the change in HEAD.  You
-will be given a chance to edit the commit message for the new commit.
+This will create a new cummit which undoes the change in HEAD.  You
+will be given a chance to edit the cummit message for the new cummit.
 
 You can also revert an earlier change, for example, the next-to-last:
 
@@ -1454,27 +1454,27 @@ resolving a merge>>.
 [[fixing-a-mistake-by-rewriting-history]]
 ==== Fixing a mistake by rewriting history
 
-If the problematic commit is the most recent commit, and you have not
-yet made that commit public, then you may just
+If the problematic cummit is the most recent cummit, and you have not
+yet made that cummit public, then you may just
 <<undoing-a-merge,destroy it using `git reset`>>.
 
 Alternatively, you
 can edit the working directory and update the index to fix your
-mistake, just as if you were going to <<how-to-make-a-commit,create a
-new commit>>, then run
+mistake, just as if you were going to <<how-to-make-a-cummit,create a
+new cummit>>, then run
 
 -------------------------------------------------
-$ git commit --amend
+$ git cummit --amend
 -------------------------------------------------
 
-which will replace the old commit by a new commit incorporating your
-changes, giving you a chance to edit the old commit message first.
+which will replace the old cummit by a new cummit incorporating your
+changes, giving you a chance to edit the old cummit message first.
 
-Again, you should never do this to a commit that may already have
+Again, you should never do this to a cummit that may already have
 been merged into another branch; use linkgit:git-revert[1] instead in
 that case.
 
-It is also possible to replace commits further back in the history, but
+It is also possible to replace cummits further back in the history, but
 this is an advanced topic to be left for
 <<cleaning-up-history,another chapter>>.
 
@@ -1522,7 +1522,7 @@ current branch.  Then you can make your fix as usual.
 
 ------------------------------------------------
 ... edit and test ...
-$ git commit -a -m "blorpl: typofix"
+$ git cummit -a -m "blorpl: typofix"
 ------------------------------------------------
 
 After that, you can go back to what you were working on with
@@ -1556,12 +1556,12 @@ time.
 
 -------------------------------------------------
 $ git fsck
-dangling commit 7281251ddd2a61e38657c827739c57015671a6b3
-dangling commit 2706a059f258c6b245f298dc4ff2ccd30ec21a63
-dangling commit 13472b7c4b80851a1bc551779171dcb03655e9b5
+dangling cummit 7281251ddd2a61e38657c827739c57015671a6b3
+dangling cummit 2706a059f258c6b245f298dc4ff2ccd30ec21a63
+dangling cummit 13472b7c4b80851a1bc551779171dcb03655e9b5
 dangling blob 218761f9d90712d37a9c5e36f406f92202db07eb
-dangling commit bf093535a34a4d35731aa2bd90fe6b176302f14f
-dangling commit 8e4bec7f2ddaa268bef999853c25755452100f8e
+dangling cummit bf093535a34a4d35731aa2bd90fe6b176302f14f
+dangling cummit 8e4bec7f2ddaa268bef999853c25755452100f8e
 dangling tree d50bb86186bf27b681d25af89d3b5b68382e4085
 dangling tree b24c2473f1fd3d91352a624795be026d64c8841f
 ...
@@ -1591,9 +1591,9 @@ old history using, for example,
 $ git log master@{1}
 -------------------------------------------------
 
-This lists the commits reachable from the previous version of the
+This lists the cummits reachable from the previous version of the
 `master` branch head.  This syntax can be used with any Git command
-that accepts a commit, not just with `git log`.  Some other examples:
+that accepts a cummit, not just with `git log`.  Some other examples:
 
 -------------------------------------------------
 $ git show master@{2}		# See where the branch pointed 2,
@@ -1630,29 +1630,29 @@ In some situations the reflog may not be able to save you.  For example,
 suppose you delete a branch, then realize you need the history it
 contained.  The reflog is also deleted; however, if you have not yet
 pruned the repository, then you may still be able to find the lost
-commits in the dangling objects that `git fsck` reports.  See
+cummits in the dangling objects that `git fsck` reports.  See
 <<dangling-objects>> for the details.
 
 -------------------------------------------------
 $ git fsck
-dangling commit 7281251ddd2a61e38657c827739c57015671a6b3
-dangling commit 2706a059f258c6b245f298dc4ff2ccd30ec21a63
-dangling commit 13472b7c4b80851a1bc551779171dcb03655e9b5
+dangling cummit 7281251ddd2a61e38657c827739c57015671a6b3
+dangling cummit 2706a059f258c6b245f298dc4ff2ccd30ec21a63
+dangling cummit 13472b7c4b80851a1bc551779171dcb03655e9b5
 ...
 -------------------------------------------------
 
 You can examine
-one of those dangling commits with, for example,
+one of those dangling cummits with, for example,
 
 ------------------------------------------------
 $ gitk 7281251ddd --not --all
 ------------------------------------------------
 
-which does what it sounds like: it says that you want to see the commit
-history that is described by the dangling commit(s), but not the
+which does what it sounds like: it says that you want to see the cummit
+history that is described by the dangling cummit(s), but not the
 history that is described by all your existing branches and tags.  Thus
-you get exactly the history reachable from that commit that is lost.
-(And notice that it might not be just one commit: we only report the
+you get exactly the history reachable from that cummit that is lost.
+(And notice that it might not be just one cummit: we only report the
 "tip of the line" as being dangling, but there might be a whole deep
 and complex commit history that was dropped.)
 
@@ -1673,7 +1673,7 @@ dangling objects can arise in other situations.
 [[getting-updates-With-git-pull]]
 === Getting updates with git pull
 
-After you clone a repository and commit a few changes of your own, you
+After you clone a repository and cummit a few changes of your own, you
 may wish to check the original repository for updates and merge them
 into your own work.
 
@@ -1715,12 +1715,12 @@ linkgit:git-config[1], and the discussion of the `--track` option in
 linkgit:git-checkout[1], to learn how to control these defaults.
 
 In addition to saving you keystrokes, `git pull` also helps you by
-producing a default commit message documenting the branch and
+producing a default cummit message documenting the branch and
 repository that you pulled from.
 
-(But note that no such commit will be created in the case of a
+(But note that no such cummit will be created in the case of a
 <<fast-forwards,fast-forward>>; instead, your branch will just be
-updated to point to the latest commit from the upstream branch.)
+updated to point to the latest cummit from the upstream branch.)
 
 The `git pull` command can also be given `.` as the "remote" repository,
 in which case it just merges in a branch from the current repository; so
@@ -1750,9 +1750,9 @@ for each patch in the current branch but not in `origin/HEAD`.
 
 `git format-patch` can include an initial "cover letter". You can insert
 commentary on individual patches after the three dash line which
-`format-patch` places after the commit message but before the patch
+`format-patch` places after the cummit message but before the patch
 itself.  If you use `git notes` to track your cover letter material,
-`git format-patch --notes` will include the commit's notes in a similar
+`git format-patch --notes` will include the cummit's notes in a similar
 manner.
 
 You can then import these into your mail client and send them by
@@ -1780,17 +1780,17 @@ Git to perform a merge; if you would prefer it just to abort and
 leave your tree and index untouched, you may omit that option.)
 
 Once the index is updated with the results of the conflict
-resolution, instead of creating a new commit, just run
+resolution, instead of creating a new cummit, just run
 
 -------------------------------------------------
 $ git am --continue
 -------------------------------------------------
 
-and Git will create the commit for you and continue applying the
+and Git will create the cummit for you and continue applying the
 remaining patches from the mailbox.
 
-The final result will be a series of commits, one for each patch in
-the original mailbox, with authorship and commit log message each
+The final result will be a series of cummits, one for each patch in
+the original mailbox, with authorship and cummit log message each
 taken from the message containing each patch.
 
 [[public-repositories]]
@@ -1997,10 +1997,10 @@ hint: See the 'Note about fast-forwards' in 'git push --help' for details.
 
 This can happen, for example, if you:
 
-	- use `git reset --hard` to remove already-published commits, or
-	- use `git commit --amend` to replace already-published commits
+	- use `git reset --hard` to remove already-published cummits, or
+	- use `git cummit --amend` to replace already-published cummits
 	  (as in <<fixing-a-mistake-by-rewriting-history>>), or
-	- use `git rebase` to rebase any already-published commits (as
+	- use `git rebase` to rebase any already-published cummits (as
 	  in <<using-git-rebase>>).
 
 You may force `git push` to perform the update anyway by preceding the
@@ -2018,7 +2018,7 @@ $ git push -f ssh://yourserver.com/~you/proj.git master
 -------------------------------------------------
 
 Normally whenever a branch head in a public repository is modified, it
-is modified to point to a descendant of the commit that it pointed to
+is modified to point to a descendant of the cummit that it pointed to
 before.  By forcing a push in this situation, you break that convention.
 (See <<problems-With-rewriting-history>>.)
 
@@ -2060,7 +2060,7 @@ advantages over the central shared repository:
 	  trivial for another developer to take over maintenance of a
 	  project, either by mutual agreement, or because a maintainer
 	  becomes unresponsive or difficult to work with.
-	- The lack of a central group of "committers" means there is
+	- The lack of a central group of "cummitters" means there is
 	  less need for formal decisions about who is "in" and who is
 	  "out".
 
@@ -2154,10 +2154,10 @@ $ git switch release && git pull
 -------------------------------------------------
 
 Important note!  If you have any local changes in these branches, then
-this merge will create a commit object in the history (with no local
+this merge will create a cummit object in the history (with no local
 changes Git will simply do a "fast-forward" merge).  Many people dislike
 the "noise" that this creates in the Linux history, so you should avoid
-doing this capriciously in the `release` branch, as these noisy commits
+doing this capriciously in the `release` branch, as these noisy cummits
 will become part of the permanent history when you ask Linus to pull
 from the release branch.
 
@@ -2205,12 +2205,12 @@ tested changes
 $ git switch -c speed-up-spinlocks v2.6.35
 -------------------------------------------------
 
-Now you apply the patch(es), run some tests, and commit the change(s).  If
+Now you apply the patch(es), run some tests, and cummit the change(s).  If
 the patch is a multi-part series, then you should apply each as a separate
-commit to this branch.
+cummit to this branch.
 
 -------------------------------------------------
-$ ... patch ... test  ... commit [ ... patch ... test ... commit ]*
+$ ... patch ... test  ... cummit [ ... patch ... test ... cummit ]*
 -------------------------------------------------
 
 When you are happy with the state of this change, you can merge it into the
@@ -2356,7 +2356,7 @@ restore=$(tput setab 9)
 
 if [ `git rev-list test..release | wc -c` -gt 0 ]
 then
-	echo $rb Warning: commits in release that are not in test $restore
+	echo $rb Warning: cummits in release that are not in test $restore
 	git log test..release
 fi
 
@@ -2401,7 +2401,7 @@ done
 [[cleaning-up-history]]
 == Rewriting history and maintaining patch series
 
-Normally commits are only added to a project, never taken away or
+Normally cummits are only added to a project, never taken away or
 replaced.  Git is designed with this assumption, and violating it will
 cause Git's merge machinery (for example) to do the wrong thing.
 
@@ -2416,7 +2416,7 @@ complicated feature, and to present it to the other developers in a way
 that makes it easy for them to read your changes, verify that they are
 correct, and understand why you made each change.
 
-If you present all of your changes as a single patch (or commit), they
+If you present all of your changes as a single patch (or cummit), they
 may find that it is too much to digest all at once.
 
 If you present them with the entire history of your work, complete with
@@ -2444,14 +2444,14 @@ you are rewriting history.
 === Keeping a patch series up to date using git rebase
 
 Suppose that you create a branch `mywork` on a remote-tracking branch
-`origin`, and create some commits on top of it:
+`origin`, and create some cummits on top of it:
 
 -------------------------------------------------
 $ git switch -c mywork origin
 $ vi file.txt
-$ git commit
+$ git cummit
 $ vi otherfile.txt
-$ git commit
+$ git cummit
 ...
 -------------------------------------------------
 
@@ -2474,7 +2474,7 @@ Some more interesting work has been done in the upstream project, and
 ................................................
 
 At this point, you could use `pull` to merge your changes back in;
-the result would create a new merge commit, like this:
+the result would create a new merge cummit, like this:
 
 ................................................
  o--o--O--o--o--o <-- origin
@@ -2483,7 +2483,7 @@ the result would create a new merge commit, like this:
 ................................................
 
 However, if you prefer to keep the history in mywork a simple series of
-commits without any merges, you may instead choose to use
+cummits without any merges, you may instead choose to use
 linkgit:git-rebase[1]:
 
 -------------------------------------------------
@@ -2491,7 +2491,7 @@ $ git switch mywork
 $ git rebase origin
 -------------------------------------------------
 
-This will remove each of your commits from mywork, temporarily saving
+This will remove each of your cummits from mywork, temporarily saving
 them as patches (in a directory named `.git/rebase-apply`), update mywork to
 point at the latest version of origin, then apply each of the saved
 patches to the new mywork.  The result will look like:
@@ -2506,7 +2506,7 @@ patches to the new mywork.  The result will look like:
 In the process, it may discover conflicts.  In that case it will stop
 and allow you to fix the conflicts; after fixing conflicts, use `git add`
 to update the index with those contents, and then, instead of
-running `git commit`, just run
+running `git cummit`, just run
 
 -------------------------------------------------
 $ git rebase --continue
@@ -2521,34 +2521,34 @@ return mywork to the state it had before you started the rebase:
 $ git rebase --abort
 -------------------------------------------------
 
-If you need to reorder or edit a number of commits in a branch, it may
+If you need to reorder or edit a number of cummits in a branch, it may
 be easier to use `git rebase -i`, which allows you to reorder and
-squash commits, as well as marking them for individual editing during
+squash cummits, as well as marking them for individual editing during
 the rebase.  See <<interactive-rebase>> for details, and
 <<reordering-patch-series>> for alternatives.
 
-[[rewriting-one-commit]]
-=== Rewriting a single commit
+[[rewriting-one-cummit]]
+=== Rewriting a single cummit
 
 We saw in <<fixing-a-mistake-by-rewriting-history>> that you can replace the
-most recent commit using
+most recent cummit using
 
 -------------------------------------------------
-$ git commit --amend
+$ git cummit --amend
 -------------------------------------------------
 
-which will replace the old commit by a new commit incorporating your
-changes, giving you a chance to edit the old commit message first.
-This is useful for fixing typos in your last commit, or for adjusting
-the patch contents of a poorly staged commit.
+which will replace the old cummit by a new cummit incorporating your
+changes, giving you a chance to edit the old cummit message first.
+This is useful for fixing typos in your last cummit, or for adjusting
+the patch contents of a poorly staged cummit.
 
-If you need to amend commits from deeper in your history, you can
+If you need to amend cummits from deeper in your history, you can
 use <<interactive-rebase,interactive rebase's `edit` instruction>>.
 
 [[reordering-patch-series]]
 === Reordering or selecting from a patch series
 
-Sometimes you want to edit a commit deeper in your history.  One
+Sometimes you want to edit a cummit deeper in your history.  One
 approach is to use `git format-patch` to create a series of patches
 and then reset the state to before the patches:
 
@@ -2571,8 +2571,8 @@ You can also edit a patch series with an interactive rebase.  This is
 the same as <<reordering-patch-series,reordering a patch series using
 `format-patch`>>, so use whichever interface you like best.
 
-Rebase your current HEAD on the last commit you want to retain as-is.
-For example, if you want to reorder the last 5 commits, use:
+Rebase your current HEAD on the last cummit you want to retain as-is.
+For example, if you want to reorder the last 5 cummits, use:
 
 -------------------------------------------------
 $ git rebase -i HEAD~5
@@ -2582,31 +2582,31 @@ This will open your editor with a list of steps to be taken to perform
 your rebase.
 
 -------------------------------------------------
-pick deadbee The oneline of this commit
-pick fa1afe1 The oneline of the next commit
+pick deadbee The oneline of this cummit
+pick fa1afe1 The oneline of the next cummit
 ...
 
 # Rebase c0ffeee..deadbee onto c0ffeee
 #
 # Commands:
-#  p, pick = use commit
-#  r, reword = use commit, but edit the commit message
-#  e, edit = use commit, but stop for amending
-#  s, squash = use commit, but meld into previous commit
-#  f, fixup = like "squash", but discard this commit's log message
+#  p, pick = use cummit
+#  r, reword = use cummit, but edit the cummit message
+#  e, edit = use cummit, but stop for amending
+#  s, squash = use cummit, but meld into previous cummit
+#  f, fixup = like "squash", but discard this cummit's log message
 #  x, exec = run command (the rest of the line) using shell
 #
 # These lines can be re-ordered; they are executed from top to bottom.
 #
-# If you remove a line here THAT COMMIT WILL BE LOST.
+# If you remove a line here THAT cummit WILL BE LOST.
 #
 # However, if you remove everything, the rebase will be aborted.
 #
-# Note that empty commits are commented out
+# Note that empty cummits are commented out
 -------------------------------------------------
 
-As explained in the comments, you can reorder commits, squash them
-together, edit commit messages, etc. by editing the list.  Once you
+As explained in the comments, you can reorder cummits, squash them
+together, edit cummit messages, etc. by editing the list.  Once you
 are satisfied, save the list and close your editor, and the rebase
 will begin.
 
@@ -2641,7 +2641,7 @@ their branch, with a result something like this:
          t--t--t--m <-- their branch:
 ................................................
 
-Then suppose you modify the last three commits:
+Then suppose you modify the last three cummits:
 
 ................................................
 	 o--o--o <-- new head of origin
@@ -2677,12 +2677,12 @@ For true distributed development that supports proper merging,
 published branches should never be rewritten.
 
 [[bisect-merges]]
-=== Why bisecting merge commits can be harder than bisecting linear history
+=== Why bisecting merge cummits can be harder than bisecting linear history
 
 The linkgit:git-bisect[1] command correctly handles history that
-includes merge commits.  However, when the commit that it finds is a
-merge commit, the user may need to work harder than usual to figure out
-why that commit introduced a problem.
+includes merge cummits.  However, when the cummit that it finds is a
+merge cummit, the user may need to work harder than usual to figure out
+why that cummit introduced a problem.
 
 Imagine this history:
 
@@ -2693,15 +2693,15 @@ Imagine this history:
 ................................................
 
 Suppose that on the upper line of development, the meaning of one
-of the functions that exists at Z is changed at commit X.  The
-commits from Z leading to A change both the function's
+of the functions that exists at Z is changed at cummit X.  The
+cummits from Z leading to A change both the function's
 implementation and all calling sites that exist at Z, as well
 as new calling sites they add, to be consistent.  There is no
 bug at A.
 
 Suppose that in the meantime on the lower line of development somebody
-adds a new calling site for that function at commit Y.  The
-commits from Z leading to B all assume the old semantics of that
+adds a new calling site for that function at cummit Y.  The
+cummits from Z leading to B all assume the old semantics of that
 function and the callers and the callee are consistent with each
 other.  There is no bug at B, either.
 
@@ -2715,12 +2715,12 @@ you know is that D is bad, that Z is good, and that
 linkgit:git-bisect[1] identifies C as the culprit, how will you
 figure out that the problem is due to this change in semantics?
 
-When the result of a `git bisect` is a non-merge commit, you should
-normally be able to discover the problem by examining just that commit.
+When the result of a `git bisect` is a non-merge cummit, you should
+normally be able to discover the problem by examining just that cummit.
 Developers can make this easy by breaking their changes into small
-self-contained commits.  That won't help in the case above, however,
+self-contained cummits.  That won't help in the case above, however,
 because the problem isn't obvious from examination of any single
-commit; instead, a global view of the development is required.  To
+cummit; instead, a global view of the development is required.  To
 make matters worse, the change in semantics in the problematic
 function may be just one small part of the changes in the upper
 line of development.
@@ -2733,7 +2733,7 @@ linear history:
     ---Z---o---X--...---o---A---o---o---Y*--...---o---B*--D*
 ................................................................
 
-Bisecting between Z and D* would hit a single culprit commit Y*,
+Bisecting between Z and D* would hit a single culprit cummit Y*,
 and understanding why Y* was broken would probably be easier.
 
 Partly for this reason, many experienced Git users, even when
@@ -2769,17 +2769,17 @@ $ git fetch git://example.com/proj.git master:example-master
 will create a new branch named `example-master` and store in it the
 branch named `master` from the repository at the given URL.  If you
 already have a branch named example-master, it will attempt to
-<<fast-forwards,fast-forward>> to the commit given by example.com's
+<<fast-forwards,fast-forward>> to the cummit given by example.com's
 master branch.  In more detail:
 
 [[fetch-fast-forwards]]
 === git fetch and fast-forwards
 
 In the previous example, when updating an existing branch, `git fetch`
-checks to make sure that the most recent commit on the remote
-branch is a descendant of the most recent commit on your copy of the
+checks to make sure that the most recent cummit on the remote
+branch is a descendant of the most recent cummit on your copy of the
 branch before updating your copy of the branch to point at the new
-commit.  Git calls this process a <<fast-forwards,fast-forward>>.
+cummit.  Git calls this process a <<fast-forwards,fast-forward>>.
 
 A fast-forward looks something like this:
 
@@ -2805,7 +2805,7 @@ In this case, `git fetch` will fail, and print out a warning.
 
 In that case, you can still force Git to update to the new head, as
 described in the following section.  However, note that in the
-situation above this may mean losing the commits labeled `a` and `b`,
+situation above this may mean losing the cummits labeled `a` and `b`,
 unless you've already created a reference of your own pointing to
 them.
 
@@ -2826,7 +2826,7 @@ flag to force updates of all the fetched branches, as in:
 $ git fetch -f origin
 -------------------------------------------------
 
-Be aware that commits that the old version of example/master pointed at
+Be aware that cummits that the old version of example/master pointed at
 may be lost, as we saw in the previous section.
 
 [[remote-branch-configuration]]
@@ -2894,7 +2894,7 @@ database>> and the <<def_index,index>>.
 === The Object Database
 
 
-We already saw in <<understanding-commits>> that all commits are stored
+We already saw in <<understanding-cummits>> that all cummits are stored
 under a 40-digit "object name".  In fact, all the information needed to
 represent the history of a project is stored in objects with such names.
 In each case the name is calculated by taking the SHA-1 hash of the
@@ -2914,18 +2914,18 @@ others:
 (See <<object-details>> for the details of the object formatting and
 SHA-1 calculation.)
 
-There are four different types of objects: "blob", "tree", "commit", and
+There are four different types of objects: "blob", "tree", "cummit", and
 "tag".
 
 - A <<def_blob_object,"blob" object>> is used to store file data.
 - A <<def_tree_object,"tree" object>> ties one or more
   "blob" objects into a directory structure. In addition, a tree object
   can refer to other tree objects, thus creating a directory hierarchy.
-- A <<def_commit_object,"commit" object>> ties such directory hierarchies
+- A <<def_cummit_object,"cummit" object>> ties such directory hierarchies
   together into a <<def_DAG,directed acyclic graph>> of revisions--each
-  commit contains the object name of exactly one tree designating the
-  directory hierarchy at the time of the commit. In addition, a commit
-  refers to "parent" commit objects that describe the history of how we
+  cummit contains the object name of exactly one tree designating the
+  directory hierarchy at the time of the cummit. In addition, a cummit
+  refers to "parent" cummit objects that describe the history of how we
   arrived at that directory hierarchy.
 - A <<def_tag_object,"tag" object>> symbolically identifies and can be
   used to sign other objects. It contains the object name and type of
@@ -2934,56 +2934,56 @@ There are four different types of objects: "blob", "tree", "commit", and
 
 The object types in some more detail:
 
-[[commit-object]]
-==== Commit Object
+[[cummit-object]]
+==== cummit Object
 
-The "commit" object links a physical state of a tree with a description
+The "cummit" object links a physical state of a tree with a description
 of how we got there and why.  Use the `--pretty=raw` option to
 linkgit:git-show[1] or linkgit:git-log[1] to examine your favorite
-commit:
+cummit:
 
 ------------------------------------------------
 $ git show -s --pretty=raw 2be7fcb476
-commit 2be7fcb4764f2dbcee52635b91fedb1b3dcf7ab4
+cummit 2be7fcb4764f2dbcee52635b91fedb1b3dcf7ab4
 tree fb3a8bdd0ceddd019615af4d57a53f43d8cee2bf
 parent 257a84d9d02e90447b149af58b271c19405edb6a
 author Dave Watson <dwatson@mimvista.com> 1187576872 -0400
-committer Junio C Hamano <gitster@pobox.com> 1187591163 -0700
+cummitter Junio C Hamano <gitster@pobox.com> 1187591163 -0700
 
     Fix misspelling of 'suppress' in docs
 
     Signed-off-by: Junio C Hamano <gitster@pobox.com>
 ------------------------------------------------
 
-As you can see, a commit is defined by:
+As you can see, a cummit is defined by:
 
 - a tree: The SHA-1 name of a tree object (as defined below), representing
   the contents of a directory at a certain point in time.
-- parent(s): The SHA-1 name(s) of some number of commits which represent the
+- parent(s): The SHA-1 name(s) of some number of cummits which represent the
   immediately previous step(s) in the history of the project.  The
-  example above has one parent; merge commits may have more than
-  one.  A commit with no parents is called a "root" commit, and
+  example above has one parent; merge cummits may have more than
+  one.  A cummit with no parents is called a "root" cummit, and
   represents the initial revision of a project.  Each project must have
   at least one root.  A project can also have multiple roots, though
   that isn't common (or necessarily a good idea).
 - an author: The name of the person responsible for this change, together
   with its date.
-- a committer: The name of the person who actually created the commit,
+- a cummitter: The name of the person who actually created the cummit,
   with the date it was done.  This may be different from the author, for
   example, if the author was someone who wrote a patch and emailed it
-  to the person who used it to create the commit.
-- a comment describing this commit.
+  to the person who used it to create the cummit.
+- a comment describing this cummit.
 
-Note that a commit does not itself contain any information about what
+Note that a cummit does not itself contain any information about what
 actually changed; all changes are calculated by comparing the contents
-of the tree referred to by this commit with the trees associated with
+of the tree referred to by this cummit with the trees associated with
 its parents.  In particular, Git does not attempt to record file renames
 explicitly, though it can identify cases where the existence of the same
 file data at changing paths suggests a rename.  (See, for example, the
 `-M` option to linkgit:git-diff[1]).
 
-A commit is usually created by linkgit:git-commit[1], which creates a
-commit whose parent is normally the current HEAD, and whose tree is
+A cummit is usually created by linkgit:git-cummit[1], which creates a
+cummit whose parent is normally the current HEAD, and whose tree is
 taken from the content currently stored in the index.
 
 [[tree-object]]
@@ -3019,7 +3019,7 @@ are identical.  This allows Git to quickly determine the differences
 between two related tree objects, since it can ignore any entries with
 identical object names.
 
-(Note: in the presence of submodules, trees may also have commits as
+(Note: in the presence of submodules, trees may also have cummits as
 entries.  See <<submodules>> for documentation.)
 
 Note that the files all have mode 644 or 755: Git actually only pays
@@ -3065,20 +3065,20 @@ that produce the same hash.
 
 Similarly, you need only trust the SHA-1 name of a top-level tree object
 to trust the contents of the entire directory that it refers to, and if
-you receive the SHA-1 name of a commit from a trusted source, then you
-can easily verify the entire history of commits reachable through
-parents of that commit, and all of those contents of the trees referred
-to by those commits.
+you receive the SHA-1 name of a cummit from a trusted source, then you
+can easily verify the entire history of cummits reachable through
+parents of that cummit, and all of those contents of the trees referred
+to by those cummits.
 
 So to introduce some real trust in the system, the only thing you need
 to do is to digitally sign just 'one' special note, which includes the
-name of a top-level commit.  Your digital signature shows others
-that you trust that commit, and the immutability of the history of
-commits tells others that they can trust the whole history.
+name of a top-level cummit.  Your digital signature shows others
+that you trust that cummit, and the immutability of the history of
+cummits tells others that they can trust the whole history.
 
 In other words, you can easily validate a whole archive by just
 sending out a single email that tells the people the name (SHA-1 hash)
-of the top commit, and digitally sign that email using something
+of the top cummit, and digitally sign that email using something
 like GPG/PGP.
 
 To assist in this, Git also provides the tag object...
@@ -3093,7 +3093,7 @@ a signature, as can be seen using linkgit:git-cat-file[1]:
 ------------------------------------------------
 $ git cat-file tag v1.5.0
 object 437b1b20df4b356c9342dac8d38849f24ef44f27
-type commit
+type cummit
 tag v1.5.0
 tagger Junio C Hamano <junkio@cox.net> 1171411200 +0000
 
@@ -3155,7 +3155,7 @@ $ git prune
 
 to remove any of the "loose" objects that are now contained in the
 pack.  This will also remove any unreferenced objects (which may be
-created when, for example, you use `git reset` to remove a commit).
+created when, for example, you use `git reset` to remove a cummit).
 You can verify that the loose objects are gone by looking at the
 `.git/objects` directory or by running
 
@@ -3184,10 +3184,10 @@ pointer itself just doesn't, since you replaced it with another one.
 
 There are also other situations that cause dangling objects. For
 example, a "dangling blob" may arise because you did a `git add` of a
-file, but then, before you actually committed it and made it part of the
-bigger picture, you changed something else in that file and committed
+file, but then, before you actually cummitted it and made it part of the
+bigger picture, you changed something else in that file and cummitted
 that *updated* thing--the old state that you added originally ends up
-not being pointed to by any commit or tree, so it's now a dangling blob
+not being pointed to by any cummit or tree, so it's now a dangling blob
 object.
 
 Similarly, when the "ort" merge strategy runs, and finds that
@@ -3204,18 +3204,18 @@ be how you recover your old tree (say, you did a rebase, and realized
 that you really didn't want to--you can look at what dangling objects
 you have, and decide to reset your head to some old dangling state).
 
-For commits, you can just use:
+For cummits, you can just use:
 
 ------------------------------------------------
-$ gitk <dangling-commit-sha-goes-here> --not --all
+$ gitk <dangling-cummit-sha-goes-here> --not --all
 ------------------------------------------------
 
-This asks for all the history reachable from the given commit but not
+This asks for all the history reachable from the given cummit but not
 from any branch, tag, or other reference.  If you decide it's something
 you want, you can always create a new reference to it, e.g.,
 
 ------------------------------------------------
-$ git branch recovered-branch <dangling-commit-sha-goes-here>
+$ git branch recovered-branch <dangling-cummit-sha-goes-here>
 ------------------------------------------------
 
 For blobs and trees, you can't do the same, but you can still examine
@@ -3267,7 +3267,7 @@ in case you corrupt things even more in the process.
 
 We'll assume that the problem is a single missing or corrupted blob,
 which is sometimes a solvable problem.  (Recovering missing trees and
-especially commits is *much* harder).
+especially cummits is *much* harder).
 
 Before starting, verify that there is corruption, and figure out where
 it is with linkgit:git-fsck[1]; this may be time-consuming.
@@ -3326,14 +3326,14 @@ $ git log --raw --all --full-history -- somedirectory/myfile
 Because you're asking for raw output, you'll now get something like
 
 ------------------------------------------------
-commit abc
+cummit abc
 Author:
 Date:
 ...
 :100644 100644 4b9458b newsha M somedirectory/myfile
 
 
-commit xyz
+cummit xyz
 Author:
 Date:
 
@@ -3343,10 +3343,10 @@ Date:
 
 This tells you that the immediately following version of the file was
 "newsha", and that the immediately preceding version was "oldsha".
-You also know the commit messages that went with the change from oldsha
+You also know the cummit messages that went with the change from oldsha
 to 4b9458b and with the change from 4b9458b to newsha.
 
-If you've been committing small enough changes, you may now have a good
+If you've been cummitting small enough changes, you may now have a good
 shot at reconstructing the contents of the in-between state 4b9458b.
 
 If you can do that, you can now recreate the missing object with
@@ -3394,9 +3394,9 @@ properties:
 1. The index contains all the information necessary to generate a single
 (uniquely determined) tree object.
 +
-For example, running linkgit:git-commit[1] generates this tree object
+For example, running linkgit:git-cummit[1] generates this tree object
 from the index, stores it in the object database, and uses it as the
-tree object associated with the new commit.
+tree object associated with the new cummit.
 
 2. The index enables fast comparisons between the tree object it defines
 and the working tree.
@@ -3438,12 +3438,12 @@ build scripts.
 With centralized revision control systems this is often accomplished by
 including every module in one single repository.  Developers can check out
 all modules or only the modules they need to work with.  They can even modify
-files across several modules in a single commit while moving things around
+files across several modules in a single cummit while moving things around
 or updating APIs and translations.
 
 Git does not allow partial checkouts, so duplicating this approach in Git
 would force developers to keep a local copy of modules they are not
-interested in touching.  Commits in an enormous checkout would be slower
+interested in touching.  cummits in an enormous checkout would be slower
 than you'd expect as Git would have to scan every directory for changes.
 If modules have a lot of local history, clones would take forever.
 
@@ -3458,13 +3458,13 @@ local changes.
 Git's submodule support allows a repository to contain, as a subdirectory, a
 checkout of an external project.  Submodules maintain their own identity;
 the submodule support just stores the submodule repository location and
-commit ID, so other developers who clone the containing project
+cummit ID, so other developers who clone the containing project
 ("superproject") can easily clone all the submodules at the same revision.
 Partial checkouts of the superproject are possible: you can tell Git to
 clone none, some or all of the submodules.
 
 The linkgit:git-submodule[1] command is available since Git 1.5.3.  Users
-with Git 1.5.2 can look up the submodule commits in the repository and
+with Git 1.5.2 can look up the submodule cummits in the repository and
 manually check them out; earlier versions won't recognize the submodules at
 all.
 
@@ -3481,7 +3481,7 @@ do
 	git init
 	echo "module $i" > $i.txt
 	git add $i.txt
-	git commit -m "Initial commit, submodule $i"
+	git cummit -m "Initial cummit, submodule $i"
 	cd ..
 done
 -------------------------------------------------
@@ -3512,14 +3512,14 @@ The `git submodule add <repo> <path>` command does a couple of things:
 - It clones the submodule from `<repo>` to the given `<path>` under the
   current directory and by default checks out the master branch.
 - It adds the submodule's clone path to the linkgit:gitmodules[5] file and
-  adds this file to the index, ready to be committed.
-- It adds the submodule's current commit ID to the index, ready to be
-  committed.
+  adds this file to the index, ready to be cummitted.
+- It adds the submodule's current cummit ID to the index, ready to be
+  cummitted.
 
-Commit the superproject:
+cummit the superproject:
 
 -------------------------------------------------
-$ git commit -m "Add submodules a, b, c and d."
+$ git cummit -m "Add submodules a, b, c and d."
 -------------------------------------------------
 
 Now clone the superproject:
@@ -3542,8 +3542,8 @@ $ git submodule status
 -d96249ff5d57de5de093e6baff9e0aafa5276a74 d
 -------------------------------------------------
 
-NOTE: The commit object names shown above would be different for you, but they
-should match the HEAD commit object names of your repositories.  You can check
+NOTE: The cummit object names shown above would be different for you, but they
+should match the HEAD cummit object names of your repositories.  You can check
 it by running `git ls-remote ../a`.
 
 Pulling down the submodules is a two-step process. First run `git submodule
@@ -3554,7 +3554,7 @@ $ git submodule init
 -------------------------------------------------
 
 Now use `git submodule update` to clone the repositories and check out the
-commits specified in the superproject:
+cummits specified in the superproject:
 
 -------------------------------------------------
 $ git submodule update
@@ -3564,7 +3564,7 @@ $ ls -a
 -------------------------------------------------
 
 One major difference between `git submodule update` and `git submodule add` is
-that `git submodule update` checks out a specific commit, rather than the tip
+that `git submodule update` checks out a specific cummit, rather than the tip
 of a branch. It's like checking out a tag: the head is detached, so you're not
 working on a branch.
 
@@ -3577,7 +3577,7 @@ $ git branch
 If you want to make a change within a submodule and you have a detached head,
 then you should create or checkout a branch, make your changes, publish the
 change within the submodule, and then update the superproject to reference the
-new commit:
+new cummit:
 
 -------------------------------------------------
 $ git switch master
@@ -3593,7 +3593,7 @@ then
 
 -------------------------------------------------
 $ echo "adding a line again" >> a.txt
-$ git commit -a -m "Updated the submodule from within the superproject."
+$ git cummit -a -m "Updated the submodule from within the superproject."
 $ git push
 $ cd ..
 $ git diff
@@ -3602,10 +3602,10 @@ index d266b98..261dfac 160000
 --- a/a
 +++ b/a
 @@ -1 +1 @@
--Subproject commit d266b9873ad50488163457f025db7cdd9683d88b
-+Subproject commit 261dfac35cb99d380eb966e102c1197139f7fa24
+-Subproject cummit d266b9873ad50488163457f025db7cdd9683d88b
++Subproject cummit 261dfac35cb99d380eb966e102c1197139f7fa24
 $ git add a
-$ git commit -m "Updated submodule a."
+$ git cummit -m "Updated submodule a."
 $ git push
 -------------------------------------------------
 
@@ -3622,10 +3622,10 @@ others won't be able to clone the repository:
 -------------------------------------------------
 $ cd ~/git/super/a
 $ echo i added another line to this file >> a.txt
-$ git commit -a -m "doing it wrong this time"
+$ git cummit -a -m "doing it wrong this time"
 $ cd ..
 $ git add a
-$ git commit -m "Updated submodule a again."
+$ git cummit -m "Updated submodule a again."
 $ git push
 $ cd ~/git/cloned
 $ git pull
@@ -3635,11 +3635,11 @@ Did you forget to 'git add'?
 Unable to checkout '261dfac35cb99d380eb966e102c1197139f7fa24' in submodule path 'a'
 -------------------------------------------------
 
-In older Git versions it could be easily forgotten to commit new or modified
+In older Git versions it could be easily forgotten to cummit new or modified
 files in a submodule, which silently leads to similar problems as not pushing
 the submodule changes. Starting with Git 1.7.0 both `git status` and `git diff`
 in the superproject show submodules as modified when they contain new or
-modified files to protect against accidentally committing such a state. `git
+modified files to protect against accidentally cummitting such a state. `git
 diff` will also add a `-dirty` to the work tree side when generating patch
 output or used with the `--submodule` option:
 
@@ -3649,16 +3649,16 @@ diff --git a/sub b/sub
 --- a/sub
 +++ b/sub
 @@ -1 +1 @@
--Subproject commit 3f356705649b5d566d97ff843cf193359229a453
-+Subproject commit 3f356705649b5d566d97ff843cf193359229a453-dirty
+-Subproject cummit 3f356705649b5d566d97ff843cf193359229a453
++Subproject cummit 3f356705649b5d566d97ff843cf193359229a453-dirty
 $ git diff --submodule
 Submodule sub 3f35670..3f35670-dirty:
 -------------------------------------------------
 
-You also should not rewind branches in a submodule beyond commits that were
+You also should not rewind branches in a submodule beyond cummits that were
 ever recorded in any superproject.
 
-It's not safe to run `git submodule update` if you've made and committed
+It's not safe to run `git submodule update` if you've made and cummitted
 changes within a submodule without checking out a branch first. They will be
 silently overwritten:
 
@@ -3666,7 +3666,7 @@ silently overwritten:
 $ cat a.txt
 module a
 $ echo line added from private2 >> a.txt
-$ git commit -a -m "line added inside private2"
+$ git cummit -a -m "line added inside private2"
 $ cd ..
 $ git submodule update
 Submodule path 'a': checked out 'd266b9873ad50488163457f025db7cdd9683d88b'
@@ -3677,7 +3677,7 @@ module a
 
 NOTE: The changes are still visible in the submodule's reflog.
 
-If you have uncommitted changes in your submodule working tree, `git
+If you have uncummitted changes in your submodule working tree, `git
 submodule update` will not overwrite them.  Instead, you get the usual
 warning about not being able switch from a dirty branch.
 
@@ -3695,7 +3695,7 @@ understand its inner workings.
 The linkgit:git-cat-file[1] command can show the contents of any object,
 though the higher-level linkgit:git-show[1] is usually more useful.
 
-The linkgit:git-commit-tree[1] command allows constructing commits with
+The linkgit:git-cummit-tree[1] command allows constructing cummits with
 arbitrary parents and trees.
 
 A tree can be created with linkgit:git-write-tree[1] and its data can be
@@ -3709,7 +3709,7 @@ use linkgit:git-tag[1] for both.
 [[the-workflow]]
 === The Workflow
 
-High-level operations such as linkgit:git-commit[1] and
+High-level operations such as linkgit:git-cummit[1] and
 linkgit:git-restore[1] work by moving data
 between the working tree, the index, and the object database.  Git
 provides low-level operations which perform each of these steps
@@ -3820,44 +3820,44 @@ from one representation to the other:
 [[tying-it-all-together]]
 ==== Tying it all together
 
-To commit a tree you have instantiated with `git write-tree`, you'd
-create a "commit" object that refers to that tree and the history
-behind it--most notably the "parent" commits that preceded it in
+To cummit a tree you have instantiated with `git write-tree`, you'd
+create a "cummit" object that refers to that tree and the history
+behind it--most notably the "parent" cummits that preceded it in
 history.
 
-Normally a "commit" has one parent: the previous state of the tree
+Normally a "cummit" has one parent: the previous state of the tree
 before a certain change was made. However, sometimes it can have two
-or more parent commits, in which case we call it a "merge", due to the
-fact that such a commit brings together ("merges") two or more
-previous states represented by other commits.
+or more parent cummits, in which case we call it a "merge", due to the
+fact that such a cummit brings together ("merges") two or more
+previous states represented by other cummits.
 
 In other words, while a "tree" represents a particular directory state
-of a working directory, a "commit" represents that state in time,
+of a working directory, a "cummit" represents that state in time,
 and explains how we got there.
 
-You create a commit object by giving it the tree that describes the
-state at the time of the commit, and a list of parents:
+You create a cummit object by giving it the tree that describes the
+state at the time of the cummit, and a list of parents:
 
 -------------------------------------------------
-$ git commit-tree <tree> -p <parent> [(-p <parent2>)...]
+$ git cummit-tree <tree> -p <parent> [(-p <parent2>)...]
 -------------------------------------------------
 
-and then giving the reason for the commit on stdin (either through
+and then giving the reason for the cummit on stdin (either through
 redirection from a pipe or file, or by just typing it at the tty).
 
-`git commit-tree` will return the name of the object that represents
-that commit, and you should save it away for later use. Normally,
-you'd commit a new `HEAD` state, and while Git doesn't care where you
+`git cummit-tree` will return the name of the object that represents
+that cummit, and you should save it away for later use. Normally,
+you'd cummit a new `HEAD` state, and while Git doesn't care where you
 save the note about that state, in practice we tend to just write the
 result to the file pointed at by `.git/HEAD`, so that we can always see
-what the last committed state was.
+what the last cummitted state was.
 
 Here is a picture that illustrates how various pieces fit together:
 
 ------------
 
-                     commit-tree
-                      commit obj
+                     cummit-tree
+                      cummit obj
                        +----+
                        |    |
                        |    |
@@ -3907,7 +3907,7 @@ shows the type of the object, and once you have the type (which is
 usually implicit in where you find the object), you can use
 
 -------------------------------------------------
-$ git cat-file blob|tree|commit|tag <objectname>
+$ git cat-file blob|tree|cummit|tag <objectname>
 -------------------------------------------------
 
 to show its contents. NOTE! Trees have binary content, and as a result
@@ -3915,16 +3915,16 @@ there is a special helper for showing that content, called
 `git ls-tree`, which turns the binary content into a more easily
 readable form.
 
-It's especially instructive to look at "commit" objects, since those
+It's especially instructive to look at "cummit" objects, since those
 tend to be small and fairly self-explanatory. In particular, if you
-follow the convention of having the top commit name in `.git/HEAD`,
+follow the convention of having the top cummit name in `.git/HEAD`,
 you can do
 
 -------------------------------------------------
 $ git cat-file commit HEAD
 -------------------------------------------------
 
-to see what the top commit was.
+to see what the top cummit was.
 
 [[merging-multiple-trees]]
 === Merging multiple trees
@@ -3932,37 +3932,37 @@ to see what the top commit was.
 Git can help you perform a three-way merge, which can in turn be
 used for a many-way merge by repeating the merge procedure several
 times.  The usual situation is that you only do one three-way merge
-(reconciling two lines of history) and commit the result, but if
+(reconciling two lines of history) and cummit the result, but if
 you like to, you can merge several branches in one go.
 
-To perform a three-way merge, you start with the two commits you
-want to merge, find their closest common parent (a third commit),
-and compare the trees corresponding to these three commits.
+To perform a three-way merge, you start with the two cummits you
+want to merge, find their closest common parent (a third cummit),
+and compare the trees corresponding to these three cummits.
 
 To get the "base" for the merge, look up the common parent of two
-commits:
+cummits:
 
 -------------------------------------------------
-$ git merge-base <commit1> <commit2>
+$ git merge-base <cummit1> <cummit2>
 -------------------------------------------------
 
-This prints the name of a commit they are both based on. You should
-now look up the tree objects of those commits, which you can easily
+This prints the name of a cummit they are both based on. You should
+now look up the tree objects of those cummits, which you can easily
 do with
 
 -------------------------------------------------
-$ git cat-file commit <commitname> | head -1
+$ git cat-file cummit <cummitname> | head -1
 -------------------------------------------------
 
-since the tree object information is always the first line in a commit
+since the tree object information is always the first line in a cummit
 object.
 
 Once you know the three trees you are going to merge (the one "original"
 tree, aka the common tree, and the two "result" trees, aka the branches
 you want to merge), you do a "merge" read into the index. This will
 complain if it has to throw away your old index contents, so you should
-make sure that you've committed those--in fact you would normally
-always do a merge against your last commit (which should thus match what
+make sure that you've cummitted those--in fact you would normally
+always do a merge against your last cummit (which should thus match what
 you have in your current index anyway).
 
 To do the merge, do
@@ -4058,7 +4058,7 @@ probably only Git developers need to understand.
 All objects have a statically determined "type" which identifies the
 format of the object (i.e. how it is used, and how it can refer to other
 objects).  There are currently four different object types: "blob",
-"tree", "commit", and "tag".
+"tree", "cummit", and "tag".
 
 Regardless of object type, all objects share the following
 characteristics: they are all deflated with zlib, and have a header
@@ -4089,7 +4089,7 @@ It is not always easy for new developers to find their way through Git's
 source code.  This section gives you a little guidance to show where to
 start.
 
-A good place to start is with the contents of the initial commit, with:
+A good place to start is with the contents of the initial cummit, with:
 
 ----------------------------------------------------
 $ git switch --detach e83c5163
@@ -4100,15 +4100,15 @@ today, but is small enough to read in one sitting.
 
 Note that terminology has changed since that revision.  For example, the
 README in that revision uses the word "changeset" to describe what we
-now call a <<def_commit_object,commit>>.
+now call a <<def_cummit_object,cummit>>.
 
 Also, we do not call it "cache" any more, but rather "index"; however, the
 file is still called `cache.h`.  Remark: Not much reason to change it now,
 especially since there is no good single name for it anyway, because it is
 basically _the_ header file which is included by _all_ of Git's C sources.
 
-If you grasp the ideas in that initial commit, you should check out a
-more recent version and skim `cache.h`, `object.h` and `commit.h`.
+If you grasp the ideas in that initial cummit, you should check out a
+more recent version and skim `cache.h`, `object.h` and `cummit.h`.
 
 In the early days, Git (in the tradition of UNIX) was a bunch of programs
 which were extremely simple, and which you used in scripts, piping the
@@ -4120,14 +4120,14 @@ and to avoid code duplication.
 
 By now, you know what the index is (and find the corresponding data
 structures in `cache.h`), and that there are just a couple of object types
-(blobs, trees, commits and tags) which inherit their common structure from
+(blobs, trees, cummits and tags) which inherit their common structure from
 `struct object`, which is their first member (and thus, you can cast e.g.
-`(struct object *)commit` to achieve the _same_ as `&commit->object`, i.e.
+`(struct object *)cummit` to achieve the _same_ as `&cummit->object`, i.e.
 get at the object name and flags).
 
 Now is a good point to take a break to let this information sink in.
 
-Next step: get familiar with the object naming.  Read <<naming-commits>>.
+Next step: get familiar with the object naming.  Read <<naming-cummits>>.
 There are quite a few ways to name an object (and not only revisions!).
 All of these are handled in `sha1_name.c`. Just have a quick look at
 the function `get_sha1()`. A lot of the special handling is done by
@@ -4164,7 +4164,7 @@ options for the revision walker. This information is stored in the struct
 `rev_info` for later consumption. You can do your own command-line option
 parsing after calling `setup_revisions()`. After that, you have to call
 `prepare_revision_walk()` for initialization, and then you can get the
-commits one by one with the function `get_revision()`.
+cummits one by one with the function `get_revision()`.
 
 If you are interested in more details of the revision walking process,
 just have a look at the first implementation of `cmd_log()`; call
@@ -4205,7 +4205,7 @@ For the sake of clarity, let's stay with `git cat-file`, because it
 
 - is plumbing, and
 
-- was around even in the initial commit (it literally went only through
+- was around even in the initial cummit (it literally went only through
   some 20 revisions as `cat-file.c`, was renamed to `builtin/cat-file.c`
   when made a builtin, and then saw less than 10 versions).
 
@@ -4234,7 +4234,7 @@ Two things are interesting here:
 - the variable `sha1` in the function signature of `get_sha1()` is `unsigned
   char *`, but is actually expected to be a pointer to `unsigned
   char[20]`.  This variable will contain the 160-bit SHA-1 of the given
-  commit.  Note that whenever a SHA-1 is passed as `unsigned char *`, it
+  cummit.  Note that whenever a SHA-1 is passed as `unsigned char *`, it
   is the binary representation, as opposed to the ASCII representation in
   hex characters, which is passed as `char *`.
 
@@ -4261,7 +4261,7 @@ To find out how the result can be used, just read on in `cmd_cat_file()`:
 
 Sometimes, you do not know where to look for a feature.  In many such cases,
 it helps to search through the output of `git log`, and then `git show` the
-corresponding commit.
+corresponding cummit.
 
 Example: If you know that there was some test case for `git bundle`, but
 do not remember where it was (yes, you _could_ `git grep bundle t/`, but that
@@ -4272,7 +4272,7 @@ $ git log --no-merges t/
 ------------------------
 
 In the pager (`less`), just search for "bundle", go a few lines back,
-and see that it is in commit 18449ab0.  Now just copy this object name,
+and see that it is in cummit 18449ab0.  Now just copy this object name,
 and paste it into the command line
 
 -------------------
@@ -4317,7 +4317,7 @@ $ cd project
 $ git init
 Initialized empty Git repository in .git/
 $ git add .
-$ git commit
+$ git cummit
 -----------------------------------------------
 
 From a remote repository:
@@ -4342,9 +4342,9 @@ Instead of basing a new branch on current HEAD (the default), use:
 -----------------------------------------------
 $ git branch new test    # branch named "test"
 $ git branch new v2.6.15 # tag named v2.6.15
-$ git branch new HEAD^   # commit before the most recent
-$ git branch new HEAD^^  # commit before that
-$ git branch new test~10 # ten commits before tip of branch "test"
+$ git branch new HEAD^   # cummit before the most recent
+$ git branch new HEAD^^  # cummit before that
+$ git branch new test~10 # ten cummits before tip of branch "test"
 -----------------------------------------------
 
 Create and switch to a new branch at the same time:
@@ -4396,7 +4396,7 @@ $ git branch -r			# list all remote branches
 
 -----------------------------------------------
 $ gitk			    # visualize and browse history
-$ git log		    # list all commits
+$ git log		    # list all cummits
 $ git log src/		    # ...modifying src/
 $ git log v2.6.15..v2.6.16  # ...in v2.6.16, not in v2.6.15
 $ git log master..test	    # ...in branch test, not in branch master
@@ -4405,7 +4405,7 @@ $ git log test...master	    # ...in one branch, not in both
 $ git log -S'foo()'	    # ...where difference contain "foo()"
 $ git log --since="2 weeks ago"
 $ git log -p		    # show patches as well
-$ git show		    # most recent commit
+$ git show		    # most recent cummit
 $ git diff v2.6.15..v2.6.16 # diff between two tagged versions
 $ git diff v2.6.15..HEAD    # diff with current head
 $ git grep "foo()"	    # search working directory for "foo()"
@@ -4439,21 +4439,21 @@ $ cat >>~/.gitconfig <<\EOF
 EOF
 ------------------------------------------------
 
-Select file contents to include in the next commit, then make the
-commit:
+Select file contents to include in the next cummit, then make the
+cummit:
 
 -----------------------------------------------
 $ git add a.txt    # updated file
 $ git add b.txt    # new file
 $ git rm c.txt     # old file
-$ git commit
+$ git cummit
 -----------------------------------------------
 
-Or, prepare and create the commit in one step:
+Or, prepare and create the cummit in one step:
 
 -----------------------------------------------
-$ git commit d.txt # use latest content only of d.txt
-$ git commit -a	   # use latest content of all tracked files
+$ git cummit d.txt # use latest content only of d.txt
+$ git cummit -a	   # use latest content of all tracked files
 -----------------------------------------------
 
 [[merging]]
@@ -4472,7 +4472,7 @@ $ git pull . test  # equivalent to git merge test
 Importing or exporting patches:
 
 -----------------------------------------------
-$ git format-patch origin..HEAD # format a patch for each commit
+$ git format-patch origin..HEAD # format a patch for each cummit
 				# in HEAD but not in origin
 $ git am mbox # import patches from the mailbox "mbox"
 -----------------------------------------------
@@ -4491,8 +4491,8 @@ current branch:
 $ git pull git://example.com/project.git theirbranch:mybranch
 -----------------------------------------------
 
-After creating commits on a local branch, update the remote
-branch with your commits:
+After creating cummits on a local branch, update the remote
+branch with your cummits:
 
 -----------------------------------------------
 $ git push ssh://example.com/project.git mybranch:theirbranch

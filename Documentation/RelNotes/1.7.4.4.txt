@@ -14,9 +14,9 @@ Fixes since v1.7.4.3
 
  * "git instaweb" should work better again with plackup.
 
- * "git log --max-count=4 -Sfoobar" now shows 4 commits that changes the
+ * "git log --max-count=4 -Sfoobar" now shows 4 cummits that changes the
    number of occurrences of string "foobar"; it used to scan only for 4
-   commits and then emitted only matching ones.
+   cummits and then emitted only matching ones.
 
  * "git log --first-parent --boundary $c^..$c" segfaulted on a merge.
 

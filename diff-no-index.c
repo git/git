@@ -6,7 +6,7 @@
 
 #include "cache.h"
 #include "color.h"
-#include "commit.h"
+#include "cummit.h"
 #include "blob.h"
 #include "tag.h"
 #include "diff.h"

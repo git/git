@@ -686,7 +686,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 finish:
 	if (write_locked_index(&the_index, &lock_file,
-			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
+			       cummit_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 
 	dir_clear(&dir);

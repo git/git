@@ -10,7 +10,7 @@ test_expect_success 'start p4d' '
 
 # Basic p4 label tests.
 #
-# Note: can't have more than one label per commit - others
+# Note: can't have more than one label per cummit - others
 # are silently discarded.
 #
 test_expect_success 'basic p4 labels' '

@@ -2,7 +2,7 @@
 #define BLAME_H
 
 #include "cache.h"
-#include "commit.h"
+#include "cummit.h"
 #include "xdiff-interface.h"
 #include "revision.h"
 #include "prio-queue.h"
@@ -19,37 +19,37 @@
 struct fingerprint;
 
 /*
- * One blob in a commit that is being suspected
+ * One blob in a cummit that is being suspected
  */
 struct blame_origin {
 	int refcnt;
 	/* Record preceding blame record for this blob */
 	struct blame_origin *previous;
 	/* origins are put in a list linked via `next' hanging off the
-	 * corresponding commit's util field in order to make finding
+	 * corresponding cummit's util field in order to make finding
 	 * them fast.  The presence in this chain does not count
 	 * towards the origin's reference count.  It is tempting to
-	 * let it count as long as the commit is pending examination,
-	 * but even under circumstances where the commit will be
+	 * let it count as long as the cummit is pending examination,
+	 * but even under circumstances where the cummit will be
 	 * present multiple times in the priority queue of unexamined
-	 * commits, processing the first instance will not leave any
+	 * cummits, processing the first instance will not leave any
 	 * work requiring the origin data for the second instance.  An
-	 * interspersed commit changing that would have to be
+	 * interspersed cummit changing that would have to be
 	 * preexisting with a different ancestry and with the same
-	 * commit date in order to wedge itself between two instances
-	 * of the same commit in the priority queue _and_ produce
+	 * cummit date in order to wedge itself between two instances
+	 * of the same cummit in the priority queue _and_ produce
 	 * blame entries relevant for it.  While we don't want to let
 	 * us get tripped up by this case, it certainly does not seem
 	 * worth optimizing for.
 	 */
 	struct blame_origin *next;
-	struct commit *commit;
+	struct cummit *cummit;
 	/* `suspects' contains blame entries that may be attributed to
-	 * this origin's commit or to parent commits.  When a commit
+	 * this origin's cummit or to parent cummits.  When a cummit
 	 * is being processed, all suspects will be moved, either by
-	 * assigning them to an origin in a different commit, or by
+	 * assigning them to an origin in a different cummit, or by
 	 * shipping them to the scoreboard's ent list because they
-	 * cannot be attributed to a different commit.
+	 * cannot be attributed to a different cummit.
 	 */
 	struct blame_entry *suspects;
 	mmfile_t file;
@@ -58,7 +58,7 @@ struct blame_origin {
 	struct object_id blob_oid;
 	unsigned short mode;
 	/* guilty gets set when shipping any suspects to the final
-	 * blame list instead of other commits
+	 * blame list instead of other cummits
 	 */
 	char guilty;
 	char path[FLEX_ARRAY];
@@ -84,7 +84,7 @@ struct blame_entry {
 	/* how many lines this group has */
 	int num_lines;
 
-	/* the commit that introduced this group into the final image */
+	/* the cummit that introduced this group into the final image */
 	struct blame_origin *suspect;
 
 	/* the line number of the first line of this group in the
@@ -106,10 +106,10 @@ struct blame_bloom_data;
  * The current state of the blame assignment.
  */
 struct blame_scoreboard {
-	/* the final commit (i.e. where we started digging from) */
-	struct commit *final;
-	/* Priority queue for commits with unassigned blame records */
-	struct prio_queue commits;
+	/* the final cummit (i.e. where we started digging from) */
+	struct cummit *final;
+	/* Priority queue for cummits with unassigned blame records */
+	struct prio_queue cummits;
 	struct repository *repo;
 	struct rev_info *revs;
 	const char *path;
@@ -134,7 +134,7 @@ struct blame_scoreboard {
 	/* stats */
 	int num_read_blob;
 	int num_get_patch;
-	int num_commits;
+	int num_cummits;
 
 	/*
 	 * blame for a blame_entry with score lower than these thresholds
@@ -189,6 +189,6 @@ struct blame_entry *blame_entry_prepend(struct blame_entry *head,
 					long start, long end,
 					struct blame_origin *o);
 
-struct blame_origin *get_blame_suspects(struct commit *commit);
+struct blame_origin *get_blame_suspects(struct cummit *cummit);
 
 #endif /* BLAME_H */

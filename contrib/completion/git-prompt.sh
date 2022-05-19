@@ -59,7 +59,7 @@
 # behaviour by setting GIT_PS1_SHOWUPSTREAM to a space-separated list
 # of values:
 #
-#     verbose       show number of commits ahead/behind (+/-) upstream
+#     verbose       show number of cummits ahead/behind (+/-) upstream
 #     name          if verbose, then also show the upstream abbrev name
 #     legacy        don't use the '--count' option available in recent
 #                   versions of git-rev-list
@@ -85,7 +85,7 @@
 # by setting GIT_PS1_OMITSPARSESTATE.
 #
 # If you would like to see more information about the identity of
-# commits checked out as a detached HEAD, set GIT_PS1_DESCRIBE_STYLE
+# cummits checked out as a detached HEAD, set GIT_PS1_DESCRIBE_STYLE
 # to one of these values:
 #
 #     contains      relative to newer annotated tag (v1.6.3.2~35)
@@ -152,7 +152,7 @@ __git_ps1_show_upstream ()
 	case "$upstream_type" in
 	git)    upstream_type="@{upstream}" ;;
 	svn*)
-		# get the upstream from the "git-svn-id: ..." in a commit message
+		# get the upstream from the "git-svn-id: ..." in a cummit message
 		# (git-svn uses essentially the same procedure internally)
 		local -a svn_upstream
 		svn_upstream=($(git log --first-parent -1 \
@@ -177,19 +177,19 @@ __git_ps1_show_upstream ()
 		;;
 	esac
 
-	# Find how many commits we are ahead/behind our upstream
+	# Find how many cummits we are ahead/behind our upstream
 	if [[ -z "$legacy" ]]; then
 		count="$(git rev-list --count --left-right \
 				"$upstream_type"...HEAD 2>/dev/null)"
 	else
 		# produce equivalent output to --count for older versions of git
-		local commits
-		if commits="$(git rev-list --left-right "$upstream_type"...HEAD 2>/dev/null)"
+		local cummits
+		if cummits="$(git rev-list --left-right "$upstream_type"...HEAD 2>/dev/null)"
 		then
-			local commit behind=0 ahead=0
-			for commit in $commits
+			local cummit behind=0 ahead=0
+			for cummit in $cummits
 			do
-				case "$commit" in
+				case "$cummit" in
 				"<"*) ((behind++)) ;;
 				*)    ((ahead++))  ;;
 				esac
@@ -297,8 +297,8 @@ __git_eread ()
 	test -r "$1" && IFS=$'\r\n' read "$2" <"$1"
 }
 
-# see if a cherry-pick or revert is in progress, if the user has committed a
-# conflict resolution with 'git commit' in the middle of a sequence of picks or
+# see if a cherry-pick or revert is in progress, if the user has cummitted a
+# conflict resolution with 'git cummit' in the middle of a sequence of picks or
 # reverts then CHERRY_PICK_HEAD/REVERT_HEAD will not exist so we have to read
 # the todo file.
 __git_sequencer_status ()

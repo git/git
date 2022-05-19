@@ -85,7 +85,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 
 /*
  * Execute the --negotiate-only mode of "git fetch", adding all known common
- * commits to acked_commits.
+ * cummits to acked_cummits.
  *
  * In the capability advertisement that has happened prior to invoking this
  * function, the "wait-for-done" capability must be present.
@@ -94,7 +94,7 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 			   const struct string_list *server_options,
 			   int stateless_rpc,
 			   int fd[],
-			   struct oidset *acked_commits);
+			   struct oidset *acked_cummits);
 
 /*
  * Print an appropriate error message for each sought ref that wasn't

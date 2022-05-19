@@ -41,7 +41,7 @@ sub usage(;$) {
 usage: git cvsimport     # fetch/update GIT from CVS
        [-o branch-for-HEAD] [-h] [-v] [-d CVSROOT] [-A author-conv-file]
        [-p opts-for-cvsps] [-P file] [-C GIT_repository] [-z fuzz] [-i] [-k]
-       [-u] [-s subst] [-a] [-m] [-M regex] [-S regex] [-L commitlimit]
+       [-u] [-s subst] [-a] [-m] [-M regex] [-S regex] [-L cummitlimit]
        [-r remote] [-R] [CVS_module]
 END
 	exit(1);
@@ -214,7 +214,7 @@ if (@opt_M) {
 }
 
 # Remember UTC of our starting time
-# we'll want to avoid importing commits
+# we'll want to avoid importing cummits
 # that are too recent
 our $starttime = time();
 
@@ -819,15 +819,15 @@ sub write_tree () {
 }
 
 my ($patchset,$date,$author_name,$author_email,$author_tz,$branch,$ancestor,$tag,$logmsg);
-my (@old,@new,@skipped,%ignorebranch,@commit_revisions);
+my (@old,@new,@skipped,%ignorebranch,@cummit_revisions);
 
-# commits that cvsps cannot place anywhere...
+# cummits that cvsps cannot place anywhere...
 $ignorebranch{'#CVSPS_NO_BRANCH'} = 1;
 
-sub commit {
+sub cummit {
 	if ($branch eq $opt_o && !$index{branch} &&
 		!get_headref("$remote/$branch")) {
-	    # looks like an initial commit
+	    # looks like an initial cummit
 	    # use the index primed by git init
 	    $ENV{GIT_INDEX_FILE} = "$git_dir/index";
 	    $index{$branch} = "$git_dir/index";
@@ -853,16 +853,16 @@ sub commit {
 	my $parent = get_headref("$remote/$last_branch");
 	print "Parent ID " . ($parent ? $parent : "(empty)") . "\n" if $opt_v;
 
-	my @commit_args;
-	push @commit_args, ("-p", $parent) if $parent;
+	my @cummit_args;
+	push @cummit_args, ("-p", $parent) if $parent;
 
 	# loose detection of merges
-	# based on the commit msg
+	# based on the cummit msg
 	foreach my $rx (@mergerx) {
 		next unless $logmsg =~ $rx && $1;
 		my $mparent = $1 eq 'HEAD' ? $opt_o : $1;
 		if (my $sha1 = get_headref("$remote/$mparent")) {
-			push @commit_args, '-p', "$remote/$mparent";
+			push @cummit_args, '-p', "$remote/$mparent";
 			print "Merge parent branch: $mparent\n" if $opt_v;
 		}
 	}
@@ -870,16 +870,16 @@ sub commit {
 	set_timezone($author_tz);
 	# $date is in the seconds since epoch format
 	my $tz_offset = get_tz_offset($date);
-	my $commit_date = "$date $tz_offset";
+	my $cummit_date = "$date $tz_offset";
 	set_timezone('UTC');
 	$ENV{GIT_AUTHOR_NAME} = $author_name;
 	$ENV{GIT_AUTHOR_EMAIL} = $author_email;
-	$ENV{GIT_AUTHOR_DATE} = $commit_date;
-	$ENV{GIT_COMMITTER_NAME} = $author_name;
-	$ENV{GIT_COMMITTER_EMAIL} = $author_email;
-	$ENV{GIT_COMMITTER_DATE} = $commit_date;
-	my $pid = open2(my $commit_read, my $commit_write,
-		'git', 'commit-tree', $tree, @commit_args);
+	$ENV{GIT_AUTHOR_DATE} = $cummit_date;
+	$ENV{GIT_cummitTER_NAME} = $author_name;
+	$ENV{GIT_cummitTER_EMAIL} = $author_email;
+	$ENV{GIT_cummitTER_DATE} = $cummit_date;
+	my $pid = open2(my $cummit_read, my $cummit_write,
+		'git', 'cummit-tree', $tree, @cummit_args);
 
 	# compatibility with git2cvs
 	substr($logmsg,32767) = "" if length($logmsg) > 32767;
@@ -891,25 +891,25 @@ sub commit {
 	    @skipped = ();
 	}
 
-	print($commit_write "$logmsg\n") && close($commit_write)
-		or die "Error writing to git commit-tree: $!\n";
+	print($cummit_write "$logmsg\n") && close($cummit_write)
+		or die "Error writing to git cummit-tree: $!\n";
 
-	print "Committed patch $patchset ($branch $commit_date)\n" if $opt_v;
-	chomp(my $cid = <$commit_read>);
-	is_oid($cid) or die "Cannot get commit id ($cid): $!\n";
-	print "Commit ID $cid\n" if $opt_v;
-	close($commit_read);
+	print "cummitted patch $patchset ($branch $cummit_date)\n" if $opt_v;
+	chomp(my $cid = <$cummit_read>);
+	is_oid($cid) or die "Cannot get cummit id ($cid): $!\n";
+	print "cummit ID $cid\n" if $opt_v;
+	close($cummit_read);
 
 	waitpid($pid,0);
-	die "Error running git commit-tree: $?\n" if $?;
+	die "Error running git cummit-tree: $?\n" if $?;
 
 	system('git' , 'update-ref', "$remote/$branch", $cid) == 0
 		or die "Cannot write branch $branch for update: $!\n";
 
 	if ($revision_map) {
-		print $revision_map "@$_ $cid\n" for @commit_revisions;
+		print $revision_map "@$_ $cid\n" for @cummit_revisions;
 	}
-	@commit_revisions = ();
+	@cummit_revisions = ();
 
 	if ($tag) {
 	        my ($xtag) = $tag;
@@ -952,7 +952,7 @@ sub commit {
 	}
 };
 
-my $commitcount = 1;
+my $cummitcount = 1;
 while (<CVS>) {
 	chomp;
 	if ($state == 0 and /^-+$/) {
@@ -1019,9 +1019,9 @@ while (<CVS>) {
 			next;
 		}
 		if (!$opt_a && $starttime - 300 - (defined $opt_z ? $opt_z : 300) <= $date) {
-			# skip if the commit is too recent
+			# skip if the cummit is too recent
 			# given that the cvsps default fuzz is 300s, we give ourselves another
-			# 300s just in case -- this also prevents skipping commits
+			# 300s just in case -- this also prevents skipping cummits
 			# due to server clock drift
 			print "skip patchset $patchset: $date too recent\n" if $opt_v;
 			$state = 11;
@@ -1074,7 +1074,7 @@ while (<CVS>) {
 		    push(@skipped, $fn);
 		    next;
 		}
-		push @commit_revisions, [$fn, $rev];
+		push @cummit_revisions, [$fn, $rev];
 		print "Fetching $fn   v $rev\n" if $opt_v;
 		my ($tmpname, $size) = $cvs->file($fn,$rev);
 		if ($size == -1) {
@@ -1099,18 +1099,18 @@ while (<CVS>) {
 		my $fn = $1;
 		my $rev = $2;
 		$fn =~ s#^/+##;
-		push @commit_revisions, [$fn, $rev];
+		push @cummit_revisions, [$fn, $rev];
 		push(@old,$fn);
 		print "Delete $fn\n" if $opt_v;
 	} elsif ($state == 9 and /^\s*$/) {
 		$state = 10;
 	} elsif (($state == 9 or $state == 10) and /^-+$/) {
-		$commitcount++;
-		if ($opt_L && $commitcount > $opt_L) {
+		$cummitcount++;
+		if ($opt_L && $cummitcount > $opt_L) {
 			last;
 		}
-		commit();
-		if (($commitcount & 1023) == 0) {
+		cummit();
+		if (($cummitcount & 1023) == 0) {
 			system(qw(git repack -a -d));
 		}
 		$state = 1;
@@ -1122,13 +1122,13 @@ while (<CVS>) {
 		print STDERR "* UNKNOWN LINE * $_\n";
 	}
 }
-commit() if $branch and $state != 11;
+cummit() if $branch and $state != 11;
 
 unless ($opt_P) {
 	unlink($cvspsfile);
 }
 
-# The heuristic of repacking every 1024 commits can leave a
+# The heuristic of repacking every 1024 cummits can leave a
 # lot of unpacked data.  If there is more than 1MB worth of
 # not-packed objects, repack once more.
 my $line = `git count-objects`;

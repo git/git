@@ -1,5 +1,5 @@
 TL;DR: Run update_unicode.sh after the publication of a new Unicode
-standard and commit the resulting unicode-widths.h file.
+standard and cummit the resulting unicode-widths.h file.
 
 The long version
 ================
@@ -17,4 +17,4 @@ This requires a current-ish version of autoconf (2.69 works per December
 On each run, update_unicode.sh checks whether more recent Unicode data
 files are available from the Unicode consortium, and rebuilds the header
 unicode-widths.h with the new data. The new header can then be
-committed.
+cummitted.

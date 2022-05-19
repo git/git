@@ -16,61 +16,61 @@ list_duplicates()
 date >path0
 git update-index --add path0
 save_tag tree git write-tree
-on_dates "00:00" "00:00" hide_error save_tag root unique_commit root tree
-on_dates "00:01" "00:01" save_tag l0 unique_commit l0 tree -p root
-on_dates "00:02" "00:02" save_tag l1 unique_commit l1 tree -p l0
-on_dates "00:03" "00:03" save_tag l2 unique_commit l2 tree -p l1
-on_dates "00:04" "00:04" save_tag a0 unique_commit a0 tree -p l2
-on_dates "00:05" "00:05" save_tag a1 unique_commit a1 tree -p a0
-on_dates "00:06" "00:06" save_tag b1 unique_commit b1 tree -p a0
-on_dates "00:07" "00:07" save_tag c1 unique_commit c1 tree -p b1
-on_dates "00:08" "00:08" as_author foobar@example.com save_tag b2 unique_commit b2 tree -p b1
-on_dates "00:09" "00:09" save_tag b3 unique_commit b3 tree -p b2
-on_dates "00:10" "00:10" save_tag c2 unique_commit c2 tree -p c1 -p b2
-on_dates "00:11" "00:11" save_tag c3 unique_commit c3 tree -p c2
-on_dates "00:12" "00:00" save_tag a2 unique_commit a2 tree -p a1
-on_dates "00:13" "00:01" save_tag a3 unique_commit a3 tree -p a2
-on_dates "00:14" "00:14" save_tag b4 unique_commit b4 tree -p b3 -p a3
-on_dates "00:15" "00:15" save_tag a4 unique_commit a4 tree -p a3 -p b4 -p c3
-on_dates "00:16" "00:16" save_tag l3 unique_commit l3 tree -p a4
-on_dates "00:17" "00:17" save_tag l4 unique_commit l4 tree -p l3
-on_dates "00:18" "00:18" save_tag l5 unique_commit l5 tree -p l4
-on_dates "00:19" "00:19" save_tag m1 unique_commit m1 tree -p a4 -p c3
-on_dates "00:20" "00:20" save_tag m2 unique_commit m2 tree -p c3 -p a4
-on_dates "00:21" "00:21" hide_error save_tag alt_root unique_commit alt_root tree
-on_dates "00:22" "00:22" save_tag r0 unique_commit r0 tree -p alt_root
-on_dates "00:23" "00:23" save_tag r1 unique_commit r1 tree -p r0
-on_dates "00:24" "00:24" save_tag l5r1 unique_commit l5r1 tree -p l5 -p r1
-on_dates "00:25" "00:25" save_tag r1l5 unique_commit r1l5 tree -p r1 -p l5
+on_dates "00:00" "00:00" hide_error save_tag root unique_cummit root tree
+on_dates "00:01" "00:01" save_tag l0 unique_cummit l0 tree -p root
+on_dates "00:02" "00:02" save_tag l1 unique_cummit l1 tree -p l0
+on_dates "00:03" "00:03" save_tag l2 unique_cummit l2 tree -p l1
+on_dates "00:04" "00:04" save_tag a0 unique_cummit a0 tree -p l2
+on_dates "00:05" "00:05" save_tag a1 unique_cummit a1 tree -p a0
+on_dates "00:06" "00:06" save_tag b1 unique_cummit b1 tree -p a0
+on_dates "00:07" "00:07" save_tag c1 unique_cummit c1 tree -p b1
+on_dates "00:08" "00:08" as_author foobar@example.com save_tag b2 unique_cummit b2 tree -p b1
+on_dates "00:09" "00:09" save_tag b3 unique_cummit b3 tree -p b2
+on_dates "00:10" "00:10" save_tag c2 unique_cummit c2 tree -p c1 -p b2
+on_dates "00:11" "00:11" save_tag c3 unique_cummit c3 tree -p c2
+on_dates "00:12" "00:00" save_tag a2 unique_cummit a2 tree -p a1
+on_dates "00:13" "00:01" save_tag a3 unique_cummit a3 tree -p a2
+on_dates "00:14" "00:14" save_tag b4 unique_cummit b4 tree -p b3 -p a3
+on_dates "00:15" "00:15" save_tag a4 unique_cummit a4 tree -p a3 -p b4 -p c3
+on_dates "00:16" "00:16" save_tag l3 unique_cummit l3 tree -p a4
+on_dates "00:17" "00:17" save_tag l4 unique_cummit l4 tree -p l3
+on_dates "00:18" "00:18" save_tag l5 unique_cummit l5 tree -p l4
+on_dates "00:19" "00:19" save_tag m1 unique_cummit m1 tree -p a4 -p c3
+on_dates "00:20" "00:20" save_tag m2 unique_cummit m2 tree -p c3 -p a4
+on_dates "00:21" "00:21" hide_error save_tag alt_root unique_cummit alt_root tree
+on_dates "00:22" "00:22" save_tag r0 unique_cummit r0 tree -p alt_root
+on_dates "00:23" "00:23" save_tag r1 unique_cummit r1 tree -p r0
+on_dates "00:24" "00:24" save_tag l5r1 unique_cummit l5r1 tree -p l5 -p r1
+on_dates "00:25" "00:25" save_tag r1l5 unique_cummit r1l5 tree -p r1 -p l5
 
 
-hide_error save_tag e1 as_author e@example.com unique_commit e1 tree
-save_tag e2 as_author e@example.com unique_commit e2 tree -p e1
-save_tag f1 as_author f@example.com unique_commit f1 tree -p e1
-save_tag e3 as_author e@example.com unique_commit e3 tree -p e2
-save_tag f2 as_author f@example.com unique_commit f2 tree -p f1
-save_tag e4 as_author e@example.com unique_commit e4 tree -p e3 -p f2
-save_tag e5 as_author e@example.com unique_commit e5 tree -p e4
-save_tag f3 as_author f@example.com unique_commit f3 tree -p f2
-save_tag f4 as_author f@example.com unique_commit f4 tree -p f3
-save_tag e6 as_author e@example.com unique_commit e6 tree -p e5 -p f4
-save_tag f5 as_author f@example.com unique_commit f5 tree -p f4
-save_tag f6 as_author f@example.com unique_commit f6 tree -p f5 -p e6
-save_tag e7 as_author e@example.com unique_commit e7 tree -p e6
-save_tag e8 as_author e@example.com unique_commit e8 tree -p e7
-save_tag e9 as_author e@example.com unique_commit e9 tree -p e8
-save_tag f7 as_author f@example.com unique_commit f7 tree -p f6
-save_tag f8 as_author f@example.com unique_commit f8 tree -p f7
-save_tag f9 as_author f@example.com unique_commit f9 tree -p f8
-save_tag e10 as_author e@example.com unique_commit e1 tree -p e9 -p f8
+hide_error save_tag e1 as_author e@example.com unique_cummit e1 tree
+save_tag e2 as_author e@example.com unique_cummit e2 tree -p e1
+save_tag f1 as_author f@example.com unique_cummit f1 tree -p e1
+save_tag e3 as_author e@example.com unique_cummit e3 tree -p e2
+save_tag f2 as_author f@example.com unique_cummit f2 tree -p f1
+save_tag e4 as_author e@example.com unique_cummit e4 tree -p e3 -p f2
+save_tag e5 as_author e@example.com unique_cummit e5 tree -p e4
+save_tag f3 as_author f@example.com unique_cummit f3 tree -p f2
+save_tag f4 as_author f@example.com unique_cummit f4 tree -p f3
+save_tag e6 as_author e@example.com unique_cummit e6 tree -p e5 -p f4
+save_tag f5 as_author f@example.com unique_cummit f5 tree -p f4
+save_tag f6 as_author f@example.com unique_cummit f6 tree -p f5 -p e6
+save_tag e7 as_author e@example.com unique_cummit e7 tree -p e6
+save_tag e8 as_author e@example.com unique_cummit e8 tree -p e7
+save_tag e9 as_author e@example.com unique_cummit e9 tree -p e8
+save_tag f7 as_author f@example.com unique_cummit f7 tree -p f6
+save_tag f8 as_author f@example.com unique_cummit f8 tree -p f7
+save_tag f9 as_author f@example.com unique_cummit f9 tree -p f8
+save_tag e10 as_author e@example.com unique_cummit e1 tree -p e9 -p f8
 
-hide_error save_tag g0 unique_commit g0 tree
-save_tag g1 unique_commit g1 tree -p g0
-save_tag h1 unique_commit g2 tree -p g0
-save_tag g2 unique_commit g3 tree -p g1 -p h1
-save_tag h2 unique_commit g4 tree -p g2
-save_tag g3 unique_commit g5 tree -p g2
-save_tag g4 unique_commit g6 tree -p g3 -p h2
+hide_error save_tag g0 unique_cummit g0 tree
+save_tag g1 unique_cummit g1 tree -p g0
+save_tag h1 unique_cummit g2 tree -p g0
+save_tag g2 unique_cummit g3 tree -p g1 -p h1
+save_tag h2 unique_cummit g4 tree -p g2
+save_tag g3 unique_cummit g5 tree -p g2
+save_tag g4 unique_cummit g6 tree -p g3 -p h2
 
 git update-ref HEAD $(tag l5)
 
@@ -314,7 +314,7 @@ c2
 b3
 EOF
 
-test_output_expect_success '--max-age=c3, no --topo-order' "git rev-list --max-age=$(commit_date c3) l5" <<EOF
+test_output_expect_success '--max-age=c3, no --topo-order' "git rev-list --max-age=$(cummit_date c3) l5" <<EOF
 l5
 l4
 l3
@@ -328,7 +328,7 @@ EOF
 #
 # this test fails on --topo-order - a fix is required
 #
-#test_output_expect_success '--max-age=c3, --topo-order' "git rev-list --topo-order --max-age=$(commit_date c3) l5" <<EOF
+#test_output_expect_success '--max-age=c3, --topo-order' "git rev-list --topo-order --max-age=$(cummit_date c3) l5" <<EOF
 #l5
 #l4
 #l3

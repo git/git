@@ -6,7 +6,7 @@ test_description="Test pickaxe performance"
 
 test_perf_default_repo
 
-# Not --max-count, as that's the number of matching commit, so it's
+# Not --max-count, as that's the number of matching cummit, so it's
 # unbounded. We want to limit our revision walk here.
 from_rev_desc=
 from_rev=

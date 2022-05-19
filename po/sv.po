@@ -756,7 +756,7 @@ msgstr ""
 "samman."
 
 #: advice.c:183
-msgid "Committing is not possible because you have unmerged files."
+msgid "cummitting is not possible because you have unmerged files."
 msgstr ""
 "Du kan inte utföra en incheckning eftersom du har filer som inte slagits "
 "samman."
@@ -787,7 +787,7 @@ msgstr ""
 #: advice.c:199
 msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
-"as appropriate to mark resolution and make a commit."
+"as appropriate to mark resolution and make a cummit."
 msgstr ""
 "Rätta dem i din arbetskatalog och använd sedan \"git add/rm <fil>\"\n"
 "som lämpligt för att ange lösning och checka in."
@@ -801,7 +801,7 @@ msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "Du har inte avslutat sammanslagningen (MERGE_HEAD finns)."
 
 #: advice.c:214
-msgid "Please, commit your changes before merging."
+msgid "Please, cummit your changes before merging."
 msgstr "Checka in dina ändringar innan du utför sammanslagningen."
 
 #: advice.c:215
@@ -839,10 +839,10 @@ msgid ""
 "Note: switching to '%s'.\n"
 "\n"
 "You are in 'detached HEAD' state. You can look around, make experimental\n"
-"changes and commit them, and you can discard any commits you make in this\n"
+"changes and cummit them, and you can discard any cummits you make in this\n"
 "state without impacting any branches by switching back to a branch.\n"
 "\n"
-"If you want to create a new branch to retain commits you create, you may\n"
+"If you want to create a new branch to retain cummits you create, you may\n"
 "do so (now or later) by using -c with the switch command. Example:\n"
 "\n"
 "  git switch -c <new-branch-name>\n"
@@ -901,8 +901,8 @@ msgstr "okänt alternativ för ignore-whitespace: \"%s\""
 #: builtin/add.c:515 builtin/add.c:527 builtin/branch.c:755
 #: builtin/checkout.c:472 builtin/checkout.c:475 builtin/checkout.c:1663
 #: builtin/checkout.c:1773 builtin/checkout.c:1776 builtin/clone.c:921
-#: builtin/commit.c:359 builtin/commit.c:362 builtin/commit.c:1200
-#: builtin/commit.c:1256 builtin/commit.c:1273 builtin/describe.c:593
+#: builtin/cummit.c:359 builtin/cummit.c:362 builtin/cummit.c:1200
+#: builtin/cummit.c:1256 builtin/cummit.c:1273 builtin/describe.c:593
 #: builtin/diff-tree.c:155 builtin/difftool.c:733 builtin/fast-export.c:1245
 #: builtin/fetch.c:2141 builtin/fetch.c:2162 builtin/fetch.c:2167
 #: builtin/help.c:602 builtin/index-pack.c:1858 builtin/init-db.c:560
@@ -1637,7 +1637,7 @@ msgid "prepend prefix to each pathname in the archive"
 msgstr "lägg till prefix till varje sökväg i arkivet"
 
 #: archive.c:554 archive.c:557 builtin/blame.c:881 builtin/blame.c:885
-#: builtin/blame.c:886 builtin/commit-tree.c:115 builtin/config.c:135
+#: builtin/blame.c:886 builtin/cummit-tree.c:115 builtin/config.c:135
 #: builtin/fast-export.c:1181 builtin/fast-export.c:1183
 #: builtin/fast-export.c:1187 builtin/grep.c:936 builtin/hash-object.c:104
 #: builtin/ls-files.c:654 builtin/ls-files.c:657 builtin/notes.c:410
@@ -1693,7 +1693,7 @@ msgstr "Oväntad flagga --remote"
 
 #: archive.c:580 fetch-pack.c:300 revision.c:2914 builtin/add.c:530
 #: builtin/add.c:562 builtin/checkout.c:1782 builtin/clone.c:1099
-#: builtin/clone.c:1102 builtin/commit.c:371 builtin/fast-export.c:1230
+#: builtin/clone.c:1102 builtin/cummit.c:371 builtin/fast-export.c:1230
 #: builtin/index-pack.c:1854 builtin/log.c:2140 builtin/reset.c:442
 #: builtin/reset.c:500 builtin/rm.c:281 builtin/stash.c:1708
 #: builtin/worktree.c:580 builtin/worktree.c:781 http-fetch.c:144
@@ -1746,7 +1746,7 @@ msgstr "Det finns inte mer att göra \"bisect\" på!\n"
 
 #: bisect.c:765
 #, c-format
-msgid "Not a valid commit name %s"
+msgid "Not a valid cummit name %s"
 msgstr "Namnet på incheckningen är inte giltigt: %s"
 
 #: bisect.c:790
@@ -1771,7 +1771,7 @@ msgstr ""
 #, c-format
 msgid ""
 "The merge base %s is %s.\n"
-"This means the first '%s' commit is between %s and [%s].\n"
+"This means the first '%s' cummit is between %s and [%s].\n"
 msgstr ""
 "Sammanslagningsbasen %s är %s.\n"
 "Det betyder att den första \"%s\" incheckningen är mellan %s och [%s].\n"
@@ -1791,7 +1791,7 @@ msgstr ""
 #, c-format
 msgid ""
 "the merge base between %s and [%s] must be skipped.\n"
-"So we cannot be sure the first %s commit is between %s and %s.\n"
+"So we cannot be sure the first %s cummit is between %s and %s.\n"
 "We continue anyway."
 msgstr ""
 "sammanslagningsbasen mellan %s och [%s] måste hoppas över.\n"
@@ -1831,7 +1831,7 @@ msgstr "%s var både %s och %s\n"
 #: bisect.c:1065
 #, c-format
 msgid ""
-"No testable commit found.\n"
+"No testable cummit found.\n"
 "Maybe you started with bad path arguments?\n"
 msgstr ""
 "Ingen testbar incheckning hittades.\n"
@@ -1859,17 +1859,17 @@ msgid "--contents and --reverse do not blend well."
 msgstr "--contents och --reverse fungerar inte så bra tillsammans."
 
 #: blame.c:2787
-msgid "cannot use --contents with final commit object name"
+msgid "cannot use --contents with final cummit object name"
 msgstr "kan inte använda --contents med namn på slutgiltigt incheckningsobjekt"
 
 #: blame.c:2808
-msgid "--reverse and --first-parent together require specified latest commit"
+msgid "--reverse and --first-parent together require specified latest cummit"
 msgstr ""
 "--reverse och --first-parent tillsammans kräver att du anger senaste "
 "incheckningen"
 
 #: blame.c:2817 bundle.c:231 midx.c:1058 ref-filter.c:2371 remote.c:2157
-#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/commit.c:1118
+#: sequencer.c:2348 sequencer.c:4872 submodule.c:913 builtin/cummit.c:1118
 #: builtin/log.c:437 builtin/log.c:1055 builtin/log.c:1663 builtin/log.c:2096
 #: builtin/log.c:2387 builtin/merge.c:431 builtin/pack-objects.c:3381
 #: builtin/pack-objects.c:3781 builtin/pack-objects.c:3796
@@ -2104,13 +2104,13 @@ msgid "unrecognized header: %s%s (%d)"
 msgstr "okänt huvud: %s%s (%d)"
 
 #: bundle.c:145 rerere.c:464 rerere.c:675 sequencer.c:2616 sequencer.c:3402
-#: builtin/commit.c:865
+#: builtin/cummit.c:865
 #, c-format
 msgid "could not open '%s'"
 msgstr "kunde inte öppna \"%s\""
 
 #: bundle.c:203
-msgid "Repository lacks these prerequisite commits:"
+msgid "Repository lacks these prerequisite cummits:"
 msgstr "Arkivet saknar dessa nödvändiga incheckningar:"
 
 #: bundle.c:206
@@ -2204,277 +2204,277 @@ msgstr "avslutande stycke har id %<PRIx32> som inte är noll"
 msgid "invalid color value: %.*s"
 msgstr "felaktigt färgvärde: %.*s"
 
-#: commit-graph.c:204 midx.c:52
+#: cummit-graph.c:204 midx.c:52
 msgid "invalid hash version"
 msgstr "felaktig hashnings-version"
 
-#: commit-graph.c:262
-msgid "commit-graph file is too small"
+#: cummit-graph.c:262
+msgid "cummit-graph file is too small"
 msgstr "incheckningsgraffilen %s är för liten"
 
-#: commit-graph.c:355
+#: cummit-graph.c:355
 #, c-format
-msgid "commit-graph signature %X does not match signature %X"
+msgid "cummit-graph signature %X does not match signature %X"
 msgstr "incheckningsgrafens signatur %X stämmer inte med signaturen %X"
 
-#: commit-graph.c:362
+#: cummit-graph.c:362
 #, c-format
-msgid "commit-graph version %X does not match version %X"
+msgid "cummit-graph version %X does not match version %X"
 msgstr "incheckningsgrafens version %X stämmer inte med versionen %X"
 
-#: commit-graph.c:369
+#: cummit-graph.c:369
 #, c-format
-msgid "commit-graph hash version %X does not match version %X"
+msgid "cummit-graph hash version %X does not match version %X"
 msgstr "incheckningsgrafens hashversion %X stämmer inte med versionen %X"
 
-#: commit-graph.c:386
+#: cummit-graph.c:386
 #, c-format
-msgid "commit-graph file is too small to hold %u chunks"
+msgid "cummit-graph file is too small to hold %u chunks"
 msgstr "incheckningsgraffilen är för liten för att innehålla %u stycken"
 
-#: commit-graph.c:485
-msgid "commit-graph has no base graphs chunk"
+#: cummit-graph.c:485
+msgid "cummit-graph has no base graphs chunk"
 msgstr "incheckningsgrafen har inga bas-graf-stycken"
 
-#: commit-graph.c:495
-msgid "commit-graph chain does not match"
+#: cummit-graph.c:495
+msgid "cummit-graph chain does not match"
 msgstr "incheckningsgrafens kedja stämmer inte"
 
-#: commit-graph.c:543
+#: cummit-graph.c:543
 #, c-format
-msgid "invalid commit-graph chain: line '%s' not a hash"
+msgid "invalid cummit-graph chain: line '%s' not a hash"
 msgstr "ogiltig incheckingsgrafkedja: rad \"%s\" är inte ett hash-värde"
 
-#: commit-graph.c:567
-msgid "unable to find all commit-graph files"
+#: cummit-graph.c:567
+msgid "unable to find all cummit-graph files"
 msgstr "kan inte hitta alla incheckingsgraffiler"
 
-#: commit-graph.c:752 commit-graph.c:789
-msgid "invalid commit position. commit-graph is likely corrupt"
+#: cummit-graph.c:752 cummit-graph.c:789
+msgid "invalid cummit position. cummit-graph is likely corrupt"
 msgstr "ogiltig incheckningsposition. incheckningsgrafen är troligtvis trasig"
 
-#: commit-graph.c:773
+#: cummit-graph.c:773
 #, c-format
-msgid "could not find commit %s"
+msgid "could not find cummit %s"
 msgstr "kunde inte hitta incheckningen %s"
 
-#: commit-graph.c:806
-msgid "commit-graph requires overflow generation data but has none"
+#: cummit-graph.c:806
+msgid "cummit-graph requires overflow generation data but has none"
 msgstr "incheckningsgraf kräver spillgenerationsdata, men har ingen"
 
-#: commit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
+#: cummit-graph.c:1111 builtin/am.c:1370 builtin/checkout.c:775
 #: builtin/clone.c:705
 #, c-format
-msgid "unable to parse commit %s"
+msgid "unable to parse cummit %s"
 msgstr "kunde inte tolka incheckningen %s"
 
-#: commit-graph.c:1373 builtin/pack-objects.c:3078
+#: cummit-graph.c:1373 builtin/pack-objects.c:3078
 #, c-format
 msgid "unable to get type of object %s"
 msgstr "kunde inte hämta typ för objektet %s"
 
-#: commit-graph.c:1404
-msgid "Loading known commits in commit graph"
+#: cummit-graph.c:1404
+msgid "Loading known cummits in cummit graph"
 msgstr "Läser in kända incheckningar i incheckningsgraf"
 
-#: commit-graph.c:1421
-msgid "Expanding reachable commits in commit graph"
+#: cummit-graph.c:1421
+msgid "Expanding reachable cummits in cummit graph"
 msgstr "Expanderar nåbara incheckningar i incheckningsgraf"
 
-#: commit-graph.c:1441
-msgid "Clearing commit marks in commit graph"
+#: cummit-graph.c:1441
+msgid "Clearing cummit marks in cummit graph"
 msgstr "Rensar incheckningsmärken i incheckningsgraf"
 
-#: commit-graph.c:1460
-msgid "Computing commit graph topological levels"
+#: cummit-graph.c:1460
+msgid "Computing cummit graph topological levels"
 msgstr "Beräknar topografiska nivåer för incheckningsgraf"
 
-#: commit-graph.c:1513
-msgid "Computing commit graph generation numbers"
+#: cummit-graph.c:1513
+msgid "Computing cummit graph generation numbers"
 msgstr "Beräknar generationsvärden för incheckningsgraf"
 
-#: commit-graph.c:1598
-msgid "Computing commit changed paths Bloom filters"
+#: cummit-graph.c:1598
+msgid "Computing cummit changed paths Bloom filters"
 msgstr "Beräknar Bloom-filter för sökvägar ändrade av incheckningen"
 
-#: commit-graph.c:1675
-msgid "Collecting referenced commits"
+#: cummit-graph.c:1675
+msgid "Collecting referenced cummits"
 msgstr "Samlar refererade incheckningar"
 
-#: commit-graph.c:1701
+#: cummit-graph.c:1701
 #, c-format
-msgid "Finding commits for commit graph in %<PRIuMAX> pack"
-msgid_plural "Finding commits for commit graph in %<PRIuMAX> packs"
+msgid "Finding cummits for cummit graph in %<PRIuMAX> pack"
+msgid_plural "Finding cummits for cummit graph in %<PRIuMAX> packs"
 msgstr[0] "Söker incheckningar för incheckingsgraf i %<PRIuMAX> paket"
 msgstr[1] "Söker incheckningar för incheckingsgraf i %<PRIuMAX> paket"
 
-#: commit-graph.c:1714
+#: cummit-graph.c:1714
 #, c-format
 msgid "error adding pack %s"
 msgstr "fel vid tillägg av paketet %s"
 
-#: commit-graph.c:1718
+#: cummit-graph.c:1718
 #, c-format
 msgid "error opening index for %s"
 msgstr "fel vid öppning av indexet för %s"
 
-#: commit-graph.c:1756
-msgid "Finding commits for commit graph among packed objects"
+#: cummit-graph.c:1756
+msgid "Finding cummits for cummit graph among packed objects"
 msgstr "Söker incheckningar för incheckingsgraf i packade objekt"
 
-#: commit-graph.c:1774
-msgid "Finding extra edges in commit graph"
+#: cummit-graph.c:1774
+msgid "Finding extra edges in cummit graph"
 msgstr "Söker ytterligare kanter i incheckingsgraf"
 
-#: commit-graph.c:1823
+#: cummit-graph.c:1823
 msgid "failed to write correct number of base graph ids"
 msgstr "kunde inte skriva korrekt antal bas-graf-id:n"
 
-#: commit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
+#: cummit-graph.c:1854 midx.c:1168 builtin/sparse-checkout.c:475
 #, c-format
 msgid "unable to create leading directories of %s"
 msgstr "kunde inte skapa inledande kataloger för %s"
 
-#: commit-graph.c:1868
+#: cummit-graph.c:1868
 msgid "unable to create temporary graph layer"
 msgstr "kan inte skapa temporärt graflager"
 
-#: commit-graph.c:1873
+#: cummit-graph.c:1873
 #, c-format
 msgid "unable to adjust shared permissions for '%s'"
 msgstr "kan inte justera delade behörigheter för \"%s\""
 
-#: commit-graph.c:1930
+#: cummit-graph.c:1930
 #, c-format
-msgid "Writing out commit graph in %d pass"
-msgid_plural "Writing out commit graph in %d passes"
+msgid "Writing out cummit graph in %d pass"
+msgid_plural "Writing out cummit graph in %d passes"
 msgstr[0] "Skriver ut incheckningsgraf i %d pass"
 msgstr[1] "Skriver ut incheckningsgraf i %d pass"
 
-#: commit-graph.c:1967
-msgid "unable to open commit-graph chain file"
+#: cummit-graph.c:1967
+msgid "unable to open cummit-graph chain file"
 msgstr "Kunde inte öppna incheckningsgrafkedjefilen"
 
-#: commit-graph.c:1983
-msgid "failed to rename base commit-graph file"
+#: cummit-graph.c:1983
+msgid "failed to rename base cummit-graph file"
 msgstr "kunde inte byta namn på bas-incheckingsgraffilen"
 
-#: commit-graph.c:2004
-msgid "failed to rename temporary commit-graph file"
+#: cummit-graph.c:2004
+msgid "failed to rename temporary cummit-graph file"
 msgstr "kunde inte byta namn på temporär incheckningsgraffil"
 
-#: commit-graph.c:2137
-msgid "Scanning merged commits"
+#: cummit-graph.c:2137
+msgid "Scanning merged cummits"
 msgstr "Söker sammanslagna incheckningar"
 
-#: commit-graph.c:2181
-msgid "Merging commit-graph"
+#: cummit-graph.c:2181
+msgid "Merging cummit-graph"
 msgstr "Slår ihop incheckningsgraf"
 
-#: commit-graph.c:2289
-msgid "attempting to write a commit-graph, but 'core.commitGraph' is disabled"
+#: cummit-graph.c:2289
+msgid "attempting to write a cummit-graph, but 'core.cummitGraph' is disabled"
 msgstr ""
-"försöker skriva en incheckningsgraf, men \"core.commitGraph\" är inaktiverad"
+"försöker skriva en incheckningsgraf, men \"core.cummitGraph\" är inaktiverad"
 
-#: commit-graph.c:2396
-msgid "too many commits to write graph"
+#: cummit-graph.c:2396
+msgid "too many cummits to write graph"
 msgstr "för många incheckningar för att skriva graf"
 
-#: commit-graph.c:2494
-msgid "the commit-graph file has incorrect checksum and is likely corrupt"
+#: cummit-graph.c:2494
+msgid "the cummit-graph file has incorrect checksum and is likely corrupt"
 msgstr ""
 "filen med incheckningsgraf har felaktig kontrollsumma och är troligtvis "
 "trasig"
 
-#: commit-graph.c:2504
+#: cummit-graph.c:2504
 #, c-format
-msgid "commit-graph has incorrect OID order: %s then %s"
+msgid "cummit-graph has incorrect OID order: %s then %s"
 msgstr "incheckningsgrafen har felaktig OID-ordning: %s så %s"
 
-#: commit-graph.c:2514 commit-graph.c:2529
+#: cummit-graph.c:2514 cummit-graph.c:2529
 #, c-format
-msgid "commit-graph has incorrect fanout value: fanout[%d] = %u != %u"
+msgid "cummit-graph has incorrect fanout value: fanout[%d] = %u != %u"
 msgstr ""
 "incheckningsgrafen har felaktig utbredningsvärde: fanout[%d] = %u != %u"
 
-#: commit-graph.c:2521
+#: cummit-graph.c:2521
 #, c-format
-msgid "failed to parse commit %s from commit-graph"
+msgid "failed to parse cummit %s from cummit-graph"
 msgstr "kunde inte tolka incheckning %s från incheckningsgraf"
 
-#: commit-graph.c:2539
-msgid "Verifying commits in commit graph"
+#: cummit-graph.c:2539
+msgid "Verifying cummits in cummit graph"
 msgstr "Bekräftar incheckningar i incheckningsgrafen"
 
-#: commit-graph.c:2554
+#: cummit-graph.c:2554
 #, c-format
-msgid "failed to parse commit %s from object database for commit-graph"
+msgid "failed to parse cummit %s from object database for cummit-graph"
 msgstr ""
 "misslyckades tolka incheckning %s från objektdatabasen för incheckningsgraf"
 
-#: commit-graph.c:2561
+#: cummit-graph.c:2561
 #, c-format
-msgid "root tree OID for commit %s in commit-graph is %s != %s"
+msgid "root tree OID for cummit %s in cummit-graph is %s != %s"
 msgstr "rot-trädets OID för incheckningen %s i incheckningsgrafen är %s != %s"
 
-#: commit-graph.c:2571
+#: cummit-graph.c:2571
 #, c-format
-msgid "commit-graph parent list for commit %s is too long"
+msgid "cummit-graph parent list for cummit %s is too long"
 msgstr "incheckningsgrafens föräldralista för incheckningen %s är för lång"
 
-#: commit-graph.c:2580
+#: cummit-graph.c:2580
 #, c-format
-msgid "commit-graph parent for %s is %s != %s"
+msgid "cummit-graph parent for %s is %s != %s"
 msgstr "incheckningsgrafens förälder för %s är %s != %s"
 
-#: commit-graph.c:2594
+#: cummit-graph.c:2594
 #, c-format
-msgid "commit-graph parent list for commit %s terminates early"
+msgid "cummit-graph parent list for cummit %s terminates early"
 msgstr ""
 "incheckningsgrafens föräldralista för incheckningen %s avslutas för tidigt"
 
-#: commit-graph.c:2599
+#: cummit-graph.c:2599
 #, c-format
 msgid ""
-"commit-graph has generation number zero for commit %s, but non-zero elsewhere"
+"cummit-graph has generation number zero for cummit %s, but non-zero elsewhere"
 msgstr ""
 "incheckningsgrafen har generationsnummer noll för incheckningen %s, men icke-"
 "noll på annan plats"
 
-#: commit-graph.c:2603
+#: cummit-graph.c:2603
 #, c-format
 msgid ""
-"commit-graph has non-zero generation number for commit %s, but zero elsewhere"
+"cummit-graph has non-zero generation number for cummit %s, but zero elsewhere"
 msgstr ""
 "incheckningsgrafen har generationsnummer skilt från noll för incheckningen "
 "%s, men noll på annan plats"
 
-#: commit-graph.c:2620
+#: cummit-graph.c:2620
 #, c-format
-msgid "commit-graph generation for commit %s is %<PRIuMAX> < %<PRIuMAX>"
+msgid "cummit-graph generation for cummit %s is %<PRIuMAX> < %<PRIuMAX>"
 msgstr ""
 "incheckningsgrafens generation för incheckningen %s är %<PRIuMAX> < "
 "%<PRIuMAX>"
 
-#: commit-graph.c:2626
+#: cummit-graph.c:2626
 #, c-format
-msgid "commit date for commit %s in commit-graph is %<PRIuMAX> != %<PRIuMAX>"
+msgid "cummit date for cummit %s in cummit-graph is %<PRIuMAX> != %<PRIuMAX>"
 msgstr ""
 "incheckningsdatumet för incheckningen %s i incheckningsgrafen är %<PRIuMAX> !"
 "= %<PRIuMAX>"
 
-#: commit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
+#: cummit.c:54 sequencer.c:3105 builtin/am.c:400 builtin/am.c:445
 #: builtin/am.c:450 builtin/am.c:1449 builtin/am.c:2124 builtin/replace.c:456
 #, c-format
 msgid "could not parse %s"
 msgstr "kunde inte tolka %s"
 
-#: commit.c:56
+#: cummit.c:56
 #, c-format
-msgid "%s %s is not a commit!"
+msgid "%s %s is not a cummit!"
 msgstr "%s %s är inte en incheckning!"
 
-#: commit.c:197
+#: cummit.c:197
 msgid ""
 "Support for <GIT_DIR>/info/grafts is deprecated\n"
 "and will be removed in a future Git version.\n"
@@ -2494,37 +2494,37 @@ msgstr ""
 "Slå av detta meddelande genom att skriva\n"
 "\"git config advice.graftFileDeprecated false\""
 
-#: commit.c:1252
+#: cummit.c:1252
 #, c-format
-msgid "Commit %s has an untrusted GPG signature, allegedly by %s."
+msgid "cummit %s has an untrusted GPG signature, allegedly by %s."
 msgstr ""
 "Incheckningen %s har en obetrodd GPG-signatur som påstås vara gjord av %s."
 
-#: commit.c:1256
+#: cummit.c:1256
 #, c-format
-msgid "Commit %s has a bad GPG signature allegedly by %s."
+msgid "cummit %s has a bad GPG signature allegedly by %s."
 msgstr ""
 "Incheckningen %s har en felaktig GPG-signatur som påstås vara gjord av %s."
 
-#: commit.c:1259
+#: cummit.c:1259
 #, c-format
-msgid "Commit %s does not have a GPG signature."
+msgid "cummit %s does not have a GPG signature."
 msgstr "Incheckning %s har inte någon GPG-signatur."
 
-#: commit.c:1262
+#: cummit.c:1262
 #, c-format
-msgid "Commit %s has a good GPG signature by %s\n"
+msgid "cummit %s has a good GPG signature by %s\n"
 msgstr "Incheckningen %s har en korrekt GPG-signatur av %s\n"
 
-#: commit.c:1516
+#: cummit.c:1516
 msgid ""
-"Warning: commit message did not conform to UTF-8.\n"
+"Warning: cummit message did not conform to UTF-8.\n"
 "You may want to amend it after fixing the message, or set the config\n"
-"variable i18n.commitencoding to the encoding your project uses.\n"
+"variable i18n.cummitencoding to the encoding your project uses.\n"
 msgstr ""
 "Varning: incheckningsmeddelandet är inte korrekt UTF-8.\n"
 "Uppdatera det efter att ha rättat meddelandet, eller ändra variabeln\n"
-"i18n.commitencoding till den teckenkodning som används i ditt projekt.\n"
+"i18n.cummitencoding till den teckenkodning som används i ditt projekt.\n"
 
 #: compat/obstack.c:406 compat/obstack.c:408
 msgid "memory exhausted"
@@ -3371,7 +3371,7 @@ msgid "--merge-base does not work with ranges"
 msgstr "--merge-base fungerar inte med intervall"
 
 #: diff-lib.c:563
-msgid "--merge-base only works with commits"
+msgid "--merge-base only works with cummits"
 msgstr "--merge-base fungerar bara med incheckningar"
 
 #: diff-lib.c:580
@@ -4190,7 +4190,7 @@ msgstr "fick %s %d %s"
 
 #: fetch-pack.c:470
 #, c-format
-msgid "invalid commit %s"
+msgid "invalid cummit %s"
 msgstr "ogiltig incheckning %s"
 
 #: fetch-pack.c:501
@@ -4276,7 +4276,7 @@ msgid "Server does not support this repository's object format"
 msgstr "Servern stöder inte det här arkivets objektformat"
 
 #: fetch-pack.c:1142
-msgid "no common commits"
+msgid "no common cummits"
 msgstr "inga gemensamma incheckningar"
 
 #: fetch-pack.c:1151 fetch-pack.c:1506 builtin/clone.c:1166
@@ -4709,7 +4709,7 @@ msgid "Author identity unknown\n"
 msgstr "Författar-identitet okänd\n"
 
 #: ident.c:357
-msgid "Committer identity unknown\n"
+msgid "cummitter identity unknown\n"
 msgstr "Incheckar-identitet okänd\n"
 
 #: ident.c:363
@@ -4766,7 +4766,7 @@ msgstr "tomt ident-namn (för <%s>) ej tillåtet"
 msgid "name consists only of disallowed characters: %s"
 msgstr "namnet består enbart av ej tillåtna tecken: %s"
 
-#: ident.c:455 builtin/commit.c:649
+#: ident.c:455 builtin/cummit.c:649
 #, c-format
 msgid "invalid date format: %s"
 msgstr "felaktigt datumformat: %s"
@@ -4828,7 +4828,7 @@ msgstr "posten \"%s\" i trädet %s har blob-läge, men är inte en blob"
 
 #: list-objects.c:415
 #, c-format
-msgid "unable to load root tree for commit %s"
+msgid "unable to load root tree for cummit %s"
 msgstr "kunde inte läsa in rot-trädet för incheckningen %s"
 
 #: lockfile.c:152
@@ -4837,7 +4837,7 @@ msgid ""
 "Unable to create '%s.lock': %s.\n"
 "\n"
 "Another git process seems to be running in this repository, e.g.\n"
-"an editor opened by 'git commit'. Please make sure all processes\n"
+"an editor opened by 'git cummit'. Please make sure all processes\n"
 "are terminated then try again. If it still fails, a git process\n"
 "may have crashed in this repository earlier:\n"
 "remove the file manually to continue."
@@ -4845,7 +4845,7 @@ msgstr ""
 "Kunde inte skapa \"%s.lock\": %s.\n"
 "\n"
 "Det verkar som en annan git-process kör i det här arkivet, t.ex.\n"
-"ett textredigeringsprogram startat av \"git commit\". Se till att\n"
+"ett textredigeringsprogram startat av \"git cummit\". Se till att\n"
 "alla processer avslutats och försök sedan igen. Om det fortfarande\n"
 "misslyckas kanske en git-process har kraschat i det här arkivet\n"
 "tidigare:\n"
@@ -4881,12 +4881,12 @@ msgstr "Misslyckades slå ihop undermodulen %s (ej utcheckad)"
 
 #: merge-ort.c:1639 merge-recursive.c:1221
 #, c-format
-msgid "Failed to merge submodule %s (commits not present)"
+msgid "Failed to merge submodule %s (cummits not present)"
 msgstr "Misslyckades slå ihop undermodulen %s (incheckningar saknas)"
 
 #: merge-ort.c:1648 merge-recursive.c:1228
 #, c-format
-msgid "Failed to merge submodule %s (commits don't follow merge-base)"
+msgid "Failed to merge submodule %s (cummits don't follow merge-base)"
 msgstr ""
 "Misslyckades slå ihop undermodulen %s (incheckningar följer inte "
 "sammanslagningsbasen)"
@@ -5143,7 +5143,7 @@ msgid "Already up to date."
 msgstr "Redan à jour."
 
 #: merge-recursive.c:353
-msgid "(bad commit)\n"
+msgid "(bad cummit)\n"
 msgstr "(felaktig incheckning)\n"
 
 #: merge-recursive.c:381
@@ -5205,7 +5205,7 @@ msgstr "vet inte hur %06o %s \"%s\" ska hanteras"
 
 #: merge-recursive.c:1236 merge-recursive.c:1249
 #, c-format
-msgid "Fast-forwarding submodule %s to the following commit:"
+msgid "Fast-forwarding submodule %s to the following cummit:"
 msgstr "Snabbspolar undermodulen %s till följande incheckning:"
 
 #: merge-recursive.c:1239 merge-recursive.c:1252
@@ -5215,7 +5215,7 @@ msgstr "Snabbspolar undermodulen %s"
 
 #: merge-recursive.c:1276
 #, c-format
-msgid "Failed to merge submodule %s (merge following commits not found)"
+msgid "Failed to merge submodule %s (merge following cummits not found)"
 msgstr ""
 "Misslyckades slå ihop undermodulen %s (sammanslagning efter incheckningar "
 "hittades inte)"
@@ -5412,7 +5412,7 @@ msgstr[0] "hittade %u gemensam förfader:"
 msgstr[1] "hittade %u gemensamma förfäder:"
 
 #: merge-recursive.c:3651
-msgid "merge returned no commit"
+msgid "merge returned no cummit"
 msgstr "sammanslagningen returnerade ingen incheckning"
 
 #: merge-recursive.c:3823
@@ -5671,11 +5671,11 @@ msgstr "misslyckades utföra join på lazy_name-tråd: %s"
 #, c-format
 msgid ""
 "You have not concluded your previous notes merge (%s exists).\n"
-"Please, use 'git notes merge --commit' or 'git notes merge --abort' to "
-"commit/abort the previous merge before you start a new notes merge."
+"Please, use 'git notes merge --cummit' or 'git notes merge --abort' to "
+"cummit/abort the previous merge before you start a new notes merge."
 msgstr ""
 "Du har inte avslutat föregående antecknings-sammanslagning (%s finns).\n"
-"Använd \"git notes merge --commit\" eller \"git notes merge --abort\" för "
+"Använd \"git notes merge --cummit\" eller \"git notes merge --abort\" för "
 "att checka in eller avbryta föregående sammanslagning innan du påbörjar en "
 "ny antecknings-sammanslagning."
 
@@ -5685,7 +5685,7 @@ msgid "You have not concluded your notes merge (%s exists)."
 msgstr "Du har inte avslutat antecknings-sammanslagningen (%s finns)."
 
 #: notes-utils.c:46
-msgid "Cannot commit uninitialized/unreferenced notes tree"
+msgid "Cannot cummit uninitialized/unreferenced notes tree"
 msgstr "Kan inte checka in oinitierat/orefererat anteckningsträd"
 
 #: notes-utils.c:105
@@ -5896,7 +5896,7 @@ msgid "cannot read object for %s"
 msgstr "kan inte läsa objekt för %s"
 
 #: object-file.c:2151
-msgid "corrupt commit"
+msgid "corrupt cummit"
 msgstr "trasik incheckning"
 
 #: object-file.c:2159
@@ -5972,14 +5972,14 @@ msgstr "kan inte tolka innehåll i %s"
 msgid "%s [bad object]"
 msgstr "%s [felaktig objekt]."
 
-#. TRANSLATORS: This is a line of ambiguous commit
+#. TRANSLATORS: This is a line of ambiguous cummit
 #. object output. E.g.:
 #. *
-#.    "deadbeef commit 2021-01-01 - Some Commit Message"
+#.    "deadbeef cummit 2021-01-01 - Some cummit Message"
 #.
 #: object-name.c:407
 #, c-format
-msgid "%s commit %s - %s"
+msgid "%s cummit %s - %s"
 msgstr "%s incheckning %s - %s"
 
 #. TRANSLATORS: This is a line of ambiguous
@@ -6247,7 +6247,7 @@ msgstr "offset före slutet av packindex för %s (trasigt index?)"
 msgid "offset beyond end of pack index for %s (truncated index?)"
 msgstr "offset borton slutet av packindex för %s (trunkerat index?)"
 
-#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/commit-graph.c:175
+#: parse-options-cb.c:21 parse-options-cb.c:25 builtin/cummit-graph.c:175
 #, c-format
 msgid "option `%s' expects a numerical value"
 msgstr "flaggan \"%s\" antar ett numeriskt värde"
@@ -6572,16 +6572,16 @@ msgstr "kunde inte läsa utdata från \"log\""
 
 #: range-diff.c:98 sequencer.c:5575
 #, c-format
-msgid "could not parse commit '%s'"
+msgid "could not parse cummit '%s'"
 msgstr "kunde inte tolka incheckningen \"%s\""
 
 #: range-diff.c:109
 #, c-format
 msgid ""
-"could not parse first line of `log` output: did not start with 'commit ': "
+"could not parse first line of `log` output: did not start with 'cummit ': "
 "'%s'"
 msgstr ""
-"kunde inte tolka första raden i \"log\"-updata: börjar inte med \"commit \": "
+"kunde inte tolka första raden i \"log\"-updata: börjar inte med \"cummit \": "
 "\"%s\""
 
 #: range-diff.c:132
@@ -6615,7 +6615,7 @@ msgstr ""
 
 #: read-cache.c:780 builtin/submodule--helper.c:3359
 #, c-format
-msgid "'%s' does not have a commit checked out"
+msgid "'%s' does not have a cummit checked out"
 msgstr "\"%s\" har inte någon utcheckad incheckning"
 
 #: read-cache.c:832
@@ -6711,7 +6711,7 @@ msgstr "osorterade köposter för \"%s\""
 #: read-cache.c:2096 read-cache.c:2402 rerere.c:549 rerere.c:583 rerere.c:1096
 #: submodule.c:1831 builtin/add.c:586 builtin/check-ignore.c:183
 #: builtin/checkout.c:532 builtin/checkout.c:724 builtin/clean.c:1016
-#: builtin/commit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
+#: builtin/cummit.c:379 builtin/diff-tree.c:122 builtin/grep.c:521
 #: builtin/mv.c:148 builtin/reset.c:506 builtin/rm.c:293
 #: builtin/submodule--helper.c:335 builtin/submodule--helper.c:3319
 msgid "index file corrupt"
@@ -6818,31 +6818,31 @@ msgstr ""
 #: rebase-interactive.c:33
 #, c-format
 msgid ""
-"unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
+"unrecognized setting %s for option rebase.missingcummitsCheck. Ignoring."
 msgstr ""
-"okänd inställning %s för flaggan rebase.missingCommitsCheck. Ignorerar."
+"okänd inställning %s för flaggan rebase.missingcummitsCheck. Ignorerar."
 
 #: rebase-interactive.c:42
 msgid ""
 "\n"
 "Commands:\n"
-"p, pick <commit> = use commit\n"
-"r, reword <commit> = use commit, but edit the commit message\n"
-"e, edit <commit> = use commit, but stop for amending\n"
-"s, squash <commit> = use commit, but meld into previous commit\n"
-"f, fixup [-C | -c] <commit> = like \"squash\" but keep only the previous\n"
-"                   commit's log message, unless -C is used, in which case\n"
-"                   keep only this commit's message; -c is same as -C but\n"
+"p, pick <cummit> = use cummit\n"
+"r, reword <cummit> = use cummit, but edit the cummit message\n"
+"e, edit <cummit> = use cummit, but stop for amending\n"
+"s, squash <cummit> = use cummit, but meld into previous cummit\n"
+"f, fixup [-C | -c] <cummit> = like \"squash\" but keep only the previous\n"
+"                   cummit's log message, unless -C is used, in which case\n"
+"                   keep only this cummit's message; -c is same as -C but\n"
 "                   opens the editor\n"
 "x, exec <command> = run command (the rest of the line) using shell\n"
 "b, break = stop here (continue rebase later with 'git rebase --continue')\n"
-"d, drop <commit> = remove commit\n"
+"d, drop <cummit> = remove cummit\n"
 "l, label <label> = label current HEAD with a name\n"
 "t, reset <label> = reset HEAD to a label\n"
-"m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-".       create a merge commit using the original merge commit's\n"
-".       message (or the oneline, if no original merge commit was\n"
-".       specified); use -c <commit> to reword the commit message\n"
+"m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+".       create a merge cummit using the original merge cummit's\n"
+".       message (or the oneline, if no original merge cummit was\n"
+".       specified); use -c <cummit> to reword the cummit message\n"
 "\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n"
 msgstr ""
@@ -6886,7 +6886,7 @@ msgstr[1] "Ombasera %s på %s (%d kommandon)"
 #: rebase-interactive.c:75
 msgid ""
 "\n"
-"Do not remove any line. Use 'drop' explicitly to remove a commit.\n"
+"Do not remove any line. Use 'drop' explicitly to remove a cummit.\n"
 msgstr ""
 "\n"
 "Ta inte bort rader. Använd \"drop\" för att specifikt förkasta en "
@@ -6895,7 +6895,7 @@ msgstr ""
 #: rebase-interactive.c:78
 msgid ""
 "\n"
-"If you remove a line here THAT COMMIT WILL BE LOST.\n"
+"If you remove a line here THAT cummit WILL BE LOST.\n"
 msgstr ""
 "\n"
 "Om du tar bort en rad KOMMER DEN INCHECKNINGEN ATT FÖRLORAS.\n"
@@ -6939,8 +6939,8 @@ msgstr "kunde inte skriva \"%s\"."
 #: rebase-interactive.c:196
 #, c-format
 msgid ""
-"Warning: some commits may have been dropped accidentally.\n"
-"Dropped commits (newer to older):\n"
+"Warning: some cummits may have been dropped accidentally.\n"
+"Dropped cummits (newer to older):\n"
 msgstr ""
 "Varning: vissa incheckningar kan av misstag ha tappats.\n"
 "Tappade incheckningar (nyaste först):\n"
@@ -6948,9 +6948,9 @@ msgstr ""
 #: rebase-interactive.c:203
 #, c-format
 msgid ""
-"To avoid this message, use \"drop\" to explicitly remove a commit.\n"
+"To avoid this message, use \"drop\" to explicitly remove a cummit.\n"
 "\n"
-"Use 'git config rebase.missingCommitsCheck' to change the level of "
+"Use 'git config rebase.missingcummitsCheck' to change the level of "
 "warnings.\n"
 "The possible behaviours are: ignore, warn, error.\n"
 "\n"
@@ -6959,7 +6959,7 @@ msgstr ""
 "explicit\n"
 "kasta en incheckning.\n"
 "\n"
-"Använd \"git config rebase.missingCommitsCheck\" för att ändra "
+"Använd \"git config rebase.missingcummitsCheck\" för att ändra "
 "varningsnivån.\n"
 "Möjliga bettenden är: \"ignore\" (ignorera), \"warn\" (varna), \"error"
 "\" (fel).\n"
@@ -7203,7 +7203,7 @@ msgstr "felformat objektnamn %s"
 
 #: ref-filter.c:2746
 #, c-format
-msgid "option `%s' must point to a commit"
+msgid "option `%s' must point to a cummit"
 msgstr "flaggan \"%s\" måste peka på en incheckning"
 
 #: reflog.c:407
@@ -7408,7 +7408,7 @@ msgstr ""
 #: remote.c:1231
 #, c-format
 msgid ""
-"The <src> part of the refspec is a commit object.\n"
+"The <src> part of the refspec is a cummit object.\n"
 "Did you mean to create a new branch by pushing to\n"
 "'%s:refs/heads/%s'?"
 msgstr ""
@@ -7537,7 +7537,7 @@ msgstr "Din gren är à jour med \"%s\".\n"
 
 #: remote.c:2246
 #, c-format
-msgid "Your branch and '%s' refer to different commits.\n"
+msgid "Your branch and '%s' refer to different cummits.\n"
 msgstr "Din gren och \"%s\" pekar på olika incheckningar.\n"
 
 #: remote.c:2249
@@ -7547,20 +7547,20 @@ msgstr "  (använd \"%s\" för detaljer)\n"
 
 #: remote.c:2253
 #, c-format
-msgid "Your branch is ahead of '%s' by %d commit.\n"
-msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
+msgid "Your branch is ahead of '%s' by %d cummit.\n"
+msgid_plural "Your branch is ahead of '%s' by %d cummits.\n"
 msgstr[0] "Din gren ligger före \"%s\" med %d incheckning.\n"
 msgstr[1] "Din gren ligger före \"%s\" med %d incheckningar.\n"
 
 #: remote.c:2259
-msgid "  (use \"git push\" to publish your local commits)\n"
+msgid "  (use \"git push\" to publish your local cummits)\n"
 msgstr "  (använd \"git push\" för att publicera dina lokala incheckningar)\n"
 
 #: remote.c:2262
 #, c-format
-msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
+msgid "Your branch is behind '%s' by %d cummit, and can be fast-forwarded.\n"
 msgid_plural ""
-"Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
+"Your branch is behind '%s' by %d cummits, and can be fast-forwarded.\n"
 msgstr[0] ""
 "Din gren ligger efter \"%s\" med %d incheckning, och kan snabbspolas.\n"
 msgstr[1] ""
@@ -7574,10 +7574,10 @@ msgstr "  (använd \"git pull\" för att uppdatera din lokala gren)\n"
 #, c-format
 msgid ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commit each, respectively.\n"
+"and have %d and %d different cummit each, respectively.\n"
 msgid_plural ""
 "Your branch and '%s' have diverged,\n"
-"and have %d and %d different commits each, respectively.\n"
+"and have %d and %d different cummits each, respectively.\n"
 msgstr[0] ""
 "Din gren och \"%s\" har divergerat,\n"
 "och har %d respektive %d olika incheckning.\n"
@@ -7721,7 +7721,7 @@ msgstr "din nuvarande gren verkar vara trasig"
 
 #: revision.c:2715
 #, c-format
-msgid "your current branch '%s' does not have any commits yet"
+msgid "your current branch '%s' does not have any cummits yet"
 msgstr "din nuvarande gren \"%s\" innehåller ännu inte några incheckningar"
 
 #: revision.c:2901
@@ -7789,7 +7789,7 @@ msgstr "mottagarsidan stöder inte push-flaggor"
 
 #: sequencer.c:197
 #, c-format
-msgid "invalid commit message cleanup mode '%s'"
+msgid "invalid cummit message cleanup mode '%s'"
 msgstr "felaktigt incheckningsmeddelandestädningsläge \"%s\""
 
 #: sequencer.c:325
@@ -7833,7 +7833,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git cherry-pick --continue\".\n"
-"You can instead skip this commit with \"git cherry-pick --skip\".\n"
+"You can instead skip this cummit with \"git cherry-pick --skip\".\n"
 "To abort and get back to the state before \"git cherry-pick\",\n"
 "run \"git cherry-pick --abort\"."
 msgstr ""
@@ -7849,7 +7849,7 @@ msgid ""
 "After resolving the conflicts, mark them with\n"
 "\"git add/rm <pathspec>\", then run\n"
 "\"git revert --continue\".\n"
-"You can instead skip this commit with \"git revert --skip\".\n"
+"You can instead skip this cummit with \"git revert --skip\".\n"
 "To abort and get back to the state before \"git revert\",\n"
 "run \"git revert --abort\"."
 msgstr ""
@@ -7883,7 +7883,7 @@ msgid "failed to finalize '%s'"
 msgstr "misslyckades färdigställa \"%s\""
 
 #: sequencer.c:473 sequencer.c:1930 sequencer.c:3112 sequencer.c:3547
-#: sequencer.c:3675 builtin/am.c:290 builtin/commit.c:837 builtin/merge.c:1154
+#: sequencer.c:3675 builtin/am.c:290 builtin/cummit.c:837 builtin/merge.c:1154
 #, c-format
 msgid "could not read '%s'"
 msgstr "kunde inte läsa \"%s\""
@@ -7894,7 +7894,7 @@ msgid "your local changes would be overwritten by %s."
 msgstr "dina lokala ändringar skulle skrivas över av %s."
 
 #: sequencer.c:503
-msgid "commit your changes or stash them to proceed."
+msgid "cummit your changes or stash them to proceed."
 msgstr "checka in dina ändringar eller använd \"stash\" för att fortsätta."
 
 #: sequencer.c:535
@@ -7920,7 +7920,7 @@ msgid "unable to update cache tree"
 msgstr "kan inte uppdatera cacheträd"
 
 #: sequencer.c:713
-msgid "could not resolve HEAD commit"
+msgid "could not resolve HEAD cummit"
 msgstr "kunde inte bestämma HEAD:s incheckning"
 
 #: sequencer.c:793
@@ -7972,13 +7972,13 @@ msgstr "\"GIT_AUTHOR_DATE\" saknas"
 #, c-format
 msgid ""
 "you have staged changes in your working tree\n"
-"If these changes are meant to be squashed into the previous commit, run:\n"
+"If these changes are meant to be squashed into the previous cummit, run:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
-"If they are meant to go into a new commit, run:\n"
+"If they are meant to go into a new cummit, run:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "In both cases, once you're done, continue with:\n"
 "\n"
@@ -7987,19 +7987,19 @@ msgstr ""
 "du har köade ändringar i din arbetskatalog.\n"
 "Om ändringarna ska läggas in i föregående incheckning, kör:\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Om de ska checkas in i en egen incheckning, kör:\n"
 "\n"
-"  git commit %s\n"
+"  git cummit %s\n"
 "\n"
 "Oavsett vilket, när du är färdig fortsätter du med:\n"
 "\n"
 "  git rebase --continue\n"
 
 #: sequencer.c:1225
-msgid "'prepare-commit-msg' hook failed"
-msgstr "kroken \"prepare-commit-msg\" misslyckades"
+msgid "'prepare-cummit-msg' hook failed"
+msgstr "kroken \"prepare-cummit-msg\" misslyckades"
 
 #: sequencer.c:1231
 msgid ""
@@ -8011,9 +8011,9 @@ msgid ""
 "\n"
 "    git config --global --edit\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Ditt namn och e-postadress konfigurerades automatiskt baserat på\n"
 "ditt användar-id och värdnamn. Kontrollera att de är riktiga. Du\n"
@@ -8026,7 +8026,7 @@ msgstr ""
 "När du gjort det kan du rätta identiteten som användes för den här\n"
 "incheckningen med:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1244
 msgid ""
@@ -8037,9 +8037,9 @@ msgid ""
 "    git config --global user.name \"Your Name\"\n"
 "    git config --global user.email you@example.com\n"
 "\n"
-"After doing this, you may fix the identity used for this commit with:\n"
+"After doing this, you may fix the identity used for this cummit with:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 msgstr ""
 "Ditt namn och e-postadress konfigurerades automatiskt baserat på\n"
 "ditt användar-id och värdnamn. Kontrollera att de är riktiga. Du\n"
@@ -8051,18 +8051,18 @@ msgstr ""
 "När du gjort det kan du rätta identiteten som användes för den här\n"
 "incheckningen med:\n"
 "\n"
-"    git commit --amend --reset-author\n"
+"    git cummit --amend --reset-author\n"
 
 #: sequencer.c:1287
-msgid "couldn't look up newly created commit"
+msgid "couldn't look up newly created cummit"
 msgstr "kunde inte slå upp en precis skapad incheckning"
 
 #: sequencer.c:1289
-msgid "could not parse newly created commit"
+msgid "could not parse newly created cummit"
 msgstr "kunde inte tolka en precis skapad incheckning"
 
 #: sequencer.c:1336
-msgid "unable to resolve HEAD after creating commit"
+msgid "unable to resolve HEAD after creating cummit"
 msgstr "kunde inte bestämma HEAD efter att ha skapat incheckning"
 
 #: sequencer.c:1338
@@ -8070,7 +8070,7 @@ msgid "detached HEAD"
 msgstr "frånkopplad HEAD"
 
 #: sequencer.c:1342
-msgid " (root-commit)"
+msgid " (root-cummit)"
 msgstr " (rotincheckning)"
 
 #: sequencer.c:1363
@@ -8079,15 +8079,15 @@ msgstr "kunde inte tolka HEAD"
 
 #: sequencer.c:1365
 #, c-format
-msgid "HEAD %s is not a commit!"
+msgid "HEAD %s is not a cummit!"
 msgstr "HEAD %s är inte en incheckning!"
 
-#: sequencer.c:1369 sequencer.c:1447 builtin/commit.c:1707
-msgid "could not parse HEAD commit"
+#: sequencer.c:1369 sequencer.c:1447 builtin/cummit.c:1707
+msgid "could not parse HEAD cummit"
 msgstr "kunde inte tolka HEAD:s incheckning"
 
 #: sequencer.c:1425 sequencer.c:2310
-msgid "unable to parse commit author"
+msgid "unable to parse cummit author"
 msgstr "kunde inte tolka incheckningens författare"
 
 #: sequencer.c:1436 builtin/am.c:1644 builtin/merge.c:710
@@ -8096,7 +8096,7 @@ msgstr "git write-tree misslyckades skriva ett träd"
 
 #: sequencer.c:1469 sequencer.c:1589
 #, c-format
-msgid "unable to read commit message from '%s'"
+msgid "unable to read cummit message from '%s'"
 msgstr "kunde inte läsa incheckningsmeddelande från \"%s\""
 
 #: sequencer.c:1500 sequencer.c:1532
@@ -8108,9 +8108,9 @@ msgstr "ogiltig författar-identitet \"%s\""
 msgid "corrupt author: missing date information"
 msgstr "trasig författare: saknar datuminformation"
 
-#: sequencer.c:1545 builtin/am.c:1671 builtin/commit.c:1821 builtin/merge.c:921
+#: sequencer.c:1545 builtin/am.c:1671 builtin/cummit.c:1821 builtin/merge.c:921
 #: builtin/merge.c:946 t/helper/test-fast-rebase.c:78
-msgid "failed to write commit object"
+msgid "failed to write cummit object"
 msgstr "kunde inte skriva incheckningsobjekt"
 
 #: sequencer.c:1572 sequencer.c:4496 t/helper/test-fast-rebase.c:199
@@ -8121,12 +8121,12 @@ msgstr "kunde inte uppdatera %s"
 
 #: sequencer.c:1621
 #, c-format
-msgid "could not parse commit %s"
+msgid "could not parse cummit %s"
 msgstr "kunde inte tolka incheckningen %s"
 
 #: sequencer.c:1626
 #, c-format
-msgid "could not parse parent commit %s"
+msgid "could not parse parent cummit %s"
 msgstr "kunde inte tolka föräldraincheckningen %s"
 
 #: sequencer.c:1709 sequencer.c:1990
@@ -8135,26 +8135,26 @@ msgid "unknown command: %d"
 msgstr "okänt kommando: %d"
 
 #: sequencer.c:1751
-msgid "This is the 1st commit message:"
+msgid "This is the 1st cummit message:"
 msgstr "Det här är 1:a incheckningsmeddelandet:"
 
 #: sequencer.c:1752
 #, c-format
-msgid "This is the commit message #%d:"
+msgid "This is the cummit message #%d:"
 msgstr "Det här är incheckningsmeddelande %d:"
 
 #: sequencer.c:1753
-msgid "The 1st commit message will be skipped:"
+msgid "The 1st cummit message will be skipped:"
 msgstr "1:a incheckningsmeddelandet kommer hoppas över:"
 
 #: sequencer.c:1754
 #, c-format
-msgid "The commit message #%d will be skipped:"
+msgid "The cummit message #%d will be skipped:"
 msgstr "Incheckningsmeddelande %d kommer hoppas över:"
 
 #: sequencer.c:1755
 #, c-format
-msgid "This is a combination of %d commits."
+msgid "This is a combination of %d cummits."
 msgstr "Det här är en kombination av %d incheckningar."
 
 #: sequencer.c:1902 sequencer.c:1959
@@ -8171,12 +8171,12 @@ msgid "could not read HEAD"
 msgstr "kunde inte läsa HEAD"
 
 #: sequencer.c:1953
-msgid "could not read HEAD's commit message"
+msgid "could not read HEAD's cummit message"
 msgstr "kunde inte läsa HEAD:s incheckningsmeddelande"
 
 #: sequencer.c:1977
 #, c-format
-msgid "could not read commit message of %s"
+msgid "could not read cummit message of %s"
 msgstr "kunde inte läsa incheckningsmeddelande för %s"
 
 #: sequencer.c:2087
@@ -8184,29 +8184,29 @@ msgid "your index file is unmerged."
 msgstr "din indexfil har inte slagits ihop."
 
 #: sequencer.c:2094
-msgid "cannot fixup root commit"
+msgid "cannot fixup root cummit"
 msgstr "kan inte göra \"fixup\" på rotincheckning"
 
 #: sequencer.c:2113
 #, c-format
-msgid "commit %s is a merge but no -m option was given."
+msgid "cummit %s is a merge but no -m option was given."
 msgstr "incheckning %s är en sammanslagning, men flaggan -m angavs inte."
 
 #: sequencer.c:2121 sequencer.c:2129
 #, c-format
-msgid "commit %s does not have parent %d"
+msgid "cummit %s does not have parent %d"
 msgstr "incheckning %s har inte förälder %d"
 
 #: sequencer.c:2135
 #, c-format
-msgid "cannot get commit message for %s"
+msgid "cannot get cummit message for %s"
 msgstr "kan inte hämta incheckningsmeddelande för %s"
 
 #. TRANSLATORS: The first %s will be a "todo" command like
 #. "revert" or "pick", the second %s a SHA1.
 #: sequencer.c:2154
 #, c-format
-msgid "%s: cannot parse parent commit %s"
+msgid "%s: cannot parse parent cummit %s"
 msgstr "%s: kan inte tolka föräldraincheckningen %s"
 
 #: sequencer.c:2220
@@ -8261,7 +8261,7 @@ msgstr "ogiltig rad %d: %.*s"
 
 #: sequencer.c:2572
 #, c-format
-msgid "cannot '%s' without a previous commit"
+msgid "cannot '%s' without a previous cummit"
 msgstr "kan inte utföra \"%s\" utan en föregående incheckning"
 
 #: sequencer.c:2620 builtin/rebase.c:185
@@ -8287,7 +8287,7 @@ msgid "unusable instruction sheet: '%s'"
 msgstr "oanvändbart manus: \"%s\""
 
 #: sequencer.c:2714
-msgid "no commits parsed."
+msgid "no cummits parsed."
 msgstr "inga incheckningar lästes."
 
 #: sequencer.c:2725
@@ -8308,7 +8308,7 @@ msgid "malformed options sheet: '%s'"
 msgstr "trasigt manus: \"%s\""
 
 #: sequencer.c:3029 sequencer.c:4875
-msgid "empty commit set passed"
+msgid "empty cummit set passed"
 msgstr "den angivna uppsättningen incheckningar är tom"
 
 #: sequencer.c:3046
@@ -8385,7 +8385,7 @@ msgid "no cherry-pick in progress"
 msgstr "ingen \"cherry-pick\" pågår"
 
 #: sequencer.c:3256
-msgid "failed to skip the commit"
+msgid "failed to skip the cummit"
 msgstr "kunde inte hoppa över incheckningen"
 
 #: sequencer.c:3263
@@ -8395,7 +8395,7 @@ msgstr "ingenting att hoppa över"
 #: sequencer.c:3266
 #, c-format
 msgid ""
-"have you committed already?\n"
+"have you cummitted already?\n"
 "try \"git %s --continue\""
 msgstr ""
 "har du redan checkat in?\n"
@@ -8413,9 +8413,9 @@ msgstr "kan inte kopiera in \"%s\" till \"%s\""
 #: sequencer.c:3453
 #, c-format
 msgid ""
-"You can amend the commit now, with\n"
+"You can amend the cummit now, with\n"
 "\n"
-"  git commit --amend %s\n"
+"  git cummit --amend %s\n"
 "\n"
 "Once you are satisfied with your changes, run\n"
 "\n"
@@ -8423,7 +8423,7 @@ msgid ""
 msgstr ""
 "Du kan utöka incheckningen nu, med\n"
 "\n"
-"\tgit commit --amend %s\n"
+"\tgit cummit --amend %s\n"
 "\n"
 "När du är nöjd med dina ändringar kör du\n"
 "\n"
@@ -8473,7 +8473,7 @@ msgstr "och gjorde ändringar till indexet och/eller arbetskatalogen\n"
 msgid ""
 "execution succeeded: %s\n"
 "but left changes to the index and/or the working tree\n"
-"Commit or stash your changes, and then run\n"
+"cummit or stash your changes, and then run\n"
 "\n"
 "  git rebase --continue\n"
 "\n"
@@ -8491,7 +8491,7 @@ msgid "illegal label name: '%.*s'"
 msgstr "ogiltigt etikettnamn: \"%.*s\""
 
 #: sequencer.c:3655
-msgid "writing fake root commit"
+msgid "writing fake root cummit"
 msgstr "skriver fejkad rotincheckning"
 
 #: sequencer.c:3660
@@ -8523,7 +8523,7 @@ msgstr "\"octopus\"-sammanslagning kan inte köras ovanpå en [ny rot]"
 
 #: sequencer.c:3869
 #, c-format
-msgid "could not get commit message of '%s'"
+msgid "could not get cummit message of '%s'"
 msgstr "kunde inte läsa incheckningsmeddelande för \"%s\""
 
 #: sequencer.c:4013
@@ -8660,7 +8660,7 @@ msgid "cannot rebase: You have unstaged changes."
 msgstr "kan inte ombasera: Du har oköade ändringar."
 
 #: sequencer.c:4624
-msgid "cannot amend non-existing commit"
+msgid "cannot amend non-existing cummit"
 msgstr "kan inte lägga till incheckning som inte finns"
 
 #: sequencer.c:4626
@@ -8676,7 +8676,7 @@ msgstr "ogiltigt innehåll: \"%s\""
 #: sequencer.c:4631
 msgid ""
 "\n"
-"You have uncommitted changes in your working tree. Please, commit them\n"
+"You have uncummitted changes in your working tree. Please, cummit them\n"
 "first and then run 'git rebase --continue' again."
 msgstr ""
 "\n"
@@ -8693,7 +8693,7 @@ msgid "could not remove CHERRY_PICK_HEAD"
 msgstr "kunde inte ta bort CHERRY_PICK_HEAD"
 
 #: sequencer.c:4732
-msgid "could not commit staged changes."
+msgid "could not cummit staged changes."
 msgstr "kunde inte checka in köade ändringar."
 
 #: sequencer.c:4852
@@ -8707,16 +8707,16 @@ msgid "%s: bad revision"
 msgstr "%s: felaktig revision"
 
 #: sequencer.c:4891
-msgid "can't revert as initial commit"
+msgid "can't revert as initial cummit"
 msgstr "kan inte ångra som första incheckning"
 
 #: sequencer.c:5162 sequencer.c:5391
 #, c-format
-msgid "skipped previously applied commit %s"
+msgid "skipped previously applied cummit %s"
 msgstr "hoppade över tidigare applicerad incheckning %s"
 
 #: sequencer.c:5232 sequencer.c:5407
-msgid "use --reapply-cherry-picks to include skipped commits"
+msgid "use --reapply-cherry-picks to include skipped cummits"
 msgstr "använd --reapply-cherry-picks för att ta med överhoppade incheckningar"
 
 #: sequencer.c:5378
@@ -9049,7 +9049,7 @@ msgstr "felaktigt argument till --ignore-submodules: %s"
 #: submodule.c:866
 #, c-format
 msgid ""
-"Submodule in commit %s at path: '%s' collides with a submodule named the "
+"Submodule in cummit %s at path: '%s' collides with a submodule named the "
 "same. Skipping it."
 msgstr ""
 "Undermodulen i incheckning %s på sökvägen: \"%s\" krockar med en undermodul "
@@ -9057,13 +9057,13 @@ msgstr ""
 
 #: submodule.c:987
 #, c-format
-msgid "submodule entry '%s' (%s) is a %s, not a commit"
+msgid "submodule entry '%s' (%s) is a %s, not a cummit"
 msgstr "undermodulposten \"%s\" (%s) är en %s, inte en incheckning"
 
 #: submodule.c:1069
 #, c-format
 msgid ""
-"Could not run 'git rev-list <commits> --not --remotes -n 1' command in "
+"Could not run 'git rev-list <cummits> --not --remotes -n 1' command in "
 "submodule %s"
 msgstr ""
 "kunde inte köra \"git rev-list <incheckningar> --not --remotes -n 1\" i "
@@ -9100,12 +9100,12 @@ msgstr "Kunde inte komma åt undermodulen \"%s\"\n"
 
 #: submodule.c:1618
 #, c-format
-msgid "Could not access submodule '%s' at commit %s\n"
+msgid "Could not access submodule '%s' at cummit %s\n"
 msgstr "Kunde inte komma åt undermodulen \"%s\" vid incheckningen %s\n"
 
 #: submodule.c:1629
 #, c-format
-msgid "Fetching submodule %s%s at commit %s\n"
+msgid "Fetching submodule %s%s at cummit %s\n"
 msgstr "Hämtar undermodulen %s%s vvid incheckningen %s\n"
 
 #: submodule.c:1849
@@ -9578,7 +9578,7 @@ msgstr "trädfil för kort"
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by checkout:\n"
-"%%sPlease commit your changes or stash them before you switch branches."
+"%%sPlease cummit your changes or stash them before you switch branches."
 msgstr ""
 "Dina lokala ändringar av följande filer skulle skrivas över av utcheckning:\n"
 "%%sChecka in dina ändringar eller använd \"stash\" innan du byter gren."
@@ -9596,7 +9596,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
-"%%sPlease commit your changes or stash them before you merge."
+"%%sPlease cummit your changes or stash them before you merge."
 msgstr ""
 "Dina lokala ändringar av följande filer skulle skrivas över av "
 "sammanslagning:\n"
@@ -9616,7 +9616,7 @@ msgstr ""
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by %s:\n"
-"%%sPlease commit your changes or stash them before you %s."
+"%%sPlease cummit your changes or stash them before you %s."
 msgstr ""
 "Dina lokala ändringar av följande filer skulle skrivas över av \"%s\":\n"
 "%%sChecka in dina ändringar eller använd \"stash\" innan du \"%s\"."
@@ -10050,20 +10050,20 @@ msgid "  (use \"git rm <file>...\" to mark resolution)"
 msgstr "  (använd \"git rm <fil>...\" för att ange lösning)"
 
 #: wt-status.c:211 wt-status.c:1140
-msgid "Changes to be committed:"
+msgid "Changes to be cummitted:"
 msgstr "Ändringar att checka in:"
 
 #: wt-status.c:234 wt-status.c:1149
-msgid "Changes not staged for commit:"
+msgid "Changes not staged for cummit:"
 msgstr "Ändringar ej i incheckningskön:"
 
 #: wt-status.c:238
-msgid "  (use \"git add <file>...\" to update what will be committed)"
+msgid "  (use \"git add <file>...\" to update what will be cummitted)"
 msgstr ""
 "  (använd \"git add <fil>...\" för att uppdatera vad som ska checkas in)"
 
 #: wt-status.c:240
-msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
+msgid "  (use \"git add/rm <file>...\" to update what will be cummitted)"
 msgstr ""
 "  (använd \"git add/rm <fil>...\" för att uppdatera vad som ska checkas in)"
 
@@ -10075,13 +10075,13 @@ msgstr ""
 "arbetskatalogen)"
 
 #: wt-status.c:243
-msgid "  (commit or discard the untracked or modified content in submodules)"
+msgid "  (cummit or discard the untracked or modified content in submodules)"
 msgstr ""
 "  (checka in eller förkasta ospårat eller ändrat innehåll i undermoduler)"
 
 #: wt-status.c:254
 #, c-format
-msgid "  (use \"git %s <file>...\" to include in what will be committed)"
+msgid "  (use \"git %s <file>...\" to include in what will be cummitted)"
 msgstr "  (använd \"git %s <fil>...\" för att ta med i det som ska checkas in)"
 
 #: wt-status.c:266
@@ -10145,7 +10145,7 @@ msgid "unmerged:"
 msgstr "osammanslagen:"
 
 #: wt-status.c:382
-msgid "new commits, "
+msgid "new cummits, "
 msgstr "nya incheckningar, "
 
 #: wt-status.c:384
@@ -10168,7 +10168,7 @@ msgid "Submodules changed but not updated:"
 msgstr "Undermoduler ändrade men inte uppdaterade:"
 
 #: wt-status.c:1006
-msgid "Submodule changes to be committed:"
+msgid "Submodule changes to be cummitted:"
 msgstr "Undermodulers ändringar att checka in:"
 
 #: wt-status.c:1088
@@ -10195,8 +10195,8 @@ msgid "You have unmerged paths."
 msgstr "Du har ej sammanslagna sökvägar."
 
 #: wt-status.c:1213
-msgid "  (fix conflicts and run \"git commit\")"
-msgstr "  (rätta konflikter och kör \"git commit\")"
+msgid "  (fix conflicts and run \"git cummit\")"
+msgstr "  (rätta konflikter och kör \"git cummit\")"
 
 #: wt-status.c:1215
 msgid "  (use \"git merge --abort\" to abort the merge)"
@@ -10207,8 +10207,8 @@ msgid "All conflicts fixed but you are still merging."
 msgstr "Alla konflikter har rättats men du är fortfarande i en sammanslagning."
 
 #: wt-status.c:1222
-msgid "  (use \"git commit\" to conclude merge)"
-msgstr "  (använd \"git commit\" för att slutföra sammanslagningen)"
+msgid "  (use \"git cummit\" to conclude merge)"
+msgstr "  (använd \"git cummit\" för att slutföra sammanslagningen)"
 
 #: wt-status.c:1233
 msgid "You are in the middle of an am session."
@@ -10228,7 +10228,7 @@ msgstr "  (använd \"git am --skip\" för att hoppa över patchen)"
 
 #: wt-status.c:1246
 msgid ""
-"  (use \"git am --allow-empty\" to record this patch as an empty commit)"
+"  (use \"git am --allow-empty\" to record this patch as an empty cummit)"
 msgstr ""
 "  (använd \"git am --allow-empty\" för att registrera patchen som en tom "
 "incheckning)"
@@ -10300,13 +10300,13 @@ msgstr "  (alla konflikter rättade: kör \"git rebase --continue\")"
 #: wt-status.c:1458
 #, c-format
 msgid ""
-"You are currently splitting a commit while rebasing branch '%s' on '%s'."
+"You are currently splitting a cummit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Du håller på att dela upp en incheckning medan du ombaserar grenen \"%s\" "
 "ovanpå \"%s\"."
 
 #: wt-status.c:1463
-msgid "You are currently splitting a commit during a rebase."
+msgid "You are currently splitting a cummit during a rebase."
 msgstr "Du håller på att dela upp en incheckning i en ombasering."
 
 #: wt-status.c:1466
@@ -10315,19 +10315,19 @@ msgstr "  (Så fort din arbetskatalog är ren, kör \"git rebase --continue\")"
 
 #: wt-status.c:1470
 #, c-format
-msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
+msgid "You are currently editing a cummit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Du håller på att redigera en incheckning medan du ombaserar grenen \"%s\" "
 "ovanpå \"%s\"."
 
 #: wt-status.c:1475
-msgid "You are currently editing a commit during a rebase."
+msgid "You are currently editing a cummit during a rebase."
 msgstr "Du håller på att redigera en incheckning under en ombasering."
 
 #: wt-status.c:1478
-msgid "  (use \"git commit --amend\" to amend the current commit)"
+msgid "  (use \"git cummit --amend\" to amend the current cummit)"
 msgstr ""
-"  (använd \"git commit --amend\" för att lägga till på aktuell incheckning)"
+"  (använd \"git cummit --amend\" för att lägga till på aktuell incheckning)"
 
 #: wt-status.c:1480
 msgid ""
@@ -10340,7 +10340,7 @@ msgstr "Cherry-pick pågår."
 
 #: wt-status.c:1494
 #, c-format
-msgid "You are currently cherry-picking commit %s."
+msgid "You are currently cherry-picking cummit %s."
 msgstr "Du håller på med en \"cherry-pick\" av incheckningen %s."
 
 #: wt-status.c:1501
@@ -10371,7 +10371,7 @@ msgstr "Ångring pågår."
 
 #: wt-status.c:1524
 #, c-format
-msgid "You are currently reverting commit %s."
+msgid "You are currently reverting cummit %s."
 msgstr "Du håller på med att ångra incheckningen %s."
 
 #: wt-status.c:1530
@@ -10442,11 +10442,11 @@ msgid "Not currently on any branch."
 msgstr "Inte på någon gren för närvarande."
 
 #: wt-status.c:1851
-msgid "Initial commit"
+msgid "Initial cummit"
 msgstr "Första incheckning"
 
 #: wt-status.c:1852
-msgid "No commits yet"
+msgid "No cummits yet"
 msgstr "Inga incheckningar ännu"
 
 #: wt-status.c:1866
@@ -10484,20 +10484,20 @@ msgstr "Inga ändringar"
 
 #: wt-status.c:1891
 #, c-format
-msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
+msgid "no changes added to cummit (use \"git add\" and/or \"git cummit -a\")\n"
 msgstr ""
-"inga ändringar att checka in (använd \"git add\" och/eller \"git commit -a"
+"inga ändringar att checka in (använd \"git add\" och/eller \"git cummit -a"
 "\")\n"
 
 #: wt-status.c:1895
 #, c-format
-msgid "no changes added to commit\n"
+msgid "no changes added to cummit\n"
 msgstr "inga ändringar att checka in\n"
 
 #: wt-status.c:1899
 #, c-format
 msgid ""
-"nothing added to commit but untracked files present (use \"git add\" to "
+"nothing added to cummit but untracked files present (use \"git add\" to "
 "track)\n"
 msgstr ""
 "inget köat för incheckning, men ospårade filer finns (spåra med \"git add"
@@ -10505,31 +10505,31 @@ msgstr ""
 
 #: wt-status.c:1903
 #, c-format
-msgid "nothing added to commit but untracked files present\n"
+msgid "nothing added to cummit but untracked files present\n"
 msgstr "inget köat för incheckning, men ospårade filer finns\n"
 
 #: wt-status.c:1907
 #, c-format
-msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
+msgid "nothing to cummit (create/copy files and use \"git add\" to track)\n"
 msgstr "inget att checka in (skapa/kopiera filer och spåra med \"git add\")\n"
 
 #: wt-status.c:1911 wt-status.c:1917
 #, c-format
-msgid "nothing to commit\n"
+msgid "nothing to cummit\n"
 msgstr "inget att checka in\n"
 
 #: wt-status.c:1914
 #, c-format
-msgid "nothing to commit (use -u to show untracked files)\n"
+msgid "nothing to cummit (use -u to show untracked files)\n"
 msgstr "inget att checka in (använd -u för att visa ospårade filer)\n"
 
 #: wt-status.c:1919
 #, c-format
-msgid "nothing to commit, working tree clean\n"
+msgid "nothing to cummit, working tree clean\n"
 msgstr "inget att checka in, arbetskatalogen ren\n"
 
 #: wt-status.c:2024
-msgid "No commits yet on "
+msgid "No cummits yet on "
 msgstr "Inga incheckningar ännu på "
 
 #: wt-status.c:2028
@@ -10555,12 +10555,12 @@ msgid "cannot %s: You have unstaged changes."
 msgstr "kan inte %s: Du har oköade ändringar."
 
 #: wt-status.c:2611
-msgid "additionally, your index contains uncommitted changes."
+msgid "additionally, your index contains uncummitted changes."
 msgstr "dessutom innehåller dit index ändringar som inte har checkats in."
 
 #: wt-status.c:2613
 #, c-format
-msgid "cannot %s: Your index contains uncommitted changes."
+msgid "cannot %s: Your index contains uncummitted changes."
 msgstr "kan inte %s: Ditt index innehåller ändringar som inte checkats in."
 
 #: compat/simple-ipc/ipc-unix-socket.c:205
@@ -10608,7 +10608,7 @@ msgstr "kan inte utföra chmod %cx \"%s\""
 msgid "unexpected diff status %c"
 msgstr "diff-status %c förväntades inte"
 
-#: builtin/add.c:110 builtin/commit.c:299
+#: builtin/add.c:110 builtin/cummit.c:299
 msgid "updating files failed"
 msgstr "misslyckades uppdatera filer"
 
@@ -10657,7 +10657,7 @@ msgstr "Följande sökvägar ignoreras av en av dina .gitignore-filer:\n"
 msgid "dry run"
 msgstr "testkörning"
 
-#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/commit.c:1483
+#: builtin/add.c:368 builtin/check-ignore.c:22 builtin/cummit.c:1483
 #: builtin/count-objects.c:98 builtin/fsck.c:789 builtin/log.c:2338
 #: builtin/mv.c:123 builtin/read-tree.c:120
 msgid "be verbose"
@@ -10778,7 +10778,7 @@ msgstr "misslyckades lägga till filer"
 msgid "--chmod param '%s' must be either -x or +x"
 msgstr "\"--chmod\"-parametern \"%s\" måste antingen vara -x eller +x"
 
-#: builtin/add.c:555 builtin/checkout.c:1770 builtin/commit.c:365
+#: builtin/add.c:555 builtin/checkout.c:1770 builtin/cummit.c:365
 #: builtin/reset.c:436 builtin/rm.c:275 builtin/stash.c:1702
 #, c-format
 msgid "'%s' and pathspec arguments cannot be used together"
@@ -10868,7 +10868,7 @@ msgstr "Om du hellre vill hoppa över patchen, kör \"%s --skip\" i stället."
 
 #: builtin/am.c:1160
 #, c-format
-msgid "To record the empty patch as an empty commit, run \"%s --allow-empty\"."
+msgid "To record the empty patch as an empty cummit, run \"%s --allow-empty\"."
 msgstr ""
 "För att registrera den tomma patchen som en tom incheckning, kör \"%s --"
 "allow-empty\"."
@@ -10886,7 +10886,7 @@ msgstr ""
 
 #: builtin/am.c:1345
 #, c-format
-msgid "missing author line in commit %s"
+msgid "missing author line in cummit %s"
 msgstr "saknad \"author\"-rad i incheckningen %s"
 
 #: builtin/am.c:1348
@@ -10931,7 +10931,7 @@ msgid "cannot resume: %s does not exist."
 msgstr "kan inte återuppta: %s finns inte."
 
 #: builtin/am.c:1726
-msgid "Commit Body is:"
+msgid "cummit Body is:"
 msgstr "Incheckningskroppen är:"
 
 #. TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
@@ -10943,7 +10943,7 @@ msgstr "Incheckningskroppen är:"
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "
 msgstr "Tillämpa? Y=ja/N=nej/E=redigera/V=visa patch/A=godta alla: "
 
-#: builtin/am.c:1782 builtin/commit.c:410
+#: builtin/am.c:1782 builtin/cummit.c:410
 msgid "unable to write index file"
 msgstr "kan inte skriva indexfil"
 
@@ -10959,7 +10959,7 @@ msgstr "Hoppar över: %.*s"
 
 #: builtin/am.c:1833
 #, c-format
-msgid "Creating an empty commit: %.*s"
+msgid "Creating an empty cummit: %.*s"
 msgstr "Skapar en tom incheckningar: %.*s"
 
 #: builtin/am.c:1837
@@ -10987,7 +10987,7 @@ msgstr ""
 "misslyckades"
 
 #: builtin/am.c:1921
-msgid "No changes - recorded it as an empty commit."
+msgid "No changes - recorded it as an empty cummit."
 msgstr "Inga ändringar - sparat som en tom incheckning."
 
 #: builtin/am.c:1923
@@ -11061,7 +11061,7 @@ msgid "be quiet"
 msgstr "var tyst"
 
 #: builtin/am.c:2337
-msgid "add a Signed-off-by trailer to the commit message"
+msgid "add a Signed-off-by trailer to the cummit message"
 msgstr "lägg till \"Signed-off-by\"-släprad i incheckningsmeddelandet"
 
 #: builtin/am.c:2340
@@ -11102,7 +11102,7 @@ msgstr "sänd det genom git-mailinfo"
 msgid "pass it through git-apply"
 msgstr "sänd det genom git-apply"
 
-#: builtin/am.c:2376 builtin/commit.c:1514 builtin/fmt-merge-msg.c:18
+#: builtin/am.c:2376 builtin/cummit.c:1514 builtin/fmt-merge-msg.c:18
 #: builtin/fmt-merge-msg.c:21 builtin/grep.c:920 builtin/merge.c:263
 #: builtin/pull.c:142 builtin/pull.c:204 builtin/pull.c:221
 #: builtin/rebase.c:1074 builtin/repack.c:657 builtin/repack.c:661
@@ -11152,25 +11152,25 @@ msgid "show the patch being applied"
 msgstr "visa patchen som tillämpas"
 
 #: builtin/am.c:2411
-msgid "record the empty patch as an empty commit"
+msgid "record the empty patch as an empty cummit"
 msgstr "lagra den tomma patchen som en tom incheckning"
 
 #: builtin/am.c:2415
-msgid "lie about committer date"
+msgid "lie about cummitter date"
 msgstr "ljug om incheckningsdatum"
 
 #: builtin/am.c:2417
 msgid "use current timestamp for author date"
 msgstr "använd nuvarande tidsstämpel för författardatum"
 
-#: builtin/am.c:2419 builtin/commit-tree.c:118 builtin/commit.c:1642
+#: builtin/am.c:2419 builtin/cummit-tree.c:118 builtin/cummit.c:1642
 #: builtin/merge.c:302 builtin/pull.c:179 builtin/rebase.c:1127
 #: builtin/revert.c:117 builtin/tag.c:461
 msgid "key-id"
 msgstr "nyckel-id"
 
 #: builtin/am.c:2420 builtin/rebase.c:1128
-msgid "GPG-sign commits"
+msgid "GPG-sign cummits"
 msgstr "GPG-signera incheckningar"
 
 #: builtin/am.c:2423
@@ -11245,7 +11245,7 @@ msgid "git archive: expected a flush"
 msgstr "git archive: förväntade en tömning (flush)"
 
 #: builtin/bisect--helper.c:24
-msgid "git bisect--helper --bisect-reset [<commit>]"
+msgid "git bisect--helper --bisect-reset [<cummit>]"
 msgstr "git bisect--helper --bisect-reset [<incheckning>]"
 
 #: builtin/bisect--helper.c:26
@@ -11319,13 +11319,13 @@ msgstr "Vi utför ingen bisect för tillfället.\n"
 
 #: builtin/bisect--helper.c:218
 #, c-format
-msgid "'%s' is not a valid commit"
+msgid "'%s' is not a valid cummit"
 msgstr "\"%s\" är inte en giltig incheckning"
 
 #: builtin/bisect--helper.c:227
 #, c-format
 msgid ""
-"could not check out original HEAD '%s'. Try 'git bisect reset <commit>'."
+"could not check out original HEAD '%s'. Try 'git bisect reset <cummit>'."
 msgstr ""
 "Kunde inte checka ut original-HEAD \"%s\". Försök \"git bisect reset "
 "<incheckning>\"."
@@ -11372,7 +11372,7 @@ msgstr ""
 
 #: builtin/bisect--helper.c:365
 #, c-format
-msgid "bisecting only with a %s commit"
+msgid "bisecting only with a %s cummit"
 msgstr "utför bisect med endast en %s incheckning"
 
 #. TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -11480,7 +11480,7 @@ msgstr "Felaktig rev-indata: %s"
 
 #: builtin/bisect--helper.c:904
 #, c-format
-msgid "Bad rev input (not a commit): %s"
+msgid "Bad rev input (not a cummit): %s"
 msgstr "Felaktig rev-indata (ej incheckning): %s"
 
 #: builtin/bisect--helper.c:936
@@ -11538,7 +11538,7 @@ msgstr "\"bisect\"-körningen lyckades"
 
 #: builtin/bisect--helper.c:1218
 #, c-format
-msgid "bisect found first bad commit"
+msgid "bisect found first bad cummit"
 msgstr "bisect hittade första trasiga incheckning"
 
 #: builtin/bisect--helper.c:1221
@@ -11567,7 +11567,7 @@ msgid "start the bisect session"
 msgstr "påbörja bisect-körningen"
 
 #: builtin/bisect--helper.c:1261
-msgid "find the next bisection commit"
+msgid "find the next bisection cummit"
 msgstr "hitta nästa incheckning i bisect"
 
 #: builtin/bisect--helper.c:1263
@@ -11583,7 +11583,7 @@ msgid "replay the bisection process from the given file"
 msgstr "spela upp \"bisect\"-processen från angiven fil"
 
 #: builtin/bisect--helper.c:1269
-msgid "skip some commits for checkout"
+msgid "skip some cummits for checkout"
 msgstr "hoppa över ett par incheckningar"
 
 #: builtin/bisect--helper.c:1271
@@ -11599,7 +11599,7 @@ msgid "no log for BISECT_WRITE"
 msgstr "ingen logg för BISECT_WRITE"
 
 #: builtin/bisect--helper.c:1290
-msgid "--bisect-reset requires either no argument or a commit"
+msgid "--bisect-reset requires either no argument or a cummit"
 msgstr "--bisect-reset kräver antingen inget argument eller en incheckning"
 
 #: builtin/bisect--helper.c:1295
@@ -11645,11 +11645,11 @@ msgid "show blame entries as we find them, incrementally"
 msgstr "visa klandringsposter när vi hittar dem, interaktivt"
 
 #: builtin/blame.c:865
-msgid "do not show object names of boundary commits (Default: off)"
+msgid "do not show object names of boundary cummits (Default: off)"
 msgstr "visa inte objektnamn för gränsincheckningar (Standard: av)"
 
 #: builtin/blame.c:866
-msgid "do not treat root commits as boundaries (Default: off)"
+msgid "do not treat root cummits as boundaries (Default: off)"
 msgstr "vehandla inte rotincheckningar som gränser (Standard: av)"
 
 #: builtin/blame.c:867
@@ -11657,7 +11657,7 @@ msgid "show work cost statistics"
 msgstr "visa statistik över arbetskostnad"
 
 #: builtin/blame.c:868 builtin/checkout.c:1554 builtin/clone.c:98
-#: builtin/commit-graph.c:75 builtin/commit-graph.c:228 builtin/fetch.c:181
+#: builtin/cummit-graph.c:75 builtin/cummit-graph.c:228 builtin/fetch.c:181
 #: builtin/merge.c:301 builtin/multi-pack-index.c:103
 #: builtin/multi-pack-index.c:154 builtin/multi-pack-index.c:180
 #: builtin/multi-pack-index.c:208 builtin/pull.c:120 builtin/push.c:566
@@ -11682,7 +11682,7 @@ msgid "show in a format designed for machine consumption"
 msgstr "visa i ett format avsett för maskinkonsumtion"
 
 #: builtin/blame.c:873
-msgid "show porcelain format with per-line commit information"
+msgid "show porcelain format with per-line cummit information"
 msgstr "visa porslinsformat med per-rad-incheckningsinformation"
 
 #: builtin/blame.c:874
@@ -11694,7 +11694,7 @@ msgid "show raw timestamp (Default: off)"
 msgstr "visa rå tidsstämpel (Standard: av)"
 
 #: builtin/blame.c:876
-msgid "show long commit SHA1 (Default: off)"
+msgid "show long cummit SHA1 (Default: off)"
 msgstr "visa lång inchecknings-SHA1 (Standard: av)"
 
 #: builtin/blame.c:877
@@ -11844,7 +11844,7 @@ msgstr ""
 
 #: builtin/branch.c:183
 #, c-format
-msgid "Couldn't look up commit object for '%s'"
+msgid "Couldn't look up cummit object for '%s'"
 msgstr "Kunde inte slå upp incheckningsobjekt för \"%s\""
 
 #: builtin/branch.c:187
@@ -11865,7 +11865,7 @@ msgid "cannot use -a with -d"
 msgstr "kan inte ange -a med -d"
 
 #: builtin/branch.c:242
-msgid "Couldn't look up commit object for HEAD"
+msgid "Couldn't look up cummit object for HEAD"
 msgstr "Kunde inte slå upp incheckningsobjekt för HEAD"
 
 #: builtin/branch.c:259
@@ -12014,11 +12014,11 @@ msgid "act on remote-tracking branches"
 msgstr "arbeta på fjärrspårande grenar"
 
 #: builtin/branch.c:666 builtin/branch.c:668
-msgid "print only branches that contain the commit"
+msgid "print only branches that contain the cummit"
 msgstr "visa endast grenar som innehåller incheckningen"
 
 #: builtin/branch.c:667 builtin/branch.c:669
-msgid "print only branches that don't contain the commit"
+msgid "print only branches that don't contain the cummit"
 msgstr "visa endast grenar som inte innehåller incheckningen"
 
 #: builtin/branch.c:672
@@ -12138,7 +12138,7 @@ msgstr "kan inte redigera beskrivning för mer än en gren"
 
 #: builtin/branch.c:814
 #, c-format
-msgid "No commit on branch '%s' yet."
+msgid "No cummit on branch '%s' yet."
 msgstr "Inga incheckningar på grenen \"%s\" ännu."
 
 #: builtin/branch.c:817
@@ -12441,8 +12441,8 @@ msgid "Emit [broken] object attributes"
 msgstr "Skriv ut [trasiga] objektattribut"
 
 #: builtin/cat-file.c:842
-msgid "show object type (one of 'blob', 'tree', 'commit', 'tag', ...)"
-msgstr "visa objekttyp (en av: \"blob\", \"tree\", \"commit\", \"tag\", ...)"
+msgid "show object type (one of 'blob', 'tree', 'cummit', 'tag', ...)"
+msgstr "visa objekttyp (en av: \"blob\", \"tree\", \"cummit\", \"tag\", ...)"
 
 #: builtin/cat-file.c:843
 msgid "show object size"
@@ -12853,12 +12853,12 @@ msgstr " ... och %d till.\n"
 #: builtin/checkout.c:1023
 #, c-format
 msgid ""
-"Warning: you are leaving %d commit behind, not connected to\n"
+"Warning: you are leaving %d cummit behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
 msgid_plural ""
-"Warning: you are leaving %d commits behind, not connected to\n"
+"Warning: you are leaving %d cummits behind, not connected to\n"
 "any of your branches:\n"
 "\n"
 "%s\n"
@@ -12982,12 +12982,12 @@ msgstr "förväntade gren, fick \"%s\""
 
 #: builtin/checkout.c:1420
 #, c-format
-msgid "a branch is expected, got commit '%s'"
+msgid "a branch is expected, got cummit '%s'"
 msgstr "förväntade gren, fick incheckningen \"%s\""
 
 #: builtin/checkout.c:1429
 msgid ""
-"If you want to detach HEAD at the commit, try again with the --detach option."
+"If you want to detach HEAD at the cummit, try again with the --detach option."
 msgstr ""
 "Om du vill koppla från HEAD vid incheckningen, försök igen med flaggan --"
 "detach."
@@ -13058,11 +13058,11 @@ msgstr "\"%s\" kan inte ta <startpunkt>"
 
 #: builtin/checkout.c:1505
 #, c-format
-msgid "Cannot switch branch to a non-commit '%s'"
+msgid "Cannot switch branch to a non-cummit '%s'"
 msgstr "Kan inte växla gren till icke-incheckningen \"%s\""
 
 #: builtin/checkout.c:1512
-msgid "missing branch or commit argument"
+msgid "missing branch or cummit argument"
 msgstr "saknar gren- eller incheckingsargument"
 
 #: builtin/checkout.c:1555
@@ -13078,7 +13078,7 @@ msgid "conflict style (merge, diff3, or zdiff3)"
 msgstr "konfliktstil (merge, diff3 eller zdiff3)"
 
 #: builtin/checkout.c:1569 builtin/worktree.c:560
-msgid "detach HEAD at named commit"
+msgid "detach HEAD at named cummit"
 msgstr "koppla från HEAD vid namngiven incheckning"
 
 #: builtin/checkout.c:1574
@@ -13139,7 +13139,7 @@ msgstr "felaktig sökvägsangivelse"
 
 #: builtin/checkout.c:1760
 #, c-format
-msgid "'%s' is not a commit and a branch '%s' cannot be created from it"
+msgid "'%s' is not a cummit and a branch '%s' cannot be created from it"
 msgstr ""
 "\"%s\" är inte en incheckning och grenen \"%s\" kan inte skapas från den"
 
@@ -13802,219 +13802,219 @@ msgstr "spaltfyllnad mellan spalter"
 msgid "--command must be the first argument"
 msgstr "--command måste vara första argument"
 
-#: builtin/commit-graph.c:13
+#: builtin/cummit-graph.c:13
 msgid ""
-"git commit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
+"git cummit-graph verify [--object-dir <objdir>] [--shallow] [--[no-]progress]"
 msgstr ""
-"git commit-graph verify [--object-dir <objkat>] [--shallow] [--[no-]progress]"
+"git cummit-graph verify [--object-dir <objkat>] [--shallow] [--[no-]progress]"
 
-#: builtin/commit-graph.c:16
+#: builtin/cummit-graph.c:16
 msgid ""
-"git commit-graph write [--object-dir <objdir>] [--append] [--"
-"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
+"git cummit-graph write [--object-dir <objdir>] [--append] [--"
+"split[=<strategy>]] [--reachable|--stdin-packs|--stdin-cummits] [--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] <split options>"
 msgstr ""
-"git commit-graph write [--object-dir <objkat>] [--append] [--"
-"split[=<strategi>]] [--reachable|--stdin-packs|--stdin-commits] [--changed-"
+"git cummit-graph write [--object-dir <objkat>] [--append] [--"
+"split[=<strategi>]] [--reachable|--stdin-packs|--stdin-cummits] [--changed-"
 "paths] [--[no-]max-new-filters <n>] [--[no-]progress] <delnings-flaggor>"
 
-#: builtin/commit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
+#: builtin/cummit-graph.c:51 builtin/fetch.c:196 builtin/log.c:1813
 msgid "dir"
 msgstr "kat"
 
-#: builtin/commit-graph.c:52
+#: builtin/cummit-graph.c:52
 msgid "the object directory to store the graph"
 msgstr "objektkatalogen där grafen ska lagras"
 
-#: builtin/commit-graph.c:73
-msgid "if the commit-graph is split, only verify the tip file"
+#: builtin/cummit-graph.c:73
+msgid "if the cummit-graph is split, only verify the tip file"
 msgstr "om inchecknignsgrafen är delad, kontrollera bara spetsfilen"
 
-#: builtin/commit-graph.c:100
+#: builtin/cummit-graph.c:100
 #, c-format
-msgid "Could not open commit-graph '%s'"
+msgid "Could not open cummit-graph '%s'"
 msgstr "Kunde inte öppna incheckningsgrafen \"%s\""
 
-#: builtin/commit-graph.c:137
+#: builtin/cummit-graph.c:137
 #, c-format
 msgid "unrecognized --split argument, %s"
 msgstr "okänt argument för --split, %s"
 
-#: builtin/commit-graph.c:150
+#: builtin/cummit-graph.c:150
 #, c-format
 msgid "unexpected non-hex object ID: %s"
 msgstr "oväntat icke-hexadecimalt objekt-ID: %s"
 
-#: builtin/commit-graph.c:155
+#: builtin/cummit-graph.c:155
 #, c-format
 msgid "invalid object: %s"
 msgstr "ogiltigt objekt: %s"
 
-#: builtin/commit-graph.c:205
+#: builtin/cummit-graph.c:205
 msgid "start walk at all refs"
 msgstr "starta traversering vid alla referenser"
 
-#: builtin/commit-graph.c:207
-msgid "scan pack-indexes listed by stdin for commits"
+#: builtin/cummit-graph.c:207
+msgid "scan pack-indexes listed by stdin for cummits"
 msgstr "sök paketindex listade på standard in efter incheckningar"
 
-#: builtin/commit-graph.c:209
-msgid "start walk at commits listed by stdin"
+#: builtin/cummit-graph.c:209
+msgid "start walk at cummits listed by stdin"
 msgstr "börja gå genom incheckningar listade på standard in"
 
-#: builtin/commit-graph.c:211
-msgid "include all commits already in the commit-graph file"
-msgstr "ta med alla incheckningar redan i filen commit-graph"
+#: builtin/cummit-graph.c:211
+msgid "include all cummits already in the cummit-graph file"
+msgstr "ta med alla incheckningar redan i filen cummit-graph"
 
-#: builtin/commit-graph.c:213
+#: builtin/cummit-graph.c:213
 msgid "enable computation for changed paths"
 msgstr "aktivera beräkning av ändrade sökvägar"
 
-#: builtin/commit-graph.c:215
-msgid "allow writing an incremental commit-graph file"
+#: builtin/cummit-graph.c:215
+msgid "allow writing an incremental cummit-graph file"
 msgstr "tillåt skriva en inkrementell incheckningsgraffil"
 
-#: builtin/commit-graph.c:219
-msgid "maximum number of commits in a non-base split commit-graph"
+#: builtin/cummit-graph.c:219
+msgid "maximum number of cummits in a non-base split cummit-graph"
 msgstr ""
 "maximalt antal incheckningar i en delad incheckingsgraf som inte är bad"
 
-#: builtin/commit-graph.c:221
-msgid "maximum ratio between two levels of a split commit-graph"
+#: builtin/cummit-graph.c:221
+msgid "maximum ratio between two levels of a split cummit-graph"
 msgstr "maximalt förhållande mellan två nivåer av en delad incheckningsgraf"
 
-#: builtin/commit-graph.c:223
+#: builtin/cummit-graph.c:223
 msgid "only expire files older than a given date-time"
 msgstr "låt tid endast gå ut för filer äldre än givet datum och tid"
 
-#: builtin/commit-graph.c:225
+#: builtin/cummit-graph.c:225
 msgid "maximum number of changed-path Bloom filters to compute"
 msgstr "maximalt antal Bloom-filer med ändrad sökväg att beräkna"
 
-#: builtin/commit-graph.c:251
-msgid "use at most one of --reachable, --stdin-commits, or --stdin-packs"
-msgstr "använd som mest en av --reachable, --stdin-commits och --stdin-packs"
+#: builtin/cummit-graph.c:251
+msgid "use at most one of --reachable, --stdin-cummits, or --stdin-packs"
+msgstr "använd som mest en av --reachable, --stdin-cummits och --stdin-packs"
 
-#: builtin/commit-graph.c:282
-msgid "Collecting commits from input"
+#: builtin/cummit-graph.c:282
+msgid "Collecting cummits from input"
 msgstr "Hämtar incheckningar från indata"
 
-#: builtin/commit-graph.c:328 builtin/multi-pack-index.c:259
+#: builtin/cummit-graph.c:328 builtin/multi-pack-index.c:259
 #, c-format
 msgid "unrecognized subcommand: %s"
 msgstr "okänt underkommando: %s"
 
-#: builtin/commit-tree.c:18
+#: builtin/cummit-tree.c:18
 msgid ""
-"git commit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
+"git cummit-tree [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...] [(-F "
 "<file>)...] <tree>"
 msgstr ""
-"git commit-tree [(-p <föräldrer>)...] [-S[<nyckelid>]] [(-m "
+"git cummit-tree [(-p <föräldrer>)...] [-S[<nyckelid>]] [(-m "
 "<meddelande>)...] [(-F <fil>)...] <träd>"
 
-#: builtin/commit-tree.c:31
+#: builtin/cummit-tree.c:31
 #, c-format
 msgid "duplicate parent %s ignored"
 msgstr "duplicerad förälder %s ignorerades"
 
-#: builtin/commit-tree.c:56 builtin/commit-tree.c:134 builtin/log.c:590
+#: builtin/cummit-tree.c:56 builtin/cummit-tree.c:134 builtin/log.c:590
 #, c-format
 msgid "not a valid object name %s"
 msgstr "objektnamnet är inte giltigt: %s"
 
-#: builtin/commit-tree.c:94
+#: builtin/cummit-tree.c:94
 #, c-format
-msgid "git commit-tree: failed to read '%s'"
-msgstr "git commit-tree: misslyckades läsa \"%s\""
+msgid "git cummit-tree: failed to read '%s'"
+msgstr "git cummit-tree: misslyckades läsa \"%s\""
 
-#: builtin/commit-tree.c:96
+#: builtin/cummit-tree.c:96
 #, c-format
-msgid "git commit-tree: failed to close '%s'"
-msgstr "git commit-tree: misslyckades stänga \"%s\""
+msgid "git cummit-tree: failed to close '%s'"
+msgstr "git cummit-tree: misslyckades stänga \"%s\""
 
-#: builtin/commit-tree.c:109
+#: builtin/cummit-tree.c:109
 msgid "parent"
 msgstr "förälder"
 
-#: builtin/commit-tree.c:110
-msgid "id of a parent commit object"
+#: builtin/cummit-tree.c:110
+msgid "id of a parent cummit object"
 msgstr "id på ett förälderincheckningsobjekt"
 
-#: builtin/commit-tree.c:112 builtin/commit.c:1626 builtin/merge.c:284
+#: builtin/cummit-tree.c:112 builtin/cummit.c:1626 builtin/merge.c:284
 #: builtin/notes.c:407 builtin/notes.c:573 builtin/stash.c:1666
 #: builtin/tag.c:455
 msgid "message"
 msgstr "meddelande"
 
-#: builtin/commit-tree.c:113 builtin/commit.c:1626
-msgid "commit message"
+#: builtin/cummit-tree.c:113 builtin/cummit.c:1626
+msgid "cummit message"
 msgstr "incheckningsmeddelande"
 
-#: builtin/commit-tree.c:116
-msgid "read commit log message from file"
+#: builtin/cummit-tree.c:116
+msgid "read cummit log message from file"
 msgstr "läs incheckningsloggmeddelande från fil"
 
-#: builtin/commit-tree.c:119 builtin/commit.c:1643 builtin/merge.c:303
+#: builtin/cummit-tree.c:119 builtin/cummit.c:1643 builtin/merge.c:303
 #: builtin/pull.c:180 builtin/revert.c:118
-msgid "GPG sign commit"
+msgid "GPG sign cummit"
 msgstr "GPG-signera incheckning"
 
-#: builtin/commit-tree.c:131
+#: builtin/cummit-tree.c:131
 msgid "must give exactly one tree"
 msgstr "måste ange exakt ett träd"
 
-#: builtin/commit-tree.c:138
-msgid "git commit-tree: failed to read"
-msgstr "git commit-tree: misslyckades läsa"
+#: builtin/cummit-tree.c:138
+msgid "git cummit-tree: failed to read"
+msgstr "git cummit-tree: misslyckades läsa"
 
-#: builtin/commit.c:43
-msgid "git commit [<options>] [--] <pathspec>..."
-msgstr "git commit [<flaggor>] [--] <sökväg>..."
+#: builtin/cummit.c:43
+msgid "git cummit [<options>] [--] <pathspec>..."
+msgstr "git cummit [<flaggor>] [--] <sökväg>..."
 
-#: builtin/commit.c:48
+#: builtin/cummit.c:48
 msgid "git status [<options>] [--] <pathspec>..."
 msgstr "git status [<flaggor>] [--] <sökväg>..."
 
-#: builtin/commit.c:53
+#: builtin/cummit.c:53
 msgid ""
-"You asked to amend the most recent commit, but doing so would make\n"
+"You asked to amend the most recent cummit, but doing so would make\n"
 "it empty. You can repeat your command with --allow-empty, or you can\n"
-"remove the commit entirely with \"git reset HEAD^\".\n"
+"remove the cummit entirely with \"git reset HEAD^\".\n"
 msgstr ""
 "Du bad om att utöka den senaste incheckningen, men om du gör det\n"
 "blir den tom. Du kan köra kommandot på nytt med --allow-empty, eller\n"
 "så kan du ta bort incheckningen helt med \"git reset HEAD^\".\n"
 
-#: builtin/commit.c:58
+#: builtin/cummit.c:58
 msgid ""
 "The previous cherry-pick is now empty, possibly due to conflict resolution.\n"
-"If you wish to commit it anyway, use:\n"
+"If you wish to cummit it anyway, use:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 msgstr ""
 "Den tidigare \"cherry-pick\":en är nu tom, kanske på grund av en löst\n"
 "konflikt. Om du vill checka in den ändå använder du:\n"
 "\n"
-"    git commit --allow-empty\n"
+"    git cummit --allow-empty\n"
 "\n"
 
-#: builtin/commit.c:65
+#: builtin/cummit.c:65
 msgid "Otherwise, please use 'git rebase --skip'\n"
 msgstr "Använd annars \"git rebase --skip\"\n"
 
-#: builtin/commit.c:68
+#: builtin/cummit.c:68
 msgid "Otherwise, please use 'git cherry-pick --skip'\n"
 msgstr "Använd annars \"git cherry-pick --skip\"\n"
 
-#: builtin/commit.c:71
+#: builtin/cummit.c:71
 msgid ""
 "and then use:\n"
 "\n"
 "    git cherry-pick --continue\n"
 "\n"
-"to resume cherry-picking the remaining commits.\n"
-"If you wish to skip this commit, use:\n"
+"to resume cherry-picking the remaining cummits.\n"
+"If you wish to skip this cummit, use:\n"
 "\n"
 "    git cherry-pick --skip\n"
 "\n"
@@ -14029,155 +14029,155 @@ msgstr ""
 "    git cherry-pick --skip\n"
 "\n"
 
-#: builtin/commit.c:326
+#: builtin/cummit.c:326
 msgid "failed to unpack HEAD tree object"
 msgstr "misslyckades packa upp HEAD:s trädobjekt"
 
-#: builtin/commit.c:376
+#: builtin/cummit.c:376
 msgid "No paths with --include/--only does not make sense."
 msgstr "Du måste ange sökvägar tillsammans med --include/--only."
 
-#: builtin/commit.c:388
+#: builtin/cummit.c:388
 msgid "unable to create temporary index"
 msgstr "kunde inte skapa temporär indexfil"
 
-#: builtin/commit.c:397
+#: builtin/cummit.c:397
 msgid "interactive add failed"
 msgstr "interaktiv tilläggning misslyckades"
 
-#: builtin/commit.c:412
+#: builtin/cummit.c:412
 msgid "unable to update temporary index"
 msgstr "kan inte uppdatera temporärt index"
 
-#: builtin/commit.c:414
+#: builtin/cummit.c:414
 msgid "Failed to update main cache tree"
 msgstr "Misslyckades uppdatera huvud-cacheträdet"
 
-#: builtin/commit.c:439 builtin/commit.c:462 builtin/commit.c:510
+#: builtin/cummit.c:439 builtin/cummit.c:462 builtin/cummit.c:510
 msgid "unable to write new_index file"
 msgstr "kunde inte skriva filen new_index"
 
-#: builtin/commit.c:491
-msgid "cannot do a partial commit during a merge."
+#: builtin/cummit.c:491
+msgid "cannot do a partial cummit during a merge."
 msgstr "kan inte utföra en delvis incheckning under en sammanslagning."
 
-#: builtin/commit.c:493
-msgid "cannot do a partial commit during a cherry-pick."
+#: builtin/cummit.c:493
+msgid "cannot do a partial cummit during a cherry-pick."
 msgstr "kan inte utföra en delvis incheckning under en cherry-pick."
 
-#: builtin/commit.c:495
-msgid "cannot do a partial commit during a rebase."
+#: builtin/cummit.c:495
+msgid "cannot do a partial cummit during a rebase."
 msgstr "kan inte utföra en delvis incheckning under en ombasering."
 
-#: builtin/commit.c:503
+#: builtin/cummit.c:503
 msgid "cannot read the index"
 msgstr "kan inte läsa indexet"
 
-#: builtin/commit.c:522
+#: builtin/cummit.c:522
 msgid "unable to write temporary index file"
 msgstr "kunde inte skriva temporär indexfil"
 
-#: builtin/commit.c:620
+#: builtin/cummit.c:620
 #, c-format
-msgid "commit '%s' lacks author header"
+msgid "cummit '%s' lacks author header"
 msgstr "incheckningen \"%s\" saknar författarhuvud"
 
-#: builtin/commit.c:622
+#: builtin/cummit.c:622
 #, c-format
-msgid "commit '%s' has malformed author line"
+msgid "cummit '%s' has malformed author line"
 msgstr "incheckningen \"%s\" har felformaterat författarhuvud"
 
-#: builtin/commit.c:641
+#: builtin/cummit.c:641
 msgid "malformed --author parameter"
 msgstr "felformad \"--author\"-flagga"
 
-#: builtin/commit.c:694
+#: builtin/cummit.c:694
 msgid ""
 "unable to select a comment character that is not used\n"
-"in the current commit message"
+"in the current cummit message"
 msgstr ""
 "kunde inte välja ett kommentarstecken som inte använts\n"
 "i det befintliga incheckningsmeddelandet"
 
-#: builtin/commit.c:750 builtin/commit.c:784 builtin/commit.c:1170
+#: builtin/cummit.c:750 builtin/cummit.c:784 builtin/cummit.c:1170
 #, c-format
-msgid "could not lookup commit %s"
+msgid "could not lookup cummit %s"
 msgstr "kunde inte slå upp incheckningen %s"
 
-#: builtin/commit.c:762 builtin/shortlog.c:417
+#: builtin/cummit.c:762 builtin/shortlog.c:417
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr "(läser loggmeddelande från standard in)\n"
 
-#: builtin/commit.c:764
+#: builtin/cummit.c:764
 msgid "could not read log from standard input"
 msgstr "kunde inte läsa logg från standard in"
 
-#: builtin/commit.c:768
+#: builtin/cummit.c:768
 #, c-format
 msgid "could not read log file '%s'"
 msgstr "kunde inte läsa loggfilen \"%s\""
 
-#: builtin/commit.c:805
+#: builtin/cummit.c:805
 #, c-format
 msgid "options '%s' and '%s:%s' cannot be used together"
 msgstr "flaggorna \"%s\" och \"%s:%s\" kan inte användas samtidigt"
 
-#: builtin/commit.c:817 builtin/commit.c:833
+#: builtin/cummit.c:817 builtin/cummit.c:833
 msgid "could not read SQUASH_MSG"
 msgstr "kunde inte läsa SQUASH_MSG"
 
-#: builtin/commit.c:824
+#: builtin/cummit.c:824
 msgid "could not read MERGE_MSG"
 msgstr "kunde inte läsa MERGE_MSG"
 
-#: builtin/commit.c:884
-msgid "could not write commit template"
+#: builtin/cummit.c:884
+msgid "could not write cummit template"
 msgstr "kunde inte skriva incheckningsmall"
 
-#: builtin/commit.c:897
+#: builtin/cummit.c:897
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be ignored.\n"
 msgstr ""
 "Ange incheckningsmeddelandet för dina ändringar. Rader som inleds\n"
 "med \"%c\" kommer ignoreras.\n"
 
-#: builtin/commit.c:899
+#: builtin/cummit.c:899
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
-"with '%c' will be ignored, and an empty message aborts the commit.\n"
+"Please enter the cummit message for your changes. Lines starting\n"
+"with '%c' will be ignored, and an empty message aborts the cummit.\n"
 msgstr ""
 "Ange incheckningsmeddelandet för dina ändringar. Rader som inleds\n"
 "med \"%c\" kommer ignoreras, och ett tomt meddelande avbryter "
 "incheckningen.\n"
 
-#: builtin/commit.c:903
+#: builtin/cummit.c:903
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
 msgstr ""
 "Ange incheckningsmeddelandet för dina ändringar. Rader som inleds\n"
 "med \"%c\" kommer behållas; du kan själv ta bort dem om du vill.\n"
 
-#: builtin/commit.c:907
+#: builtin/cummit.c:907
 #, c-format
 msgid ""
-"Please enter the commit message for your changes. Lines starting\n"
+"Please enter the cummit message for your changes. Lines starting\n"
 "with '%c' will be kept; you may remove them yourself if you want to.\n"
-"An empty message aborts the commit.\n"
+"An empty message aborts the cummit.\n"
 msgstr ""
 "Ange incheckningsmeddelandet för dina ändringar. Rader som inleds\n"
 "med \"%c\" kommer behållas; du kan själv ta bort dem om du vill.\n"
 "Ett tomt meddelande avbryter incheckningen.\n"
 
-#: builtin/commit.c:919
+#: builtin/cummit.c:919
 msgid ""
 "\n"
-"It looks like you may be committing a merge.\n"
+"It looks like you may be cummitting a merge.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d MERGE_HEAD\n"
 "and try again.\n"
@@ -14188,10 +14188,10 @@ msgstr ""
 "\tgit update-ref -d MERGE_HEAD\n"
 "och försöker igen.\n"
 
-#: builtin/commit.c:924
+#: builtin/cummit.c:924
 msgid ""
 "\n"
-"It looks like you may be committing a cherry-pick.\n"
+"It looks like you may be cummitting a cherry-pick.\n"
 "If this is not correct, please run\n"
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "and try again.\n"
@@ -14202,147 +14202,147 @@ msgstr ""
 "\tgit update-ref -d CHERRY_PICK_HEAD\n"
 "och försöker igen.\n"
 
-#: builtin/commit.c:951
+#: builtin/cummit.c:951
 #, c-format
 msgid "%sAuthor:    %.*s <%.*s>"
 msgstr "%sFörfattare: %.*s <%.*s>"
 
-#: builtin/commit.c:959
+#: builtin/cummit.c:959
 #, c-format
 msgid "%sDate:      %s"
 msgstr "%sDatum:      %s"
 
-#: builtin/commit.c:966
+#: builtin/cummit.c:966
 #, c-format
-msgid "%sCommitter: %.*s <%.*s>"
+msgid "%scummitter: %.*s <%.*s>"
 msgstr "%sIncheckare: %.*s <%.*s>"
 
-#: builtin/commit.c:984
+#: builtin/cummit.c:984
 msgid "Cannot read index"
 msgstr "Kan inte läsa indexet"
 
-#: builtin/commit.c:1029
+#: builtin/cummit.c:1029
 msgid "unable to pass trailers to --trailers"
 msgstr "kan inte sända släprader till --trailers"
 
-#: builtin/commit.c:1069
+#: builtin/cummit.c:1069
 msgid "Error building trees"
 msgstr "Fel vid byggande av träd"
 
-#: builtin/commit.c:1083 builtin/tag.c:317
+#: builtin/cummit.c:1083 builtin/tag.c:317
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr "Ange meddelandet en av flaggorna -m eller -F.\n"
 
-#: builtin/commit.c:1128
+#: builtin/cummit.c:1128
 #, c-format
 msgid "--author '%s' is not 'Name <email>' and matches no existing author"
 msgstr ""
 "--author '%s' är inte 'Namn <epost>' och motsvarar ingen befintlig författare"
 
-#: builtin/commit.c:1142
+#: builtin/cummit.c:1142
 #, c-format
 msgid "Invalid ignored mode '%s'"
 msgstr "Ogiltigt ignorerat läge \"%s\""
 
-#: builtin/commit.c:1160 builtin/commit.c:1450
+#: builtin/cummit.c:1160 builtin/cummit.c:1450
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr "Ogiltigt läge för ospårade filer: \"%s\""
 
-#: builtin/commit.c:1231
+#: builtin/cummit.c:1231
 msgid "You are in the middle of a merge -- cannot reword."
 msgstr "Du är i mitten av en sammanslagning -- kan inte omformulera."
 
-#: builtin/commit.c:1233
+#: builtin/cummit.c:1233
 msgid "You are in the middle of a cherry-pick -- cannot reword."
 msgstr "Du är i mitten av en cherry-pick -- kan inte omformulera."
 
-#: builtin/commit.c:1236
+#: builtin/cummit.c:1236
 #, c-format
 msgid "reword option of '%s' and path '%s' cannot be used together"
 msgstr ""
 "reword-flaggan till \"%s\" och sökvägen \"%s\" kan inte användas tillsammans"
 
-#: builtin/commit.c:1238
+#: builtin/cummit.c:1238
 #, c-format
 msgid "reword option of '%s' and '%s' cannot be used together"
 msgstr "reword-flaggan till \"%s\" och \"%s\" kan inte användas tillsammans"
 
-#: builtin/commit.c:1263
+#: builtin/cummit.c:1263
 msgid "You have nothing to amend."
 msgstr "Du har inget att utöka."
 
-#: builtin/commit.c:1266
+#: builtin/cummit.c:1266
 msgid "You are in the middle of a merge -- cannot amend."
 msgstr "Du är i mitten av en sammanslagning -- kan inte utöka."
 
-#: builtin/commit.c:1268
+#: builtin/cummit.c:1268
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Du är i mitten av en cherry-pick -- kan inte utöka."
 
-#: builtin/commit.c:1270
+#: builtin/cummit.c:1270
 msgid "You are in the middle of a rebase -- cannot amend."
 msgstr "Du är i mitten av en ombasering -- kan inte utöka."
 
-#: builtin/commit.c:1290
+#: builtin/cummit.c:1290
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "--reset-author kan endast användas med -C, -c eller --amend."
 
-#: builtin/commit.c:1337
+#: builtin/cummit.c:1337
 #, c-format
 msgid "unknown option: --fixup=%s:%s"
 msgstr "okänd flagga: --fixup=%s:%s"
 
-#: builtin/commit.c:1354
+#: builtin/cummit.c:1354
 #, c-format
 msgid "paths '%s ...' with -a does not make sense"
 msgstr "sökvägarna \"%s ...\" med -a ger ingen mening"
 
-#: builtin/commit.c:1485 builtin/commit.c:1654
+#: builtin/cummit.c:1485 builtin/cummit.c:1654
 msgid "show status concisely"
 msgstr "visa koncis status"
 
-#: builtin/commit.c:1487 builtin/commit.c:1656
+#: builtin/cummit.c:1487 builtin/cummit.c:1656
 msgid "show branch information"
 msgstr "visa information om gren"
 
-#: builtin/commit.c:1489
+#: builtin/cummit.c:1489
 msgid "show stash information"
 msgstr "visa information om stash"
 
-#: builtin/commit.c:1491 builtin/commit.c:1658
+#: builtin/cummit.c:1491 builtin/cummit.c:1658
 msgid "compute full ahead/behind values"
 msgstr "beräkna fullständiga före-/efter-värden"
 
-#: builtin/commit.c:1493
+#: builtin/cummit.c:1493
 msgid "version"
 msgstr "version"
 
-#: builtin/commit.c:1493 builtin/commit.c:1660 builtin/push.c:551
+#: builtin/cummit.c:1493 builtin/cummit.c:1660 builtin/push.c:551
 #: builtin/worktree.c:765
 msgid "machine-readable output"
 msgstr "maskinläsbar utdata"
 
-#: builtin/commit.c:1496 builtin/commit.c:1662
+#: builtin/cummit.c:1496 builtin/cummit.c:1662
 msgid "show status in long format (default)"
 msgstr "visa status i långt format (standard)"
 
-#: builtin/commit.c:1499 builtin/commit.c:1665
+#: builtin/cummit.c:1499 builtin/cummit.c:1665
 msgid "terminate entries with NUL"
 msgstr "terminera poster med NUL"
 
-#: builtin/commit.c:1501 builtin/commit.c:1505 builtin/commit.c:1668
+#: builtin/cummit.c:1501 builtin/cummit.c:1505 builtin/cummit.c:1668
 #: builtin/fast-export.c:1172 builtin/fast-export.c:1175
 #: builtin/fast-export.c:1178 builtin/rebase.c:1139 parse-options.h:368
 msgid "mode"
 msgstr "läge"
 
-#: builtin/commit.c:1502 builtin/commit.c:1668
+#: builtin/cummit.c:1502 builtin/cummit.c:1668
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr "visa ospårade filer, valfria lägen: all, normal, no. (Standard: all)"
 
-#: builtin/commit.c:1506
+#: builtin/cummit.c:1506
 msgid ""
 "show ignored files, optional modes: traditional, matching, no. (Default: "
 "traditional)"
@@ -14350,11 +14350,11 @@ msgstr ""
 "visa ignorerade filer, valfria lägen: traditional, matching, no (Standard: "
 "traditional)"
 
-#: builtin/commit.c:1508 parse-options.h:197
+#: builtin/cummit.c:1508 parse-options.h:197
 msgid "when"
 msgstr "när"
 
-#: builtin/commit.c:1509
+#: builtin/cummit.c:1509
 msgid ""
 "ignore changes to submodules, optional when: all, dirty, untracked. "
 "(Default: all)"
@@ -14362,194 +14362,194 @@ msgstr ""
 "ignorera ändringar i undermoduler, valfritt när: all, dirty, untracked. "
 "(Default: all)"
 
-#: builtin/commit.c:1511
+#: builtin/cummit.c:1511
 msgid "list untracked files in columns"
 msgstr "visa ospårade filer i spalter"
 
-#: builtin/commit.c:1512
+#: builtin/cummit.c:1512
 msgid "do not detect renames"
 msgstr "detektera inte namnändringar"
 
-#: builtin/commit.c:1514
+#: builtin/cummit.c:1514
 msgid "detect renames, optionally set similarity index"
 msgstr "detektera namnändringar, möjligen sätt likhetsindex"
 
-#: builtin/commit.c:1537
+#: builtin/cummit.c:1537
 msgid "Unsupported combination of ignored and untracked-files arguments"
 msgstr "Kombinationen av argument för ignorerade och ospårade filer stöds ej"
 
-#: builtin/commit.c:1619
-msgid "suppress summary after successful commit"
+#: builtin/cummit.c:1619
+msgid "suppress summary after successful cummit"
 msgstr "undertryck sammanfattning efter framgångsrik incheckning"
 
-#: builtin/commit.c:1620
-msgid "show diff in commit message template"
+#: builtin/cummit.c:1620
+msgid "show diff in cummit message template"
 msgstr "visa diff i mallen för incheckningsmeddelandet"
 
-#: builtin/commit.c:1622
-msgid "Commit message options"
+#: builtin/cummit.c:1622
+msgid "cummit message options"
 msgstr "Alternativ för incheckningsmeddelande"
 
-#: builtin/commit.c:1623 builtin/merge.c:288 builtin/tag.c:457
+#: builtin/cummit.c:1623 builtin/merge.c:288 builtin/tag.c:457
 msgid "read message from file"
 msgstr "läs meddelande från fil"
 
-#: builtin/commit.c:1624
+#: builtin/cummit.c:1624
 msgid "author"
 msgstr "författare"
 
-#: builtin/commit.c:1624
-msgid "override author for commit"
+#: builtin/cummit.c:1624
+msgid "override author for cummit"
 msgstr "överstyr författare för incheckningen"
 
-#: builtin/commit.c:1625 builtin/gc.c:551
+#: builtin/cummit.c:1625 builtin/gc.c:551
 msgid "date"
 msgstr "datum"
 
-#: builtin/commit.c:1625
-msgid "override date for commit"
+#: builtin/cummit.c:1625
+msgid "override date for cummit"
 msgstr "överstyr datum för incheckningen"
 
-#: builtin/commit.c:1627 builtin/commit.c:1628 builtin/commit.c:1634
+#: builtin/cummit.c:1627 builtin/cummit.c:1628 builtin/cummit.c:1634
 #: parse-options.h:360 ref-filter.h:89
-msgid "commit"
+msgid "cummit"
 msgstr "incheckning"
 
-#: builtin/commit.c:1627
-msgid "reuse and edit message from specified commit"
+#: builtin/cummit.c:1627
+msgid "reuse and edit message from specified cummit"
 msgstr "återanvänd och redigera meddelande från angiven incheckning"
 
-#: builtin/commit.c:1628
-msgid "reuse message from specified commit"
+#: builtin/cummit.c:1628
+msgid "reuse message from specified cummit"
 msgstr "återanvänd meddelande från angiven incheckning"
 
 #. TRANSLATORS: Leave "[(amend|reword):]" as-is,
-#. and only translate <commit>.
+#. and only translate <cummit>.
 #.
-#: builtin/commit.c:1633
-msgid "[(amend|reword):]commit"
+#: builtin/cummit.c:1633
+msgid "[(amend|reword):]cummit"
 msgstr "[(amend|reword):]incheckning"
 
-#: builtin/commit.c:1633
+#: builtin/cummit.c:1633
 msgid ""
-"use autosquash formatted message to fixup or amend/reword specified commit"
+"use autosquash formatted message to fixup or amend/reword specified cummit"
 msgstr ""
 "använd autosquash-formaterat meddelande för att fixa/omformulera angiven "
 "incheckning"
 
-#: builtin/commit.c:1634
-msgid "use autosquash formatted message to squash specified commit"
+#: builtin/cummit.c:1634
+msgid "use autosquash formatted message to squash specified cummit"
 msgstr ""
 "använd autosquash-formaterat meddelande för att slå ihop med angiven "
 "incheckning"
 
-#: builtin/commit.c:1635
-msgid "the commit is authored by me now (used with -C/-c/--amend)"
+#: builtin/cummit.c:1635
+msgid "the cummit is authored by me now (used with -C/-c/--amend)"
 msgstr "jag är nu författare av incheckningen (används med -C/-c/--amend)"
 
-#: builtin/commit.c:1636 builtin/interpret-trailers.c:111
+#: builtin/cummit.c:1636 builtin/interpret-trailers.c:111
 msgid "trailer"
 msgstr "släprad"
 
-#: builtin/commit.c:1636
+#: builtin/cummit.c:1636
 msgid "add custom trailer(s)"
 msgstr "använd skräddarsydd(a) släprad(er)"
 
-#: builtin/commit.c:1637 builtin/log.c:1788 builtin/merge.c:306
+#: builtin/cummit.c:1637 builtin/log.c:1788 builtin/merge.c:306
 #: builtin/pull.c:146 builtin/revert.c:110
 msgid "add a Signed-off-by trailer"
 msgstr "lägg till Signed-off-by-släprad"
 
-#: builtin/commit.c:1638
+#: builtin/cummit.c:1638
 msgid "use specified template file"
 msgstr "använd angiven mallfil"
 
-#: builtin/commit.c:1639
-msgid "force edit of commit"
+#: builtin/cummit.c:1639
+msgid "force edit of cummit"
 msgstr "tvinga redigering av incheckning"
 
-#: builtin/commit.c:1641
-msgid "include status in commit message template"
+#: builtin/cummit.c:1641
+msgid "include status in cummit message template"
 msgstr "ta med status i mallen för incheckningsmeddelandet"
 
-#: builtin/commit.c:1646
-msgid "Commit contents options"
+#: builtin/cummit.c:1646
+msgid "cummit contents options"
 msgstr "Alternativ för incheckningens innehåll"
 
-#: builtin/commit.c:1647
-msgid "commit all changed files"
+#: builtin/cummit.c:1647
+msgid "cummit all changed files"
 msgstr "checka in alla ändrade filer"
 
-#: builtin/commit.c:1648
-msgid "add specified files to index for commit"
+#: builtin/cummit.c:1648
+msgid "add specified files to index for cummit"
 msgstr "lägg till angivna filer till indexet för incheckning"
 
-#: builtin/commit.c:1649
+#: builtin/cummit.c:1649
 msgid "interactively add files"
 msgstr "lägg till filer interaktivt"
 
-#: builtin/commit.c:1650
+#: builtin/cummit.c:1650
 msgid "interactively add changes"
 msgstr "lägg till ändringar interaktivt"
 
-#: builtin/commit.c:1651
-msgid "commit only specified files"
+#: builtin/cummit.c:1651
+msgid "cummit only specified files"
 msgstr "checka endast in angivna filer"
 
-#: builtin/commit.c:1652
-msgid "bypass pre-commit and commit-msg hooks"
-msgstr "förbigå pre-commit- och commit-msg-krokar"
+#: builtin/cummit.c:1652
+msgid "bypass pre-cummit and cummit-msg hooks"
+msgstr "förbigå pre-cummit- och cummit-msg-krokar"
 
-#: builtin/commit.c:1653
-msgid "show what would be committed"
+#: builtin/cummit.c:1653
+msgid "show what would be cummitted"
 msgstr "visa vad som skulle checkas in"
 
-#: builtin/commit.c:1666
-msgid "amend previous commit"
+#: builtin/cummit.c:1666
+msgid "amend previous cummit"
 msgstr "lägg till föregående incheckning"
 
-#: builtin/commit.c:1667
+#: builtin/cummit.c:1667
 msgid "bypass post-rewrite hook"
 msgstr "förbigå post-rewrite-krok"
 
-#: builtin/commit.c:1674
+#: builtin/cummit.c:1674
 msgid "ok to record an empty change"
 msgstr "ok att registrera en tom ändring"
 
-#: builtin/commit.c:1676
+#: builtin/cummit.c:1676
 msgid "ok to record a change with an empty message"
 msgstr "ok att registrera en ändring med tomt meddelande"
 
-#: builtin/commit.c:1752
+#: builtin/cummit.c:1752
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "Trasig MERGE_HEAD-fil (%s)"
 
-#: builtin/commit.c:1759
+#: builtin/cummit.c:1759
 msgid "could not read MERGE_MODE"
 msgstr "kunde inte läsa MERGE_MODE"
 
-#: builtin/commit.c:1780
+#: builtin/cummit.c:1780
 #, c-format
-msgid "could not read commit message: %s"
+msgid "could not read cummit message: %s"
 msgstr "kunde inte läsa incheckningsmeddelande: %s"
 
-#: builtin/commit.c:1787
+#: builtin/cummit.c:1787
 #, c-format
-msgid "Aborting commit due to empty commit message.\n"
+msgid "Aborting cummit due to empty cummit message.\n"
 msgstr "Avbryter på grund av tomt incheckningsmeddelande.\n"
 
-#: builtin/commit.c:1792
+#: builtin/cummit.c:1792
 #, c-format
-msgid "Aborting commit; you did not edit the message.\n"
+msgid "Aborting cummit; you did not edit the message.\n"
 msgstr "Avbryter incheckning; meddelandet inte redigerat.\n"
 
-#: builtin/commit.c:1803
+#: builtin/cummit.c:1803
 #, c-format
-msgid "Aborting commit due to empty commit message body.\n"
+msgid "Aborting cummit due to empty cummit message body.\n"
 msgstr "Avbryter på grund av tom incheckningsmeddelandekropp.\n"
 
-#: builtin/commit.c:1839
+#: builtin/cummit.c:1839
 msgid ""
 "repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -14924,7 +14924,7 @@ msgid "unable to get credential storage lock in %d ms"
 msgstr "kunde inte erhålla låset för lagring av inlogginsuppgifter på %d ms"
 
 #: builtin/describe.c:26
-msgid "git describe [<options>] [<commit-ish>...]"
+msgid "git describe [<options>] [<cummit-ish>...]"
 msgstr "git describe [<flaggor>] [<incheckning-igt>...]"
 
 #: builtin/describe.c:27
@@ -14989,7 +14989,7 @@ msgstr ""
 
 #: builtin/describe.c:458
 #, c-format
-msgid "traversed %lu commits\n"
+msgid "traversed %lu cummits\n"
 msgstr "traverserade %lu incheckningar\n"
 
 #: builtin/describe.c:461
@@ -15013,11 +15013,11 @@ msgstr "Objektnamnet är inte giltigt: %s"
 
 #: builtin/describe.c:540
 #, c-format
-msgid "%s is neither a commit nor blob"
+msgid "%s is neither a cummit nor blob"
 msgstr "%s är varken incheckning eller blob"
 
 #: builtin/describe.c:554
-msgid "find the tag that comes after the commit"
+msgid "find the tag that comes after the cummit"
 msgstr "hitta taggen som kommer efter incheckningen"
 
 #: builtin/describe.c:555
@@ -15057,7 +15057,7 @@ msgid "do not consider tags matching <pattern>"
 msgstr "överväg inte taggar som motsvarar <mönster>"
 
 #: builtin/describe.c:570 builtin/name-rev.c:595
-msgid "show abbreviated commit object as fallback"
+msgid "show abbreviated cummit object as fallback"
 msgstr "visa förkortade incheckningsobjekt som standard"
 
 #: builtin/describe.c:571 builtin/describe.c:574
@@ -15078,11 +15078,11 @@ msgstr "Inga namn hittades, kan inte beskriva något."
 
 #: builtin/describe.c:673 builtin/describe.c:675
 #, c-format
-msgid "option '%s' and commit-ishes cannot be used together"
+msgid "option '%s' and cummit-ishes cannot be used together"
 msgstr "flaggorna \"%s\" och incheckning-igter kan inte användas samtidigt"
 
 #: builtin/diff-tree.c:157
-msgid "--merge-base only works with two commits"
+msgid "--merge-base only works with two cummits"
 msgstr "--merge-base fungerar endast med två incheckningar"
 
 #: builtin/diff.c:92
@@ -15125,7 +15125,7 @@ msgid "%s...%s: multiple merge bases, using %s"
 msgstr "%s...%s: flera sammanslagningsbaser, använder %s"
 
 #: builtin/difftool.c:31
-msgid "git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"
+msgid "git difftool [<options>] [<cummit> [<cummit>]] [--] [<path>...]"
 msgstr ""
 "git difftool [<flaggor>] [<incheckning> [<incheckning>]] [--] [<sökväg>...]"
 
@@ -15284,7 +15284,7 @@ msgid "select handling of tags that tag filtered objects"
 msgstr "välj hantering av taggar som har taggfiltrerade objekt"
 
 #: builtin/fast-export.c:1179
-msgid "select handling of commit messages in an alternate encoding"
+msgid "select handling of cummit messages in an alternate encoding"
 msgstr "välj hantering av incheckningsmeddelanden i alternativ teckenkodning"
 
 #: builtin/fast-export.c:1182
@@ -15304,7 +15304,7 @@ msgid "fake a tagger when tags lack one"
 msgstr "fejka taggare när taggen saknar en"
 
 #: builtin/fast-export.c:1192
-msgid "output full tree for each commit"
+msgid "output full tree for each cummit"
 msgstr "skriv ut hela trädet för varje incheckning"
 
 #: builtin/fast-export.c:1194
@@ -15340,7 +15340,7 @@ msgid "reference parents which are not in fast-export stream by object id"
 msgstr "referera föräldrar som inte finns i fast-export-ström med objekt-id"
 
 #: builtin/fast-export.c:1205
-msgid "show original object ids of blobs/commits"
+msgid "show original object ids of blobs/cummits"
 msgstr "visa ursprungliga objekt-id för blobbar/incheckningar"
 
 #: builtin/fast-export.c:1207
@@ -15490,7 +15490,7 @@ msgid "convert to a complete repository"
 msgstr "konvertera till komplett arkiv"
 
 #: builtin/fetch.c:194
-msgid "re-fetch without negotiating common commits"
+msgid "re-fetch without negotiating common cummits"
 msgstr "hämta om utan att förhandla om gemensamma incheckningar"
 
 #: builtin/fetch.c:197
@@ -15534,7 +15534,7 @@ msgid "check for forced-updates on all updated branches"
 msgstr "se efter tvingade uppdateringar i alla uppdaterade grenar"
 
 #: builtin/fetch.c:224
-msgid "write the commit-graph after fetching"
+msgid "write the cummit-graph after fetching"
 msgstr "skriv incheckingsgrafen efter hämtning"
 
 #: builtin/fetch.c:226
@@ -15837,12 +15837,12 @@ msgid "git for-each-ref [--points-at <object>]"
 msgstr "git for-each-ref [--points-at <objekt>]"
 
 #: builtin/for-each-ref.c:12
-msgid "git for-each-ref [--merged [<commit>]] [--no-merged [<commit>]]"
+msgid "git for-each-ref [--merged [<cummit>]] [--no-merged [<cummit>]]"
 msgstr ""
 "git for-each-ref [--merged [<incheckning>]] [--no-merged <incheckning>]]"
 
 #: builtin/for-each-ref.c:13
-msgid "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
+msgid "git for-each-ref [--contains [<cummit>]] [--no-contains [<cummit>]]"
 msgstr ""
 "git for-each-ref [--contains [<incheckning>]] [--no-contains [<incheckning>]]"
 
@@ -15883,11 +15883,11 @@ msgid "print only refs that are not merged"
 msgstr "visa endast referenser som ej slagits samman"
 
 #: builtin/for-each-ref.c:49
-msgid "print only refs which contain the commit"
+msgid "print only refs which contain the cummit"
 msgstr "visa endast referenser som innehåller incheckningen"
 
 #: builtin/for-each-ref.c:50
-msgid "print only refs which don't contain the commit"
+msgid "print only refs which don't contain the cummit"
 msgstr "visa endast referenser som inte innehåller incheckningen"
 
 #: builtin/for-each-repo.c:9
@@ -16017,7 +16017,7 @@ msgstr "%s: ogiltig sha1-pekare %s"
 
 #: builtin/fsck.c:537
 #, c-format
-msgid "%s: not a commit"
+msgid "%s: not a cummit"
 msgstr "%s: inte en incheckning!"
 
 #: builtin/fsck.c:591
@@ -16385,7 +16385,7 @@ msgid "unrecognized --schedule argument '%s'"
 msgstr "okänt argument för --schedule, %s"
 
 #: builtin/gc.c:870
-msgid "failed to write commit-graph"
+msgid "failed to write cummit-graph"
 msgstr "kunde inte skriva incheckningsgraf"
 
 #: builtin/gc.c:906
@@ -17603,7 +17603,7 @@ msgstr "två utdatakataloger?"
 
 #: builtin/log.c:1536 builtin/log.c:2369 builtin/log.c:2371 builtin/log.c:2383
 #, c-format
-msgid "unknown commit %s"
+msgid "unknown cummit %s"
 msgstr "okänd incheckning %s"
 
 #: builtin/log.c:1547 builtin/replace.c:58 builtin/replace.c:207
@@ -17618,9 +17618,9 @@ msgstr "kunde inte hitta exakt sammanslagningsbas"
 
 #: builtin/log.c:1566
 msgid ""
-"failed to get upstream, if you want to record base commit automatically,\n"
+"failed to get upstream, if you want to record base cummit automatically,\n"
 "please use git branch --set-upstream-to to track a remote branch.\n"
-"Or you could specify base commit by --base=<base-commit-id> manually"
+"Or you could specify base cummit by --base=<base-cummit-id> manually"
 msgstr ""
 "kunde inte hämta uppström, om du vill lagra basincheckningen automatiskt,\n"
 "använd git branch --set-upstream-to för att spåra en fjärrgren.\n"
@@ -17631,11 +17631,11 @@ msgid "failed to find exact merge base"
 msgstr "kunde inte hitta exakt sammanslagningsbas"
 
 #: builtin/log.c:1606
-msgid "base commit should be the ancestor of revision list"
+msgid "base cummit should be the ancestor of revision list"
 msgstr "basincheckningen bör vara förfader till revisionslistan"
 
 #: builtin/log.c:1616
-msgid "base commit shouldn't be in revision list"
+msgid "base cummit shouldn't be in revision list"
 msgstr "basincheckningen bör inte vara i revisionslistan"
 
 #: builtin/log.c:1674
@@ -17728,7 +17728,7 @@ msgid "output all-zero hash in From header"
 msgstr "använd hashvärde med nollor i From-huvud"
 
 #: builtin/log.c:1823
-msgid "don't include a patch matching a commit upstream"
+msgid "don't include a patch matching a cummit upstream"
 msgstr "ta inte med patchar som motsvarar en uppströmsincheckning"
 
 #: builtin/log.c:1825
@@ -17764,7 +17764,7 @@ msgid "ident"
 msgstr "ident"
 
 #: builtin/log.c:1833
-msgid "set From address to <ident> (or committer ident if absent)"
+msgid "set From address to <ident> (or cummitter ident if absent)"
 msgstr "sätt Från-adress till <ident> (eller incheckare om ident saknas)"
 
 #: builtin/log.c:1835
@@ -17800,7 +17800,7 @@ msgid "add a signature"
 msgstr "lägg till signatur"
 
 #: builtin/log.c:1849
-msgid "base-commit"
+msgid "base-cummit"
 msgstr "basincheckning"
 
 #: builtin/log.c:1850
@@ -18137,12 +18137,12 @@ msgid "keep non patch brackets in subject"
 msgstr "behåll hakparanterser som inte är \"patch\" i ärenderaden"
 
 #: builtin/mailinfo.c:62
-msgid "copy Message-ID to the end of commit message"
+msgid "copy Message-ID to the end of cummit message"
 msgstr "kopiera Message-ID till slutet av incheckningsmeddelandet"
 
 #: builtin/mailinfo.c:64
-msgid "re-code metadata to i18n.commitEncoding"
-msgstr "koda om metadata till i18n.commitEncoding"
+msgid "re-code metadata to i18n.cummitEncoding"
+msgstr "koda om metadata till i18n.cummitEncoding"
 
 #: builtin/mailinfo.c:67
 msgid "disable charset re-coding of metadata"
@@ -18182,23 +18182,23 @@ msgid "empty mbox: '%s'"
 msgstr "tom mbox: \"%s\""
 
 #: builtin/merge-base.c:32
-msgid "git merge-base [-a | --all] <commit> <commit>..."
+msgid "git merge-base [-a | --all] <cummit> <cummit>..."
 msgstr "git merge-base [-a | --all] <incheckning> <incheckning>..."
 
 #: builtin/merge-base.c:33
-msgid "git merge-base [-a | --all] --octopus <commit>..."
+msgid "git merge-base [-a | --all] --octopus <cummit>..."
 msgstr "git merge-base [-a | --all] --octopus <incheckning>..."
 
 #: builtin/merge-base.c:34
-msgid "git merge-base --independent <commit>..."
+msgid "git merge-base --independent <cummit>..."
 msgstr "git merge-base --independent <incheckning>..."
 
 #: builtin/merge-base.c:35
-msgid "git merge-base --is-ancestor <commit> <commit>"
+msgid "git merge-base --is-ancestor <cummit> <cummit>"
 msgstr "git merge-base --is-ancestor <incheckning> <incheckning>"
 
 #: builtin/merge-base.c:36
-msgid "git merge-base --fork-point <ref> [<commit>]"
+msgid "git merge-base --fork-point <ref> [<cummit>]"
 msgstr "git merge-base --fork-point <ref> [<incheckning>]"
 
 #: builtin/merge-base.c:144
@@ -18218,7 +18218,7 @@ msgid "is the first one ancestor of the other?"
 msgstr "är den första anfader till den andra?"
 
 #: builtin/merge-base.c:152
-msgid "find where <commit> forked from reflog of <ref>"
+msgid "find where <cummit> forked from reflog of <ref>"
 msgstr "se var <incheckning> grenades av från referensloggen från <ref>"
 
 #: builtin/merge-file.c:9
@@ -18297,7 +18297,7 @@ msgid "Merging %s with %s\n"
 msgstr "Slår ihop %s med %s\n"
 
 #: builtin/merge.c:59
-msgid "git merge [<options>] [<commit>...]"
+msgid "git merge [<options>] [<cummit>...]"
 msgstr "git merge [<flaggor>] [<incheckning>...]"
 
 #: builtin/merge.c:125
@@ -18337,20 +18337,20 @@ msgid "(synonym to --stat)"
 msgstr "(synonym till --stat)"
 
 #: builtin/merge.c:264 builtin/pull.c:143
-msgid "add (at most <n>) entries from shortlog to merge commit message"
+msgid "add (at most <n>) entries from shortlog to merge cummit message"
 msgstr ""
 "lägg till (som mest <n>) poster från shortlog till incheckningsmeddelandet"
 
 #: builtin/merge.c:267 builtin/pull.c:149
-msgid "create a single commit instead of doing a merge"
+msgid "create a single cummit instead of doing a merge"
 msgstr "skapa en ensam incheckning istället för en sammanslagning"
 
 #: builtin/merge.c:269 builtin/pull.c:152
-msgid "perform a commit if the merge succeeds (default)"
+msgid "perform a cummit if the merge succeeds (default)"
 msgstr "utför en incheckning om sammanslagningen lyckades (standard)"
 
 #: builtin/merge.c:271 builtin/pull.c:155
-msgid "edit message before committing"
+msgid "edit message before cummitting"
 msgstr "redigera meddelande innan incheckning"
 
 #: builtin/merge.c:273
@@ -18383,7 +18383,7 @@ msgid "option for selected merge strategy"
 msgstr "alternativ för vald sammanslagningsstrategi"
 
 #: builtin/merge.c:285
-msgid "merge commit message (for a non-fast-forward merge)"
+msgid "merge cummit message (for a non-fast-forward merge)"
 msgstr "incheckningsmeddelande för (icke snabbspolande) sammanslagning"
 
 #: builtin/merge.c:291
@@ -18407,8 +18407,8 @@ msgid "allow merging unrelated histories"
 msgstr "tillåt sammanslagning av orelaterade historier"
 
 #: builtin/merge.c:307
-msgid "bypass pre-merge-commit and commit-msg hooks"
-msgstr "förbigå pre-merge-commit- och commit-msg-krokar"
+msgid "bypass pre-merge-cummit and cummit-msg hooks"
+msgstr "förbigå pre-merge-cummit- och cummit-msg-krokar"
 
 #: builtin/merge.c:323
 msgid "could not run stash."
@@ -18433,7 +18433,7 @@ msgstr "Redan à jour. (inget att platta till)"
 
 #: builtin/merge.c:417
 #, c-format
-msgid "Squash commit -- not updating HEAD\n"
+msgid "Squash cummit -- not updating HEAD\n"
 msgstr "Tillplattningsincheckning -- uppdaterar inte HEAD\n"
 
 #: builtin/merge.c:467
@@ -18443,7 +18443,7 @@ msgstr "Inget sammanslagningsmeddelande -- uppdaterar inte HEAD\n"
 
 #: builtin/merge.c:517
 #, c-format
-msgid "'%s' does not point to a commit"
+msgid "'%s' does not point to a cummit"
 msgstr "\"%s\" verkar inte peka på en incheckning"
 
 #: builtin/merge.c:605
@@ -18472,14 +18472,14 @@ msgstr "Kunde inte läsa från \"%s\""
 
 #: builtin/merge.c:825
 #, c-format
-msgid "Not committing merge; use 'git commit' to complete the merge.\n"
+msgid "Not cummitting merge; use 'git cummit' to complete the merge.\n"
 msgstr ""
-"Checkar inte in sammanslagningen; använd \"git commit\" för att slutföra "
+"Checkar inte in sammanslagningen; använd \"git cummit\" för att slutföra "
 "den.\n"
 
 #: builtin/merge.c:831
 msgid ""
-"Please enter a commit message to explain why this merge is necessary,\n"
+"Please enter a cummit message to explain why this merge is necessary,\n"
 "especially if it merges an updated upstream into a topic branch.\n"
 "\n"
 msgstr ""
@@ -18489,20 +18489,20 @@ msgstr ""
 "\n"
 
 #: builtin/merge.c:836
-msgid "An empty message aborts the commit.\n"
+msgid "An empty message aborts the cummit.\n"
 msgstr "Ett tomt meddelande avbryter incheckningen.\n"
 
 #: builtin/merge.c:839
 #, c-format
 msgid ""
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
-"the commit.\n"
+"the cummit.\n"
 msgstr ""
 "Rader som inleds med \"%c\" kommer ignoreras, och ett tomt meddelande\n"
 "avbryter incheckningen.\n"
 
 #: builtin/merge.c:900
-msgid "Empty commit message."
+msgid "Empty cummit message."
 msgstr "Tomt incheckningsmeddelande."
 
 #: builtin/merge.c:915
@@ -18512,7 +18512,7 @@ msgstr "Underbart.\n"
 
 #: builtin/merge.c:976
 #, c-format
-msgid "Automatic merge failed; fix conflicts and then commit the result.\n"
+msgid "Automatic merge failed; fix conflicts and then cummit the result.\n"
 msgstr ""
 "Kunde inte slå ihop automatiskt; fixa konflikter och checka in resultatet.\n"
 
@@ -18570,7 +18570,7 @@ msgstr "Ingen sammanslagning pågår (MERGE_HEAD saknas)."
 #: builtin/merge.c:1385
 msgid ""
 "You have not concluded your merge (MERGE_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Du har inte avslutat sammanslagningen (MERGE_HEAD finns).\n"
 "Checka in dina ändringar innan du slår ihop."
@@ -18578,7 +18578,7 @@ msgstr ""
 #: builtin/merge.c:1392
 msgid ""
 "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists).\n"
-"Please, commit your changes before you merge."
+"Please, cummit your changes before you merge."
 msgstr ""
 "Du har inte avslutat din \"cherry-pick\" (CHERRY_PICK_HEAD finns).\n"
 "Checka in dina ändringar innan du slår ihop."
@@ -18588,15 +18588,15 @@ msgid "You have not concluded your cherry-pick (CHERRY_PICK_HEAD exists)."
 msgstr "Du har inte avslutat din \"cherry-pick\" (CHERRY_PICK_HEAD finns)."
 
 #: builtin/merge.c:1427
-msgid "No commit specified and merge.defaultToUpstream not set."
+msgid "No cummit specified and merge.defaultToUpstream not set."
 msgstr "Ingen incheckning angiven och merge.defaultToUpstream är ej satt."
 
 #: builtin/merge.c:1444
-msgid "Squash commit into empty head not supported yet"
+msgid "Squash cummit into empty head not supported yet"
 msgstr "Stöder inte en tillplattningsincheckning på ett tomt huvud ännu"
 
 #: builtin/merge.c:1446
-msgid "Non-fast-forward commit does not make sense into an empty head"
+msgid "Non-fast-forward cummit does not make sense into an empty head"
 msgstr "Icke-snabbspolad incheckning kan inte användas med ett tomt huvud"
 
 #: builtin/merge.c:1451
@@ -18605,7 +18605,7 @@ msgid "%s - not something we can merge"
 msgstr "%s - inte något vi kan slå ihop"
 
 #: builtin/merge.c:1453
-msgid "Can merge only exactly one commit into empty head"
+msgid "Can merge only exactly one cummit into empty head"
 msgstr "Kan endast slå ihop en enda incheckning i ett tomt huvud"
 
 #: builtin/merge.c:1540
@@ -18654,7 +18654,7 @@ msgstr "Använder strategin %s för att förbereda lösning för hand.\n"
 
 #: builtin/merge.c:1753
 #, c-format
-msgid "Automatic merge went well; stopped before committing as requested\n"
+msgid "Automatic merge went well; stopped before cummitting as requested\n"
 msgstr ""
 "Automatisk sammanslagning lyckades; stoppar före incheckning som önskat\n"
 
@@ -18748,7 +18748,7 @@ msgid "write multi-pack index containing only given indexes"
 msgstr "skriv flerpaketsindex som endast innehåller angivna index"
 
 #: builtin/multi-pack-index.c:107
-msgid "refs snapshot for selecting bitmap commits"
+msgid "refs snapshot for selecting bitmap cummits"
 msgstr "refs-ögonblicksbild för att välja bitkarte-incheckningar"
 
 #: builtin/multi-pack-index.c:206
@@ -18857,7 +18857,7 @@ msgid "renaming '%s' failed"
 msgstr "misslyckades byta namn på \"%s\""
 
 #: builtin/name-rev.c:524
-msgid "git name-rev [<options>] <commit>..."
+msgid "git name-rev [<options>] <cummit>..."
 msgstr "git name-rev [<flaggor>] <incheckning>..."
 
 #: builtin/name-rev.c:525
@@ -18873,7 +18873,7 @@ msgid "print only ref-based names (no object names)"
 msgstr "skriv endast referensbaserade namn (inga objektnamn)"
 
 #: builtin/name-rev.c:584
-msgid "only use tags to name the commits"
+msgid "only use tags to name the cummits"
 msgstr "använd endast taggar för att namnge incheckningar"
 
 #: builtin/name-rev.c:586
@@ -18885,7 +18885,7 @@ msgid "ignore refs matching <pattern>"
 msgstr "ignorera referenser som motsvarar <mönster>"
 
 #: builtin/name-rev.c:590
-msgid "list all commits reachable from all refs"
+msgid "list all cummits reachable from all refs"
 msgstr "lista alla incheckningar som kan nås alla referenser"
 
 #: builtin/name-rev.c:591
@@ -18989,8 +18989,8 @@ msgid "git notes merge [<options>] <notes-ref>"
 msgstr "git notes merge [<flaggor>] <anteckningsref>"
 
 #: builtin/notes.c:76
-msgid "git notes merge --commit [<options>]"
-msgstr "git notes merge --commit [<flaggor>]"
+msgid "git notes merge --cummit [<options>]"
+msgstr "git notes merge --cummit [<flaggor>]"
 
 #: builtin/notes.c:77
 msgid "git notes merge --abort [<options>]"
@@ -19175,11 +19175,11 @@ msgid "failed to read ref NOTES_MERGE_PARTIAL"
 msgstr "misslyckades läsa references NOTES_MERGE_PARTIAL"
 
 #: builtin/notes.c:722
-msgid "could not find commit from NOTES_MERGE_PARTIAL."
+msgid "could not find cummit from NOTES_MERGE_PARTIAL."
 msgstr "kunde inte hitta incheckning från NOTES_MERGE_PARTIAL."
 
 #: builtin/notes.c:724
-msgid "could not parse commit from NOTES_MERGE_PARTIAL."
+msgid "could not parse cummit from NOTES_MERGE_PARTIAL."
 msgstr "kunde inte tolka incheckning från NOTES_MERGE_PARTIAL."
 
 #: builtin/notes.c:737
@@ -19212,11 +19212,11 @@ msgstr ""
 "cat_sort_uniq)"
 
 #: builtin/notes.c:788
-msgid "Committing unmerged notes"
+msgid "cummitting unmerged notes"
 msgstr "Checkar in ej sammanslagna anteckningar"
 
 #: builtin/notes.c:790
-msgid "finalize notes merge by committing unmerged notes"
+msgid "finalize notes merge by cummitting unmerged notes"
 msgstr ""
 "färdigställ sammanslagning av anteckningar genom att checka in ej "
 "sammanslagna anteckningar"
@@ -19230,8 +19230,8 @@ msgid "abort notes merge"
 msgstr "avbryt sammanslagning av anteckningar"
 
 #: builtin/notes.c:805
-msgid "cannot mix --commit, --abort or -s/--strategy"
-msgstr "kan inte blanda --commit, --abort eller -s/--strategy"
+msgid "cannot mix --cummit, --abort or -s/--strategy"
+msgstr "kan inte blanda --cummit, --abort eller -s/--strategy"
 
 #: builtin/notes.c:810
 msgid "must specify a notes ref to merge"
@@ -19255,12 +19255,12 @@ msgstr "misslyckades lagra länk till aktuell anteckningsreferens (%s)"
 #: builtin/notes.c:880
 #, c-format
 msgid ""
-"Automatic notes merge failed. Fix conflicts in %s and commit the result with "
-"'git notes merge --commit', or abort the merge with 'git notes merge --"
+"Automatic notes merge failed. Fix conflicts in %s and cummit the result with "
+"'git notes merge --cummit', or abort the merge with 'git notes merge --"
 "abort'.\n"
 msgstr ""
 "Automatisk sammanslagning av anteckningar misslyckades. Rätta konflikter i "
-"%s och checka in resultatet med \"git notes merge --commit\", eller avbryt "
+"%s och checka in resultatet med \"git notes merge --cummit\", eller avbryt "
 "sammanslagningen med \"git notes merge --abort\".\n"
 
 #: builtin/notes.c:899 builtin/tag.c:595
@@ -19630,7 +19630,7 @@ msgid "pack compression level"
 msgstr "komprimeringsgrad för paket"
 
 #: builtin/pack-objects.c:3972
-msgid "do not hide commits by grafts"
+msgid "do not hide cummits by grafts"
 msgstr "göm inte incheckningar med ympningar (\"grafts\")"
 
 #: builtin/pack-objects.c:3974
@@ -19781,8 +19781,8 @@ msgid "allow fast-forward"
 msgstr "tillåt snabbspolning"
 
 #: builtin/pull.c:165
-msgid "control use of pre-merge-commit and commit-msg hooks"
-msgstr "styr användning av pre-merge-commit- och commit-msg-krokar"
+msgid "control use of pre-merge-cummit and cummit-msg hooks"
+msgstr "styr användning av pre-merge-cummit- och cummit-msg-krokar"
 
 #: builtin/pull.c:171 parse-options.h:371
 msgid "automatically stash/stash pop before and after"
@@ -19880,7 +19880,7 @@ msgstr ""
 
 #: builtin/pull.c:600
 #, c-format
-msgid "unable to access commit %s"
+msgid "unable to access cummit %s"
 msgstr "kunde inte komma åt incheckningen %s"
 
 #: builtin/pull.c:908
@@ -19925,7 +19925,7 @@ msgid "pull with rebase"
 msgstr "pull med ombasering"
 
 #: builtin/pull.c:1052
-msgid "please commit or stash them."
+msgid "please cummit or stash them."
 msgstr "checka in eller använd \"stash\" på dem."
 
 #: builtin/pull.c:1077
@@ -19933,7 +19933,7 @@ msgstr "checka in eller använd \"stash\" på dem."
 msgid ""
 "fetch updated the current branch head.\n"
 "fast-forwarding your working tree from\n"
-"commit %s."
+"cummit %s."
 msgstr ""
 "fetch uppdaterade huvudet för aktuell gren.\n"
 "snabbspolar din arbetskatalog från\n"
@@ -20117,8 +20117,8 @@ msgstr "Uppdateringarna avvisades eftersom taggen redan finns på fjärren."
 
 #: builtin/push.c:280
 msgid ""
-"You cannot update a remote ref that points at a non-commit object,\n"
-"or update a remote ref to make it point at a non-commit object,\n"
+"You cannot update a remote ref that points at a non-cummit object,\n"
+"or update a remote ref to make it point at a non-cummit object,\n"
 "without using the '--force' option.\n"
 msgstr ""
 "Du kan inte uppdatera en fjärr-referens som pekar på ett objekt som\n"
@@ -20298,7 +20298,7 @@ msgstr "visa endast utdata för det andra intervallet"
 
 #: builtin/range-diff.c:60 builtin/range-diff.c:64
 #, c-format
-msgid "not a commit range: '%s'"
+msgid "not a cummit range: '%s'"
 msgstr "inte ett incheckningsintervall: \"%s\""
 
 #: builtin/range-diff.c:74
@@ -20306,7 +20306,7 @@ msgid "single arg format must be symmetric range"
 msgstr "ensamt argument måste vara symmetriskt intervall"
 
 #: builtin/range-diff.c:89
-msgid "need two commit ranges"
+msgid "need two cummit ranges"
 msgstr "behöver två incheckningsintervall"
 
 #: builtin/read-tree.c:41
@@ -20419,7 +20419,7 @@ msgid "could not generate todo list"
 msgstr "Kunde inte skapa attgöra-lista"
 
 #: builtin/rebase.c:332
-msgid "a base commit must be provided with --upstream or --onto"
+msgid "a base cummit must be provided with --upstream or --onto"
 msgstr "en basincheckning måste anges med --upstream eller --onto"
 
 #: builtin/rebase.c:391
@@ -20446,7 +20446,7 @@ msgstr "ignorera ogiltigt allow_rerere_autoupdate: \"%s\""
 msgid ""
 "Resolve all conflicts manually, mark them as resolved with\n"
 "\"git add/rm <conflicted_files>\", then run \"git rebase --continue\".\n"
-"You can instead skip this commit: run \"git rebase --skip\".\n"
+"You can instead skip this cummit: run \"git rebase --skip\".\n"
 "To abort and get back to the state before \"git rebase\", run \"git rebase --"
 "abort\"."
 msgstr ""
@@ -20551,11 +20551,11 @@ msgid "do not show diffstat of what changed upstream"
 msgstr "visa inte en diffstat för vad som ändrats uppströms"
 
 #: builtin/rebase.c:1066
-msgid "add a Signed-off-by trailer to each commit"
+msgid "add a Signed-off-by trailer to each cummit"
 msgstr "lägg \"Signed-off-by:\"-släprad till varje incheckning"
 
 #: builtin/rebase.c:1069
-msgid "make committer date match author date"
+msgid "make cummitter date match author date"
 msgstr "sätt incheckningsdatum till författardatum"
 
 #: builtin/rebase.c:1071
@@ -20575,7 +20575,7 @@ msgid "ignore changes in whitespace"
 msgstr "ignorera ändringar i blanksteg"
 
 #: builtin/rebase.c:1081 builtin/rebase.c:1084
-msgid "cherry-pick all commits, even if unchanged"
+msgid "cherry-pick all cummits, even if unchanged"
 msgstr "utför cherry-pick på alla incheckningar, även om oändrad"
 
 #: builtin/rebase.c:1086
@@ -20611,7 +20611,7 @@ msgid "use merging strategies to rebase"
 msgstr "använd sammanslagningsstrategier för ombasering"
 
 #: builtin/rebase.c:1109
-msgid "let the user edit the list of commits to rebase"
+msgid "let the user edit the list of cummits to rebase"
 msgstr "låt användaren redigera listan över incheckningar att ombasera"
 
 #: builtin/rebase.c:1113
@@ -20620,23 +20620,23 @@ msgstr ""
 "(AVRÅDS) försök återskapa sammanslagningar istället för att ignorera dem"
 
 #: builtin/rebase.c:1118
-msgid "how to handle commits that become empty"
+msgid "how to handle cummits that become empty"
 msgstr "hur incheckningar som blir tomma ska hanteras"
 
 #: builtin/rebase.c:1121
-msgid "keep commits which start empty"
+msgid "keep cummits which start empty"
 msgstr "behåller incheckningar som är tomma från början"
 
 #: builtin/rebase.c:1125
-msgid "move commits that begin with squash!/fixup! under -i"
+msgid "move cummits that begin with squash!/fixup! under -i"
 msgstr "flytta incheckningar som börjar med squash!/fixup! under -i"
 
 #: builtin/rebase.c:1132
-msgid "add exec lines after each commit of the editable list"
+msgid "add exec lines after each cummit of the editable list"
 msgstr "lägg till exec-rader efter varje incheckning i den redigerbara listan"
 
 #: builtin/rebase.c:1136
-msgid "allow rebasing commits with empty messages"
+msgid "allow rebasing cummits with empty messages"
 msgstr "tillåt ombasering av incheckningar med tomt meddelande"
 
 #: builtin/rebase.c:1140
@@ -20660,7 +20660,7 @@ msgid "pass the argument through to the merge strategy"
 msgstr "sänd flaggan till sammanslagningsstrategin"
 
 #: builtin/rebase.c:1151
-msgid "rebase all reachable commits up to the root(s)"
+msgid "rebase all reachable cummits up to the root(s)"
 msgstr "ombasera alla nåbara incheckningar upp till roten/rötterna"
 
 #: builtin/rebase.c:1154
@@ -20762,7 +20762,7 @@ msgid "invalid upstream '%s'"
 msgstr "felaktig uppström \"%s\""
 
 #: builtin/rebase.c:1571
-msgid "Could not create new root commit"
+msgid "Could not create new root cummit"
 msgstr "kunde inte skapa ny rotincheckning"
 
 #: builtin/rebase.c:1597
@@ -20777,12 +20777,12 @@ msgstr "\"%s\": behöver precis en sammanslagningsbas"
 
 #: builtin/rebase.c:1609
 #, c-format
-msgid "Does not point to a valid commit '%s'"
+msgid "Does not point to a valid cummit '%s'"
 msgstr "Pekar inte på en giltig incheckning: \"%s\""
 
 #: builtin/rebase.c:1636
 #, c-format
-msgid "no such branch/commit '%s'"
+msgid "no such branch/cummit '%s'"
 msgstr "ingen sådan gren/incheckning: \"%s\""
 
 #: builtin/rebase.c:1647 builtin/submodule--helper.c:43
@@ -20796,7 +20796,7 @@ msgid "Could not resolve HEAD to a revision"
 msgstr "Kunde inte bestämma HEAD:s incheckning"
 
 #: builtin/rebase.c:1679
-msgid "Please commit or stash them."
+msgid "Please cummit or stash them."
 msgstr "Checka in eller använd \"stash\" på dem."
 
 #: builtin/rebase.c:1714
@@ -20975,7 +20975,7 @@ msgstr ""
 "rensa poster äldre än <tid> som inte kan nås från nuvarande ände av grenen"
 
 #: builtin/reflog.c:258
-msgid "prune any reflog entries that point to broken commits"
+msgid "prune any reflog entries that point to broken cummits"
 msgstr "rensa alla referensloggposter som pekar på trasiga incheckningar"
 
 #: builtin/reflog.c:259
@@ -21692,7 +21692,7 @@ msgid "git replace [-f] --edit <object>"
 msgstr "git replace [-f] --edit <objekt>"
 
 #: builtin/replace.c:24
-msgid "git replace [-f] --graft <commit> [<parent>...]"
+msgid "git replace [-f] --graft <cummit> [<parent>...]"
 msgstr "git replace [-f] --graft <incheckning> [<förälder>...]"
 
 #: builtin/replace.c:26
@@ -21798,23 +21798,23 @@ msgstr "nytt objekt är samma som det gamla: \"%s\""
 
 #: builtin/replace.c:383
 #, c-format
-msgid "could not parse %s as a commit"
+msgid "could not parse %s as a cummit"
 msgstr "kunde inte tolka %s som incheckning"
 
 #: builtin/replace.c:415
 #, c-format
-msgid "bad mergetag in commit '%s'"
+msgid "bad mergetag in cummit '%s'"
 msgstr "felaktig sammanslagningstagg i incheckningen \"%s\""
 
 #: builtin/replace.c:417
 #, c-format
-msgid "malformed mergetag in commit '%s'"
+msgid "malformed mergetag in cummit '%s'"
 msgstr "felformad sammanslagningstagg i incheckningen \"%s\""
 
 #: builtin/replace.c:429
 #, c-format
 msgid ""
-"original commit '%s' contains mergetag '%s' that is discarded; use --edit "
+"original cummit '%s' contains mergetag '%s' that is discarded; use --edit "
 "instead of --graft"
 msgstr ""
 "den ursprungliga incheckningen \"%s\" innehåller sammanslagningstaggen \"%s"
@@ -21822,16 +21822,16 @@ msgstr ""
 
 #: builtin/replace.c:468
 #, c-format
-msgid "the original commit '%s' has a gpg signature"
+msgid "the original cummit '%s' has a gpg signature"
 msgstr "den ursprungliga incheckningen \"%s\" har en gpg-signatur"
 
 #: builtin/replace.c:469
-msgid "the signature will be removed in the replacement commit!"
+msgid "the signature will be removed in the replacement cummit!"
 msgstr "signaturen kommer att tas bort i ersättningsincheckningen!"
 
 #: builtin/replace.c:479
 #, c-format
-msgid "could not write replacement commit for: '%s'"
+msgid "could not write replacement cummit for: '%s'"
 msgstr "kunde inte skriva ersättningsincheckning för: \"%s\""
 
 #: builtin/replace.c:487
@@ -21841,7 +21841,7 @@ msgstr "ympning för \"%s\" behövs inte"
 
 #: builtin/replace.c:491
 #, c-format
-msgid "new commit is the same as the old one: '%s'"
+msgid "new cummit is the same as the old one: '%s'"
 msgstr "ny incheckning är samma som den gamla: \"%s\""
 
 #: builtin/replace.c:526
@@ -21866,7 +21866,7 @@ msgid "edit existing object"
 msgstr "redigera befintligt objekt"
 
 #: builtin/replace.c:550
-msgid "change a commit's parents"
+msgid "change a cummit's parents"
 msgstr "ändra en inchecknings föräldrar"
 
 #: builtin/replace.c:551
@@ -21940,7 +21940,7 @@ msgstr "misslyckades skapa diff för \"%s\""
 
 #: builtin/reset.c:33
 msgid ""
-"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<commit>]"
+"git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<cummit>]"
 msgstr ""
 "git reset [--mixed | --soft | --hard | --merge | --keep] [-q] [<incheckning>]"
 
@@ -22174,7 +22174,7 @@ msgid "unknown mode for --show-object-format: %s"
 msgstr "okänt läge för --show-object-format: %s"
 
 #: builtin/revert.c:24
-msgid "git revert [<options>] <commit-ish>..."
+msgid "git revert [<options>] <cummit-ish>..."
 msgstr "git revert [<flaggor>] <incheckning-igt>..."
 
 #: builtin/revert.c:25
@@ -22182,7 +22182,7 @@ msgid "git revert <subcommand>"
 msgstr "git revert <underkommando>"
 
 #: builtin/revert.c:30
-msgid "git cherry-pick [<options>] <commit-ish>..."
+msgid "git cherry-pick [<options>] <cummit-ish>..."
 msgstr "git cherry-pick [<flaggor>] <incheckning-igt>..."
 
 #: builtin/revert.c:31
@@ -22212,15 +22212,15 @@ msgid "cancel revert or cherry-pick sequence"
 msgstr "avbryt revert- eller cherry-pick-sekvens"
 
 #: builtin/revert.c:105
-msgid "skip current commit and continue"
+msgid "skip current cummit and continue"
 msgstr "hoppa över nuvarande incheckning och fortsätt"
 
 #: builtin/revert.c:107
-msgid "don't automatically commit"
+msgid "don't automatically cummit"
 msgstr "checka inte in automatiskt"
 
 #: builtin/revert.c:108
-msgid "edit the commit message"
+msgid "edit the cummit message"
 msgstr "redigera incheckningsmeddelandet"
 
 #: builtin/revert.c:111
@@ -22240,19 +22240,19 @@ msgid "option for merge strategy"
 msgstr "alternativ för sammanslagningsstrategi"
 
 #: builtin/revert.c:125
-msgid "append commit name"
+msgid "append cummit name"
 msgstr "lägg till incheckningsnamn"
 
 #: builtin/revert.c:127
-msgid "preserve initially empty commits"
+msgid "preserve initially empty cummits"
 msgstr "behåll incheckningar som börjar som tomma"
 
 #: builtin/revert.c:128
-msgid "allow commits with empty messages"
+msgid "allow cummits with empty messages"
 msgstr "tillåt incheckningar med tomt meddelande"
 
 #: builtin/revert.c:129
-msgid "keep redundant, empty commits"
+msgid "keep redundant, empty cummits"
 msgstr "behåll redundanta, tomma incheckningar"
 
 #: builtin/revert.c:241
@@ -22396,15 +22396,15 @@ msgid "unknown group type: %s"
 msgstr "okänd grupptyp: %s"
 
 #: builtin/shortlog.c:351
-msgid "group by committer rather than author"
+msgid "group by cummitter rather than author"
 msgstr "gruppera efter incheckare istället för författare"
 
 #: builtin/shortlog.c:354
-msgid "sort output according to the number of commits per author"
+msgid "sort output according to the number of cummits per author"
 msgstr "sortera utdata enligt antal incheckningar per författare"
 
 #: builtin/shortlog.c:356
-msgid "suppress commit descriptions, only provides commit count"
+msgid "suppress cummit descriptions, only provides cummit count"
 msgstr "undertryck beskrivningar, visa bara antal incheckningar"
 
 #: builtin/shortlog.c:358
@@ -22472,7 +22472,7 @@ msgid "color '*!+-' corresponding to the branch"
 msgstr "färga \"*!+-\" enligt grenen"
 
 #: builtin/show-branch.c:651
-msgid "show <n> more commits after the common ancestor"
+msgid "show <n> more cummits after the common ancestor"
 msgstr "visa <n> ytterligare incheckningar efter gemensam anfader"
 
 #: builtin/show-branch.c:653
@@ -22488,7 +22488,7 @@ msgid "include the current branch"
 msgstr "ta med aktuell gren"
 
 #: builtin/show-branch.c:658
-msgid "name commits with their object names"
+msgid "name cummits with their object names"
 msgstr "namnge incheckningar med deras objektnamn"
 
 #: builtin/show-branch.c:660
@@ -22500,11 +22500,11 @@ msgid "show refs unreachable from any other ref"
 msgstr "visa referenser som inte kan nås från någon annan referens"
 
 #: builtin/show-branch.c:664
-msgid "show commits in topological order"
+msgid "show cummits in topological order"
 msgstr "visa incheckningar i topologisk ordning"
 
 #: builtin/show-branch.c:667
-msgid "show only commits not on the first branch"
+msgid "show only cummits not on the first branch"
 msgstr "visa endast incheckningar inte på den första grenen"
 
 #: builtin/show-branch.c:669
@@ -22557,7 +22557,7 @@ msgstr "\"%s\" är inte en giltig referens."
 
 #: builtin/show-branch.c:838
 #, c-format
-msgid "cannot find commit %s (%s)"
+msgid "cannot find cummit %s (%s)"
 msgstr "hittar inte incheckning %s (%s)"
 
 #: builtin/show-index.c:21
@@ -22815,7 +22815,7 @@ msgid "git stash apply [--index] [-q|--quiet] [<stash>]"
 msgstr "git stash apply [--index] [-q|--quiet] [<stash>]"
 
 #: builtin/stash.c:75
-msgid "git stash store [-m|--message <message>] [-q|--quiet] <commit>"
+msgid "git stash store [-m|--message <message>] [-q|--quiet] <cummit>"
 msgstr "git stash store [-m|--message <meddelande>] [-q|--quiet] <incheckning>"
 
 #: builtin/stash.c:80
@@ -22838,7 +22838,7 @@ msgstr ""
 
 #: builtin/stash.c:130
 #, c-format
-msgid "'%s' is not a stash-like commit"
+msgid "'%s' is not a stash-like cummit"
 msgstr "\"%s\" är inte en \"stash\"-liknande incheckning"
 
 #: builtin/stash.c:150
@@ -22953,7 +22953,7 @@ msgid "stash message"
 msgstr "\"stash\"-meddelande"
 
 #: builtin/stash.c:958
-msgid "\"git stash store\" requires one <commit> argument"
+msgid "\"git stash store\" requires one <cummit> argument"
 msgstr "\"git stash store\" kräver ett <incheckning>-argument"
 
 #: builtin/stash.c:1143
@@ -22965,7 +22965,7 @@ msgid "No changes selected"
 msgstr "Inga ändringar valda"
 
 #: builtin/stash.c:1304
-msgid "You do not have the initial commit yet"
+msgid "You do not have the initial cummit yet"
 msgstr "Du har inte den första incheckningen ännu"
 
 #: builtin/stash.c:1331
@@ -23174,7 +23174,7 @@ msgstr "hindra statusutskrift för undermodul"
 
 #: builtin/submodule--helper.c:875
 msgid ""
-"use commit stored in the index instead of the one stored in the submodule "
+"use cummit stored in the index instead of the one stored in the submodule "
 "HEAD"
 msgstr ""
 "visa incheckning från indexet istället för den som lagrats i undermodulens "
@@ -23214,11 +23214,11 @@ msgid "unexpected mode %o\n"
 msgstr "okänt läge %o\n"
 
 #: builtin/submodule--helper.c:1288
-msgid "use the commit stored in the index instead of the submodule HEAD"
+msgid "use the cummit stored in the index instead of the submodule HEAD"
 msgstr "använd incechkning lagrad i indexet istället för undermodulens HEAD"
 
 #: builtin/submodule--helper.c:1290
-msgid "compare the commit in the index with that in the submodule HEAD"
+msgid "compare the cummit in the index with that in the submodule HEAD"
 msgstr "jämför incheckningen i indexet med den i undermodulens HEAD"
 
 #: builtin/submodule--helper.c:1292
@@ -23231,7 +23231,7 @@ msgid "limit the summary size"
 msgstr "begränsa översiktsstorleken"
 
 #: builtin/submodule--helper.c:1299
-msgid "git submodule--helper summary [<options>] [<commit>] [--] [<path>]"
+msgid "git submodule--helper summary [<options>] [<cummit>] [--] [<path>]"
 msgstr ""
 "git submodule--helper summary [<flaggor>] [<incheckning>] [--] [<sökväg>]"
 
@@ -23495,7 +23495,7 @@ msgstr "Kan inte hämta i undermodulsökväg \"%s\"; försökte hämta %s direkt
 #, c-format
 msgid ""
 "Fetched in submodule path '%s', but it did not contain %s. Direct fetching "
-"of that commit failed."
+"of that cummit failed."
 msgstr ""
 "Hämtade i undermodulssökvägen \"%s\", men den innehöll inte %s. Direkt "
 "hämtning av incheckningen misslyckades."
@@ -23837,9 +23837,9 @@ msgstr "git tag -d <taggnamn>..."
 
 #: builtin/tag.c:29
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--no-contains <commit>] [--"
+"git tag -l [-n[<num>]] [--contains <cummit>] [--no-contains <cummit>] [--"
 "points-at <object>]\n"
-"        [--format=<format>] [--merged <commit>] [--no-merged <commit>] "
+"        [--format=<format>] [--merged <cummit>] [--no-merged <cummit>] "
 "[<pattern>...]"
 msgstr ""
 "git tag -l [-n[<antal>]] [--contains <incheckning>] [--no-contains "
@@ -23976,11 +23976,11 @@ msgid "show tag list in columns"
 msgstr "lista taggar i spalter"
 
 #: builtin/tag.c:468 builtin/tag.c:470
-msgid "print only tags that contain the commit"
+msgid "print only tags that contain the cummit"
 msgstr "visa endast taggar som innehåller incheckningen"
 
 #: builtin/tag.c:469 builtin/tag.c:471
-msgid "print only tags that don't contain the commit"
+msgid "print only tags that don't contain the cummit"
 msgstr "visa endast taggar som inte innehåller incheckningen"
 
 #: builtin/tag.c:472
@@ -24325,15 +24325,15 @@ msgstr "testa inte <katalog>/.git/ om <katalog> inte är en Git-katalog"
 msgid "interrupt transfer after <n> seconds of inactivity"
 msgstr "avbryt överföringen efter <n> sekunders inaktivitet"
 
-#: builtin/verify-commit.c:19
-msgid "git verify-commit [-v | --verbose] <commit>..."
-msgstr "git verify-commit [-v | --verbose] <incheckning>..."
+#: builtin/verify-cummit.c:19
+msgid "git verify-cummit [-v | --verbose] <cummit>..."
+msgstr "git verify-cummit [-v | --verbose] <incheckning>..."
 
-#: builtin/verify-commit.c:68
-msgid "print commit contents"
+#: builtin/verify-cummit.c:68
+msgid "print cummit contents"
 msgstr "visa innehåll för incheckning"
 
-#: builtin/verify-commit.c:69 builtin/verify-tag.c:37
+#: builtin/verify-cummit.c:69 builtin/verify-tag.c:37
 msgid "print raw gpg status output"
 msgstr "visa råa gpg-statusdata"
 
@@ -24358,7 +24358,7 @@ msgid "print tag contents"
 msgstr "visa innehåll för tag"
 
 #: builtin/worktree.c:19
-msgid "git worktree add [<options>] <path> [<commit-ish>]"
+msgid "git worktree add [<options>] <path> [<cummit-ish>]"
 msgstr "git worktree add [<flaggor>] <sökväg> [<incheckning-igt>]"
 
 #: builtin/worktree.c:20
@@ -24819,11 +24819,11 @@ msgstr "fel när revisioner skulle förberedas"
 
 #: t/helper/test-reach.c:154
 #, c-format
-msgid "commit %s is not marked reachable"
+msgid "cummit %s is not marked reachable"
 msgstr "incheckning %s är inte märkt nåbar"
 
 #: t/helper/test-reach.c:164
-msgid "too many commits marked reachable"
+msgid "too many cummits marked reachable"
 msgstr "för många incheckningar markerade nåbara"
 
 #: t/helper/test-serve-v2.c:7
@@ -25340,7 +25340,7 @@ msgid "Apply a series of patches from a mailbox"
 msgstr "Tillämpa en serie patchar från en brevlåda"
 
 #: command-list.h:52
-msgid "Annotate file lines with commit information"
+msgid "Annotate file lines with cummit information"
 msgstr "Kommentera filrader med incheckningsinformation"
 
 #: command-list.h:53
@@ -25356,7 +25356,7 @@ msgid "Create an archive of files from a named tree"
 msgstr "Skapa ett arkiv över filer från ett namngivet träd"
 
 #: command-list.h:56
-msgid "Use binary search to find the commit that introduced a bug"
+msgid "Use binary search to find the cummit that introduced a bug"
 msgstr "Använd binärsökning för att hitta ändringen som introducerade ett fel"
 
 #: command-list.h:57
@@ -25405,16 +25405,16 @@ msgid "Copy files from the index to the working tree"
 msgstr "Kopiera filer från indexet till arbetskatalogen"
 
 #: command-list.h:68
-msgid "Find commits yet to be applied to upstream"
+msgid "Find cummits yet to be applied to upstream"
 msgstr "Hitta incheckningar som ännu inte applicerats uppströms"
 
 #: command-list.h:69
-msgid "Apply the changes introduced by some existing commits"
+msgid "Apply the changes introduced by some existing cummits"
 msgstr "Applicera ändringarna introducerade av befintliga incheckningar"
 
 #: command-list.h:70
-msgid "Graphical alternative to git-commit"
-msgstr "Grafiskt alternativ till git-commit"
+msgid "Graphical alternative to git-cummit"
+msgstr "Grafiskt alternativ till git-cummit"
 
 #: command-list.h:71
 msgid "Remove untracked files from the working tree"
@@ -25433,11 +25433,11 @@ msgid "Record changes to the repository"
 msgstr "Protokollför ändringar i arkivet"
 
 #: command-list.h:75
-msgid "Write and verify Git commit-graph files"
+msgid "Write and verify Git cummit-graph files"
 msgstr "Skriv och verifiera Git-incheckningsgraffiler"
 
 #: command-list.h:76
-msgid "Create a new commit object"
+msgid "Create a new cummit object"
 msgstr "Skapa ett nytt incheckningsobjekt"
 
 #: command-list.h:77
@@ -25461,7 +25461,7 @@ msgid "Helper to store credentials on disk"
 msgstr "Hjälpprogram för att lagra användarreferenser på disk"
 
 #: command-list.h:82
-msgid "Export a single commit to a CVS checkout"
+msgid "Export a single cummit to a CVS checkout"
 msgstr "Exportera en enkel incheckning i en CVS-utcheckning"
 
 #: command-list.h:83
@@ -25481,7 +25481,7 @@ msgid "Give an object a human readable name based on an available ref"
 msgstr "Ge ett objekt användarläsbara namn baserade på en tillgänglig referens"
 
 #: command-list.h:87
-msgid "Show changes between commits, commit and working tree, etc"
+msgid "Show changes between cummits, cummit and working tree, etc"
 msgstr "Visa ändringar mellan incheckningar, med arbetskatalogen, osv"
 
 #: command-list.h:88
@@ -25521,7 +25521,7 @@ msgid "Rewrite branches"
 msgstr "Skriv om grenar"
 
 #: command-list.h:97
-msgid "Produce a merge commit message"
+msgid "Produce a merge cummit message"
 msgstr "Skapa incheckningsmeddelande för en sammanslagning"
 
 #: command-list.h:98
@@ -25545,7 +25545,7 @@ msgid "Cleanup unnecessary files and optimize the local repository"
 msgstr "Städa onödiga filer och optimera det lokala arkivet"
 
 #: command-list.h:103
-msgid "Extract commit ID from an archive created using git-archive"
+msgid "Extract cummit ID from an archive created using git-archive"
 msgstr "Hämta inchecknings-id från ett arkiv skapat med git-archive"
 
 #: command-list.h:104
@@ -25597,12 +25597,12 @@ msgid "Instantly browse your working repository in gitweb"
 msgstr "Omedelbart bläddra i din arbetskatalog med gitweb"
 
 #: command-list.h:116
-msgid "Add or parse structured information in commit messages"
+msgid "Add or parse structured information in cummit messages"
 msgstr ""
 "Lägg till eller tolka strukturerad information i incheckningsmeddelanden"
 
 #: command-list.h:117
-msgid "Show commit logs"
+msgid "Show cummit logs"
 msgstr "Visa incheckningsloggar"
 
 #: command-list.h:118
@@ -25722,7 +25722,7 @@ msgid "Applies a quilt patchset onto the current branch"
 msgstr "Tillämpar en quilt-patchuppsättning på aktiv gren"
 
 #: command-list.h:147
-msgid "Compare two commit ranges (e.g. two versions of a branch)"
+msgid "Compare two cummit ranges (e.g. two versions of a branch)"
 msgstr "Jämför två incheckningsintervall (dvs. två versioner av en gren)"
 
 #: command-list.h:148
@@ -25730,7 +25730,7 @@ msgid "Reads tree information into the index"
 msgstr "Läser trädinformation in i indexet"
 
 #: command-list.h:149
-msgid "Reapply commits on top of another base tip"
+msgid "Reapply cummits on top of another base tip"
 msgstr "Applicera incheckningar på nytt ovanpå en annan bastopp"
 
 #: command-list.h:150
@@ -25770,7 +25770,7 @@ msgid "Restore working tree files"
 msgstr "Återställ filer i arbetskatalogen"
 
 #: command-list.h:159
-msgid "Lists commit objects in reverse chronological order"
+msgid "Lists cummit objects in reverse chronological order"
 msgstr "Visa incheckningsobjekt i omvänd kronologisk ordning"
 
 #: command-list.h:160
@@ -25778,7 +25778,7 @@ msgid "Pick out and massage parameters"
 msgstr "Plocka ut och massera parametrar"
 
 #: command-list.h:161
-msgid "Revert some existing commits"
+msgid "Revert some existing cummits"
 msgstr "Återställ några befintliga incheckningar"
 
 #: command-list.h:162
@@ -25814,7 +25814,7 @@ msgid "Show various types of objects"
 msgstr "Visa olika sorters objekt"
 
 #: command-list.h:170
-msgid "Show branches and their commits"
+msgid "Show branches and their cummits"
 msgstr "Visa grenar och deras incheckningar"
 
 #: command-list.h:171
@@ -25898,7 +25898,7 @@ msgid "Show a Git logical variable"
 msgstr "Visa en logisk Git-variabel"
 
 #: command-list.h:191
-msgid "Check the GPG signature of commits"
+msgid "Check the GPG signature of cummits"
 msgstr "Kontrollera GPG-signaturer för incheckningar"
 
 #: command-list.h:192
@@ -25910,7 +25910,7 @@ msgid "Check the GPG signature of tags"
 msgstr "Kontrollera GPG-signaturer i taggar"
 
 #: command-list.h:194
-msgid "Show logs with difference each commit introduces"
+msgid "Show logs with difference each cummit introduces"
 msgstr "Visa loggar med differenser varje incheckning introducerar"
 
 #: command-list.h:195
@@ -25970,7 +25970,7 @@ msgid "The Git repository browser"
 msgstr "Bläddraren för Git-arkiv"
 
 #: command-list.h:209
-msgid "Map author/committer names and/or E-Mail addresses"
+msgid "Map author/cummitter names and/or E-Mail addresses"
 msgstr "Kopplar författar-/incheckarnamn och/eller -e-postadresser"
 
 #: command-list.h:210
@@ -26031,7 +26031,7 @@ msgstr "Borde inte använda octopus."
 
 #: git-merge-octopus.sh:73
 #, sh-format
-msgid "Unable to find common commit with $pretty_name"
+msgid "Unable to find common cummit with $pretty_name"
 msgstr "Kunde inte hitta gemensam incheckning med $pretty_name"
 
 #: git-merge-octopus.sh:77
@@ -26079,12 +26079,12 @@ msgstr "Kan inte $action: Du har oköade ändringar."
 
 #: git-sh-setup.sh:226
 #, sh-format
-msgid "Cannot $action: Your index contains uncommitted changes."
+msgid "Cannot $action: Your index contains uncummitted changes."
 msgstr ""
 "Kan inte $action: Ditt index innehåller ändringar som inte checkats in."
 
 #: git-sh-setup.sh:228
-msgid "Additionally, your index contains uncommitted changes."
+msgid "Additionally, your index contains uncummitted changes."
 msgstr "Dessutom innehåller dit index ändringar som inte har checkats in."
 
 #: git-sh-setup.sh:348
@@ -26514,7 +26514,7 @@ msgstr "varning: sendmail-raden känns inte igen: %s\n"
 #: git-send-email.perl:747
 #, perl-format
 msgid ""
-"File '%s' exists but it could also be the range of commits\n"
+"File '%s' exists but it could also be the range of cummits\n"
 "to produce patches for.  Please disambiguate by...\n"
 "\n"
 "    * Saying \"./%s\" if you mean a file; or\n"
@@ -26643,7 +26643,7 @@ msgstr "CA-sökvägen \"%s\" finns inte"
 #: git-send-email.perl:1565
 msgid ""
 "    The Cc list above has been expanded by additional\n"
-"    addresses found in the patch commit message. By default\n"
+"    addresses found in the patch cummit message. By default\n"
 "    send-email prompts before sending whenever this occurs.\n"
 "    This behavior is controlled by the sendemail.confirm\n"
 "    configuration setting.\n"
@@ -26938,8 +26938,8 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "read from stdin"
 #~ msgstr "läs från standard in"
 
-#~ msgid "git notes merge --commit [-v | -q]"
-#~ msgstr "git notes merge --commit [-v | -q]"
+#~ msgid "git notes merge --cummit [-v | -q]"
+#~ msgstr "git notes merge --cummit [-v | -q]"
 
 #~ msgid "git notes merge --abort [-v | -q]"
 #~ msgstr "git notes merge --abort [-v | -q]"
@@ -27280,11 +27280,11 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "--long is incompatible with --abbrev=0"
 #~ msgstr "--long är inkompatibel med --abbrev=0"
 
-#~ msgid "--dirty is incompatible with commit-ishes"
-#~ msgstr "--dirty är inkompatibelt med \"commit-ish\"-värden"
+#~ msgid "--dirty is incompatible with cummit-ishes"
+#~ msgstr "--dirty är inkompatibelt med \"cummit-ish\"-värden"
 
-#~ msgid "--broken is incompatible with commit-ishes"
-#~ msgstr "--broken är inkompatibelt med \"commit-ish\"-värden"
+#~ msgid "--broken is incompatible with cummit-ishes"
+#~ msgstr "--broken är inkompatibelt med \"cummit-ish\"-värden"
 
 #~ msgid "--stdin and --merge-base are mutually exclusive"
 #~ msgstr "--stdin och --merge-base är ömsesidigt uteslutande"
@@ -27336,8 +27336,8 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "You cannot combine --squash with --no-ff."
 #~ msgstr "Du kan inte kombinera --squash med --no-ff."
 
-#~ msgid "You cannot combine --squash with --commit."
-#~ msgstr "Du kan inte kombinera --squash med --commit."
+#~ msgid "You cannot combine --squash with --cummit."
+#~ msgstr "Du kan inte kombinera --squash med --cummit."
 
 #~ msgid "--keep-unreachable and --unpack-unreachable are incompatible"
 #~ msgstr ""
@@ -27481,11 +27481,11 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid ""
 #~ "after resolving the conflicts, mark the corrected paths\n"
 #~ "with 'git add <paths>' or 'git rm <paths>'\n"
-#~ "and commit the result with 'git commit'"
+#~ "and cummit the result with 'git cummit'"
 #~ msgstr ""
 #~ "efter att ha löst konflikterna, markera de rättade sökvägarna\n"
 #~ "med \"git add <sökvägar>\" eller \"git rm <sökvägar>\"\n"
-#~ "och checka in resultatet med \"git commit\""
+#~ "och checka in resultatet med \"git cummit\""
 
 #~ msgid "open /dev/null or dup failed"
 #~ msgstr "misslyckades öppna /dev/null eller \"dup\""
@@ -27514,8 +27514,8 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "couldn't create a new file at '%s'"
 #~ msgstr "kunde inte skapa filen på \"%s\""
 
-#~ msgid "git commit-tree: failed to open '%s'"
-#~ msgstr "git commit-tree: misslyckades öppna \"%s\""
+#~ msgid "git cummit-tree: failed to open '%s'"
+#~ msgstr "git cummit-tree: misslyckades öppna \"%s\""
 
 #~ msgid "cannot open packfile '%s'"
 #~ msgstr "kan inte öppna paketfilen \"%s\""
@@ -27535,31 +27535,31 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "git rebase--interactive [<options>]"
 #~ msgstr "git rebase--interactive [<flaggor>]"
 
-#~ msgid "rebase merge commits"
+#~ msgid "rebase merge cummits"
 #~ msgstr "ombasera sammanslagningar"
 
 #~ msgid "keep original branch points of cousins"
 #~ msgstr "behåll ursprungliga förgreningspunkter för kusiner"
 
-#~ msgid "move commits that begin with squash!/fixup!"
+#~ msgid "move cummits that begin with squash!/fixup!"
 #~ msgstr "flytta incheckningar som inleds med squash!/fixup!"
 
-#~ msgid "sign commits"
+#~ msgid "sign cummits"
 #~ msgstr "signera incheckningar"
 
 #~ msgid "continue rebase"
 #~ msgstr "fortsätt ombasering"
 
-#~ msgid "skip commit"
+#~ msgid "skip cummit"
 #~ msgstr "hoppa över incheckning"
 
 #~ msgid "edit the todo list"
 #~ msgstr "redigera attgöra-listan"
 
-#~ msgid "shorten commit ids in the todo list"
+#~ msgid "shorten cummit ids in the todo list"
 #~ msgstr "förkorta inchecknings-id i todo-listan"
 
-#~ msgid "expand commit ids in the todo list"
+#~ msgid "expand cummit ids in the todo list"
 #~ msgstr "utöka inchecknings-id i todo-listan"
 
 #~ msgid "check the todo list"
@@ -27586,7 +27586,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "squash onto"
 #~ msgstr "tryck ihop ovanpå"
 
-#~ msgid "the upstream commit"
+#~ msgid "the upstream cummit"
 #~ msgstr "uppströmsincheckningen"
 
 #~ msgid "head-name"
@@ -27607,7 +27607,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "switch-to"
 #~ msgstr "switch-to"
 
-#~ msgid "the branch or commit to checkout"
+#~ msgid "the branch or cummit to checkout"
 #~ msgstr "gren eller inchecking att checka ut"
 
 #~ msgid "onto-name"
@@ -27668,7 +27668,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "running $command"
 #~ msgstr "kör $command"
 
-#~ msgid "'$sm_path' does not have a commit checked out"
+#~ msgid "'$sm_path' does not have a cummit checked out"
 #~ msgstr "\"$sm_path\" har inte någon utcheckad incheckning"
 
 #~ msgid "Submodule path '$displaypath': '$command $sha1'"
@@ -27695,20 +27695,20 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid ""
 #~ "\n"
 #~ "Commands:\n"
-#~ "p, pick <commit> = use commit\n"
-#~ "r, reword <commit> = use commit, but edit the commit message\n"
-#~ "e, edit <commit> = use commit, but stop for amending\n"
-#~ "s, squash <commit> = use commit, but meld into previous commit\n"
-#~ "f, fixup <commit> = like \"squash\", but discard this commit's log "
+#~ "p, pick <cummit> = use cummit\n"
+#~ "r, reword <cummit> = use cummit, but edit the cummit message\n"
+#~ "e, edit <cummit> = use cummit, but stop for amending\n"
+#~ "s, squash <cummit> = use cummit, but meld into previous cummit\n"
+#~ "f, fixup <cummit> = like \"squash\", but discard this cummit's log "
 #~ "message\n"
-#~ "x, exec <commit> = run command (the rest of the line) using shell\n"
-#~ "d, drop <commit> = remove commit\n"
+#~ "x, exec <cummit> = run command (the rest of the line) using shell\n"
+#~ "d, drop <cummit> = remove cummit\n"
 #~ "l, label <label> = label current HEAD with a name\n"
 #~ "t, reset <label> = reset HEAD to a label\n"
-#~ "m, merge [-C <commit> | -c <commit>] <label> [# <oneline>]\n"
-#~ ".       create a merge commit using the original merge commit's\n"
-#~ ".       message (or the oneline, if no original merge commit was\n"
-#~ ".       specified). Use -c <commit> to reword the commit message.\n"
+#~ "m, merge [-C <cummit> | -c <cummit>] <label> [# <oneline>]\n"
+#~ ".       create a merge cummit using the original merge cummit's\n"
+#~ ".       message (or the oneline, if no original merge cummit was\n"
+#~ ".       specified). Use -c <cummit> to reword the cummit message.\n"
 #~ "\n"
 #~ "These lines can be re-ordered; they are executed from top to bottom.\n"
 #~ msgstr ""
@@ -27734,9 +27734,9 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ "Du kan byta ordning på raderna; de utförs uppifrån och ned.\n"
 
 #~ msgid ""
-#~ "You can amend the commit now, with\n"
+#~ "You can amend the cummit now, with\n"
 #~ "\n"
-#~ "\tgit commit --amend $gpg_sign_opt_quoted\n"
+#~ "\tgit cummit --amend $gpg_sign_opt_quoted\n"
 #~ "\n"
 #~ "Once you are satisfied with your changes, run\n"
 #~ "\n"
@@ -27744,19 +27744,19 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgstr ""
 #~ "Du kan utöka incheckningen nu, med\n"
 #~ "\n"
-#~ "\tgit commit --amend $gpg_sign_opt_quoted\n"
+#~ "\tgit cummit --amend $gpg_sign_opt_quoted\n"
 #~ "\n"
 #~ "När du är nöjd med dina ändringar kör du\n"
 #~ "\n"
 #~ "\tgit rebase --continue"
 
-#~ msgid "$sha1: not a commit that can be picked"
+#~ msgid "$sha1: not a cummit that can be picked"
 #~ msgstr "$sha1: inte en incheckning som kan väljas"
 
-#~ msgid "Invalid commit name: $sha1"
+#~ msgid "Invalid cummit name: $sha1"
 #~ msgstr "Felaktigt incheckningsnamn: $sha1"
 
-#~ msgid "Cannot write current commit's replacement sha1"
+#~ msgid "Cannot write current cummit's replacement sha1"
 #~ msgstr "Kan inte skriva ersättnings-sha1 för aktuell incheckning"
 
 #~ msgid "Fast-forward to $sha1"
@@ -27777,43 +27777,43 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "Could not pick $sha1"
 #~ msgstr "Kunde inte välja $sha1"
 
-#~ msgid "This is the commit message #${n}:"
+#~ msgid "This is the cummit message #${n}:"
 #~ msgstr "Det här är incheckningsmeddelande ${n}:"
 
-#~ msgid "The commit message #${n} will be skipped:"
+#~ msgid "The cummit message #${n} will be skipped:"
 #~ msgstr "Incheckningsmeddelande ${n} kommer hoppas över:"
 
-#~ msgid "This is a combination of $count commit."
-#~ msgid_plural "This is a combination of $count commits."
+#~ msgid "This is a combination of $count cummit."
+#~ msgid_plural "This is a combination of $count cummits."
 #~ msgstr[0] "Det här är en kombination av $count incheckning."
 #~ msgstr[1] "Det här är en kombination av $count incheckningar."
 
 #~ msgid "Cannot write $fixup_msg"
 #~ msgstr "Kan inte skriva $fixup_msg"
 
-#~ msgid "This is a combination of 2 commits."
+#~ msgid "This is a combination of 2 cummits."
 #~ msgstr "Det här är en kombination av 2 incheckningar."
 
 #~ msgid "Could not apply $sha1... $rest"
 #~ msgstr "Kunde inte tillämpa $sha1... $rest"
 
 #~ msgid ""
-#~ "Could not amend commit after successfully picking $sha1... $rest\n"
-#~ "This is most likely due to an empty commit message, or the pre-commit "
+#~ "Could not amend cummit after successfully picking $sha1... $rest\n"
+#~ "This is most likely due to an empty cummit message, or the pre-cummit "
 #~ "hook\n"
 #~ "failed. If the pre-commit hook failed, you may need to resolve the issue "
 #~ "before\n"
-#~ "you are able to reword the commit."
+#~ "you are able to reword the cummit."
 #~ msgstr ""
 #~ "Kunde inte utöka incheckning efter att ha lyckats välja $sha1... $rest\n"
 #~ "Det är antagligen på grund av ett tomt incheckningsmeddelande, eller att\n"
-#~ "pre-commit-kroken misslyckades. Om pre-commit-kroken misslyckades kanske\n"
+#~ "pre-cummit-kroken misslyckades. Om pre-cummit-kroken misslyckades kanske\n"
 #~ "du måste lösa problemet innan du kan skriva om incheckningsmeddelandet."
 
 #~ msgid "Stopped at $sha1_abbrev... $rest"
 #~ msgstr "Stoppade på $sha1_abbrev... $rest"
 
-#~ msgid "Cannot '$squash_style' without a previous commit"
+#~ msgid "Cannot '$squash_style' without a previous cummit"
 #~ msgstr "Kan inte utföra \"$squash_style\" utan en föregående incheckning"
 
 #~ msgid "Executing: $rest"
@@ -27837,7 +27837,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid ""
 #~ "Execution succeeded: $rest\n"
 #~ "but left changes to the index and/or the working tree\n"
-#~ "Commit or stash your changes, and then run\n"
+#~ "cummit or stash your changes, and then run\n"
 #~ "\n"
 #~ "\tgit rebase --continue"
 #~ msgstr ""
@@ -27862,13 +27862,13 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid ""
 #~ "You have staged changes in your working tree.\n"
 #~ "If these changes are meant to be\n"
-#~ "squashed into the previous commit, run:\n"
+#~ "squashed into the previous cummit, run:\n"
 #~ "\n"
-#~ "  git commit --amend $gpg_sign_opt_quoted\n"
+#~ "  git cummit --amend $gpg_sign_opt_quoted\n"
 #~ "\n"
-#~ "If they are meant to go into a new commit, run:\n"
+#~ "If they are meant to go into a new cummit, run:\n"
 #~ "\n"
-#~ "  git commit $gpg_sign_opt_quoted\n"
+#~ "  git cummit $gpg_sign_opt_quoted\n"
 #~ "\n"
 #~ "In both cases, once you're done, continue with:\n"
 #~ "\n"
@@ -27878,28 +27878,28 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ "Om det är meningen att ändringarna\n"
 #~ "ska läggas in i föregående incheckning, kör:\n"
 #~ "\n"
-#~ "  git commit --amend $gpg_sign_opt_quoted\n"
+#~ "  git cummit --amend $gpg_sign_opt_quoted\n"
 #~ "\n"
 #~ "Om de ska checkas in i en egen incheckning, kör:\n"
 #~ "\n"
-#~ "  git commit $gpg_sign_opt_quoted\n"
+#~ "  git cummit $gpg_sign_opt_quoted\n"
 #~ "\n"
 #~ "Oavsett vilket, när du är färdig fortsätter du med:\n"
 #~ "\n"
 #~ "  git rebase --continue\n"
 
-#~ msgid "Error trying to find the author identity to amend commit"
+#~ msgid "Error trying to find the author identity to amend cummit"
 #~ msgstr ""
 #~ "Fel vid försök att hitta författaridentitet för att utöka incheckning"
 
 #~ msgid ""
-#~ "You have uncommitted changes in your working tree. Please commit them\n"
+#~ "You have uncummitted changes in your working tree. Please cummit them\n"
 #~ "first and then run 'git rebase --continue' again."
 #~ msgstr ""
 #~ "Du har ändringar i arbetskatalogen som inte checkats in. Checka in dem\n"
 #~ "först och kör sedan \"git rebase --continue\" igen."
 
-#~ msgid "Could not commit staged changes."
+#~ msgid "Could not cummit staged changes."
 #~ msgstr "Kunde inte checka in köade ändringar."
 
 #~ msgid "Could not execute editor"
@@ -27923,10 +27923,10 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgstr[1] ""
 #~ "Ombasera $shortrevisions på $shortonto ($todocount incheckningar)"
 
-#~ msgid "Note that empty commits are commented out"
+#~ msgid "Note that empty cummits are commented out"
 #~ msgstr "Observera att tomma incheckningar är utkommenterade"
 
-#~ msgid "Could not init rewritten commits"
+#~ msgid "Could not init rewritten cummits"
 #~ msgstr "Kunde inte initiera omskrivna incheckningar"
 
 #~ msgid "Cannot rebase: You have unstaged changes."
@@ -27935,11 +27935,11 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "Cannot pull with rebase: You have unstaged changes."
 #~ msgstr "Kan inte hämta med ombasering: Du har oköade ändringar."
 
-#~ msgid "Cannot rebase: Your index contains uncommitted changes."
+#~ msgid "Cannot rebase: Your index contains uncummitted changes."
 #~ msgstr ""
 #~ "Kan inte ombasera: Ditt index innehåller ändringar som inte checkats in."
 
-#~ msgid "Cannot pull with rebase: Your index contains uncommitted changes."
+#~ msgid "Cannot pull with rebase: Your index contains uncummitted changes."
 #~ msgstr ""
 #~ "Kan inte hämta med ombasering: Ditt index innehåller oincheckade "
 #~ "ändringar."
@@ -27990,20 +27990,20 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "%s: patch contains a line longer than 998 characters"
 #~ msgstr "%s: patchen innehåller en rad längre än 998 tecken"
 
-#~ msgid "repository contains replace objects; skipping commit-graph"
+#~ msgid "repository contains replace objects; skipping cummit-graph"
 #~ msgstr "arkivet innehåller replace-objekt; hoppar över incheckningsgraf"
 
-#~ msgid "repository contains (deprecated) grafts; skipping commit-graph"
+#~ msgid "repository contains (deprecated) grafts; skipping cummit-graph"
 #~ msgstr ""
 #~ "arkivet innehåller ympningar (avråds från); hoppar över incheckningsgraf"
 
-#~ msgid "repository is shallow; skipping commit-graph"
+#~ msgid "repository is shallow; skipping cummit-graph"
 #~ msgstr "källarkivet är grunt; hoppar över incheckningsgraf"
 
-#~ msgid "commit-graph improper chunk offset %08x%08x"
+#~ msgid "cummit-graph improper chunk offset %08x%08x"
 #~ msgstr "felaktigt offset för stycke %08x%08x i incheckningsgraffilen"
 
-#~ msgid "commit-graph chunk id %08x appears multiple times"
+#~ msgid "cummit-graph chunk id %08x appears multiple times"
 #~ msgstr "incheckningsgrafens stycke-id %08x förekommer flera gånger"
 
 #~ msgid "invalid chunk offset (too large)"
@@ -28039,7 +28039,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgstr "visa och ange termer för bisect-tillstånd"
 
 #~ msgid ""
-#~ "verify the next bisection state then checkout the next bisection commit"
+#~ "verify the next bisection state then checkout the next bisection cummit"
 #~ msgstr ""
 #~ "kontrollera nästa bisect-tillstånd och checka så ut nästa bisect-"
 #~ "incheckning"
@@ -28077,10 +28077,10 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "Bad rev input: $arg"
 #~ msgstr "Felaktig rev-indata: $arg"
 
-#~ msgid "Counting distinct commits in commit graph"
+#~ msgid "Counting distinct cummits in cummit graph"
 #~ msgstr "Räknar olika incheckningar i incheckningsgraf"
 
-#~ msgid "the commit graph format cannot write %d commits"
+#~ msgid "the cummit graph format cannot write %d cummits"
 #~ msgstr "formatet på incheckningsgrafen kan inte visa %d incheckningar"
 
 #~ msgid "store only"
@@ -28092,7 +28092,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "compress better"
 #~ msgstr "komprimera bättre"
 
-#~ msgid "unexpected duplicate commit id %s"
+#~ msgid "unexpected duplicate cummit id %s"
 #~ msgstr "oväntat duplicerat inchecknings-id %s"
 
 #~ msgid "error preparing packfile from multi-pack-index"
@@ -28101,10 +28101,10 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "%s: not a valid OID"
 #~ msgstr "%s: inte ett giltigt OID"
 
-#~ msgid "invalid committer '%s'"
+#~ msgid "invalid cummitter '%s'"
 #~ msgstr "ogiltig incheckare %s"
 
-#~ msgid "invalid committer: %s"
+#~ msgid "invalid cummitter: %s"
 #~ msgstr "ogiltig incheckare: %s"
 
 #~ msgid "git bisect--helper --next-all"
@@ -28190,7 +28190,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgstr "okänd hashningsalgoritmlängd"
 
 #~ msgid ""
-#~ "commit-graph chunk lookup table entry missing; file may be incomplete"
+#~ "cummit-graph chunk lookup table entry missing; file may be incomplete"
 #~ msgstr ""
 #~ "incheckningsgrafen saknar post i styckeuppslagningstabell; filen kan vara "
 #~ "ofullständig"
@@ -28240,7 +28240,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "could not open the file BISECT_TERMS"
 #~ msgstr "kunde inte öppna filen BISECT_TERMS"
 
-#~ msgid "update BISECT_HEAD instead of checking out the current commit"
+#~ msgid "update BISECT_HEAD instead of checking out the current cummit"
 #~ msgstr ""
 #~ "uppdatera BISECT_HEAD istället för att checka ut aktuell incheckning"
 
@@ -28253,24 +28253,24 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "The --cached option cannot be used with the --files option"
 #~ msgstr "Flaggan --cached kan inte användas med flaggan --files"
 
-#~ msgid "  Warn: $display_name doesn't contain commit $sha1_src"
+#~ msgid "  Warn: $display_name doesn't contain cummit $sha1_src"
 #~ msgstr "  Varning: $display_name innehåller inte incheckningen $sha1_src"
 
-#~ msgid "  Warn: $display_name doesn't contain commit $sha1_dst"
+#~ msgid "  Warn: $display_name doesn't contain cummit $sha1_dst"
 #~ msgstr "  Varning: $display_name innehåller inte incheckningen $sha1_dst"
 
 #~ msgid ""
-#~ "  Warn: $display_name doesn't contain commits $sha1_src and $sha1_dst"
+#~ "  Warn: $display_name doesn't contain cummits $sha1_src and $sha1_dst"
 #~ msgstr ""
 #~ "  Varning: $display_name innehåller inte incheckningarna $sha1_src och "
 #~ "$sha1_dst"
 
-#~ msgid "Finding commits for commit graph from %d ref"
-#~ msgid_plural "Finding commits for commit graph from %d refs"
+#~ msgid "Finding cummits for cummit graph from %d ref"
+#~ msgid_plural "Finding cummits for cummit graph from %d refs"
 #~ msgstr[0] "Söker incheckningar för incheckingsgraf från %d referens"
 #~ msgstr[1] "Söker incheckningar för incheckingsgraf från %d referenser"
 
-#~ msgid "invalid commit object id: %s"
+#~ msgid "invalid cummit object id: %s"
 #~ msgstr "ogiltigt inchecknings-objekt-id %s"
 
 #~ msgid "Removing worktrees/%s: not a valid directory"
@@ -28322,7 +28322,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "--[no-]autostash option is only valid with --rebase."
 #~ msgstr "--[no-]autostash är endast giltig med --rebase."
 
-#~ msgid "(DEPRECATED) keep empty commits"
+#~ msgid "(DEPRECATED) keep empty cummits"
 #~ msgstr "(FÖRÅLDRAD) behåll tomma incheckningar"
 
 #~ msgid "Could not read '%s'"
@@ -28340,8 +28340,8 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "Cannot remove temporary index (can't happen)"
 #~ msgstr "Kan inte ta bort temporärt index (kan inte inträffa)"
 
-#~ msgid "Cannot update $ref_stash with $w_commit"
-#~ msgstr "Kan inte uppdatera $ref_stash med $w_commit"
+#~ msgid "Cannot update $ref_stash with $w_cummit"
+#~ msgstr "Kan inte uppdatera $ref_stash med $w_cummit"
 
 #~ msgid "error: unknown option for 'stash push': $option"
 #~ msgstr "fel: okänd flagga för \"stash push\": $option"
@@ -28358,7 +28358,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "$reference is not a valid reference"
 #~ msgstr "$reference är inte en giltig referens"
 
-#~ msgid "'$args' is not a stash-like commit"
+#~ msgid "'$args' is not a stash-like cummit"
 #~ msgstr "\"$args\" är inte en \"stash\"-liknande incheckning"
 
 #~ msgid "'$args' is not a stash reference"
@@ -28459,7 +28459,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "no HEAD?"
 #~ msgstr "inget HEAD?"
 
-#~ msgid "preserve empty commits during rebase"
+#~ msgid "preserve empty cummits during rebase"
 #~ msgstr "behåll tomma incheckningar under ombasering"
 
 #~ msgid "cannot combine --use-bitmap-index with object filtering"
@@ -28477,11 +28477,11 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "Use an experimental heuristic to improve diffs"
 #~ msgstr "Använd en experimentell algoritm för att förbättra diffar"
 
-#~ msgid "git commit-graph [--object-dir <objdir>]"
-#~ msgstr "git commit-graph [--object-dir <objkat>]"
+#~ msgid "git cummit-graph [--object-dir <objdir>]"
+#~ msgstr "git cummit-graph [--object-dir <objkat>]"
 
-#~ msgid "git commit-graph read [--object-dir <objdir>]"
-#~ msgstr "git commit-graph read [--object-dir <objkat>]"
+#~ msgid "git cummit-graph read [--object-dir <objdir>]"
+#~ msgstr "git cummit-graph read [--object-dir <objkat>]"
 
 #~ msgid "unknown core.untrackedCache value '%s'; using 'keep' default value"
 #~ msgstr ""
@@ -28494,7 +28494,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "error building trees"
 #~ msgstr "fel vid byggande av träd"
 
-#~ msgid "writing root commit"
+#~ msgid "writing root cummit"
 #~ msgstr "skriver rotincheckning"
 
 #~ msgid "staged changes in the following files may be lost: %s"
@@ -28507,8 +28507,8 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ "--filter kan endast användas med fjärren konfigurerad i extensions."
 #~ "partialClone"
 
-#~ msgid "verify commit-msg hook"
-#~ msgstr "bekräfta commit-msg-krok"
+#~ msgid "verify cummit-msg hook"
+#~ msgstr "bekräfta cummit-msg-krok"
 
 #~ msgid "cannot combine '--rebase-merges' with '--strategy-option'"
 #~ msgstr "kan inte kombinera \"--rebase-merges\" med \"--strategy-option\""
@@ -28584,12 +28584,12 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgstr "misslyckades ta status på %s\n"
 
 #~ msgid ""
-#~ "If you wish to skip this commit, use:\n"
+#~ "If you wish to skip this cummit, use:\n"
 #~ "\n"
 #~ "    git reset\n"
 #~ "\n"
 #~ "Then \"git cherry-pick --continue\" will resume cherry-picking\n"
-#~ "the remaining commits.\n"
+#~ "the remaining cummits.\n"
 #~ msgstr ""
 #~ "Om du vill hoppa över incheckningen, använd:\n"
 #~ "\n"
@@ -28671,10 +28671,10 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "$onto_name: there is no merge base"
 #~ msgstr "$onto_name: ingen sammanslagningsbas finns"
 
-#~ msgid "Does not point to a valid commit: $onto_name"
+#~ msgid "Does not point to a valid cummit: $onto_name"
 #~ msgstr "Peka på en giltig incheckning: $onto_name"
 
-#~ msgid "fatal: no such branch/commit '$branch_name'"
+#~ msgid "fatal: no such branch/cummit '$branch_name'"
 #~ msgstr "ödesdigert: ingen sådan gren/incheckning: $branch_name"
 
 #~ msgid "Created autostash: $stash_abbrev"
@@ -28711,7 +28711,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "Internal error"
 #~ msgstr "Internt fel"
 
-#~ msgid "mainline was specified but commit %s is not a merge."
+#~ msgid "mainline was specified but cummit %s is not a merge."
 #~ msgstr "huvudlinje angavs, men incheckningen %s är inte en sammanslagning."
 
 #~ msgid "unable to write sha1 filename %s"
@@ -28739,7 +28739,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "unrecognised option: '$arg'"
 #~ msgstr "flaggan känns inte igen: \"$arg\""
 
-#~ msgid "'$invalid' is not a valid commit"
+#~ msgid "'$invalid' is not a valid cummit"
 #~ msgstr "\"$invalid\" är inte en giltig incheckning"
 
 #~ msgid "could not parse '%s' (looking for '%s')"
@@ -28882,9 +28882,9 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgstr "Misslyckades rekursera in i undermodulsökvägen \"$sm_path\""
 
 #~ msgid ""
-#~ "unrecognized setting %s for optionrebase.missingCommitsCheck. Ignoring."
+#~ "unrecognized setting %s for optionrebase.missingcummitsCheck. Ignoring."
 #~ msgstr ""
-#~ "okänd inställning %s för flaggan rebase.missingCommitsCheck. Ignorerar."
+#~ "okänd inställning %s för flaggan rebase.missingcummitsCheck. Ignorerar."
 
 #~ msgid "%s, %"
 #~ msgid_plural "%s, %"
@@ -28911,7 +28911,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgstr "basnamn"
 
 #~ msgid ""
-#~ "Warning: the SHA-1 is missing or isn't a commit in the following line:\n"
+#~ "Warning: the SHA-1 is missing or isn't a cummit in the following line:\n"
 #~ " - $line"
 #~ msgstr ""
 #~ "Varning: SHA-1 saknas eller inte en incheckning på följande rad:\n"
@@ -28933,7 +28933,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "dup2(%d,%d) failed"
 #~ msgstr "dup2(%d,%d) misslyckades"
 
-#~ msgid "Initial commit on "
+#~ msgid "Initial cummit on "
 #~ msgstr "Första incheckning på "
 
 #~ msgid "Patch is empty. Was it split wrong?"
@@ -28948,7 +28948,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 
 #~ msgid ""
 #~ "Cannot update paths and switch to branch '%s' at the same time.\n"
-#~ "Did you intend to checkout '%s' which can not be resolved as commit?"
+#~ "Did you intend to checkout '%s' which can not be resolved as cummit?"
 #~ msgstr ""
 #~ "Kan inte uppdatera sökvägar och växla till grenen \"%s\" samtidigt.\n"
 #~ "Ville du checka ut \"%s\" som inte kan lösas som en utcheckning?"
@@ -28970,7 +28970,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "tag: tagging "
 #~ msgstr "tag: taggar"
 
-#~ msgid "commit object"
+#~ msgid "cummit object"
 #~ msgstr "incheckningsobjekt"
 
 #~ msgid "blob object"
@@ -29073,7 +29073,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "Could not format %s."
 #~ msgstr "Kunde inte formatera %s."
 
-#~ msgid "You need to set your committer info first"
+#~ msgid "You need to set your cummitter info first"
 #~ msgstr "Du måste ställa in din incheckarinformation först"
 
 #~ msgid "bad numeric config value '%s' for '%s': invalid unit"
@@ -29113,79 +29113,79 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ "felaktigt numeriskt konfigurationsvärde \"%s\" för \"%s\" i %s: ogiltig "
 #~ "enhet"
 
-#~ msgid "This is the 3rd commit message:"
+#~ msgid "This is the 3rd cummit message:"
 #~ msgstr "Det här är 3:e incheckningsmeddelandet:"
 
-#~ msgid "This is the 4th commit message:"
+#~ msgid "This is the 4th cummit message:"
 #~ msgstr "Det här är 4:e incheckningsmeddelandet:"
 
-#~ msgid "This is the 5th commit message:"
+#~ msgid "This is the 5th cummit message:"
 #~ msgstr "Det här är 5:e incheckningsmeddelandet:"
 
-#~ msgid "This is the 6th commit message:"
+#~ msgid "This is the 6th cummit message:"
 #~ msgstr "Det här är 6:e incheckningsmeddelandet:"
 
-#~ msgid "This is the 7th commit message:"
+#~ msgid "This is the 7th cummit message:"
 #~ msgstr "Det här är 7:e incheckningsmeddelandet:"
 
-#~ msgid "This is the 8th commit message:"
+#~ msgid "This is the 8th cummit message:"
 #~ msgstr "Det här är 8:e incheckningsmeddelandet:"
 
-#~ msgid "This is the 9th commit message:"
+#~ msgid "This is the 9th cummit message:"
 #~ msgstr "Det här är 9:e incheckningsmeddelandet:"
 
-#~ msgid "This is the 10th commit message:"
+#~ msgid "This is the 10th cummit message:"
 #~ msgstr "Det här är 10:e incheckningsmeddelandet:"
 
-#~ msgid "This is the ${n}th commit message:"
+#~ msgid "This is the ${n}th cummit message:"
 #~ msgstr "Det här är ${n}:e incheckningsmeddelandet:"
 
-#~ msgid "This is the ${n}st commit message:"
+#~ msgid "This is the ${n}st cummit message:"
 #~ msgstr "Det här är ${n}:a incheckningsmeddelandet:"
 
-#~ msgid "This is the ${n}nd commit message:"
+#~ msgid "This is the ${n}nd cummit message:"
 #~ msgstr "Det här är ${n}:a incheckningsmeddelandet:"
 
-#~ msgid "This is the ${n}rd commit message:"
+#~ msgid "This is the ${n}rd cummit message:"
 #~ msgstr "Det här är ${n}:e incheckningsmeddelandet:"
 
-#~ msgid "The 2nd commit message will be skipped:"
+#~ msgid "The 2nd cummit message will be skipped:"
 #~ msgstr "2:a incheckningsmeddelandet kommer hoppas över:"
 
-#~ msgid "The 3rd commit message will be skipped:"
+#~ msgid "The 3rd cummit message will be skipped:"
 #~ msgstr "3:e incheckningsmeddelandet kommer hoppas över:"
 
-#~ msgid "The 4th commit message will be skipped:"
+#~ msgid "The 4th cummit message will be skipped:"
 #~ msgstr "4:e incheckningsmeddelandet kommer hoppas över:"
 
-#~ msgid "The 5th commit message will be skipped:"
+#~ msgid "The 5th cummit message will be skipped:"
 #~ msgstr "5:e incheckningsmeddelandet kommer hoppas över:"
 
-#~ msgid "The 6th commit message will be skipped:"
+#~ msgid "The 6th cummit message will be skipped:"
 #~ msgstr "6:e incheckningsmeddelandet kommer hoppas över:"
 
-#~ msgid "The 7th commit message will be skipped:"
+#~ msgid "The 7th cummit message will be skipped:"
 #~ msgstr "7:e incheckningsmeddelandet kommer hoppas över:"
 
-#~ msgid "The 8th commit message will be skipped:"
+#~ msgid "The 8th cummit message will be skipped:"
 #~ msgstr "8:e incheckningsmeddelandet kommer hoppas över:"
 
-#~ msgid "The 9th commit message will be skipped:"
+#~ msgid "The 9th cummit message will be skipped:"
 #~ msgstr "9:e incheckningsmeddelandet kommer hoppas över:"
 
-#~ msgid "The 10th commit message will be skipped:"
+#~ msgid "The 10th cummit message will be skipped:"
 #~ msgstr "10:e incheckningsmeddelandet kommer hoppas över:"
 
-#~ msgid "The ${n}th commit message will be skipped:"
+#~ msgid "The ${n}th cummit message will be skipped:"
 #~ msgstr "${n}:e incheckningsmeddelandet kommer hoppas över:"
 
-#~ msgid "The ${n}st commit message will be skipped:"
+#~ msgid "The ${n}st cummit message will be skipped:"
 #~ msgstr "${n}:a incheckningsmeddelandet kommer hoppas över:"
 
-#~ msgid "The ${n}nd commit message will be skipped:"
+#~ msgid "The ${n}nd cummit message will be skipped:"
 #~ msgstr "${n}:a incheckningsmeddelandet kommer hoppas över:"
 
-#~ msgid "The ${n}rd commit message will be skipped:"
+#~ msgid "The ${n}rd cummit message will be skipped:"
 #~ msgstr "${n}:e incheckningsmeddelandet kommer hoppas över:"
 
 #~ msgid "could not run gpg."
@@ -29221,7 +29221,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "corrupt index file"
 #~ msgstr "indexfilen är trasig"
 
-#~ msgid "detach the HEAD at named commit"
+#~ msgid "detach the HEAD at named cummit"
 #~ msgstr "koppla från HEAD vid namngiven incheckning"
 
 # Vague original, not networking-related, but rather related to the actual
@@ -29310,7 +29310,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ "Undermodulen \"$displaypath\" har inte initierats\n"
 #~ "Kanske du vill köra \"update --init\"?"
 
-#~ msgid "Forward-port local commits to the updated upstream head"
+#~ msgid "Forward-port local cummits to the updated upstream head"
 #~ msgstr "Framåtanpassa lokala kommandon på uppdaterat uppströmshuvud"
 
 #~ msgid "improper format entered align:%s"
@@ -29380,7 +29380,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "no such user"
 #~ msgstr "okänd användare"
 
-#~ msgid "branch '%s' does not point at a commit"
+#~ msgid "branch '%s' does not point at a cummit"
 #~ msgstr "grenen \"%s\" pekar inte på en incheckning"
 
 #~ msgid "--dissociate given, but there is no --reference"
@@ -29416,7 +29416,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "BUG: reopen a lockfile that is still open"
 #~ msgstr "FEL: återöppna en låsfil som fortfarande är öppen"
 
-#~ msgid "BUG: reopen a lockfile that has been committed"
+#~ msgid "BUG: reopen a lockfile that has been cummitted"
 #~ msgstr "FEL: återöppna en låsfil som har överlämnats"
 
 #~ msgid "option %s does not accept negative form"
@@ -29462,7 +29462,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid ""
 #~ "Pull is not possible because you have unmerged files.\n"
 #~ "Please, fix them up in the work tree, and then use 'git add/rm <file>'\n"
-#~ "as appropriate to mark resolution and make a commit."
+#~ "as appropriate to mark resolution and make a cummit."
 #~ msgstr ""
 #~ "Du kan inte göra en \"pull\" då du har ändringar som inte checkats in.\n"
 #~ "Rätta dem i din arbetskatalog och använd sedan \"git add/rm <fil>\"\n"
@@ -29660,8 +29660,8 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "  (fix conflicts and then run \"git am --resolved\")"
 #~ msgstr "  (rätta konflikter och kör sedan \"git am --resolved\")"
 
-#~ msgid "  (all conflicts fixed: run \"git commit\")"
-#~ msgstr "  (alla konflikter har rättats: kör \"git commit\")"
+#~ msgid "  (all conflicts fixed: run \"git cummit\")"
+#~ msgstr "  (alla konflikter har rättats: kör \"git cummit\")"
 
 #~ msgid "more than %d trees given: '%s'"
 #~ msgstr "mer än %d träd angavs: \"%s\""
@@ -29674,7 +29674,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ "(använd --cached för att behålla filen eller -f för att tvinga "
 #~ "borttagning)"
 
-#~ msgid "show commits where no parent comes before its children"
+#~ msgid "show cummits where no parent comes before its children"
 #~ msgstr "visa incheckningar där ingen förälder kommer före dess barn"
 
 #~ msgid "show the HEAD reference"
@@ -29695,7 +29695,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "new files yourself (see 'git help status')."
 #~ msgstr "inte glömmer lägga till filer själv (se \"git help status\")"
 
-#~ msgid "git shortlog [-n] [-s] [-e] [-w] [rev-opts] [--] [<commit-id>... ]"
+#~ msgid "git shortlog [-n] [-s] [-e] [-w] [rev-opts] [--] [<cummit-id>... ]"
 #~ msgstr ""
 #~ "git shortlog [-n] [-s] [-e] [-w] [rev-flaggor] [--] [<incheckning-id>... ]"
 
@@ -29767,7 +29767,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "'%s': not a documentation directory."
 #~ msgstr "\"%s\": inte en dokumentationskatalog."
 
-#~ msgid "Could not extract email from committer identity."
+#~ msgid "Could not extract email from cummitter identity."
 #~ msgstr "Kunde inte extrahera e-postadress från incheckarens identitet."
 
 #~ msgid "--"
@@ -29785,7 +29785,7 @@ msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
 #~ msgid "Paths with --interactive does not make sense."
 #~ msgstr "Kan inte ange sökvägar med --interactive."
 
-#~ msgid "No HEAD commit to compare with (yet)"
+#~ msgid "No HEAD cummit to compare with (yet)"
 #~ msgstr "Ingen HEAD-incheckning att jämföra med (ännu)"
 
 #~ msgid "cannot mix --fixed-strings and regexp"

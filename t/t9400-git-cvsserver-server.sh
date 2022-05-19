@@ -48,13 +48,13 @@ test_expect_success 'setup' '
   git config push.default matching &&
   echo >empty &&
   git add empty &&
-  git commit -q -m "First Commit" &&
+  git cummit -q -m "First cummit" &&
   mkdir secondroot &&
   ( cd secondroot &&
   git init &&
   touch secondrootfile &&
   git add secondrootfile &&
-  git commit -m "second root") &&
+  git cummit -m "second root") &&
   git fetch secondroot main &&
   git merge --allow-unrelated-histories FETCH_HEAD &&
   git clone -q --bare "$WORKDIR/.git" "$SERVERDIR" >/dev/null 2>&1 &&
@@ -302,7 +302,7 @@ exit 1
 test_expect_success 'cvs update (create new file)' \
   'echo testfile1 >testfile1 &&
    git add testfile1 &&
-   git commit -q -m "Add testfile1" &&
+   git cummit -q -m "Add testfile1" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update &&
@@ -313,7 +313,7 @@ cd "$WORKDIR"
 test_expect_success 'cvs update (update existing file)' \
   'echo line 2 >>testfile1 &&
    git add testfile1 &&
-   git commit -q -m "Append to testfile1" &&
+   git cummit -q -m "Append to testfile1" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update &&
@@ -326,7 +326,7 @@ test_expect_failure "cvs update w/o -d doesn't create subdir (TODO)" '
    mkdir test &&
    echo >test/empty &&
    git add test &&
-   git commit -q -m "Single Subdirectory" &&
+   git cummit -q -m "Single Subdirectory" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update &&
@@ -340,7 +340,7 @@ test_expect_success 'cvs update (subdirectories)' \
       echo "test file in $dir" >"$dir/file_in_$(echo $dir|sed -e "s#/# #g")"  &&
       git add $dir || exit 1
    done) &&
-   git commit -q -m "deep sub directory structure" &&
+   git cummit -q -m "deep sub directory structure" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update -d &&
@@ -357,7 +357,7 @@ test_expect_success 'cvs update (subdirectories)' \
 cd "$WORKDIR"
 test_expect_success 'cvs update (delete file)' \
   'git rm testfile1 &&
-   git commit -q -m "Remove testfile1" &&
+   git cummit -q -m "Remove testfile1" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update &&
@@ -368,7 +368,7 @@ cd "$WORKDIR"
 test_expect_success 'cvs update (re-add deleted file)' \
   'echo readded testfile >testfile1 &&
    git add testfile1 &&
-   git commit -q -m "Re-Add testfile1" &&
+   git cummit -q -m "Re-Add testfile1" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update &&
@@ -385,7 +385,7 @@ test_expect_success 'cvs update (merge)' \
    done &&
    echo Line 8 >>expected &&
    git add merge &&
-   git commit -q -m "Merge test (pre-merge)" &&
+   git cummit -q -m "Merge test (pre-merge)" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update &&
@@ -396,7 +396,7 @@ test_expect_success 'cvs update (merge)' \
    cd "$WORKDIR" &&
    echo Line 8 >>merge &&
    git add merge &&
-   git commit -q -m "Merge test (merge)" &&
+   git cummit -q -m "Merge test (merge)" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
    sleep 1 && touch merge &&
@@ -422,7 +422,7 @@ test_expect_success 'cvs update (conflict merge)' \
   '( echo LINE 0 && cat merge ) >merge.tmp &&
    mv merge.tmp merge &&
    git add merge &&
-   git commit -q -m "Merge test (conflict)" &&
+   git cummit -q -m "Merge test (conflict)" &&
    git push gitcvs.git >/dev/null &&
    cd cvswork &&
    GIT_CONFIG="$git_config" cvs -Q update &&
@@ -439,7 +439,7 @@ test_expect_success 'cvs update (merge no-op)' \
    'echo Line 9 >>merge &&
     cp merge cvswork/merge &&
     git add merge &&
-    git commit -q -m "Merge test (no-op)" &&
+    git cummit -q -m "Merge test (no-op)" &&
     git push gitcvs.git >/dev/null &&
     cd cvswork &&
     sleep 1 && touch merge &&
@@ -452,7 +452,7 @@ test_expect_success 'cvs update (-p)' '
     echo Line 1 > no-lf &&
     printf "Line 2" >> no-lf &&
     git add really-empty no-lf &&
-    git commit -q -m "Update -p test" &&
+    git cummit -q -m "Update -p test" &&
     git push gitcvs.git >/dev/null &&
     cd cvswork &&
     GIT_CONFIG="$git_config" cvs update &&
@@ -479,7 +479,7 @@ test_expect_success 'cvs status' '
     echo Line > status.dir/status.file &&
     echo Line > status.file &&
     git add status.dir status.file &&
-    git commit -q -m "Status test" &&
+    git cummit -q -m "Status test" &&
     git push gitcvs.git >/dev/null &&
     cd cvswork &&
     GIT_CONFIG="$git_config" cvs update &&
@@ -524,8 +524,8 @@ test_expect_success 'cvs co -c (shows module database)' '
 #    tagging in the protocol), and if cvs 1.12.x client sees the MT tags,
 #    it converts to local time zone.  git-cvsserver doesn't do the +0000
 #    or the MT tags...
-#  - The latest 1.12.x releases add a "commitid:" field on to the end of the
-#    "date:" line (after "lines:").  Maybe we could stick git's commit id
+#  - The latest 1.12.x releases add a "cummitid:" field on to the end of the
+#    "date:" line (after "lines:").  Maybe we could stick git's cummit id
 #    in it?  Or does CVS expect a certain number of bits (too few for
 #    a full sha1)?
 #

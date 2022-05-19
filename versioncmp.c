@@ -3,7 +3,7 @@
 #include "string-list.h"
 
 /*
- * versioncmp(): copied from string/strverscmp.c in glibc commit
+ * versioncmp(): copied from string/strverscmp.c in glibc cummit
  * ee9247c38a8def24a59eb5cfb7196a98bef8cfdc, reformatted to Git coding
  * style. The implementation is under LGPL-2.1 and Git relicenses it
  * to GPLv2.

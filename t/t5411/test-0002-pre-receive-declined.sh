@@ -16,13 +16,13 @@ test_expect_success "git-push is declined ($PROTOCOL)" '
 	make_user_friendly_and_stable_output <out-$test_count >actual &&
 	cat >expect <<-EOF &&
 	To <URL/of/upstream.git>
-	 ! [remote rejected] <COMMIT-B> -> main (pre-receive hook declined)
+	 ! [remote rejected] <cummit-B> -> main (pre-receive hook declined)
 	 ! [remote rejected] HEAD -> next (pre-receive hook declined)
 	EOF
 	test_cmp expect actual &&
 
 	test_cmp_refs -C "$upstream" <<-\EOF
-	<COMMIT-A> refs/heads/main
+	<cummit-A> refs/heads/main
 	EOF
 '
 

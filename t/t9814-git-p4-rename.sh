@@ -62,14 +62,14 @@ test_expect_success 'detect renames' '
 		git config git-p4.skipSubmitEdit true &&
 
 		git mv file1 file4 &&
-		git commit -a -m "Rename file1 to file4" &&
+		git cummit -a -m "Rename file1 to file4" &&
 		git diff-tree -r -M HEAD &&
 		git p4 submit &&
 		p4 filelog //depot/file4 >filelog &&
 		! grep " from //depot" filelog &&
 
 		git mv file4 file5 &&
-		git commit -a -m "Rename file4 to file5" &&
+		git cummit -a -m "Rename file4 to file5" &&
 		git diff-tree -r -M HEAD &&
 		git config git-p4.detectRenames true &&
 		git p4 submit &&
@@ -79,7 +79,7 @@ test_expect_success 'detect renames' '
 		git mv file5 file6 &&
 		echo update >>file6 &&
 		git add file6 &&
-		git commit -a -m "Rename file5 to file6 with changes" &&
+		git cummit -a -m "Rename file5 to file6 with changes" &&
 		git diff-tree -r -M HEAD &&
 		level=$(git diff-tree -r -M HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/R0*//") &&
 		test -n "$level" && test "$level" -gt 0 && test "$level" -lt 98 &&
@@ -91,7 +91,7 @@ test_expect_success 'detect renames' '
 		git mv file6 file7 &&
 		echo update >>file7 &&
 		git add file7 &&
-		git commit -a -m "Rename file6 to file7 with changes" &&
+		git cummit -a -m "Rename file6 to file7 with changes" &&
 		git diff-tree -r -M HEAD &&
 		level=$(git diff-tree -r -M HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/R0*//") &&
 		test -n "$level" && test "$level" -gt 2 && test "$level" -lt 100 &&
@@ -121,23 +121,23 @@ test_expect_success 'detect copies' '
 		git config git-p4.skipSubmitEdit true &&
 
 		echo "file8" >>file2 &&
-		git commit -a -m "Differentiate file2" &&
+		git cummit -a -m "Differentiate file2" &&
 		git p4 submit &&
 		cp file2 file8 &&
 		git add file8 &&
-		git commit -a -m "Copy file2 to file8" &&
+		git cummit -a -m "Copy file2 to file8" &&
 		git diff-tree -r -C HEAD &&
 		git p4 submit &&
 		p4 filelog //depot/file8 &&
 		! p4 filelog //depot/file8 | grep -q "branch from" &&
 
 		echo "file9" >>file2 &&
-		git commit -a -m "Differentiate file2" &&
+		git cummit -a -m "Differentiate file2" &&
 		git p4 submit &&
 
 		cp file2 file9 &&
 		git add file9 &&
-		git commit -a -m "Copy file2 to file9" &&
+		git cummit -a -m "Copy file2 to file9" &&
 		git diff-tree -r -C HEAD &&
 		git config git-p4.detectCopies true &&
 		git p4 submit &&
@@ -145,13 +145,13 @@ test_expect_success 'detect copies' '
 		! p4 filelog //depot/file9 | grep -q "branch from" &&
 
 		echo "file10" >>file2 &&
-		git commit -a -m "Differentiate file2" &&
+		git cummit -a -m "Differentiate file2" &&
 		git p4 submit &&
 
 		echo "file2" >>file2 &&
 		cp file2 file10 &&
 		git add file2 file10 &&
-		git commit -a -m "Modify and copy file2 to file10" &&
+		git cummit -a -m "Modify and copy file2 to file10" &&
 		git diff-tree -r -C HEAD &&
 		src=$(git diff-tree -r -C HEAD | sed 1d | sed 2d | cut -f2) &&
 		test "$src" = file2 &&
@@ -160,12 +160,12 @@ test_expect_success 'detect copies' '
 		p4 filelog //depot/file10 | grep -q "branch from //depot/file2" &&
 
 		echo "file11" >>file2 &&
-		git commit -a -m "Differentiate file2" &&
+		git cummit -a -m "Differentiate file2" &&
 		git p4 submit &&
 
 		cp file2 file11 &&
 		git add file11 &&
-		git commit -a -m "Copy file2 to file11" &&
+		git cummit -a -m "Copy file2 to file11" &&
 		git diff-tree -r -C --find-copies-harder HEAD &&
 		src=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f2) &&
 		test "$src" = file2 &&
@@ -175,13 +175,13 @@ test_expect_success 'detect copies' '
 		p4 filelog //depot/file11 | grep -q "branch from //depot/file2" &&
 
 		echo "file12" >>file2 &&
-		git commit -a -m "Differentiate file2" &&
+		git cummit -a -m "Differentiate file2" &&
 		git p4 submit &&
 
 		cp file2 file12 &&
 		echo "some text" >>file12 &&
 		git add file12 &&
-		git commit -a -m "Copy file2 to file12 with changes" &&
+		git cummit -a -m "Copy file2 to file12 with changes" &&
 		git diff-tree -r -C --find-copies-harder HEAD &&
 		level=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/C0*//") &&
 		test -n "$level" && test "$level" -gt 0 && test "$level" -lt 98 &&
@@ -193,13 +193,13 @@ test_expect_success 'detect copies' '
 		! p4 filelog //depot/file12 | grep -q "branch from" &&
 
 		echo "file13" >>file2 &&
-		git commit -a -m "Differentiate file2" &&
+		git cummit -a -m "Differentiate file2" &&
 		git p4 submit &&
 
 		cp file2 file13 &&
 		echo "different text" >>file13 &&
 		git add file13 &&
-		git commit -a -m "Copy file2 to file13 with changes" &&
+		git cummit -a -m "Copy file2 to file13 with changes" &&
 		git diff-tree -r -C --find-copies-harder HEAD &&
 		level=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/C0*//") &&
 		test -n "$level" && test "$level" -gt 2 && test "$level" -lt 100 &&
@@ -237,7 +237,7 @@ test_expect_success P4D_HAVE_CONFIGURABLE_RUN_MOVE_ALLOW \
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.detectRenames true &&
 		git mv move-disallow-file move-disallow-file-moved &&
-		git commit -m "move move-disallow-file" &&
+		git cummit -m "move move-disallow-file" &&
 		git p4 submit
 	)
 '

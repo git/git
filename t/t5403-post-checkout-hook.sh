@@ -13,11 +13,11 @@ test_expect_success setup '
 	test_hook --setup post-checkout <<-\EOF &&
 	echo "$@" >.git/post-checkout.args
 	EOF
-	test_commit one &&
-	test_commit two &&
-	test_commit rebase-on-me &&
+	test_cummit one &&
+	test_cummit two &&
+	test_cummit rebase-on-me &&
 	git reset --hard HEAD^ &&
-	test_commit three
+	test_cummit three
 '
 
 test_expect_success 'post-checkout receives the right arguments with HEAD unchanged ' '

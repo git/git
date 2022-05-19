@@ -17,15 +17,15 @@ test_expect_success setup '
 	git config core.autocrlf true &&
 	echo foo | append_cr >file &&
 	git add file &&
-	git commit -m "Initial" &&
+	git cummit -m "Initial" &&
 	git tag initial &&
 	git branch side &&
 	echo line from a | append_cr >file &&
-	git commit -m "add line from a" file &&
+	git cummit -m "add line from a" file &&
 	git tag a &&
 	git checkout side &&
 	echo line from b | append_cr >file &&
-	git commit -m "add line from b" file &&
+	git cummit -m "add line from b" file &&
 	git tag b &&
 	git checkout main
 '

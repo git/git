@@ -6,35 +6,35 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-GIT_TEST_COMMIT_GRAPH=0
-GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS=0
+GIT_TEST_cummit_GRAPH=0
+GIT_TEST_cummit_GRAPH_CHANGED_PATHS=0
 
-test_expect_success 'setup test - repo, commits, commit graph, log outputs' '
+test_expect_success 'setup test - repo, cummits, cummit graph, log outputs' '
 	git init &&
 	mkdir A A/B A/B/C &&
-	test_commit c1 A/file1 &&
-	test_commit c2 A/B/file2 &&
-	test_commit c3 A/B/C/file3 &&
-	test_commit c4 A/file1 &&
-	test_commit c5 A/B/file2 &&
-	test_commit c6 A/B/C/file3 &&
-	test_commit c7 A/file1 &&
-	test_commit c8 A/B/file2 &&
-	test_commit c9 A/B/C/file3 &&
-	test_commit c10 file_to_be_deleted &&
+	test_cummit c1 A/file1 &&
+	test_cummit c2 A/B/file2 &&
+	test_cummit c3 A/B/C/file3 &&
+	test_cummit c4 A/file1 &&
+	test_cummit c5 A/B/file2 &&
+	test_cummit c6 A/B/C/file3 &&
+	test_cummit c7 A/file1 &&
+	test_cummit c8 A/B/file2 &&
+	test_cummit c9 A/B/C/file3 &&
+	test_cummit c10 file_to_be_deleted &&
 	git checkout -b side HEAD~4 &&
-	test_commit side-1 file4 &&
+	test_cummit side-1 file4 &&
 	git checkout main &&
 	git merge side &&
-	test_commit c11 file5 &&
+	test_cummit c11 file5 &&
 	mv file5 file5_renamed &&
 	git add file5_renamed &&
-	git commit -m "rename" &&
+	git cummit -m "rename" &&
 	rm file_to_be_deleted &&
 	git add . &&
-	git commit -m "file removed" &&
-	git commit --allow-empty -m "empty" &&
-	git commit-graph write --reachable --changed-paths &&
+	git cummit -m "file removed" &&
+	git cummit --allow-empty -m "empty" &&
+	git cummit-graph write --reachable --changed-paths &&
 
 	test_oid_cache <<-EOF
 	oid_version sha1:1
@@ -46,15 +46,15 @@ graph_read_expect () {
 	NUM_CHUNKS=6
 	cat >expect <<- EOF
 	header: 43475048 1 $(test_oid oid_version) $NUM_CHUNKS 0
-	num_commits: $1
-	chunks: oid_fanout oid_lookup commit_metadata generation_data bloom_indexes bloom_data
+	num_cummits: $1
+	chunks: oid_fanout oid_lookup cummit_metadata generation_data bloom_indexes bloom_data
 	options: bloom(1,10,7) read_generation_data
 	EOF
 	test-tool read-graph >actual &&
 	test_cmp expect actual
 }
 
-test_expect_success 'commit-graph write wrote out the bloom chunks' '
+test_expect_success 'cummit-graph write wrote out the bloom chunks' '
 	graph_read_expect 16
 '
 
@@ -65,8 +65,8 @@ sane_unset GIT_TRACE2_CONFIG_PARAMS
 
 setup () {
 	rm -f "$TRASH_DIRECTORY/trace.perf" &&
-	git -c core.commitGraph=false log --pretty="format:%s" $1 >log_wo_bloom &&
-	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.perf" git -c core.commitGraph=true log --pretty="format:%s" $1 >log_w_bloom
+	git -c core.cummitGraph=false log --pretty="format:%s" $1 >log_wo_bloom &&
+	GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace.perf" git -c core.cummitGraph=true log --pretty="format:%s" $1 >log_w_bloom
 }
 
 test_bloom_filters_used () {
@@ -102,7 +102,7 @@ do
 	do
 		test_expect_success "git log option: $option for path: $path" '
 			test_bloom_filters_used "$option -- $path" &&
-			test_config commitgraph.readChangedPaths false &&
+			test_config cummitgraph.readChangedPaths false &&
 			test_bloom_filters_not_used "$option -- $path"
 		'
 	done
@@ -139,12 +139,12 @@ test_expect_success 'git log with wildcard that resolves to a multiple paths doe
 	test_bloom_filters_not_used "-- file*"
 '
 
-test_expect_success 'setup - add commit-graph to the chain without Bloom filters' '
-	test_commit c14 A/anotherFile2 &&
-	test_commit c15 A/B/anotherFile2 &&
-	test_commit c16 A/B/C/anotherFile2 &&
-	git commit-graph write --reachable --split --no-changed-paths &&
-	test_line_count = 2 .git/objects/info/commit-graphs/commit-graph-chain
+test_expect_success 'setup - add cummit-graph to the chain without Bloom filters' '
+	test_cummit c14 A/anotherFile2 &&
+	test_cummit c15 A/B/anotherFile2 &&
+	test_cummit c16 A/B/C/anotherFile2 &&
+	git cummit-graph write --reachable --split --no-changed-paths &&
+	test_line_count = 2 .git/objects/info/cummit-graphs/cummit-graph-chain
 '
 
 test_expect_success 'use Bloom filters even if the latest graph does not have Bloom filters' '
@@ -154,10 +154,10 @@ test_expect_success 'use Bloom filters even if the latest graph does not have Bl
 	test_bloom_filters_used "-- A/B" 3
 '
 
-test_expect_success 'setup - add commit-graph to the chain with Bloom filters' '
-	test_commit c17 A/anotherFile3 &&
-	git commit-graph write --reachable --changed-paths --split &&
-	test_line_count = 3 .git/objects/info/commit-graphs/commit-graph-chain
+test_expect_success 'setup - add cummit-graph to the chain with Bloom filters' '
+	test_cummit c17 A/anotherFile3 &&
+	git cummit-graph write --reachable --changed-paths --split &&
+	test_line_count = 3 .git/objects/info/cummit-graphs/cummit-graph-chain
 '
 
 test_bloom_filters_used_when_some_filters_are_missing () {
@@ -168,20 +168,20 @@ test_bloom_filters_used_when_some_filters_are_missing () {
 	test_cmp log_wo_bloom log_w_bloom
 }
 
-test_expect_success 'Use Bloom filters if they exist in the latest but not all commit graphs in the chain.' '
+test_expect_success 'Use Bloom filters if they exist in the latest but not all cummit graphs in the chain.' '
 	test_bloom_filters_used_when_some_filters_are_missing "-- A/B"
 '
 
 test_expect_success 'persist filter settings' '
-	test_when_finished rm -rf .git/objects/info/commit-graph* &&
-	rm -rf .git/objects/info/commit-graph* &&
+	test_when_finished rm -rf .git/objects/info/cummit-graph* &&
+	rm -rf .git/objects/info/cummit-graph* &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 		GIT_TEST_BLOOM_SETTINGS_NUM_HASHES=9 \
 		GIT_TEST_BLOOM_SETTINGS_BITS_PER_ENTRY=15 \
-		git commit-graph write --reachable --changed-paths &&
+		git cummit-graph write --reachable --changed-paths &&
 	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2.txt &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2-auto.txt" \
-		git commit-graph write --reachable --changed-paths &&
+		git cummit-graph write --reachable --changed-paths &&
 	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2-auto.txt
 '
 
@@ -226,19 +226,19 @@ test_expect_success 'correctly report changes over limit' '
 		touch foo.txt &&
 
 		git add d foo foo.txt mode &&
-		git commit -m "files" &&
+		git cummit -m "files" &&
 
 		# Commit has 7 file and 4 directory adds
 		GIT_TEST_BLOOM_SETTINGS_MAX_CHANGED_PATHS=10 \
 			GIT_TRACE2_EVENT="$(pwd)/trace" \
-			git commit-graph write --reachable --changed-paths &&
+			git cummit-graph write --reachable --changed-paths &&
 		test_max_changed_paths 10 trace &&
 		test_filter_computed 1 trace &&
 		test_filter_trunc_large 1 trace &&
 
 		for path in $(git ls-tree -r --name-only HEAD)
 		do
-			git -c commitGraph.readChangedPaths=false log \
+			git -c cummitGraph.readChangedPaths=false log \
 				-- $path >expect &&
 			git log -- $path >actual &&
 			test_cmp expect actual || return 1
@@ -257,37 +257,37 @@ test_expect_success 'correctly report changes over limit' '
 		git update-index --chmod=+x mode/script.sh &&
 
 		git add foo d f &&
-		git commit -m "complicated" &&
+		git cummit -m "complicated" &&
 
 		# start from scratch and rebuild
-		rm -f .git/objects/info/commit-graph &&
+		rm -f .git/objects/info/cummit-graph &&
 		GIT_TEST_BLOOM_SETTINGS_MAX_CHANGED_PATHS=10 \
 			GIT_TRACE2_EVENT="$(pwd)/trace-edit" \
-			git commit-graph write --reachable --changed-paths &&
+			git cummit-graph write --reachable --changed-paths &&
 		test_max_changed_paths 10 trace-edit &&
 		test_filter_computed 2 trace-edit &&
 		test_filter_trunc_large 2 trace-edit &&
 
 		for path in $(git ls-tree -r --name-only HEAD)
 		do
-			git -c commitGraph.readChangedPaths=false log \
+			git -c cummitGraph.readChangedPaths=false log \
 				-- $path >expect &&
 			git log -- $path >actual &&
 			test_cmp expect actual || return 1
 		done &&
 
 		# start from scratch and rebuild
-		rm -f .git/objects/info/commit-graph &&
+		rm -f .git/objects/info/cummit-graph &&
 		GIT_TEST_BLOOM_SETTINGS_MAX_CHANGED_PATHS=11 \
 			GIT_TRACE2_EVENT="$(pwd)/trace-update" \
-			git commit-graph write --reachable --changed-paths &&
+			git cummit-graph write --reachable --changed-paths &&
 		test_max_changed_paths 11 trace-update &&
 		test_filter_computed 2 trace-update &&
 		test_filter_trunc_large 0 trace-update &&
 
 		for path in $(git ls-tree -r --name-only HEAD)
 		do
-			git -c commitGraph.readChangedPaths=false log \
+			git -c cummitGraph.readChangedPaths=false log \
 				-- $path >expect &&
 			git log -- $path >actual &&
 			test_cmp expect actual || return 1
@@ -295,16 +295,16 @@ test_expect_success 'correctly report changes over limit' '
 	)
 '
 
-test_expect_success 'correctly report commits with no changed paths' '
+test_expect_success 'correctly report cummits with no changed paths' '
 	git init empty &&
 	test_when_finished "rm -fr empty" &&
 	(
 		cd empty &&
 
-		git commit --allow-empty -m "initial commit" &&
+		git cummit --allow-empty -m "initial cummit" &&
 
 		GIT_TRACE2_EVENT="$(pwd)/trace.event" \
-			git commit-graph write --reachable --changed-paths &&
+			git cummit-graph write --reachable --changed-paths &&
 		test_filter_computed 1 trace.event &&
 		test_filter_not_computed 0 trace.event &&
 		test_filter_trunc_empty 1 trace.event &&
@@ -315,13 +315,13 @@ test_expect_success 'correctly report commits with no changed paths' '
 test_expect_success 'Bloom generation is limited by --max-new-filters' '
 	(
 		cd limits &&
-		test_commit c2 filter &&
-		test_commit c3 filter &&
-		test_commit c4 no-filter &&
+		test_cummit c2 filter &&
+		test_cummit c3 filter &&
+		test_cummit c4 no-filter &&
 
 		rm -f trace.event &&
 		GIT_TRACE2_EVENT="$(pwd)/trace.event" \
-			git commit-graph write --reachable --split=replace \
+			git cummit-graph write --reachable --split=replace \
 				--changed-paths --max-new-filters=2 &&
 
 		test_filter_computed 2 trace.event &&
@@ -332,14 +332,14 @@ test_expect_success 'Bloom generation is limited by --max-new-filters' '
 '
 
 test_expect_success 'Bloom generation backfills previously-skipped filters' '
-	# Check specifying commitGraph.maxNewFilters over "git config" works.
-	test_config -C limits commitGraph.maxNewFilters 1 &&
+	# Check specifying cummitGraph.maxNewFilters over "git config" works.
+	test_config -C limits cummitGraph.maxNewFilters 1 &&
 	(
 		cd limits &&
 
 		rm -f trace.event &&
 		GIT_TRACE2_EVENT="$(pwd)/trace.event" \
-			git commit-graph write --reachable --changed-paths \
+			git cummit-graph write --reachable --changed-paths \
 				--split=replace &&
 		test_filter_computed 1 trace.event &&
 		test_filter_not_computed 4 trace.event &&
@@ -351,15 +351,15 @@ test_expect_success 'Bloom generation backfills previously-skipped filters' '
 test_expect_success '--max-new-filters overrides configuration' '
 	git init override &&
 	test_when_finished "rm -fr override" &&
-	test_config -C override commitGraph.maxNewFilters 2 &&
+	test_config -C override cummitGraph.maxNewFilters 2 &&
 	(
 		cd override &&
-		test_commit one &&
-		test_commit two &&
+		test_cummit one &&
+		test_cummit two &&
 
 		rm -f trace.event &&
 		GIT_TRACE2_EVENT="$(pwd)/trace.event" \
-			git commit-graph write --reachable --changed-paths \
+			git cummit-graph write --reachable --changed-paths \
 				--max-new-filters=1 &&
 		test_filter_computed 1 trace.event &&
 		test_filter_not_computed 1 trace.event &&
@@ -368,22 +368,22 @@ test_expect_success '--max-new-filters overrides configuration' '
 	)
 '
 
-test_expect_success 'Bloom generation backfills empty commits' '
+test_expect_success 'Bloom generation backfills empty cummits' '
 	git init empty &&
 	test_when_finished "rm -fr empty" &&
 	(
 		cd empty &&
 		for i in $(test_seq 1 6)
 		do
-			git commit --allow-empty -m "$i" || return 1
+			git cummit --allow-empty -m "$i" || return 1
 		done &&
 
-		# Generate Bloom filters for empty commits 1-6, two at a time.
+		# Generate Bloom filters for empty cummits 1-6, two at a time.
 		for i in $(test_seq 1 3)
 		do
 			rm -f trace.event &&
 			GIT_TRACE2_EVENT="$(pwd)/trace.event" \
-				git commit-graph write --reachable \
+				git cummit-graph write --reachable \
 					--changed-paths --max-new-filters=2 &&
 			test_filter_computed 2 trace.event &&
 			test_filter_not_computed 4 trace.event &&
@@ -391,11 +391,11 @@ test_expect_success 'Bloom generation backfills empty commits' '
 			test_filter_trunc_large 0 trace.event || return 1
 		done &&
 
-		# Finally, make sure that once all commits have filters, that
+		# Finally, make sure that once all cummits have filters, that
 		# none are subsequently recomputed.
 		rm -f trace.event &&
 		GIT_TRACE2_EVENT="$(pwd)/trace.event" \
-			git commit-graph write --reachable \
+			git cummit-graph write --reachable \
 				--changed-paths --max-new-filters=2 &&
 		test_filter_computed 0 trace.event &&
 		test_filter_not_computed 6 trace.event &&

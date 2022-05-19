@@ -8,9 +8,9 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit initial world hello &&
+	test_cummit initial world hello &&
 	git branch other &&
-	test_commit --append second world "hello again"
+	test_cummit --append second world "hello again"
 '
 
 test_expect_success '"checkout -" does not work initially' '
@@ -102,7 +102,7 @@ test_expect_success 'switch to twelfth from the last' '
 
 test_expect_success 'merge base test setup' '
 	git checkout -b another other &&
-	test_commit --append third world "hello again"
+	test_cummit --append third world "hello again"
 '
 
 test_expect_success 'another...main' '

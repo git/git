@@ -147,7 +147,7 @@ int would_convert_to_git_filter_fd(struct index_state *istate,
 
 /*
  * Initialize the checkout metadata with the given values.  Any argument may be
- * NULL if it is not applicable.  The treeish should be a commit if that is
+ * NULL if it is not applicable.  The treeish should be a cummit if that is
  * available, and a tree otherwise.
  *
  * The refname is not copied and must be valid for the lifetime of the struct.

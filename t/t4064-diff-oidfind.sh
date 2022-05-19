@@ -4,20 +4,20 @@ test_description='test finding specific blobs in the revision walking'
 . ./test-lib.sh
 
 test_expect_success 'setup ' '
-	git commit --allow-empty -m "empty initial commit" &&
+	git cummit --allow-empty -m "empty initial cummit" &&
 
 	echo "Hello, world!" >greeting &&
 	git add greeting &&
-	git commit -m "add the greeting blob" && # borrowed from Git from the Bottom Up
+	git cummit -m "add the greeting blob" && # borrowed from Git from the Bottom Up
 	git tag -m "the blob" greeting $(git rev-parse HEAD:greeting) &&
 
 	echo asdf >unrelated &&
 	git add unrelated &&
-	git commit -m "unrelated history" &&
+	git cummit -m "unrelated history" &&
 
 	git revert HEAD^ &&
 
-	git commit --allow-empty -m "another unrelated commit"
+	git cummit --allow-empty -m "another unrelated cummit"
 '
 
 test_expect_success 'find the greeting blob' '
@@ -35,7 +35,7 @@ test_expect_success 'setup a tree' '
 	mkdir a &&
 	echo asdf >a/file &&
 	git add a/file &&
-	git commit -m "add a file in a subdirectory"
+	git cummit -m "add a file in a subdirectory"
 '
 
 test_expect_success 'find a tree' '
@@ -50,9 +50,9 @@ test_expect_success 'find a tree' '
 
 test_expect_success 'setup a submodule' '
 	test_create_repo sub &&
-	test_commit -C sub sub &&
+	test_cummit -C sub sub &&
 	git submodule add ./sub sub &&
-	git commit -a -m "add sub"
+	git cummit -a -m "add sub"
 '
 
 test_expect_success 'find a submodule' '
@@ -66,26 +66,26 @@ test_expect_success 'find a submodule' '
 '
 
 test_expect_success 'set up merge tests' '
-	test_commit base &&
+	test_cummit base &&
 
 	git checkout -b boring base^ &&
 	echo boring >file &&
 	git add file &&
-	git commit -m boring &&
+	git cummit -m boring &&
 
 	git checkout -b interesting base^ &&
 	echo interesting >file &&
 	git add file &&
-	git commit -m interesting &&
+	git cummit -m interesting &&
 
 	blob=$(git rev-parse interesting:file)
 '
 
 test_expect_success 'detect merge which introduces blob' '
 	git checkout -B merge base &&
-	git merge --no-commit boring &&
+	git merge --no-cummit boring &&
 	echo interesting >file &&
-	git commit -am "introduce blob" &&
+	git cummit -am "introduce blob" &&
 	git diff-tree --format=%s --find-object=$blob -c --name-status HEAD >actual &&
 	cat >expect <<-\EOF &&
 	introduce blob
@@ -97,9 +97,9 @@ test_expect_success 'detect merge which introduces blob' '
 
 test_expect_success 'detect merge which removes blob' '
 	git checkout -B merge interesting &&
-	git merge --no-commit base &&
+	git merge --no-cummit base &&
 	echo boring >file &&
-	git commit -am "remove blob" &&
+	git cummit -am "remove blob" &&
 	git diff-tree --format=%s --find-object=$blob -c --name-status HEAD >actual &&
 	cat >expect <<-\EOF &&
 	remove blob

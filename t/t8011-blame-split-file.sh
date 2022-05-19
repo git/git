@@ -3,10 +3,10 @@
 test_description='
 The general idea is that we have a single file whose lines come from
 multiple other files, and those individual files were modified in the same
-commits. That means that we will see the same commit in multiple contexts,
+cummits. That means that we will see the same cummit in multiple contexts,
 and each one should be attributed to the correct file.
 
-Note that we need to use "blame -C" to find the commit for all lines. We will
+Note that we need to use "blame -C" to find the cummit for all lines. We will
 not bother testing that the non-C case fails to find it. That is how blame
 behaves now, but it is not a property we want to make sure is retained.
 '
@@ -31,26 +31,26 @@ test_expect_success 'setup split file case' '
 	test_seq 1000 1010 >one &&
 	test_seq 2000 2010 >two &&
 	git add one two &&
-	test_commit base &&
+	test_cummit base &&
 
 	sed "6s/^/modified /" <one >one.tmp &&
 	mv one.tmp one &&
 	sed "6s/^/modified /" <two >two.tmp &&
 	mv two.tmp two &&
 	git add -u &&
-	test_commit modified &&
+	test_cummit modified &&
 
 	cat one two >combined &&
 	git add combined &&
 	git rm one two &&
-	test_commit combined
+	test_cummit combined
 '
 
 test_expect_success 'setup simulated porcelain' '
 	# This just reads porcelain-ish output and tries
 	# to output the value of a given field for each line (either by
 	# reading the field that accompanies this line, or referencing
-	# the information found last time the commit was mentioned).
+	# the information found last time the cummit was mentioned).
 	cat >read-porcelain.pl <<-\EOF
 	my $field = shift;
 	while (<>) {
@@ -80,7 +80,7 @@ do
 		git blame --root -C --$output combined >output
 	'
 
-	test_expect_success "$output output finds correct commits" '
+	test_expect_success "$output output finds correct cummits" '
 		generate_expect >expect <<-\EOF &&
 		5 base
 		1 modified

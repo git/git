@@ -5,7 +5,7 @@
 #include "blob.h"
 #include "tree.h"
 #include "diff.h"
-#include "commit.h"
+#include "cummit.h"
 #include "decorate.h"
 #include "revision.h"
 #include "xdiff-interface.h"
@@ -182,7 +182,7 @@ static void range_set_union(struct range_set *out,
 /*
  * Difference of range sets (out = a \ b).  Pass the "interesting"
  * ranges as 'a' and the target side of the diff as 'b': it removes
- * the ranges for which the commit is responsible.
+ * the ranges for which the cummit is responsible.
  */
 static void range_set_difference(struct range_set *out,
 				  struct range_set *a, struct range_set *b)
@@ -445,7 +445,7 @@ static void range_set_shift_diff(struct range_set *out,
 
 /*
  * Given a diff and the set of interesting ranges, map the ranges
- * across the diff.  That is: observe that the target commit takes
+ * across the diff.  That is: observe that the target cummit takes
  * blame for all the + (target-side) ranges.  So for every pair of
  * ranges in the diff that was touched, we remove the latter and add
  * its parent side.
@@ -470,9 +470,9 @@ static void range_set_map_across_diff(struct range_set *out,
 	*touched_out = touched;
 }
 
-static struct commit *check_single_commit(struct rev_info *revs)
+static struct cummit *check_single_cummit(struct rev_info *revs)
 {
-	struct object *commit = NULL;
+	struct object *cummit = NULL;
 	int found = -1;
 	int i;
 
@@ -481,30 +481,30 @@ static struct commit *check_single_commit(struct rev_info *revs)
 		if (obj->flags & UNINTERESTING)
 			continue;
 		obj = deref_tag(revs->repo, obj, NULL, 0);
-		if (!obj || obj->type != OBJ_COMMIT)
-			die("Non commit %s?", revs->pending.objects[i].name);
-		if (commit)
-			die("More than one commit to dig from: %s and %s?",
+		if (!obj || obj->type != OBJ_cummit)
+			die("Non cummit %s?", revs->pending.objects[i].name);
+		if (cummit)
+			die("More than one cummit to dig from: %s and %s?",
 			    revs->pending.objects[i].name,
 			    revs->pending.objects[found].name);
-		commit = obj;
+		cummit = obj;
 		found = i;
 	}
 
-	if (!commit)
-		die("No commit specified?");
+	if (!cummit)
+		die("No cummit specified?");
 
-	return (struct commit *) commit;
+	return (struct cummit *) cummit;
 }
 
-static void fill_blob_sha1(struct repository *r, struct commit *commit,
+static void fill_blob_sha1(struct repository *r, struct cummit *cummit,
 			   struct diff_filespec *spec)
 {
 	unsigned short mode;
 	struct object_id oid;
 
-	if (get_tree_entry(r, &commit->object.oid, spec->path, &oid, &mode))
-		die("There is no path %s in the commit", spec->path);
+	if (get_tree_entry(r, &cummit->object.oid, spec->path, &oid, &mode))
+		die("There is no path %s in the cummit", spec->path);
 	fill_filespec(spec, &oid, 1, mode);
 
 	return;
@@ -559,7 +559,7 @@ static const char *nth_line(void *data, long line)
 }
 
 static struct line_log_data *
-parse_lines(struct repository *r, struct commit *commit,
+parse_lines(struct repository *r, struct cummit *cummit,
 	    const char *prefix, struct string_list *args)
 {
 	long lines = 0;
@@ -587,7 +587,7 @@ parse_lines(struct repository *r, struct commit *commit,
 					name_part);
 
 		spec = alloc_filespec(full_name);
-		fill_blob_sha1(r, commit, spec);
+		fill_blob_sha1(r, cummit, spec);
 		fill_line_ends(r, spec, &lines, &ends);
 		cb_data.spec = spec;
 		cb_data.lines = lines;
@@ -697,13 +697,13 @@ static struct line_log_data *line_log_data_merge(struct line_log_data *a,
 	return head;
 }
 
-static void add_line_range(struct rev_info *revs, struct commit *commit,
+static void add_line_range(struct rev_info *revs, struct cummit *cummit,
 			   struct line_log_data *range)
 {
 	struct line_log_data *old_line = NULL;
 	struct line_log_data *new_line = NULL;
 
-	old_line = lookup_decoration(&revs->line_log_data, &commit->object);
+	old_line = lookup_decoration(&revs->line_log_data, &cummit->object);
 	if (old_line && range) {
 		new_line = line_log_data_merge(old_line, range);
 		free_line_log_data(old_line);
@@ -711,26 +711,26 @@ static void add_line_range(struct rev_info *revs, struct commit *commit,
 		new_line = line_log_data_copy(range);
 
 	if (new_line)
-		add_decoration(&revs->line_log_data, &commit->object, new_line);
+		add_decoration(&revs->line_log_data, &cummit->object, new_line);
 }
 
-static void clear_commit_line_range(struct rev_info *revs, struct commit *commit)
+static void clear_cummit_line_range(struct rev_info *revs, struct cummit *cummit)
 {
 	struct line_log_data *r;
-	r = lookup_decoration(&revs->line_log_data, &commit->object);
+	r = lookup_decoration(&revs->line_log_data, &cummit->object);
 	if (!r)
 		return;
 	free_line_log_data(r);
-	add_decoration(&revs->line_log_data, &commit->object, NULL);
+	add_decoration(&revs->line_log_data, &cummit->object, NULL);
 }
 
 static struct line_log_data *lookup_line_range(struct rev_info *revs,
-					       struct commit *commit)
+					       struct cummit *cummit)
 {
 	struct line_log_data *ret = NULL;
 	struct line_log_data *d;
 
-	ret = lookup_decoration(&revs->line_log_data, &commit->object);
+	ret = lookup_decoration(&revs->line_log_data, &cummit->object);
 
 	for (d = ret; d; d = d->next)
 		range_set_check_invariants(&d->ranges);
@@ -772,12 +772,12 @@ static void parse_pathspec_from_ranges(struct pathspec *pathspec,
 
 void line_log_init(struct rev_info *rev, const char *prefix, struct string_list *args)
 {
-	struct commit *commit = NULL;
+	struct cummit *cummit = NULL;
 	struct line_log_data *range;
 
-	commit = check_single_commit(rev);
-	range = parse_lines(rev->diffopt.repo, commit, prefix, args);
-	add_line_range(rev, commit, range);
+	cummit = check_single_cummit(rev);
+	range = parse_lines(rev->diffopt.repo, cummit, prefix, args);
+	add_line_range(rev, cummit, range);
 
 	parse_pathspec_from_ranges(&rev->diffopt.pathspec, range);
 }
@@ -835,14 +835,14 @@ static inline int diff_might_be_rename(void)
 static void queue_diffs(struct line_log_data *range,
 			struct diff_options *opt,
 			struct diff_queue_struct *queue,
-			struct commit *commit, struct commit *parent)
+			struct cummit *cummit, struct cummit *parent)
 {
 	struct object_id *tree_oid, *parent_tree_oid;
 
-	assert(commit);
+	assert(cummit);
 
-	tree_oid = get_commit_tree_oid(commit);
-	parent_tree_oid = parent ? get_commit_tree_oid(parent) : NULL;
+	tree_oid = get_cummit_tree_oid(cummit);
+	parent_tree_oid = parent ? get_cummit_tree_oid(parent) : NULL;
 
 	if (opt->detect_rename &&
 	    !same_paths_in_pathspec_and_range(&opt->pathspec, range)) {
@@ -1112,7 +1112,7 @@ static int process_all_files(struct line_log_data **range_out,
 			/*
 			 * Store away the diff for later output.  We
 			 * tuck it in the ranges we got as _input_,
-			 * since that's the commit that caused the
+			 * since that's the cummit that caused the
 			 * diff.
 			 *
 			 * NEEDSWORK not enough when we get around to
@@ -1136,30 +1136,30 @@ static int process_all_files(struct line_log_data **range_out,
 	return changed;
 }
 
-int line_log_print(struct rev_info *rev, struct commit *commit)
+int line_log_print(struct rev_info *rev, struct cummit *cummit)
 {
 
 	show_log(rev);
 	if (!(rev->diffopt.output_format & DIFF_FORMAT_NO_OUTPUT)) {
-		struct line_log_data *range = lookup_line_range(rev, commit);
+		struct line_log_data *range = lookup_line_range(rev, cummit);
 		dump_diff_hacky(rev, range);
 	}
 	return 1;
 }
 
 static int bloom_filter_check(struct rev_info *rev,
-			      struct commit *commit,
+			      struct cummit *cummit,
 			      struct line_log_data *range)
 {
 	struct bloom_filter *filter;
 	struct bloom_key key;
 	int result = 0;
 
-	if (!commit->parents)
+	if (!cummit->parents)
 		return 1;
 
 	if (!rev->bloom_filter_settings ||
-	    !(filter = get_bloom_filter(rev->repo, commit)))
+	    !(filter = get_bloom_filter(rev->repo, cummit)))
 		return 1;
 
 	if (!range)
@@ -1178,18 +1178,18 @@ static int bloom_filter_check(struct rev_info *rev,
 	return result;
 }
 
-static int process_ranges_ordinary_commit(struct rev_info *rev, struct commit *commit,
+static int process_ranges_ordinary_cummit(struct rev_info *rev, struct cummit *cummit,
 					  struct line_log_data *range)
 {
-	struct commit *parent = NULL;
+	struct cummit *parent = NULL;
 	struct diff_queue_struct queue;
 	struct line_log_data *parent_range;
 	int changed;
 
-	if (commit->parents)
-		parent = commit->parents->item;
+	if (cummit->parents)
+		parent = cummit->parents->item;
 
-	queue_diffs(range, &rev->diffopt, &queue, commit, parent);
+	queue_diffs(range, &rev->diffopt, &queue, cummit, parent);
 	changed = process_all_files(&parent_range, rev, &queue, range);
 
 	if (parent)
@@ -1198,15 +1198,15 @@ static int process_ranges_ordinary_commit(struct rev_info *rev, struct commit *c
 	return changed;
 }
 
-static int process_ranges_merge_commit(struct rev_info *rev, struct commit *commit,
+static int process_ranges_merge_cummit(struct rev_info *rev, struct cummit *cummit,
 				       struct line_log_data *range)
 {
 	struct diff_queue_struct *diffqueues;
 	struct line_log_data **cand;
-	struct commit **parents;
-	struct commit_list *p;
+	struct cummit **parents;
+	struct cummit_list *p;
 	int i;
-	int nparents = commit_list_count(commit->parents);
+	int nparents = cummit_list_count(cummit->parents);
 
 	if (nparents > 1 && rev->first_parent_only)
 		nparents = 1;
@@ -1215,11 +1215,11 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 	ALLOC_ARRAY(cand, nparents);
 	ALLOC_ARRAY(parents, nparents);
 
-	p = commit->parents;
+	p = cummit->parents;
 	for (i = 0; i < nparents; i++) {
 		parents[i] = p->item;
 		p = p->next;
-		queue_diffs(range, &rev->diffopt, &diffqueues[i], commit, parents[i]);
+		queue_diffs(range, &rev->diffopt, &diffqueues[i], cummit, parents[i]);
 	}
 
 	for (i = 0; i < nparents; i++) {
@@ -1232,8 +1232,8 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 			 * don't follow any other path in history
 			 */
 			add_line_range(rev, parents[i], cand[i]);
-			clear_commit_line_range(rev, commit);
-			commit_list_append(parents[i], &commit->parents);
+			clear_cummit_line_range(rev, cummit);
+			cummit_list_append(parents[i], &cummit->parents);
 			free(parents);
 			free(cand);
 			free_diffqueues(nparents, diffqueues);
@@ -1250,7 +1250,7 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 		add_line_range(rev, parents[i], cand[i]);
 	}
 
-	clear_commit_line_range(rev, commit);
+	clear_cummit_line_range(rev, cummit);
 	free(parents);
 	free(cand);
 	free_diffqueues(nparents, diffqueues);
@@ -1260,32 +1260,32 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 	/* NEEDSWORK leaking like a sieve */
 }
 
-int line_log_process_ranges_arbitrary_commit(struct rev_info *rev, struct commit *commit)
+int line_log_process_ranges_arbitrary_cummit(struct rev_info *rev, struct cummit *cummit)
 {
-	struct line_log_data *range = lookup_line_range(rev, commit);
+	struct line_log_data *range = lookup_line_range(rev, cummit);
 	int changed = 0;
 
 	if (range) {
-		if (commit->parents && !bloom_filter_check(rev, commit, range)) {
+		if (cummit->parents && !bloom_filter_check(rev, cummit, range)) {
 			struct line_log_data *prange = line_log_data_copy(range);
-			add_line_range(rev, commit->parents->item, prange);
-			clear_commit_line_range(rev, commit);
-		} else if (!commit->parents || !commit->parents->next)
-			changed = process_ranges_ordinary_commit(rev, commit, range);
+			add_line_range(rev, cummit->parents->item, prange);
+			clear_cummit_line_range(rev, cummit);
+		} else if (!cummit->parents || !cummit->parents->next)
+			changed = process_ranges_ordinary_cummit(rev, cummit, range);
 		else
-			changed = process_ranges_merge_commit(rev, commit, range);
+			changed = process_ranges_merge_cummit(rev, cummit, range);
 	}
 
 	if (!changed)
-		commit->object.flags |= TREESAME;
+		cummit->object.flags |= TREESAME;
 
 	return changed;
 }
 
-static enum rewrite_result line_log_rewrite_one(struct rev_info *rev, struct commit **pp)
+static enum rewrite_result line_log_rewrite_one(struct rev_info *rev, struct cummit **pp)
 {
 	for (;;) {
-		struct commit *p = *pp;
+		struct cummit *p = *pp;
 		if (p->parents && p->parents->next)
 			return rewrite_one_ok;
 		if (p->object.flags & UNINTERESTING)
@@ -1300,14 +1300,14 @@ static enum rewrite_result line_log_rewrite_one(struct rev_info *rev, struct com
 
 int line_log_filter(struct rev_info *rev)
 {
-	struct commit *commit;
-	struct commit_list *list = rev->commits;
-	struct commit_list *out = NULL, **pp = &out;
+	struct cummit *cummit;
+	struct cummit_list *list = rev->cummits;
+	struct cummit_list *out = NULL, **pp = &out;
 
 	while (list) {
-		struct commit_list *to_free = NULL;
-		commit = list->item;
-		if (line_log_process_ranges_arbitrary_commit(rev, commit)) {
+		struct cummit_list *to_free = NULL;
+		cummit = list->item;
+		if (line_log_process_ranges_arbitrary_cummit(rev, cummit)) {
 			*pp = list;
 			pp = &list->next;
 		} else
@@ -1320,7 +1320,7 @@ int line_log_filter(struct rev_info *rev)
 	for (list = out; list; list = list->next)
 		rewrite_parents(rev, list->item, line_log_rewrite_one);
 
-	rev->commits = out;
+	rev->cummits = out;
 
 	return 0;
 }

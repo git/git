@@ -109,7 +109,7 @@ directory rename detection support in:
   * rebase
 
     Since am-based rebases work by first generating a bunch of patches
-    (which no longer record what the original commits were and thus don't
+    (which no longer record what the original cummits were and thus don't
     have the necessary info from which we can find a real merge-base), and
     then calling git-am, this implies that am-based rebases will not always
     successfully detect directory renames either (see the 'am' section

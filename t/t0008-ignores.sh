@@ -188,7 +188,7 @@ test_expect_success 'setup' '
 		git init &&
 		echo a >a &&
 		git add a &&
-		git commit -m"commit in submodule"
+		git cummit -m"cummit in submodule"
 	) &&
 	git add a/submodule &&
 	cat <<-\EOF >.gitignore &&

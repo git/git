@@ -90,7 +90,7 @@ test_expect_success 'setup' '
 
 	Q$body
 	EOF
-	git commit --allow-empty -F msg
+	git cummit --allow-empty -F msg
 '
 
 test_expand ""

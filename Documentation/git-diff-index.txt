@@ -32,7 +32,7 @@ include::diff-options.txt[]
 --merge-base::
 	Instead of comparing <tree-ish> directly, use the merge base
 	between <tree-ish> and HEAD instead.  <tree-ish> must be a
-	commit.
+	cummit.
 
 -m::
 	By default, files recorded in the index but not checked
@@ -57,20 +57,20 @@ If `--cached` is specified, it allows you to ask:
 	contents (the ones I'd write using 'git write-tree')
 
 For example, let's say that you have worked on your working directory, updated
-some files in the index and are ready to commit. You want to see exactly
-*what* you are going to commit, without having to write a new tree
+some files in the index and are ready to cummit. You want to see exactly
+*what* you are going to cummit, without having to write a new tree
 object and compare it that way, and to do that, you just do
 
 	git diff-index --cached HEAD
 
-Example: let's say I had renamed `commit.c` to `git-commit.c`, and I had
+Example: let's say I had renamed `cummit.c` to `git-cummit.c`, and I had
 done an `update-index` to make that effective in the index file.
 `git diff-files` wouldn't show anything at all, since the index file
 matches my working directory. But doing a 'git diff-index' does:
 
   torvalds@ppc970:~/git> git diff-index --cached HEAD
-  -100644 blob    4161aecc6700a2eb579e842af0b7f22b98443f74        commit.c
-  +100644 blob    4161aecc6700a2eb579e842af0b7f22b98443f74        git-commit.c
+  -100644 blob    4161aecc6700a2eb579e842af0b7f22b98443f74        cummit.c
+  +100644 blob    4161aecc6700a2eb579e842af0b7f22b98443f74        git-cummit.c
 
 You can see easily that the above is a rename.
 
@@ -79,7 +79,7 @@ actually doing a 'git write-tree' and comparing that. Except this one is much
 nicer for the case where you just want to check where you are.
 
 So doing a `git diff-index --cached` is basically very useful when you are
-asking yourself "what have I already marked for being committed, and
+asking yourself "what have I already marked for being cummitted, and
 what's the difference to a previous tree".
 
 NON-CACHED MODE
@@ -93,7 +93,7 @@ The non-cached version asks the question:
   tree - index contents _and_ files that aren't up to date
 
 which is obviously a very useful question too, since that tells you what
-you *could* commit. Again, the output matches the 'git diff-tree -r'
+you *could* cummit. Again, the output matches the 'git diff-tree -r'
 output to a tee, but with a twist.
 
 The twist is that if some file doesn't match the index, we don't have

@@ -17,7 +17,7 @@ test_full_bitmap () {
 		git pack-objects --use-bitmap-index --all pack1b </dev/null >/dev/null
 	'
 
-	test_perf 'rev-list (commits)' '
+	test_perf 'rev-list (cummits)' '
 		git rev-list --all --use-bitmap-index >/dev/null
 	'
 

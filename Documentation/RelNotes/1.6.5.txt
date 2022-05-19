@@ -105,17 +105,17 @@ Updates since v1.6.4
    copy individual object files without preserving the old timestamp, giving
    them extra lifetime in the new repository until they gc'ed.
 
- * "git commit --dry-run $args" is a new recommended way to ask "what would
-   happen if I try to commit with these arguments."
+ * "git cummit --dry-run $args" is a new recommended way to ask "what would
+   happen if I try to cummit with these arguments."
 
- * "git commit --dry-run" and "git status" shows conflicted paths in a
+ * "git cummit --dry-run" and "git status" shows conflicted paths in a
    separate section to make them easier to spot during a merge.
 
  * "git cvsimport" now supports password-protected pserver access even
    when the password is not taken from ~/.cvspass file.
 
  * "git fast-export" learned --no-data option that can be useful when
-   reordering commits and trees without touching the contents of
+   reordering cummits and trees without touching the contents of
    blobs.
 
  * "git fast-import" has a pair of new front-end in contrib/ area.
@@ -130,7 +130,7 @@ Updates since v1.6.4
 
  * "git merge" issued an unnecessarily scary message when it detected
    that the merge may have to touch the path that the user has local
-   uncommitted changes to. The message has been reworded to make it
+   uncummitted changes to. The message has been reworded to make it
    clear that the command aborted, without doing any harm.
 
  * "git push" can be told to be --quiet.
@@ -147,7 +147,7 @@ Updates since v1.6.4
  * various subcommands to "git submodule" learned --recursive option.
 
  * "git submodule summary" learned --files option to compare the work
-   tree vs the commit bound at submodule path, instead of comparing
+   tree vs the cummit bound at submodule path, instead of comparing
    the index.
 
  * "git upload-pack", which is the server side support for "git clone" and

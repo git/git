@@ -7,7 +7,7 @@
 static void die_usage(int argc, const char **argv, const char *msg)
 {
 	fprintf(stderr, "%s\n", msg);
-	fprintf(stderr, "Usage: %s [<commit> <submodulepath>] ...\n", argv[0]);
+	fprintf(stderr, "Usage: %s [<cummit> <submodulepath>] ...\n", argv[0]);
 	exit(1);
 }
 
@@ -35,25 +35,25 @@ int cmd__submodule_config(int argc, const char **argv)
 	setup_git_directory();
 
 	while (*arg) {
-		struct object_id commit_oid;
+		struct object_id cummit_oid;
 		const struct submodule *submodule;
-		const char *commit;
+		const char *cummit;
 		const char *path_or_name;
 
-		commit = arg[0];
+		cummit = arg[0];
 		path_or_name = arg[1];
 
-		if (commit[0] == '\0')
-			oidclr(&commit_oid);
-		else if (get_oid(commit, &commit_oid) < 0)
-			die_usage(argc, argv, "Commit not found.");
+		if (cummit[0] == '\0')
+			oidclr(&cummit_oid);
+		else if (get_oid(cummit, &cummit_oid) < 0)
+			die_usage(argc, argv, "cummit not found.");
 
 		if (lookup_name) {
 			submodule = submodule_from_name(the_repository,
-							&commit_oid, path_or_name);
+							&cummit_oid, path_or_name);
 		} else
 			submodule = submodule_from_path(the_repository,
-							&commit_oid, path_or_name);
+							&cummit_oid, path_or_name);
 		if (!submodule)
 			die_usage(argc, argv, "Submodule not found.");
 

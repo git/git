@@ -7,9 +7,9 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-test_expect_success 'setup commits and contacts file' '
-	test_commit initial one one &&
-	test_commit --author "nick1 <bugs@company.xx>" --append second one two
+test_expect_success 'setup cummits and contacts file' '
+	test_cummit initial one one &&
+	test_cummit --author "nick1 <bugs@company.xx>" --append second one two
 '
 
 test_expect_success 'check-mailmap no arguments' '
@@ -267,7 +267,7 @@ test_expect_success 'setup mailmap blob tests' '
 	EOF
 	printf "Tricky Guy <$GIT_AUTHOR_EMAIL>" >no-newline &&
 	git add just-bugs both no-newline &&
-	git commit -m "my mailmaps" &&
+	git cummit -m "my mailmaps" &&
 
 	cat >internal.map <<-EOF
 	Internal Guy <$GIT_AUTHOR_EMAIL>
@@ -368,7 +368,7 @@ test_expect_success 'mailmap.blob defaults to off in non-bare repo' '
 	git init non-bare &&
 	(
 		cd non-bare &&
-		test_commit one .mailmap "Fake Name <$GIT_AUTHOR_EMAIL>" &&
+		test_cummit one .mailmap "Fake Name <$GIT_AUTHOR_EMAIL>" &&
 		cat >expect <<-\EOF &&
 		     1	Fake Name
 		EOF
@@ -438,11 +438,11 @@ test_expect_success 'preserve canonical email case' '
 
 test_expect_success 'gitmailmap(5) example output: setup' '
 	test_create_repo doc &&
-	test_commit -C doc --author "Joe Developer <joe@example.com>" A &&
-	test_commit -C doc --author "Joe R. Developer <joe@example.com>" B &&
-	test_commit -C doc --author "Jane Doe <jane@example.com>" C &&
-	test_commit -C doc --author "Jane Doe <jane@laptop.(none)>" D &&
-	test_commit -C doc --author "Jane D. <jane@desktop.(none)>" E
+	test_cummit -C doc --author "Joe Developer <joe@example.com>" A &&
+	test_cummit -C doc --author "Joe R. Developer <joe@example.com>" B &&
+	test_cummit -C doc --author "Jane Doe <jane@example.com>" C &&
+	test_cummit -C doc --author "Jane Doe <jane@laptop.(none)>" D &&
+	test_cummit -C doc --author "Jane D. <jane@desktop.(none)>" E
 '
 
 test_expect_success 'gitmailmap(5) example output: example #1' '
@@ -455,21 +455,21 @@ test_expect_success 'gitmailmap(5) example output: example #1' '
 
 	cat >expect <<-\EOF &&
 	Author Joe Developer <joe@example.com> maps to Joe R. Developer <joe@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author Joe R. Developer <joe@example.com> maps to Joe R. Developer <joe@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author Jane Doe <jane@example.com> maps to Jane Doe <jane@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author Jane Doe <jane@laptop.(none)> maps to Jane Doe <jane@laptop.(none)>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author Jane D <jane@desktop.(none)> maps to Jane Doe <jane@desktop.(none)>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 	EOF
-	git -C doc log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%nCommitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
+	git -C doc log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%ncummitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
 	test_cmp expect actual
 '
 
@@ -483,21 +483,21 @@ test_expect_success 'gitmailmap(5) example output: example #2' '
 
 	cat >expect <<-\EOF &&
 	Author Joe Developer <joe@example.com> maps to Joe R. Developer <joe@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author Joe R. Developer <joe@example.com> maps to Joe R. Developer <joe@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author Jane Doe <jane@example.com> maps to Jane Doe <jane@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author Jane Doe <jane@laptop.(none)> maps to Jane Doe <jane@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author Jane D <jane@desktop.(none)> maps to Jane Doe <jane@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 	EOF
-	git -C doc log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%nCommitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
+	git -C doc log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%ncummitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
 	test_cmp expect actual
 '
 
@@ -508,18 +508,18 @@ test_expect_success 'gitmailmap(5) example output: example #3' '
 	Jane Doe <jane@example.com> Jane <bugs@example.com>
 	EOF
 
-	test_commit -C doc --author "Joe <bugs@example.com>" F &&
-	test_commit -C doc --author "Jane <bugs@example.com>" G &&
+	test_cummit -C doc --author "Joe <bugs@example.com>" F &&
+	test_cummit -C doc --author "Jane <bugs@example.com>" G &&
 
 	cat >>expect <<-\EOF &&
 
 	Author Joe <bugs@example.com> maps to Joe R. Developer <joe@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author Jane <bugs@example.com> maps to Jane Doe <jane@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 	EOF
-	git -C doc log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%nCommitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
+	git -C doc log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%ncummitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
 	test_cmp expect actual
 '
 
@@ -527,7 +527,7 @@ test_expect_success 'gitmailmap(5) example output: example #3' '
 test_expect_success 'Shortlog output (complex mapping)' '
 	test_config mailmap.file complex.map &&
 	cat >complex.map <<-EOF &&
-	Committed <$GIT_COMMITTER_EMAIL>
+	cummitted <$GIT_cummitTER_EMAIL>
 	<cto@company.xx> <cto@coompany.xx>
 	Some Dude <some@dude.xx>         nick1 <bugs@company.xx>
 	Other Author <other@author.xx>   nick2 <bugs@company.xx>
@@ -535,11 +535,11 @@ test_expect_success 'Shortlog output (complex mapping)' '
 	Santa Claus <santa.claus@northpole.xx> <me@company.xx>
 	EOF
 
-	test_commit --author "nick2 <bugs@company.xx>" --append third one three &&
-	test_commit --author "nick2 <nick2@company.xx>" --append fourth one four &&
-	test_commit --author "santa <me@company.xx>" --append fifth one five &&
-	test_commit --author "claus <me@company.xx>" --append sixth one six &&
-	test_commit --author "CTO <cto@coompany.xx>" --append seventh one seven &&
+	test_cummit --author "nick2 <bugs@company.xx>" --append third one three &&
+	test_cummit --author "nick2 <nick2@company.xx>" --append fourth one four &&
+	test_cummit --author "santa <me@company.xx>" --append fifth one five &&
+	test_cummit --author "claus <me@company.xx>" --append sixth one six &&
+	test_cummit --author "CTO <cto@coompany.xx>" --append seventh one seven &&
 
 	cat >expect <<-EOF &&
 	$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> (1):
@@ -571,56 +571,56 @@ test_expect_success 'Log output (complex mapping)' '
 
 	cat >expect <<-EOF &&
 	Author CTO <cto@coompany.xx> maps to CTO <cto@company.xx>
-	Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
+	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
 
 	Author claus <me@company.xx> maps to Santa Claus <santa.claus@northpole.xx>
-	Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
+	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
 
 	Author santa <me@company.xx> maps to Santa Claus <santa.claus@northpole.xx>
-	Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
+	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
 
 	Author nick2 <nick2@company.xx> maps to Other Author <other@author.xx>
-	Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
+	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
 
 	Author nick2 <bugs@company.xx> maps to Other Author <other@author.xx>
-	Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
+	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
 
 	Author nick1 <bugs@company.xx> maps to Some Dude <some@dude.xx>
-	Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
+	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
 
 	Author $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL> maps to $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>
-	Committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> maps to Committed <$GIT_COMMITTER_EMAIL>
+	cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> maps to cummitted <$GIT_cummitTER_EMAIL>
 	EOF
 
-	git log --pretty=format:"Author %an <%ae> maps to %aN <%aE>%nCommitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
+	git log --pretty=format:"Author %an <%ae> maps to %aN <%aE>%ncummitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'Log output (local-part email address)' '
 	cat >expect <<-EOF &&
 	Author email cto@coompany.xx has local-part cto
-	Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
 
 	Author email me@company.xx has local-part me
-	Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
 
 	Author email me@company.xx has local-part me
-	Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
 
 	Author email nick2@company.xx has local-part nick2
-	Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
 
 	Author email bugs@company.xx has local-part bugs
-	Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
 
 	Author email bugs@company.xx has local-part bugs
-	Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
 
 	Author email author@example.com has local-part author
-	Committer email $GIT_COMMITTER_EMAIL has local-part $TEST_COMMITTER_LOCALNAME
+	cummitter email $GIT_cummitTER_EMAIL has local-part $TEST_cummitTER_LOCALNAME
 	EOF
 
-	git log --pretty=format:"Author email %ae has local-part %al%nCommitter email %ce has local-part %cl%n" >actual &&
+	git log --pretty=format:"Author email %ae has local-part %al%ncummitter email %ce has local-part %cl%n" >actual &&
 	test_cmp expect actual
 '
 
@@ -764,25 +764,25 @@ test_expect_success 'Blame output (complex mapping)' '
 	! cmp a b
 '
 
-test_expect_success 'commit --author honors mailmap' '
+test_expect_success 'cummit --author honors mailmap' '
 	test_config mailmap.file complex.map &&
 
 	cat >expect <<-\EOF &&
 	Some Dude <some@dude.xx>
 	EOF
 
-	test_must_fail git commit --author "nick" --allow-empty -meight &&
-	git commit --author "Some Dude" --allow-empty -meight &&
+	test_must_fail git cummit --author "nick" --allow-empty -meight &&
+	git cummit --author "Some Dude" --allow-empty -meight &&
 	git show --pretty=format:"%an <%ae>%n" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'comment syntax: setup' '
 	test_create_repo comm &&
-	test_commit -C comm --author "A <a@example.com>" A &&
-	test_commit -C comm --author "B <b@example.com>" B &&
-	test_commit -C comm --author "C <#@example.com>" C &&
-	test_commit -C comm --author "D <d@e#ample.com>" D &&
+	test_cummit -C comm --author "A <a@example.com>" A &&
+	test_cummit -C comm --author "B <b@example.com>" B &&
+	test_cummit -C comm --author "C <#@example.com>" C &&
+	test_cummit -C comm --author "D <d@e#ample.com>" D &&
 
 	test_config -C comm mailmap.file ../doc.map &&
 	cat >>doc.map <<-\EOF &&
@@ -795,31 +795,31 @@ test_expect_success 'comment syntax: setup' '
 
 	cat >expect <<-\EOF &&
 	Author A <a@example.com> maps to A <a@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author B <b@example.com> maps to ; Bee <b@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author C <#@example.com> maps to Cee <cee@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author D <d@e#ample.com> maps to Dee <dee@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 	EOF
-	git -C comm log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%nCommitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
+	git -C comm log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%ncummitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'whitespace syntax: setup' '
 	test_create_repo space &&
-	test_commit -C space --author "A <a@example.com>" A &&
-	test_commit -C space --author "B <b@example.com>" B &&
-	test_commit -C space --author " C <c@example.com>" C &&
-	test_commit -C space --author " D  <d@example.com>" D &&
-	test_commit -C space --author "E E <e@example.com>" E &&
-	test_commit -C space --author "F  F <f@example.com>" F &&
-	test_commit -C space --author "G   G <g@example.com>" G &&
-	test_commit -C space --author "H   H <h@example.com>" H &&
+	test_cummit -C space --author "A <a@example.com>" A &&
+	test_cummit -C space --author "B <b@example.com>" B &&
+	test_cummit -C space --author " C <c@example.com>" C &&
+	test_cummit -C space --author " D  <d@example.com>" D &&
+	test_cummit -C space --author "E E <e@example.com>" E &&
+	test_cummit -C space --author "F  F <f@example.com>" F &&
+	test_cummit -C space --author "G   G <g@example.com>" G &&
+	test_cummit -C space --author "H   H <h@example.com>" H &&
 
 	test_config -C space mailmap.file ../space.map &&
 	cat >>space.map <<-\EOF &&
@@ -835,38 +835,38 @@ test_expect_success 'whitespace syntax: setup' '
 
 	cat >expect <<-\EOF &&
 	Author A <a@example.com> maps to A <a@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author B <b@example.com> maps to B <b@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author C <c@example.com> maps to Cee <cee@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author D <d@example.com> maps to dee <dee@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author E E <e@example.com> maps to eee <eee@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author F  F <f@example.com> maps to eff <eff@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author G   G <g@example.com> maps to gee <gee@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author H   H <h@example.com> maps to H   H <h@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 	EOF
-	git -C space log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%nCommitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
+	git -C space log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%ncummitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'empty syntax: setup' '
 	test_create_repo empty &&
-	test_commit -C empty --author "A <>" A &&
-	test_commit -C empty --author "B <b@example.com>" B &&
-	test_commit -C empty --author "C <c@example.com>" C &&
+	test_cummit -C empty --author "A <>" A &&
+	test_cummit -C empty --author "B <b@example.com>" B &&
+	test_cummit -C empty --author "C <c@example.com>" C &&
 
 	test_config -C empty mailmap.file ../empty.map &&
 	cat >>empty.map <<-\EOF &&
@@ -877,21 +877,21 @@ test_expect_success 'empty syntax: setup' '
 
 	cat >expect <<-\EOF &&
 	Author A <> maps to Bee <bee@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author B <b@example.com> maps to B <b@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 
 	Author C <c@example.com> maps to C <c@example.com>
-	Committer C O Mitter <committer@example.com> maps to C O Mitter <committer@example.com>
+	cummitter C O Mitter <cummitter@example.com> maps to C O Mitter <cummitter@example.com>
 	EOF
-	git -C empty log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%nCommitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
+	git -C empty log --reverse --pretty=format:"Author %an <%ae> maps to %aN <%aE>%ncummitter %cn <%ce> maps to %cN <%cE>%n" >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'set up mailmap location tests' '
 	git init --bare loc-bare &&
-	git --git-dir=loc-bare --work-tree=. commit \
+	git --git-dir=loc-bare --work-tree=. cummit \
 		--allow-empty -m foo --author="Orig <orig@example.com>" &&
 	echo "New <new@example.com> <orig@example.com>" >loc-bare/.mailmap
 '
@@ -933,7 +933,7 @@ test_expect_success 'find top-level mailmap from subdir' '
 '
 
 test_expect_success SYMLINKS 'set up symlink tests' '
-	git commit --allow-empty -m foo --author="Orig <orig@example.com>" &&
+	git cummit --allow-empty -m foo --author="Orig <orig@example.com>" &&
 	echo "New <new@example.com> <orig@example.com>" >map &&
 	rm -f .mailmap
 '

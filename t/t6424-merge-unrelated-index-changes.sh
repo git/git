@@ -15,17 +15,17 @@ test_description="merges with unrelated index changes"
 #         \-o E
 #          \
 #           o F
-#   Commit A: some file a
-#   Commit B: adds file b, modifies end of a
-#   Commit C: adds file c
-#   Commit D: adds file d, modifies beginning of a
-#   Commit E: renames a->subdir/a, adds subdir/e
-#   Commit F: empty commit
+#   cummit A: some file a
+#   cummit B: adds file b, modifies end of a
+#   cummit C: adds file c
+#   cummit D: adds file d, modifies beginning of a
+#   cummit E: renames a->subdir/a, adds subdir/e
+#   cummit F: empty cummit
 
 test_expect_success 'setup trivial merges' '
 	test_seq 1 10 >a &&
 	git add a &&
-	test_tick && git commit -m A &&
+	test_tick && git cummit -m A &&
 
 	git branch A &&
 	git branch B &&
@@ -38,28 +38,28 @@ test_expect_success 'setup trivial merges' '
 	echo b >b &&
 	echo 11 >>a &&
 	git add a b &&
-	test_tick && git commit -m B &&
+	test_tick && git cummit -m B &&
 
 	git checkout C &&
 	echo c >c &&
 	git add c &&
-	test_tick && git commit -m C &&
+	test_tick && git cummit -m C &&
 
 	git checkout D &&
 	test_seq 2 10 >a &&
 	echo d >d &&
 	git add a d &&
-	test_tick && git commit -m D &&
+	test_tick && git cummit -m D &&
 
 	git checkout E &&
 	mkdir subdir &&
 	git mv a subdir/a &&
 	echo e >subdir/e &&
 	git add subdir &&
-	test_tick && git commit -m E &&
+	test_tick && git cummit -m E &&
 
 	git checkout F &&
-	test_tick && git commit --allow-empty -m F
+	test_tick && git cummit --allow-empty -m F
 '
 
 test_expect_success 'ff update' '

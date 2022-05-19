@@ -4,7 +4,7 @@ Git v2.9.3 Release Notes
 Fixes since v2.9.2
 ------------------
 
- * A helper function that takes the contents of a commit object and
+ * A helper function that takes the contents of a cummit object and
    finds its subject line did not ignore leading blank lines, as is
    commonly done by other codepaths.  Make it ignore leading blank
    lines to match.
@@ -18,9 +18,9 @@ Fixes since v2.9.2
  * "git rebase -i --autostash" did not restore the auto-stashed change
    when the operation was aborted.
 
- * "git commit --amend --allow-empty-message -S" for a commit without
+ * "git cummit --amend --allow-empty-message -S" for a cummit without
    any message body could have misidentified where the header of the
-   commit object ends.
+   cummit object ends.
 
  * More mark-up updates to typeset strings that are expected to
    literally typed by the end user in fixed-width font.
@@ -55,11 +55,11 @@ Fixes since v2.9.2
  * A test that unconditionally used "mktemp" learned that the command
    is not necessarily available everywhere.
 
- * "git blame file" allowed the lineage of lines in the uncommitted,
+ * "git blame file" allowed the lineage of lines in the uncummitted,
    unadded contents of "file" to be inspected, but it refused when
-   "file" did not appear in the current commit.  When "file" was
+   "file" did not appear in the current cummit.  When "file" was
    created by renaming an existing file (but the change has not been
-   committed), this restriction was unnecessarily tight.
+   cummitted), this restriction was unnecessarily tight.
 
  * "git add -N dir/file && git write-tree" produced an incorrect tree
    when there are other paths in the same directory that sorts after
@@ -112,9 +112,9 @@ Fixes since v2.9.2
  * The use of strbuf in "git rm" to build filename to remove was a bit
    suboptimal, which has been fixed.
 
- * "git commit --help" said "--no-verify" is only about skipping the
+ * "git cummit --help" said "--no-verify" is only about skipping the
    pre-commit hook, and failed to say that it also skipped the
-   commit-msg hook.
+   cummit-msg hook.
 
  * "git merge" in Git v2.9 was taught to forbid merging an unrelated
    lines of history by default, but that is exactly the kind of thing
@@ -143,7 +143,7 @@ Fixes since v2.9.2
  * Windows port was failing some tests in t4130, due to the lack of
    inum in the returned values by its lstat(2) emulation.
 
- * The characters in the label shown for tags/refs for commits in
+ * The characters in the label shown for tags/refs for cummits in
    "gitweb" output are now properly escaped for proper HTML output.
 
  * FreeBSD can lie when asked mtime of a directory, which made the
@@ -158,9 +158,9 @@ Fixes since v2.9.2
    that it is safe to do so.
 
  * Not-so-recent rewrite of "git am" that started making internal
-   calls into the commit machinery had an unintended regression, in
+   calls into the cummit machinery had an unintended regression, in
    that no matter how many seconds it took to apply many patches, the
-   resulting committer timestamp for the resulting commits were all
+   resulting cummitter timestamp for the resulting cummits were all
    the same.
 
  * "git difftool <paths>..." started in a subdirectory failed to

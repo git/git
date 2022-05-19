@@ -19,9 +19,9 @@ sub format_contact {
 	return "$name <$email>";
 }
 
-sub parse_commit {
-	my ($commit, $data) = @_;
-	my $contacts = $commit->{contacts};
+sub parse_cummit {
+	my ($cummit, $data) = @_;
+	my $contacts = $cummit->{contacts};
 	my $inbody = 0;
 	for (split(/^/m, $data)) {
 		if (not $inbody) {
@@ -36,20 +36,20 @@ sub parse_commit {
 	}
 }
 
-sub import_commits {
-	my ($commits) = @_;
-	return unless %$commits;
+sub import_cummits {
+	my ($cummits) = @_;
+	return unless %$cummits;
 	my $pid = open2 my $reader, my $writer, qw(git cat-file --batch);
-	for my $id (keys(%$commits)) {
+	for my $id (keys(%$cummits)) {
 		print $writer "$id\n";
 		my $line = <$reader>;
-		if ($line =~ /^([0-9a-f]{40}) commit (\d+)/) {
+		if ($line =~ /^([0-9a-f]{40}) cummit (\d+)/) {
 			my ($cid, $len) = ($1, $2);
 			die "expected $id but got $cid\n" unless $id eq $cid;
 			my $data;
 			# cat-file emits newline after data, so read len+1
 			read $reader, $data, $len + 1;
-			parse_commit($commits->{$id}, $data);
+			parse_cummit($cummits->{$id}, $data);
 		}
 	}
 	close $reader;
@@ -59,7 +59,7 @@ sub import_commits {
 }
 
 sub get_blame {
-	my ($commits, $source, $from, $ranges) = @_;
+	my ($cummits, $source, $from, $ranges) = @_;
 	return unless @$ranges;
 	open my $f, '-|',
 		qw(git blame --porcelain -C),
@@ -68,7 +68,7 @@ sub get_blame {
 	while (<$f>) {
 		if (/^([0-9a-f]{40}) \d+ \d+ \d+$/) {
 			my $id = $1;
-			$commits->{$id} = { id => $id, contacts => {} }
+			$cummits->{$id} = { id => $id, contacts => {} }
 				unless $seen{$id};
 			$seen{$id} = 1;
 		}
@@ -77,10 +77,10 @@ sub get_blame {
 }
 
 sub blame_sources {
-	my ($sources, $commits) = @_;
+	my ($sources, $cummits) = @_;
 	for my $s (keys %$sources) {
 		for my $id (keys %{$sources->{$s}}) {
-			get_blame($commits, $s, $id, $sources->{$s}{$id});
+			get_blame($cummits, $s, $id, $sources->{$s}{$id});
 		}
 	}
 }
@@ -104,9 +104,9 @@ sub scan_patches {
 }
 
 sub scan_patch_file {
-	my ($commits, $file) = @_;
+	my ($cummits, $file) = @_;
 	open my $f, '<', $file or die "read failure: $file: $!\n";
-	scan_patches($commits, undef, $f);
+	scan_patches($cummits, undef, $f);
 	close $f;
 }
 
@@ -127,7 +127,7 @@ sub parse_rev_args {
 }
 
 sub scan_rev_args {
-	my ($commits, $args) = @_;
+	my ($cummits, $args) = @_;
 	my @revs = parse_rev_args(@$args);
 	open my $f, '-|', qw(git rev-list --reverse), @revs or die;
 	while (<$f>) {
@@ -135,7 +135,7 @@ sub scan_rev_args {
 		my $id = $_;
 		$seen{$id} = 1;
 		open my $g, '-|', qw(git show -C --oneline), $id or die;
-		scan_patches($commits, $id, $g);
+		scan_patches($cummits, $id, $g);
 		close $g;
 	}
 	close $f;
@@ -183,21 +183,21 @@ my $toplevel = `git rev-parse --show-toplevel`;
 chomp $toplevel;
 chdir($toplevel) or die "chdir failure: $toplevel: $!\n";
 
-my %commits;
-blame_sources(\%sources, \%commits);
-import_commits(\%commits);
+my %cummits;
+blame_sources(\%sources, \%cummits);
+import_cummits(\%cummits);
 
 my $contacts = {};
-for my $commit (values %commits) {
-	for my $contact (keys %{$commit->{contacts}}) {
+for my $cummit (values %cummits) {
+	for my $contact (keys %{$cummit->{contacts}}) {
 		$contacts->{$contact}++;
 	}
 }
 $contacts = mailmap_contacts($contacts);
 
-my $ncommits = scalar(keys %commits);
+my $ncummits = scalar(keys %cummits);
 for my $contact (keys %$contacts) {
-	my $percent = $contacts->{$contact} * 100 / $ncommits;
+	my $percent = $contacts->{$contact} * 100 / $ncummits;
 	next if $percent < $min_percent;
 	print "$contact\n";
 }

@@ -866,12 +866,12 @@ sub remote_refs {
 =item ident_person ( TYPE | IDENTSTR | IDENTARRAY )
 
 This suite of functions retrieves and parses ident information, as stored
-in the commit and tag objects or produced by C<var GIT_type_IDENT> (thus
-C<TYPE> can be either I<author> or I<committer>; case is insignificant).
+in the cummit and tag objects or produced by C<var GIT_type_IDENT> (thus
+C<TYPE> can be either I<author> or I<cummitter>; case is insignificant).
 
 The C<ident> method retrieves the ident information from C<git var>
 and either returns it as a scalar string or as an array with the fields parsed.
-Alternatively, it can take a prepared ident string (e.g. from the commit
+Alternatively, it can take a prepared ident string (e.g. from the cummit
 object) and just parse it.
 
 C<ident_person> returns the person part of the ident - name and email;
@@ -889,7 +889,7 @@ The synopsis is like:
 sub ident {
 	my ($self, $type) = _maybe_self(@_);
 	my $identstr;
-	if (lc $type eq lc 'committer' or lc $type eq lc 'author') {
+	if (lc $type eq lc 'cummitter' or lc $type eq lc 'author') {
 		my @cmd = ('var', 'GIT_'.uc($type).'_IDENT');
 		unshift @cmd, $self if $self;
 		$identstr = command_oneline(@cmd);
@@ -912,7 +912,7 @@ sub ident_person {
 =item hash_object ( TYPE, FILENAME )
 
 Compute the SHA1 object id of the given C<FILENAME> considering it is
-of the C<TYPE> object type (C<blob>, C<commit>, C<tree>).
+of the C<TYPE> object type (C<blob>, C<cummit>, C<tree>).
 
 The method can be called without any instance or on a specified Git repository,
 it makes zero difference.

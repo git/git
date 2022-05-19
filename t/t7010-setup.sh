@@ -110,15 +110,15 @@ test_expect_success 'git ls-files (relative #3)' '
 
 '
 
-test_expect_success 'commit using absolute path names' '
-	git commit -m "foo" &&
+test_expect_success 'cummit using absolute path names' '
+	git cummit -m "foo" &&
 	echo aa >>a/b/c/d &&
-	git commit -m "aa" "$(pwd)/a/b/c/d"
+	git cummit -m "aa" "$(pwd)/a/b/c/d"
 '
 
 test_expect_success 'log using absolute path names' '
 	echo bb >>a/b/c/d &&
-	git commit -m "bb" "$(pwd)/a/b/c/d" &&
+	git cummit -m "bb" "$(pwd)/a/b/c/d" &&
 
 	git log a/b/c/d >f1.txt &&
 	git log "$(pwd)/a/b/c/d" >f2.txt &&

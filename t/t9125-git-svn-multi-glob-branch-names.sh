@@ -25,12 +25,12 @@ test_expect_success 'test clone with multi-glob in branch names' '
 	)
 	'
 
-test_expect_success 'test dcommit to multi-globbed branch' "
+test_expect_success 'test dcummit to multi-globbed branch' "
 	(cd project &&
 	git reset --hard 'refs/remotes/origin/v14.1/gold' &&
 	echo hello >> foo &&
-	git commit -m 'hello' -- foo &&
-	git svn dcommit
+	git cummit -m 'hello' -- foo &&
+	git svn dcummit
 	)
 	"
 

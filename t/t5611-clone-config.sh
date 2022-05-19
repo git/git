@@ -41,7 +41,7 @@ test_expect_success 'clone -c without a value is boolean true' '
 test_expect_success 'clone -c config is available during clone' '
 	echo content >file &&
 	git add file &&
-	git commit -m one &&
+	git cummit -m one &&
 	rm -rf child &&
 	git clone -c core.autocrlf . child &&
 	printf "content\\r\\n" >expect &&
@@ -121,7 +121,7 @@ test_expect_success 'clone.rejectshallow=true should succeed cloning normal repo
 '
 
 test_expect_success MINGW 'clone -c core.hideDotFiles' '
-	test_commit attributes .gitattributes "" &&
+	test_cummit attributes .gitattributes "" &&
 	rm -rf child &&
 	git clone -c core.hideDotFiles=false . child &&
 	! test_path_is_hidden child/.gitattributes &&

@@ -9,45 +9,45 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success GPG 'create signed tags' '
 	echo 1 >file && git add file &&
-	test_tick && git commit -m initial &&
+	test_tick && git cummit -m initial &&
 	git tag -s -m initial initial &&
 	git branch side &&
 
-	echo 2 >file && test_tick && git commit -a -m second &&
+	echo 2 >file && test_tick && git cummit -a -m second &&
 	git tag -s -m second second &&
 
 	git checkout side &&
 	echo 3 >elif && git add elif &&
-	test_tick && git commit -m "third on side" &&
+	test_tick && git cummit -m "third on side" &&
 
 	git checkout main &&
 	test_tick && git merge -S side &&
 	git tag -s -m merge merge &&
 
-	echo 4 >file && test_tick && git commit -a -S -m "fourth unsigned" &&
+	echo 4 >file && test_tick && git cummit -a -S -m "fourth unsigned" &&
 	git tag -a -m fourth-unsigned fourth-unsigned &&
 
-	test_tick && git commit --amend -S -m "fourth signed" &&
+	test_tick && git cummit --amend -S -m "fourth signed" &&
 	git tag -s -m fourth fourth-signed &&
 
-	echo 5 >file && test_tick && git commit -a -m "fifth" &&
+	echo 5 >file && test_tick && git cummit -a -m "fifth" &&
 	git tag fifth-unsigned &&
 
-	git config commit.gpgsign true &&
-	echo 6 >file && test_tick && git commit -a -m "sixth" &&
+	git config cummit.gpgsign true &&
+	echo 6 >file && test_tick && git cummit -a -m "sixth" &&
 	git tag -a -m sixth sixth-unsigned &&
 
 	test_tick && git rebase -f HEAD^^ && git tag -s -m 6th sixth-signed HEAD^ &&
 	git tag -m seventh -s seventh-signed &&
 
-	echo 8 >file && test_tick && git commit -a -m eighth &&
+	echo 8 >file && test_tick && git cummit -a -m eighth &&
 	git tag -uB7227189 -m eighth eighth-signed-alt
 '
 
 test_expect_success GPGSM 'create signed tags x509 ' '
 	test_config gpg.format x509 &&
-	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
-	echo 9 >file && test_tick && git commit -a -m "ninth gpgsm-signed" &&
+	test_config user.signingkey $GIT_cummitTER_EMAIL &&
+	echo 9 >file && test_tick && git cummit -a -m "ninth gpgsm-signed" &&
 	git tag -s -m ninth ninth-signed-x509
 '
 

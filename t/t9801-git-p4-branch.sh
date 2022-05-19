@@ -116,7 +116,7 @@ test_expect_success 'import depot, branch detection' '
 
 		git log --oneline --graph --decorate --all &&
 
-		# 4 main commits
+		# 4 main cummits
 		git rev-list main -- >wc &&
 		test_line_count = 4 wc &&
 
@@ -139,7 +139,7 @@ test_expect_success 'import depot, branch detection, branchList branch definitio
 
 		git log --oneline --graph --decorate --all &&
 
-		# 4 main commits
+		# 4 main cummits
 		git rev-list main -- >wc &&
 		test_line_count = 4 wc &&
 
@@ -645,7 +645,7 @@ test_expect_success 'Update a file in git side and submit to P4 using client vie
 		git reset --hard p4/depot/branch1 &&
 		echo "client spec" >> file1 &&
 		git add -u . &&
-		git commit -m "update file1 in branch1" &&
+		git cummit -m "update file1 in branch1" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --verbose &&
 		cd "$cli" &&

@@ -9,9 +9,9 @@ LOCAL_PRISTINE="$(pwd)/local_pristine"
 
 test_expect_success 'setup repos for session ID capability tests' '
 	git init "$REPO" &&
-	test_commit -C "$REPO" a &&
+	test_cummit -C "$REPO" a &&
 	git clone "file://$REPO" "$LOCAL_PRISTINE" &&
-	test_commit -C "$REPO" b
+	test_cummit -C "$REPO" b
 '
 
 for PROTO in 0 1 2

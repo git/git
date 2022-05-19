@@ -235,7 +235,7 @@ static int update_working_directory(struct pattern_list *pl)
 		 */
 		result = UPDATE_SPARSITY_SUCCESS;
 	if (result == UPDATE_SPARSITY_SUCCESS)
-		write_locked_index(r->index, &lock_file, COMMIT_LOCK);
+		write_locked_index(r->index, &lock_file, cummit_LOCK);
 	else
 		rollback_lock_file(&lock_file);
 
@@ -346,7 +346,7 @@ static int write_patterns_and_update(struct pattern_list *pl)
 		write_patterns_to_file(fp, pl);
 
 	fflush(fp);
-	commit_lock_file(&lk);
+	cummit_lock_file(&lk);
 
 	clear_pattern_list(pl);
 

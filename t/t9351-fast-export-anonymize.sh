@@ -7,17 +7,17 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup simple repo' '
-	test_commit base &&
-	test_commit foo &&
-	test_commit retain-me &&
+	test_cummit base &&
+	test_cummit foo &&
+	test_cummit retain-me &&
 	git checkout -b other HEAD^ &&
 	mkdir subdir &&
-	test_commit subdir/bar &&
-	test_commit subdir/xyzzy &&
-	fake_commit=$(echo $ZERO_OID | sed s/0/a/) &&
-	git update-index --add --cacheinfo 160000,$fake_commit,link1 &&
-	git update-index --add --cacheinfo 160000,$fake_commit,link2 &&
-	git commit -m "add gitlink" &&
+	test_cummit subdir/bar &&
+	test_cummit subdir/xyzzy &&
+	fake_cummit=$(echo $ZERO_OID | sed s/0/a/) &&
+	git update-index --add --cacheinfo 160000,$fake_cummit,link1 &&
+	git update-index --add --cacheinfo 160000,$fake_cummit,link2 &&
+	git cummit -m "add gitlink" &&
 	git tag -m "annotated tag" mytag &&
 	git tag -m "annotated tag with long message" longtag
 '
@@ -30,7 +30,7 @@ test_expect_success 'export anonymized stream' '
 		>stream
 '
 
-# this also covers commit messages
+# this also covers cummit messages
 test_expect_success 'stream omits path names' '
 	! grep base stream &&
 	! grep foo stream &&
@@ -61,8 +61,8 @@ test_expect_success 'stream omits other refnames' '
 '
 
 test_expect_success 'stream omits identities' '
-	! grep "$GIT_COMMITTER_NAME" stream &&
-	! grep "$GIT_COMMITTER_EMAIL" stream &&
+	! grep "$GIT_cummitTER_NAME" stream &&
+	! grep "$GIT_cummitTER_EMAIL" stream &&
 	! grep "$GIT_AUTHOR_NAME" stream &&
 	! grep "$GIT_AUTHOR_EMAIL" stream
 '
@@ -116,8 +116,8 @@ test_expect_success 'paths in subdir ended up in one tree' '
 '
 
 test_expect_success 'identical gitlinks got identical oid' '
-	awk "/commit/ { print \$3 }" <root | sort -u >commits &&
-	test_line_count = 1 commits
+	awk "/cummit/ { print \$3 }" <root | sort -u >cummits &&
+	test_line_count = 1 cummits
 '
 
 test_expect_success 'all tags point to branch tip' '
@@ -130,10 +130,10 @@ test_expect_success 'idents are shared' '
 	git log --all --format="%an <%ae>" >authors &&
 	sort -u authors >unique &&
 	test_line_count = 1 unique &&
-	git log --all --format="%cn <%ce>" >committers &&
-	sort -u committers >unique &&
+	git log --all --format="%cn <%ce>" >cummitters &&
+	sort -u cummitters >unique &&
 	test_line_count = 1 unique &&
-	! test_cmp authors committers
+	! test_cmp authors cummitters
 '
 
 test_done

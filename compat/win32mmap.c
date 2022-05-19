@@ -36,7 +36,7 @@ void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t of
 	if (temp)
 		return temp;
 
-	errno = GetLastError() == ERROR_COMMITMENT_LIMIT ? EFBIG : EINVAL;
+	errno = GetLastError() == ERROR_cummitMENT_LIMIT ? EFBIG : EINVAL;
 	return MAP_FAILED;
 }
 

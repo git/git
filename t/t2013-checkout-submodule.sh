@@ -9,15 +9,15 @@ test_expect_success 'setup' '
 	mkdir submodule &&
 	(cd submodule &&
 	 git init &&
-	 test_commit first) &&
+	 test_cummit first) &&
 	git add submodule &&
 	test_tick &&
-	git commit -m superproject &&
+	git cummit -m superproject &&
 	(cd submodule &&
-	 test_commit second) &&
+	 test_cummit second) &&
 	git add submodule &&
 	test_tick &&
-	git commit -m updated.superproject
+	git cummit -m updated.superproject
 '
 
 test_expect_success '"reset <submodule>" updates the index' '

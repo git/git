@@ -4,8 +4,8 @@ test_description='test custom script in place of pack-objects'
 . ./test-lib.sh
 
 test_expect_success 'create some history to fetch' '
-	test_commit one &&
-	test_commit two
+	test_cummit one &&
+	test_cummit two
 '
 
 test_expect_success 'create debugging hook script' '

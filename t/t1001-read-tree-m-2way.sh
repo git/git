@@ -7,7 +7,7 @@ test_description='Two way merge with read-tree -m $H $M
 
 This test tries two-way merge (aka fast-forward with carry forward).
 
-There is the head (called H) and another commit (called M), which is
+There is the head (called H) and another cummit (called M), which is
 simply ahead of H.  The index and the work tree contains a state that
 is derived from H, but may also have local changes.  This test checks
 all the combinations described in the two-tree merge "carry forward"
@@ -404,10 +404,10 @@ test_expect_success '-m references the correct modified tree' '
 	echo >file-a &&
 	echo >file-b &&
 	git add file-a file-b &&
-	git commit -a -m "test for correct modified tree" &&
+	git cummit -a -m "test for correct modified tree" &&
 	git branch initial-mod &&
 	echo b >file-b &&
-	git commit -a -m "B" &&
+	git cummit -a -m "B" &&
 	echo a >file-a &&
 	git add file-a &&
 	git ls-tree $(git write-tree) file-a >expect &&

@@ -19,7 +19,7 @@
 
 [[def_branch]]branch::
 	A "branch" is a line of development.  The most recent
-	<<def_commit,commit>> on a branch is referred to as the tip of
+	<<def_cummit,cummit>> on a branch is referred to as the tip of
 	that branch.  The tip of the branch is referenced by a branch
 	<<def_head,head>>, which moves forward as additional development
 	is done on the branch.  A single Git
@@ -34,10 +34,10 @@
 [[def_chain]]chain::
 	A list of objects, where each <<def_object,object>> in the list contains
 	a reference to its successor (for example, the successor of a
-	<<def_commit,commit>> could be one of its <<def_parent,parents>>).
+	<<def_cummit,cummit>> could be one of its <<def_parent,parents>>).
 
 [[def_changeset]]changeset::
-	BitKeeper/cvsps speak for "<<def_commit,commit>>". Since Git does not
+	BitKeeper/cvsps speak for "<<def_cummit,cummit>>". Since Git does not
 	store changes, but states, it really does not make sense to use the term
 	"changesets" with Git.
 
@@ -51,47 +51,47 @@
 
 [[def_cherry-picking]]cherry-picking::
 	In <<def_SCM,SCM>> jargon, "cherry pick" means to choose a subset of
-	changes out of a series of changes (typically commits) and record them
+	changes out of a series of changes (typically cummits) and record them
 	as a new series of changes on top of a different codebase. In Git, this is
 	performed by the "git cherry-pick" command to extract the change introduced
-	by an existing <<def_commit,commit>> and to record it based on the tip
-	of the current <<def_branch,branch>> as a new commit.
+	by an existing <<def_cummit,cummit>> and to record it based on the tip
+	of the current <<def_branch,branch>> as a new cummit.
 
 [[def_clean]]clean::
 	A <<def_working_tree,working tree>> is clean, if it
 	corresponds to the <<def_revision,revision>> referenced by the current
 	<<def_head,head>>. Also see "<<def_dirty,dirty>>".
 
-[[def_commit]]commit::
+[[def_cummit]]cummit::
 	As a noun: A single point in the
 	Git history; the entire history of a project is represented as a
-	set of interrelated commits.  The word "commit" is often
+	set of interrelated cummits.  The word "cummit" is often
 	used by Git in the same places other revision control systems
 	use the words "revision" or "version".  Also used as a short
-	hand for <<def_commit_object,commit object>>.
+	hand for <<def_cummit_object,cummit object>>.
 +
 As a verb: The action of storing a new snapshot of the project's
-state in the Git history, by creating a new commit representing the current
+state in the Git history, by creating a new cummit representing the current
 state of the <<def_index,index>> and advancing <<def_HEAD,HEAD>>
-to point at the new commit.
+to point at the new cummit.
 
-[[def_commit_object]]commit object::
+[[def_cummit_object]]cummit object::
 	An <<def_object,object>> which contains the information about a
-	particular <<def_revision,revision>>, such as <<def_parent,parents>>, committer,
+	particular <<def_revision,revision>>, such as <<def_parent,parents>>, cummitter,
 	author, date and the <<def_tree_object,tree object>> which corresponds
 	to the top <<def_directory,directory>> of the stored
 	revision.
 
-[[def_commit-ish]]commit-ish (also committish)::
-	A <<def_commit_object,commit object>> or an
+[[def_cummit-ish]]cummit-ish (also cummittish)::
+	A <<def_cummit_object,cummit object>> or an
 	<<def_object,object>> that can be recursively dereferenced to
-	a commit object.
-	The following are all commit-ishes:
-	a commit object,
-	a <<def_tag_object,tag object>> that points to a commit
+	a cummit object.
+	The following are all cummit-ishes:
+	a cummit object,
+	a <<def_tag_object,tag object>> that points to a cummit
 	object,
 	a tag object that points to a tag object that points to a
-	commit object,
+	cummit object,
 	etc.
 
 [[def_core_git]]core Git::
@@ -99,9 +99,9 @@ to point at the new commit.
 	source code management tools.
 
 [[def_DAG]]DAG::
-	Directed acyclic graph. The <<def_commit_object,commit objects>> form a
+	Directed acyclic graph. The <<def_cummit_object,cummit objects>> form a
 	directed acyclic graph, because they have parents (directed), and the
-	graph of commit objects is acyclic (there is no <<def_chain,chain>>
+	graph of cummit objects is acyclic (there is no <<def_chain,chain>>
 	which begins and ends with the same <<def_object,object>>).
 
 [[def_dangling_object]]dangling object::
@@ -116,12 +116,12 @@ to point at the new commit.
 	history HEAD represents operate on the history leading to the
 	tip of the branch the HEAD points at.  However, Git also
 	allows you to <<def_checkout,check out>> an arbitrary
-	<<def_commit,commit>> that isn't necessarily the tip of any
+	<<def_cummit,cummit>> that isn't necessarily the tip of any
 	particular branch.  The HEAD in such a state is called
 	"detached".
 +
 Note that commands that operate on the history of the current branch
-(e.g. `git commit` to build a new history on top of it) still work
+(e.g. `git cummit` to build a new history on top of it) still work
 while the HEAD is detached. They update the HEAD to point at the tip
 of the updated history without affecting any branch.  Commands that
 update or inquire information _about_ the current branch (e.g. `git
@@ -134,7 +134,7 @@ current branch integrates with) obviously do not work, as there is no
 
 [[def_dirty]]dirty::
 	A <<def_working_tree,working tree>> is said to be "dirty" if
-	it contains modifications which have not been <<def_commit,committed>> to the current
+	it contains modifications which have not been <<def_cummit,cummitted>> to the current
 	<<def_branch,branch>>.
 
 [[def_evil_merge]]evil merge::
@@ -146,7 +146,7 @@ current branch integrates with) obviously do not work, as there is no
 	<<def_revision,revision>> and you are "merging" another
 	<<def_branch,branch>>'s changes that happen to be a descendant of what
 	you have. In such a case, you do not make a new <<def_merge,merge>>
-	<<def_commit,commit>> but instead just update your branch to point at the same
+	<<def_cummit,cummit>> but instead just update your branch to point at the same
 	revision as the branch you are merging. This will happen frequently on a
 	<<def_remote_tracking_branch,remote-tracking branch>> of a remote
 	<<def_repository,repository>>.
@@ -172,9 +172,9 @@ current branch integrates with) obviously do not work, as there is no
 
 [[def_grafts]]grafts::
 	Grafts enables two otherwise different lines of development to be joined
-	together by recording fake ancestry information for commits. This way
-	you can make Git pretend the set of <<def_parent,parents>> a <<def_commit,commit>> has
-	is different from what was recorded when the commit was
+	together by recording fake ancestry information for cummits. This way
+	you can make Git pretend the set of <<def_parent,parents>> a <<def_cummit,cummit>> has
+	is different from what was recorded when the cummit was
 	created. Configured via the `.git/info/grafts` file.
 +
 Note that the grafts mechanism is outdated and can lead to problems
@@ -185,7 +185,7 @@ for a more flexible and robust system to do the same thing.
 	In Git's context, synonym for <<def_object_name,object name>>.
 
 [[def_head]]head::
-	A <<def_ref,named reference>> to the <<def_commit,commit>> at the tip of a
+	A <<def_ref,named reference>> to the <<def_cummit,cummit>> at the tip of a
 	<<def_branch,branch>>.  Heads are stored in a file in
 	`$GIT_DIR/refs/heads/` directory, except when using packed refs. (See
 	linkgit:git-pack-refs[1].)
@@ -196,7 +196,7 @@ for a more flexible and robust system to do the same thing.
 	referred to by HEAD.  HEAD is a reference to one of the
 	<<def_head,heads>> in your repository, except when using a
 	<<def_detached_HEAD,detached HEAD>>, in which case it directly
-	references an arbitrary commit.
+	references an arbitrary cummit.
 
 [[def_head_ref]]head ref::
 	A synonym for <<def_head,head>>.
@@ -246,10 +246,10 @@ for a more flexible and robust system to do the same thing.
 	merge.
 +
 As a noun: unless it is a <<def_fast_forward,fast-forward>>, a
-successful merge results in the creation of a new <<def_commit,commit>>
+successful merge results in the creation of a new <<def_cummit,cummit>>
 representing the result of the merge, and having as
 <<def_parent,parents>> the tips of the merged <<def_branch,branches>>.
-This commit is referred to as a "merge commit", or sometimes just a
+This cummit is referred to as a "merge cummit", or sometimes just a
 "merge".
 
 [[def_object]]object::
@@ -271,7 +271,7 @@ This commit is referred to as a "merge commit", or sometimes just a
 	hexadecimal string.  Also colloquially called <<def_SHA1,SHA-1>>.
 
 [[def_object_type]]object type::
-	One of the identifiers "<<def_commit_object,commit>>",
+	One of the identifiers "<<def_cummit_object,cummit>>",
 	"<<def_tree_object,tree>>", "<<def_tag_object,tag>>" or
 	"<<def_blob_object,blob>>" describing the type of an
 	<<def_object,object>>.
@@ -425,7 +425,7 @@ exclude;;
 --
 
 [[def_parent]]parent::
-	A <<def_commit_object,commit object>> contains a (possibly empty) list
+	A <<def_cummit_object,cummit object>> contains a (possibly empty) list
 	of the logical predecessor(s) in the line of development, i.e. its
 	parents.
 
@@ -484,12 +484,12 @@ exclude;;
 	ancestor to the local head, the push fails.
 
 [[def_reachable]]reachable::
-	All of the ancestors of a given <<def_commit,commit>> are said to be
-	"reachable" from that commit. More
+	All of the ancestors of a given <<def_cummit,cummit>> are said to be
+	"reachable" from that cummit. More
 	generally, one <<def_object,object>> is reachable from
 	another if we can reach the one from the other by a <<def_chain,chain>>
 	that follows <<def_tag,tags>> to whatever they tag,
-	<<def_commit_object,commits>> to their parents or trees, and
+	<<def_cummit_object,cummits>> to their parents or trees, and
 	<<def_tree_object,trees>> to the trees or <<def_blob_object,blobs>>
 	that they contain.
 
@@ -537,7 +537,7 @@ The most notable example is `HEAD`.
 	'bar' in a remote named 'foo'), and matches the right-hand-side of
 	a configured fetch <<def_refspec,refspec>>. A remote-tracking
 	branch should not contain direct modifications or have local
-	commits made to it.
+	cummits made to it.
 
 [[def_repository]]repository::
 	A collection of <<def_ref,refs>> together with an
@@ -552,7 +552,7 @@ The most notable example is `HEAD`.
 	<<def_merge,merge>> left behind.
 
 [[def_revision]]revision::
-	Synonym for <<def_commit,commit>> (the noun).
+	Synonym for <<def_cummit,cummit>> (the noun).
 
 [[def_rewind]]rewind::
 	To throw away part of the development, i.e. to assign the
@@ -572,9 +572,9 @@ The most notable example is `HEAD`.
 
 [[def_shallow_repository]]shallow repository::
 	A shallow <<def_repository,repository>> has an incomplete
-	history some of whose <<def_commit,commits>> have <<def_parent,parents>> cauterized away (in other
-	words, Git is told to pretend that these commits do not have the
-	parents, even though they are recorded in the <<def_commit_object,commit
+	history some of whose <<def_cummit,cummits>> have <<def_parent,parents>> cauterized away (in other
+	words, Git is told to pretend that these cummits do not have the
+	parents, even though they are recorded in the <<def_cummit_object,cummit
 	object>>). This is sometimes useful when you are interested only in the
 	recent history of a project even though the real history recorded in the
 	upstream is much larger. A shallow repository
@@ -594,7 +594,7 @@ The most notable example is `HEAD`.
 	A <<def_repository,repository>> that references repositories
 	of other projects in its working tree as <<def_submodule,submodules>>.
 	The superproject knows about the names of (but does not hold
-	copies of) commit objects of the contained submodules.
+	copies of) cummit objects of the contained submodules.
 
 [[def_symref]]symref::
 	Symbolic reference: instead of containing the <<def_SHA1,SHA-1>>
@@ -607,17 +607,17 @@ The most notable example is `HEAD`.
 [[def_tag]]tag::
 	A <<def_ref,ref>> under `refs/tags/` namespace that points to an
 	object of an arbitrary type (typically a tag points to either a
-	<<def_tag_object,tag>> or a <<def_commit_object,commit object>>).
+	<<def_tag_object,tag>> or a <<def_cummit_object,cummit object>>).
 	In contrast to a <<def_head,head>>, a tag is not updated by
-	the `commit` command. A Git tag has nothing to do with a Lisp
+	the `cummit` command. A Git tag has nothing to do with a Lisp
 	tag (which would be called an <<def_object_type,object type>>
 	in Git's context). A tag is most typically used to mark a particular
-	point in the commit ancestry <<def_chain,chain>>.
+	point in the cummit ancestry <<def_chain,chain>>.
 
 [[def_tag_object]]tag object::
 	An <<def_object,object>> containing a <<def_ref,ref>> pointing to
 	another object, which can contain a message just like a
-	<<def_commit_object,commit object>>. It can also contain a (PGP)
+	<<def_cummit_object,cummit object>>. It can also contain a (PGP)
 	signature, in which case it is called a "signed tag object".
 
 [[def_topic_branch]]topic branch::
@@ -640,11 +640,11 @@ The most notable example is `HEAD`.
 [[def_tree-ish]]tree-ish (also treeish)::
 	A <<def_tree_object,tree object>> or an <<def_object,object>>
 	that can be recursively dereferenced to a tree object.
-	Dereferencing a <<def_commit_object,commit object>> yields the
+	Dereferencing a <<def_cummit_object,cummit object>> yields the
 	tree object corresponding to the <<def_revision,revision>>'s
 	top <<def_directory,directory>>.
 	The following are all tree-ishes:
-	a <<def_commit-ish,commit-ish>>,
+	a <<def_cummit-ish,cummit-ish>>,
 	a tree object,
 	a <<def_tag_object,tag object>> that points to a tree object,
 	a tag object that points to a tag object that points to a tree
@@ -667,8 +667,8 @@ The most notable example is `HEAD`.
 
 [[def_working_tree]]working tree::
 	The tree of actual checked out files.  The working tree normally
-	contains the contents of the <<def_HEAD,HEAD>> commit's tree,
-	plus any local changes that you have made but not yet committed.
+	contains the contents of the <<def_HEAD,HEAD>> cummit's tree,
+	plus any local changes that you have made but not yet cummitted.
 
 [[def_worktree]]worktree::
 	A repository can have zero (i.e. bare repository) or one or

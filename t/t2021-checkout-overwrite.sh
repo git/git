@@ -10,41 +10,41 @@ test_expect_success 'setup' '
 	mkdir -p a/b/c &&
 	>a/b/c/d &&
 	git add -A &&
-	git commit -m base &&
+	git cummit -m base &&
 	git tag start
 '
 
-test_expect_success 'create a commit where dir a/b changed to file' '
+test_expect_success 'create a cummit where dir a/b changed to file' '
 
 	git checkout -b file &&
 	rm -rf a/b &&
 	>a/b &&
 	git add -A &&
-	git commit -m "dir to file"
+	git cummit -m "dir to file"
 '
 
-test_expect_success 'checkout commit with dir must not remove untracked a/b' '
+test_expect_success 'checkout cummit with dir must not remove untracked a/b' '
 
 	git rm --cached a/b &&
-	git commit -m "un-track the file" &&
+	git cummit -m "un-track the file" &&
 	test_must_fail git checkout start &&
 	test -f a/b
 '
 
-test_expect_success 'create a commit where dir a/b changed to symlink' '
+test_expect_success 'create a cummit where dir a/b changed to symlink' '
 
 	rm -rf a/b &&	# cleanup if previous test failed
 	git checkout -f -b symlink start &&
 	rm -rf a/b &&
 	git add -A &&
 	test_ln_s_add foo a/b &&
-	git commit -m "dir to symlink"
+	git cummit -m "dir to symlink"
 '
 
-test_expect_success 'checkout commit with dir must not remove untracked a/b' '
+test_expect_success 'checkout cummit with dir must not remove untracked a/b' '
 
 	git rm --cached a/b &&
-	git commit -m "un-track the symlink" &&
+	git cummit -m "un-track the symlink" &&
 	test_must_fail git checkout start
 '
 
@@ -59,7 +59,7 @@ test_expect_success SYMLINKS 'checkout -f must not follow symlinks when removing
 	mkdir dir &&
 	>dir/f &&
 	git add dir/f &&
-	git commit -m "add dir/f" &&
+	git cummit -m "add dir/f" &&
 	mv dir untracked &&
 	ln -s untracked dir &&
 	git checkout -f HEAD~ &&

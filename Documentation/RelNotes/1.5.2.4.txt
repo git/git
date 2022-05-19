@@ -14,7 +14,7 @@ Fixes since v1.5.2.3
      file "xyzzy/filfre", while the other one has a file
      "frotz/filfre".
 
-   - "git prune" used to segfault upon seeing a commit that is
+   - "git prune" used to segfault upon seeing a cummit that is
      referred to by a tree object (aka "subproject").
 
    - "git diff --name-status --no-index" mishandled an added file.

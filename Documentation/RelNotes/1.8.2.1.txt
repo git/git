@@ -12,7 +12,7 @@ Fixes since v1.8.2
  * Verification of signed tags were not done correctly when not in C
    or en/US locale.
 
- * 'git commit -m "$msg"' used to add an extra newline even when
+ * 'git cummit -m "$msg"' used to add an extra newline even when
    $msg already ended with one.
 
  * The "--match=<pattern>" option of "git describe", when used with

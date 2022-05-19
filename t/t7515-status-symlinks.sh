@@ -13,7 +13,7 @@ test_expect_success 'setup' '
 	echo x >dir/file1 &&
 	echo y >dir/file2 &&
 	git add dir &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag initial
 '
 
@@ -31,7 +31,7 @@ test_expect_success SYMLINKS 'symlink replacing a directory' '
 	cp dir/file1 copy/file1 &&
 	echo "changed in copy" >copy/file2 &&
 	git add copy &&
-	git commit -m second &&
+	git cummit -m second &&
 	rm -rf copy &&
 	ln -s dir copy &&
 	echo " D copy/file1" >expect &&

@@ -11,7 +11,7 @@ test_expect_success 'setup' '
 	mkdir parent &&
 	(cd parent && git init &&
 	 echo one >file && git add file &&
-	 git commit -m one)
+	 git cummit -m one)
 '
 
 test_expect_success 'git pull -q --no-rebase' '
@@ -111,7 +111,7 @@ test_expect_success 'git pull --force' '
 		merge = refs/heads/main
 	EOF
 	git pull two &&
-	test_commit A &&
+	test_cummit A &&
 	git branch -f origin &&
 	git pull --no-rebase --all --force
 	)
@@ -167,14 +167,14 @@ test_expect_success 'git pull --allow-unrelated-histories' '
 	git init src &&
 	(
 		cd src &&
-		test_commit one &&
-		test_commit two
+		test_cummit one &&
+		test_cummit two
 	) &&
 	git clone src dst &&
 	(
 		cd src &&
 		git checkout --orphan side HEAD^ &&
-		test_commit three
+		test_cummit three
 	) &&
 	(
 		cd dst &&
@@ -186,9 +186,9 @@ test_expect_success 'git pull --allow-unrelated-histories' '
 test_expect_success 'git pull does not add a sign-off line' '
 	test_when_finished "rm -fr src dst actual" &&
 	git init src &&
-	test_commit -C src one &&
+	test_cummit -C src one &&
 	git clone src dst &&
-	test_commit -C src two &&
+	test_cummit -C src two &&
 	git -C dst pull --no-ff &&
 	git -C dst show -s --pretty="format:%(trailers)" HEAD >actual &&
 	test_must_be_empty actual
@@ -197,9 +197,9 @@ test_expect_success 'git pull does not add a sign-off line' '
 test_expect_success 'git pull --no-signoff does not add sign-off line' '
 	test_when_finished "rm -fr src dst actual" &&
 	git init src &&
-	test_commit -C src one &&
+	test_cummit -C src one &&
 	git clone src dst &&
-	test_commit -C src two &&
+	test_cummit -C src two &&
 	git -C dst pull --no-signoff --no-ff &&
 	git -C dst show -s --pretty="format:%(trailers)" HEAD >actual &&
 	test_must_be_empty actual
@@ -207,11 +207,11 @@ test_expect_success 'git pull --no-signoff does not add sign-off line' '
 
 test_expect_success 'git pull --signoff add a sign-off line' '
 	test_when_finished "rm -fr src dst expected actual" &&
-	echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" >expected &&
+	echo "Signed-off-by: $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL>" >expected &&
 	git init src &&
-	test_commit -C src one &&
+	test_cummit -C src one &&
 	git clone src dst &&
-	test_commit -C src two &&
+	test_cummit -C src two &&
 	git -C dst pull --signoff --no-ff &&
 	git -C dst show -s --pretty="format:%(trailers)" HEAD >actual &&
 	test_cmp expected actual
@@ -220,9 +220,9 @@ test_expect_success 'git pull --signoff add a sign-off line' '
 test_expect_success 'git pull --no-signoff flag cancels --signoff flag' '
 	test_when_finished "rm -fr src dst actual" &&
 	git init src &&
-	test_commit -C src one &&
+	test_cummit -C src one &&
 	git clone src dst &&
-	test_commit -C src two &&
+	test_cummit -C src two &&
 	git -C dst pull --signoff --no-signoff --no-ff &&
 	git -C dst show -s --pretty="format:%(trailers)" HEAD >actual &&
 	test_must_be_empty actual
@@ -231,24 +231,24 @@ test_expect_success 'git pull --no-signoff flag cancels --signoff flag' '
 test_expect_success 'git pull --no-verify flag passed to merge' '
 	test_when_finished "rm -fr src dst actual" &&
 	git init src &&
-	test_commit -C src one &&
+	test_cummit -C src one &&
 	git clone src dst &&
-	test_hook -C dst commit-msg <<-\EOF &&
+	test_hook -C dst cummit-msg <<-\EOF &&
 	false
 	EOF
-	test_commit -C src two &&
+	test_cummit -C src two &&
 	git -C dst pull --no-ff --no-verify
 '
 
 test_expect_success 'git pull --no-verify --verify passed to merge' '
 	test_when_finished "rm -fr src dst actual" &&
 	git init src &&
-	test_commit -C src one &&
+	test_cummit -C src one &&
 	git clone src dst &&
-	test_hook -C dst commit-msg <<-\EOF &&
+	test_hook -C dst cummit-msg <<-\EOF &&
 	false
 	EOF
-	test_commit -C src two &&
+	test_cummit -C src two &&
 	test_must_fail git -C dst pull --no-ff --no-verify --verify
 '
 

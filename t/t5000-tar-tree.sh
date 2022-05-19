@@ -3,23 +3,23 @@
 # Copyright (C) 2005 Rene Scharfe
 #
 
-test_description='git archive and git get-tar-commit-id test
+test_description='git archive and git get-tar-cummit-id test
 
-This test covers the topics of file contents, commit date handling and
-commit id embedding:
+This test covers the topics of file contents, cummit date handling and
+cummit id embedding:
 
   The contents of the repository is compared to the extracted tar
   archive.  The repository contains simple text files, symlinks and a
   binary file (/bin/sh).  Only paths shorter than 99 characters are
   used.
 
-  git archive applies the commit date to every file in the archive it
-  creates.  The test sets the commit date to a specific value and checks
+  git archive applies the cummit date to every file in the archive it
+  creates.  The test sets the cummit date to a specific value and checks
   if the tar archive contains that value.
 
-  When giving git archive a commit id (in contrast to a tree id) it
-  embeds this commit id into the tar archive as a comment.  The test
-  checks the ability of git get-tar-commit-id to figure it out from the
+  When giving git archive a cummit id (in contrast to a tree id) it
+  embeds this cummit id into the tar archive as a comment.  The test
+  checks the ability of git get-tar-cummit-id to figure it out from the
   tar file.
 
 '
@@ -147,7 +147,7 @@ test_expect_success \
 
 test_expect_success 'add files to repository' '
 	git add a &&
-	GIT_COMMITTER_DATE="2005-05-27 22:00" git commit -m initial
+	GIT_cummitTER_DATE="2005-05-27 22:00" git cummit -m initial
 '
 
 test_expect_success 'setup export-subst' '
@@ -243,8 +243,8 @@ test_expect_success 'validate file modification time' '
 	test_cmp expected.mtime b.mtime
 '
 
-test_expect_success 'git get-tar-commit-id' '
-	git get-tar-commit-id <b.tar >actual &&
+test_expect_success 'git get-tar-cummit-id' '
+	git get-tar-cummit-id <b.tar >actual &&
 	git rev-parse HEAD >expect &&
 	test_cmp expect actual
 '
@@ -270,16 +270,16 @@ test_expect_success 'git archive --remote outside of a git repo' '
 	test_cmp_bin expect.tar actual.tar
 '
 
-test_expect_success 'clients cannot access unreachable commits' '
-	test_commit unreachable &&
+test_expect_success 'clients cannot access unreachable cummits' '
+	test_cummit unreachable &&
 	sha1=$(git rev-parse HEAD) &&
 	git reset --hard HEAD^ &&
 	git archive $sha1 >remote.tar &&
 	test_must_fail git archive --remote=. $sha1 >remote.tar
 '
 
-test_expect_success 'upload-archive can allow unreachable commits' '
-	test_commit unreachable1 &&
+test_expect_success 'upload-archive can allow unreachable cummits' '
+	test_cummit unreachable1 &&
 	sha1=$(git rev-parse HEAD) &&
 	git reset --hard HEAD^ &&
 	git archive $sha1 >remote.tar &&
@@ -423,7 +423,7 @@ test_expect_success LONG_IS_64BIT 'set up repository with huge blob' '
 	cp "$TEST_DIRECTORY"/t5000/huge-object .git/objects/$path &&
 	rm -f .git/index &&
 	git update-index --add --cacheinfo 100644,$obj,huge &&
-	git commit -m huge
+	git cummit -m huge
 '
 
 # We expect git to die with SIGPIPE here (otherwise we
@@ -443,12 +443,12 @@ test_expect_success TAR_HUGE,LONG_IS_64BIT 'system tar can read our huge size' '
 	test_cmp expect actual
 '
 
-test_expect_success TIME_IS_64BIT 'set up repository with far-future (2^34 - 1) commit' '
+test_expect_success TIME_IS_64BIT 'set up repository with far-future (2^34 - 1) cummit' '
 	rm -f .git/index &&
 	echo foo >file &&
 	git add file &&
-	GIT_COMMITTER_DATE="@17179869183 +0000" \
-		git commit -m "tempori parendum"
+	GIT_cummitTER_DATE="@17179869183 +0000" \
+		git cummit -m "tempori parendum"
 '
 
 test_expect_success TIME_IS_64BIT 'generate tar with far-future mtime' '
@@ -461,12 +461,12 @@ test_expect_success TAR_HUGE,TIME_IS_64BIT,TIME_T_IS_64BIT 'system tar can read 
 	test_cmp expect actual
 '
 
-test_expect_success TIME_IS_64BIT 'set up repository with far-far-future (2^36 + 1) commit' '
+test_expect_success TIME_IS_64BIT 'set up repository with far-far-future (2^36 + 1) cummit' '
 	rm -f .git/index &&
 	echo content >file &&
 	git add file &&
-	GIT_TEST_COMMIT_GRAPH=0 GIT_COMMITTER_DATE="@68719476737 +0000" \
-		git commit -m "tempori parendum"
+	GIT_TEST_cummit_GRAPH=0 GIT_cummitTER_DATE="@68719476737 +0000" \
+		git cummit -m "tempori parendum"
 '
 
 test_expect_success TIME_IS_64BIT 'generate tar with far-far-future mtime' '

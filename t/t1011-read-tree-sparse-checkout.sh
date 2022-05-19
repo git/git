@@ -15,7 +15,7 @@ test_description='sparse checkout tests
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 
 test_expect_success 'setup' '
-	test_commit init &&
+	test_cummit init &&
 	echo modified >>init.t &&
 
 	cat >expected <<-EOF &&
@@ -34,10 +34,10 @@ test_expect_success 'setup' '
 	mkdir sub subsub &&
 	touch sub/added sub/addedtoo subsub/added &&
 	git add init.t sub/added sub/addedtoo subsub/added &&
-	git commit -m "modified and added" &&
+	git cummit -m "modified and added" &&
 	git tag top &&
 	git rm sub/added &&
-	git commit -m removed &&
+	git cummit -m removed &&
 	git tag removed &&
 	git checkout top &&
 	git ls-files --stage >result &&

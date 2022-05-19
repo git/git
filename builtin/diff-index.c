@@ -3,7 +3,7 @@
 #include "config.h"
 #include "diff.h"
 #include "diff-merges.h"
-#include "commit.h"
+#include "cummit.h"
 #include "revision.h"
 #include "builtin.h"
 #include "submodule.h"

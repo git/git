@@ -5,11 +5,11 @@ test_description='check handling of disallowed .gitmodule urls'
 
 test_expect_success 'create submodule with protected dash in url' '
 	git init upstream &&
-	git -C upstream commit --allow-empty -m base &&
+	git -C upstream cummit --allow-empty -m base &&
 	mv upstream ./-upstream &&
 	git submodule add ./-upstream sub &&
 	git add sub .gitmodules &&
-	git commit -m submodule
+	git cummit -m submodule
 '
 
 test_expect_success 'clone can recurse submodule' '
@@ -29,7 +29,7 @@ test_expect_success 'fsck accepts protected dash' '
 
 test_expect_success 'remove ./ protection from .gitmodules url' '
 	perl -i -pe "s{\./}{}" .gitmodules &&
-	git commit -am "drop protection"
+	git cummit -am "drop protection"
 '
 
 test_expect_success 'clone rejects unprotected dash' '
@@ -48,14 +48,14 @@ test_expect_success 'fsck rejects unprotected dash' '
 
 test_expect_success 'trailing backslash is handled correctly' '
 	git init testmodule &&
-	test_commit -C testmodule c &&
+	test_cummit -C testmodule c &&
 	git submodule add ./testmodule &&
 	: ensure that the name ends in a double backslash &&
 	sed -e "s|\\(submodule \"testmodule\\)\"|\\1\\\\\\\\\"|" \
 		-e "s|url = .*|url = \" --should-not-be-an-option\"|" \
 		<.gitmodules >.new &&
 	mv .new .gitmodules &&
-	git commit -am "Add testmodule" &&
+	git cummit -am "Add testmodule" &&
 	test_must_fail git clone --verbose --recurse-submodules . dolly 2>err &&
 	test_i18ngrep ! "unknown option" err
 '
@@ -68,7 +68,7 @@ test_expect_success 'fsck rejects missing URL scheme' '
 	EOF
 	git add .gitmodules &&
 	test_tick &&
-	git commit -m "gitmodules with missing URL scheme" &&
+	git cummit -m "gitmodules with missing URL scheme" &&
 	test_when_finished "rm -rf dst" &&
 	git init --bare dst &&
 	git -C dst config transfer.fsckObjects true &&
@@ -84,7 +84,7 @@ test_expect_success 'fsck rejects relative URL resolving to missing scheme' '
 	EOF
 	git add .gitmodules &&
 	test_tick &&
-	git commit -m "gitmodules with relative URL that strips off scheme" &&
+	git cummit -m "gitmodules with relative URL that strips off scheme" &&
 	test_when_finished "rm -rf dst" &&
 	git init --bare dst &&
 	git -C dst config transfer.fsckObjects true &&
@@ -100,7 +100,7 @@ test_expect_success 'fsck rejects empty URL scheme' '
 	EOF
 	git add .gitmodules &&
 	test_tick &&
-	git commit -m "gitmodules with empty URL scheme" &&
+	git cummit -m "gitmodules with empty URL scheme" &&
 	test_when_finished "rm -rf dst" &&
 	git init --bare dst &&
 	git -C dst config transfer.fsckObjects true &&
@@ -116,7 +116,7 @@ test_expect_success 'fsck rejects relative URL resolving to empty scheme' '
 	EOF
 	git add .gitmodules &&
 	test_tick &&
-	git commit -m "relative gitmodules URL resolving to empty scheme" &&
+	git cummit -m "relative gitmodules URL resolving to empty scheme" &&
 	test_when_finished "rm -rf dst" &&
 	git init --bare dst &&
 	git -C dst config transfer.fsckObjects true &&
@@ -132,7 +132,7 @@ test_expect_success 'fsck rejects empty hostname' '
 	EOF
 	git add .gitmodules &&
 	test_tick &&
-	git commit -m "gitmodules with extra slashes" &&
+	git cummit -m "gitmodules with extra slashes" &&
 	test_when_finished "rm -rf dst" &&
 	git init --bare dst &&
 	git -C dst config transfer.fsckObjects true &&
@@ -148,7 +148,7 @@ test_expect_success 'fsck rejects relative url that produced empty hostname' '
 	EOF
 	git add .gitmodules &&
 	test_tick &&
-	git commit -m "gitmodules abusing relative_path" &&
+	git cummit -m "gitmodules abusing relative_path" &&
 	test_when_finished "rm -rf dst" &&
 	git init --bare dst &&
 	git -C dst config transfer.fsckObjects true &&
@@ -163,7 +163,7 @@ test_expect_success 'fsck permits embedded newline with unrecognized scheme' '
 		url = "data://acjbkd%0akajfdickajkd"
 	EOF
 	git add .gitmodules &&
-	git commit -m "gitmodules with unrecognized scheme" &&
+	git cummit -m "gitmodules with unrecognized scheme" &&
 	test_when_finished "rm -rf dst" &&
 	git init --bare dst &&
 	git -C dst config transfer.fsckObjects true &&
@@ -178,7 +178,7 @@ test_expect_success 'fsck rejects embedded newline in url' '
 	url = "https://one.example.com?%0ahost=two.example.com/foo.git"
 	EOF
 	git add .gitmodules &&
-	git commit -m "gitmodules with newline" &&
+	git cummit -m "gitmodules with newline" &&
 	test_when_finished "rm -rf dst" &&
 	git init --bare dst &&
 	git -C dst config transfer.fsckObjects true &&
@@ -193,7 +193,7 @@ test_expect_success 'fsck rejects embedded newline in relative url' '
 		url = "./%0ahost=two.example.com/foo.git"
 	EOF
 	git add .gitmodules &&
-	git commit -m "relative url with newline" &&
+	git cummit -m "relative url with newline" &&
 	test_when_finished "rm -rf dst" &&
 	git init --bare dst &&
 	git -C dst config transfer.fsckObjects true &&
@@ -208,7 +208,7 @@ test_expect_success 'fsck rejects embedded newline in git url' '
 	url = "git://example.com:1234/repo%0a.git"
 	EOF
 	git add .gitmodules &&
-	git commit -m "git url with newline" &&
+	git cummit -m "git url with newline" &&
 	test_when_finished "rm -rf dst" &&
 	git init --bare dst &&
 	git -C dst config transfer.fsckObjects true &&

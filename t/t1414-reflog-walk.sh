@@ -7,14 +7,14 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'set up some reflog entries' '
-	test_commit one &&
-	test_commit two &&
+	test_cummit one &&
+	test_cummit two &&
 	git checkout -b side HEAD^ &&
-	test_commit three &&
-	git merge --no-commit main &&
+	test_cummit three &&
+	git merge --no-cummit main &&
 	echo evil-merge-content >>one.t &&
 	test_tick &&
-	git commit --no-edit -a
+	git cummit --no-edit -a
 '
 
 do_walk () {
@@ -23,11 +23,11 @@ do_walk () {
 
 test_expect_success 'set up expected reflog' '
 	cat >expect.all <<-EOF
-	HEAD@{0} commit (merge): Merge branch ${SQ}main${SQ} into side
-	HEAD@{1} commit: three
+	HEAD@{0} cummit (merge): Merge branch ${SQ}main${SQ} into side
+	HEAD@{1} cummit: three
 	HEAD@{2} checkout: moving from main to side
-	HEAD@{3} commit: two
-	HEAD@{4} commit (initial): one
+	HEAD@{3} cummit: two
+	HEAD@{4} cummit (initial): one
 	EOF
 '
 
@@ -50,8 +50,8 @@ test_expect_success 'reflog can limit with pathspecs' '
 
 test_expect_success 'pathspec limiting handles merges' '
 	# we pick up:
-	#   - the initial commit of one
-	#   - the checkout back to commit one
+	#   - the initial cummit of one
+	#   - the checkout back to cummit one
 	#   - the evil merge which touched one
 	sed -n "1p;3p;5p" expect.all >expect &&
 	do_walk -- one.t >actual &&
@@ -94,9 +94,9 @@ test_expect_success 'date-limiting does not interfere with other logs' '
 '
 
 test_expect_success 'min/max age uses entry date to limit' '
-	# Flip between commits one and two so each ref update actually
+	# Flip between cummits one and two so each ref update actually
 	# does something (and does not get optimized out). We know
-	# that the timestamps of those commits will be before our "min".
+	# that the timestamps of those cummits will be before our "min".
 
 	git update-ref -m before refs/heads/minmax one &&
 
@@ -124,7 +124,7 @@ test_expect_success 'min/max age uses entry date to limit' '
 test_expect_success REFFILES 'walk prefers reflog to ref tip' '
 	head=$(git rev-parse HEAD) &&
 	one=$(git rev-parse one) &&
-	ident="$GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE" &&
+	ident="$GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE" &&
 	echo "$head $one $ident	broken reflog entry" >>.git/logs/HEAD &&
 
 	echo $one >expect &&

@@ -23,50 +23,50 @@ KNOWN_FAILURE_NOFF_MERGE_ATTEMPTS_TO_MERGE_REMOVED_SUBMODULE_FILES=1
 test_submodule_switch_func "am_3way"
 
 test_expect_success 'setup diff.submodule' '
-	test_commit one &&
+	test_cummit one &&
 	INITIAL=$(git rev-parse HEAD) &&
 
 	git init submodule &&
 	(
 		cd submodule &&
-		test_commit two &&
+		test_cummit two &&
 		git rev-parse HEAD >../initial-submodule
 	) &&
 	git submodule add ./submodule &&
-	git commit -m first &&
+	git cummit -m first &&
 
 	(
 		cd submodule &&
-		test_commit three &&
+		test_cummit three &&
 		git rev-parse HEAD >../first-submodule
 	) &&
 	git add submodule &&
-	git commit -m second &&
+	git cummit -m second &&
 	SECOND=$(git rev-parse HEAD) &&
 
 	(
 		cd submodule &&
 		git mv two.t four.t &&
-		git commit -m "second submodule" &&
+		git cummit -m "second submodule" &&
 		git rev-parse HEAD >../second-submodule
 	) &&
-	test_commit four &&
+	test_cummit four &&
 	git add submodule &&
-	git commit --amend --no-edit &&
+	git cummit --amend --no-edit &&
 	THIRD=$(git rev-parse HEAD) &&
 	git submodule update --init
 '
 
 run_test() {
-	START_COMMIT=$1 &&
+	START_cummit=$1 &&
 	EXPECT=$2 &&
 	# Abort any merges in progress: the previous
 	# test may have failed, and we should clean up.
 	test_might_fail git am --abort &&
-	git reset --hard $START_COMMIT &&
+	git reset --hard $START_cummit &&
 	rm -f *.patch &&
 	git format-patch -1 &&
-	git reset --hard $START_COMMIT^ &&
+	git reset --hard $START_cummit^ &&
 	git submodule update &&
 	git am *.patch &&
 	git submodule update &&

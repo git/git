@@ -12,24 +12,24 @@
 	updated, or on error, no refs are updated.
 
 --depth=<depth>::
-	Limit fetching to the specified number of commits from the tip of
+	Limit fetching to the specified number of cummits from the tip of
 	each remote branch history. If fetching to a 'shallow' repository
 	created by `git clone` with `--depth=<depth>` option (see
 	linkgit:git-clone[1]), deepen or shorten the history to the specified
-	number of commits. Tags for the deepened commits are not fetched.
+	number of cummits. Tags for the deepened cummits are not fetched.
 
 --deepen=<depth>::
-	Similar to --depth, except it specifies the number of commits
+	Similar to --depth, except it specifies the number of cummits
 	from the current shallow boundary instead of from the tip of
 	each remote branch history.
 
 --shallow-since=<date>::
 	Deepen or shorten the history of a shallow repository to
-	include all reachable commits after <date>.
+	include all reachable cummits after <date>.
 
 --shallow-exclude=<revision>::
 	Deepen or shorten the history of a shallow repository to
-	exclude commits reachable from a specified remote branch or tag.
+	exclude cummits reachable from a specified remote branch or tag.
 	This option can be specified multiple times.
 
 --unshallow::
@@ -46,20 +46,20 @@ the current repository has the same history as the source repository.
 	.git/shallow. This option updates .git/shallow and accept such
 	refs.
 
---negotiation-tip=<commit|glob>::
-	By default, Git will report, to the server, commits reachable
-	from all local refs to find common commits in an attempt to
+--negotiation-tip=<cummit|glob>::
+	By default, Git will report, to the server, cummits reachable
+	from all local refs to find common cummits in an attempt to
 	reduce the size of the to-be-received packfile. If specified,
-	Git will only report commits reachable from the given tips.
+	Git will only report cummits reachable from the given tips.
 	This is useful to speed up fetches when the user knows which
-	local ref is likely to have commits in common with the
+	local ref is likely to have cummits in common with the
 	upstream ref being fetched.
 +
 This option may be specified more than once; if so, Git will report
-commits reachable from any of the given commits.
+cummits reachable from any of the given cummits.
 +
 The argument to this option may be a glob on ref names, a ref, or the (possibly
-abbreviated) SHA-1 of a commit. Specifying a glob is equivalent to specifying
+abbreviated) SHA-1 of a cummit. Specifying a glob is equivalent to specifying
 this option multiple times, one for each matching ref name.
 +
 See also the `fetch.negotiationAlgorithm` and `push.negotiate`
@@ -115,9 +115,9 @@ ifndef::git-pull[]
 	repository maintenance if needed. (`--[no-]auto-gc` is a synonym.)
 	This is enabled by default.
 
---[no-]write-commit-graph::
-	Write a commit-graph after fetching. This overrides the config
-	setting `fetch.writeCommitGraph`.
+--[no-]write-cummit-graph::
+	Write a cummit-graph after fetching. This overrides the config
+	setting `fetch.writecummitGraph`.
 endif::git-pull[]
 
 --prefetch::
@@ -165,7 +165,7 @@ endif::git-pull[]
 
 ifndef::git-pull[]
 --refetch::
-	Instead of negotiating with the server to avoid transferring commits and
+	Instead of negotiating with the server to avoid transferring cummits and
 	associated objects that are already present locally, this option fetches
 	all objects as a fresh clone would. Use this to reapply a partial clone
 	filter from configuration or using `--filter=` when the filter
@@ -195,11 +195,11 @@ endif::git-pull[]
 
 ifndef::git-pull[]
 --recurse-submodules[=yes|on-demand|no]::
-	This option controls if and under what conditions new commits of
+	This option controls if and under what conditions new cummits of
 	submodules should be fetched too. When recursing through submodules,
 	`git fetch` always attempts to fetch "changed" submodules, that is, a
-	submodule that has commits that are referenced by a newly fetched
-	superproject commit but are missing in the local submodule clone. A
+	submodule that has cummits that are referenced by a newly fetched
+	superproject cummit but are missing in the local submodule clone. A
 	changed submodule can be fetched as long as it is present locally e.g.
 	in `$GIT_DIR/modules/` (see linkgit:gitsubmodules[7]); if the upstream
 	adds a new submodule, that submodule cannot be fetched until it is

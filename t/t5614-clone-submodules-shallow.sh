@@ -8,18 +8,18 @@ pwd=$(pwd)
 
 test_expect_success 'setup' '
 	git checkout -b main &&
-	test_commit commit1 &&
-	test_commit commit2 &&
+	test_cummit cummit1 &&
+	test_cummit cummit2 &&
 	mkdir sub &&
 	(
 		cd sub &&
 		git init &&
-		test_commit subcommit1 &&
-		test_commit subcommit2 &&
-		test_commit subcommit3
+		test_cummit subcummit1 &&
+		test_cummit subcummit2 &&
+		test_cummit subcummit3
 	) &&
 	git submodule add "file://$pwd/sub" sub &&
-	git commit -m "add submodule"
+	git cummit -m "add submodule"
 '
 
 test_expect_success 'nonshallow clone implies nonshallow submodule' '
@@ -71,7 +71,7 @@ test_expect_success 'clone follows shallow recommendation' '
 	test_when_finished "rm -rf super_clone" &&
 	git config -f .gitmodules submodule.sub.shallow true &&
 	git add .gitmodules &&
-	git commit -m "recommend shallow for sub" &&
+	git cummit -m "recommend shallow for sub" &&
 	git clone --recurse-submodules --no-local "file://$pwd/." super_clone &&
 	(
 		cd super_clone &&
@@ -105,7 +105,7 @@ test_expect_success 'clone follows non shallow recommendation' '
 	test_when_finished "rm -rf super_clone" &&
 	git config -f .gitmodules submodule.sub.shallow false &&
 	git add .gitmodules &&
-	git commit -m "recommend non shallow for sub" &&
+	git cummit -m "recommend non shallow for sub" &&
 	git clone --recurse-submodules --no-local "file://$pwd/." super_clone &&
 	(
 		cd super_clone &&

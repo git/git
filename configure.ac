@@ -390,7 +390,7 @@ GIT_PARSE_WITH_SET_MAKE_VAR(pager, DEFAULT_PAGER,
 # Allow user to set the default editor
 GIT_PARSE_WITH_SET_MAKE_VAR(editor, DEFAULT_EDITOR,
 			Use VALUE as the fall-back editor instead of 'vi'.
-			This is used by things like 'git commit' when the user
+			This is used by things like 'git cummit' when the user
 			does not specify a preferred editor through other
 			methods. eg: /usr/bin/editor)
 

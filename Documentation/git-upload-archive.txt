@@ -25,19 +25,19 @@ SECURITY
 
 In order to protect the privacy of objects that have been removed from
 history but may not yet have been pruned, `git-upload-archive` avoids
-serving archives for commits and trees that are not reachable from the
+serving archives for cummits and trees that are not reachable from the
 repository's refs.  However, because calculating object reachability is
 computationally expensive, `git-upload-archive` implements a stricter
 but easier-to-check set of rules:
 
-  1. Clients may request a commit or tree that is pointed to directly by
+  1. Clients may request a cummit or tree that is pointed to directly by
      a ref. E.g., `git archive --remote=origin v1.0`.
 
-  2. Clients may request a sub-tree within a commit or tree using the
+  2. Clients may request a sub-tree within a cummit or tree using the
      `ref:path` syntax. E.g., `git archive --remote=origin v1.0:Documentation`.
 
   3. Clients may _not_ use other sha1 expressions, even if the end
-     result is reachable. E.g., neither a relative commit like `master^`
+     result is reachable. E.g., neither a relative cummit like `master^`
      nor a literal sha1 like `abcd1234` is allowed, even if the result
      is reachable from the refs.
 

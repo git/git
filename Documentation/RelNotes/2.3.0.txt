@@ -34,7 +34,7 @@ UI, Workflows & Features
    "Conflicts:" block at the end.
 
  * "git am" learned "--message-id" option to copy the message ID of
-   the incoming e-mail to the log message of resulting commit.
+   the incoming e-mail to the log message of resulting cummit.
 
  * "git clone --reference=<over there>" learned the "--dissociate"
    option to go with it; it borrows objects from the reference object
@@ -95,7 +95,7 @@ UI, Workflows & Features
 Performance, Internal Implementation, Development Support etc.
 
  * Earlier we made "rev-list --object-edge" more aggressively list the
-   objects at the edge commits, in order to reduce number of objects　
+   objects at the edge cummits, in order to reduce number of objects　
    fetched into a shallow repository, but the change affected cases
    other than "fetching into a shallow repository" and made it
    unusably slow (e.g. fetching into a normal repository should not
@@ -148,7 +148,7 @@ notes for details).
    (merge f6786c8 jk/http-push-symref-fix later to maint).
 
  * The logic in "git bisect bad HEAD" etc. to avoid forcing the test
-   of the common ancestor of bad and good commits was broken.
+   of the common ancestor of bad and good cummits was broken.
    (merge 07913d5 cc/bisect-rev-parsing later to maint).
 
  * "git checkout-index --temp=$target $path" did not work correctly
@@ -166,16 +166,16 @@ notes for details).
    status.
    (merge 6babe76 tf/prompt-preserve-exit-status later to maint).
 
- * Recent update to "git commit" broke amending an existing commit
-   with bogus author/committer lines without a valid e-mail address.
-   (merge c83a509 jk/commit-date-approxidate later to maint).
+ * Recent update to "git cummit" broke amending an existing cummit
+   with bogus author/cummitter lines without a valid e-mail address.
+   (merge c83a509 jk/cummit-date-approxidate later to maint).
 
  * The lockfile API used to get confused which file to clean up when
    the process moved the $cwd after creating a lockfile.
    (merge fa137f6 nd/lockfile-absolute later to maint).
 
  * Traditionally we tried to avoid interpreting date strings given by
-   the user as future dates, e.g. GIT_COMMITTER_DATE=2014-12-10 when
+   the user as future dates, e.g. GIT_cummitTER_DATE=2014-12-10 when
    used early November 2014 was taken as "October 12, 2014" because it
    is likely that a date in the future, December 10, is a mistake.
    This heuristics has been loosened to allow people to express future

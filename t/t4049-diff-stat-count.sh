@@ -12,7 +12,7 @@ test_expect_success 'setup' '
 	>c &&
 	>d &&
 	git add a b c d &&
-	git commit -m initial
+	git cummit -m initial
 '
 
 test_expect_success 'mode-only change show as a 0-line change' '

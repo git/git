@@ -11,20 +11,20 @@ pwd=$(pwd)
 
 test_expect_success 'setup' '
 	git checkout -b main &&
-	test_commit commit1 &&
+	test_cummit cummit1 &&
 	mkdir sub &&
 	(
 		cd sub &&
 		git init &&
-		test_commit subcommit1 &&
+		test_cummit subcummit1 &&
 		git tag sub_when_added_to_super &&
 		git branch other
 	) &&
 	git submodule add "file://$pwd/sub" sub &&
-	git commit -m "add submodule" &&
+	git cummit -m "add submodule" &&
 	(
 		cd sub &&
-		test_commit subcommit2
+		test_cummit subcummit2
 	)
 '
 

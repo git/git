@@ -12,12 +12,12 @@ test_expect_success setup '
     cat file1 >file2 &&
     git add file1 file2 &&
     test_tick &&
-    git commit -m "Initial commit" &&
+    git cummit -m "Initial cummit" &&
     git tag initial &&
     echo line 4 >>file1 &&
     cat file1 >file2 &&
     test_tick &&
-    git commit -m "add line 4 to file1" file1 &&
+    git cummit -m "add line 4 to file1" file1 &&
     git tag second
 '
 
@@ -169,7 +169,7 @@ test_expect_success 'reset --merge fails with changes in file it touches' '
     git reset --hard second &&
     echo "line 5" >> file1 &&
     test_tick &&
-    git commit -m "add line 5" file1 &&
+    git cummit -m "add line 5" file1 &&
     sed -e "s/line 1/changed line 1/" <file1 >file3 &&
     mv file3 file1 &&
     test_must_fail git reset --merge HEAD^ 2>err.log &&
@@ -185,7 +185,7 @@ test_expect_success 'reset --keep fails with changes in file it touches' '
     git reset --hard second &&
     echo "line 5" >> file1 &&
     test_tick &&
-    git commit -m "add line 5" file1 &&
+    git cummit -m "add line 5" file1 &&
     sed -e "s/line 1/changed line 1/" <file1 >file3 &&
     mv file3 file1 &&
     test_must_fail git reset --keep HEAD^ 2>err.log &&
@@ -200,18 +200,18 @@ test_expect_success 'setup 3 different branches' '
     git checkout branch1 &&
     echo "line 5 in branch1" >> file1 &&
     test_tick &&
-    git commit -a -m "change in branch1" &&
+    git cummit -a -m "change in branch1" &&
     git checkout branch2 &&
     echo "line 5 in branch2" >> file1 &&
     test_tick &&
-    git commit -a -m "change in branch2" &&
+    git cummit -a -m "change in branch2" &&
     git tag third &&
     git checkout branch3 &&
     echo a new file >file3 &&
     rm -f file1 &&
     git add file3 &&
     test_tick &&
-    git commit -a -m "change in branch3"
+    git cummit -a -m "change in branch3"
 '
 
 # The next test will test the following:

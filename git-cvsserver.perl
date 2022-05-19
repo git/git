@@ -238,7 +238,7 @@ if ($state->{method} eq 'pserver') {
         # Fall through to LOVE
     }
 
-    # For checking whether the user is anonymous on commit
+    # For checking whether the user is anonymous on cummit
     $state->{user} = $user;
 
     $line = <STDIN>; chomp $line;
@@ -699,11 +699,11 @@ sub req_add
 
     if ( $addcount == 1 )
     {
-        print "E cvs add: use `cvs commit' to add this file permanently\n";
+        print "E cvs add: use `cvs cummit' to add this file permanently\n";
     }
     elsif ( $addcount > 1 )
     {
-        print "E cvs add: use `cvs commit' to add these files permanently\n";
+        print "E cvs add: use `cvs cummit' to add these files permanently\n";
     }
 
     print "ok\n";
@@ -784,11 +784,11 @@ sub req_remove
 
     if ( $rmcount == 1 )
     {
-        print "E cvs remove: use `cvs commit' to remove this file permanently\n";
+        print "E cvs remove: use `cvs cummit' to remove this file permanently\n";
     }
     elsif ( $rmcount > 1 )
     {
-        print "E cvs remove: use `cvs commit' to remove these files permanently\n";
+        print "E cvs remove: use `cvs cummit' to remove these files permanently\n";
     }
 
     print "ok\n";
@@ -980,7 +980,7 @@ sub req_co
     my $headHash;
     if( defined($stickyInfo) && defined($stickyInfo->{tag}) )
     {
-        $headHash = $updater->lookupCommitRef($stickyInfo->{tag});
+        $headHash = $updater->lookupcummitRef($stickyInfo->{tag});
         if( !defined($headHash) )
         {
             print "error 1 no such tag `$stickyInfo->{tag}'\n";
@@ -1528,7 +1528,7 @@ sub req_ci
 
     if ( $state->{method} eq 'pserver' and $state->{user} eq 'anonymous' )
     {
-        print "error 1 anonymous user cannot commit via pserver\n";
+        print "error 1 anonymous user cannot cummit via pserver\n";
         cleanupWorkTree();
         exit;
     }
@@ -1545,7 +1545,7 @@ sub req_ci
     my $updater = GITCVS::updater->new($state->{CVSROOT}, $state->{module}, $log);
     $updater->update();
 
-    my @committedfiles = ();
+    my @cummittedfiles = ();
     my %oldmeta;
     my $stickyInfo;
     my $branchRef;
@@ -1554,13 +1554,13 @@ sub req_ci
     # foreach file specified on the command line ...
     foreach my $filename ( @{$state->{args}} )
     {
-        my $committedfile = $filename;
+        my $cummittedfile = $filename;
         $filename = filecleanup($filename);
 
         next unless ( exists $state->{entries}{$filename}{modified_filename} or not $state->{entries}{$filename}{unchanged} );
 
         #####
-        # Figure out which branch and parenthash we are committing
+        # Figure out which branch and parenthash we are cummitting
         # to, and setup worktree:
 
         # should always come from entries:
@@ -1572,7 +1572,7 @@ sub req_ci
                 ( defined($stickyInfo->{date}) ||
                   !defined($stickyInfo->{tag}) ) )
             {
-                print "error 1 cannot commit with sticky date for file `$filename'\n";
+                print "error 1 cannot cummit with sticky date for file `$filename'\n";
                 cleanupWorkTree();
                 exit;
             }
@@ -1601,16 +1601,16 @@ sub req_ci
 
             setupWorkTree($parenthash);
 
-            $log->info("Lockless commit start, basing commit on '$work->{workDir}', index file is '$work->{index}'");
+            $log->info("Lockless cummit start, basing cummit on '$work->{workDir}', index file is '$work->{index}'");
 
             $log->info("Created index '$work->{index}' for head $state->{module} - exit status $?");
         }
         elsif( !refHashEqual($stickyInfo,$fileStickyInfo) )
         {
-            #TODO: We could split the cvs commit into multiple
-            #  git commits by distinct stickyTag values, but that
+            #TODO: We could split the cvs cummit into multiple
+            #  git cummits by distinct stickyTag values, but that
             #  is lowish priority.
-            print "error 1 Committing different files to different"
+            print "error 1 cummitting different files to different"
                   . " branches is not currently supported\n";
             cleanupWorkTree();
             exit;
@@ -1649,8 +1649,8 @@ sub req_ci
             exit;
         }
 
-        push @committedfiles, $committedfile;
-        $log->info("Committing $filename");
+        push @cummittedfiles, $cummittedfile;
+        $log->info("cummitting $filename");
 
         system("mkdir","-p",$dirpart) unless ( -d $dirpart );
 
@@ -1683,9 +1683,9 @@ sub req_ci
         }
     }
 
-    unless ( scalar(@committedfiles) > 0 )
+    unless ( scalar(@cummittedfiles) > 0 )
     {
-        print "E No files to commit\n";
+        print "E No files to cummit\n";
         print "ok\n";
         cleanupWorkTree();
         return;
@@ -1696,38 +1696,38 @@ sub req_ci
 
     $log->debug("Treehash : $treehash, Parenthash : $parenthash");
 
-    # write our commit message out if we have one ...
+    # write our cummit message out if we have one ...
     my ( $msg_fh, $msg_filename ) = tempfile( DIR => $TEMP_DIR );
     print $msg_fh $state->{opt}{m};# if ( exists ( $state->{opt}{m} ) );
-    if ( defined ( $cfg->{gitcvs}{commitmsgannotation} ) ) {
-        if ($cfg->{gitcvs}{commitmsgannotation} !~ /^\s*$/ ) {
-            print $msg_fh "\n\n".$cfg->{gitcvs}{commitmsgannotation}."\n"
+    if ( defined ( $cfg->{gitcvs}{cummitmsgannotation} ) ) {
+        if ($cfg->{gitcvs}{cummitmsgannotation} !~ /^\s*$/ ) {
+            print $msg_fh "\n\n".$cfg->{gitcvs}{cummitmsgannotation}."\n"
         }
     } else {
         print $msg_fh "\n\nvia git-CVS emulator\n";
     }
     close $msg_fh;
 
-    my $commithash = safe_pipe_capture('git', 'commit-tree', $treehash, '-p', $parenthash, '-F', $msg_filename);
-    chomp($commithash);
-    $log->info("Commit hash : $commithash");
+    my $cummithash = safe_pipe_capture('git', 'cummit-tree', $treehash, '-p', $parenthash, '-F', $msg_filename);
+    chomp($cummithash);
+    $log->info("Commit hash : $cummithash");
 
-    unless ( $commithash =~ /[a-zA-Z0-9]{$state->{hexsz}}/ )
+    unless ( $cummithash =~ /[a-zA-Z0-9]{$state->{hexsz}}/ )
     {
-        $log->warn("Commit failed (Invalid commit hash)");
-        print "error 1 Commit failed (unknown reason)\n";
+        $log->warn("cummit failed (Invalid commit hash)");
+        print "error 1 cummit failed (unknown reason)\n";
         cleanupWorkTree();
         exit;
     }
 
 	### Emulate git-receive-pack by running hooks/update
 	my @hook = ( $ENV{GIT_DIR}.'hooks/update', $branchRef,
-			$parenthash, $commithash );
+			$parenthash, $cummithash );
 	if( -x $hook[0] ) {
 		unless( system( @hook ) == 0 )
 		{
-			$log->warn("Commit failed (update hook declined to update ref)");
-			print "error 1 Commit failed (update hook declined)\n";
+			$log->warn("cummit failed (update hook declined to update ref)");
+			print "error 1 cummit failed (update hook declined)\n";
 			cleanupWorkTree();
 			exit;
 		}
@@ -1735,9 +1735,9 @@ sub req_ci
 
 	### Update the ref
 	if (system(qw(git update-ref -m), "cvsserver ci",
-			$branchRef, $commithash, $parenthash)) {
+			$branchRef, $cummithash, $parenthash)) {
 		$log->warn("update-ref for $state->{module} failed.");
-		print "error 1 Cannot commit -- update first\n";
+		print "error 1 Cannot cummit -- update first\n";
 		cleanupWorkTree();
 		exit;
 	}
@@ -1749,7 +1749,7 @@ sub req_ci
 
 		local $SIG{PIPE} = sub { die 'pipe broke' };
 
-		print $pipe "$parenthash $commithash $branchRef\n";
+		print $pipe "$parenthash $cummithash $branchRef\n";
 
 		close $pipe || die "bad pipe: $! $?";
 	}
@@ -1763,7 +1763,7 @@ sub req_ci
 	}
 
     # foreach file specified on the command line ...
-    foreach my $filename ( @committedfiles )
+    foreach my $filename ( @cummittedfiles )
     {
         $filename = filecleanup($filename);
 
@@ -2012,7 +2012,7 @@ sub req_diff
         #  1. First -r (missing file: check -N)
         #  2. wrev from client's Entry line
         #      - missing line/file: check -N
-        #      - "0": added file not committed (empty contents for rev1)
+        #      - "0": added file not cummitted (empty contents for rev1)
         #      - Prefixed with dash (to be removed): check -N
 
         if ( defined ( $revision1 ) )
@@ -2278,10 +2278,10 @@ sub req_log
                   "  author: $revision->{author};  state: " .
                   ( $revision->{filehash} eq "deleted" ? "dead" : "Exp" ) .
                   ";  lines: +2 -3\n";
-            my $commitmessage;
-            $commitmessage = $updater->commitmessage($revision->{commithash});
-            $commitmessage =~ s/^/M /mg;
-            print $commitmessage . "\n";
+            my $cummitmessage;
+            $cummitmessage = $updater->cummitmessage($revision->{cummithash});
+            $cummitmessage =~ s/^/M /mg;
+            print $cummitmessage . "\n";
         }
         print "M =======" . ( "=" x 70 ) . "\n";
     }
@@ -2319,15 +2319,15 @@ sub req_annotate
 
         next unless ( $meta->{revision} );
 
-	# get all the commits that this file was in
+	# get all the cummits that this file was in
 	# in dense format -- aka skip dead revisions
         my $revisions   = $updater->gethistorydense($filename);
 	my $lastseenin  = $revisions->[0][2];
 
-	# populate the temporary index based on the latest commit were we saw
+	# populate the temporary index based on the latest cummit were we saw
 	# the file -- but do it cheaply without checking out any files
 	# TODO: if we got a revision from the client, use that instead
-	# to look up the commithash in sqlite (still good to default to
+	# to look up the cummithash in sqlite (still good to default to
 	# the current head as we do now)
 	system("git", "read-tree", $lastseenin);
 	unless ($? == 0)
@@ -2335,7 +2335,7 @@ sub req_annotate
 	    print "E error running git-read-tree $lastseenin $ENV{GIT_INDEX_FILE} $!\n";
 	    return;
 	}
-	$log->info("Created index '$ENV{GIT_INDEX_FILE}' with commit $lastseenin - exit status $?");
+	$log->info("Created index '$ENV{GIT_INDEX_FILE}' with cummit $lastseenin - exit status $?");
 
         # do a checkout of the file
         system('git', 'checkout-index', '-f', '-u', $filename);
@@ -2346,9 +2346,9 @@ sub req_annotate
 
         $log->info("Annotate $filename");
 
-        # Prepare a file with the commits from the linearized
+        # Prepare a file with the cummits from the linearized
         # history that annotate should know about. This prevents
-        # git-jsannotate telling us about commits we are hiding
+        # git-jsannotate telling us about cummits we are hiding
         # from the client.
 
         my $a_hints = "$work->{workDir}/.annotate_hints";
@@ -2381,18 +2381,18 @@ sub req_annotate
         {
             if (m/^([a-zA-Z0-9]{$state->{hexsz}})\t\([^\)]*\)(.*)$/i)
             {
-                my $commithash = $1;
+                my $cummithash = $1;
                 my $data = $2;
-                unless ( defined ( $metadata->{$commithash} ) )
+                unless ( defined ( $metadata->{$cummithash} ) )
                 {
-                    $metadata->{$commithash} = $updater->getmeta($filename, $commithash);
-                    $metadata->{$commithash}{author} = cvs_author($metadata->{$commithash}{author});
-                    $metadata->{$commithash}{modified} = sprintf("%02d-%s-%02d", $1, $2, $3) if ( $metadata->{$commithash}{modified} =~ /^(\d+)\s(\w+)\s\d\d(\d\d)/ );
+                    $metadata->{$cummithash} = $updater->getmeta($filename, $cummithash);
+                    $metadata->{$cummithash}{author} = cvs_author($metadata->{$cummithash}{author});
+                    $metadata->{$cummithash}{modified} = sprintf("%02d-%s-%02d", $1, $2, $3) if ( $metadata->{$cummithash}{modified} =~ /^(\d+)\s(\w+)\s\d\d(\d\d)/ );
                 }
                 printf("M %-7s      (%-8s %10s): %s\n",
-                    $metadata->{$commithash}{revision},
-                    $metadata->{$commithash}{author},
-                    $metadata->{$commithash}{modified},
+                    $metadata->{$cummithash}{revision},
+                    $metadata->{$cummithash}{author},
+                    $metadata->{$cummithash}{modified},
                     $data
                 );
             } else {
@@ -2830,7 +2830,7 @@ sub statecleanup
 # Return working directory CVS revision "1.X" out
 # of the working directory "entries" state, for the given filename.
 # This is prefixed with a dash if the file is scheduled for removal
-# when it is committed.
+# when it is cummitted.
 sub revparse
 {
     my $filename = shift;
@@ -3653,7 +3653,7 @@ sub new
                              'head' => 1,
                              'head_ix1' => 1,
                              'properties' => 1,
-                             'commitmsgs' => 1};
+                             'cummitmsgs' => 1};
 
     $self->{module} = $module;
     $self->{git_path} = $config . "/";
@@ -3663,7 +3663,7 @@ sub new
     die "Git repo '$self->{git_path}' doesn't exist" unless ( -d $self->{git_path} );
 
     # Stores full sha1's for various branch/tag names, abbreviations, etc:
-    $self->{commitRefCache} = {};
+    $self->{cummitRefCache} = {};
 
     $self->{dbdriver} = $cfg->{gitcvs}{$state->{method}}{dbdriver} ||
         $cfg->{gitcvs}{dbdriver} || "SQLite";
@@ -3705,9 +3705,9 @@ sub new
     # Construct the revision table if required
     # The revision table stores an entry for each file, each time that file
     # changes.
-    #   numberOfRecords = O( numCommits * averageNumChangedFilesPerCommit )
-    # This is not sufficient to support "-r {commithash}" for any
-    # files except files that were modified by that commit (also,
+    #   numberOfRecords = O( numcummits * averageNumChangedFilesPercummit )
+    # This is not sufficient to support "-r {cummithash}" for any
+    # files except files that were modified by that cummit (also,
     # some places in the code ignore/effectively strip out -r in
     # some cases, before it gets passed to getmeta()).
     # The "filehash" field typically has a git blob hash, but can also
@@ -3723,7 +3723,7 @@ sub new
                 name       TEXT NOT NULL,
                 revision   INTEGER NOT NULL,
                 filehash   TEXT NOT NULL,
-                commithash TEXT NOT NULL,
+                cummithash TEXT NOT NULL,
                 author     TEXT NOT NULL,
                 modified   TEXT NOT NULL,
                 mode       TEXT NOT NULL
@@ -3735,12 +3735,12 @@ sub new
         ");
         $self->{dbh}->do("
             CREATE INDEX $ix2name
-            ON $tablename (name,commithash)
+            ON $tablename (name,cummithash)
         ");
     }
 
     # Construct the head table if required
-    # The head table (along with the "last_commit" entry in the property
+    # The head table (along with the "last_cummit" entry in the property
     # table) is the persisted working state of the "sub update" subroutine.
     # All of it's data is read entirely first, and completely recreated
     # last, every time "sub update" runs.
@@ -3758,7 +3758,7 @@ sub new
                 name       TEXT NOT NULL,
                 revision   INTEGER NOT NULL,
                 filehash   TEXT NOT NULL,
-                commithash TEXT NOT NULL,
+                cummithash TEXT NOT NULL,
                 author     TEXT NOT NULL,
                 modified   TEXT NOT NULL,
                 mode       TEXT NOT NULL
@@ -3771,7 +3771,7 @@ sub new
     }
 
     # Construct the properties table if required
-    #  - "last_commit" - Used by "sub update".
+    #  - "last_cummit" - Used by "sub update".
     unless ( $self->{tables}{$self->tablename("properties")} )
     {
         my $tablename = $self->tablename("properties");
@@ -3783,15 +3783,15 @@ sub new
         ");
     }
 
-    # Construct the commitmsgs table if required
-    # The commitmsgs table is only used for merge commits, since
+    # Construct the cummitmsgs table if required
+    # The cummitmsgs table is only used for merge cummits, since
     # "sub update" will only keep one branch of parents.  Shortlogs
-    # for ignored commits (i.e. not on the chosen branch) will be used
-    # to construct a replacement "collapsed" merge commit message,
-    # which will be stored in this table.  See also "sub commitmessage".
-    unless ( $self->{tables}{$self->tablename("commitmsgs")} )
+    # for ignored cummits (i.e. not on the chosen branch) will be used
+    # to construct a replacement "collapsed" merge cummit message,
+    # which will be stored in this table.  See also "sub cummitmessage".
+    unless ( $self->{tables}{$self->tablename("cummitmsgs")} )
     {
-        my $tablename = $self->tablename("commitmsgs");
+        my $tablename = $self->tablename("cummitmsgs");
         $self->{dbh}->do("
             CREATE TABLE $tablename (
                 key        TEXT NOT NULL PRIMARY KEY,
@@ -3824,7 +3824,7 @@ Bring the database up to date with the latest changes from
 the git repository.
 
 Internal working state is read out of the "head" table and the
-"last_commit" property, then it updates "revisions" based on that, and
+"last_cummit" property, then it updates "revisions" based on that, and
 finally it writes the new internal state back to the "head" table
 so it can be used as a starting point the next time update is called.
 
@@ -3833,25 +3833,25 @@ sub update
 {
     my $self = shift;
 
-    # first lets get the commit list
+    # first lets get the cummit list
     $ENV{GIT_DIR} = $self->{git_path};
 
     my $commitsha1 = ::safe_pipe_capture('git', 'rev-parse', $self->{module});
     chomp $commitsha1;
 
-    my $commitinfo = ::safe_pipe_capture('git', 'cat-file', 'commit', $self->{module});
-    unless ( $commitinfo =~ /tree\s+[a-zA-Z0-9]{$state->{hexsz}}/ )
+    my $cummitinfo = ::safe_pipe_capture('git', 'cat-file', 'cummit', $self->{module});
+    unless ( $cummitinfo =~ /tree\s+[a-zA-Z0-9]{$state->{hexsz}}/ )
     {
         die("Invalid module '$self->{module}'");
     }
 
 
     my $git_log;
-    my $lastcommit = $self->_get_prop("last_commit");
+    my $lastcummit = $self->_get_prop("last_cummit");
 
-    if (defined $lastcommit && $lastcommit eq $commitsha1) { # up-to-date
+    if (defined $lastcummit && $lastcummit eq $commitsha1) { # up-to-date
          # invalidate the gethead cache
-         $self->clearCommitRefCaches();
+         $self->clearcummitRefCaches();
          return 1;
     }
 
@@ -3863,31 +3863,31 @@ sub update
     # we can probably do something really efficient
     my @git_log_params = ('--pretty', '--parents', '--topo-order');
 
-    if (defined $lastcommit) {
-        push @git_log_params, "$lastcommit..$self->{module}";
+    if (defined $lastcummit) {
+        push @git_log_params, "$lastcummit..$self->{module}";
     } else {
         push @git_log_params, $self->{module};
     }
     # git-rev-list is the backend / plumbing version of git-log
     open(my $gitLogPipe, '-|', 'git', 'rev-list', @git_log_params)
                 or die "Cannot call git-rev-list: $!";
-    my @commits=readCommits($gitLogPipe);
+    my @cummits=readcummits($gitLogPipe);
     close $gitLogPipe;
 
-    # Now all the commits are in the @commits bucket
-    # ordered by time DESC. for each commit that needs processing,
+    # Now all the cummits are in the @cummits bucket
+    # ordered by time DESC. for each cummit that needs processing,
     # determine whether it's following the last head we've seen or if
     # it's on its own branch, grab a file list, and add whatever's changed
-    # NOTE: $lastcommit refers to the last commit from previous run
-    #       $lastpicked is the last commit we picked in this run
+    # NOTE: $lastcummit refers to the last cummit from previous run
+    #       $lastpicked is the last cummit we picked in this run
     my $lastpicked;
     my $head = {};
-    if (defined $lastcommit) {
-        $lastpicked = $lastcommit;
+    if (defined $lastcummit) {
+        $lastpicked = $lastcummit;
     }
 
-    my $committotal = scalar(@commits);
-    my $commitcount = 0;
+    my $cummittotal = scalar(@cummits);
+    my $cummitcount = 0;
 
     # Load the head table into $head (for cached lookups during the update process)
     foreach my $file ( @{$self->gethead(1)} )
@@ -3895,24 +3895,24 @@ sub update
         $head->{$file->{name}} = $file;
     }
 
-    foreach my $commit ( @commits )
+    foreach my $cummit ( @cummits )
     {
-        $self->{log}->debug("GITCVS::updater - Processing commit $commit->{hash} (" . (++$commitcount) . " of $committotal)");
+        $self->{log}->debug("GITCVS::updater - Processing cummit $cummit->{hash} (" . (++$cummitcount) . " of $cummittotal)");
         if (defined $lastpicked)
         {
-            if (!in_array($lastpicked, @{$commit->{parents}}))
+            if (!in_array($lastpicked, @{$cummit->{parents}}))
             {
                 # skip, we'll see this delta
                 # as part of a merge later
-                # warn "skipping off-track  $commit->{hash}\n";
+                # warn "skipping off-track  $cummit->{hash}\n";
                 next;
-            } elsif (@{$commit->{parents}} > 1) {
-                # it is a merge commit, for each parent that is
+            } elsif (@{$cummit->{parents}} > 1) {
+                # it is a merge cummit, for each parent that is
                 # not $lastpicked (not given a CVS revision number),
                 # see if we can get a log
                 # from the merge-base to that parent to put it
                 # in the message as a merge summary.
-                my @parents = @{$commit->{parents}};
+                my @parents = @{$cummit->{parents}};
                 foreach my $parent (@parents) {
                     if ($parent eq $lastpicked) {
                         next;
@@ -3939,7 +3939,7 @@ sub update
                         while (<GITLOG>) {
                             chomp;
                             if (!defined $mergedhash) {
-                                if (m/^commit\s+(.+)$/) {
+                                if (m/^cummit\s+(.+)$/) {
                                     $mergedhash = $1;
                                 } else {
                                     next;
@@ -3957,13 +3957,13 @@ sub update
                         }
                         close GITLOG;
                         if (@merged) {
-                            $commit->{mergemsg} = $commit->{message};
-                            $commit->{mergemsg} .= "\nSummary of merged commits:\n\n";
+                            $cummit->{mergemsg} = $cummit->{message};
+                            $cummit->{mergemsg} .= "\nSummary of merged cummits:\n\n";
                             foreach my $summary (@merged) {
-                                $commit->{mergemsg} .= "\t$summary\n";
+                                $cummit->{mergemsg} .= "\t$summary\n";
                             }
-                            $commit->{mergemsg} .= "\n\n";
-                            # print "Message for $commit->{hash} \n$commit->{mergemsg}";
+                            $cummit->{mergemsg} .= "\n\n";
+                            # print "Message for $cummit->{hash} \n$cummit->{mergemsg}";
                         }
                     }
                 }
@@ -3971,11 +3971,11 @@ sub update
         }
 
         # convert the date to CVS-happy format
-        my $cvsDate = convertToCvsDate($commit->{date});
+        my $cvsDate = convertToCvsDate($cummit->{date});
 
         if ( defined ( $lastpicked ) )
         {
-            my $filepipe = open(FILELIST, '-|', 'git', 'diff-tree', '-z', '-r', $lastpicked, $commit->{hash}) or die("Cannot call git-diff-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'git', 'diff-tree', '-z', '-r', $lastpicked, $cummit->{hash}) or die("Cannot call git-diff-tree : $!");
 	    local ($/) = "\0";
             while ( <FILELIST> )
             {
@@ -3999,12 +3999,12 @@ sub update
                         name => $name,
                         revision => $head->{$name}{revision} + 1,
                         filehash => "deleted",
-                        commithash => $commit->{hash},
+                        cummithash => $cummit->{hash},
                         modified => $cvsDate,
-                        author => $commit->{author},
+                        author => $cummit->{author},
                         mode => $dbMode,
                     };
-                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $cvsDate, $commit->{author}, $dbMode);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $cummit->{hash}, $cvsDate, $cummit->{author}, $dbMode);
                 }
                 elsif ( $change eq "M" || $change eq "T" )
                 {
@@ -4013,12 +4013,12 @@ sub update
                         name => $name,
                         revision => $head->{$name}{revision} + 1,
                         filehash => $hash,
-                        commithash => $commit->{hash},
+                        cummithash => $cummit->{hash},
                         modified => $cvsDate,
-                        author => $commit->{author},
+                        author => $cummit->{author},
                         mode => $dbMode,
                     };
-                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $cvsDate, $commit->{author}, $dbMode);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $cummit->{hash}, $cvsDate, $cummit->{author}, $dbMode);
                 }
                 elsif ( $change eq "A" )
                 {
@@ -4027,12 +4027,12 @@ sub update
                         name => $name,
                         revision => $head->{$name}{revision} ? $head->{$name}{revision}+1 : 1,
                         filehash => $hash,
-                        commithash => $commit->{hash},
+                        cummithash => $cummit->{hash},
                         modified => $cvsDate,
-                        author => $commit->{author},
+                        author => $cummit->{author},
                         mode => $dbMode,
                     };
-                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $commit->{hash}, $cvsDate, $commit->{author}, $dbMode);
+                    $self->insert_rev($name, $head->{$name}{revision}, $hash, $cummit->{hash}, $cvsDate, $cummit->{author}, $dbMode);
                 }
                 else
                 {
@@ -4045,7 +4045,7 @@ sub update
             # this is used to detect files removed from the repo
             my $seen_files = {};
 
-            my $filepipe = open(FILELIST, '-|', 'git', 'ls-tree', '-z', '-r', $commit->{hash}) or die("Cannot call git-ls-tree : $!");
+            my $filepipe = open(FILELIST, '-|', 'git', 'ls-tree', '-z', '-r', $cummit->{hash}) or die("Cannot call git-ls-tree : $!");
 	    local $/ = "\0";
             while ( <FILELIST> )
             {
@@ -4076,14 +4076,14 @@ sub update
                         name => $git_filename,
                         revision => $newrevision,
                         filehash => $git_hash,
-                        commithash => $commit->{hash},
+                        cummithash => $cummit->{hash},
                         modified => $cvsDate,
-                        author => $commit->{author},
+                        author => $cummit->{author},
                         mode => $dbMode,
                     };
 
 
-                    $self->insert_rev($git_filename, $newrevision, $git_hash, $commit->{hash}, $cvsDate, $commit->{author}, $dbMode);
+                    $self->insert_rev($git_filename, $newrevision, $git_hash, $cummit->{hash}, $cvsDate, $cummit->{author}, $dbMode);
                 }
             }
             close FILELIST;
@@ -4095,25 +4095,25 @@ sub update
                 {
                     $head->{$file}{revision}++;
                     $head->{$file}{filehash} = "deleted";
-                    $head->{$file}{commithash} = $commit->{hash};
+                    $head->{$file}{cummithash} = $cummit->{hash};
                     $head->{$file}{modified} = $cvsDate;
-                    $head->{$file}{author} = $commit->{author};
+                    $head->{$file}{author} = $cummit->{author};
 
-                    $self->insert_rev($file, $head->{$file}{revision}, $head->{$file}{filehash}, $commit->{hash}, $cvsDate, $commit->{author}, $head->{$file}{mode});
+                    $self->insert_rev($file, $head->{$file}{revision}, $head->{$file}{filehash}, $cummit->{hash}, $cvsDate, $cummit->{author}, $head->{$file}{mode});
                 }
             }
             # END : "Detect deleted files"
         }
 
 
-        if (exists $commit->{mergemsg})
+        if (exists $cummit->{mergemsg})
         {
-            $self->insert_mergelog($commit->{hash}, $commit->{mergemsg});
+            $self->insert_mergelog($cummit->{hash}, $cummit->{mergemsg});
         }
 
-        $lastpicked = $commit->{hash};
+        $lastpicked = $cummit->{hash};
 
-        $self->_set_prop("last_commit", $commit->{hash});
+        $self->_set_prop("last_cummit", $cummit->{hash});
     }
 
     $self->delete_head();
@@ -4123,61 +4123,61 @@ sub update
             $file,
             $head->{$file}{revision},
             $head->{$file}{filehash},
-            $head->{$file}{commithash},
+            $head->{$file}{cummithash},
             $head->{$file}{modified},
             $head->{$file}{author},
             $head->{$file}{mode},
         );
     }
     # invalidate the gethead cache
-    $self->clearCommitRefCaches();
+    $self->clearcummitRefCaches();
 
 
     # Ending exclusive lock here
-    $self->{dbh}->commit() or die "Failed to commit changes to SQLite";
+    $self->{dbh}->cummit() or die "Failed to cummit changes to SQLite";
 }
 
-sub readCommits
+sub readcummits
 {
     my $pipeHandle = shift;
-    my @commits;
+    my @cummits;
 
-    my %commit = ();
+    my %cummit = ();
 
     while ( <$pipeHandle> )
     {
         chomp;
-        if (m/^commit\s+(.*)$/) {
-            # on ^commit lines put the just seen commit in the stack
+        if (m/^cummit\s+(.*)$/) {
+            # on ^cummit lines put the just seen cummit in the stack
             # and prime things for the next one
-            if (keys %commit) {
-                my %copy = %commit;
-                unshift @commits, \%copy;
-                %commit = ();
+            if (keys %cummit) {
+                my %copy = %cummit;
+                unshift @cummits, \%copy;
+                %cummit = ();
             }
             my @parents = split(m/\s+/, $1);
             $commit{hash} = shift @parents;
-            $commit{parents} = \@parents;
-        } elsif (m/^(\w+?):\s+(.*)$/ && !exists($commit{message})) {
+            $cummit{parents} = \@parents;
+        } elsif (m/^(\w+?):\s+(.*)$/ && !exists($cummit{message})) {
             # on rfc822-like lines seen before we see any message,
             # lowercase the entry and put it in the hash as key-value
-            $commit{lc($1)} = $2;
+            $cummit{lc($1)} = $2;
         } else {
             # message lines - skip initial empty line
             # and trim whitespace
-            if (!exists($commit{message}) && m/^\s*$/) {
+            if (!exists($cummit{message}) && m/^\s*$/) {
                 # define it to mark the end of headers
-                $commit{message} = '';
+                $cummit{message} = '';
                 next;
             }
             s/^\s+//; s/\s+$//; # trim ws
-            $commit{message} .= $_ . "\n";
+            $cummit{message} .= $_ . "\n";
         }
     }
 
-    unshift @commits, \%commit if ( keys %commit );
+    unshift @cummits, \%cummit if ( keys %cummit );
 
-    return @commits;
+    return @cummits;
 }
 
 sub convertToCvsDate
@@ -4224,14 +4224,14 @@ sub insert_rev
     my $name = shift;
     my $revision = shift;
     my $filehash = shift;
-    my $commithash = shift;
+    my $cummithash = shift;
     my $modified = shift;
     my $author = shift;
     my $mode = shift;
     my $tablename = $self->tablename("revision");
 
-    my $insert_rev = $self->{dbh}->prepare_cached("INSERT INTO $tablename (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
-    $insert_rev->execute($name, $revision, $filehash, $commithash, $modified, $author, $mode);
+    my $insert_rev = $self->{dbh}->prepare_cached("INSERT INTO $tablename (name, revision, filehash, cummithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
+    $insert_rev->execute($name, $revision, $filehash, $cummithash, $modified, $author, $mode);
 }
 
 sub insert_mergelog
@@ -4239,7 +4239,7 @@ sub insert_mergelog
     my $self = shift;
     my $key = shift;
     my $value = shift;
-    my $tablename = $self->tablename("commitmsgs");
+    my $tablename = $self->tablename("cummitmsgs");
 
     my $insert_mergelog = $self->{dbh}->prepare_cached("INSERT INTO $tablename (key, value) VALUES (?,?)",{},1);
     $insert_mergelog->execute($key, $value);
@@ -4260,14 +4260,14 @@ sub insert_head
     my $name = shift;
     my $revision = shift;
     my $filehash = shift;
-    my $commithash = shift;
+    my $cummithash = shift;
     my $modified = shift;
     my $author = shift;
     my $mode = shift;
     my $tablename = $self->tablename("head");
 
-    my $insert_head = $self->{dbh}->prepare_cached("INSERT INTO $tablename (name, revision, filehash, commithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
-    $insert_head->execute($name, $revision, $filehash, $commithash, $modified, $author, $mode);
+    my $insert_head = $self->{dbh}->prepare_cached("INSERT INTO $tablename (name, revision, filehash, cummithash, modified, author, mode) VALUES (?,?,?,?,?,?,?)",{},1);
+    $insert_head->execute($name, $revision, $filehash, $cummithash, $modified, $author, $mode);
 }
 
 sub _get_prop
@@ -4314,7 +4314,7 @@ sub gethead
 
     return $self->{gethead_cache} if ( defined ( $self->{gethead_cache} ) );
 
-    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, mode, revision, modified, commithash, author FROM $tablename ORDER BY name ASC",{},1);
+    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, mode, revision, modified, cummithash, author FROM $tablename ORDER BY name ASC",{},1);
     $db_query->execute();
 
     my $tree = [];
@@ -4368,7 +4368,7 @@ sub getAnyHead
         }
 
         my($mode, $git_type, $git_hash, $git_filename) = ($1, $2, $3, $4);
-        push @$tree, $self->getMetaFromCommithash($git_filename,$hash);
+        push @$tree, $self->getMetaFromcummithash($git_filename,$hash);
     }
 
     return $tree;
@@ -4417,7 +4417,7 @@ sub getRevisionDirMap
     }
     else
     {
-        my ($hash)=$self->lookupCommitRef($ver);
+        my ($hash)=$self->lookupcummitRef($ver);
         if( !defined($hash) )
         {
             return undef;
@@ -4526,7 +4526,7 @@ sub getlog
         $minrev++ if ( defined($minrev) and $control eq "::" );
     }
 
-    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, author, mode, revision, modified, commithash FROM $tablename WHERE name=? ORDER BY revision DESC",{},1);
+    my $db_query = $self->{dbh}->prepare_cached("SELECT name, filehash, author, mode, revision, modified, cummithash FROM $tablename WHERE name=? ORDER BY revision DESC",{},1);
     $db_query->execute($filename);
 
     my $totalRevs=0;
@@ -4565,7 +4565,7 @@ There are several ways $revision can be specified:
      "1." prefix),
    - Complex CVS-compatible "special" revision number for
      non-linear history (see comment below)
-   - git commit sha1 hash
+   - git cummit sha1 hash
    - branch or tag name
 
 =cut
@@ -4601,7 +4601,7 @@ sub getmeta
     #   - Odd "n"s are used by "vendor branches" that result
     #     from "cvs import".  Vendor branches have additional
     #     strangeness in the sense that the main rcs "head" of the main
-    #     branch will (temporarily until first normal commit) point
+    #     branch will (temporarily until first normal cummit) point
     #     to the version on the vendor branch, rather than the actual
     #     main branch.  (FUTURE: This may provide an opportunity
     #     to use "strange" revision numbers for fast-forward-merged
@@ -4617,7 +4617,7 @@ sub getmeta
     #   - To handle non-linear history, it uses a version of the form
     #     "2.1.1.2000.b.b.b."..., where the 2.1.1.2000 is to help uniquely
     #     identify this as a special revision number, and there are
-    #     20 b's that together encode the sha1 git commit from which
+    #     20 b's that together encode the sha1 git cummit from which
     #     this version of this file originated.  Each b is
     #     the numerical value of the corresponding byte plus
     #     100.
@@ -4650,16 +4650,16 @@ sub getmeta
         }
         elsif ( $revision =~ /^2\.1\.1\.2000(\.[1-3][0-9][0-9]){$state->{rawsz}}$/ )
         {
-            my ($commitHash)=($revision=~/^2\.1\.1\.2000(.*)$/);
-            $commitHash=~s/\.([0-9]+)/sprintf("%02x",$1-100)/eg;
-            if($commitHash=~/^[0-9a-f]{$state->{hexsz}}$/)
+            my ($cummitHash)=($revision=~/^2\.1\.1\.2000(.*)$/);
+            $cummitHash=~s/\.([0-9]+)/sprintf("%02x",$1-100)/eg;
+            if($cummitHash=~/^[0-9a-f]{$state->{hexsz}}$/)
             {
-                return $self->getMetaFromCommithash($filename,$commitHash);
+                return $self->getMetaFromcummithash($filename,$cummitHash);
             }
 
             # error recovery: fall back on head version below
-            print "E Failed to find $filename version=$revision or commit=$commitHash\n";
-            $log->warning("failed get $revision with commithash=$commitHash");
+            print "E Failed to find $filename version=$revision or cummit=$cummitHash\n";
+            $log->warning("failed get $revision with cummithash=$cummitHash");
             undef $revision;
         }
         elsif ( $revision =~ /^[0-9a-f]{$state->{hexsz}}$/ )
@@ -4670,20 +4670,20 @@ sub getmeta
             # in most other cases [unless the file happened to be
             # modified in $revision specifically], but
             # it is probably in the noise compared to how long
-            # getMetaFromCommithash() will take.
+            # getMetaFromcummithash() will take.
             my $db_query;
             $db_query = $self->{dbh}->prepare_cached(
-                "SELECT * FROM $tablename_rev WHERE name=? AND commithash=?",
+                "SELECT * FROM $tablename_rev WHERE name=? AND cummithash=?",
                 {},1);
             $db_query->execute($filename, $revision);
             $meta = $db_query->fetchrow_hashref;
 
             if(! $meta)
             {
-                my($revCommit)=$self->lookupCommitRef($revision);
-                if($revCommit=~/^[0-9a-f]{$state->{hexsz}}$/)
+                my($revcummit)=$self->lookupcummitRef($revision);
+                if($revcummit=~/^[0-9a-f]{$state->{hexsz}}$/)
                 {
-                    return $self->getMetaFromCommithash($filename,$revCommit);
+                    return $self->getMetaFromcummithash($filename,$revcummit);
                 }
 
                 # error recovery: nothing found:
@@ -4694,10 +4694,10 @@ sub getmeta
         }
         else
         {
-            my($revCommit)=$self->lookupCommitRef($revision);
-            if($revCommit=~/^[0-9a-f]{$state->{hexsz}}$/)
+            my($revcummit)=$self->lookupcummitRef($revision);
+            if($revcummit=~/^[0-9a-f]{$state->{hexsz}}$/)
             {
-                return $self->getMetaFromCommithash($filename,$revCommit);
+                return $self->getMetaFromcummithash($filename,$revcummit);
             }
 
             # error recovery: fall back on head version below
@@ -4723,14 +4723,14 @@ sub getmeta
     return $meta;
 }
 
-sub getMetaFromCommithash
+sub getMetaFromcummithash
 {
     my $self = shift;
     my $filename = shift;
-    my $revCommit = shift;
+    my $revcummit = shift;
 
     # NOTE: This function doesn't scale well (lots of forks), especially
-    #   if you have many files that have not been modified for many commits
+    #   if you have many files that have not been modified for many cummits
     #   (each git-rev-parse redoes a lot of work for each file
     #   that theoretically could be done in parallel by smarter
     #   graph traversal).
@@ -4741,29 +4741,29 @@ sub getMetaFromCommithash
     #     data structure can do this efficiently.  Perhaps something
     #     similar to "git notes", and carefully structured to take
     #     advantage same-sha1-is-same-contents, to roll the same
-    #     unmodified subdirectory data onto multiple commits?
+    #     unmodified subdirectory data onto multiple cummits?
     #   - Write and use a C tool that is like git-blame, but
     #     operates on multiple files with file granularity, instead
     #     of one file with line granularity.  Cache
-    #     most-recently-modified in $self->{commitRefCache}{$revCommit}.
+    #     most-recently-modified in $self->{cummitRefCache}{$revcummit}.
     #     Try to be intelligent about how many files we do with
     #     one fork (perhaps one directory at a time, without recursion,
     #     and/or include directory as one line item, recurse from here
     #     instead of in C tool?).
     #   - Perhaps we could ask the DB for (filename,fileHash),
     #     and just guess that it is correct (that the file hadn't
-    #     changed between $revCommit and the found commit, then
+    #     changed between $revcummit and the found cummit, then
     #     changed back, confusing anything trying to interpret
     #     history).  Probably need to add another index to revisions
     #     DB table for this.
-    #   - NOTE: Trying to store all (commit,file) keys in DB [to
-    #     find "lastModfiedCommit] (instead of
-    #     just files that changed in each commit as we do now) is
+    #   - NOTE: Trying to store all (cummit,file) keys in DB [to
+    #     find "lastModfiedcummit] (instead of
+    #     just files that changed in each cummit as we do now) is
     #     probably not practical from a disk space perspective.
 
-        # Does the file exist in $revCommit?
+        # Does the file exist in $revcummit?
     # TODO: Include file hash in dirmap cache.
-    my($dirMap)=$self->getRevisionDirMap($revCommit);
+    my($dirMap)=$self->getRevisionDirMap($revcummit);
     my($dir,$file)=($filename=~m%^(?:(.*)/)?([^/]*$)%);
     if(!defined($dir))
     {
@@ -4780,46 +4780,46 @@ sub getMetaFromCommithash
 
             # not needed and difficult to compute:
         $retVal->{revision}="0";  # $revision;
-        $retVal->{commithash}=$revCommit;
-        #$retVal->{author}=$commit->{author};
-        #$retVal->{modified}=convertToCvsDate($commit->{date});
+        $retVal->{cummithash}=$revcummit;
+        #$retVal->{author}=$cummit->{author};
+        #$retVal->{modified}=convertToCvsDate($cummit->{date});
         #$retVal->{mode}=convertToDbMode($mode);
 
         return $retVal;
     }
 
-    my($fileHash) = ::safe_pipe_capture("git","rev-parse","$revCommit:$filename");
+    my($fileHash) = ::safe_pipe_capture("git","rev-parse","$revcummit:$filename");
     chomp $fileHash;
     if(!($fileHash=~/^[0-9a-f]{$state->{hexsz}}$/))
     {
         die "Invalid fileHash '$fileHash' looking up"
-                    ." '$revCommit:$filename'\n";
+                    ." '$revcummit:$filename'\n";
     }
 
-    # information about most recent commit to modify $filename:
+    # information about most recent cummit to modify $filename:
     open(my $gitLogPipe, '-|', 'git', 'rev-list',
          '--max-count=1', '--pretty', '--parents',
-         $revCommit, '--', $filename)
+         $revcummit, '--', $filename)
                 or die "Cannot call git-rev-list: $!";
-    my @commits=readCommits($gitLogPipe);
+    my @cummits=readcummits($gitLogPipe);
     close $gitLogPipe;
-    if(scalar(@commits)!=1)
+    if(scalar(@cummits)!=1)
     {
-        die "Can't find most recent commit changing $filename\n";
+        die "Can't find most recent cummit changing $filename\n";
     }
-    my($commit)=$commits[0];
-    if( !defined($commit) || !defined($commit->{hash}) )
+    my($cummit)=$cummits[0];
+    if( !defined($cummit) || !defined($cummit->{hash}) )
     {
         return undef;
     }
 
-    # does this (commit,file) have a real assigned CVS revision number?
+    # does this (cummit,file) have a real assigned CVS revision number?
     my $tablename_rev = $self->tablename("revision");
     my $db_query;
     $db_query = $self->{dbh}->prepare_cached(
-        "SELECT * FROM $tablename_rev WHERE name=? AND commithash=?",
+        "SELECT * FROM $tablename_rev WHERE name=? AND cummithash=?",
         {},1);
-    $db_query->execute($filename, $commit->{hash});
+    $db_query->execute($filename, $cummit->{hash});
     my($meta)=$db_query->fetchrow_hashref;
     if($meta)
     {
@@ -4828,13 +4828,13 @@ sub getMetaFromCommithash
     }
 
     # fall back on special revision number
-    my($revision)=$commit->{hash};
+    my($revision)=$cummit->{hash};
     $revision=~s/(..)/'.' . (hex($1)+100)/eg;
     $revision="2.1.1.2000$revision";
 
     # meta data about $filename:
     open(my $filePipe, '-|', 'git', 'ls-tree', '-z',
-                $commit->{hash}, '--', $filename)
+                $cummit->{hash}, '--', $filename)
             or die("Cannot call git-ls-tree : $!");
     local $/ = "\0";
     my $line;
@@ -4857,86 +4857,86 @@ sub getMetaFromCommithash
     $retVal->{name}=$filename;
     $retVal->{revision}=$revision;
     $retVal->{filehash}=$fileHash;
-    $retVal->{commithash}=$revCommit;
-    $retVal->{author}=$commit->{author};
-    $retVal->{modified}=convertToCvsDate($commit->{date});
+    $retVal->{cummithash}=$revcummit;
+    $retVal->{author}=$cummit->{author};
+    $retVal->{modified}=convertToCvsDate($cummit->{date});
     $retVal->{mode}=convertToDbMode($mode);
 
     return $retVal;
 }
 
-=head2 lookupCommitRef
+=head2 lookupcummitRef
 
-Convert tag/branch/abbreviation/etc into a commit sha1 hash.  Caches
+Convert tag/branch/abbreviation/etc into a cummit sha1 hash.  Caches
 the result so looking it up again is fast.
 
 =cut
 
-sub lookupCommitRef
+sub lookupcummitRef
 {
     my $self = shift;
     my $ref = shift;
 
-    my $commitHash = $self->{commitRefCache}{$ref};
-    if(defined($commitHash))
+    my $cummitHash = $self->{cummitRefCache}{$ref};
+    if(defined($cummitHash))
     {
-        return $commitHash;
+        return $cummitHash;
     }
 
-    $commitHash = ::safe_pipe_capture("git","rev-parse","--verify","--quiet",
+    $cummitHash = ::safe_pipe_capture("git","rev-parse","--verify","--quiet",
 				      $self->unescapeRefName($ref));
-    $commitHash=~s/\s*$//;
-    if(!($commitHash=~/^[0-9a-f]{$state->{hexsz}}$/))
+    $cummitHash=~s/\s*$//;
+    if(!($cummitHash=~/^[0-9a-f]{$state->{hexsz}}$/))
     {
-        $commitHash=undef;
+        $cummitHash=undef;
     }
 
-    if( defined($commitHash) )
+    if( defined($cummitHash) )
     {
-        my $type = ::safe_pipe_capture("git","cat-file","-t",$commitHash);
-        if( ! ($type=~/^commit\s*$/ ) )
+        my $type = ::safe_pipe_capture("git","cat-file","-t",$cummitHash);
+        if( ! ($type=~/^cummit\s*$/ ) )
         {
-            $commitHash=undef;
+            $cummitHash=undef;
         }
     }
-    if(defined($commitHash))
+    if(defined($cummitHash))
     {
-        $self->{commitRefCache}{$ref}=$commitHash;
+        $self->{cummitRefCache}{$ref}=$cummitHash;
     }
-    return $commitHash;
+    return $cummitHash;
 }
 
-=head2 clearCommitRefCaches
+=head2 clearcummitRefCaches
 
-Clears cached commit cache (sha1's for various tags/abbeviations/etc),
+Clears cached cummit cache (sha1's for various tags/abbeviations/etc),
 and related caches.
 
 =cut
 
-sub clearCommitRefCaches
+sub clearcummitRefCaches
 {
     my $self = shift;
-    $self->{commitRefCache} = {};
+    $self->{cummitRefCache} = {};
     $self->{revisionDirMapCache} = undef;
     $self->{gethead_cache} = undef;
 }
 
-=head2 commitmessage
+=head2 cummitmessage
 
-this function takes a commithash and returns the commit message for that commit
+this function takes a cummithash and returns the cummit message for that cummit
 
 =cut
-sub commitmessage
+sub cummitmessage
 {
     my $self = shift;
-    my $commithash = shift;
-    my $tablename = $self->tablename("commitmsgs");
+    my $cummithash = shift;
+    my $tablename = $self->tablename("cummitmsgs");
 
-    die("Need commithash") unless ( defined($commithash) and $commithash =~ /^[a-zA-Z0-9]{$state->{hexsz}}$/ );
+    die("Need cummithash") unless ( defined($cummithash) and $cummithash =~ /^[a-zA-Z0-9]{$state->{hexsz}}$/ );
 
     my $db_query;
     $db_query = $self->{dbh}->prepare_cached("SELECT value FROM $tablename WHERE key=?",{},1);
-    $db_query->execute($commithash);
+    $db_query->execute($cummithash);
 
     my ( $message ) = $db_query->fetchrow_array;
 
@@ -4946,7 +4946,7 @@ sub commitmessage
         return $message;
     }
 
-    my @lines = ::safe_pipe_capture("git", "cat-file", "commit", $commithash);
+    my @lines = ::safe_pipe_capture("git", "cat-file", "cummit", $cummithash);
     shift @lines while ( $lines[0] =~ /\S/ );
     $message = join("",@lines);
     $message .= " " if ( $message =~ /\n$/ );
@@ -4956,7 +4956,7 @@ sub commitmessage
 =head2 gethistorydense
 
 This function takes a filename (with path) argument and returns an arrayofarrays
-containing revision,filehash,commithash ordered by revision descending.
+containing revision,filehash,cummithash ordered by revision descending.
 
 This version of gethistory skips deleted entries -- so it is useful for annotate.
 The 'dense' part is a reference to a '--dense' option available for git-rev-list
@@ -4972,7 +4972,7 @@ sub gethistorydense
     my $tablename = $self->tablename("revision");
 
     my $db_query;
-    $db_query = $self->{dbh}->prepare_cached("SELECT revision, filehash, commithash FROM $tablename WHERE name=? AND filehash!='deleted' ORDER BY revision DESC",{},1);
+    $db_query = $self->{dbh}->prepare_cached("SELECT revision, filehash, cummithash FROM $tablename WHERE name=? AND filehash!='deleted' ORDER BY revision DESC",{},1);
     $db_query->execute($filename);
 
     my $result = $db_query->fetchall_arrayref;

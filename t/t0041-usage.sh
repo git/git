@@ -8,7 +8,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup ' '
-	test_commit "v1.0"
+	test_cummit "v1.0"
 '
 
 test_expect_success 'tag --contains <existent_tag>' '
@@ -43,27 +43,27 @@ test_expect_success 'tag usage error' '
 	test_i18ngrep "usage" actual.err
 '
 
-test_expect_success 'branch --contains <existent_commit>' '
+test_expect_success 'branch --contains <existent_cummit>' '
 	git branch --contains "main" >actual 2>actual.err &&
 	test_i18ngrep "main" actual &&
 	test_line_count = 0 actual.err
 '
 
-test_expect_success 'branch --contains <inexistent_commit>' '
-	test_must_fail git branch --no-contains "nocommit" >actual 2>actual.err &&
+test_expect_success 'branch --contains <inexistent_cummit>' '
+	test_must_fail git branch --no-contains "nocummit" >actual 2>actual.err &&
 	test_line_count = 0 actual &&
 	test_i18ngrep "error" actual.err &&
 	test_i18ngrep ! "usage" actual.err
 '
 
-test_expect_success 'branch --no-contains <existent_commit>' '
+test_expect_success 'branch --no-contains <existent_cummit>' '
 	git branch --no-contains "main" >actual 2>actual.err &&
 	test_line_count = 0 actual &&
 	test_line_count = 0 actual.err
 '
 
-test_expect_success 'branch --no-contains <inexistent_commit>' '
-	test_must_fail git branch --no-contains "nocommit" >actual 2>actual.err &&
+test_expect_success 'branch --no-contains <inexistent_cummit>' '
+	test_must_fail git branch --no-contains "nocummit" >actual 2>actual.err &&
 	test_line_count = 0 actual &&
 	test_i18ngrep "error" actual.err &&
 	test_i18ngrep ! "usage" actual.err

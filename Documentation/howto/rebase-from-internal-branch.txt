@@ -33,22 +33,22 @@ the kind of task StGIT is designed to do.
 I just have done a simpler one, this time using only the core
 Git tools.
 
-I had a handful of commits that were ahead of master in 'seen', and I
+I had a handful of cummits that were ahead of master in 'seen', and I
 wanted to add some documentation bypassing my usual habit of
-placing new things in 'seen' first.  At the beginning, the commit
+placing new things in 'seen' first.  At the beginning, the cummit
 ancestry graph looked like this:
 
 			     *"seen" head
     master --> #1 --> #2 --> #3
 
-So I started from master, made a bunch of edits, and committed:
+So I started from master, made a bunch of edits, and cummitted:
 
     $ git checkout master
     $ cd Documentation; ed git.txt ...
     $ cd ..; git add Documentation/*.txt
-    $ git commit -s
+    $ git cummit -s
 
-After the commit, the ancestry graph would look like this:
+After the cummit, the ancestry graph would look like this:
 
 			      *"seen" head
     master^ --> #1 --> #2 --> #3
@@ -66,7 +66,7 @@ at "master" branch being the "maintainer" branch, and "seen"
 branch being the "contributor" branch.  Your work started at the
 tip of the "maintainer" branch some time ago, you made a lot of
 progress in the meantime, and now the maintainer branch has some
-other commits you do not have yet.  And "git rebase" was written
+other cummits you do not have yet.  And "git rebase" was written
 with the explicit purpose of helping to maintain branches like
 "seen".  You _could_ merge master to 'seen' and keep going, but if you
 eventually want to cherrypick and merge some but not necessarily
@@ -77,7 +77,7 @@ your changes) "seen" rather than merge.  So I ran "git rebase":
     $ git checkout seen
     $ git rebase master seen
 
-What this does is to pick all the commits since the current
+What this does is to pick all the cummits since the current
 branch (note that I now am on "seen" branch) forked from the
 master branch, and forward port these changes.
 
@@ -86,14 +86,14 @@ master branch, and forward port these changes.
             \---> master --> #1' --> #2' --> #3'
 
 The diff between master^ and #1 is applied to master and
-committed to create #1' commit with the commit information (log,
-author and date) taken from commit #1.  On top of that #2' and #3'
-commits are made similarly out of #2 and #3 commits.
+cummitted to create #1' cummit with the cummit information (log,
+author and date) taken from cummit #1.  On top of that #2' and #3'
+cummits are made similarly out of #2 and #3 cummits.
 
 Old #3 is not recorded in any of the .git/refs/heads/ file
-anymore, so after doing this you will have dangling commit if
+anymore, so after doing this you will have dangling cummit if
 you ran fsck-cache, which is normal.  After testing "seen", you
-can run "git prune" to get rid of those original three commits.
+can run "git prune" to get rid of those original three cummits.
 
 While I am talking about "git rebase", I should talk about how
 to do cherrypicking using only the core Git tools.
@@ -101,7 +101,7 @@ to do cherrypicking using only the core Git tools.
 Let's go back to the earlier picture, with different labels.
 
 You, as an individual developer, cloned upstream repository and
-made a couple of commits on top of it.
+made a couple of cummits on top of it.
 
                               *your "master" head
    upstream --> #1 --> #2 --> #3
@@ -128,11 +128,11 @@ up your changes, along with other changes.
    to be     \--> #A --> #2' --> #3' --> #B --> #C
                                                 *upstream head
 
-The two commits #2' and #3' in the above picture record the same
+The two cummits #2' and #3' in the above picture record the same
 changes your e-mail submission for #2 and #3 contained, but
 probably with the new sign-off line added by the upstream
-maintainer and definitely with different committer and ancestry
-information, they are different objects from #2 and #3 commits.
+maintainer and definitely with different cummitter and ancestry
+information, they are different objects from #2 and #3 cummits.
 
 You fetch from upstream, but not merge.
 
@@ -144,10 +144,10 @@ You run "git rebase" now.
 
     $ git rebase FETCH_HEAD master
 
-Earlier, I said that rebase applies all the commits from your
+Earlier, I said that rebase applies all the cummits from your
 branch on top of the upstream head.  Well, I lied.  "git rebase"
 is a bit smarter than that and notices that #2 and #3 need not
-be applied, so it only applies #1.  The commit ancestry graph
+be applied, so it only applies #1.  The cummit ancestry graph
 becomes something like this:
 
    where                     *your old "master" head
@@ -157,8 +157,8 @@ becomes something like this:
                                                 *upstream
                                                 head
 
-Again, "git prune" would discard the disused commits #1-#3 and
+Again, "git prune" would discard the disused cummits #1-#3 and
 you continue on starting from the new "master" head, which is
-the #1' commit.
+the #1' cummit.
 
 -jc

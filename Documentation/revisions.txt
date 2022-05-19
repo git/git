@@ -2,10 +2,10 @@ SPECIFYING REVISIONS
 --------------------
 
 A revision parameter '<rev>' typically, but not necessarily, names a
-commit object.  It uses what is called an 'extended SHA-1'
+cummit object.  It uses what is called an 'extended SHA-1'
 syntax.  Here are various ways to spell object names.  The
 ones listed near the end of this list name trees and
-blobs contained in a commit.
+blobs contained in a cummit.
 
 NOTE: This document shows the "raw" syntax as seen by git. The shell
 and other UIs might require additional quoting to protect special
@@ -15,16 +15,16 @@ characters and to avoid word splitting.
   The full SHA-1 object name (40-byte hexadecimal string), or
   a leading substring that is unique within the repository.
   E.g. dae86e1950b1277e545cee180551750029cfe735 and dae86e both
-  name the same commit object if there is no other object in
+  name the same cummit object if there is no other object in
   your repository whose object name starts with dae86e.
 
 '<describeOutput>', e.g. 'v1.7.4.2-679-g3bee7fb'::
   Output from `git describe`; i.e. a closest tag, optionally
-  followed by a dash and a number of commits, followed by a dash, a
+  followed by a dash and a number of cummits, followed by a dash, a
   'g', and an abbreviated object name.
 
 '<refname>', e.g. 'master', 'heads/master', 'refs/heads/master'::
-  A symbolic ref name.  E.g. 'master' typically means the commit
+  A symbolic ref name.  E.g. 'master' typically means the cummit
   object referenced by 'refs/heads/master'.  If you
   happen to have both 'heads/master' and 'tags/master', you can
   explicitly say 'heads/master' to tell Git which one you mean.
@@ -45,16 +45,16 @@ characters and to avoid word splitting.
 
   . otherwise, 'refs/remotes/<refname>/HEAD' if it exists.
 +
-`HEAD` names the commit on which you based the changes in the working tree.
+`HEAD` names the cummit on which you based the changes in the working tree.
 `FETCH_HEAD` records the branch which you fetched from a remote repository
 with your last `git fetch` invocation.
 `ORIG_HEAD` is created by commands that move your `HEAD` in a drastic
 way, to record the position of the `HEAD` before their operation, so that
 you can easily change the tip of the branch back to the state before you ran
 them.
-`MERGE_HEAD` records the commit(s) which you are merging into your branch
+`MERGE_HEAD` records the cummit(s) which you are merging into your branch
 when you run `git merge`.
-`CHERRY_PICK_HEAD` records the commit which you are cherry-picking
+`CHERRY_PICK_HEAD` records the cummit which you are cherry-picking
 when you run `git cherry-pick`.
 +
 Note that any of the 'refs/*' cases above may come either from
@@ -74,7 +74,7 @@ some output processing may assume ref names in UTF-8.
   used immediately following a ref name and the ref must have an
   existing log ('$GIT_DIR/logs/<ref>'). Note that this looks up the state
   of your *local* ref at a given time; e.g., what was in your local
-  'master' branch last week. If you want to look at commits made during
+  'master' branch last week. If you want to look at cummits made during
   certain times, see `--since` and `--until`.
 
 '<refname>@{<n>}', e.g. 'master@\{1\}'::
@@ -92,7 +92,7 @@ some output processing may assume ref names in UTF-8.
   branch 'blabla' then '@\{1\}' means the same as 'blabla@\{1\}'.
 
 '@{-<n>}', e.g. '@{-1}'::
-  The construct '@{-<n>}' means the <n>th branch/commit checked out
+  The construct '@{-<n>}' means the <n>th branch/cummit checked out
   before the current one.
 
 '[<branchname>]@\{upstream\}', e.g. 'master@\{upstream\}', '@\{u\}'::
@@ -133,33 +133,33 @@ thing no matter the case.
 
 '<rev>{caret}[<n>]', e.g. 'HEAD{caret}, v1.5.1{caret}0'::
   A suffix '{caret}' to a revision parameter means the first parent of
-  that commit object.  '{caret}<n>' means the <n>th parent (i.e.
+  that cummit object.  '{caret}<n>' means the <n>th parent (i.e.
   '<rev>{caret}'
   is equivalent to '<rev>{caret}1').  As a special rule,
-  '<rev>{caret}0' means the commit itself and is used when '<rev>' is the
-  object name of a tag object that refers to a commit object.
+  '<rev>{caret}0' means the cummit itself and is used when '<rev>' is the
+  object name of a tag object that refers to a cummit object.
 
 '<rev>{tilde}[<n>]', e.g. 'HEAD{tilde}, master{tilde}3'::
   A suffix '{tilde}' to a revision parameter means the first parent of
-  that commit object.
-  A suffix '{tilde}<n>' to a revision parameter means the commit
+  that cummit object.
+  A suffix '{tilde}<n>' to a revision parameter means the cummit
   object that is the <n>th generation ancestor of the named
-  commit object, following only the first parents.  I.e. '<rev>{tilde}3' is
+  cummit object, following only the first parents.  I.e. '<rev>{tilde}3' is
   equivalent to '<rev>{caret}{caret}{caret}' which is equivalent to
   '<rev>{caret}1{caret}1{caret}1'.  See below for an illustration of
   the usage of this form.
 
-'<rev>{caret}{<type>}', e.g. 'v0.99.8{caret}\{commit\}'::
+'<rev>{caret}{<type>}', e.g. 'v0.99.8{caret}\{cummit\}'::
   A suffix '{caret}' followed by an object type name enclosed in
   brace pair means dereference the object at '<rev>' recursively until
   an object of type '<type>' is found or the object cannot be
   dereferenced anymore (in which case, barf).
-  For example, if '<rev>' is a commit-ish, '<rev>{caret}\{commit\}'
-  describes the corresponding commit object.
+  For example, if '<rev>' is a cummit-ish, '<rev>{caret}\{cummit\}'
+  describes the corresponding cummit object.
   Similarly, if '<rev>' is a tree-ish, '<rev>{caret}\{tree\}'
   describes the corresponding tree object.
   '<rev>{caret}0'
-  is a short-hand for '<rev>{caret}\{commit\}'.
+  is a short-hand for '<rev>{caret}\{cummit\}'.
 +
 '<rev>{caret}\{object\}' can be used to make sure '<rev>' names an
 object that exists, without requiring '<rev>' to be a tag, and
@@ -179,16 +179,16 @@ existing tag object.
   A suffix '{caret}' to a revision parameter, followed by a brace
   pair that contains a text led by a slash,
   is the same as the ':/fix nasty bug' syntax below except that
-  it returns the youngest matching commit which is reachable from
+  it returns the youngest matching cummit which is reachable from
   the '<rev>' before '{caret}'.
 
 ':/<text>', e.g. ':/fix nasty bug'::
   A colon, followed by a slash, followed by a text, names
-  a commit whose commit message matches the specified regular expression.
-  This name returns the youngest matching commit which is
+  a cummit whose cummit message matches the specified regular expression.
+  This name returns the youngest matching cummit which is
   reachable from any ref, including HEAD.
   The regular expression can match any part of the
-  commit message. To match messages starting with a string, one can use
+  cummit message. To match messages starting with a string, one can use
   e.g. ':/^foo'. The special sequence ':/!' is reserved for modifiers to what
   is matched. ':/!-foo' performs a negative match, while ':/!!foo' matches a
   literal '!' character, followed by 'foo'. Any other sequence beginning with
@@ -202,7 +202,7 @@ existing tag object.
   before the colon.
   A path starting with './' or '../' is relative to the current working directory.
   The given path will be converted to be relative to the working tree's root directory.
-  This is most useful to address a blob or tree from a commit or tree that has
+  This is most useful to address a blob or tree from a cummit or tree that has
   the same tree structure as the working tree.
 
 ':[<n>:]<path>', e.g. ':0:README', ':README'::
@@ -214,8 +214,8 @@ existing tag object.
   (typically the current branch), and stage 3 is the version from
   the branch which is being merged.
 
-Here is an illustration, by Jon Loeliger.  Both commit nodes B
-and C are parents of commit node A.  Parent commits are ordered
+Here is an illustration, by Jon Loeliger.  Both cummit nodes B
+and C are parents of cummit node A.  Parent cummits are ordered
 left-to-right.
 
 ........................................
@@ -247,29 +247,29 @@ SPECIFYING RANGES
 -----------------
 
 History traversing commands such as `git log` operate on a set
-of commits, not just a single commit.
+of cummits, not just a single cummit.
 
 For these commands,
 specifying a single revision, using the notation described in the
-previous section, means the set of commits `reachable` from the given
-commit.
+previous section, means the set of cummits `reachable` from the given
+cummit.
 
-Specifying several revisions means the set of commits reachable from
-any of the given commits.
+Specifying several revisions means the set of cummits reachable from
+any of the given cummits.
 
-A commit's reachable set is the commit itself and the commits in
+A cummit's reachable set is the cummit itself and the cummits in
 its ancestry chain.
 
-There are several notations to specify a set of connected commits
+There are several notations to specify a set of connected cummits
 (called a "revision range"), illustrated below.
 
 
-Commit Exclusions
+cummit Exclusions
 ~~~~~~~~~~~~~~~~~
 
 '{caret}<rev>' (caret) Notation::
- To exclude commits reachable from a commit, a prefix '{caret}'
- notation is used.  E.g. '{caret}r1 r2' means commits reachable
+ To exclude cummits reachable from a cummit, a prefix '{caret}'
+ notation is used.  E.g. '{caret}r1 r2' means cummits reachable
  from 'r2' but exclude the ones reachable from 'r1' (i.e. 'r1' and
  its ancestors).
 
@@ -278,16 +278,16 @@ Dotted Range Notations
 
 The '..' (two-dot) Range Notation::
  The '{caret}r1 r2' set operation appears so often that there is a shorthand
- for it.  When you have two commits 'r1' and 'r2' (named according
+ for it.  When you have two cummits 'r1' and 'r2' (named according
  to the syntax explained in SPECIFYING REVISIONS above), you can ask
- for commits that are reachable from r2 excluding those that are reachable
+ for cummits that are reachable from r2 excluding those that are reachable
  from r1 by '{caret}r1 r2' and it can be written as 'r1..r2'.
 
 The '...' (three-dot) Symmetric Difference Notation::
  A similar notation 'r1\...r2' is called symmetric difference
  of 'r1' and 'r2' and is defined as
  'r1 r2 --not $(git merge-base --all r1 r2)'.
- It is the set of commits that are reachable from either one of
+ It is the set of cummits that are reachable from either one of
  'r1' (left side) or 'r2' (right side) but not from both.
 
 In these two shorthand notations, you can omit one end and let it default to HEAD.
@@ -300,41 +300,41 @@ empty range that is both reachable and unreachable from HEAD.
 Commands that are specifically designed to take two distinct ranges
 (e.g. "git range-diff R1 R2" to compare two ranges) do exist, but
 they are exceptions.  Unless otherwise noted, all "git" commands
-that operate on a set of commits work on a single revision range.
+that operate on a set of cummits work on a single revision range.
 In other words, writing two "two-dot range notation" next to each
 other, e.g.
 
     $ git log A..B C..D
 
 does *not* specify two revision ranges for most commands.  Instead
-it will name a single connected set of commits, i.e. those that are
+it will name a single connected set of cummits, i.e. those that are
 reachable from either B or D but are reachable from neither A or C.
 In a linear history like this:
 
     ---A---B---o---o---C---D
 
 because A and B are reachable from C, the revision range specified
-by these two dotted ranges is a single commit D.
+by these two dotted ranges is a single cummit D.
 
 
 Other <rev>{caret} Parent Shorthand Notations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Three other shorthands exist, particularly useful for merge commits,
-for naming a set that is formed by a commit and its parent commits.
+Three other shorthands exist, particularly useful for merge cummits,
+for naming a set that is formed by a cummit and its parent cummits.
 
 The 'r1{caret}@' notation means all parents of 'r1'.
 
-The 'r1{caret}!' notation includes commit 'r1' but excludes all of its parents.
-By itself, this notation denotes the single commit 'r1'.
+The 'r1{caret}!' notation includes cummit 'r1' but excludes all of its parents.
+By itself, this notation denotes the single cummit 'r1'.
 
 The '<rev>{caret}-[<n>]' notation includes '<rev>' but excludes the <n>th
 parent (i.e. a shorthand for '<rev>{caret}<n>..<rev>'), with '<n>' = 1 if
-not given. This is typically useful for merge commits where you
-can just pass '<commit>{caret}-' to get all the commits in the branch
-that was merged in merge commit '<commit>' (including '<commit>'
+not given. This is typically useful for merge cummits where you
+can just pass '<cummit>{caret}-' to get all the cummits in the branch
+that was merged in merge cummit '<cummit>' (including '<cummit>'
 itself).
 
-While '<rev>{caret}<n>' was about specifying a single commit parent, these
+While '<rev>{caret}<n>' was about specifying a single cummit parent, these
 three notations also consider its parents. For example you can say
 'HEAD{caret}2{caret}@', however you cannot say 'HEAD{caret}@{caret}2'.
 
@@ -342,31 +342,31 @@ Revision Range Summary
 ----------------------
 
 '<rev>'::
-	Include commits that are reachable from <rev> (i.e. <rev> and its
+	Include cummits that are reachable from <rev> (i.e. <rev> and its
 	ancestors).
 
 '{caret}<rev>'::
-	Exclude commits that are reachable from <rev> (i.e. <rev> and its
+	Exclude cummits that are reachable from <rev> (i.e. <rev> and its
 	ancestors).
 
 '<rev1>..<rev2>'::
-	Include commits that are reachable from <rev2> but exclude
+	Include cummits that are reachable from <rev2> but exclude
 	those that are reachable from <rev1>.  When either <rev1> or
 	<rev2> is omitted, it defaults to `HEAD`.
 
 '<rev1>\...<rev2>'::
-	Include commits that are reachable from either <rev1> or
+	Include cummits that are reachable from either <rev1> or
 	<rev2> but exclude those that are reachable from both.  When
 	either <rev1> or <rev2> is omitted, it defaults to `HEAD`.
 
 '<rev>{caret}@', e.g. 'HEAD{caret}@'::
   A suffix '{caret}' followed by an at sign is the same as listing
   all parents of '<rev>' (meaning, include anything reachable from
-  its parents, but not the commit itself).
+  its parents, but not the cummit itself).
 
 '<rev>{caret}!', e.g. 'HEAD{caret}!'::
   A suffix '{caret}' followed by an exclamation mark is the same
-  as giving commit '<rev>' and then all its parents prefixed with
+  as giving cummit '<rev>' and then all its parents prefixed with
   '{caret}' to exclude them (and their ancestors).
 
 '<rev>{caret}-<n>', e.g. 'HEAD{caret}-, HEAD{caret}-2'::
@@ -378,7 +378,7 @@ with each step in the notation's expansion and selection carefully
 spelt out:
 
 ....
-   Args   Expanded arguments    Selected commits
+   Args   Expanded arguments    Selected cummits
    D                            G H D
    D F                          G H I J D F
    ^G D                         H D

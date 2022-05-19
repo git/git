@@ -7,18 +7,18 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-number_of_commits=100
+number_of_cummits=100
 
-start_note_commit () {
+start_note_cummit () {
 	test_tick &&
 	cat <<INPUT_END
-commit refs/notes/commits
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
+cummit refs/notes/cummits
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
 notes
-COMMIT
+cummit
 
-from refs/notes/commits^0
+from refs/notes/cummits^0
 deleteall
 INPUT_END
 
@@ -26,43 +26,43 @@ INPUT_END
 
 verify_notes () {
 	git log | grep "^    " > output &&
-	i=$number_of_commits &&
+	i=$number_of_cummits &&
 	while [ $i -gt 0 ]; do
-		echo "    commit #$i" &&
-		echo "    note for commit #$i" &&
+		echo "    cummit #$i" &&
+		echo "    note for cummit #$i" &&
 		i=$(($i-1));
 	done > expect &&
 	test_cmp expect output
 }
 
-test_expect_success "setup: create a couple of commits" '
+test_expect_success "setup: create a couple of cummits" '
 
 	test_tick &&
 	cat <<INPUT_END >input &&
-commit refs/heads/main
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-commit #1
-COMMIT
+cummit refs/heads/main
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+cummit #1
+cummit
 
 M 644 inline file
 data <<EOF
-file in commit #1
+file in cummit #1
 EOF
 
 INPUT_END
 
 	test_tick &&
 	cat <<INPUT_END >>input &&
-commit refs/heads/main
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-commit #2
-COMMIT
+cummit refs/heads/main
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+cummit #2
+cummit
 
 M 644 inline file
 data <<EOF
-file in commit #2
+file in cummit #2
 EOF
 
 INPUT_END
@@ -71,57 +71,57 @@ INPUT_END
 
 test_expect_success "create a notes tree with both notes and non-notes" '
 
-	commit1=$(git rev-parse refs/heads/main^) &&
-	commit2=$(git rev-parse refs/heads/main) &&
+	cummit1=$(git rev-parse refs/heads/main^) &&
+	cummit2=$(git rev-parse refs/heads/main) &&
 	test_tick &&
 	cat <<INPUT_END >input &&
-commit refs/notes/commits
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-notes commit #1
-COMMIT
+cummit refs/notes/cummits
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+notes cummit #1
+cummit
 
-N inline $commit1
+N inline $cummit1
 data <<EOF
-note for commit #1
+note for cummit #1
 EOF
 
-N inline $commit2
+N inline $cummit2
 data <<EOF
-note for commit #2
+note for cummit #2
 EOF
 
 INPUT_END
 	test_tick &&
 	cat <<INPUT_END >>input &&
-commit refs/notes/commits
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-notes commit #2
-COMMIT
+cummit refs/notes/cummits
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+notes cummit #2
+cummit
 
 M 644 inline foobar/non-note.txt
 data <<EOF
 A non-note in a notes tree
 EOF
 
-N inline $commit2
+N inline $cummit2
 data <<EOF
-edited note for commit #2
+edited note for cummit #2
 EOF
 
 INPUT_END
 	test_tick &&
 	cat <<INPUT_END >>input &&
-commit refs/notes/commits
-committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
-data <<COMMIT
-notes commit #3
-COMMIT
+cummit refs/notes/cummits
+cummitter $GIT_cummitTER_NAME <$GIT_cummitTER_EMAIL> $GIT_cummitTER_DATE
+data <<cummit
+notes cummit #3
+cummit
 
-N inline $commit1
+N inline $cummit1
 data <<EOF
-edited note for commit #1
+edited note for cummit #1
 EOF
 
 M 644 inline deadbeef
@@ -147,14 +147,14 @@ EOF
 
 INPUT_END
 	git fast-import --quiet <input &&
-	git config core.notesRef refs/notes/commits
+	git config core.notesRef refs/notes/cummits
 '
 
 cat >expect <<EXPECT_END
-    commit #2
-    edited note for commit #2
-    commit #1
-    edited note for commit #1
+    cummit #2
+    edited note for cummit #2
+    cummit #1
+    edited note for cummit #1
 EXPECT_END
 
 test_expect_success "verify contents of notes" '
@@ -178,13 +178,13 @@ EXPECT_END
 
 test_expect_success "verify contents of non-notes" '
 
-	git cat-file -p refs/notes/commits:foobar/non-note.txt > actual_nn1 &&
+	git cat-file -p refs/notes/cummits:foobar/non-note.txt > actual_nn1 &&
 	test_cmp expect_nn1 actual_nn1 &&
-	git cat-file -p refs/notes/commits:deadbeef > actual_nn2 &&
+	git cat-file -p refs/notes/cummits:deadbeef > actual_nn2 &&
 	test_cmp expect_nn2 actual_nn2 &&
-	git cat-file -p refs/notes/commits:de/adbeef > actual_nn3 &&
+	git cat-file -p refs/notes/cummits:de/adbeef > actual_nn3 &&
 	test_cmp expect_nn3 actual_nn3 &&
-	git cat-file -p refs/notes/commits:dead/beef > actual_nn4 &&
+	git cat-file -p refs/notes/cummits:dead/beef > actual_nn4 &&
 	test_cmp expect_nn4 actual_nn4
 '
 
@@ -196,13 +196,13 @@ test_expect_success "git-notes preserves non-notes" '
 
 test_expect_success "verify contents of non-notes after git-notes" '
 
-	git cat-file -p refs/notes/commits:foobar/non-note.txt > actual_nn1 &&
+	git cat-file -p refs/notes/cummits:foobar/non-note.txt > actual_nn1 &&
 	test_cmp expect_nn1 actual_nn1 &&
-	git cat-file -p refs/notes/commits:deadbeef > actual_nn2 &&
+	git cat-file -p refs/notes/cummits:deadbeef > actual_nn2 &&
 	test_cmp expect_nn2 actual_nn2 &&
-	git cat-file -p refs/notes/commits:de/adbeef > actual_nn3 &&
+	git cat-file -p refs/notes/cummits:de/adbeef > actual_nn3 &&
 	test_cmp expect_nn3 actual_nn3 &&
-	git cat-file -p refs/notes/commits:dead/beef > actual_nn4 &&
+	git cat-file -p refs/notes/cummits:dead/beef > actual_nn4 &&
 	test_cmp expect_nn4 actual_nn4
 '
 

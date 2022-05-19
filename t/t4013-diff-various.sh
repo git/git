@@ -14,8 +14,8 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 test_expect_success setup '
 
 	GIT_AUTHOR_DATE="2006-06-26 00:00:00 +0000" &&
-	GIT_COMMITTER_DATE="2006-06-26 00:00:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
+	GIT_cummitTER_DATE="2006-06-26 00:00:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
 
 	mkdir dir &&
 	mkdir dir2 &&
@@ -23,34 +23,34 @@ test_expect_success setup '
 	test_write_lines A B >dir/sub &&
 	cat file0 >file2 &&
 	git add file0 file2 dir/sub &&
-	git commit -m Initial &&
+	git cummit -m Initial &&
 
 	git branch initial &&
 	git branch side &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:01:00 +0000" &&
-	GIT_COMMITTER_DATE="2006-06-26 00:01:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
+	GIT_cummitTER_DATE="2006-06-26 00:01:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
 
 	test_write_lines 4 5 6 >>file0 &&
 	test_write_lines C D >>dir/sub &&
 	rm -f file2 &&
 	git update-index --remove file0 file2 dir/sub &&
-	git commit -m "Second${LF}${LF}This is the second commit." &&
+	git cummit -m "Second${LF}${LF}This is the second cummit." &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:02:00 +0000" &&
-	GIT_COMMITTER_DATE="2006-06-26 00:02:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
+	GIT_cummitTER_DATE="2006-06-26 00:02:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
 
 	test_write_lines A B C >file1 &&
 	git add file1 &&
 	test_write_lines E F >>dir/sub &&
 	git update-index dir/sub &&
-	git commit -m Third &&
+	git cummit -m Third &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:03:00 +0000" &&
-	GIT_COMMITTER_DATE="2006-06-26 00:03:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
+	GIT_cummitTER_DATE="2006-06-26 00:03:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
 
 	git checkout side &&
 	test_write_lines A B C >>file0 &&
@@ -58,18 +58,18 @@ test_expect_success setup '
 	cat dir/sub >file3 &&
 	git add file3 &&
 	git update-index file0 dir/sub &&
-	git commit -m Side &&
+	git cummit -m Side &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:04:00 +0000" &&
-	GIT_COMMITTER_DATE="2006-06-26 00:04:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
+	GIT_cummitTER_DATE="2006-06-26 00:04:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
 
 	git checkout master &&
 	git pull -s ours --no-rebase . side &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:05:00 +0000" &&
-	GIT_COMMITTER_DATE="2006-06-26 00:05:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
+	GIT_cummitTER_DATE="2006-06-26 00:05:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
 
 	test_write_lines A B C >>file0 &&
 	test_write_lines 1 2 >>dir/sub &&
@@ -80,39 +80,39 @@ test_expect_success setup '
 	test-tool chmtime +1 dir3/sub &&
 
 	git config log.showroot false &&
-	git commit --amend &&
+	git cummit --amend &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
-	GIT_COMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
+	GIT_cummitTER_DATE="2006-06-26 00:06:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
 	git checkout -b rearrange initial &&
 	test_write_lines B A >dir/sub &&
 	git add dir/sub &&
-	git commit -m "Rearranged lines in dir/sub" &&
+	git cummit -m "Rearranged lines in dir/sub" &&
 	git checkout master &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
-	GIT_COMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
+	GIT_cummitTER_DATE="2006-06-26 00:06:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
 	git checkout -b mode initial &&
 	git update-index --chmod=+x file0 &&
-	git commit -m "update mode" &&
+	git cummit -m "update mode" &&
 	git checkout -f master &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
-	GIT_COMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
-	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
+	GIT_cummitTER_DATE="2006-06-26 00:06:00 +0000" &&
+	export GIT_AUTHOR_DATE GIT_cummitTER_DATE &&
 	git checkout -b note initial &&
 	git update-index --chmod=+x file2 &&
-	git commit -m "update mode (file2)" &&
+	git cummit -m "update mode (file2)" &&
 	git notes add -m "note" &&
 	git checkout -f master &&
 
 	# Same merge as master, but with parents reversed. Hide it in a
 	# pseudo-ref to avoid impacting tests with --all.
-	commit=$(echo reverse |
-		 git commit-tree -p master^2 -p master^1 master^{tree}) &&
-	git update-ref REVERSE $commit &&
+	cummit=$(echo reverse |
+		 git cummit-tree -p master^2 -p master^1 master^{tree}) &&
+	git update-ref REVERSE $cummit &&
 
 	git config diff.renames false &&
 
@@ -166,7 +166,7 @@ process_diffs () {
 		while (<STDIN>) {
 			s/($orx)/munge_oid($1)/ge;
 			s/From ($x40)( |\))/"From " . munge_oid($1) . $2/ge;
-			s/commit ($x40)($| \(from )($x40?)/"commit " .  munge_oid($1) . $2 . munge_oid($3)/ge;
+			s/cummit ($x40)($| \(from )($x40?)/"cummit " .  munge_oid($1) . $2 . munge_oid($3)/ge;
 			s/\b($x40)( |\.\.|$)/munge_oid($1) . $2/ge;
 			s/^($x40)($| )/munge_oid($1) . $2/e;
 			s/($xab)(\.\.|,| |\.\.\.|$)/munge_oid($1) . $2/ge;
@@ -578,7 +578,7 @@ test_expect_success 'show A B ... -- <pathspec>' '
 test_expect_success 'diff -I<regex>: setup' '
 	git checkout master &&
 	test_seq 50 >file0 &&
-	git commit -m "Set up -I<regex> test file" file0 &&
+	git cummit -m "Set up -I<regex> test file" file0 &&
 	test_seq 50 | sed -e "s/13/ten and three/" -e "/7\$/d" >file0 &&
 	echo >>file0
 '

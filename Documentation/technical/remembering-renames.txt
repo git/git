@@ -1,5 +1,5 @@
 Rebases and cherry-picks involve a sequence of merges whose results are
-recorded as new single-parent commits.  The first parent side of those
+recorded as new single-parent cummits.  The first parent side of those
 merges represent the "upstream" side, and often include a far larger set of
 changes than the second parent side.  Traditionally, the renames on the
 first-parent side of that sequence of merges were repeatedly re-detected
@@ -39,7 +39,7 @@ Outline:
 
 There are two assumptions that will hold throughout this document:
 
-  * The upstream side where commits are transplanted to is treated as the
+  * The upstream side where cummits are transplanted to is treated as the
     first parent side when rebase/cherry-pick call the merge machinery
 
   * All merges are fully automatic
@@ -105,11 +105,11 @@ After rebasing or cherry-picking topic onto main, this will appear as:
 			    /
 	       D---E---F---G main
 
-The way the commits A', B', and C' are created is through a series of
+The way the cummits A', B', and C' are created is through a series of
 merges, where rebase or cherry-pick sequentially uses each of the three
-A-B-C commits in a special merge operation.  Let's label the three commits
+A-B-C cummits in a special merge operation.  Let's label the three cummits
 in the merge operation as MERGE_BASE, MERGE_SIDE1, and MERGE_SIDE2.  For
-this picture, the three commits for each of the three merges would be:
+this picture, the three cummits for each of the three merges would be:
 
 To create A':
    MERGE_BASE:   E
@@ -135,7 +135,7 @@ either:
   * Apply the changes between B & B' to C
 
 Conceptually the two statements above are the same as a three-way merge of
-B, B', and C, at least the parts before you decide to record a commit.
+B, B', and C, at least the parts before you decide to record a cummit.
 
 
 === 2. Why the renames on MERGE_SIDE1 in any given pick are always a ===
@@ -153,7 +153,7 @@ filename under one of three conditions:
 
   * When MERGE_SIDE2 renames the file.
 
-First, let's remember what commits are involved in the first and second
+First, let's remember what cummits are involved in the first and second
 picks of the cherry-pick or rebase sequence:
 
 To create A':
@@ -370,9 +370,9 @@ merge, and thus seems entirely correct for us to have used them that way.
 (Sidenote: One particular example here may be enlightening.  Let's say that
 B was an immediate revert of A.  B clearly would have been a clean revert
 of A, since A was B's immediate parent.  One would assume that if you can
-pick a commit, you should also be able to cherry-pick its immediate revert.
+pick a cummit, you should also be able to cherry-pick its immediate revert.
 However, this is one of those funny corner cases; without this
-optimization, we just successfully picked a commit cleanly, but we are
+optimization, we just successfully picked a cummit cleanly, but we are
 unable to cherry-pick its immediate revert due to the size differences
 between E:oldfile and A:oldfile.)
 
@@ -397,7 +397,7 @@ optimization than without.
 === 6. Interaction with skipping of "irrelevant" renames ===
 
 Previous optimizations involved skipping rename detection for paths
-considered to be "irrelevant".  See for example the following commits:
+considered to be "irrelevant".  See for example the following cummits:
 
   * 32a56dfb99 ("merge-ort: precompute subset of sources for which we
 		need rename detection", 2021-03-11)
@@ -409,13 +409,13 @@ considered to be "irrelevant".  See for example the following commits:
 Relevance is always determined by what the _other_ side of history has
 done, in terms of modifing a file that our side renamed, or adding a
 file to a directory which our side renamed.  This means that a path
-that is "irrelevant" when picking the first commit of a series in a
+that is "irrelevant" when picking the first cummit of a series in a
 rebase or cherry-pick, may suddenly become "relevant" when picking the
-next commit.
+next cummit.
 
 The upshot of this is that we can only cache rename detection results
 for relevant paths, and need to re-check relevance in subsequent
-commits.  If those subsequent commits have additional paths that are
+cummits.  If those subsequent cummits have additional paths that are
 relevant for rename detection, then we will need to redo rename
 detection -- though we can limit it to the paths for which we have not
 already detected renames.
@@ -440,12 +440,12 @@ These are all stored in struct rename_info, and respectively appear in
 The reason for (A) comes from the irrelevant renames skipping
 optimization discussed in section 6.  The fact that irrelevant renames
 are skipped means we only get a subset of the potential renames
-detected and subsequent commits may need to run rename detection on
+detected and subsequent cummits may need to run rename detection on
 the upstream side on a subset of the remaining renames (to get the
-renames that are relevant for that later commit).  Since unpaired
+renames that are relevant for that later cummit).  Since unpaired
 deletes are involved in rename detection too, we don't want to
 repeatedly check that those paths remain unpaired on the upstream side
-with every commit we are transplanting.
+with every cummit we are transplanting.
 
 The reason for (B) is that diffcore_rename_extended() is what
 generates the counts of renames by directory which is needed in
@@ -458,7 +458,7 @@ those paths are relevant (marking them as RELEVANT_LOCATION), but the
 fact that they were downgraded to RELEVANT_NO_MORE means that
 dir_rename_counts already has the information we need for directory
 rename detection.  (A path which becomes RELEVANT_CONTENT in a
-subsequent commit will be removed from cached_irrelevant.)
+subsequent cummit will be removed from cached_irrelevant.)
 
 The reason for (D) is that is how we determine whether the remember
 renames optimization can be used.  In particular, remembering that our
@@ -565,8 +565,8 @@ while considering all of these cases:
       rename/rename(1to1) cases occur, then dir_rename_counts will get
       re-computed the next time rename detection occurs, as noted above.
 
-  * the side with multiple commits to pick, is the side of history that we
-    do NOT cache renames for.  Thus, there are no additional commits to
+  * the side with multiple cummits to pick, is the side of history that we
+    do NOT cache renames for.  Thus, there are no additional cummits to
     change the number of renames in a directory, except for those done by
     directory rename detection (which always pad the majority).
 
@@ -590,7 +590,7 @@ Case 1: MERGE_SIDE1 renames old dir, MERGE_SIDE2 adds new file to old dir
     MERGE_SIDE2:  B,   Modifies olddir/newfile
     => expected   B',  with threeway-merged newdir/newfile from above
 
-  In this case, with the optimization, note that after the first commit:
+  In this case, with the optimization, note that after the first cummit:
     * MERGE_SIDE1 remembers olddir/ -> newdir/
     * MERGE_SIDE1 has cached olddir/newfile -> newdir/newfile
   Given the cached rename noted above, the second merge can proceed as
@@ -609,7 +609,7 @@ Case 2: MERGE_SIDE1 renames old dir, MERGE_SIDE2 renames  file into old dir
     MERGE_SIDE2:  B    modify olddir/newfile
     => expected   B',  with threeway-merged newdir/newfile from above
 
-  In this case, with the optimization, note that after the first commit:
+  In this case, with the optimization, note that after the first cummit:
     * MERGE_SIDE1 remembers olddir/ -> newdir/
     * MERGE_SIDE1 has cached olddir/newfile -> newdir/newfile
 		  (NOT oldfile -> newdir/newfile; compare to case with
@@ -632,7 +632,7 @@ Case 3: MERGE_SIDE1 adds new file to   old dir, MERGE_SIDE2 renames old dir
     MERGE_SIDE2:  B,   Has newdir/, but no notion of newdir/newfile
     => expected   B',  with newdir/newfile from A'
 
-  In this case, with the optimization, note that after the first commit there
+  In this case, with the optimization, note that after the first cummit there
   were no renames on MERGE_SIDE1, and any renames on MERGE_SIDE2 are tossed.
   But the second merge didn't need any renames so this is fine.
 
@@ -650,7 +650,7 @@ Case 4: MERGE_SIDE1 renames  file into old dir, MERGE_SIDE2 renames old dir
     MERGE_SIDE2:  B,   Modifies oldfile
     => expected   B',  with threeway-merged newdir/newfile from above
 
-  In this case, with the optimization, note that after the first commit:
+  In this case, with the optimization, note that after the first cummit:
     * MERGE_SIDE1 remembers oldfile -> newdir/newfile
 		  (NOT oldfile -> olddir/newfile; compare to case of second
 		   block under p->status == 'R' in possibly_cache_new_pair())
@@ -666,6 +666,6 @@ case we will not have been able to detect any rename for the directory
 itself.  In such a case, we do not know whether the directory was
 renamed; we want to be careful to avoid cacheing some kind of "this
 directory was not renamed" statement.  If we did, then a subsequent
-commit being rebased could add a file to the old directory, and the
+cummit being rebased could add a file to the old directory, and the
 user would expect it to end up in the correct directory -- something
 our erroneous "this directory was not renamed" cache would preclude.

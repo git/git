@@ -29,7 +29,7 @@ Fixes since v2.13
    to be merged.
 
  * The codepath in "git am" that is used when running "git rebase"
-   leaked memory held for the log message of the commits being rebased.
+   leaked memory held for the log message of the cummits being rebased.
 
  * "pack-objects" can stream a slice of an existing packfile out when
    the pack bitmap can tell that the reachable objects are all needed
@@ -84,10 +84,10 @@ Fixes since v2.13
    resolve the HEAD symref as many times as it had processed refs,
    which was wasteful, and "git branch" shared the same problem.
 
- * "git interpret-trailers", when used as GIT_EDITOR for "git commit
+ * "git interpret-trailers", when used as GIT_EDITOR for "git cummit
    -v", looked for and appended to a trailer block at the very end,
    i.e. at the end of the "diff" output.  The command has been
-   corrected to pay attention to the cut-mark line "commit -v" adds to
+   corrected to pay attention to the cut-mark line "cummit -v" adds to
    the buffer---the real trailer block should appear just before it.
 
  * A test allowed both "git push" and "git receive-pack" on the other

@@ -16,11 +16,11 @@ Fixes since v1.7.11.1
  * "git archive" incorrectly computed the header checksum; the symptom
    was observed only when using pathnames with hi-bit set.
 
- * "git blame" did not try to make sure that the abbreviated commit
+ * "git blame" did not try to make sure that the abbreviated cummit
    object names in its output are unique.
 
  * Running "git bundle verify" on a bundle that records a complete
-   history said "it requires these 0 commits".
+   history said "it requires these 0 cummits".
 
  * "git clone --single-branch" to clone a single branch did not limit
    the cloning to the specified branch.
@@ -35,10 +35,10 @@ Fixes since v1.7.11.1
 
  * When "git log" gets "--simplify-merges/by-decoration" together with
    "--first-parent", the combination of these options makes the
-   simplification logic to use in-core commit objects that haven't
+   simplification logic to use in-core cummit objects that haven't
    been examined for relevance, either producing incorrect result or
    taking too long to produce any output.  Teach the simplification
-   logic to ignore commits that the first-parent traversal logic
+   logic to ignore cummits that the first-parent traversal logic
    ignored when both are in effect to work around the issue.
 
  * "git ls-files --exclude=t -i" did not consider anything under t/ as

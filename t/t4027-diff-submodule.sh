@@ -12,19 +12,19 @@ test_expect_success setup '
 		cd sub &&
 		echo hello >world &&
 		git add world &&
-		git commit -m submodule
+		git cummit -m submodule
 	) &&
 
 	test_tick &&
 	echo frotz >nitfol &&
 	git add nitfol sub &&
-	git commit -m superproject &&
+	git cummit -m superproject &&
 
 	(
 		cd sub &&
 		echo goodbye >world &&
 		git add world &&
-		git commit -m "submodule #2"
+		git cummit -m "submodule #2"
 	) &&
 
 	git -C sub rev-list HEAD >revs &&
@@ -50,7 +50,7 @@ test_expect_success 'git diff-files --raw' '
 '
 
 expect_from_to () {
-	printf "%sSubproject commit %s\n+Subproject commit %s\n" \
+	printf "%sSubproject cummit %s\n+Subproject cummit %s\n" \
 		"-" "$1" "$2"
 }
 
@@ -104,7 +104,7 @@ test_expect_success 'git diff HEAD with dirty submodule (untracked) (none ignore
 '
 
 test_expect_success 'git diff HEAD with dirty submodule (work tree, refs match)' '
-	git commit -m "x" sub &&
+	git cummit -m "x" sub &&
 	echo >>sub/world &&
 	git diff HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
@@ -208,7 +208,7 @@ test_expect_success 'git diff HEAD with dirty submodule (untracked, refs match) 
 	rm .gitmodules
 '
 
-test_expect_success 'git diff between submodule commits' '
+test_expect_success 'git diff between submodule cummits' '
 	git diff HEAD^..HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
@@ -221,7 +221,7 @@ test_expect_success 'git diff between submodule commits' '
 	test_must_be_empty actual
 '
 
-test_expect_success 'git diff between submodule commits [.gitmodules]' '
+test_expect_success 'git diff between submodule cummits [.gitmodules]' '
 	git diff HEAD^..HEAD >actual &&
 	sed -e "1,/^@@/d" actual >actual.body &&
 	expect_from_to >expect.body $subtip $subprev &&
@@ -264,9 +264,9 @@ index 2ffffff,3ffffff..0000000
 --- a/sub
 +++ b/sub
 @@@ -1,1 -1,1 +1,1 @@@
-- Subproject commit 2$c
- -Subproject commit 3$c
-++Subproject commit $ZERO_OID" &&
+- Subproject cummit 2$c
+ -Subproject cummit 3$c
+++Subproject cummit $ZERO_OID" &&
 
 	hh=$(git rev-parse HEAD) &&
 	sed -e "s/$ZERO_OID/$hh/" expect.nosub >expect.withsub

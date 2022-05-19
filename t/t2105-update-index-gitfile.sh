@@ -16,7 +16,7 @@ test_expect_success 'submodule with absolute .git file' '
 	 REAL="$(pwd)/.real" &&
 	 mv .git "$REAL" &&
 	 echo "gitdir: $REAL" >.git &&
-	 test_commit first)
+	 test_cummit first)
 '
 
 test_expect_success 'add gitlink to absolute .git file' '
@@ -29,7 +29,7 @@ test_expect_success 'submodule with relative .git file' '
 	 git init &&
 	 mv .git .real &&
 	 echo "gitdir: .real" >.git &&
-	 test_commit first)
+	 test_cummit first)
 '
 
 test_expect_success 'add gitlink to relative .git file' '

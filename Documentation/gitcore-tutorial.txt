@@ -77,7 +77,7 @@ three entries, among other things:
    `refs/heads/master` relative to the `HEAD` file.
 +
 Don't worry about the fact that the file that the `HEAD` link points to
-doesn't even exist yet -- you haven't created the commit that will
+doesn't even exist yet -- you haven't created the cummit that will
 start your `HEAD` development branch yet.
 
  - a subdirectory called `objects`, which will contain all the
@@ -144,7 +144,7 @@ but to actually check in your hard work, you will have to go through two steps:
  - fill in the 'index' file (aka 'cache') with the information about your
    working tree state.
 
- - commit that index file as an object.
+ - cummit that index file as an object.
 
 The first step is trivial: when you want to tell Git about any changes
 to your working tree, you use the 'git update-index' program. That
@@ -282,13 +282,13 @@ index 557db03..263414f 100644
 ------------
 
 
-Committing Git state
+cummitting Git state
 --------------------
 
 Now, we want to go to the next stage in Git, which is to take the files
-that Git knows about in the index, and commit them as a real tree. We do
-that in two phases: creating a 'tree' object, and committing that 'tree'
-object as a 'commit' object together with an explanation of what the
+that Git knows about in the index, and cummit them as a real tree. We do
+that in two phases: creating a 'tree' object, and cummitting that 'tree'
+object as a 'cummit' object together with an explanation of what the
 tree was all about, along with information of how we came to that state.
 
 Creating a tree object is trivial, and is done with 'git write-tree'.
@@ -316,37 +316,37 @@ is not a "blob" object, but a "tree" object (you can also use
 mainly a binary mess, so that's less interesting).
 
 However -- normally you'd never use 'git write-tree' on its own, because
-normally you always commit a tree into a commit object using the
-'git commit-tree' command. In fact, it's easier to not actually use
+normally you always cummit a tree into a cummit object using the
+'git cummit-tree' command. In fact, it's easier to not actually use
 'git write-tree' on its own at all, but to just pass its result in as an
-argument to 'git commit-tree'.
+argument to 'git cummit-tree'.
 
-'git commit-tree' normally takes several arguments -- it wants to know
-what the 'parent' of a commit was, but since this is the first commit
+'git cummit-tree' normally takes several arguments -- it wants to know
+what the 'parent' of a cummit was, but since this is the first cummit
 ever in this new repository, and it has no parents, we only need to pass in
-the object name of the tree. However, 'git commit-tree' also wants to get a
-commit message on its standard input, and it will write out the resulting
-object name for the commit to its standard output.
+the object name of the tree. However, 'git cummit-tree' also wants to get a
+cummit message on its standard input, and it will write out the resulting
+object name for the cummit to its standard output.
 
 And this is where we create the `.git/refs/heads/master` file
 which is pointed at by `HEAD`. This file is supposed to contain
 the reference to the top-of-tree of the master branch, and since
-that's exactly what 'git commit-tree' spits out, we can do this
+that's exactly what 'git cummit-tree' spits out, we can do this
 all with a sequence of simple shell commands:
 
 ------------------------------------------------
 $ tree=$(git write-tree)
-$ commit=$(echo 'Initial commit' | git commit-tree $tree)
-$ git update-ref HEAD $commit
+$ cummit=$(echo 'Initial cummit' | git cummit-tree $tree)
+$ git update-ref HEAD $cummit
 ------------------------------------------------
 
-In this case this creates a totally new commit that is not related to
+In this case this creates a totally new cummit that is not related to
 anything else. Normally you do this only *once* for a project ever, and
-all later commits will be parented on top of an earlier commit.
+all later cummits will be parented on top of an earlier cummit.
 
 Again, normally you'd never actually do this by hand. There is a
-helpful script called `git commit` that will do all of this for you. So
-you could have just written `git commit`
+helpful script called `git cummit` that will do all of this for you. So
+you could have just written `git cummit`
 instead, and it would have done the above magic scripting for you.
 
 
@@ -358,23 +358,23 @@ changed `hello` afterward, and could compare the new state of `hello` with the
 state we saved in the index file?
 
 Further, remember how I said that 'git write-tree' writes the contents
-of the *index* file to the tree, and thus what we just committed was in
+of the *index* file to the tree, and thus what we just cummitted was in
 fact the *original* contents of the file `hello`, not the new ones. We did
 that on purpose, to show the difference between the index state, and the
 state in the working tree, and how they don't have to match, even
-when we commit things.
+when we cummit things.
 
 As before, if we do `git diff-files -p` in our git-tutorial project,
 we'll still see the same difference we saw last time: the index file
-hasn't changed by the act of committing anything. However, now that we
-have committed something, we can also learn to use a new command:
+hasn't changed by the act of cummitting anything. However, now that we
+have cummitted something, we can also learn to use a new command:
 'git diff-index'.
 
 Unlike 'git diff-files', which showed the difference between the index
 file and the working tree, 'git diff-index' shows the differences
-between a committed *tree* and either the index file or the working
+between a cummitted *tree* and either the index file or the working
 tree. In other words, 'git diff-index' wants a tree to be diffed
-against, and before we did the commit, we couldn't do that, because we
+against, and before we did the cummit, we couldn't do that, because we
 didn't have anything to diff against.
 
 But now we can do
@@ -422,10 +422,10 @@ expects you to tell it what the files are, and that's what the index
 is there for.
 ================
 
-However, our next step is to commit the *change* we did, and again, to
+However, our next step is to cummit the *change* we did, and again, to
 understand what's going on, keep in mind the difference between "working
-tree contents", "index file" and "committed tree". We have changes
-in the working tree that we want to commit, and we always have to
+tree contents", "index file" and "cummitted tree". We have changes
+in the working tree that we want to cummit, and we always have to
 work through the index file, so the first thing we need to do is to
 update the index cache:
 
@@ -439,36 +439,36 @@ about the file already).
 Note what happens to the different 'git diff-{asterisk}' versions here.
 After we've updated `hello` in the index, `git diff-files -p` now shows no
 differences, but `git diff-index -p HEAD` still *does* show that the
-current state is different from the state we committed. In fact, now
+current state is different from the state we cummitted. In fact, now
 'git diff-index' shows the same difference whether we use the `--cached`
 flag or not, since now the index is coherent with the working tree.
 
-Now, since we've updated `hello` in the index, we can commit the new
+Now, since we've updated `hello` in the index, we can cummit the new
 version. We could do it by writing the tree by hand again, and
-committing the tree (this time we'd have to use the `-p HEAD` flag to
-tell commit that the HEAD was the *parent* of the new commit, and that
-this wasn't an initial commit any more), but you've done that once
+cummitting the tree (this time we'd have to use the `-p HEAD` flag to
+tell cummit that the HEAD was the *parent* of the new cummit, and that
+this wasn't an initial cummit any more), but you've done that once
 already, so let's just use the helpful script this time:
 
 ------------------------------------------------
-$ git commit
+$ git cummit
 ------------------------------------------------
 
-which starts an editor for you to write the commit message and tells you
+which starts an editor for you to write the cummit message and tells you
 a bit about what you have done.
 
 Write whatever message you want, and all the lines that start with '#'
-will be pruned out, and the rest will be used as the commit message for
-the change. If you decide you don't want to commit anything after all at
+will be pruned out, and the rest will be used as the cummit message for
+the change. If you decide you don't want to cummit anything after all at
 this point (you can continue to edit things and update the index), you
-can just leave an empty message. Otherwise `git commit` will commit
+can just leave an empty message. Otherwise `git cummit` will cummit
 the change for you.
 
-You've now made your first real Git commit. And if you're interested in
-looking at what `git commit` really does, feel free to investigate:
-it's a few very simple shell scripts to generate the helpful (?) commit
+You've now made your first real Git cummit. And if you're interested in
+looking at what `git cummit` really does, feel free to investigate:
+it's a few very simple shell scripts to generate the helpful (?) cummit
 message headers, and a few one-liners that actually do the
-commit itself ('git commit').
+cummit itself ('git cummit').
 
 
 Inspecting Changes
@@ -480,8 +480,8 @@ later what changed. The most useful command for this is another of the
 
 'git diff-tree' can be given two arbitrary trees, and it will tell you the
 differences between them. Perhaps even more commonly, though, you can
-give it just a single commit object, and it will figure out the parent
-of that commit itself, and show the difference directly. Thus, to get
+give it just a single cummit object, and it will figure out the parent
+of that cummit itself, and show the difference directly. Thus, to get
 the same diff that we've already seen several times, we can now do
 
 ----------------
@@ -489,7 +489,7 @@ $ git diff-tree -p HEAD
 ----------------
 
 (again, `-p` means to show the difference as a human-readable patch),
-and it will show what the last commit (in `HEAD`) actually changed.
+and it will show what the last cummit (in `HEAD`) actually changed.
 
 [NOTE]
 ============
@@ -527,10 +527,10 @@ various 'diff-{asterisk}' commands compare things.
 ============
 
 More interestingly, you can also give 'git diff-tree' the `--pretty` flag,
-which tells it to also show the commit message and author and date of the
-commit, and you can tell it to show a whole series of diffs.
+which tells it to also show the cummit message and author and date of the
+cummit, and you can tell it to show a whole series of diffs.
 Alternatively, you can tell it to be "silent", and not show the diffs at
-all, but just show the actual commit message.
+all, but just show the actual cummit message.
 
 In fact, together with the 'git rev-list' program (which generates a
 list of revisions), 'git diff-tree' ends up being a veritable fount of
@@ -561,7 +561,7 @@ $ git diff my-first-tag
 ----------------
 
 to diff your current state against that tag which at this point will
-obviously be an empty diff, but if you continue to develop and commit
+obviously be an empty diff, but if you continue to develop and cummit
 stuff, you can use your tag as an "anchor-point" to see what has changed
 since you tagged it.
 
@@ -651,7 +651,7 @@ $ git update-index --refresh
 which will force a total index re-build from the tree pointed to by `HEAD`.
 It resets the index contents to `HEAD`, and then the 'git update-index'
 makes sure to match up all index entries with the checked-out files.
-If the original repository had uncommitted changes in its
+If the original repository had uncummitted changes in its
 working tree, `git update-index --refresh` notices them and
 tells you they need to be updated.
 
@@ -665,7 +665,7 @@ and in fact a lot of the common Git command combinations can be scripted
 with the `git xyz` interfaces.  You can learn things by just looking
 at what the various git scripts do.  For example, `git reset` used to be
 the above two lines implemented in 'git reset', but some things like
-'git status' and 'git commit' are slightly more complex scripts around
+'git status' and 'git cummit' are slightly more complex scripts around
 the basic Git commands.
 
 Many (most?) public remote repositories will not contain any of
@@ -755,10 +755,10 @@ just telling 'git switch' what the base of the checkout would be.
 In other words, if you have an earlier tag or branch, you'd just do
 
 ------------
-$ git switch -c mybranch earlier-commit
+$ git switch -c mybranch earlier-cummit
 ------------
 
-and it would create the new branch `mybranch` at the earlier commit,
+and it would create the new branch `mybranch` at the earlier cummit,
 and check out the state at that time.
 ================================================
 
@@ -810,15 +810,15 @@ that branch, and do some work there.
 ------------------------------------------------
 $ git switch mybranch
 $ echo "Work, work, work" >>hello
-$ git commit -m "Some work." -i hello
+$ git cummit -m "Some work." -i hello
 ------------------------------------------------
 
 Here, we just added another line to `hello`, and we used a shorthand for
-doing both `git update-index hello` and `git commit` by just giving the
-filename directly to `git commit`, with an `-i` flag (it tells
+doing both `git update-index hello` and `git cummit` by just giving the
+filename directly to `git cummit`, with an `-i` flag (it tells
 Git to 'include' that file in addition to what you have done to
-the index file so far when making the commit).  The `-m` flag is to give the
-commit log message from the command line.
+the index file so far when making the cummit).  The `-m` flag is to give the
+cummit log message from the command line.
 
 Now, to make it a bit more interesting, let's assume that somebody else
 does some work in the original branch, and simulate that by going back
@@ -835,7 +835,7 @@ hasn't happened in the `master` branch at all. Then do
 ------------
 $ echo "Play, play, play" >>hello
 $ echo "Lots of fun" >>example
-$ git commit -m "Some fun." -i hello example
+$ git cummit -m "Some fun." -i hello example
 ------------
 
 since the master branch is obviously in a much better mood.
@@ -863,7 +863,7 @@ to resolve and what the merge is all about:
 $ git merge -m "Merge work in mybranch" mybranch
 ------------
 
-where the first argument is going to be used as the commit message if
+where the first argument is going to be used as the cummit message if
 the merge can be resolved automatically.
 
 Now, in this case we've intentionally created a situation where the
@@ -874,7 +874,7 @@ file, which had no differences in the `mybranch` branch), and say:
 ----------------
 	Auto-merging hello
 	CONFLICT (content): Merge conflict in hello
-	Automatic merge failed; fix conflicts and then commit the result.
+	Automatic merge failed; fix conflicts and then cummit the result.
 ----------------
 
 It tells you that it did an "Automatic merge", which
@@ -895,10 +895,10 @@ Work, work, work
 and once you're happy with your manual merge, just do a
 
 ------------
-$ git commit -i hello
+$ git cummit -i hello
 ------------
 
-which will very loudly warn you that you're now committing a merge
+which will very loudly warn you that you're now cummitting a merge
 (which is correct, so never mind), and you can write a small merge
 message about your adventures in 'git merge'-land.
 
@@ -923,34 +923,34 @@ $ git show-branch --topo-order --more=1 master mybranch
 ------------------------------------------------
 
 The first two lines indicate that it is showing the two branches
-with the titles of their top-of-the-tree commits, you are currently on
+with the titles of their top-of-the-tree cummits, you are currently on
 `master` branch (notice the asterisk `*` character), and the first
-column for the later output lines is used to show commits contained in the
+column for the later output lines is used to show cummits contained in the
 `master` branch, and the second column for the `mybranch`
-branch. Three commits are shown along with their titles.
+branch. Three cummits are shown along with their titles.
 All of them have non blank characters in the first column (`*`
-shows an ordinary commit on the current branch, `-` is a merge commit), which
+shows an ordinary cummit on the current branch, `-` is a merge cummit), which
 means they are now part of the `master` branch. Only the "Some
 work" commit has the plus `+` character in the second column,
 because `mybranch` has not been merged to incorporate these
-commits from the master branch.  The string inside brackets
-before the commit log message is a short name you can use to
-name the commit.  In the above example, 'master' and 'mybranch'
+cummits from the master branch.  The string inside brackets
+before the cummit log message is a short name you can use to
+name the cummit.  In the above example, 'master' and 'mybranch'
 are branch heads.  'master^' is the first parent of 'master'
 branch head.  Please see linkgit:gitrevisions[7] if you want to
 see more complex cases.
 
 [NOTE]
 Without the '--more=1' option, 'git show-branch' would not output the
-'[master^]' commit, as '[mybranch]' commit is a common ancestor of
+'[master^]' cummit, as '[mybranch]' cummit is a common ancestor of
 both 'master' and 'mybranch' tips.  Please see linkgit:git-show-branch[1]
 for details.
 
 [NOTE]
-If there were more commits on the 'master' branch after the merge, the
-merge commit itself would not be shown by 'git show-branch' by
+If there were more cummits on the 'master' branch after the merge, the
+merge cummit itself would not be shown by 'git show-branch' by
 default.  You would need to provide `--sparse` option to make the
-merge commit visible in this case.
+merge cummit visible in this case.
 
 Now, let's pretend you are the one who did all the work in
 `mybranch`, and the fruit of your hard work has finally been merged
@@ -962,12 +962,12 @@ $ git switch mybranch
 $ git merge -m "Merge upstream changes." master
 ------------
 
-This outputs something like this (the actual commit object names
+This outputs something like this (the actual cummit object names
 would be different)
 
 ----------------
 Updating from ae3a2da... to a80b4aa....
-Fast-forward (no commit created; -m option ignored)
+Fast-forward (no cummit created; -m option ignored)
  example | 1 +
  hello   | 1 +
  2 files changed, 2 insertions(+)
@@ -979,7 +979,7 @@ not actually do a merge. Instead, it just updated the top of
 the tree of your branch to that of the `master` branch. This is
 often called 'fast-forward' merge.
 
-You can run `gitk --all` again to see how the commit ancestry
+You can run `gitk --all` again to see how the cummit ancestry
 looks like, or run 'show-branch', which tells you this.
 
 ------------------------------------------------
@@ -1019,7 +1019,7 @@ SSH::
 This transport can be used for both uploading and downloading,
 and requires you to have a log-in privilege over `ssh` to the
 remote machine.  It finds out the set of objects the other side
-lacks by exchanging the head commits both ends have and
+lacks by exchanging the head cummits both ends have and
 transfers (close to) minimum set of objects.  It is by far the
 most efficient way to exchange Git objects between repositories.
 
@@ -1041,17 +1041,17 @@ HTTP(S)::
 	`http://remote.machine/path/to/repo.git/`
 +
 Downloader from http and https URL
-first obtains the topmost commit object name from the remote site
+first obtains the topmost cummit object name from the remote site
 by looking at the specified refname under `repo.git/refs/` directory,
 and then tries to obtain the
-commit object by downloading from `repo.git/objects/xx/xxx...`
-using the object name of that commit object.  Then it reads the
-commit object to find out its parent commits and the associate
+cummit object by downloading from `repo.git/objects/xx/xxx...`
+using the object name of that cummit object.  Then it reads the
+cummit object to find out its parent cummits and the associate
 tree object; it repeats this process until it gets all the
 necessary objects.  Because of this behavior, they are
-sometimes also called 'commit walkers'.
+sometimes also called 'cummit walkers'.
 +
-The 'commit walkers' are sometimes also called 'dumb
+The 'cummit walkers' are sometimes also called 'dumb
 transports', because they do not require any Git aware smart
 server like Git Native transport does.  Any stock HTTP server
 that does not even support directory index would suffice.  But
@@ -1129,8 +1129,8 @@ $ git show-branch --more=2 master mybranch
 ------------
 
 Remember, before running 'git merge', our `master` head was at
-"Some fun." commit, while our `mybranch` head was at "Some
-work." commit.
+"Some fun." cummit, while our `mybranch` head was at "Some
+work." cummit.
 
 ------------
 $ git switch -C mybranch master^2
@@ -1138,7 +1138,7 @@ $ git switch master
 $ git reset --hard master^
 ------------
 
-After rewinding, the commit structure should look like this:
+After rewinding, the cummit structure should look like this:
 
 ------------
 $ git show-branch
@@ -1147,7 +1147,7 @@ $ git show-branch
 --
 *  [master] Some fun.
  + [mybranch] Some work.
-*+ [master^] Initial commit
+*+ [master^] Initial cummit
 ------------
 
 Now we are ready to experiment with the merge by hand.
@@ -1160,10 +1160,10 @@ The command it uses is 'git merge-base':
 $ mb=$(git merge-base HEAD mybranch)
 ------------
 
-The command writes the commit object name of the common ancestor
+The command writes the cummit object name of the common ancestor
 to the standard output, so we captured its output to a variable,
 because we will be using it in the next step.  By the way, the common
-ancestor commit is the "Initial commit" commit in this case.  You can
+ancestor cummit is the "Initial cummit" cummit in this case.  You can
 tell it by:
 
 ------------
@@ -1171,7 +1171,7 @@ $ git name-rev --name-only --tags $mb
 my-first-tag
 ------------
 
-After finding out a common ancestor commit, the second step is
+After finding out a common ancestor cummit, the second step is
 this:
 
 ------------
@@ -1203,7 +1203,7 @@ $ git ls-files --stage
 
 In our example of only two files, we did not have unchanged
 files so only 'example' resulted in collapsing.  But in real-life
-large projects, when only a small number of files change in one commit,
+large projects, when only a small number of files change in one cummit,
 this 'collapsing' tends to trivially merge most of the paths
 fairly quickly, leaving only a handful of real changes in non-zero
 stages.
@@ -1560,41 +1560,41 @@ We have already seen how branches work previously,
 with "fun and work" example using two branches.  The idea is the
 same if there are more than two branches.  Let's say you started
 out from "master" head, and have some new code in the "master"
-branch, and two independent fixes in the "commit-fix" and
+branch, and two independent fixes in the "cummit-fix" and
 "diff-fix" branches:
 
 ------------
 $ git show-branch
-! [commit-fix] Fix commit message normalization.
+! [cummit-fix] Fix cummit message normalization.
  ! [diff-fix] Fix rename detection.
   * [master] Release candidate #1
 ---
  +  [diff-fix] Fix rename detection.
  +  [diff-fix~1] Better common substring algorithm.
-+   [commit-fix] Fix commit message normalization.
++   [cummit-fix] Fix cummit message normalization.
   * [master] Release candidate #1
 ++* [diff-fix~2] Pretty-print messages.
 ------------
 
 Both fixes are tested well, and at this point, you want to merge
 in both of them.  You could merge in 'diff-fix' first and then
-'commit-fix' next, like this:
+'cummit-fix' next, like this:
 
 ------------
 $ git merge -m "Merge fix in diff-fix" diff-fix
-$ git merge -m "Merge fix in commit-fix" commit-fix
+$ git merge -m "Merge fix in cummit-fix" cummit-fix
 ------------
 
 Which would result in:
 
 ------------
 $ git show-branch
-! [commit-fix] Fix commit message normalization.
+! [cummit-fix] Fix cummit message normalization.
  ! [diff-fix] Fix rename detection.
-  * [master] Merge fix in commit-fix
+  * [master] Merge fix in cummit-fix
 ---
-  - [master] Merge fix in commit-fix
-+ * [commit-fix] Fix commit message normalization.
+  - [master] Merge fix in cummit-fix
++ * [cummit-fix] Fix cummit message normalization.
   - [master~1] Merge fix in diff-fix
  +* [diff-fix] Fix rename detection.
  +* [diff-fix~1] Better common substring algorithm.
@@ -1620,14 +1620,14 @@ two 'git merge' commands in a row, you would merge these two
 branch heads (this is known as 'making an Octopus'):
 
 ------------
-$ git merge commit-fix diff-fix
+$ git merge cummit-fix diff-fix
 $ git show-branch
-! [commit-fix] Fix commit message normalization.
+! [cummit-fix] Fix cummit message normalization.
  ! [diff-fix] Fix rename detection.
-  * [master] Octopus merge of branches 'diff-fix' and 'commit-fix'
+  * [master] Octopus merge of branches 'diff-fix' and 'cummit-fix'
 ---
-  - [master] Octopus merge of branches 'diff-fix' and 'commit-fix'
-+ * [commit-fix] Fix commit message normalization.
+  - [master] Octopus merge of branches 'diff-fix' and 'cummit-fix'
++ * [cummit-fix] Fix cummit message normalization.
  +* [diff-fix] Fix rename detection.
  +* [diff-fix~1] Better common substring algorithm.
   * [master~1] Release candidate #1

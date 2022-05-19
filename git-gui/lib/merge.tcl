@@ -7,23 +7,23 @@ field w         ; # top level window
 field w_rev     ; # mega-widget to pick the revision to merge
 
 method _can_merge {} {
-	global HEAD commit_type file_states
+	global HEAD cummit_type file_states
 
-	if {[string match amend* $commit_type]} {
+	if {[string match amend* $cummit_type]} {
 		info_popup [mc "Cannot merge while amending.
 
-You must finish amending this commit before starting any type of merge.
+You must finish amending this cummit before starting any type of merge.
 "]
 		return 0
 	}
 
-	if {[committer_ident] eq {}} {return 0}
+	if {[cummitter_ident] eq {}} {return 0}
 	if {![lock_index merge]} {return 0}
 
 	# -- Our in memory state should match the repository.
 	#
 	repository_state curType curHEAD curMERGE_HEAD
-	if {$commit_type ne $curType || $HEAD ne $curHEAD} {
+	if {$cummit_type ne $curType || $HEAD ne $curHEAD} {
 		info_popup [mc "Last scanned state does not match repository state.
 
 Another Git program has modified this repository since the last scan.  A rescan must be performed before a merge can be performed.
@@ -46,7 +46,7 @@ The rescan will be automatically started now.
 
 File %s has merge conflicts.
 
-You must resolve them, stage the file, and commit to complete the current merge.  Only then can you begin another merge.
+You must resolve them, stage the file, and cummit to complete the current merge.  Only then can you begin another merge.
 " [short_path $path]]
 			unlock_index
 			return 0
@@ -56,7 +56,7 @@ You must resolve them, stage the file, and commit to complete the current merge.
 
 File %s is modified.
 
-You should complete the current commit before starting a merge.  Doing so will help you abort a failed merge, should the need arise.
+You should complete the current cummit before starting a merge.  Doing so will help you abort a failed merge, should the need arise.
 " [short_path $path]]
 			unlock_index
 			return 0
@@ -68,7 +68,7 @@ You should complete the current commit before starting a merge.  Doing so will h
 }
 
 method _rev {} {
-	if {[catch {$w_rev commit_or_die}]} {
+	if {[catch {$w_rev cummit_or_die}]} {
 		return {}
 	}
 	return [$w_rev get]
@@ -91,7 +91,7 @@ method _start {} {
 	}
 
 	set spec [$w_rev get_tracking_branch]
-	set cmit [$w_rev get_commit]
+	set cmit [$w_rev get_cummit]
 
 	set fh [open [gitdir FETCH_HEAD] w]
 	fconfigure $fh -translation lf
@@ -212,28 +212,28 @@ method _cancel {} {
 namespace eval merge {
 
 proc reset_hard {} {
-	global HEAD commit_type file_states
+	global HEAD cummit_type file_states
 
-	if {[string match amend* $commit_type]} {
+	if {[string match amend* $cummit_type]} {
 		info_popup [mc "Cannot abort while amending.
 
-You must finish amending this commit.
+You must finish amending this cummit.
 "]
 		return
 	}
 
 	if {![lock_index abort]} return
 
-	if {[string match *merge* $commit_type]} {
+	if {[string match *merge* $cummit_type]} {
 		set op_question [mc "Abort merge?
 
-Aborting the current merge will cause *ALL* uncommitted changes to be lost.
+Aborting the current merge will cause *ALL* uncummitted changes to be lost.
 
 Continue with aborting the current merge?"]
 	} else {
 		set op_question [mc "Reset changes?
 
-Resetting the changes will cause *ALL* uncommitted changes to be lost.
+Resetting the changes will cause *ALL* uncummitted changes to be lost.
 
 Continue with resetting the current changes?"]
 	}

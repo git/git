@@ -15,7 +15,7 @@ Fixes since v2.4
    that edits it had incorrectly spelled user.name and user.email
    entries in it.
 
- * "git commit --date=now" or anything that relies on approxidate lost
+ * "git cummit --date=now" or anything that relies on approxidate lost
    the daylight-saving-time offset.
 
  * "git cat-file bl $blob" failed to barf even though there is no

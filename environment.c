@@ -14,7 +14,7 @@
 #include "config.h"
 #include "refs.h"
 #include "fmt-merge-msg.h"
-#include "commit.h"
+#include "cummit.h"
 #include "strvec.h"
 #include "object-store.h"
 #include "tmp-objdir.h"
@@ -34,7 +34,7 @@ int warn_ambiguous_refs = 1;
 int warn_on_object_refname_ambiguity = 1;
 int repository_format_precious_objects;
 int repository_format_worktree_config;
-const char *git_commit_encoding;
+const char *git_cummit_encoding;
 const char *git_log_output_encoding;
 char *apply_default_whitespace;
 char *apply_default_ignorewhitespace;
@@ -369,12 +369,12 @@ void set_git_dir(const char *path, int make_realpath)
 const char *get_log_output_encoding(void)
 {
 	return git_log_output_encoding ? git_log_output_encoding
-		: get_commit_output_encoding();
+		: get_cummit_output_encoding();
 }
 
-const char *get_commit_output_encoding(void)
+const char *get_cummit_output_encoding(void)
 {
-	return git_commit_encoding ? git_commit_encoding : "UTF-8";
+	return git_cummit_encoding ? git_cummit_encoding : "UTF-8";
 }
 
 static int the_shared_repository = PERM_UMASK;

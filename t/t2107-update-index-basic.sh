@@ -43,7 +43,7 @@ test_expect_success '--cacheinfo does not accept blob null sha1' '
 
 test_expect_success '--cacheinfo does not accept gitlink null sha1' '
 	git init submodule &&
-	(cd submodule && test_commit foo) &&
+	(cd submodule && test_cummit foo) &&
 	git add submodule &&
 	git rev-parse :submodule >expect &&
 	test_must_fail git update-index --cacheinfo 160000 $ZERO_OID submodule &&

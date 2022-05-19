@@ -12,22 +12,22 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 # Setup test files
 test_setup() {
-	# Expected commit message after merge --signoff
+	# Expected cummit message after merge --signoff
 	cat >expected-signed <<EOF &&
 Merge branch 'main' into other-branch
 
-Signed-off-by: $(git var GIT_COMMITTER_IDENT | sed -e "s/>.*/>/")
+Signed-off-by: $(git var GIT_cummitTER_IDENT | sed -e "s/>.*/>/")
 EOF
 
-	# Expected commit message after merge without --signoff (or with --no-signoff)
+	# Expected cummit message after merge without --signoff (or with --no-signoff)
 	cat >expected-unsigned <<EOF &&
 Merge branch 'main' into other-branch
 EOF
 
-	# Initial commit and feature branch to merge main into it.
-	git commit --allow-empty -m "Initial empty commit" &&
+	# Initial cummit and feature branch to merge main into it.
+	git cummit --allow-empty -m "Initial empty cummit" &&
 	git checkout -b other-branch &&
-	test_commit other-branch file1 1
+	test_cummit other-branch file1 1
 }
 
 # Setup repository, files & feature branch
@@ -42,7 +42,7 @@ test_expect_success 'setup' '
 # Test with --signoff flag
 test_expect_success 'git merge --signoff adds a sign-off line' '
 	git checkout main &&
-	test_commit main-branch-2 file2 2 &&
+	test_cummit main-branch-2 file2 2 &&
 	git checkout other-branch &&
 	git merge main --signoff --no-edit &&
 	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
@@ -52,7 +52,7 @@ test_expect_success 'git merge --signoff adds a sign-off line' '
 # Test without --signoff flag
 test_expect_success 'git merge does not add a sign-off line' '
 	git checkout main &&
-	test_commit main-branch-3 file3 3 &&
+	test_cummit main-branch-3 file3 3 &&
 	git checkout other-branch &&
 	git merge main --no-edit &&
 	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
@@ -62,7 +62,7 @@ test_expect_success 'git merge does not add a sign-off line' '
 # Test for --no-signoff flag
 test_expect_success 'git merge --no-signoff flag cancels --signoff flag' '
 	git checkout main &&
-	test_commit main-branch-4 file4 4 &&
+	test_cummit main-branch-4 file4 4 &&
 	git checkout other-branch &&
 	git merge main --no-edit --signoff --no-signoff &&
 	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&

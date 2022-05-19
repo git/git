@@ -13,7 +13,7 @@ D=$(pwd)
 test_expect_success setup '
 	echo >file original &&
 	git add file &&
-	git commit -a -m original &&
+	git cummit -a -m original &&
 	git branch -M main
 '
 
@@ -22,7 +22,7 @@ test_expect_success "clone and setup child repos" '
 	(
 		cd one &&
 		echo >file updated by one &&
-		git commit -a -m "updated by one"
+		git cummit -a -m "updated by one"
 	) &&
 	git clone . two &&
 	(
@@ -50,7 +50,7 @@ test_expect_success "clone and setup child repos" '
 test_expect_success "fetch test" '
 	cd "$D" &&
 	echo >file updated by origin &&
-	git commit -a -m "updated by origin" &&
+	git cummit -a -m "updated by origin" &&
 	cd two &&
 	git fetch &&
 	git rev-parse --verify refs/heads/one &&
@@ -244,8 +244,8 @@ test_expect_success 'fetch --atomic aborts with non-fast-forward update' '
 	git rev-parse HEAD >actual &&
 
 	git branch atomic-new-branch &&
-	parent_commit=$(git rev-parse atomic-non-ff~) &&
-	git update-ref refs/heads/atomic-non-ff $parent_commit &&
+	parent_cummit=$(git rev-parse atomic-non-ff~) &&
+	git update-ref refs/heads/atomic-non-ff $parent_cummit &&
 
 	test_must_fail git -C atomic fetch --atomic origin refs/heads/*:refs/remotes/origin/* &&
 	test_must_fail git -C atomic rev-parse refs/remotes/origin/atomic-new-branch &&
@@ -267,7 +267,7 @@ test_expect_success 'fetch --atomic executes a single reference transaction only
 		prepared
 		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-1
 		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-2
-		committed
+		cummitted
 		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-1
 		$ZERO_OID $head_oid refs/remotes/origin/atomic-hooks-2
 	EOF
@@ -410,7 +410,7 @@ test_expect_success 'fetch uses remote ref names to describe new refs' '
 	git checkout descriptive-branch &&
 	echo "Nuts" >crazy &&
 	git add crazy &&
-	git commit -a -m "descriptive commit" &&
+	git cummit -a -m "descriptive cummit" &&
 	git update-ref refs/others/crazy HEAD &&
 	(
 		cd descriptive &&
@@ -449,7 +449,7 @@ test_expect_success 'fetch can now resolve short remote name' '
 test_expect_success 'create bundle 1' '
 	cd "$D" &&
 	echo >file updated again by origin &&
-	git commit -a -m "tip" &&
+	git cummit -a -m "tip" &&
 	git bundle create --version=3 bundle1 main^..main
 '
 
@@ -492,7 +492,7 @@ test_expect_success 'bundle does not prerequisite objects' '
 	cd "$D" &&
 	touch file2 &&
 	git add file2 &&
-	git commit -m add.file2 file2 &&
+	git cummit -m add.file2 file2 &&
 	git bundle create bundle3 -1 HEAD &&
 	test_bundle_object_count bundle3 3
 '
@@ -685,7 +685,7 @@ test_expect_success 'auto tag following fetches minimum' '
 		for i in 1 2 3 4 5 6 7
 		do
 			echo $i >>file &&
-			git commit -m $i -a &&
+			git cummit -m $i -a &&
 			git tag -a -m $i excess-$i || exit 1
 		done
 	) &&
@@ -746,8 +746,8 @@ test_expect_success 'LHS of refspec follows ref disambiguation rules' '
 	(
 		cd lhs-ambiguous &&
 		git init server &&
-		test_commit -C server unwanted &&
-		test_commit -C server wanted &&
+		test_cummit -C server unwanted &&
+		test_cummit -C server wanted &&
 
 		git init client &&
 
@@ -776,32 +776,32 @@ test_expect_success 'LHS of refspec follows ref disambiguation rules' '
 	)
 '
 
-test_expect_success 'fetch.writeCommitGraph' '
+test_expect_success 'fetch.writecummitGraph' '
 	git clone three write &&
 	(
 		cd three &&
-		test_commit new
+		test_cummit new
 	) &&
 	(
 		cd write &&
-		git -c fetch.writeCommitGraph fetch origin &&
-		test_path_is_file .git/objects/info/commit-graphs/commit-graph-chain
+		git -c fetch.writecummitGraph fetch origin &&
+		test_path_is_file .git/objects/info/cummit-graphs/cummit-graph-chain
 	)
 '
 
-test_expect_success 'fetch.writeCommitGraph with submodules' '
+test_expect_success 'fetch.writecummitGraph with submodules' '
 	git clone dups super &&
 	(
 		cd super &&
 		git submodule add "file://$TRASH_DIRECTORY/three" &&
-		git commit -m "add submodule"
+		git cummit -m "add submodule"
 	) &&
 	git clone "super" super-clone &&
 	(
 		cd super-clone &&
 		rm -rf .git/objects/info &&
-		git -c fetch.writeCommitGraph=true fetch origin &&
-		test_path_is_file .git/objects/info/commit-graphs/commit-graph-chain
+		git -c fetch.writecummitGraph=true fetch origin &&
+		test_path_is_file .git/objects/info/cummit-graphs/cummit-graph-chain
 	)
 '
 
@@ -1037,11 +1037,11 @@ test_expect_success 'remove remote.origin.fetch "one"' '
 test_configured_prune_type unset unset unset unset kept pruned "origin --prune --prune-tags" "name"
 test_configured_prune_type unset unset unset unset kept pruned "origin --prune --prune-tags" "link"
 
-test_expect_success 'all boundary commits are excluded' '
-	test_commit base &&
-	test_commit oneside &&
+test_expect_success 'all boundary cummits are excluded' '
+	test_cummit base &&
+	test_cummit oneside &&
 	git checkout HEAD^ &&
-	test_commit otherside &&
+	test_cummit otherside &&
 	git checkout main &&
 	test_tick &&
 	git merge otherside &&
@@ -1077,7 +1077,7 @@ test_expect_success 'branchname D/F conflict resolved by --prune' '
 '
 
 test_expect_success 'fetching a one-level ref works' '
-	test_commit extra &&
+	test_cummit extra &&
 	git reset --hard HEAD^ &&
 	git update-ref refs/foo extra &&
 	git init one-level &&
@@ -1093,7 +1093,7 @@ test_expect_success 'fetching with auto-gc does not lock up' '
 	false
 	EOF
 	git clone "file://$D" auto-gc &&
-	test_commit test2 &&
+	test_cummit test2 &&
 	(
 		cd auto-gc &&
 		git config fetch.unpackLimit 1 &&
@@ -1107,7 +1107,7 @@ test_expect_success 'fetching with auto-gc does not lock up' '
 
 test_expect_success 'fetch aligned output' '
 	git clone . full-output &&
-	test_commit looooooooooooong-tag &&
+	test_cummit looooooooooooong-tag &&
 	(
 		cd full-output &&
 		git -c fetch.output=full fetch origin >actual 2>&1 &&
@@ -1122,7 +1122,7 @@ test_expect_success 'fetch aligned output' '
 
 test_expect_success 'fetch compact output' '
 	git clone . compact &&
-	test_commit extraaa &&
+	test_cummit extraaa &&
 	(
 		cd compact &&
 		git -c fetch.output=compact fetch origin >actual 2>&1 &&
@@ -1140,8 +1140,8 @@ test_expect_success '--no-show-forced-updates' '
 	(
 		cd forced-updates &&
 		git init &&
-		test_commit 1 &&
-		test_commit 2
+		test_cummit 1 &&
+		test_cummit 2
 	) &&
 	git clone forced-updates forced-update-clone &&
 	git clone forced-updates no-forced-update-clone &&
@@ -1165,11 +1165,11 @@ setup_negotiation_tip () {
 
 	rm -rf "$SERVER" client trace &&
 	git init -b main "$SERVER" &&
-	test_commit -C "$SERVER" alpha_1 &&
-	test_commit -C "$SERVER" alpha_2 &&
+	test_cummit -C "$SERVER" alpha_1 &&
+	test_cummit -C "$SERVER" alpha_2 &&
 	git -C "$SERVER" checkout --orphan beta &&
-	test_commit -C "$SERVER" beta_1 &&
-	test_commit -C "$SERVER" beta_2 &&
+	test_cummit -C "$SERVER" beta_1 &&
+	test_cummit -C "$SERVER" beta_2 &&
 
 	git clone "$URL" client &&
 
@@ -1179,9 +1179,9 @@ setup_negotiation_tip () {
 		git -C client config protocol.version 2
 	fi &&
 
-	test_commit -C "$SERVER" beta_s &&
+	test_cummit -C "$SERVER" beta_s &&
 	git -C "$SERVER" checkout main &&
-	test_commit -C "$SERVER" alpha_s &&
+	test_cummit -C "$SERVER" alpha_s &&
 	git -C "$SERVER" tag -d alpha_1 alpha_2 beta_1 beta_2
 }
 

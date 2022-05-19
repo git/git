@@ -43,11 +43,11 @@ echo "oldtime: $oldtime"
 
 if test $(echo "$newtime" "$rtime" "$oldtime" | awk '{ print ($1 - $2 > $2 - $3) }') = 1
 then
-	# Current commit is considered "good/old"
+	# Current cummit is considered "good/old"
 	echo "$rtime" >"$info_dir/oldtime"
 	exit 0
 else
-	# Current commit is considered "bad/new"
+	# Current cummit is considered "bad/new"
 	echo "$rtime" >"$info_dir/newtime"
 	exit 1
 fi

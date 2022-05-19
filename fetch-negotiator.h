@@ -1,7 +1,7 @@
 #ifndef FETCH_NEGOTIATOR_H
 #define FETCH_NEGOTIATOR_H
 
-struct commit;
+struct cummit;
 struct repository;
 
 /*
@@ -20,32 +20,32 @@ struct repository;
 struct fetch_negotiator {
 	/*
 	 * Before negotiation starts, indicate that the server is known to have
-	 * this commit.
+	 * this cummit.
 	 */
-	void (*known_common)(struct fetch_negotiator *, struct commit *);
+	void (*known_common)(struct fetch_negotiator *, struct cummit *);
 
 	/*
 	 * Once this function is invoked, known_common() cannot be invoked any
 	 * more.
 	 *
-	 * Indicate that this commit and all its ancestors are to be checked
+	 * Indicate that this cummit and all its ancestors are to be checked
 	 * for commonality with the server.
 	 */
-	void (*add_tip)(struct fetch_negotiator *, struct commit *);
+	void (*add_tip)(struct fetch_negotiator *, struct cummit *);
 
 	/*
 	 * Once this function is invoked, known_common() and add_tip() cannot
 	 * be invoked any more.
 	 *
-	 * Return the next commit that the client should send as a "have" line.
+	 * Return the next cummit that the client should send as a "have" line.
 	 */
 	const struct object_id *(*next)(struct fetch_negotiator *);
 
 	/*
-	 * Inform the negotiator that the server has the given commit. This
-	 * method must only be called on commits returned by next().
+	 * Inform the negotiator that the server has the given cummit. This
+	 * method must only be called on cummits returned by next().
 	 */
-	int (*ack)(struct fetch_negotiator *, struct commit *);
+	int (*ack)(struct fetch_negotiator *, struct cummit *);
 
 	void (*release)(struct fetch_negotiator *);
 

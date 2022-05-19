@@ -7,25 +7,25 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
-commit() {
+cummit() {
 	echo "$1" >tracked &&
 	git add tracked &&
-	git commit -m "$1"
+	git cummit -m "$1"
 }
 
 test_expect_success 'setup' '
 	git config --global transfer.fsckObjects true &&
-	commit 1 &&
-	commit 2 &&
-	commit 3 &&
-	commit 4 &&
+	cummit 1 &&
+	cummit 2 &&
+	cummit 3 &&
+	cummit 4 &&
 	git clone . full &&
 	(
 	git init full-abc &&
 	cd full-abc &&
-	commit a &&
-	commit b &&
-	commit c
+	cummit a &&
+	cummit b &&
+	cummit c
 	) &&
 	git clone --no-local --depth=2 .git shallow &&
 	git --git-dir=shallow/.git log --format=%s >actual &&
@@ -46,7 +46,7 @@ EOF
 test_expect_success 'push from shallow clone' '
 	(
 	cd shallow &&
-	commit 5 &&
+	cummit 5 &&
 	git push ../.git +main:refs/remotes/shallow/main
 	) &&
 	git log --format=%s shallow/main >actual &&
@@ -108,7 +108,7 @@ EOF
 
 test_expect_success 'push from full to shallow' '
 	! git --git-dir=shallow2/.git cat-file blob $(echo 1|git hash-object --stdin) &&
-	commit 1 &&
+	cummit 1 &&
 	git push shallow2/.git +main:refs/remotes/top/main &&
 	(
 	cd shallow2 &&

@@ -8,7 +8,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'create repo with file' '
 	echo content >file &&
 	git add file &&
-	git commit -m file &&
+	git cummit -m file &&
 	echo modification >file
 '
 

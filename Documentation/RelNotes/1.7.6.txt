@@ -18,7 +18,7 @@ Updates since v1.7.5
  * The scripting part of the codebase is getting prepared for i18n/l10n.
 
  * Pushing and pulling from a repository with large number of refs that
-   point to identical commits are optimized by not listing the same commit
+   point to identical cummits are optimized by not listing the same cummit
    during the common ancestor negotiation exchange with the other side.
 
  * Adding a file larger than core.bigfilethreshold (defaults to 1/2 Gig)
@@ -42,15 +42,15 @@ Updates since v1.7.5
    name it by "./:/that/path" or by "\:/that/path".
 
  * "git blame" learned "--abbrev[=<n>]" option to control the minimum
-   number of hexdigits shown for commit object names.
+   number of hexdigits shown for cummit object names.
 
  * "git blame" learned "--line-porcelain" that is less efficient but is
    easier to parse.
 
- * Aborting "git commit --interactive" discards updates to the index
+ * Aborting "git cummit --interactive" discards updates to the index
    made during the interactive session.
 
- * "git commit" learned a "--patch" option to directly jump to the
+ * "git cummit" learned a "--patch" option to directly jump to the
    per-hunk selection UI of the interactive mode.
 
  * "git diff" and its family of commands learned --dirstat=0 to show
@@ -75,8 +75,8 @@ Updates since v1.7.5
    "--show-notes" option.  Unlike "--show-notes", "--notes=<ref>" does
    not imply showing the default notes.
 
- * They also learned a log.abbrevCommit configuration variable to augment
-   the --abbrev-commit command line option.
+ * They also learned a log.abbrevcummit configuration variable to augment
+   the --abbrev-cummit command line option.
 
  * "git ls-remote" learned "--exit-code" option to consider it a
    different kind of error when no remote ref to be shown.
@@ -85,8 +85,8 @@ Updates since v1.7.5
    like the way "git checkout -" works.
 
  * "git merge" uses "merge.ff" configuration variable to decide to always
-   create a merge commit (i.e. --no-ff, aka merge.ff=no), refuse to create
-   a merge commit (i.e. --ff-only, aka merge.ff=only). Setting merge.ff=yes
+   create a merge cummit (i.e. --no-ff, aka merge.ff=no), refuse to create
+   a merge cummit (i.e. --ff-only, aka merge.ff=only). Setting merge.ff=yes
    (or not setting it at all) restores the default behaviour of allowing
    fast-forward to happen when possible.
 
@@ -107,7 +107,7 @@ Updates since v1.7.5
    not renamed.
 
  * "git rev-list --count" used with "--cherry-mark" counts the cherry-picked
-   commits separately, producing more a useful output.
+   cummits separately, producing more a useful output.
 
  * "git submodule update" learned "--force" option to get rid of local
    changes in submodules and replace them with the up-to-date version.

@@ -87,7 +87,7 @@ test_expect_success 'ident converts on output' '
 # ensures that smudging doesn't mangle large files on 64-bit Windows.
 test_expect_success EXPENSIVE,SIZE_T_IS_64BIT,!LONG_IS_64BIT \
 		'files over 4GB convert on output' '
-	test_commit test small "a small file" &&
+	test_cummit test small "a small file" &&
 	small_size=$(test_file_size small) &&
 	test_config filter.makelarge.smudge \
 		"test-tool genzeros $((5*1024*1024*1024)) && cat" &&

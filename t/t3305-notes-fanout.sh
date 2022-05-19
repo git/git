@@ -12,18 +12,18 @@ path_has_fanout() {
 }
 
 touched_one_note_with_fanout() {
-	notes_commit=$1 &&
+	notes_cummit=$1 &&
 	modification=$2 &&  # 'A' for addition, 'D' for deletion
 	fanout=$3 &&
-	diff=$(git diff-tree --no-commit-id --name-status --root -r $notes_commit) &&
+	diff=$(git diff-tree --no-cummit-id --name-status --root -r $notes_cummit) &&
 	path=$(echo $diff | sed -e "s/^$modification[\t ]//") &&
 	path_has_fanout "$path" $fanout;
 }
 
 all_notes_have_fanout() {
-	notes_commit=$1 &&
+	notes_cummit=$1 &&
 	fanout=$2 &&
-	git ls-tree -r --name-only $notes_commit |
+	git ls-tree -r --name-only $notes_cummit |
 	while read path
 	do
 		path_has_fanout $path $fanout || return 1
@@ -32,7 +32,7 @@ all_notes_have_fanout() {
 
 test_expect_success 'tweak test environment' '
 	git checkout -b nondeterminism &&
-	test_commit A &&
+	test_cummit A &&
 	git checkout --orphan with_notes;
 '
 
@@ -43,9 +43,9 @@ test_expect_success 'creating many notes with git-notes' '
 	do
 		i=$(($i + 1)) &&
 		test_tick &&
-		echo "file for commit #$i" > file &&
+		echo "file for cummit #$i" > file &&
 		git add file &&
-		git commit -q -m "commit #$i" &&
+		git cummit -q -m "cummit #$i" &&
 		git notes add -m "note #$i" || return 1
 	done
 '
@@ -56,7 +56,7 @@ test_expect_success !SANITIZE_LEAK 'many notes created correctly with git-notes'
 	i=$num_notes &&
 	while test $i -gt 0
 	do
-		echo "    commit #$i" &&
+		echo "    cummit #$i" &&
 		echo "    note #$i" &&
 		i=$(($i - 1)) || return 1
 	done > expect &&
@@ -69,23 +69,23 @@ test_expect_success 'stable fanout 0 is followed by stable fanout 1' '
 	while test $i -gt 0
 	do
 		i=$(($i - 1)) &&
-		if touched_one_note_with_fanout refs/notes/commits~$i A $fanout
+		if touched_one_note_with_fanout refs/notes/cummits~$i A $fanout
 		then
 			continue
 		elif test $fanout -eq 0
 		then
 			fanout=1 &&
-			if all_notes_have_fanout refs/notes/commits~$i $fanout
+			if all_notes_have_fanout refs/notes/cummits~$i $fanout
 			then
-				echo "Fanout 0 -> 1 at refs/notes/commits~$i" &&
+				echo "Fanout 0 -> 1 at refs/notes/cummits~$i" &&
 				continue
 			fi
 		fi &&
-		echo "Failed fanout=$fanout check at refs/notes/commits~$i" &&
-		git ls-tree -r --name-only refs/notes/commits~$i &&
+		echo "Failed fanout=$fanout check at refs/notes/cummits~$i" &&
+		git ls-tree -r --name-only refs/notes/cummits~$i &&
 		return 1
 	done &&
-	all_notes_have_fanout refs/notes/commits 1
+	all_notes_have_fanout refs/notes/cummits 1
 '
 
 test_expect_success 'deleting most notes with git-notes' '
@@ -105,7 +105,7 @@ test_expect_success 'most notes deleted correctly with git-notes' '
 	i=$(($num_notes - $remove_notes)) &&
 	while test $i -gt 0
 	do
-		echo "    commit #$i" &&
+		echo "    cummit #$i" &&
 		echo "    note #$i" &&
 		i=$(($i - 1)) || return 1
 	done > expect &&
@@ -118,23 +118,23 @@ test_expect_success 'stable fanout 1 is followed by stable fanout 0' '
 	while test $i -gt 0
 	do
 		i=$(($i - 1)) &&
-		if touched_one_note_with_fanout refs/notes/commits~$i D $fanout
+		if touched_one_note_with_fanout refs/notes/cummits~$i D $fanout
 		then
 			continue
 		elif test $fanout -eq 1
 		then
 			fanout=0 &&
-			if all_notes_have_fanout refs/notes/commits~$i $fanout
+			if all_notes_have_fanout refs/notes/cummits~$i $fanout
 			then
-				echo "Fanout 1 -> 0 at refs/notes/commits~$i" &&
+				echo "Fanout 1 -> 0 at refs/notes/cummits~$i" &&
 				continue
 			fi
 		fi &&
-		echo "Failed fanout=$fanout check at refs/notes/commits~$i" &&
-		git ls-tree -r --name-only refs/notes/commits~$i &&
+		echo "Failed fanout=$fanout check at refs/notes/cummits~$i" &&
+		git ls-tree -r --name-only refs/notes/cummits~$i &&
 		return 1
 	done &&
-	all_notes_have_fanout refs/notes/commits 0
+	all_notes_have_fanout refs/notes/cummits 0
 '
 
 test_done

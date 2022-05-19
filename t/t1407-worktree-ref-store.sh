@@ -11,11 +11,11 @@ RWT="test-tool ref-store worktree:wt"
 RMAIN="test-tool ref-store worktree:main"
 
 test_expect_success 'setup' '
-	test_commit first &&
+	test_cummit first &&
 	git worktree add -b wt-main wt &&
 	(
 		cd wt &&
-		test_commit second
+		test_cummit second
 	)
 '
 

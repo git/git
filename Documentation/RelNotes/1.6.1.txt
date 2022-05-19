@@ -79,9 +79,9 @@ on.
 * "git bisect" is careful about a user mistake and suggests testing of
   merge base first when good is not a strict ancestor of bad.
 
-* "git bisect skip" can take a range of commits.
+* "git bisect skip" can take a range of cummits.
 
-* "git blame" re-encodes the commit metainfo to UTF-8 from i18n.commitEncoding
+* "git blame" re-encodes the cummit metainfo to UTF-8 from i18n.cummitEncoding
   by default.
 
 * "git check-attr --stdin" can check attributes for multiple paths.
@@ -100,10 +100,10 @@ on.
 
 * "git clone" learned to be verbose with -v
 
-* "git commit --author=$name" can look up author name from existing
-  commits.
+* "git cummit --author=$name" can look up author name from existing
+  cummits.
 
-* output from "git commit" has been reworded in a more concise and yet
+* output from "git cummit" has been reworded in a more concise and yet
   more informative way.
 
 * "git count-objects" reports the on-disk footprint for packfiles and
@@ -136,7 +136,7 @@ on.
   format-patch among other things).
 
 * "--cached" option to "git diff has an easier to remember synonym "--staged",
-  to ask "what is the difference between the given commit and the
+  to ask "what is the difference between the given cummit and the
   contents staged in the index?"
 
 * "git for-each-ref" learned "refname:short" token that gives an
@@ -161,14 +161,14 @@ on.
 * "git log" learned --simplify-merges, a milder variant of --full-history;
   "gitk --simplify-merges" is easier to view than with --full-history.
 
-* "git log" learned "--source" to show what ref each commit was reached
+* "git log" learned "--source" to show what ref each cummit was reached
   from.
 
 * "git log" also learned "--simplify-by-decoration" to show the
   birds-eye-view of the topology of the history.
 
 * "git log --pretty=format:" learned "%d" format element that inserts
-  names of tags that point at the commit.
+  names of tags that point at the cummit.
 
 * "git merge --squash" and "git merge --no-ff" into an unborn branch are
   noticed as user errors.
@@ -272,7 +272,7 @@ release, unless otherwise noted.
 * "git push --tags --all $there" failed with generic usage message without
   telling saying these two options are incompatible.
 
-* "git log --author/--committer" match used to potentially match the
+* "git log --author/--cummitter" match used to potentially match the
   timestamp part, exposing internal implementation detail.  Also these did
   not work with --fixed-strings match at all.
 

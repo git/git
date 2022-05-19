@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='Test ref-filter and pretty APIs for commit and tag messages using CRLF'
+test_description='Test ref-filter and pretty APIs for cummit and tag messages using CRLF'
 . ./test-lib.sh
 
 LIB_CRLF_BRANCHES=""
@@ -13,7 +13,7 @@ create_crlf_ref () {
 	grep 'Body' .crlf-message-$branch.txt >.crlf-body-$branch.txt || true &&
 	LIB_CRLF_BRANCHES="${LIB_CRLF_BRANCHES} ${branch}" &&
 	test_tick &&
-	hash=$(git commit-tree HEAD^{tree} -p HEAD -F .crlf-message-${branch}.txt) &&
+	hash=$(git cummit-tree HEAD^{tree} -p HEAD -F .crlf-message-${branch}.txt) &&
 	git branch ${branch} ${hash} &&
 	git tag tag-${branch} ${branch} -F .crlf-message-${branch}.txt --cleanup=verbatim
 }
@@ -79,8 +79,8 @@ test_crlf_subject_body_and_contents() {
 }
 
 
-test_expect_success 'Setup refs with commit and tag messages using CRLF' '
-	test_commit inital &&
+test_expect_success 'Setup refs with cummit and tag messages using CRLF' '
+	test_cummit inital &&
 	create_crlf_refs
 '
 

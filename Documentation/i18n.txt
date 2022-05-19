@@ -21,37 +21,37 @@ UTF-8-based systems (e.g. Linux, Mac, Windows) and vice versa.
 Additionally, many Git-based tools simply assume path names to
 be UTF-8 and will fail to display other encodings correctly.
 
- - Commit log messages are typically encoded in UTF-8, but other
+ - cummit log messages are typically encoded in UTF-8, but other
    extended ASCII encodings are also supported. This includes
    ISO-8859-x, CP125x and many others, but _not_ UTF-16/32,
    EBCDIC and CJK multi-byte encodings (GBK, Shift-JIS, Big5,
    EUC-x, CP9xx etc.).
 
-Although we encourage that the commit log messages are encoded
+Although we encourage that the cummit log messages are encoded
 in UTF-8, both the core and Git Porcelain are designed not to
 force UTF-8 on projects.  If all participants of a particular
 project find it more convenient to use legacy encodings, Git
 does not forbid it.  However, there are a few things to keep in
 mind.
 
-. 'git commit' and 'git commit-tree' issues
-  a warning if the commit log message given to it does not look
+. 'git cummit' and 'git cummit-tree' issues
+  a warning if the cummit log message given to it does not look
   like a valid UTF-8 string, unless you explicitly say your
   project uses a legacy encoding.  The way to say this is to
-  have `i18n.commitEncoding` in `.git/config` file, like this:
+  have `i18n.cummitEncoding` in `.git/config` file, like this:
 +
 ------------
 [i18n]
-	commitEncoding = ISO-8859-1
+	cummitEncoding = ISO-8859-1
 ------------
 +
-Commit objects created with the above setting record the value
-of `i18n.commitEncoding` in its `encoding` header.  This is to
+cummit objects created with the above setting record the value
+of `i18n.cummitEncoding` in its `encoding` header.  This is to
 help other people who look at them later.  Lack of this header
-implies that the commit log message is encoded in UTF-8.
+implies that the cummit log message is encoded in UTF-8.
 
 . 'git log', 'git show', 'git blame' and friends look at the
-  `encoding` header of a commit object, and try to re-code the
+  `encoding` header of a cummit object, and try to re-code the
   log message into UTF-8 unless otherwise specified.  You can
   specify the desired output encoding with
   `i18n.logOutputEncoding` in `.git/config` file, like this:
@@ -62,9 +62,9 @@ implies that the commit log message is encoded in UTF-8.
 ------------
 +
 If you do not have this configuration variable, the value of
-`i18n.commitEncoding` is used instead.
+`i18n.cummitEncoding` is used instead.
 
-Note that we deliberately chose not to re-code the commit log
-message when a commit is made to force UTF-8 at the commit
+Note that we deliberately chose not to re-code the cummit log
+message when a cummit is made to force UTF-8 at the cummit
 object level, because re-coding to UTF-8 is not necessarily a
 reversible operation.

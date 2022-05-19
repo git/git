@@ -40,7 +40,7 @@ test_expect_success 'push mirror creates new branches' '
 	mk_repo_pair &&
 	(
 		cd main &&
-		echo one >foo && git add foo && git commit -m one &&
+		echo one >foo && git add foo && git cummit -m one &&
 		git push --mirror up
 	) &&
 	main_main=$(cd main && git show-ref -s --verify refs/heads/main) &&
@@ -54,9 +54,9 @@ test_expect_success 'push mirror updates existing branches' '
 	mk_repo_pair &&
 	(
 		cd main &&
-		echo one >foo && git add foo && git commit -m one &&
+		echo one >foo && git add foo && git cummit -m one &&
 		git push --mirror up &&
-		echo two >foo && git add foo && git commit -m two &&
+		echo two >foo && git add foo && git cummit -m two &&
 		git push --mirror up
 	) &&
 	main_main=$(cd main && git show-ref -s --verify refs/heads/main) &&
@@ -70,9 +70,9 @@ test_expect_success 'push mirror force updates existing branches' '
 	mk_repo_pair &&
 	(
 		cd main &&
-		echo one >foo && git add foo && git commit -m one &&
+		echo one >foo && git add foo && git cummit -m one &&
 		git push --mirror up &&
-		echo two >foo && git add foo && git commit -m two &&
+		echo two >foo && git add foo && git cummit -m two &&
 		git push --mirror up &&
 		git reset --hard HEAD^ &&
 		git push --mirror up
@@ -88,7 +88,7 @@ test_expect_success 'push mirror removes branches' '
 	mk_repo_pair &&
 	(
 		cd main &&
-		echo one >foo && git add foo && git commit -m one &&
+		echo one >foo && git add foo && git cummit -m one &&
 		git branch remove main &&
 		git push --mirror up &&
 		git branch -D remove &&
@@ -106,12 +106,12 @@ test_expect_success 'push mirror adds, updates and removes branches together' '
 	mk_repo_pair &&
 	(
 		cd main &&
-		echo one >foo && git add foo && git commit -m one &&
+		echo one >foo && git add foo && git cummit -m one &&
 		git branch remove main &&
 		git push --mirror up &&
 		git branch -D remove &&
 		git branch add main &&
-		echo two >foo && git add foo && git commit -m two &&
+		echo two >foo && git add foo && git cummit -m two &&
 		git push --mirror up
 	) &&
 	main_main=$(cd main && git show-ref -s --verify refs/heads/main) &&
@@ -134,7 +134,7 @@ test_expect_success 'push mirror creates new tags' '
 	mk_repo_pair &&
 	(
 		cd main &&
-		echo one >foo && git add foo && git commit -m one &&
+		echo one >foo && git add foo && git cummit -m one &&
 		git tag -f tmain main &&
 		git push --mirror up
 	) &&
@@ -149,10 +149,10 @@ test_expect_success 'push mirror updates existing tags' '
 	mk_repo_pair &&
 	(
 		cd main &&
-		echo one >foo && git add foo && git commit -m one &&
+		echo one >foo && git add foo && git cummit -m one &&
 		git tag -f tmain main &&
 		git push --mirror up &&
-		echo two >foo && git add foo && git commit -m two &&
+		echo two >foo && git add foo && git cummit -m two &&
 		git tag -f tmain main &&
 		git push --mirror up
 	) &&
@@ -167,10 +167,10 @@ test_expect_success 'push mirror force updates existing tags' '
 	mk_repo_pair &&
 	(
 		cd main &&
-		echo one >foo && git add foo && git commit -m one &&
+		echo one >foo && git add foo && git cummit -m one &&
 		git tag -f tmain main &&
 		git push --mirror up &&
-		echo two >foo && git add foo && git commit -m two &&
+		echo two >foo && git add foo && git cummit -m two &&
 		git tag -f tmain main &&
 		git push --mirror up &&
 		git reset --hard HEAD^ &&
@@ -188,7 +188,7 @@ test_expect_success 'push mirror removes tags' '
 	mk_repo_pair &&
 	(
 		cd main &&
-		echo one >foo && git add foo && git commit -m one &&
+		echo one >foo && git add foo && git cummit -m one &&
 		git tag -f tremove main &&
 		git push --mirror up &&
 		git tag -d tremove &&
@@ -206,13 +206,13 @@ test_expect_success 'push mirror adds, updates and removes tags together' '
 	mk_repo_pair &&
 	(
 		cd main &&
-		echo one >foo && git add foo && git commit -m one &&
+		echo one >foo && git add foo && git cummit -m one &&
 		git tag -f tmain main &&
 		git tag -f tremove main &&
 		git push --mirror up &&
 		git tag -d tremove &&
 		git tag tadd main &&
-		echo two >foo && git add foo && git commit -m two &&
+		echo two >foo && git add foo && git cummit -m two &&
 		git tag -f tmain main &&
 		git push --mirror up
 	) &&
@@ -234,7 +234,7 @@ test_expect_success 'remote.foo.mirror adds and removes branches' '
 	mk_repo_pair --mirror &&
 	(
 		cd main &&
-		echo one >foo && git add foo && git commit -m one &&
+		echo one >foo && git add foo && git cummit -m one &&
 		git branch keep main &&
 		git branch remove main &&
 		git push up &&
@@ -254,7 +254,7 @@ test_expect_success 'remote.foo.mirror=no has no effect' '
 	mk_repo_pair &&
 	(
 		cd main &&
-		echo one >foo && git add foo && git commit -m one &&
+		echo one >foo && git add foo && git cummit -m one &&
 		git config --add remote.up.mirror no &&
 		git branch keep main &&
 		git push --mirror up &&
@@ -272,7 +272,7 @@ test_expect_success 'push to mirrored repository with refspec fails' '
 	mk_repo_pair &&
 	(
 		cd main &&
-		echo one >foo && git add foo && git commit -m one &&
+		echo one >foo && git add foo && git cummit -m one &&
 		git config --add remote.up.mirror true &&
 		test_must_fail git push up main
 	)

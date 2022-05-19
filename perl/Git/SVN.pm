@@ -44,10 +44,10 @@ my %SKIP_PROP;
 BEGIN {
 	%SKIP_PROP = map { $_ => 1 } qw/svn:wc:ra_dav:version-url
 	                                svn:special svn:executable
-	                                svn:entry:committed-rev
+	                                svn:entry:cummitted-rev
 	                                svn:entry:last-author
 	                                svn:entry:uuid
-	                                svn:entry:committed-date/;
+	                                svn:entry:cummitted-date/;
 
 	# some options are read globally, but can be overridden locally
 	# per [svn-remote "..."] section.  Command-line options will *NOT*
@@ -100,7 +100,7 @@ sub resolve_local_globs {
 			my $u = (::cmt_metadata("$refname"))[0];
 			if (!defined($u)) {
 				warn
-"W: $refname: no associated commit metadata from SVN, skipping\n";
+"W: $refname: no associated cummit metadata from SVN, skipping\n";
 				next;
 			}
 			$u =~ s!^\Q$url\E(/|$)!! or die
@@ -773,31 +773,31 @@ sub prop_walk {
 	}
 }
 
-sub last_rev { ($_[0]->last_rev_commit)[0] }
-sub last_commit { ($_[0]->last_rev_commit)[1] }
+sub last_rev { ($_[0]->last_rev_cummit)[0] }
+sub last_cummit { ($_[0]->last_rev_cummit)[1] }
 
-# returns the newest SVN revision number and newest commit SHA1
-sub last_rev_commit {
+# returns the newest SVN revision number and newest cummit SHA1
+sub last_rev_cummit {
 	my ($self) = @_;
-	if (defined $self->{last_rev} && defined $self->{last_commit}) {
-		return ($self->{last_rev}, $self->{last_commit});
+	if (defined $self->{last_rev} && defined $self->{last_cummit}) {
+		return ($self->{last_rev}, $self->{last_cummit});
 	}
 	my $c = ::verify_ref($self->refname.'^0');
 	if ($c && !$self->use_svm_props && !$self->no_metadata) {
 		my $rev = (::cmt_metadata($c))[1];
 		if (defined $rev) {
-			($self->{last_rev}, $self->{last_commit}) = ($rev, $c);
+			($self->{last_rev}, $self->{last_cummit}) = ($rev, $c);
 			return ($rev, $c);
 		}
 	}
 	my $map_path = $self->map_path;
 	unless (-e $map_path) {
-		($self->{last_rev}, $self->{last_commit}) = (undef, undef);
+		($self->{last_rev}, $self->{last_cummit}) = (undef, undef);
 		return (undef, undef);
 	}
-	my ($rev, $commit) = $self->rev_map_max(1);
-	($self->{last_rev}, $self->{last_commit}) = ($rev, $commit);
-	return ($rev, $commit);
+	my ($rev, $cummit) = $self->rev_map_max(1);
+	($self->{last_rev}, $self->{last_cummit}) = ($rev, $cummit);
+	return ($rev, $cummit);
 }
 
 sub get_fetch_range {
@@ -873,7 +873,7 @@ sub assert_index_clean {
 	$self->tmp_index_do(sub {
 		command_noisy('read-tree', $treeish) unless -e $self->{index};
 		my $x = command_oneline('write-tree');
-		my ($y) = (command(qw/cat-file commit/, $treeish) =~
+		my ($y) = (command(qw/cat-file cummit/, $treeish) =~
 		           /^tree ($::oid)/mo);
 		return if $y eq $x;
 
@@ -888,21 +888,21 @@ sub assert_index_clean {
 	});
 }
 
-sub get_commit_parents {
+sub get_cummit_parents {
 	my ($self, $log_entry) = @_;
 	my (%seen, @ret, @tmp);
 	# legacy support for 'set-tree'; this is only used by set_tree_cb:
 	if (my $ip = $self->{inject_parents}) {
-		if (my $commit = delete $ip->{$log_entry->{revision}}) {
-			push @tmp, $commit;
+		if (my $cummit = delete $ip->{$log_entry->{revision}}) {
+			push @tmp, $cummit;
 		}
 	}
 	if (my $cur = ::verify_ref($self->refname.'^0')) {
 		push @tmp, $cur;
 	}
-	if (my $ipd = $self->{inject_parents_dcommit}) {
-		if (my $commit = delete $ipd->{$log_entry->{revision}}) {
-			push @tmp, @$commit;
+	if (my $ipd = $self->{inject_parents_dcummit}) {
+		if (my $cummit = delete $ipd->{$log_entry->{revision}}) {
+			push @tmp, @$cummit;
 		}
 	}
 	push @tmp, $_ foreach (@{$log_entry->{parents}}, @tmp);
@@ -966,20 +966,20 @@ sub set_commit_header_env {
 	my ($log_entry) = @_;
 	my %env;
 	foreach my $ned (qw/NAME EMAIL DATE/) {
-		foreach my $ac (qw/AUTHOR COMMITTER/) {
+		foreach my $ac (qw/AUTHOR cummitTER/) {
 			$env{"GIT_${ac}_${ned}"} = $ENV{"GIT_${ac}_${ned}"};
 		}
 	}
 
 	$ENV{GIT_AUTHOR_NAME} = $log_entry->{name};
 	$ENV{GIT_AUTHOR_EMAIL} = $log_entry->{email};
-	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_COMMITTER_DATE} = $log_entry->{date};
+	$ENV{GIT_AUTHOR_DATE} = $ENV{GIT_cummitTER_DATE} = $log_entry->{date};
 
-	$ENV{GIT_COMMITTER_NAME} = (defined $log_entry->{commit_name})
-						? $log_entry->{commit_name}
+	$ENV{GIT_cummitTER_NAME} = (defined $log_entry->{cummit_name})
+						? $log_entry->{cummit_name}
 						: $log_entry->{name};
-	$ENV{GIT_COMMITTER_EMAIL} = (defined $log_entry->{commit_email})
-						? $log_entry->{commit_email}
+	$ENV{GIT_cummitTER_EMAIL} = (defined $log_entry->{cummit_email})
+						? $log_entry->{cummit_email}
 						: $log_entry->{email};
 	\%env;
 }
@@ -987,7 +987,7 @@ sub set_commit_header_env {
 sub restore_commit_header_env {
 	my ($env) = @_;
 	foreach my $ned (qw/NAME EMAIL DATE/) {
-		foreach my $ac (qw/AUTHOR COMMITTER/) {
+		foreach my $ac (qw/AUTHOR cummitTER/) {
 			my $k = "GIT_${ac}_${ned}";
 			if (defined $env->{$k}) {
 				$ENV{$k} = $env->{$k};
@@ -1002,7 +1002,7 @@ sub gc {
 	command_noisy('gc', '--auto');
 };
 
-sub do_git_commit {
+sub do_git_cummit {
 	my ($self, $log_entry) = @_;
 	my $lr = $self->last_rev;
 	if (defined $lr && $lr >= $log_entry->{revision}) {
@@ -1022,17 +1022,17 @@ sub do_git_commit {
 	}
 	die "Tree is not a valid oid $tree\n" if $tree !~ /^$::oid$/o;
 
-	my @exec = ('git', 'commit-tree', $tree);
-	foreach ($self->get_commit_parents($log_entry)) {
+	my @exec = ('git', 'cummit-tree', $tree);
+	foreach ($self->get_cummit_parents($log_entry)) {
 		push @exec, '-p', $_;
 	}
 	defined(my $pid = open3(my $msg_fh, my $out_fh, '>&STDERR', @exec))
 	                                                           or croak $!;
 	binmode $msg_fh;
 
-	# we always get UTF-8 from SVN, but we may want our commits in
+	# we always get UTF-8 from SVN, but we may want our cummits in
 	# a different encoding.
-	if (my $enc = Git::config('i18n.commitencoding')) {
+	if (my $enc = Git::config('i18n.cummitencoding')) {
 		require Encode;
 		Encode::from_to($log_entry->{log}, 'UTF-8', $enc);
 	}
@@ -1044,30 +1044,30 @@ sub do_git_commit {
 	}
 	$msg_fh->flush == 0 or croak $!;
 	close $msg_fh or croak $!;
-	chomp(my $commit = do { local $/; <$out_fh> });
+	chomp(my $cummit = do { local $/; <$out_fh> });
 	close $out_fh or croak $!;
 	waitpid $pid, 0;
 	croak $? if $?;
-	if ($commit !~ /^$::oid$/o) {
-		die "Failed to commit, invalid oid: $commit\n";
+	if ($cummit !~ /^$::oid$/o) {
+		die "Failed to cummit, invalid oid: $cummit\n";
 	}
 
-	$self->rev_map_set($log_entry->{revision}, $commit, 1);
+	$self->rev_map_set($log_entry->{revision}, $cummit, 1);
 
 	$self->{last_rev} = $log_entry->{revision};
-	$self->{last_commit} = $commit;
+	$self->{last_cummit} = $cummit;
 	print "r$log_entry->{revision}" unless $::_q > 1;
 	if (defined $log_entry->{svm_revision}) {
 		 print " (\@$log_entry->{svm_revision})" unless $::_q > 1;
-		 $self->rev_map_set($log_entry->{svm_revision}, $commit,
+		 $self->rev_map_set($log_entry->{svm_revision}, $cummit,
 		                   0, $self->svm_uuid);
 	}
-	print " = $commit ($self->{ref_id})\n" unless $::_q > 1;
+	print " = $cummit ($self->{ref_id})\n" unless $::_q > 1;
 	if (--$_gc_nr == 0) {
 		$_gc_nr = $_gc_period;
 		gc();
 	}
-	return $commit;
+	return $cummit;
 }
 
 sub match_paths {
@@ -1159,7 +1159,7 @@ sub find_parent_branch {
 			# is not included with SVN 1.4.3 (the latest version
 			# at the moment), so we can't rely on it
 			$self->{last_rev} = $r0;
-			$self->{last_commit} = $parent;
+			$self->{last_cummit} = $parent;
 			$ed = Git::SVN::Fetcher->new($self, $gs->path);
 			$gs->ra->gs_do_switch($r0, $rev, $gs,
 					      $self->full_url, $ed)
@@ -1174,7 +1174,7 @@ sub find_parent_branch {
 			$self->tmp_index_do(sub {
 			    command_noisy('read-tree', $parent);
 			});
-			$self->{last_commit} = $parent;
+			$self->{last_cummit} = $parent;
 		} else {
 			print STDERR "Following parent with do_update\n"
 			             unless $::_q > 1;
@@ -1192,7 +1192,7 @@ sub do_fetch {
 	my ($self, $paths, $rev) = @_;
 	my $ed;
 	my ($last_rev, @parents);
-	if (my $lc = $self->last_commit) {
+	if (my $lc = $self->last_cummit) {
 		# we can have a branch that was deleted, then re-added
 		# under the same name but copied from another path, in
 		# which case we'll have multiple parents (we don't
@@ -1462,9 +1462,9 @@ sub other_gs {
 			# does not match, we must either find a ref with a
 			# matching url or create a new ref by growing a tail.
 			$gs = Git::SVN->init($u, $p, $repo_id, $ref_id, 1);
-			my (undef, $max_commit) = $gs->rev_map_max(1);
-			last if (!$max_commit);
-			my ($url) = ::cmt_metadata($max_commit);
+			my (undef, $max_cummit) = $gs->rev_map_max(1);
+			last if (!$max_cummit);
+			my ($url) = ::cmt_metadata($max_cummit);
 			last if ($url eq $gs->metadata_url);
 			$ref_id .= '-';
 		}
@@ -1524,14 +1524,14 @@ sub find_extra_svk_parents {
 			                         $branch_from,
 			                         $rev,
 			                         $self->{ref_id});
-			if ( my $commit = $gs->rev_map_get($rev, $uuid) ) {
+			if ( my $cummit = $gs->rev_map_get($rev, $uuid) ) {
 				# wahey!  we found it, but it might be
 				# an old one (!)
-				push @known_parents, [ $rev, $commit ];
+				push @known_parents, [ $rev, $cummit ];
 			}
 		}
 	}
-	# Ordering matters; highest-numbered commit merge tickets
+	# Ordering matters; highest-numbered cummit merge tickets
 	# first, as they may account for later merge ticket additions
 	# or changes.
 	@known_parents = map {$_->[1]} sort {$b->[0] <=> $a->[0]} @known_parents;
@@ -1565,8 +1565,8 @@ sub lookup_svn_merge {
 		return;
 	}
 	my @ranges = split ",", $revs;
-	my ($tip, $tip_commit);
-	my @merged_commit_ranges;
+	my ($tip, $tip_cummit);
+	my @merged_cummit_ranges;
 	# find the tip
 	for my $range ( @ranges ) {
 		if ($range =~ /[*]$/) {
@@ -1576,28 +1576,28 @@ sub lookup_svn_merge {
 		}
 		my ($bottom, $top) = split "-", $range;
 		$top ||= $bottom;
-		my $bottom_commit = $gs->find_rev_after( $bottom, 1, $top );
-		my $top_commit = $gs->find_rev_before( $top, 1, $bottom );
+		my $bottom_cummit = $gs->find_rev_after( $bottom, 1, $top );
+		my $top_cummit = $gs->find_rev_before( $top, 1, $bottom );
 
-		unless ($top_commit and $bottom_commit) {
+		unless ($top_cummit and $bottom_cummit) {
 			warn "W: unknown path/rev in svn:mergeinfo "
 				."dirprop: $source:$range\n";
 			next;
 		}
 
-		if (scalar(command('rev-parse', "$bottom_commit^@"))) {
-			push @merged_commit_ranges,
-			     "$bottom_commit^..$top_commit";
+		if (scalar(command('rev-parse', "$bottom_cummit^@"))) {
+			push @merged_cummit_ranges,
+			     "$bottom_cummit^..$top_cummit";
 		} else {
-			push @merged_commit_ranges, "$top_commit";
+			push @merged_cummit_ranges, "$top_cummit";
 		}
 
 		if ( !defined $tip or $top > $tip ) {
 			$tip = $top;
-			$tip_commit = $top_commit;
+			$tip_cummit = $top_cummit;
 		}
 	}
-	return ($tip_commit, @merged_commit_ranges);
+	return ($tip_cummit, @merged_cummit_ranges);
 }
 
 sub _rev_list {
@@ -1618,36 +1618,36 @@ sub check_cherry_pick2 {
 	my $tip = shift;
 	my $parents = shift;
 	my @ranges = @_;
-	my %commits = map { $_ => 1 }
+	my %cummits = map { $_ => 1 }
 		_rev_list("--no-merges", $tip, "--not", $base, @$parents, "--");
 	for my $range ( @ranges ) {
-		delete @commits{_rev_list($range, "--")};
+		delete @cummits{_rev_list($range, "--")};
 	}
-	for my $commit (keys %commits) {
-		if (has_no_changes($commit)) {
-			delete $commits{$commit};
+	for my $cummit (keys %cummits) {
+		if (has_no_changes($cummit)) {
+			delete $cummits{$cummit};
 		}
 	}
-	my @k = (keys %commits);
+	my @k = (keys %cummits);
 	return (scalar @k, $k[0]);
 }
 
 sub has_no_changes {
-	my $commit = shift;
+	my $cummit = shift;
 
 	my @revs = split / /, command_oneline(
-		qw(rev-list --parents -1), $commit);
+		qw(rev-list --parents -1), $cummit);
 
-	# Commits with no parents, e.g. the start of a partial branch,
+	# cummits with no parents, e.g. the start of a partial branch,
 	# have changes by definition.
 	return 1 if (@revs < 2);
 
-	# Commits with multiple parents, e.g a merge, have no changes
+	# cummits with multiple parents, e.g a merge, have no changes
 	# by definition.
 	return 0 if (@revs > 2);
 
-	return (command_oneline("rev-parse", "$commit^{tree}") eq
-		command_oneline("rev-parse", "$commit~1^{tree}"));
+	return (command_oneline("rev-parse", "$cummit^{tree}") eq
+		command_oneline("rev-parse", "$cummit~1^{tree}"));
 }
 
 sub tie_for_persistent_memoization {
@@ -1758,33 +1758,33 @@ END {
 
 sub parents_exclude {
 	my $parents = shift;
-	my @commits = @_;
-	return unless @commits;
+	my @cummits = @_;
+	return unless @cummits;
 
 	my @excluded;
 	my $excluded;
 	do {
-		my @cmd = ('rev-list', "-1", @commits, "--not", @$parents );
+		my @cmd = ('rev-list', "-1", @cummits, "--not", @$parents );
 		$excluded = command_oneline(@cmd);
 		if ( $excluded ) {
 			my @new;
 			my $found;
-			for my $commit ( @commits ) {
-				if ( $commit eq $excluded ) {
-					push @excluded, $commit;
+			for my $cummit ( @cummits ) {
+				if ( $cummit eq $excluded ) {
+					push @excluded, $cummit;
 					$found++;
 				}
 				else {
-					push @new, $commit;
+					push @new, $cummit;
 				}
 			}
-			die "saw commit '$excluded' in rev-list output, "
-				."but we didn't ask for that commit (wanted: @commits --not @$parents)"
+			die "saw cummit '$excluded' in rev-list output, "
+				."but we didn't ask for that cummit (wanted: @cummits --not @$parents)"
 					unless $found;
-			@commits = @new;
+			@cummits = @new;
 		}
 	}
-		while ($excluded and @commits);
+		while ($excluded and @cummits);
 
 	return @excluded;
 }
@@ -1846,12 +1846,12 @@ sub find_extra_svn_parents {
 	my $uuid = $self->ra_uuid;
 	my @all_ranges;
 	for my $merge ( @merges ) {
-		my ($tip_commit, @ranges) =
+		my ($tip_cummit, @ranges) =
 			lookup_svn_merge( $uuid, $url,
 					  $merge, $mergeinfo->{$merge} );
-		unless (!$tip_commit or
-				grep { $_ eq $tip_commit } @$parents ) {
-			push @merge_tips, $tip_commit;
+		unless (!$tip_cummit or
+				grep { $_ eq $tip_cummit } @$parents ) {
+			push @merge_tips, $tip_cummit;
 			push @all_ranges, @ranges;
 		} else {
 			push @merge_tips, undef;
@@ -1885,7 +1885,7 @@ sub find_extra_svn_parents {
 			next;
 		}
 
-		# double check that there are no missing non-merge commits
+		# double check that there are no missing non-merge cummits
 		my ($ninc, $ifirst) = check_cherry_pick2(
 			$merge_base, $merge_tip,
 			$parents,
@@ -1894,14 +1894,14 @@ sub find_extra_svn_parents {
 
 		if ($ninc) {
 			warn "W: svn cherry-pick ignored ($spec) - missing " .
-				"$ninc commit(s) (eg $ifirst)\n";
+				"$ninc cummit(s) (eg $ifirst)\n";
 		} else {
 			warn "Found merge parent ($spec): ", $merge_tip, "\n";
 			push @new_parents, $merge_tip;
 		}
 	}
 
-	# cater for merges which merge commits from multiple branches
+	# cater for merges which merge cummits from multiple branches
 	if ( @new_parents > 1 ) {
 		for ( my $i = 0; $i <= $#new_parents; $i++ ) {
 			for ( my $j = 0; $j <= $#new_parents; $j++ ) {
@@ -1977,7 +1977,7 @@ sub make_log_entry {
 	my ($name, $email) = defined $::users{$author} ? @{$::users{$author}}
 						       : ($author, undef);
 
-	my ($commit_name, $commit_email) = ($name, $email);
+	my ($cummit_name, $cummit_email) = ($name, $email);
 	if ($_use_log_author) {
 		my $name_field;
 		if ($log_entry{log} =~ /From:\s+(.*\S)\s*\n/i) {
@@ -2024,7 +2024,7 @@ sub make_log_entry {
 		$log_entry{metadata} = "$full_url\@$r $uuid";
 		$log_entry{svm_revision} = $r;
 		$email = "$author\@$uuid" unless defined $email;
-		$commit_email = "$author\@$uuid" unless defined $commit_email;
+		$cummit_email = "$author\@$uuid" unless defined $cummit_email;
 	} elsif ($self->use_svnsync_props) {
 		my $full_url = canonicalize_url(
 			add_path_to_url( $self->svnsync->{url}, $self->path )
@@ -2033,25 +2033,25 @@ sub make_log_entry {
 		my $uuid = $self->svnsync->{uuid};
 		$log_entry{metadata} = "$full_url\@$rev $uuid";
 		$email = "$author\@$uuid" unless defined $email;
-		$commit_email = "$author\@$uuid" unless defined $commit_email;
+		$cummit_email = "$author\@$uuid" unless defined $cummit_email;
 	} else {
 		my $url = $self->metadata_url;
 		remove_username($url);
 		my $uuid = $self->rewrite_uuid || $self->ra->get_uuid;
 		$log_entry{metadata} = "$url\@$rev " . $uuid;
 		$email = "$author\@$uuid" unless defined $email;
-		$commit_email = "$author\@$uuid" unless defined $commit_email;
+		$cummit_email = "$author\@$uuid" unless defined $cummit_email;
 	}
 	$log_entry{name} = $name;
 	$log_entry{email} = $email;
-	$log_entry{commit_name} = $commit_name;
-	$log_entry{commit_email} = $commit_email;
+	$log_entry{cummit_name} = $cummit_name;
+	$log_entry{cummit_email} = $cummit_email;
 	\%log_entry;
 }
 
 sub fetch {
 	my ($self, $min_rev, $max_rev, @parents) = @_;
-	my ($last_rev, $last_commit) = $self->last_rev_commit;
+	my ($last_rev, $last_cummit) = $self->last_rev_cummit;
 	my ($base, $head) = $self->get_fetch_range($min_rev, $max_rev);
 	$self->ra->gs_fetch_loop_common($base, $head, [$self]);
 }
@@ -2064,14 +2064,14 @@ sub set_tree_cb {
 
 sub set_tree {
 	my ($self, $tree) = (shift, shift);
-	my $log_entry = ::get_commit_entry($tree);
+	my $log_entry = ::get_cummit_entry($tree);
 	unless ($self->{last_rev}) {
-		fatal("Must have an existing revision to commit");
+		fatal("Must have an existing revision to cummit");
 	}
 	my %ed_opts = ( r => $self->{last_rev},
 	                log => $log_entry->{log},
 	                ra => $self->ra,
-	                tree_a => $self->{last_commit},
+	                tree_a => $self->{last_cummit},
 	                tree_b => $tree,
 	                editor_cb => sub {
 			       $self->set_tree_cb($log_entry, $tree, @_) },
@@ -2150,7 +2150,7 @@ sub rebuild {
 	my $svn_uuid = $self->rewrite_uuid || $self->ra_uuid;
 	my $c;
 	while (<$log>) {
-		if ( m{^commit ($::oid)$} ) {
+		if ( m{^cummit ($::oid)$} ) {
 			$c = $1;
 			next;
 		}
@@ -2198,7 +2198,7 @@ sub rebuild {
 # The format is this:
 #   - 24 or 36 bytes for every record,
 #     * 4 bytes for the integer representing an SVN revision number
-#     * 20 or 32 bytes representing the oid of a git commit
+#     * 20 or 32 bytes representing the oid of a git cummit
 #   - No empty padding records like the old format
 #     (except the last record, which can be overwritten)
 #   - new records are written append-only since SVN revision numbers
@@ -2214,7 +2214,7 @@ sub rebuild {
 # These files are disposable unless noMetadata or useSvmProps is set
 
 sub _rev_map_set {
-	my ($fh, $rev, $commit) = @_;
+	my ($fh, $rev, $cummit) = @_;
 	my $record_size = ($::oid_length / 2) + 4;
 
 	binmode $fh or croak "binmode: $!";
@@ -2226,17 +2226,17 @@ sub _rev_map_set {
 		sysseek($fh, -$record_size, SEEK_END) or croak "seek: $!";
 		my $read = sysread($fh, my $buf, $record_size) or croak "read: $!";
 		$read == $record_size or croak "read only $read bytes (!= $record_size)";
-		my ($last_rev, $last_commit) = unpack(rev_map_fmt, $buf);
-		if ($last_commit eq ('0' x $::oid_length)) {
+		my ($last_rev, $last_cummit) = unpack(rev_map_fmt, $buf);
+		if ($last_cummit eq ('0' x $::oid_length)) {
 			if ($size >= ($record_size * 2)) {
 				sysseek($fh, -($record_size * 2), SEEK_END) or croak "seek: $!";
 				$read = sysread($fh, $buf, $record_size) or
 				    croak "read: $!";
 				$read == $record_size or
 				    croak "read only $read bytes (!= $record_size)";
-				($last_rev, $last_commit) =
+				($last_rev, $last_cummit) =
 				    unpack(rev_map_fmt, $buf);
-				if ($last_commit eq ('0' x $::oid_length)) {
+				if ($last_cummit eq ('0' x $::oid_length)) {
 					croak "inconsistent .rev_map\n";
 				}
 			}
@@ -2247,14 +2247,14 @@ sub _rev_map_set {
 		}
 	}
 	sysseek($fh, $wr_offset, SEEK_END) or croak "seek: $!";
-	syswrite($fh, pack(rev_map_fmt, $rev, $commit), $record_size) == $record_size or
+	syswrite($fh, pack(rev_map_fmt, $rev, $cummit), $record_size) == $record_size or
 	  croak "write: $!";
 }
 
 sub _rev_map_reset {
-	my ($fh, $rev, $commit) = @_;
+	my ($fh, $rev, $cummit) = @_;
 	my $c = _rev_map_get($fh, $rev);
-	$c eq $commit or die "_rev_map_reset(@_) commit $c does not match!\n";
+	$c eq $cummit or die "_rev_map_reset(@_) cummit $c does not match!\n";
 	my $offset = sysseek($fh, 0, SEEK_CUR) or croak "seek: $!";
 	truncate $fh, $offset or croak "truncate: $!";
 }
@@ -2283,9 +2283,9 @@ sub use_fsync {
 }
 
 sub rev_map_set {
-	my ($self, $rev, $commit, $update_ref, $uuid) = @_;
-	defined $commit or die "missing arg3\n";
-	$commit =~ /^$::oid$/ or die "arg3 must be a full hex object ID\n";
+	my ($self, $rev, $cummit, $update_ref, $uuid) = @_;
+	defined $cummit or die "missing arg3\n";
+	$cummit =~ /^$::oid$/ or die "arg3 must be a full hex object ID\n";
 	my $db = $self->map_path($uuid);
 	my $db_lock = "$db.lock";
 	my $sigmask;
@@ -2319,9 +2319,9 @@ sub rev_map_set {
 	     or croak "Couldn't open $db_lock: $!\n";
 	if ($update_ref eq 'reset') {
 		clear_memoized_mergeinfo_caches();
-		_rev_map_reset($fh, $rev, $commit);
+		_rev_map_reset($fh, $rev, $cummit);
 	} else {
-		_rev_map_set($fh, $rev, $commit);
+		_rev_map_set($fh, $rev, $cummit);
 	}
 
 	if ($sync) {
@@ -2334,7 +2334,7 @@ sub rev_map_set {
 		my $note = "";
 		$note = " ($update_ref)" if ($update_ref !~ /^\d*$/);
 		command_noisy('update-ref', '-m', "r$rev$note",
-		              $self->refname, $commit);
+		              $self->refname, $cummit);
 	}
 	rename $db_lock, $db or die "rev_map_set(@_): ", "Failed to rename: ",
 	                            "$db_lock => $db ($!)\n";
@@ -2345,22 +2345,22 @@ sub rev_map_set {
 	}
 }
 
-# If want_commit, this will return an array of (rev, commit) where
-# commit _must_ be a valid commit in the archive.
+# If want_cummit, this will return an array of (rev, cummit) where
+# cummit _must_ be a valid cummit in the archive.
 # Otherwise, it'll return the max revision (whether or not the
-# commit is valid or just a 0x40 placeholder).
+# cummit is valid or just a 0x40 placeholder).
 sub rev_map_max {
-	my ($self, $want_commit) = @_;
+	my ($self, $want_cummit) = @_;
 	$self->rebuild;
-	my ($r, $c) = $self->rev_map_max_norebuild($want_commit);
-	$want_commit ? ($r, $c) : $r;
+	my ($r, $c) = $self->rev_map_max_norebuild($want_cummit);
+	$want_cummit ? ($r, $c) : $r;
 }
 
 sub rev_map_max_norebuild {
-	my ($self, $want_commit) = @_;
+	my ($self, $want_cummit) = @_;
 	my $record_size = ($::oid_length / 2) + 4;
 	my $map_path = $self->map_path;
-	stat $map_path or return $want_commit ? (0, undef) : 0;
+	stat $map_path or return $want_cummit ? (0, undef) : 0;
 	sysopen(my $fh, $map_path, O_RDONLY) or croak "open: $!";
 	binmode $fh or croak "binmode: $!";
 	my $size = (stat($fh))[7];
@@ -2368,15 +2368,15 @@ sub rev_map_max_norebuild {
 
 	if ($size == 0) {
 		close $fh or croak "close: $!";
-		return $want_commit ? (0, undef) : 0;
+		return $want_cummit ? (0, undef) : 0;
 	}
 
 	sysseek($fh, -$record_size, SEEK_END) or croak "seek: $!";
 	sysread($fh, my $buf, $record_size) == $record_size or croak "read: $!";
 	my ($r, $c) = unpack(rev_map_fmt, $buf);
-	if ($want_commit && $c eq ('0' x $::oid_length)) {
+	if ($want_cummit && $c eq ('0' x $::oid_length)) {
 		if ($size < $record_size * 2) {
-			return $want_commit ? (0, undef) : 0;
+			return $want_cummit ? (0, undef) : 0;
 		}
 		sysseek($fh, -($record_size * 2), SEEK_END) or croak "seek: $!";
 		sysread($fh, $buf, $record_size) == $record_size or croak "read: $!";
@@ -2386,7 +2386,7 @@ sub rev_map_max_norebuild {
 		}
 	}
 	close $fh or croak "close: $!";
-	$want_commit ? ($r, $c) : $r;
+	$want_cummit ? ($r, $c) : $r;
 }
 
 sub rev_map_get {

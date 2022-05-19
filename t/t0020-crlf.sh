@@ -29,7 +29,7 @@ test_expect_success setup '
 	test_write_lines Oh here is NULQin text here | q_to_nul >three &&
 	git add . &&
 
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	one=$(git rev-parse HEAD:one) &&
 	dir=$(git rev-parse HEAD:dir) &&
@@ -85,7 +85,7 @@ test_expect_success 'safecrlf: print warning only once' '
 
 	test_write_lines I am all LF >doublewarn &&
 	git add doublewarn &&
-	git commit -m "nowarn" &&
+	git cummit -m "nowarn" &&
 	test_write_lines Oh here is CRLFQ in text | q_to_cr >doublewarn &&
 	git add doublewarn 2>err &&
 	grep "CRLF will be replaced by LF" err >err.warnings &&
@@ -267,7 +267,7 @@ test_expect_success 'in-tree .gitattributes (1)' '
 
 	echo "one -crlf" >>.gitattributes &&
 	git add .gitattributes &&
-	git commit -m "Add .gitattributes" &&
+	git cummit -m "Add .gitattributes" &&
 
 	rm -rf tmp one dir .gitattributes patch.file three &&
 	git read-tree --reset -u HEAD &&
@@ -314,11 +314,11 @@ test_expect_success 'checkout with existing .gitattributes' '
 	git config --unset core.safecrlf &&
 	echo ".file2 -crlfQ" | q_to_cr >> .gitattributes &&
 	git add .gitattributes &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	echo ".file -crlfQ" | q_to_cr >> .gitattributes &&
 	echo "contents" > .file &&
 	git add .gitattributes .file &&
-	git commit -m second &&
+	git cummit -m second &&
 
 	git checkout main~1 &&
 	git checkout main &&
@@ -331,7 +331,7 @@ test_expect_success 'checkout when deleting .gitattributes' '
 	git rm .gitattributes &&
 	echo "contentsQ" | q_to_cr > .file2 &&
 	git add .file2 &&
-	git commit -m third &&
+	git cummit -m third &&
 
 	git checkout main~1 &&
 	git checkout main &&
@@ -356,7 +356,7 @@ test_expect_success 'setting up for new autocrlf tests' '
 	test_write_lines Oh here is CRLFQ in text | q_to_cr >mixed &&
 	test_write_lines I am all CRLF | append_cr >allcrlf &&
 	git add -A . &&
-	git commit -m "alllf, allcrlf and mixed only" &&
+	git cummit -m "alllf, allcrlf and mixed only" &&
 	git tag -a -m "message" autocrlf-checkpoint
 '
 
@@ -391,7 +391,7 @@ test_expect_success 'CRLF only file has CRLF with autocrlf' '
 test_expect_success 'New CRLF file gets LF in repo' '
 	tr -d "\015" < alllf | append_cr > alllf2 &&
 	git add alllf2 &&
-	git commit -m "alllf2 added" &&
+	git cummit -m "alllf2 added" &&
 	git config core.autocrlf false &&
 	rm * &&
 	git checkout -f &&

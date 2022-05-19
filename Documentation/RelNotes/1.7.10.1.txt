@@ -27,12 +27,12 @@ Fixes since v1.7.10
    protection applied only to such working trees that are at the
    top-level of the current project by mistake.
 
- * "git commit --author=$name" did not tell the name that was being
-   recorded in the resulting commit to hooks, even though it does do
+ * "git cummit --author=$name" did not tell the name that was being
+   recorded in the resulting cummit to hooks, even though it does do
    so when the end user overrode the authorship via the
    "GIT_AUTHOR_NAME" environment variable.
 
- * When "git commit --template F" errors out because the user did not
+ * When "git cummit --template F" errors out because the user did not
    touch the message, it claimed that it aborts due to "empty
    message", which was utterly wrong.
 
@@ -61,7 +61,7 @@ Fixes since v1.7.10
 
  * "log -p --graph" used with "--stat" had a few formatting error.
 
- * Running "notes merge --commit" failed to perform correctly when run
+ * Running "notes merge --cummit" failed to perform correctly when run
    from any directory inside $GIT_DIR/.  When "notes merge" stops with
    conflicts, $GIT_DIR/NOTES_MERGE_WORKTREE is the place a user edits
    to resolve it.
@@ -73,6 +73,6 @@ Fixes since v1.7.10
    $there.
 
  * Giving "--continue" to a conflicted "rebase -i" session skipped a
-   commit that only results in changes to submodules.
+   cummit that only results in changes to submodules.
 
 Also contains minor fixes and documentation updates.

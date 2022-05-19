@@ -10,7 +10,7 @@
 #include "refs.h"
 #include "object-store.h"
 #include "color.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "diff-merges.h"
 #include "revision.h"
@@ -31,9 +31,9 @@
 #include "mailmap.h"
 #include "gpg-interface.h"
 #include "progress.h"
-#include "commit-slab.h"
+#include "cummit-slab.h"
 #include "repository.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 #include "range-diff.h"
 #include "tmp-objdir.h"
 
@@ -44,7 +44,7 @@
 /* Set a default date-time format for git log ("log.date" config variable) */
 static const char *default_date_mode = NULL;
 
-static int default_abbrev_commit;
+static int default_abbrev_cummit;
 static int default_show_root = 1;
 static int default_follow;
 static int default_show_signature;
@@ -143,14 +143,14 @@ static void init_log_defaults(void)
 static void cmd_log_init_defaults(struct rev_info *rev)
 {
 	if (fmt_pretty)
-		get_commit_format(fmt_pretty, rev);
+		get_cummit_format(fmt_pretty, rev);
 	if (default_follow)
 		rev->diffopt.flags.default_follow_renames = 1;
 	rev->verbose_header = 1;
 	rev->diffopt.flags.recursive = 1;
 	rev->diffopt.stat_width = -1; /* use full terminal width */
 	rev->diffopt.stat_graph_width = -1; /* respect statGraphWidth config */
-	rev->abbrev_commit = default_abbrev_commit;
+	rev->abbrev_cummit = default_abbrev_cummit;
 	rev->show_root_diff = default_show_root;
 	rev->subject_prefix = fmt_patch_subject_prefix;
 	rev->patch_name_max = fmt_patch_name_max;
@@ -235,18 +235,18 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 		read_mailmap(rev->mailmap);
 	}
 
-	if (rev->pretty_given && rev->commit_format == CMIT_FMT_RAW) {
+	if (rev->pretty_given && rev->cummit_format == CMIT_FMT_RAW) {
 		/*
 		 * "log --pretty=raw" is special; ignore UI oriented
 		 * configuration variables such as decoration.
 		 */
 		if (!decoration_given)
 			decoration_style = 0;
-		if (!rev->abbrev_commit_given)
-			rev->abbrev_commit = 0;
+		if (!rev->abbrev_cummit_given)
+			rev->abbrev_cummit = 0;
 	}
 
-	if (rev->commit_format == CMIT_FMT_USERFORMAT) {
+	if (rev->cummit_format == CMIT_FMT_USERFORMAT) {
 		if (!w.decorate) {
 			/*
 			 * Disable decoration loading if the format will not
@@ -295,16 +295,16 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 }
 
 /*
- * This gives a rough estimate for how many commits we
+ * This gives a rough estimate for how many cummits we
  * will print out in the list.
  */
-static int estimate_commit_count(struct commit_list *list)
+static int estimate_cummit_count(struct cummit_list *list)
 {
 	int n = 0;
 
 	while (list) {
-		struct commit *commit = list->item;
-		unsigned int flags = commit->object.flags;
+		struct cummit *cummit = list->item;
+		unsigned int flags = cummit->object.flags;
 		list = list->next;
 		if (!(flags & (TREESAME | UNINTERESTING)))
 			n++;
@@ -316,7 +316,7 @@ static void show_early_header(struct rev_info *rev, const char *stage, int nr)
 {
 	if (rev->shown_one) {
 		rev->shown_one = 0;
-		if (rev->commit_format != CMIT_FMT_ONELINE)
+		if (rev->cummit_format != CMIT_FMT_ONELINE)
 			putchar(rev->diffopt.line_termination);
 	}
 	fprintf(rev->diffopt.file, _("Final output: %d %s\n"), nr, stage);
@@ -324,7 +324,7 @@ static void show_early_header(struct rev_info *rev, const char *stage, int nr)
 
 static struct itimerval early_output_timer;
 
-static void log_show_early(struct rev_info *revs, struct commit_list *list)
+static void log_show_early(struct rev_info *revs, struct cummit_list *list)
 {
 	int i = revs->early_output;
 	int show_header = 1;
@@ -333,20 +333,20 @@ static void log_show_early(struct rev_info *revs, struct commit_list *list)
 	revs->diffopt.no_free = 0;
 	sort_in_topological_order(&list, revs->sort_order);
 	while (list && i) {
-		struct commit *commit = list->item;
-		switch (simplify_commit(revs, commit)) {
-		case commit_show:
+		struct cummit *cummit = list->item;
+		switch (simplify_cummit(revs, cummit)) {
+		case cummit_show:
 			if (show_header) {
-				int n = estimate_commit_count(list);
+				int n = estimate_cummit_count(list);
 				show_early_header(revs, "incomplete", n);
 				show_header = 0;
 			}
-			log_tree_commit(revs, commit);
+			log_tree_cummit(revs, cummit);
 			i--;
 			break;
-		case commit_ignore:
+		case cummit_ignore:
 			break;
-		case commit_error:
+		case cummit_error:
 			revs->diffopt.no_free = no_free;
 			diff_free(&revs->diffopt);
 			return;
@@ -354,7 +354,7 @@ static void log_show_early(struct rev_info *revs, struct commit_list *list)
 		list = list->next;
 	}
 
-	/* Did we already get enough commits for the early output? */
+	/* Did we already get enough cummits for the early output? */
 	if (!i) {
 		revs->diffopt.no_free = 0;
 		diff_free(&revs->diffopt);
@@ -412,14 +412,14 @@ static void setup_early_output(void)
 
 static void finish_early_output(struct rev_info *rev)
 {
-	int n = estimate_commit_count(rev->commits);
+	int n = estimate_cummit_count(rev->cummits);
 	signal(SIGALRM, SIG_IGN);
 	show_early_header(rev, "done", n);
 }
 
 static int cmd_log_walk_no_free(struct rev_info *rev)
 {
-	struct commit *commit;
+	struct cummit *cummit;
 	int saved_nrl = 0;
 	int saved_dcctc = 0;
 
@@ -444,22 +444,22 @@ static int cmd_log_walk_no_free(struct rev_info *rev)
 	 * and HAS_CHANGES being accumulated in rev->diffopt, so be careful to
 	 * retain that state information if replacing rev->diffopt in this loop
 	 */
-	while ((commit = get_revision(rev)) != NULL) {
-		if (!log_tree_commit(rev, commit) && rev->max_count >= 0)
+	while ((cummit = get_revision(rev)) != NULL) {
+		if (!log_tree_cummit(rev, cummit) && rev->max_count >= 0)
 			/*
 			 * We decremented max_count in get_revision,
-			 * but we didn't actually show the commit.
+			 * but we didn't actually show the cummit.
 			 */
 			rev->max_count++;
 		if (!rev->reflog_info) {
 			/*
-			 * We may show a given commit multiple times when
+			 * We may show a given cummit multiple times when
 			 * walking the reflogs.
 			 */
-			free_commit_buffer(the_repository->parsed_objects,
-					   commit);
-			free_commit_list(commit->parents);
-			commit->parents = NULL;
+			free_cummit_buffer(the_repository->parsed_objects,
+					   cummit);
+			free_cummit_list(cummit->parents);
+			cummit->parents = NULL;
 		}
 		if (saved_nrl < rev->diffopt.needed_rename_limit)
 			saved_nrl = rev->diffopt.needed_rename_limit;
@@ -508,8 +508,8 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		default_encode_email_headers = git_config_bool(var, value);
 		return 0;
 	}
-	if (!strcmp(var, "log.abbrevcommit")) {
-		default_abbrev_commit = git_config_bool(var, value);
+	if (!strcmp(var, "log.abbrevcummit")) {
+		default_abbrev_cummit = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "log.date"))
@@ -561,7 +561,7 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 	rev.simplify_history = 0;
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
-	opt.revarg_opt = REVARG_COMMITTISH;
+	opt.revarg_opt = REVARG_cummitTISH;
 	cmd_log_init(argc, argv, prefix, &rev, &opt);
 	if (!rev.diffopt.output_format)
 		rev.diffopt.output_format = DIFF_FORMAT_RAW;
@@ -573,7 +573,7 @@ static void show_tagger(const char *buf, struct rev_info *rev)
 	struct strbuf out = STRBUF_INIT;
 	struct pretty_print_context pp = {0};
 
-	pp.fmt = rev->commit_format;
+	pp.fmt = rev->cummit_format;
 	pp.date_mode = rev->date_mode;
 	pp_user_info(&pp, "Tagger", &out, buf, get_log_output_encoding());
 	fprintf(rev->diffopt.file, "%s", out.buf);
@@ -703,7 +703,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			if (rev.shown_one)
 				putchar('\n');
 			fprintf(rev.diffopt.file, "%stag %s%s\n",
-					diff_get_color_opt(&rev.diffopt, DIFF_COMMIT),
+					diff_get_color_opt(&rev.diffopt, DIFF_cummit),
 					t->tag,
 					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			ret = show_tag_object(&o->oid, &rev);
@@ -722,7 +722,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 			if (rev.shown_one)
 				putchar('\n');
 			fprintf(rev.diffopt.file, "%stree %s%s\n\n",
-					diff_get_color_opt(&rev.diffopt, DIFF_COMMIT),
+					diff_get_color_opt(&rev.diffopt, DIFF_cummit),
 					name,
 					diff_get_color_opt(&rev.diffopt, DIFF_RESET));
 			read_tree(the_repository, (struct tree *)o,
@@ -730,7 +730,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 				  rev.diffopt.file);
 			rev.shown_one = 1;
 			break;
-		case OBJ_COMMIT:
+		case OBJ_cummit:
 			rev.pending.nr = rev.pending.alloc = 0;
 			rev.pending.objects = NULL;
 			add_object_array(o, name, &rev.pending);
@@ -749,7 +749,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 }
 
 /*
- * This is equivalent to "git log -g --abbrev-commit --pretty=oneline"
+ * This is equivalent to "git log -g --abbrev-cummit --pretty=oneline"
  */
 int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 {
@@ -767,8 +767,8 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
 	cmd_log_init_defaults(&rev);
-	rev.abbrev_commit = 1;
-	rev.commit_format = CMIT_FMT_ONELINE;
+	rev.abbrev_cummit = 1;
+	rev.cummit_format = CMIT_FMT_ONELINE;
 	rev.use_terminator = 1;
 	rev.always_show_header = 1;
 	cmd_log_init_finish(argc, argv, prefix, &rev, &opt);
@@ -801,7 +801,7 @@ int cmd_log(int argc, const char **argv, const char *prefix)
 	rev.always_show_header = 1;
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
-	opt.revarg_opt = REVARG_COMMITTISH;
+	opt.revarg_opt = REVARG_cummitTISH;
 	opt.tweak = log_setup_revisions_tweak;
 	cmd_log_init(argc, argv, prefix, &rev, &opt);
 	return cmd_log_walk(&rev);
@@ -979,7 +979,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		if (b < 0)
 			from = xstrdup(value);
 		else if (b)
-			from = xstrdup(git_committer_info(IDENT_NO_DATE));
+			from = xstrdup(git_cummitter_info(IDENT_NO_DATE));
 		else
 			from = NULL;
 		return 0;
@@ -1005,7 +1005,7 @@ static int git_format_config(const char *var, const char *value, void *cb)
 static const char *output_directory = NULL;
 static int outdir_offset;
 
-static int open_next_file(struct commit *commit, const char *subject,
+static int open_next_file(struct cummit *cummit, const char *subject,
 			 struct rev_info *rev, int quiet)
 {
 	struct strbuf filename = STRBUF_INIT;
@@ -1017,8 +1017,8 @@ static int open_next_file(struct commit *commit, const char *subject,
 
 	if (rev->numbered_files)
 		strbuf_addf(&filename, "%d", rev->nr);
-	else if (commit)
-		fmt_output_commit(&filename, commit, rev);
+	else if (cummit)
+		fmt_output_cummit(&filename, cummit, rev);
 	else
 		fmt_output_subject(&filename, subject, rev);
 
@@ -1038,7 +1038,7 @@ static int open_next_file(struct commit *commit, const char *subject,
 static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids)
 {
 	struct rev_info check_rev;
-	struct commit *commit, *c1, *c2;
+	struct cummit *cummit, *c1, *c2;
 	struct object *o1, *o2;
 	unsigned flags1, flags2;
 
@@ -1049,8 +1049,8 @@ static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids)
 	o2 = rev->pending.objects[1].item;
 	flags1 = o1->flags;
 	flags2 = o2->flags;
-	c1 = lookup_commit_reference(the_repository, &o1->oid);
-	c2 = lookup_commit_reference(the_repository, &o2->oid);
+	c1 = lookup_cummit_reference(the_repository, &o1->oid);
+	c2 = lookup_cummit_reference(the_repository, &o2->oid);
 
 	if ((flags1 & UNINTERESTING) == (flags2 & UNINTERESTING))
 		die(_("not a range"));
@@ -1067,13 +1067,13 @@ static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids)
 	if (prepare_revision_walk(&check_rev))
 		die(_("revision walk setup failed"));
 
-	while ((commit = get_revision(&check_rev)) != NULL) {
-		add_commit_patch_id(commit, ids);
+	while ((cummit = get_revision(&check_rev)) != NULL) {
+		add_cummit_patch_id(cummit, ids);
 	}
 
 	/* reset for next revision walk */
-	clear_commit_marks(c1, SEEN | UNINTERESTING | SHOWN | ADDED);
-	clear_commit_marks(c2, SEEN | UNINTERESTING | SHOWN | ADDED);
+	clear_cummit_marks(c1, SEEN | UNINTERESTING | SHOWN | ADDED);
+	clear_cummit_marks(c2, SEEN | UNINTERESTING | SHOWN | ADDED);
 	o1->flags = flags1;
 	o2->flags = flags2;
 }
@@ -1083,7 +1083,7 @@ static void gen_message_id(struct rev_info *info, char *base)
 	struct strbuf buf = STRBUF_INIT;
 	strbuf_addf(&buf, "%s.%"PRItime".git.%s", base,
 		    (timestamp_t) time(NULL),
-		    git_committer_info(IDENT_NO_NAME|IDENT_NO_DATE|IDENT_STRICT));
+		    git_cummitter_info(IDENT_NO_NAME|IDENT_NO_DATE|IDENT_STRICT));
 	info->message_id = strbuf_detach(&buf, NULL);
 }
 
@@ -1127,7 +1127,7 @@ static char *find_branch_name(struct rev_info *rev)
 }
 
 static void show_diffstat(struct rev_info *rev,
-			  struct commit *origin, struct commit *head)
+			  struct cummit *origin, struct cummit *head)
 {
 	struct diff_options opts;
 
@@ -1135,8 +1135,8 @@ static void show_diffstat(struct rev_info *rev,
 	opts.output_format = DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
 	diff_setup_done(&opts);
 
-	diff_tree_oid(get_commit_tree_oid(origin),
-		      get_commit_tree_oid(head),
+	diff_tree_oid(get_cummit_tree_oid(origin),
+		      get_cummit_tree_oid(head),
 		      "", &opts);
 	diffcore_std(&opts);
 	diff_flush(&opts);
@@ -1202,24 +1202,24 @@ static void get_notes_args(struct strvec *arg, struct rev_info *rev)
 }
 
 static void make_cover_letter(struct rev_info *rev, int use_separate_file,
-			      struct commit *origin,
-			      int nr, struct commit **list,
+			      struct cummit *origin,
+			      int nr, struct cummit **list,
 			      const char *branch_name,
 			      int quiet)
 {
-	const char *committer;
+	const char *cummitter;
 	struct shortlog log;
 	struct strbuf sb = STRBUF_INIT;
 	int i;
 	const char *encoding = "UTF-8";
 	int need_8bit_cte = 0;
 	struct pretty_print_context pp = {0};
-	struct commit *head = list[0];
+	struct cummit *head = list[0];
 
-	if (!cmit_fmt_is_mail(rev->commit_format))
+	if (!cmit_fmt_is_mail(rev->cummit_format))
 		die(_("cover letter needs email format"));
 
-	committer = git_committer_info(0);
+	cummitter = git_cummitter_info(0);
 
 	if (use_separate_file &&
 	    open_next_file(NULL, rev->numbered_files ? NULL : "cover-letter", rev, quiet))
@@ -1228,10 +1228,10 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	log_write_email_headers(rev, head, &pp.after_subject, &need_8bit_cte, 0);
 
 	for (i = 0; !need_8bit_cte && i < nr; i++) {
-		const char *buf = get_commit_buffer(list[i], NULL);
+		const char *buf = get_cummit_buffer(list[i], NULL);
 		if (has_non_ascii(buf))
 			need_8bit_cte = 1;
-		unuse_commit_buffer(list[i], buf);
+		unuse_cummit_buffer(list[i], buf);
 	}
 
 	if (!branch_name)
@@ -1241,7 +1241,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	pp.date_mode.type = DATE_RFC2822;
 	pp.rev = rev;
 	pp.print_email_subject = 1;
-	pp_user_info(&pp, NULL, &sb, committer, encoding);
+	pp_user_info(&pp, NULL, &sb, cummitter, encoding);
 	prepare_cover_text(&pp, branch_name, &sb, encoding, need_8bit_cte);
 	fprintf(rev->diffopt.file, "%s\n", sb.buf);
 
@@ -1255,7 +1255,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	log.file = rev->diffopt.file;
 	log.groups = SHORTLOG_GROUP_AUTHOR;
 	for (i = 0; i < nr; i++)
-		shortlog_add_commit(&log, list[i]);
+		shortlog_add_cummit(&log, list[i]);
 
 	shortlog_output(&log);
 
@@ -1485,44 +1485,44 @@ static int from_callback(const struct option *opt, const char *arg, int unset)
 	else if (arg)
 		*from = xstrdup(arg);
 	else
-		*from = xstrdup(git_committer_info(IDENT_NO_DATE));
+		*from = xstrdup(git_cummitter_info(IDENT_NO_DATE));
 	return 0;
 }
 
 static int base_callback(const struct option *opt, const char *arg, int unset)
 {
-	const char **base_commit = opt->value;
+	const char **base_cummit = opt->value;
 
 	if (unset) {
 		auto_base = AUTO_BASE_NEVER;
-		*base_commit = NULL;
+		*base_cummit = NULL;
 	} else if (!strcmp(arg, "auto")) {
 		auto_base = AUTO_BASE_ALWAYS;
-		*base_commit = NULL;
+		*base_cummit = NULL;
 	} else {
 		auto_base = AUTO_BASE_NEVER;
-		*base_commit = arg;
+		*base_cummit = arg;
 	}
 	return 0;
 }
 
 struct base_tree_info {
-	struct object_id base_commit;
+	struct object_id base_cummit;
 	int nr_patch_id, alloc_patch_id;
 	struct object_id *patch_id;
 };
 
-static struct commit *get_base_commit(const char *base_commit,
-				      struct commit **list,
+static struct cummit *get_base_cummit(const char *base_cummit,
+				      struct cummit **list,
 				      int total)
 {
-	struct commit *base = NULL;
-	struct commit **rev;
+	struct cummit *base = NULL;
+	struct cummit **rev;
 	int i = 0, rev_nr = 0, auto_select, die_on_failure;
 
 	switch (auto_base) {
 	case AUTO_BASE_NEVER:
-		if (base_commit) {
+		if (base_cummit) {
 			auto_select = 0;
 			die_on_failure = 1;
 		} else {
@@ -1532,8 +1532,8 @@ static struct commit *get_base_commit(const char *base_commit,
 		break;
 	case AUTO_BASE_ALWAYS:
 	case AUTO_BASE_WHEN_ABLE:
-		if (base_commit) {
-			BUG("requested automatic base selection but a commit was provided");
+		if (base_cummit) {
+			BUG("requested automatic base selection but a cummit was provided");
 		} else {
 			auto_select = 1;
 			die_on_failure = auto_base == AUTO_BASE_ALWAYS;
@@ -1544,15 +1544,15 @@ static struct commit *get_base_commit(const char *base_commit,
 	}
 
 	if (!auto_select) {
-		base = lookup_commit_reference_by_name(base_commit);
+		base = lookup_cummit_reference_by_name(base_cummit);
 		if (!base)
-			die(_("unknown commit %s"), base_commit);
+			die(_("unknown cummit %s"), base_cummit);
 	} else {
 		struct branch *curr_branch = branch_get(NULL);
 		const char *upstream = branch_get_upstream(curr_branch, NULL);
 		if (upstream) {
-			struct commit_list *base_list;
-			struct commit *commit;
+			struct cummit_list *base_list;
+			struct cummit *cummit;
 			struct object_id oid;
 
 			if (get_oid(upstream, &oid)) {
@@ -1561,24 +1561,24 @@ static struct commit *get_base_commit(const char *base_commit,
 				else
 					return NULL;
 			}
-			commit = lookup_commit_or_die(&oid, "upstream base");
-			base_list = get_merge_bases_many(commit, total, list);
+			cummit = lookup_cummit_or_die(&oid, "upstream base");
+			base_list = get_merge_bases_many(cummit, total, list);
 			/* There should be one and only one merge base. */
 			if (!base_list || base_list->next) {
 				if (die_on_failure) {
 					die(_("could not find exact merge base"));
 				} else {
-					free_commit_list(base_list);
+					free_cummit_list(base_list);
 					return NULL;
 				}
 			}
 			base = base_list->item;
-			free_commit_list(base_list);
+			free_cummit_list(base_list);
 		} else {
 			if (die_on_failure)
-				die(_("failed to get upstream, if you want to record base commit automatically,\n"
+				die(_("failed to get upstream, if you want to record base cummit automatically,\n"
 				      "please use git branch --set-upstream-to to track a remote branch.\n"
-				      "Or you could specify base commit by --base=<base-commit-id> manually"));
+				      "Or you could specify base cummit by --base=<base-cummit-id> manually"));
 			else
 				return NULL;
 		}
@@ -1595,7 +1595,7 @@ static struct commit *get_base_commit(const char *base_commit,
 	 */
 	while (rev_nr > 1) {
 		for (i = 0; i < rev_nr / 2; i++) {
-			struct commit_list *merge_base;
+			struct cummit_list *merge_base;
 			merge_base = get_merge_bases(rev[2 * i], rev[2 * i + 1]);
 			if (!merge_base || merge_base->next) {
 				if (die_on_failure) {
@@ -1616,7 +1616,7 @@ static struct commit *get_base_commit(const char *base_commit,
 
 	if (!in_merge_bases(base, rev[0])) {
 		if (die_on_failure) {
-			die(_("base commit should be the ancestor of revision list"));
+			die(_("base cummit should be the ancestor of revision list"));
 		} else {
 			free(rev);
 			return NULL;
@@ -1626,7 +1626,7 @@ static struct commit *get_base_commit(const char *base_commit,
 	for (i = 0; i < total; i++) {
 		if (base == list[i]) {
 			if (die_on_failure) {
-				die(_("base commit shouldn't be in revision list"));
+				die(_("base cummit shouldn't be in revision list"));
 			} else {
 				free(rev);
 				return NULL;
@@ -1638,28 +1638,28 @@ static struct commit *get_base_commit(const char *base_commit,
 	return base;
 }
 
-define_commit_slab(commit_base, int);
+define_cummit_slab(cummit_base, int);
 
 static void prepare_bases(struct base_tree_info *bases,
-			  struct commit *base,
-			  struct commit **list,
+			  struct cummit *base,
+			  struct cummit **list,
 			  int total)
 {
-	struct commit *commit;
+	struct cummit *cummit;
 	struct rev_info revs;
 	struct diff_options diffopt;
-	struct commit_base commit_base;
+	struct cummit_base cummit_base;
 	int i;
 
 	if (!base)
 		return;
 
-	init_commit_base(&commit_base);
+	init_cummit_base(&cummit_base);
 	repo_diff_setup(the_repository, &diffopt);
 	diffopt.flags.recursive = 1;
 	diff_setup_done(&diffopt);
 
-	oidcpy(&bases->base_commit, &base->object.oid);
+	oidcpy(&bases->base_cummit, &base->object.oid);
 
 	repo_init_revisions(the_repository, &revs, NULL);
 	revs.max_parents = 1;
@@ -1667,7 +1667,7 @@ static void prepare_bases(struct base_tree_info *bases,
 	for (i = 0; i < total; i++) {
 		list[i]->object.flags &= ~UNINTERESTING;
 		add_pending_object(&revs, &list[i]->object, "rev_list");
-		*commit_base_at(&commit_base, list[i]) = 1;
+		*cummit_base_at(&cummit_base, list[i]) = 1;
 	}
 	base->object.flags |= UNINTERESTING;
 	add_pending_object(&revs, &base->object, "base");
@@ -1675,22 +1675,22 @@ static void prepare_bases(struct base_tree_info *bases,
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
 	/*
-	 * Traverse the commits list, get prerequisite patch ids
+	 * Traverse the cummits list, get prerequisite patch ids
 	 * and stuff them in bases structure.
 	 */
-	while ((commit = get_revision(&revs)) != NULL) {
+	while ((cummit = get_revision(&revs)) != NULL) {
 		struct object_id oid;
 		struct object_id *patch_id;
-		if (*commit_base_at(&commit_base, commit))
+		if (*cummit_base_at(&cummit_base, cummit))
 			continue;
-		if (commit_patch_id(commit, &diffopt, &oid, 0, 1))
+		if (cummit_patch_id(cummit, &diffopt, &oid, 0, 1))
 			die(_("cannot get patch id"));
 		ALLOC_GROW(bases->patch_id, bases->nr_patch_id + 1, bases->alloc_patch_id);
 		patch_id = bases->patch_id + bases->nr_patch_id;
 		oidcpy(patch_id, &oid);
 		bases->nr_patch_id++;
 	}
-	clear_commit_base(&commit_base);
+	clear_cummit_base(&cummit_base);
 }
 
 static void print_bases(struct base_tree_info *bases, FILE *file)
@@ -1698,11 +1698,11 @@ static void print_bases(struct base_tree_info *bases, FILE *file)
 	int i;
 
 	/* Only do this once, either for the cover or for the first one */
-	if (is_null_oid(&bases->base_commit))
+	if (is_null_oid(&bases->base_cummit))
 		return;
 
-	/* Show the base commit */
-	fprintf(file, "\nbase-commit: %s\n", oid_to_hex(&bases->base_commit));
+	/* Show the base cummit */
+	fprintf(file, "\nbase-cummit: %s\n", oid_to_hex(&bases->base_cummit));
 
 	/* Show the prerequisite patches */
 	for (i = bases->nr_patch_id - 1; i >= 0; i--)
@@ -1711,7 +1711,7 @@ static void print_bases(struct base_tree_info *bases, FILE *file)
 	free(bases->patch_id);
 	bases->nr_patch_id = 0;
 	bases->alloc_patch_id = 0;
-	oidclr(&bases->base_commit);
+	oidclr(&bases->base_cummit);
 }
 
 static const char *diff_title(struct strbuf *sb,
@@ -1733,8 +1733,8 @@ static const char *diff_title(struct strbuf *sb,
 static void infer_range_diff_ranges(struct strbuf *r1,
 				    struct strbuf *r2,
 				    const char *prev,
-				    struct commit *origin,
-				    struct commit *head)
+				    struct cummit *origin,
+				    struct cummit *head)
 {
 	const char *head_oid = oid_to_hex(&head->object.oid);
 	int prev_is_range = is_range_diff_range(prev);
@@ -1756,8 +1756,8 @@ static void infer_range_diff_ranges(struct strbuf *r1,
 
 int cmd_format_patch(int argc, const char **argv, const char *prefix)
 {
-	struct commit *commit;
-	struct commit **list = NULL;
+	struct cummit *cummit;
+	struct cummit **list = NULL;
 	struct rev_info rev;
 	struct setup_revision_opt s_r_opt;
 	int nr = 0, total, i;
@@ -1768,8 +1768,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	int cover_letter = -1;
 	int boundary_count = 0;
 	int no_binary_diff = 0;
-	int zero_commit = 0;
-	struct commit *origin = NULL;
+	int zero_cummit = 0;
+	struct cummit *origin = NULL;
 	const char *in_reply_to = NULL;
 	struct patch_ids ids;
 	struct strbuf buf = STRBUF_INIT;
@@ -1778,9 +1778,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	const char *reroll_count = NULL;
 	char *cover_from_description_arg = NULL;
 	char *branch_name = NULL;
-	char *base_commit = NULL;
+	char *base_cummit = NULL;
 	struct base_tree_info bases;
-	struct commit *base;
+	struct cummit *base;
 	int show_progress = 0;
 	struct progress *progress = NULL;
 	struct oid_array idiff_prev = OID_ARRAY_INIT;
@@ -1830,10 +1830,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    PARSE_OPT_NOARG | PARSE_OPT_NONEG, keep_callback),
 		OPT_BOOL(0, "no-binary", &no_binary_diff,
 			 N_("don't output binary diffs")),
-		OPT_BOOL(0, "zero-commit", &zero_commit,
+		OPT_BOOL(0, "zero-cummit", &zero_cummit,
 			 N_("output all-zero hash in From header")),
 		OPT_BOOL(0, "ignore-if-in-upstream", &ignore_if_in_upstream,
-			 N_("don't include a patch matching a commit upstream")),
+			 N_("don't include a patch matching a cummit upstream")),
 		OPT_SET_INT_F('p', "no-stat", &use_patch_format,
 			      N_("show patch format instead of default (patch + stat)"),
 			      1, PARSE_OPT_NONEG),
@@ -1843,7 +1843,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK(0, "to", NULL, N_("email"), N_("add To: header"), to_callback),
 		OPT_CALLBACK(0, "cc", NULL, N_("email"), N_("add Cc: header"), cc_callback),
 		OPT_CALLBACK_F(0, "from", &from, N_("ident"),
-			    N_("set From address to <ident> (or committer ident if absent)"),
+			    N_("set From address to <ident> (or cummitter ident if absent)"),
 			    PARSE_OPT_OPTARG, from_callback),
 		OPT_STRING(0, "in-reply-to", &in_reply_to, N_("message-id"),
 			    N_("make first mail a reply to <message-id>")),
@@ -1859,7 +1859,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    PARSE_OPT_OPTARG, thread_callback),
 		OPT_STRING(0, "signature", &signature, N_("signature"),
 			    N_("add a signature")),
-		OPT_CALLBACK_F(0, "base", &base_commit, N_("base-commit"),
+		OPT_CALLBACK_F(0, "base", &base_cummit, N_("base-cummit"),
 			       N_("add prerequisite tree info to the patch series"),
 			       0, base_callback),
 		OPT_FILENAME(0, "signature-file", &signature_file,
@@ -1889,7 +1889,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	rev.show_notes = show_notes;
 	memcpy(&rev.notes_opt, &notes_opt, sizeof(notes_opt));
-	rev.commit_format = CMIT_FMT_EMAIL;
+	rev.cummit_format = CMIT_FMT_EMAIL;
 	rev.encode_email_headers = default_encode_email_headers;
 	rev.expand_tabs_in_log_default = 0;
 	rev.verbose_header = 1;
@@ -1900,7 +1900,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.subject_prefix = fmt_patch_subject_prefix;
 	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.def = "HEAD";
-	s_r_opt.revarg_opt = REVARG_COMMITTISH;
+	s_r_opt.revarg_opt = REVARG_cummitTISH;
 
 	if (default_attach) {
 		rev.mime_boundary = default_attach;
@@ -2007,7 +2007,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	/* Always generate a patch */
 	rev.diffopt.output_format |= DIFF_FORMAT_PATCH;
 
-	rev.zero_commit = zero_commit;
+	rev.zero_cummit = zero_cummit;
 	rev.patch_name_max = fmt_patch_name_max;
 
 	if (!rev.diffopt.flags.text && !no_binary_diff)
@@ -2103,19 +2103,19 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	if (prepare_revision_walk(&rev))
 		die(_("revision walk setup failed"));
 	rev.boundary = 1;
-	while ((commit = get_revision(&rev)) != NULL) {
-		if (commit->object.flags & BOUNDARY) {
+	while ((cummit = get_revision(&rev)) != NULL) {
+		if (cummit->object.flags & BOUNDARY) {
 			boundary_count++;
-			origin = (boundary_count == 1) ? commit : NULL;
+			origin = (boundary_count == 1) ? cummit : NULL;
 			continue;
 		}
 
-		if (ignore_if_in_upstream && has_commit_patch_id(commit, &ids))
+		if (ignore_if_in_upstream && has_cummit_patch_id(cummit, &ids))
 			continue;
 
 		nr++;
 		REALLOC_ARRAY(list, nr);
-		list[nr - 1] = commit;
+		list[nr - 1] = cummit;
 	}
 	if (nr == 0)
 		/* nothing to do */
@@ -2136,7 +2136,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		if (!cover_letter && total != 1)
 			die(_("--interdiff requires --cover-letter or single patch"));
 		rev.idiff_oid1 = &idiff_prev.oid[idiff_prev.nr - 1];
-		rev.idiff_oid2 = get_commit_tree_oid(list[0]);
+		rev.idiff_oid2 = get_cummit_tree_oid(list[0]);
 		rev.idiff_title = diff_title(&idiff_title, reroll_count,
 					     _("Interdiff:"),
 					     _("Interdiff against v%d:"));
@@ -2174,7 +2174,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	}
 
 	memset(&bases, 0, sizeof(bases));
-	base = get_base_commit(base_commit, list, nr);
+	base = get_base_cummit(base_cummit, list, nr);
 	if (base) {
 		reset_revision_walk();
 		clear_object_flags(UNINTERESTING);
@@ -2209,7 +2209,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	while (0 <= --nr) {
 		int shown;
 		display_progress(progress, total - nr);
-		commit = list[nr];
+		cummit = list[nr];
 		rev.nr = total - nr + (start_number - 1);
 		/* Make the second and subsequent mails replies to the first */
 		if (thread) {
@@ -2244,15 +2244,15 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 					string_list_append(rev.ref_message_ids,
 							   rev.message_id);
 			}
-			gen_message_id(&rev, oid_to_hex(&commit->object.oid));
+			gen_message_id(&rev, oid_to_hex(&cummit->object.oid));
 		}
 
 		if (output_directory &&
-		    open_next_file(rev.numbered_files ? NULL : commit, NULL, &rev, quiet))
+		    open_next_file(rev.numbered_files ? NULL : cummit, NULL, &rev, quiet))
 			die(_("failed to create output files"));
-		shown = log_tree_commit(&rev, commit);
-		free_commit_buffer(the_repository->parsed_objects,
-				   commit);
+		shown = log_tree_cummit(&rev, cummit);
+		free_cummit_buffer(the_repository->parsed_objects,
+				   cummit);
 
 		/* We put one extra blank line between formatted
 		 * patches and this flag is used by log-tree code
@@ -2293,15 +2293,15 @@ done:
 	return 0;
 }
 
-static int add_pending_commit(const char *arg, struct rev_info *revs, int flags)
+static int add_pending_cummit(const char *arg, struct rev_info *revs, int flags)
 {
 	struct object_id oid;
 	if (get_oid(arg, &oid) == 0) {
-		struct commit *commit = lookup_commit_reference(the_repository,
+		struct cummit *cummit = lookup_cummit_reference(the_repository,
 								&oid);
-		if (commit) {
-			commit->object.flags |= flags;
-			add_pending_object(revs, &commit->object, arg);
+		if (cummit) {
+			cummit->object.flags |= flags;
+			add_pending_object(revs, &cummit->object, arg);
 			return 0;
 		}
 	}
@@ -2313,17 +2313,17 @@ static const char * const cherry_usage[] = {
 	NULL
 };
 
-static void print_commit(char sign, struct commit *commit, int verbose,
+static void print_cummit(char sign, struct cummit *cummit, int verbose,
 			 int abbrev, FILE *file)
 {
 	if (!verbose) {
 		fprintf(file, "%c %s\n", sign,
-		       find_unique_abbrev(&commit->object.oid, abbrev));
+		       find_unique_abbrev(&cummit->object.oid, abbrev));
 	} else {
 		struct strbuf buf = STRBUF_INIT;
-		pp_commit_easy(CMIT_FMT_ONELINE, commit, &buf);
+		pp_cummit_easy(CMIT_FMT_ONELINE, cummit, &buf);
 		fprintf(file, "%c %s %s\n", sign,
-		       find_unique_abbrev(&commit->object.oid, abbrev),
+		       find_unique_abbrev(&cummit->object.oid, abbrev),
 		       buf.buf);
 		strbuf_release(&buf);
 	}
@@ -2333,8 +2333,8 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
 	struct patch_ids ids;
-	struct commit *commit;
-	struct commit_list *list = NULL;
+	struct cummit *cummit;
+	struct cummit_list *list = NULL;
 	struct branch *current_branch;
 	const char *upstream;
 	const char *head = "HEAD";
@@ -2374,9 +2374,9 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 	revs.max_parents = 1;
 
 	if (add_pending_commit(head, &revs, 0))
-		die(_("unknown commit %s"), head);
-	if (add_pending_commit(upstream, &revs, UNINTERESTING))
-		die(_("unknown commit %s"), upstream);
+		die(_("unknown cummit %s"), head);
+	if (add_pending_cummit(upstream, &revs, UNINTERESTING))
+		die(_("unknown cummit %s"), upstream);
 
 	/* Don't say anything if head and upstream are the same. */
 	if (revs.pending.nr == 2) {
@@ -2387,23 +2387,23 @@ int cmd_cherry(int argc, const char **argv, const char *prefix)
 
 	get_patch_ids(&revs, &ids);
 
-	if (limit && add_pending_commit(limit, &revs, UNINTERESTING))
-		die(_("unknown commit %s"), limit);
+	if (limit && add_pending_cummit(limit, &revs, UNINTERESTING))
+		die(_("unknown cummit %s"), limit);
 
-	/* reverse the list of commits */
+	/* reverse the list of cummits */
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
-	while ((commit = get_revision(&revs)) != NULL) {
-		commit_list_insert(commit, &list);
+	while ((cummit = get_revision(&revs)) != NULL) {
+		cummit_list_insert(cummit, &list);
 	}
 
 	while (list) {
 		char sign = '+';
 
-		commit = list->item;
-		if (has_commit_patch_id(commit, &ids))
+		cummit = list->item;
+		if (has_cummit_patch_id(cummit, &ids))
 			sign = '-';
-		print_commit(sign, commit, verbose, abbrev, revs.diffopt.file);
+		print_cummit(sign, cummit, verbose, abbrev, revs.diffopt.file);
 		list = list->next;
 	}
 

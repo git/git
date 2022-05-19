@@ -1,5 +1,5 @@
 blame.blankBoundary::
-	Show blank commit object name for boundary commits in
+	Show blank cummit object name for boundary cummits in
 	linkgit:git-blame[1]. This option defaults to false.
 
 blame.coloring::
@@ -17,7 +17,7 @@ blame.showEmail::
 	This option defaults to false.
 
 blame.showRoot::
-	Do not treat root commits as boundaries in linkgit:git-blame[1].
+	Do not treat root cummits as boundaries in linkgit:git-blame[1].
 	This option defaults to false.
 
 blame.ignoreRevsFile::
@@ -29,9 +29,9 @@ blame.ignoreRevsFile::
 
 blame.markUnblamableLines::
 	Mark lines that were changed by an ignored revision that we could not
-	attribute to another commit with a '*' in the output of
+	attribute to another cummit with a '*' in the output of
 	linkgit:git-blame[1].
 
 blame.markIgnoredLines::
 	Mark lines that were changed by an ignored revision that we attributed to
-	another commit with a '?' in the output of linkgit:git-blame[1].
+	another cummit with a '?' in the output of linkgit:git-blame[1].

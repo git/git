@@ -58,13 +58,13 @@ msgid "clone [verb]"
 msgstr "clonare"
 
 #. "A single point in the git history."
-msgid "commit [noun]"
-msgstr "revisione, commit, deposito (TortoiseCVS), invio (TSVN)?"
+msgid "cummit [noun]"
+msgstr "revisione, cummit, deposito (TortoiseCVS), invio (TSVN)?"
 
 #. "The action of storing a new snapshot of the project's state in the git history."
-msgid "commit [verb]"
+msgid "cummit [verb]"
 msgstr ""
-"creare una nuova revisione, archiviare, effettuare un commit, depositare "
+"creare una nuova revisione, archiviare, effettuare un cummit, depositare "
 "(nel server), fare un deposito (TortoiseCVS), inviare (TSVN)?"
 
 #. ""
@@ -87,7 +87,7 @@ msgstr "recuperare, prelevare, prendere da, recuperare (TSVN)"
 msgid "index (in git-gui: staging area)"
 msgstr "indice"
 
-#. "A successful merge results in the creation of a new commit representing the result of the merge."
+#. "A successful merge results in the creation of a new cummit representing the result of the merge."
 msgid "merge [noun]"
 msgstr "fusione, unione"
 
@@ -153,7 +153,7 @@ msgstr ""
 msgid "status"
 msgstr "stato"
 
-#. "A ref pointing to a tag or commit object"
+#. "A ref pointing to a tag or cummit object"
 msgid "tag [noun]"
 msgstr "etichetta, etichettatura (TortoiseCVS)"
 

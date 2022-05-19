@@ -1,13 +1,13 @@
 #include "test-tool.h"
 #include "cache.h"
-#include "commit-graph.h"
+#include "cummit-graph.h"
 #include "repository.h"
 #include "object-store.h"
 #include "bloom.h"
 
 int cmd__read_graph(int argc, const char **argv)
 {
-	struct commit_graph *graph = NULL;
+	struct cummit_graph *graph = NULL;
 	struct object_directory *odb;
 
 	setup_git_directory();
@@ -15,7 +15,7 @@ int cmd__read_graph(int argc, const char **argv)
 
 	prepare_repo_settings(the_repository);
 
-	graph = read_commit_graph_one(the_repository, odb);
+	graph = read_cummit_graph_one(the_repository, odb);
 	if (!graph)
 		return 1;
 
@@ -25,15 +25,15 @@ int cmd__read_graph(int argc, const char **argv)
 		*(unsigned char*)(graph->data + 5),
 		*(unsigned char*)(graph->data + 6),
 		*(unsigned char*)(graph->data + 7));
-	printf("num_commits: %u\n", graph->num_commits);
+	printf("num_cummits: %u\n", graph->num_cummits);
 	printf("chunks:");
 
 	if (graph->chunk_oid_fanout)
 		printf(" oid_fanout");
 	if (graph->chunk_oid_lookup)
 		printf(" oid_lookup");
-	if (graph->chunk_commit_data)
-		printf(" commit_metadata");
+	if (graph->chunk_cummit_data)
+		printf(" cummit_metadata");
 	if (graph->chunk_generation_data)
 		printf(" generation_data");
 	if (graph->chunk_generation_data_overflow)

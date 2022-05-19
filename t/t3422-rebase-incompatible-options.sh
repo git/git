@@ -8,7 +8,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'setup' '
 	test_seq 2 9 >foo &&
 	git add foo &&
-	git commit -m orig &&
+	git cummit -m orig &&
 
 	git branch A &&
 	git branch B &&
@@ -16,12 +16,12 @@ test_expect_success 'setup' '
 	git checkout A &&
 	test_seq 1 9 >foo &&
 	git add foo &&
-	git commit -m A &&
+	git cummit -m A &&
 
 	git checkout B &&
 	echo "q qfoo();" | q_to_tab >>foo &&
 	git add foo &&
-	git commit -m B
+	git cummit -m B
 '
 
 #

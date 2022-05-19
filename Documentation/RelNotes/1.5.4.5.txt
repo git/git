@@ -17,7 +17,7 @@ Fixes since v1.5.4.4
  * The subdirectory filter to "git filter-branch" mishandled a history
    where the subdirectory becomes empty and then later becomes non-empty.
 
- * "git shortlog" gave an empty line if the original commit message was
+ * "git shortlog" gave an empty line if the original cummit message was
    malformed (e.g. a botched import from foreign SCM).  Now it finds the
    first non-empty line and uses it for better information.
 
@@ -27,7 +27,7 @@ Fixes since v1.5.4.4
 
  * After "git rebase" stopped due to conflicts, if the user played with
    "git reset" and friends, "git rebase --abort" failed to go back to the
-   correct commit.
+   correct cummit.
 
  * Additional work trees prepared with git-new-workdir (in contrib/) did
    not share git-svn metadata directory .git/svn with the original.
@@ -45,12 +45,12 @@ Fixes since v1.5.4.4
  * "rev~" revision specifier used to mean "rev", which was inconsistent
    with how "rev^" worked.  Now "rev~" is the same as "rev~1" (hence it
    also is the same as "rev^1"), and "rev~0" is the same as "rev^0"
-   (i.e. it has to be a commit).
+   (i.e. it has to be a cummit).
 
  * "git quiltimport" did not grok empty lines, lines in "file -pNNN"
    format to specify the prefix levels and lines with trailing comments.
 
- * "git rebase -m" triggered pre-commit verification, which made
+ * "git rebase -m" triggered pre-cummit verification, which made
    "rebase --continue" impossible.
 
 As usual, it also comes with many documentation fixes and clarifications.

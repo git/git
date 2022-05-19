@@ -4,14 +4,14 @@ test_description='git status ignored modes'
 
 . ./test-lib.sh
 
-test_expect_success 'setup initial commit and ignore file' '
+test_expect_success 'setup initial cummit and ignore file' '
 	cat >.gitignore <<-\EOF &&
 	*.ign
 	ignored_dir/
 	!*.unignore
 	EOF
 	git add . &&
-	git commit -m "Initial commit"
+	git cummit -m "Initial cummit"
 '
 
 test_expect_success 'Verify behavior of status on directories with ignored files' '
@@ -52,7 +52,7 @@ test_expect_success 'Verify status behavior on directory with tracked & ignored 
 
 	git add tracked_ignored/tracked_1 tracked_ignored/tracked_2 \
 		dir/tracked_ignored/tracked_1 dir/tracked_ignored/tracked_2 &&
-	git commit -m "commit tracked files" &&
+	git cummit -m "cummit tracked files" &&
 
 	git status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
 	test_cmp expect output
@@ -115,7 +115,7 @@ test_expect_success 'Verify status behavior on ignored directory containing trac
 		ignored_dir/ignored_1.ign ignored_dir/ignored_2.ign \
 		ignored_dir/tracked &&
 	git add -f ignored_dir/tracked &&
-	git commit -m "Force add file in ignored directory" &&
+	git cummit -m "Force add file in ignored directory" &&
 	git status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
 	test_cmp expect output
 '
@@ -174,7 +174,7 @@ test_expect_success 'Verify status behavior on ignored directory containing trac
 		ignored_dir/ignored_1.ign ignored_dir/ignored_2.ign \
 		ignored_dir/tracked &&
 	git add -f ignored_dir/tracked &&
-	git commit -m "Force add file in ignored directory" &&
+	git cummit -m "Force add file in ignored directory" &&
 	git status --porcelain=v2 --ignored=matching --untracked-files=normal >output &&
 	test_cmp expect output
 '

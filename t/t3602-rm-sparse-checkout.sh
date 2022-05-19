@@ -8,7 +8,7 @@ test_expect_success 'setup' "
 	mkdir -p sub/dir &&
 	touch a b c sub/d sub/dir/e &&
 	git add -A &&
-	git commit -m files &&
+	git cummit -m files &&
 
 	cat >sparse_error_header <<-EOF &&
 	The following paths and/or pathspecs matched paths that exist
@@ -115,8 +115,8 @@ test_expect_success 'can remove files from non-sparse dir' '
 	git reset --hard &&
 	git sparse-checkout disable &&
 	mkdir -p w x/y &&
-	test_commit w/f &&
-	test_commit x/y/f &&
+	test_cummit w/f &&
+	test_cummit x/y/f &&
 
 	git sparse-checkout set w !/x y/ &&
 	git rm w/f.t x/y/f.t 2>stderr &&
@@ -127,7 +127,7 @@ test_expect_success 'refuse to remove non-skip-worktree file from sparse dir' '
 	git reset --hard &&
 	git sparse-checkout disable &&
 	mkdir -p x/y/z &&
-	test_commit x/y/z/f &&
+	test_cummit x/y/z/f &&
 	git sparse-checkout set !/x y/ !x/y/z &&
 
 	git update-index --no-skip-worktree x/y/z/f.t &&

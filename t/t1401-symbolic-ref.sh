@@ -13,7 +13,7 @@ reset_to_sane() {
 
 test_expect_success 'setup' '
 	git symbolic-ref HEAD refs/heads/foo &&
-	test_commit file &&
+	test_cummit file &&
 	"$TAR" cf .git.tar .git/
 '
 
@@ -81,8 +81,8 @@ test_expect_success 'create large ref name' '
 	long=$long/$long/$long/$long &&
 	long_ref=refs/heads/$long &&
 	tree=$(git write-tree) &&
-	commit=$(echo foo | git commit-tree $tree) &&
-	if git update-ref $long_ref $commit; then
+	cummit=$(echo foo | git cummit-tree $tree) &&
+	if git update-ref $long_ref $cummit; then
 		test_set_prereq LONG_REF
 	else
 		echo >&2 "long refs not supported"
@@ -97,7 +97,7 @@ test_expect_success LONG_REF 'symbolic-ref can point to large ref name' '
 '
 
 test_expect_success LONG_REF 'we can parse long symbolic ref' '
-	echo $commit >expect &&
+	echo $cummit >expect &&
 	git rev-parse --verify HEAD >actual &&
 	test_cmp expect actual
 '
@@ -110,9 +110,9 @@ test_expect_success 'symbolic-ref reports failure in exit code' '
 
 test_expect_success 'symbolic-ref writes reflog entry' '
 	git checkout -b log1 &&
-	test_commit one &&
+	test_cummit one &&
 	git checkout -b log2  &&
-	test_commit two &&
+	test_cummit two &&
 	git checkout --orphan orphan &&
 	git symbolic-ref -m create HEAD refs/heads/log1 &&
 	git symbolic-ref -m update HEAD refs/heads/log2 &&
@@ -126,7 +126,7 @@ test_expect_success 'symbolic-ref writes reflog entry' '
 
 test_expect_success 'symbolic-ref does not create ref d/f conflicts' '
 	git checkout -b df &&
-	test_commit df &&
+	test_cummit df &&
 	test_must_fail git symbolic-ref refs/heads/df/conflict refs/heads/df &&
 	git pack-refs --all --prune &&
 	test_must_fail git symbolic-ref refs/heads/df/conflict refs/heads/df

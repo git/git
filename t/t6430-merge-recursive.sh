@@ -19,7 +19,7 @@ test_expect_success 'setup 1' '
 
 	test_tick &&
 	git add a b c d/e &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	c0=$(git rev-parse --verify HEAD) &&
 	git branch side &&
 	git branch df-1 &&
@@ -38,7 +38,7 @@ test_expect_success 'setup 1' '
 	git add a d/e &&
 
 	test_tick &&
-	git commit -m "main modifies a and d/e" &&
+	git cummit -m "main modifies a and d/e" &&
 	c1=$(git rev-parse --verify HEAD) &&
 	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
 	(
@@ -77,7 +77,7 @@ test_expect_success 'setup 2' '
 	git add a &&
 
 	test_tick &&
-	git commit -m "side modifies a" &&
+	git cummit -m "side modifies a" &&
 	c2=$(git rev-parse --verify HEAD) &&
 	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
 	(
@@ -114,7 +114,7 @@ test_expect_success 'setup 3' '
 	o3=$(git hash-object b/c) &&
 
 	test_tick &&
-	git commit -m "df-1 makes b/c" &&
+	git cummit -m "df-1 makes b/c" &&
 	c3=$(git rev-parse --verify HEAD) &&
 	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
 	(
@@ -151,7 +151,7 @@ test_expect_success 'setup 4' '
 	o4=$(git hash-object a/c) &&
 
 	test_tick &&
-	git commit -m "df-2 makes a/c" &&
+	git cummit -m "df-2 makes a/c" &&
 	c4=$(git rev-parse --verify HEAD) &&
 	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
 	(
@@ -192,7 +192,7 @@ test_expect_success 'setup 5' '
 	o5=$(git hash-object a) &&
 
 	test_tick &&
-	git commit -m "remove removes b and modifies a" &&
+	git cummit -m "remove removes b and modifies a" &&
 	c5=$(git rev-parse --verify HEAD) &&
 	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
 	(
@@ -228,7 +228,7 @@ test_expect_success 'setup 6' '
 	o6=$(git hash-object d) &&
 
 	test_tick &&
-	git commit -m "df-3 makes d" &&
+	git cummit -m "df-3 makes d" &&
 	c6=$(git rev-parse --verify HEAD) &&
 	( git ls-tree -r HEAD && git ls-files -s ) >actual &&
 	(
@@ -249,10 +249,10 @@ test_expect_success 'setup 7' '
 	git checkout submod &&
 	git rm d/e &&
 	test_tick &&
-	git commit -m "remove d/e" &&
+	git cummit -m "remove d/e" &&
 	git update-index --add --cacheinfo 160000 $c1 d &&
 	test_tick &&
-	git commit -m "make d/ a submodule"
+	git cummit -m "make d/ a submodule"
 '
 
 test_expect_success 'setup 8' '
@@ -260,13 +260,13 @@ test_expect_success 'setup 8' '
 	git mv a e &&
 	git add e &&
 	test_tick &&
-	git commit -m "rename a->e" &&
+	git cummit -m "rename a->e" &&
 	c7=$(git rev-parse --verify HEAD) &&
 	git checkout rename-ln &&
 	git mv a e &&
 	test_ln_s_add e a &&
 	test_tick &&
-	git commit -m "rename a->e, symlink a->e" &&
+	git cummit -m "rename a->e, symlink a->e" &&
 	oln=$(printf e | git hash-object --stdin)
 '
 
@@ -275,7 +275,7 @@ test_expect_success 'setup 9' '
 	cp a e &&
 	git add e &&
 	test_tick &&
-	git commit -m "copy a->e"
+	git cummit -m "copy a->e"
 '
 
 test_expect_success 'merge-recursive simple' '
@@ -464,17 +464,17 @@ test_expect_success SYMLINKS 'dir in working tree with symlink ancestor does not
 		mkdir bar &&
 		>bar/file &&
 		git add foo bar/file &&
-		git commit -m "foo symlink" &&
+		git cummit -m "foo symlink" &&
 
 		git checkout -b branch1 &&
-		git commit --allow-empty -m "empty commit" &&
+		git cummit --allow-empty -m "empty cummit" &&
 
 		git checkout main &&
 		git rm foo &&
 		mkdir foo &&
 		>foo/bar &&
 		git add foo/bar &&
-		git commit -m "replace foo symlink with real foo dir and foo/bar file" &&
+		git cummit -m "replace foo symlink with real foo dir and foo/bar file" &&
 
 		git checkout branch1 &&
 
@@ -605,7 +605,7 @@ test_expect_success 'merge removes empty directories' '
 	git reset --hard main &&
 	git checkout -b rm &&
 	git rm d/e &&
-	git commit -mremoved-d/e &&
+	git cummit -mremoved-d/e &&
 	git checkout main &&
 	git merge -s recursive rm &&
 	test_path_is_missing d
@@ -679,18 +679,18 @@ test_expect_success 'merging with triple rename across D/F conflict' '
 	echo base >simple/bar &&
 	git add -A &&
 	test_tick &&
-	git commit -m base &&
+	git cummit -m base &&
 
 	git checkout -b other &&
 	echo more >>simple/bar &&
 	test_tick &&
-	git commit -a -m changesimplefile &&
+	git cummit -a -m changesimplefile &&
 
 	git checkout topic &&
 	git rm sub1 &&
 	git mv sub2 sub1 &&
 	test_tick &&
-	git commit -m changefiletodir &&
+	git cummit -m changefiletodir &&
 
 	test_tick &&
 	git merge other
@@ -704,9 +704,9 @@ test_expect_success 'merge-recursive remembers the names of all base trees' '
 	git diff --binary HEAD $c1 -- | git apply --cached &&
 
 	# more trees than static slots used by oid_to_hex()
-	for commit in $c0 $c2 $c4 $c5 $c6 $c7
+	for cummit in $c0 $c2 $c4 $c5 $c6 $c7
 	do
-		git rev-parse "$commit^{tree}" || return 1
+		git rev-parse "$cummit^{tree}" || return 1
 	done >trees &&
 
 	# ignore the return code; it only fails because the input is weird...
@@ -728,7 +728,7 @@ test_expect_success 'merge-recursive internal merge resolves to the sameness' '
 
 	# We are going to create a history leading to two criss-cross
 	# branches A and B.  The common ancestor at the bottom, O0,
-	# has two child commits O1 and O2, both of which will be merge
+	# has two child cummits O1 and O2, both of which will be merge
 	# base between A and B, like so:
 	#
 	#       O1---A
@@ -749,16 +749,16 @@ test_expect_success 'merge-recursive internal merge resolves to the sameness' '
 	echo "zero" >file &&
 	git add file &&
 	test_tick &&
-	git commit -m "O0" &&
+	git cummit -m "O0" &&
 	O0=$(git rev-parse HEAD) &&
 
 	test_tick &&
-	git commit --allow-empty -m "O1" &&
+	git cummit --allow-empty -m "O1" &&
 	O1=$(git rev-parse HEAD) &&
 
 	git reset --hard $O0 &&
 	test_tick &&
-	git commit --allow-empty -m "O2" &&
+	git cummit --allow-empty -m "O2" &&
 	O2=$(git rev-parse HEAD) &&
 
 	test_tick &&

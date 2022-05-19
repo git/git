@@ -3,7 +3,7 @@
  */
 #include "cache.h"
 #include "quote.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "revision.h"
@@ -13,7 +13,7 @@
 #include "submodule.h"
 #include "dir.h"
 #include "fsmonitor.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 
 /*
  * diff-files
@@ -60,12 +60,12 @@ static int check_removed(const struct index_state *istate, const struct cache_en
 }
 
 /*
- * Has a file changed or has a submodule new commits or a dirty work tree?
+ * Has a file changed or has a submodule new cummits or a dirty work tree?
  *
  * Return 1 when changes are detected, 0 otherwise. If the DIRTY_SUBMODULES
  * option is set, the caller does not only want to know if a submodule is
  * modified at all but wants to know all the conditions that are met (new
- * commits, untracked content and/or modified content).
+ * cummits, untracked content and/or modified content).
  */
 static int match_stat_with_submodule(struct diff_options *diffopt,
 				     const struct cache_entry *ce,
@@ -552,34 +552,34 @@ static int diff_cache(struct rev_info *revs,
 void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
 {
 	int i;
-	struct commit *mb_child[2] = {0};
-	struct commit_list *merge_bases;
+	struct cummit *mb_child[2] = {0};
+	struct cummit_list *merge_bases;
 
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object *obj = revs->pending.objects[i].item;
 		if (obj->flags)
 			die(_("--merge-base does not work with ranges"));
-		if (obj->type != OBJ_COMMIT)
-			die(_("--merge-base only works with commits"));
+		if (obj->type != OBJ_cummit)
+			die(_("--merge-base only works with cummits"));
 	}
 
 	/*
 	 * This check must go after the for loop above because A...B
-	 * ranges produce three pending commits, resulting in a
+	 * ranges produce three pending cummits, resulting in a
 	 * misleading error message.
 	 */
 	if (revs->pending.nr < 1 || revs->pending.nr > 2)
 		BUG("unexpected revs->pending.nr: %d", revs->pending.nr);
 
 	for (i = 0; i < revs->pending.nr; i++)
-		mb_child[i] = lookup_commit_reference(the_repository, &revs->pending.objects[i].item->oid);
+		mb_child[i] = lookup_cummit_reference(the_repository, &revs->pending.objects[i].item->oid);
 	if (revs->pending.nr == 1) {
 		struct object_id oid;
 
 		if (get_oid("HEAD", &oid))
 			die(_("unable to get HEAD"));
 
-		mb_child[1] = lookup_commit_reference(the_repository, &oid);
+		mb_child[1] = lookup_cummit_reference(the_repository, &oid);
 	}
 
 	merge_bases = repo_get_merge_bases(the_repository, mb_child[0], mb_child[1]);
@@ -590,7 +590,7 @@ void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
 
 	oidcpy(mb, &merge_bases->item->object.oid);
 
-	free_commit_list(merge_bases);
+	free_cummit_list(merge_bases);
 }
 
 int run_diff_index(struct rev_info *revs, unsigned int option)

@@ -324,13 +324,13 @@ sub print_codespeed_results {
 
 	for my $t (@subtests) {
 		for my $d (@dirs) {
-			my $commitid = $prefixes{$d};
-			$commitid =~ s/^build_//;
-			$commitid =~ s/\.$//;
+			my $cummitid = $prefixes{$d};
+			$cummitid =~ s/^build_//;
+			$cummitid =~ s/\.$//;
 			my ($result_value, $u, $s) = get_times("$resultsdir/$prefixes{$d}$t.result");
 
 			my %vals = (
-				"commitid" => $commitid,
+				"cummitid" => $cummitid,
 				"project" => $project,
 				"branch" => $dirnames{$d},
 				"executable" => $executable,

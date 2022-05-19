@@ -11,7 +11,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 test_expect_success 'setup' '
 	echo hello >world &&
 	git add world &&
-	git commit -m initial
+	git cummit -m initial
 '
 
 test_expect_success 'checkout should not start branch from a tree' '

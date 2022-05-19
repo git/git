@@ -8,7 +8,7 @@
 #include "refspec.h"
 #include "object-store.h"
 #include "oidset.h"
-#include "commit.h"
+#include "cummit.h"
 #include "builtin.h"
 #include "string-list.h"
 #include "remote.h"
@@ -23,10 +23,10 @@
 #include "utf8.h"
 #include "packfile.h"
 #include "list-objects-filter-options.h"
-#include "commit-reach.h"
+#include "cummit-reach.h"
 #include "branch.h"
 #include "promisor-remote.h"
-#include "commit-graph.h"
+#include "cummit-graph.h"
 #include "shallow.h"
 #include "worktree.h"
 
@@ -83,7 +83,7 @@ static struct refspec refmap = REFSPEC_INIT_FETCH;
 static struct list_objects_filter_options filter_options;
 static struct string_list server_options = STRING_LIST_INIT_DUP;
 static struct string_list negotiation_tip = STRING_LIST_INIT_NODUP;
-static int fetch_write_commit_graph = -1;
+static int fetch_write_cummit_graph = -1;
 static int stdin_refspecs = 0;
 static int negotiate_only;
 
@@ -191,7 +191,7 @@ static struct option builtin_fetch_options[] = {
 		      N_("convert to a complete repository"),
 		      1, PARSE_OPT_NONEG),
 	OPT_SET_INT_F(0, "refetch", &refetch,
-		      N_("re-fetch without negotiating common commits"),
+		      N_("re-fetch without negotiating common cummits"),
 		      1, PARSE_OPT_NONEG),
 	{ OPTION_STRING, 0, "submodule-prefix", &submodule_prefix, N_("dir"),
 		   N_("prepend this to submodule path output"), PARSE_OPT_HIDDEN },
@@ -220,8 +220,8 @@ static struct option builtin_fetch_options[] = {
 		 N_("run 'maintenance --auto' after fetching")),
 	OPT_BOOL(0, "show-forced-updates", &fetch_show_forced_updates,
 		 N_("check for forced-updates on all updated branches")),
-	OPT_BOOL(0, "write-commit-graph", &fetch_write_commit_graph,
-		 N_("write the commit-graph after fetching")),
+	OPT_BOOL(0, "write-cummit-graph", &fetch_write_cummit_graph,
+		 N_("write the cummit-graph after fetching")),
 	OPT_BOOL(0, "stdin", &stdin_refspecs,
 		 N_("accept refspecs from stdin")),
 	OPT_END()
@@ -715,7 +715,7 @@ static int s_update_ref(const char *action,
 	}
 
 	if (our_transaction) {
-		switch (ref_transaction_commit(our_transaction, &err)) {
+		switch (ref_transaction_cummit(our_transaction, &err)) {
 		case 0:
 			break;
 		case TRANSACTION_NAME_CONFLICT:
@@ -884,7 +884,7 @@ static int update_local_ref(struct ref *ref,
 			    struct strbuf *display, int summary_width,
 			    struct worktree **worktrees)
 {
-	struct commit *current = NULL, *updated;
+	struct cummit *current = NULL, *updated;
 	const struct worktree *wt;
 	const char *pretty_ref = prettify_refname(ref->name);
 	int fast_forward = 0;
@@ -930,9 +930,9 @@ static int update_local_ref(struct ref *ref,
 		}
 	}
 
-	current = lookup_commit_reference_gently(the_repository,
+	current = lookup_cummit_reference_gently(the_repository,
 						 &ref->old_oid, 1);
-	updated = lookup_commit_reference_gently(the_repository,
+	updated = lookup_cummit_reference_gently(the_repository,
 						 &ref->new_oid, 1);
 	if (!current || !updated) {
 		const char *msg;
@@ -1073,7 +1073,7 @@ static void append_fetch_head(struct fetch_head *fetch_head,
 	/*
 	 * When using an atomic fetch, we do not want to update FETCH_HEAD if
 	 * any of the reference updates fails. We thus have to write all
-	 * updates to a buffer first and only commit it as soon as all
+	 * updates to a buffer first and only cummit it as soon as all
 	 * references have been successfully updated.
 	 */
 	if (!atomic_fetch) {
@@ -1082,7 +1082,7 @@ static void append_fetch_head(struct fetch_head *fetch_head,
 	}
 }
 
-static void commit_fetch_head(struct fetch_head *fetch_head)
+static void cummit_fetch_head(struct fetch_head *fetch_head)
 {
 	if (!fetch_head->fp || !atomic_fetch)
 		return;
@@ -1160,31 +1160,31 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 			/*
 			 * When writing FETCH_HEAD we need to determine whether
-			 * we already have the commit or not. If not, then the
+			 * we already have the cummit or not. If not, then the
 			 * reference is not for merge and needs to be written
-			 * to the reflog after other commits which we already
+			 * to the reflog after other cummits which we already
 			 * have. We're not interested in this property though
 			 * in case FETCH_HEAD is not to be updated, so we can
 			 * skip the classification in that case.
 			 */
 			if (fetch_head->fp) {
-				struct commit *commit = NULL;
+				struct cummit *cummit = NULL;
 
 				/*
 				 * References in "refs/tags/" are often going to point
 				 * to annotated tags, which are not part of the
-				 * commit-graph. We thus only try to look up refs in
+				 * cummit-graph. We thus only try to look up refs in
 				 * the graph which are not in that namespace to not
 				 * regress performance in repositories with many
 				 * annotated tags.
 				 */
 				if (!starts_with(rm->name, "refs/tags/"))
-					commit = lookup_commit_in_graph(the_repository, &rm->old_oid);
-				if (!commit) {
-					commit = lookup_commit_reference_gently(the_repository,
+					cummit = lookup_cummit_in_graph(the_repository, &rm->old_oid);
+				if (!cummit) {
+					cummit = lookup_cummit_reference_gently(the_repository,
 										&rm->old_oid,
 										1);
-					if (!commit)
+					if (!cummit)
 						rm->fetch_head_status = FETCH_HEAD_NOT_FOR_MERGE;
 				}
 			}
@@ -1201,7 +1201,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 			if (recurse_submodules != RECURSE_SUBMODULES_OFF &&
 			    (!rm->peer_ref || !oideq(&ref->old_oid, &ref->new_oid))) {
-				check_for_new_submodule_commits(&rm->old_oid);
+				check_for_new_submodule_cummits(&rm->old_oid);
 			}
 
 			if (!strcmp(rm->name, "HEAD")) {
@@ -1702,7 +1702,7 @@ static int do_fetch(struct transport *transport,
 			 * populate upstream information of the references we
 			 * have already fetched above. The exception though is
 			 * when `--atomic` is passed: in that case we'll abort
-			 * the transaction and don't commit anything.
+			 * the transaction and don't cummit anything.
 			 */
 			if (backfill_tags(transport, transaction, tags_ref_map,
 					  &fetch_head, worktrees))
@@ -1716,7 +1716,7 @@ static int do_fetch(struct transport *transport,
 		if (retcode)
 			goto cleanup;
 
-		retcode = ref_transaction_commit(transaction, &err);
+		retcode = ref_transaction_cummit(transaction, &err);
 		if (retcode) {
 			error("%s", err.buf);
 			ref_transaction_free(transaction);
@@ -1725,7 +1725,7 @@ static int do_fetch(struct transport *transport,
 		}
 	}
 
-	commit_fetch_head(&fetch_head);
+	cummit_fetch_head(&fetch_head);
 
 	if (set_upstream) {
 		struct branch *branch = branch_get("HEAD");
@@ -1943,7 +1943,7 @@ static int fetch_multiple(struct string_list *list, int max_children)
 	}
 
 	strvec_pushl(&argv, "fetch", "--append", "--no-auto-gc",
-		     "--no-write-commit-graph", NULL);
+		     "--no-write-cummit-graph", NULL);
 	add_options_to_argv(&argv);
 
 	if (max_children != 1 && list->nr != 1) {
@@ -2213,7 +2213,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	}
 
 	if (negotiate_only) {
-		struct oidset acked_commits = OIDSET_INIT;
+		struct oidset acked_cummits = OIDSET_INIT;
 		struct oidset_iter iter;
 		const struct object_id *oid;
 
@@ -2221,7 +2221,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			die(_("must supply remote when using --negotiate-only"));
 		gtransport = prepare_transport(remote, 1);
 		if (gtransport->smart_options) {
-			gtransport->smart_options->acked_commits = &acked_commits;
+			gtransport->smart_options->acked_cummits = &acked_cummits;
 		} else {
 			warning(_("protocol does not support --negotiate-only, exiting"));
 			result = 1;
@@ -2231,10 +2231,10 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			gtransport->server_options = &server_options;
 		result = transport_fetch_refs(gtransport, NULL);
 
-		oidset_iter_init(&acked_commits, &iter);
+		oidset_iter_init(&acked_cummits, &iter);
 		while ((oid = oidset_iter_next(&iter)))
 			printf("%s\n", oid_to_hex(oid));
-		oidset_clear(&acked_commits);
+		oidset_clear(&acked_cummits);
 	} else if (remote) {
 		if (filter_options.choice || has_promisor_remote())
 			fetch_one_setup_partial(remote);
@@ -2293,16 +2293,16 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		goto cleanup;
 
 	prepare_repo_settings(the_repository);
-	if (fetch_write_commit_graph > 0 ||
-	    (fetch_write_commit_graph < 0 &&
-	     the_repository->settings.fetch_write_commit_graph)) {
-		int commit_graph_flags = COMMIT_GRAPH_WRITE_SPLIT;
+	if (fetch_write_cummit_graph > 0 ||
+	    (fetch_write_cummit_graph < 0 &&
+	     the_repository->settings.fetch_write_cummit_graph)) {
+		int cummit_graph_flags = cummit_GRAPH_WRITE_SPLIT;
 
 		if (progress)
-			commit_graph_flags |= COMMIT_GRAPH_WRITE_PROGRESS;
+			cummit_graph_flags |= cummit_GRAPH_WRITE_PROGRESS;
 
-		write_commit_graph_reachable(the_repository->objects->odb,
-					     commit_graph_flags,
+		write_cummit_graph_reachable(the_repository->objects->odb,
+					     cummit_graph_flags,
 					     NULL);
 	}
 

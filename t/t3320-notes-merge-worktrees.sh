@@ -11,11 +11,11 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
-test_expect_success 'setup commit' '
-	test_commit tantrum
+test_expect_success 'setup cummit' '
+	test_cummit tantrum
 '
 
-commit_tantrum=$(git rev-parse tantrum^{commit})
+cummit_tantrum=$(git rev-parse tantrum^{cummit})
 
 test_expect_success 'setup notes ref (x)' '
 	git config core.notesRef refs/notes/x &&

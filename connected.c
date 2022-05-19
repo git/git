@@ -8,12 +8,12 @@
 #include "promisor-remote.h"
 
 /*
- * If we feed all the commits we want to verify to this command
+ * If we feed all the cummits we want to verify to this command
  *
  *  $ git rev-list --objects --stdin --not --all
  *
  * and if it does not error out, that means everything reachable from
- * these commits locally exists and is connected to our existing refs.
+ * these cummits locally exists and is connected to our existing refs.
  * Note that this does _not_ validate the individual objects.
  *
  * Returns 0 if everything is connected, non-zero otherwise.

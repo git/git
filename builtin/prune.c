@@ -1,5 +1,5 @@
 #include "cache.h"
-#include "commit.h"
+#include "cummit.h"
 #include "diff.h"
 #include "revision.h"
 #include "builtin.h"
@@ -153,7 +153,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	char *s;
 
 	expire = TIME_MAX;
-	save_commit_buffer = 0;
+	save_cummit_buffer = 0;
 	read_replace_refs = 0;
 	repo_init_revisions(the_repository, &revs, prefix);
 

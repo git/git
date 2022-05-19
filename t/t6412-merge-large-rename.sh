@@ -17,7 +17,7 @@ count() {
 test_expect_success 'setup (initial)' '
 	touch file &&
 	git add . &&
-	git commit -m initial &&
+	git cummit -m initial &&
 	git tag initial
 '
 
@@ -40,18 +40,18 @@ test_rename() {
 		make_text $i initial initial >$i || return 1
 	done &&
 	git add . &&
-	git commit -m add=$n &&
+	git cummit -m add=$n &&
 	for i in $(count $n); do
 		make_text $i changed initial >$i || return 1
 	done &&
-	git commit -a -m change=$n &&
+	git cummit -a -m change=$n &&
 	git checkout -b test$n HEAD^ &&
 	for i in $(count $n); do
 		git rm $i &&
 		make_text $i initial changed >$i.moved || return 1
 	done &&
 	git add . &&
-	git commit -m change+rename=$n &&
+	git cummit -m change+rename=$n &&
 	case "$expect" in
 		ok) git merge main ;;
 		 *) test_must_fail git merge main ;;
@@ -82,19 +82,19 @@ test_expect_success 'setup large simple rename' '
 		make_text foo bar baz >$i || return 1
 	done &&
 	git add . &&
-	git commit -m create-files &&
+	git cummit -m create-files &&
 
 	git branch simple-change &&
 	git checkout -b simple-rename &&
 
 	mkdir builtin &&
 	git mv [0-9]* builtin/ &&
-	git commit -m renamed &&
+	git cummit -m renamed &&
 
 	git checkout simple-change &&
 	>unrelated-change &&
 	git add unrelated-change &&
-	git commit -m unrelated-change
+	git cummit -m unrelated-change
 '
 
 test_expect_success 'massive simple rename does not spam added files' '

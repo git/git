@@ -72,7 +72,7 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 		int len;
 
 		if (!skip_prefix(line, "diff-tree ", &p) &&
-		    !skip_prefix(line, "commit ", &p) &&
+		    !skip_prefix(line, "cummit ", &p) &&
 		    !skip_prefix(line, "From ", &p) &&
 		    starts_with(line, "\\ ") && 12 < strlen(line))
 			continue;
@@ -82,7 +82,7 @@ static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 			break;
 		}
 
-		/* Ignore commit comments */
+		/* Ignore cummit comments */
 		if (!patchlen && !starts_with(line, "diff "))
 			continue;
 

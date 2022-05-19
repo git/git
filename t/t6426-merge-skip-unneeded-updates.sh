@@ -14,7 +14,7 @@ test_description="merge cases"
 #
 # To help make it easier to follow the flow of tests, they have been
 # divided into sections and each test will start with a quick explanation
-# of what commits O, A, and B contain.
+# of what cummits O, A, and B contain.
 #
 # Notation:
 #    z/{b,c}   means  files z/b and z/c both exist
@@ -32,9 +32,9 @@ test_description="merge cases"
 ###########################################################################
 
 # Testcase 1a, Changes on A, subset of changes on B
-#   Commit O: b_1
-#   Commit A: b_2
-#   Commit B: b_3
+#   cummit O: b_1
+#   cummit A: b_2
+#   cummit B: b_3
 #   Expected: b_2
 
 test_setup_1a () {
@@ -45,7 +45,7 @@ test_setup_1a () {
 		test_write_lines 1 2 3 4 5 6 7 8 9 10 >b &&
 		git add b &&
 		test_tick &&
-		git commit -m "O" &&
+		git cummit -m "O" &&
 
 		git branch O &&
 		git branch A &&
@@ -55,13 +55,13 @@ test_setup_1a () {
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 10.5 >b &&
 		git add b &&
 		test_tick &&
-		git commit -m "A" &&
+		git cummit -m "A" &&
 
 		git checkout B &&
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 >b &&
 		git add b &&
 		test_tick &&
-		git commit -m "B"
+		git cummit -m "B"
 	)
 }
 
@@ -130,9 +130,9 @@ test_expect_success '1a-R: Modify(A)/Modify(B), change on B subset of A' '
 ###########################################################################
 
 # Testcase 2a, Changes on A, rename on B
-#   Commit O: b_1
-#   Commit A: b_2
-#   Commit B: c_1
+#   cummit O: b_1
+#   cummit A: b_2
+#   cummit B: c_1
 #   Expected: c_2
 
 test_setup_2a () {
@@ -143,7 +143,7 @@ test_setup_2a () {
 		test_seq 1 10 >b &&
 		git add b &&
 		test_tick &&
-		git commit -m "O" &&
+		git cummit -m "O" &&
 
 		git branch O &&
 		git branch A &&
@@ -153,12 +153,12 @@ test_setup_2a () {
 		test_seq 1 11 >b &&
 		git add b &&
 		test_tick &&
-		git commit -m "A" &&
+		git cummit -m "A" &&
 
 		git checkout B &&
 		git mv b c &&
 		test_tick &&
-		git commit -m "B"
+		git cummit -m "B"
 	)
 }
 
@@ -223,9 +223,9 @@ test_expect_success '2a-R: Modify/rename, merge into rename side' '
 '
 
 # Testcase 2b, Changed and renamed on A, subset of changes on B
-#   Commit O: b_1
-#   Commit A: c_2
-#   Commit B: b_3
+#   cummit O: b_1
+#   cummit A: c_2
+#   cummit B: b_3
 #   Expected: c_2
 
 test_setup_2b () {
@@ -236,7 +236,7 @@ test_setup_2b () {
 		test_write_lines 1 2 3 4 5 6 7 8 9 10 >b &&
 		git add b &&
 		test_tick &&
-		git commit -m "O" &&
+		git cummit -m "O" &&
 
 		git branch O &&
 		git branch A &&
@@ -247,13 +247,13 @@ test_setup_2b () {
 		git add b &&
 		git mv b c &&
 		test_tick &&
-		git commit -m "A" &&
+		git cummit -m "A" &&
 
 		git checkout B &&
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 >b &&
 		git add b &&
 		test_tick &&
-		git commit -m "B"
+		git cummit -m "B"
 	)
 }
 
@@ -321,9 +321,9 @@ test_expect_success '2b-R: Rename+Mod(A)/Mod(B), B mods subset of A' '
 '
 
 # Testcase 2c, Changes on A, rename on B
-#   Commit O: b_1
-#   Commit A: b_2, c_3
-#   Commit B: c_1
+#   cummit O: b_1
+#   cummit A: b_2, c_3
+#   cummit B: c_1
 #   Expected: rename/add conflict c_2 vs c_3
 #
 #   NOTE: Since A modified b_1->b_2, and B renamed b_1->c_1, the threeway
@@ -343,7 +343,7 @@ test_setup_2c () {
 		test_seq 1 10 >b &&
 		git add b &&
 		test_tick &&
-		git commit -m "O" &&
+		git cummit -m "O" &&
 
 		git branch O &&
 		git branch A &&
@@ -354,12 +354,12 @@ test_setup_2c () {
 		echo whatever >c &&
 		git add b c &&
 		test_tick &&
-		git commit -m "A" &&
+		git cummit -m "A" &&
 
 		git checkout B &&
 		git mv b c &&
 		test_tick &&
-		git commit -m "B"
+		git cummit -m "B"
 	)
 }
 
@@ -431,9 +431,9 @@ test_expect_success '2c: Modify b & add c VS rename b->c' '
 ###########################################################################
 
 # Testcase 3a, Change + rename into dir foo on A, dir rename foo->bar on B
-#   Commit O: bq_1, foo/whatever
-#   Commit A: foo/{bq_2, whatever}
-#   Commit B: bq_1, bar/whatever
+#   cummit O: bq_1, foo/whatever
+#   cummit A: foo/{bq_2, whatever}
+#   cummit B: bq_1, bar/whatever
 #   Expected: bar/{bq_2, whatever}
 
 test_setup_3a () {
@@ -446,7 +446,7 @@ test_setup_3a () {
 		test_write_lines a b c d e f g h i j k >foo/whatever &&
 		git add bq foo/whatever &&
 		test_tick &&
-		git commit -m "O" &&
+		git cummit -m "O" &&
 
 		git branch O &&
 		git branch A &&
@@ -457,12 +457,12 @@ test_setup_3a () {
 		git add bq &&
 		git mv bq foo/ &&
 		test_tick &&
-		git commit -m "A" &&
+		git cummit -m "A" &&
 
 		git checkout B &&
 		git mv foo/ bar/ &&
 		test_tick &&
-		git commit -m "B"
+		git cummit -m "B"
 	)
 }
 
@@ -531,9 +531,9 @@ test_expect_success '3a-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 '
 
 # Testcase 3b, rename into dir foo on A, dir rename foo->bar + change on B
-#   Commit O: bq_1, foo/whatever
-#   Commit A: foo/{bq_1, whatever}
-#   Commit B: bq_2, bar/whatever
+#   cummit O: bq_1, foo/whatever
+#   cummit A: foo/{bq_1, whatever}
+#   cummit B: bq_2, bar/whatever
 #   Expected: bar/{bq_2, whatever}
 
 test_setup_3b () {
@@ -546,7 +546,7 @@ test_setup_3b () {
 		test_write_lines a b c d e f g h i j k >foo/whatever &&
 		git add bq foo/whatever &&
 		test_tick &&
-		git commit -m "O" &&
+		git cummit -m "O" &&
 
 		git branch O &&
 		git branch A &&
@@ -555,14 +555,14 @@ test_setup_3b () {
 		git checkout A &&
 		git mv bq foo/ &&
 		test_tick &&
-		git commit -m "A" &&
+		git cummit -m "A" &&
 
 		git checkout B &&
 		test_seq 1 11 >bq &&
 		git add bq &&
 		git mv foo/ bar/ &&
 		test_tick &&
-		git commit -m "B"
+		git cummit -m "B"
 	)
 }
 
@@ -635,9 +635,9 @@ test_expect_success '3b-R: bq_1->foo/bq_2 on A, foo/->bar/ on B' '
 ###########################################################################
 
 # Testcase 4a, Changed on A, subset of changes on B, locally modified
-#   Commit O: b_1
-#   Commit A: b_2
-#   Commit B: b_3
+#   cummit O: b_1
+#   cummit A: b_2
+#   cummit B: b_3
 #   Working copy: b_4
 #   Expected: b_2 for merge, b_4 in working copy
 
@@ -649,7 +649,7 @@ test_setup_4a () {
 		test_write_lines 1 2 3 4 5 6 7 8 9 10 >b &&
 		git add b &&
 		test_tick &&
-		git commit -m "O" &&
+		git cummit -m "O" &&
 
 		git branch O &&
 		git branch A &&
@@ -659,13 +659,13 @@ test_setup_4a () {
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 10.5 >b &&
 		git add b &&
 		test_tick &&
-		git commit -m "A" &&
+		git cummit -m "A" &&
 
 		git checkout B &&
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 >b &&
 		git add b &&
 		test_tick &&
-		git commit -m "B"
+		git cummit -m "B"
 	)
 }
 
@@ -707,9 +707,9 @@ test_expect_merge_algorithm failure success '4a: Change on A, change on B subset
 '
 
 # Testcase 4b, Changed+renamed on A, subset of changes on B, locally modified
-#   Commit O: b_1
-#   Commit A: c_2
-#   Commit B: b_3
+#   cummit O: b_1
+#   cummit A: c_2
+#   cummit B: b_3
 #   Working copy: c_4
 #   Expected: c_2
 
@@ -721,7 +721,7 @@ test_setup_4b () {
 		test_write_lines 1 2 3 4 5 6 7 8 9 10 >b &&
 		git add b &&
 		test_tick &&
-		git commit -m "O" &&
+		git cummit -m "O" &&
 
 		git branch O &&
 		git branch A &&
@@ -732,13 +732,13 @@ test_setup_4b () {
 		git add b &&
 		git mv b c &&
 		test_tick &&
-		git commit -m "A" &&
+		git cummit -m "A" &&
 
 		git checkout B &&
 		test_write_lines 1 2 3 4 5 5.5 6 7 8 9 10 >b &&
 		git add b &&
 		test_tick &&
-		git commit -m "B"
+		git cummit -m "B"
 	)
 }
 

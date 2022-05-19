@@ -19,7 +19,7 @@ test_expect_success 'setup repository' '
 	git config push.default matching &&
 	echo content >file &&
 	git add file &&
-	git commit -m one
+	git cummit -m one
 '
 
 test_expect_success 'create git-accessible bare repository' '
@@ -40,7 +40,7 @@ test_expect_success 'clone git repository' '
 
 test_expect_success 'fetch changes via git protocol' '
 	echo content >>file &&
-	git commit -a -m two &&
+	git cummit -a -m two &&
 	git push public &&
 	(cd clone && git pull -v) 2>stderr &&
 	check_verbose_connect &&

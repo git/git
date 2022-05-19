@@ -1553,13 +1553,13 @@ static int dev_zero_fd = -1; /* Cached file descriptor for /dev/zero. */
 
 /* Win32 MMAP via VirtualAlloc */
 static FORCEINLINE void* win32mmap(size_t size) {
-  void* ptr = VirtualAlloc(0, size, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+  void* ptr = VirtualAlloc(0, size, MEM_RESERVE|MEM_cummit, PAGE_READWRITE);
   return (ptr != 0)? ptr: MFAIL;
 }
 
 /* For direct MMAP, use MEM_TOP_DOWN to minimize interference */
 static FORCEINLINE void* win32direct_mmap(size_t size) {
-  void* ptr = VirtualAlloc(0, size, MEM_RESERVE|MEM_COMMIT|MEM_TOP_DOWN,
+  void* ptr = VirtualAlloc(0, size, MEM_RESERVE|MEM_cummit|MEM_TOP_DOWN,
 			   PAGE_READWRITE);
   return (ptr != 0)? ptr: MFAIL;
 }
@@ -1572,7 +1572,7 @@ static FORCEINLINE int win32munmap(void* ptr, size_t size) {
     if (VirtualQuery(cptr, &minfo, sizeof(minfo)) == 0)
       return -1;
     if (minfo.BaseAddress != cptr || minfo.AllocationBase != cptr ||
-	minfo.State != MEM_COMMIT || minfo.RegionSize > size)
+	minfo.State != MEM_cummit || minfo.RegionSize > size)
       return -1;
     if (VirtualFree(cptr, 0, MEM_RELEASE) == 0)
       return -1;
@@ -2362,7 +2362,7 @@ typedef struct malloc_tree_chunk* tbinptr; /* The type of bins of trees */
   sys_alloc.)  When allocating using MMAP, we don't use any of the
   hinting mechanisms (inconsistently) supported in various
   implementations of unix mmap, or distinguish reserving from
-  committing memory. Instead, we just ask for space, and exploit
+  cummitting memory. Instead, we just ask for space, and exploit
   contiguity when we get it.  It is probably possible to do
   better than this on some systems, but no general scheme seems
   to be significantly better.

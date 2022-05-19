@@ -17,7 +17,7 @@ index 0000000..0123456
 --- /dev/null
 +++ b/dir/sm
 @@ -0,0 +1 @@
-+Subproject commit $(test_oid numeric)
++Subproject cummit $(test_oid numeric)
 EOF
 	cat > remove-sm.patch <<EOF
 diff --git a/dir/sm b/dir/sm
@@ -26,7 +26,7 @@ index 0123456..0000000
 --- a/dir/sm
 +++ /dev/null
 @@ -1 +0,0 @@
--Subproject commit $(test_oid numeric)
+-Subproject cummit $(test_oid numeric)
 EOF
 '
 

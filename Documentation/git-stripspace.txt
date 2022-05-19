@@ -15,7 +15,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Read text, such as commit messages, notes, tags and branch
+Read text, such as cummit messages, notes, tags and branch
 descriptions, from the standard input and clean it in the manner
 used by Git.
 

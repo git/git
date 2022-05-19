@@ -181,18 +181,18 @@ struct ref_update *ref_transaction_add_update(
  *
  * OPEN:   The transaction is initialized and new updates can still be
  *         added to it. An OPEN transaction can be prepared,
- *         committed, freed, or aborted (freeing and aborting an open
+ *         cummitted, freed, or aborted (freeing and aborting an open
  *         transaction are equivalent).
  *
  * PREPARED: ref_transaction_prepare(), which locks all of the
  *         references involved in the update and checks that the
  *         update has no errors, has been called successfully for the
- *         transaction. A PREPARED transaction can be committed or
+ *         transaction. A PREPARED transaction can be cummitted or
  *         aborted.
  *
  * CLOSED: The transaction is no longer active. A transaction becomes
  *         CLOSED if there is a failure while building the transaction
- *         or if a transaction is committed or aborted. A CLOSED
+ *         or if a transaction is cummitted or aborted. A CLOSED
  *         transaction can only be freed.
  */
 enum ref_transaction_state {
@@ -544,7 +544,7 @@ typedef int ref_transaction_abort_fn(struct ref_store *refs,
 				     struct ref_transaction *transaction,
 				     struct strbuf *err);
 
-typedef int ref_transaction_commit_fn(struct ref_store *refs,
+typedef int ref_transaction_cummit_fn(struct ref_store *refs,
 				      struct ref_transaction *transaction,
 				      struct strbuf *err);
 
@@ -672,7 +672,7 @@ struct ref_storage_be {
 	ref_transaction_prepare_fn *transaction_prepare;
 	ref_transaction_finish_fn *transaction_finish;
 	ref_transaction_abort_fn *transaction_abort;
-	ref_transaction_commit_fn *initial_transaction_commit;
+	ref_transaction_cummit_fn *initial_transaction_cummit;
 
 	pack_refs_fn *pack_refs;
 	create_symref_fn *create_symref;

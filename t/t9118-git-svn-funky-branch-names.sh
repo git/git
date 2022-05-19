@@ -57,33 +57,33 @@ test_expect_success 'test clone with funky branch names' '
 	)
 	'
 
-test_expect_success 'test dcommit to funky branch' "
+test_expect_success 'test dcummit to funky branch' "
 	(
 		cd project &&
 		git reset --hard 'refs/remotes/origin/more%20fun%20plugin!' &&
 		echo hello >> foo &&
-		git commit -m 'hello' -- foo &&
-		git svn dcommit
+		git cummit -m 'hello' -- foo &&
+		git svn dcummit
 	)
 	"
 
-test_expect_success 'test dcommit to scary branch' '
+test_expect_success 'test dcummit to scary branch' '
 	(
 		cd project &&
 		git reset --hard "refs/remotes/origin/$scary_ref" &&
 		echo urls are scary >> foo &&
-		git commit -m "eep" -- foo &&
-		git svn dcommit
+		git cummit -m "eep" -- foo &&
+		git svn dcummit
 	)
 	'
 
-test_expect_success 'test dcommit to trailing_dotlock branch' '
+test_expect_success 'test dcummit to trailing_dotlock branch' '
 	(
 		cd project &&
 		git reset --hard "refs/remotes/origin/trailing_dotlock%2Elock" &&
 		echo who names branches like this anyway? >> foo &&
-		git commit -m "bar" -- foo &&
-		git svn dcommit
+		git cummit -m "bar" -- foo &&
+		git svn dcummit
 	)
 	'
 

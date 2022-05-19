@@ -12,7 +12,7 @@ test_expect_success 'setup' '
 	 git init &&
 	 echo content >file &&
 	 git add file &&
-	 git commit -m base
+	 git cummit -m base
 	) &&
 	git fetch parent main:origin
 '

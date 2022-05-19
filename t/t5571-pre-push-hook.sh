@@ -14,7 +14,7 @@ test_expect_success 'setup' '
 	git config push.default upstream &&
 	git init --bare repo1 &&
 	git remote add parent1 repo1 &&
-	test_commit one &&
+	test_cummit one &&
 	cat >expect <<-EOF &&
 	HEAD $(git rev-parse HEAD) refs/heads/foreign $(test_oid zero)
 	EOF
@@ -24,8 +24,8 @@ test_expect_success 'setup' '
 	test_cmp expect actual
 '
 
-COMMIT1="$(git rev-parse HEAD)"
-export COMMIT1
+cummit1="$(git rev-parse HEAD)"
+export cummit1
 
 test_expect_success 'push with failing hook' '
 	test_hook pre-push <<-\EOF &&
@@ -33,7 +33,7 @@ test_expect_success 'push with failing hook' '
 	exit 1
 	EOF
 
-	test_commit two &&
+	test_cummit two &&
 	cat >expect <<-EOF &&
 	HEAD $(git rev-parse HEAD) refs/heads/main $(test_oid zero)
 	EOF
@@ -48,8 +48,8 @@ test_expect_success '--no-verify bypasses hook' '
 	test_path_is_missing actual
 '
 
-COMMIT2="$(git rev-parse HEAD)"
-export COMMIT2
+cummit2="$(git rev-parse HEAD)"
+export cummit2
 
 test_expect_success 'push with hook' '
 	test_hook --setup pre-push <<-\EOF &&
@@ -61,7 +61,7 @@ test_expect_success 'push with hook' '
 	cat >expect <<-EOF &&
 	parent1
 	repo1
-	refs/heads/main $COMMIT2 refs/heads/foreign $COMMIT1
+	refs/heads/main $cummit2 refs/heads/foreign $cummit1
 	EOF
 
 	git push parent1 main:foreign &&
@@ -70,17 +70,17 @@ test_expect_success 'push with hook' '
 
 test_expect_success 'add a branch' '
 	git checkout -b other parent1/foreign &&
-	test_commit three
+	test_cummit three
 '
 
-COMMIT3="$(git rev-parse HEAD)"
-export COMMIT3
+cummit3="$(git rev-parse HEAD)"
+export cummit3
 
 test_expect_success 'push to default' '
 	cat >expect <<-EOF &&
 	parent1
 	repo1
-	refs/heads/other $COMMIT3 refs/heads/foreign $COMMIT2
+	refs/heads/other $cummit3 refs/heads/foreign $cummit2
 	EOF
 	git push &&
 	test_cmp expect actual
@@ -90,8 +90,8 @@ test_expect_success 'push non-branches' '
 	cat >expect <<-EOF &&
 	parent1
 	repo1
-	refs/tags/one $COMMIT1 refs/tags/tag1 $ZERO_OID
-	HEAD~ $COMMIT2 refs/heads/prev $ZERO_OID
+	refs/tags/one $cummit1 refs/tags/tag1 $ZERO_OID
+	HEAD~ $cummit2 refs/heads/prev $ZERO_OID
 	EOF
 
 	git push parent1 one:tag1 HEAD~:refs/heads/prev &&
@@ -102,7 +102,7 @@ test_expect_success 'push delete' '
 	cat >expect <<-EOF &&
 	parent1
 	repo1
-	(delete) $ZERO_OID refs/heads/prev $COMMIT2
+	(delete) $ZERO_OID refs/heads/prev $cummit2
 	EOF
 
 	git push parent1 :prev &&
@@ -113,7 +113,7 @@ test_expect_success 'push to URL' '
 	cat >expect <<-EOF &&
 	repo1
 	repo1
-	HEAD $COMMIT3 refs/heads/other $ZERO_OID
+	HEAD $cummit3 refs/heads/other $ZERO_OID
 	EOF
 
 	git push repo1 HEAD &&
@@ -126,7 +126,7 @@ test_expect_success 'set up many-ref tests' '
 		while test $nr -lt 2000
 		do
 			nr=$(( $nr + 1 )) &&
-			echo "create refs/heads/b/$nr $COMMIT3" || return 1
+			echo "create refs/heads/b/$nr $cummit3" || return 1
 		done
 	} | git update-ref --stdin
 '

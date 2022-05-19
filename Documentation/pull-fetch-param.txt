@@ -71,7 +71,7 @@ refspec (or `--force`).
 Unlike when pushing with linkgit:git-push[1], any updates outside of
 `refs/{tags,heads}/*` will be accepted without `+` in the refspec (or
 `--force`), whether that's swapping e.g. a tree object for a blob, or
-a commit for another commit that's doesn't have the previous commit as
+a cummit for another cummit that's doesn't have the previous cummit as
 an ancestor etc.
 +
 Unlike when pushing with linkgit:git-push[1], there is no
@@ -82,7 +82,7 @@ As with pushing with linkgit:git-push[1], all of the rules described
 above about what's not allowed as an update can be overridden by
 adding an the optional leading `+` to a refspec (or using `--force`
 command line option). The only exception to this is that no amount of
-forcing will make the `refs/heads/*` namespace accept a non-commit
+forcing will make the `refs/heads/*` namespace accept a non-cummit
 object.
 +
 [NOTE]

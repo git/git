@@ -3,7 +3,7 @@ git-show-branch(1)
 
 NAME
 ----
-git-show-branch - Show branches and their commits
+git-show-branch - Show branches and their cummits
 
 SYNOPSIS
 --------
@@ -18,11 +18,11 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Shows the commit ancestry graph starting from the commits named
+Shows the cummit ancestry graph starting from the cummits named
 with <rev>s or <glob>s (or all refs under refs/heads
 and/or refs/tags) semi-visually.
 
-It cannot show more than 29 branches and commits at a time.
+It cannot show more than 29 branches and cummits at a time.
 
 It uses `showbranch.default` multi-valued configuration items if
 no <rev> or <glob> is given on the command line.
@@ -54,15 +54,15 @@ OPTIONS
 	given on the command line.
 
 --topo-order::
-        By default, the branches and their commits are shown in
+        By default, the branches and their cummits are shown in
         reverse chronological order.  This option makes them
-        appear in topological order (i.e., descendant commits
+        appear in topological order (i.e., descendant cummits
         are shown before their parents).
 
 --date-order::
 	This option is similar to `--topo-order` in the sense that no
-	parent comes before all of its children, but otherwise commits
-	are ordered according to their commit date.
+	parent comes before all of its children, but otherwise cummits
+	are ordered according to their cummit date.
 
 --sparse::
 	By default, the output omits merges that are reachable
@@ -70,39 +70,39 @@ OPTIONS
 	visible.
 
 --more=<n>::
-	Usually the command stops output upon showing the commit
+	Usually the command stops output upon showing the cummit
 	that is the common ancestor of all the branches.  This
-	flag tells the command to go <n> more common commits
+	flag tells the command to go <n> more common cummits
 	beyond that.  When <n> is negative, display only the
-	<reference>s given, without showing the commit ancestry
+	<reference>s given, without showing the cummit ancestry
 	tree.
 
 --list::
 	Synonym to `--more=-1`
 
 --merge-base::
-	Instead of showing the commit list, determine possible
-	merge bases for the specified commits. All merge bases
-	will be contained in all specified commits. This is
+	Instead of showing the cummit list, determine possible
+	merge bases for the specified cummits. All merge bases
+	will be contained in all specified cummits. This is
 	different from how linkgit:git-merge-base[1] handles
-	the case of three or more commits.
+	the case of three or more cummits.
 
 --independent::
 	Among the <reference>s given, display only the ones that
 	cannot be reached from any other <reference>.
 
 --no-name::
-	Do not show naming strings for each commit.
+	Do not show naming strings for each cummit.
 
 --sha1-name::
-	Instead of naming the commits using the path to reach
+	Instead of naming the cummits using the path to reach
 	them from heads (e.g. "master~2" to mean the grandparent
 	of "master"), name them with the unique prefix of their
 	object names.
 
 --topics::
-	Shows only commits that are NOT on the first branch given.
-	This helps track topic branches by hiding any commit that
+	Shows only cummits that are NOT on the first branch given.
+	This helps track topic branches by hiding any cummit that
 	is already in the main line of development.  When given
 	"git show-branch --topics master topic1 topic2", this
 	will show the revisions given by "git rev-list {caret}master
@@ -117,7 +117,7 @@ OPTIONS
 	current branch (or `HEAD` if it is detached).
 
 --color[=<when>]::
-	Color the status sign (one of these: `*` `!` `+` `-`) of each commit
+	Color the status sign (one of these: `*` `!` `+` `-`) of each cummit
 	corresponding to the branch it's in.
 	The value must be always (the default), never, or auto.
 
@@ -133,16 +133,16 @@ are mutually exclusive.
 OUTPUT
 ------
 Given N <references>, the first N lines are the one-line
-description from their commit message.  The branch head that is
+description from their cummit message.  The branch head that is
 pointed at by $GIT_DIR/HEAD is prefixed with an asterisk `*`
 character while other heads are prefixed with a `!` character.
 
-Following these N lines, one-line log for each commit is
-displayed, indented N places.  If a commit is on the I-th
+Following these N lines, one-line log for each cummit is
+displayed, indented N places.  If a cummit is on the I-th
 branch, the I-th indentation character shows a `+` sign;
-otherwise it shows a space.  Merge commits are denoted by
-a `-` sign.  Each commit shows a short name that
-can be used as an extended SHA-1 to name that commit.
+otherwise it shows a space.  Merge cummits are denoted by
+a `-` sign.  Each cummit shows a short name that
+can be used as an extended SHA-1 to name that cummit.
 
 The following example shows three branches, "master", "fixes"
 and "mhf":
@@ -166,10 +166,10 @@ $ git show-branch master fixes mhf
 *++ [master] Add 'git show-branch'.
 ------------------------------------------------
 
-These three branches all forked from a common commit, [master],
-whose commit message is "Add \'git show-branch'".
-The "fixes" branch adds one commit "Introduce "reset type" flag to
-"git reset"". The "mhf" branch adds many other commits.
+These three branches all forked from a common cummit, [master],
+whose cummit message is "Add \'git show-branch'".
+The "fixes" branch adds one cummit "Introduce "reset type" flag to
+"git reset"". The "mhf" branch adds many other cummits.
 The current branch is "master".
 
 

@@ -5,7 +5,7 @@
 #include "attr.h"
 #include "object.h"
 #include "blob.h"
-#include "commit.h"
+#include "cummit.h"
 #include "tag.h"
 #include "tree.h"
 #include "delta.h"
@@ -263,20 +263,20 @@ static uint32_t written, written_delta;
 static uint32_t reused, reused_delta;
 
 /*
- * Indexed commits
+ * Indexed cummits
  */
-static struct commit **indexed_commits;
-static unsigned int indexed_commits_nr;
-static unsigned int indexed_commits_alloc;
+static struct cummit **indexed_cummits;
+static unsigned int indexed_cummits_nr;
+static unsigned int indexed_cummits_alloc;
 
-static void index_commit_for_bitmap(struct commit *commit)
+static void index_cummit_for_bitmap(struct cummit *cummit)
 {
-	if (indexed_commits_nr >= indexed_commits_alloc) {
-		indexed_commits_alloc = (indexed_commits_alloc + 32) * 2;
-		REALLOC_ARRAY(indexed_commits, indexed_commits_alloc);
+	if (indexed_cummits_nr >= indexed_cummits_alloc) {
+		indexed_cummits_alloc = (indexed_cummits_alloc + 32) * 2;
+		REALLOC_ARRAY(indexed_cummits, indexed_cummits_alloc);
 	}
 
-	indexed_commits[indexed_commits_nr++] = commit;
+	indexed_cummits[indexed_cummits_nr++] = cummit;
 }
 
 static void *get_delta(struct object_entry *entry)
@@ -865,10 +865,10 @@ static void compute_layer_order(struct object_entry **wo, unsigned int *wo_end)
 	}
 
 	/*
-	 * And then all remaining commits and tags.
+	 * And then all remaining cummits and tags.
 	 */
 	for (i = last_untagged; i < to_pack.nr_objects; i++) {
-		if (oe_type(&objects[i]) != OBJ_COMMIT &&
+		if (oe_type(&objects[i]) != OBJ_cummit &&
 		    oe_type(&objects[i]) != OBJ_TAG)
 			continue;
 		add_to_write_order(wo, wo_end, &objects[i]);
@@ -1271,7 +1271,7 @@ static void write_pack_file(void)
 				stop_progress(&progress_state);
 
 				bitmap_writer_show_progress(progress);
-				bitmap_writer_select_commits(indexed_commits, indexed_commits_nr, -1);
+				bitmap_writer_select_cummits(indexed_cummits, indexed_cummits_nr, -1);
 				if (bitmap_writer_build(&to_pack) < 0)
 					die(_("failed to write bitmap index"));
 				bitmap_writer_finish(written_list, nr_written,
@@ -1611,7 +1611,7 @@ static struct pbase_tree {
 	/* This is a phony "cache" entry; we are not
 	 * going to evict it or find it through _get()
 	 * mechanism -- this is for the toplevel node that
-	 * would almost always change with any commit.
+	 * would almost always change with any cummit.
 	 */
 	struct pbase_tree_cache pcache;
 } *pbase_tree;
@@ -1966,7 +1966,7 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
 			oe_set_type(entry, entry->in_pack_type);
 			SET_SIZE(entry, in_pack_size);
 			entry->in_pack_header_size = used;
-			if (oe_type(entry) < OBJ_COMMIT || oe_type(entry) > OBJ_BLOB)
+			if (oe_type(entry) < OBJ_cummit || oe_type(entry) > OBJ_BLOB)
 				goto give_up;
 			unuse_pack(&w_curs);
 			return;
@@ -2212,10 +2212,10 @@ static void break_delta_chains(struct object_entry *entry)
 		 * Cutting B->C breaks the cycle. But now the depth of A is
 		 * only 1, and our total_depth counter is at 3. The size of the
 		 * error is always one less than the size of the cycle we
-		 * broke. Commits C and D were "lost" from A's chain.
+		 * broke. cummits C and D were "lost" from A's chain.
 		 *
 		 * If we instead cut D->B, then the depth of A is correct at 3.
-		 * We keep all commits in the chain that we examined.
+		 * We keep all cummits in the chain that we examined.
 		 */
 		cur->dfs_state = DFS_ACTIVE;
 		if (DELTA(cur)->dfs_state == DFS_ACTIVE) {
@@ -3219,9 +3219,9 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 	if (packed_object_info(the_repository, p, ofs, &oi) < 0)
 		die(_("could not get type of object %s in pack %s"),
 		    oid_to_hex(oid), p->pack_name);
-	else if (type == OBJ_COMMIT) {
+	else if (type == OBJ_cummit) {
 		/*
-		 * commits in included packs are used as starting points for the
+		 * cummits in included packs are used as starting points for the
 		 * subsequent revision walk
 		 */
 		add_pending_oid(revs, NULL, oid, 0);
@@ -3234,9 +3234,9 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 	return 0;
 }
 
-static void show_commit_pack_hint(struct commit *commit, void *_data)
+static void show_cummit_pack_hint(struct cummit *cummit, void *_data)
 {
-	/* nothing to do; commits don't have a namehash */
+	/* nothing to do; cummits don't have a namehash */
 }
 
 static void show_object_pack_hint(struct object *object, const char *name,
@@ -3379,8 +3379,8 @@ static void read_packs_list_from_stdin(void)
 
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
-	traverse_commit_list(&revs,
-			     show_commit_pack_hint,
+	traverse_cummit_list(&revs,
+			     show_cummit_pack_hint,
 			     show_object_pack_hint,
 			     NULL);
 
@@ -3426,15 +3426,15 @@ static void read_object_list_from_stdin(void)
 	}
 }
 
-static void show_commit(struct commit *commit, void *data)
+static void show_cummit(struct cummit *cummit, void *data)
 {
-	add_object_entry(&commit->object.oid, OBJ_COMMIT, NULL, 0);
+	add_object_entry(&cummit->object.oid, OBJ_cummit, NULL, 0);
 
 	if (write_bitmap_index)
-		index_commit_for_bitmap(commit);
+		index_cummit_for_bitmap(cummit);
 
 	if (use_delta_islands)
-		propagate_island_marks(commit);
+		propagate_island_marks(cummit);
 }
 
 static void show_object(struct object *obj, const char *name, void *data)
@@ -3516,9 +3516,9 @@ static int option_parse_missing_action(const struct option *opt,
 	return 0;
 }
 
-static void show_edge(struct commit *commit)
+static void show_edge(struct cummit *cummit)
 {
-	add_preferred_base(&commit->object.oid);
+	add_preferred_base(&cummit->object.oid);
 }
 
 static int add_object_in_unpacked_pack(const struct object_id *oid,
@@ -3674,7 +3674,7 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 		display_progress(progress_state, nr_seen);
 	}
 
-	traverse_bitmap_commit_list(bitmap_git, revs,
+	traverse_bitmap_cummit_list(bitmap_git, revs,
 				    &add_object_entry_from_bitmap);
 	return 0;
 }
@@ -3686,9 +3686,9 @@ static void record_recent_object(struct object *obj,
 	oid_array_append(&recent_objects, &obj->oid);
 }
 
-static void record_recent_commit(struct commit *commit, void *data)
+static void record_recent_cummit(struct cummit *cummit, void *data)
 {
-	oid_array_append(&recent_objects, &commit->object.oid);
+	oid_array_append(&recent_objects, &cummit->object.oid);
 }
 
 static int mark_bitmap_preferred_tip(const char *refname,
@@ -3702,7 +3702,7 @@ static int mark_bitmap_preferred_tip(const char *refname,
 		oid = &peeled;
 
 	object = parse_object_or_die(oid, refname);
-	if (object->type == OBJ_COMMIT)
+	if (object->type == OBJ_cummit)
 		object->flags |= NEEDS_BITMAP;
 
 	return 0;
@@ -3731,7 +3731,7 @@ static void get_object_list(struct rev_info *revs, int ac, const char **av)
 	int flags = 0;
 	int save_warning;
 
-	save_commit_buffer = 0;
+	save_cummit_buffer = 0;
 	setup_revisions(ac, av, revs, &s_r_opt);
 
 	/* make sure shallows are read */
@@ -3783,8 +3783,8 @@ static void get_object_list(struct rev_info *revs, int ac, const char **av)
 
 	if (!fn_show_object)
 		fn_show_object = show_object;
-	traverse_commit_list(revs,
-			     show_commit, fn_show_object,
+	traverse_cummit_list(revs,
+			     show_cummit, fn_show_object,
 			     NULL);
 
 	if (unpack_unreachable_expiration) {
@@ -3794,7 +3794,7 @@ static void get_object_list(struct rev_info *revs, int ac, const char **av)
 			die(_("unable to add recent objects"));
 		if (prepare_revision_walk(revs))
 			die(_("revision walk setup failed"));
-		traverse_commit_list(revs, record_recent_commit,
+		traverse_cummit_list(revs, record_recent_cummit,
 				     record_recent_object, NULL);
 	}
 
@@ -3969,7 +3969,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		OPT_INTEGER(0, "compression", &pack_compression_level,
 			    N_("pack compression level")),
 		OPT_SET_INT(0, "keep-true-parents", &grafts_replace_parents,
-			    N_("do not hide commits by grafts"), 0),
+			    N_("do not hide cummits by grafts"), 0),
 		OPT_BOOL(0, "use-bitmap-index", &use_bitmap_index,
 			 N_("use a bitmap index if available to speed up counting objects")),
 		OPT_SET_INT(0, "write-bitmap-index", &write_bitmap_index,

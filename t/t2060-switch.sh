@@ -8,10 +8,10 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit first &&
+	test_cummit first &&
 	git branch first-branch &&
-	test_commit second &&
-	test_commit third &&
+	test_cummit second &&
+	test_cummit third &&
 	git remote add origin nohost:/nopath &&
 	git update-ref refs/remotes/origin/foo first-branch
 '
@@ -27,19 +27,19 @@ test_expect_success 'switch branch' '
 
 test_expect_success 'switch and detach' '
 	test_when_finished git switch main &&
-	test_must_fail git switch main^{commit} &&
-	git switch --detach main^{commit} &&
+	test_must_fail git switch main^{cummit} &&
+	git switch --detach main^{cummit} &&
 	test_must_fail git symbolic-ref HEAD
 '
 
 test_expect_success 'suggestion to detach' '
-	test_must_fail git switch main^{commit} 2>stderr &&
+	test_must_fail git switch main^{cummit} 2>stderr &&
 	grep "try again with the --detach option" stderr
 '
 
 test_expect_success 'suggestion to detach is suppressed with advice.suggestDetachingHead=false' '
 	test_config advice.suggestDetachingHead false &&
-	test_must_fail git switch main^{commit} 2>stderr &&
+	test_must_fail git switch main^{cummit} 2>stderr &&
 	! grep "try again with the --detach option" stderr
 '
 
@@ -74,9 +74,9 @@ test_expect_success 'new orphan branch from empty' '
 	test_when_finished git switch main &&
 	test_must_fail git switch --orphan new-orphan HEAD &&
 	git switch --orphan new-orphan &&
-	test_commit orphan &&
-	git cat-file commit refs/heads/new-orphan >commit &&
-	! grep ^parent commit &&
+	test_cummit orphan &&
+	git cat-file cummit refs/heads/new-orphan >cummit &&
+	! grep ^parent cummit &&
 	git ls-files >tracked-files &&
 	echo orphan.t >expected &&
 	test_cmp expected tracked-files

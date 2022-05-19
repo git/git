@@ -111,7 +111,7 @@ Supported commands: 'connect'.
 Supported commands: 'stateless-connect'.
 
 'push'::
-	Can discover remote refs and push local commits and the
+	Can discover remote refs and push local cummits and the
 	history leading up to them to new or existing remote refs.
 +
 Supported commands: 'list for-push', 'push'.
@@ -316,7 +316,7 @@ If option 'check-connectivity' is requested, the helper must output
 Supported if the helper has the "fetch" capability.
 
 'push' +<src>:<dst>::
-	Pushes the given local <src> commit or branch to the
+	Pushes the given local <src> cummit or branch to the
 	remote branch described by <dst>.  A batch sequence of
 	one or more 'push' commands is terminated with a blank line
 	(if there is only one reference to push, a single 'push' command

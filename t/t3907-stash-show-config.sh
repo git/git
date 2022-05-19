@@ -5,7 +5,7 @@ test_description='Test git stash show configuration.'
 . ./test-lib.sh
 
 test_expect_success 'setup' '
-	test_commit file
+	test_cummit file
 '
 
 # takes three parameters:

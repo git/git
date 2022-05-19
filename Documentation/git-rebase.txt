@@ -3,7 +3,7 @@ git-rebase(1)
 
 NAME
 ----
-git-rebase - Reapply commits on top of another base tip
+git-rebase - Reapply cummits on top of another base tip
 
 SYNOPSIS
 --------
@@ -26,9 +26,9 @@ linkgit:git-config[1] for details) and the `--fork-point` option is
 assumed.  If you are currently not on any branch or if the current
 branch does not have a configured upstream, the rebase will abort.
 
-All changes made by commits in the current branch but that are not
+All changes made by cummits in the current branch but that are not
 in <upstream> are saved to a temporary area.  This is the same set
-of commits that would be shown by `git log <upstream>..HEAD`; or by
+of cummits that would be shown by `git log <upstream>..HEAD`; or by
 `git log 'fork_point'..HEAD`, if `--fork-point` is active (see the
 description on `--fork-point` below); or by `git log HEAD`, if the
 `--root` option is specified.
@@ -38,15 +38,15 @@ The current branch is reset to <upstream>, or <newbase> if the
 `git reset --hard <upstream>` (or <newbase>).  ORIG_HEAD is set
 to point at the tip of the branch before the reset.
 
-The commits that were previously saved into the temporary area are
+The cummits that were previously saved into the temporary area are
 then reapplied to the current branch, one by one, in order. Note that
-any commits in HEAD which introduce the same textual changes as a commit
+any cummits in HEAD which introduce the same textual changes as a cummit
 in HEAD..<upstream> are omitted (i.e., a patch already accepted upstream
-with a different commit message or timestamp will be skipped).
+with a different cummit message or timestamp will be skipped).
 
 It is possible that a merge failure will prevent this process from being
 completely automatic.  You will have to resolve any such merge failure
-and run `git rebase --continue`.  Another option is to bypass the commit
+and run `git rebase --continue`.  Another option is to bypass the cummit
 that caused the merge failure with `git rebase --skip`.  To check out the
 original <branch> and remove the .git/rebase-apply working files, use the
 command `git rebase --abort` instead.
@@ -78,11 +78,11 @@ followed by `git rebase master`. When rebase exits `topic` will
 remain the checked-out branch.
 
 If the upstream branch already contains a change you have made (e.g.,
-because you mailed a patch which was applied upstream), then that commit
+because you mailed a patch which was applied upstream), then that cummit
 will be skipped and warnings will be issued (if the `merge` backend is
 used).  For example, running `git rebase master` on the following
 history (in which `A'` and `A` introduce the same set of changes, but
-have different committer information):
+have different cummitter information):
 
 ------------
           A---B---C topic
@@ -158,7 +158,7 @@ would result in:
 
 This is useful when topicB does not depend on topicA.
 
-A range of commits could also be removed with rebase.  If we have
+A range of cummits could also be removed with rebase.  If we have
 the following situation:
 
 ------------
@@ -169,7 +169,7 @@ then the command
 
     git rebase --onto topicA~5 topicA~3 topicA
 
-would result in the removal of commits F and G:
+would result in the removal of cummits F and G:
 
 ------------
     E---H'---I'---J'  topicA
@@ -177,9 +177,9 @@ would result in the removal of commits F and G:
 
 This is useful if F and G were flawed in some way, or should not be
 part of topicA.  Note that the argument to --onto and the <upstream>
-parameter can be any valid commit-ish.
+parameter can be any valid cummit-ish.
 
-In case of conflict, 'git rebase' will stop at the first problematic commit
+In case of conflict, 'git rebase' will stop at the first problematic cummit
 and leave conflict markers in the tree.  You can use 'git diff' to locate
 the markers (<<<<<<) and make edits to resolve the conflict.  For each
 file you edit, you need to tell Git that the conflict has been resolved,
@@ -204,9 +204,9 @@ Alternatively, you can undo the 'git rebase' with
 OPTIONS
 -------
 --onto <newbase>::
-	Starting point at which to create the new commits. If the
+	Starting point at which to create the new cummits. If the
 	--onto option is not specified, the starting point is
-	<upstream>.  May be any valid commit, and not just an
+	<upstream>.  May be any valid cummit, and not just an
 	existing branch name.
 +
 As a special case, you may use "A\...B" as a shortcut for the
@@ -214,7 +214,7 @@ merge base of A and B if there is exactly one merge base. You can
 leave out at most one of A and B, in which case it defaults to HEAD.
 
 --keep-base::
-	Set the starting point at which to create the new commits to the
+	Set the starting point at which to create the new cummits to the
 	merge base of <upstream> and <branch>. Running
 	'git rebase --keep-base <upstream> <branch>' is equivalent to
 	running
@@ -223,17 +223,17 @@ leave out at most one of A and B, in which case it defaults to HEAD.
 This option is useful in the case where one is developing a feature on
 top of an upstream branch. While the feature is being worked on, the
 upstream branch may advance and it may not be the best idea to keep
-rebasing on top of the upstream but to keep the base commit as-is.
+rebasing on top of the upstream but to keep the base cummit as-is.
 +
 Although both this option and --fork-point find the merge base between
 <upstream> and <branch>, this option uses the merge base as the _starting
-point_ on which new commits will be created, whereas --fork-point uses
-the merge base to determine the _set of commits_ which will be rebased.
+point_ on which new cummits will be created, whereas --fork-point uses
+the merge base to determine the _set of cummits_ which will be rebased.
 +
 See also INCOMPATIBLE OPTIONS below.
 
 <upstream>::
-	Upstream branch to compare against.  May be any valid commit,
+	Upstream branch to compare against.  May be any valid cummit,
 	not just an existing branch name. Defaults to the configured
 	upstream for the current branch.
 
@@ -264,19 +264,19 @@ See also INCOMPATIBLE OPTIONS below.
 See also INCOMPATIBLE OPTIONS below.
 
 --empty={drop,keep,ask}::
-	How to handle commits that are not empty to start and are not
-	clean cherry-picks of any upstream commit, but which become
+	How to handle cummits that are not empty to start and are not
+	clean cherry-picks of any upstream cummit, but which become
 	empty after rebasing (because they contain a subset of already
-	upstream changes).  With drop (the default), commits that
-	become empty are dropped.  With keep, such commits are kept.
+	upstream changes).  With drop (the default), cummits that
+	become empty are dropped.  With keep, such cummits are kept.
 	With ask (implied by --interactive), the rebase will halt when
-	an empty commit is applied allowing you to choose whether to
-	drop it, edit files more, or just commit the empty changes.
+	an empty cummit is applied allowing you to choose whether to
+	drop it, edit files more, or just cummit the empty changes.
 	Other options, like --exec, will use the default of drop unless
 	-i/--interactive is explicitly specified.
 +
-Note that commits which start empty are kept (unless --no-keep-empty
-is specified), and commits which are clean cherry-picks (as determined
+Note that cummits which start empty are kept (unless --no-keep-empty
+is specified), and cummits which are clean cherry-picks (as determined
 by `git log --cherry-mark ...`) are detected and dropped as a
 preliminary step (unless --reapply-cherry-picks is passed).
 +
@@ -284,50 +284,50 @@ See also INCOMPATIBLE OPTIONS below.
 
 --no-keep-empty::
 --keep-empty::
-	Do not keep commits that start empty before the rebase
+	Do not keep cummits that start empty before the rebase
 	(i.e. that do not change anything from its parent) in the
-	result.  The default is to keep commits which start empty,
-	since creating such commits requires passing the --allow-empty
-	override flag to `git commit`, signifying that a user is very
-	intentionally creating such a commit and thus wants to keep
+	result.  The default is to keep cummits which start empty,
+	since creating such cummits requires passing the --allow-empty
+	override flag to `git cummit`, signifying that a user is very
+	intentionally creating such a cummit and thus wants to keep
 	it.
 +
 Usage of this flag will probably be rare, since you can get rid of
-commits that start empty by just firing up an interactive rebase and
-removing the lines corresponding to the commits you don't want.  This
+cummits that start empty by just firing up an interactive rebase and
+removing the lines corresponding to the cummits you don't want.  This
 flag exists as a convenient shortcut, such as for cases where external
-tools generate many empty commits and you want them all removed.
+tools generate many empty cummits and you want them all removed.
 +
-For commits which do not start empty but become empty after rebasing,
+For cummits which do not start empty but become empty after rebasing,
 see the --empty flag.
 +
 See also INCOMPATIBLE OPTIONS below.
 
 --reapply-cherry-picks::
 --no-reapply-cherry-picks::
-	Reapply all clean cherry-picks of any upstream commit instead
-	of preemptively dropping them. (If these commits then become
+	Reapply all clean cherry-picks of any upstream cummit instead
+	of preemptively dropping them. (If these cummits then become
 	empty after rebasing, because they contain a subset of already
 	upstream changes, the behavior towards them is controlled by
 	the `--empty` flag.)
 +
-By default (or if `--no-reapply-cherry-picks` is given), these commits
+By default (or if `--no-reapply-cherry-picks` is given), these cummits
 will be automatically dropped.  Because this necessitates reading all
-upstream commits, this can be expensive in repos with a large number
-of upstream commits that need to be read.  When using the `merge`
-backend, warnings will be issued for each dropped commit (unless
+upstream cummits, this can be expensive in repos with a large number
+of upstream cummits that need to be read.  When using the `merge`
+backend, warnings will be issued for each dropped cummit (unless
 `--quiet` is given). Advice will also be issued unless
 `advice.skippedCherryPicks` is set to false (see linkgit:git-config[1]).
 +
 `--reapply-cherry-picks` allows rebase to forgo reading all upstream
-commits, potentially improving performance.
+cummits, potentially improving performance.
 +
 See also INCOMPATIBLE OPTIONS below.
 
 --allow-empty-message::
-	No-op.  Rebasing commits with an empty message used to fail
-	and this option would override that behavior, allowing commits
-	with empty messages to be rebased.  Now commits with an empty
+	No-op.  Rebasing cummits with an empty message used to fail
+	and this option would override that behavior, allowing cummits
+	with empty messages to be rebased.  Now cummits with an empty
 	message do not cause rebasing to halt.
 +
 See also INCOMPATIBLE OPTIONS below.
@@ -347,7 +347,7 @@ See also INCOMPATIBLE OPTIONS below.
 --merge::
 	Using merging strategies to rebase (default).
 +
-Note that a rebase merge works by replaying each commit from the working
+Note that a rebase merge works by replaying each cummit from the working
 branch on top of the <upstream> branch.  Because of this, when a merge
 conflict happens, the side reported as 'ours' is the so-far rebased
 series, starting with <upstream>, and 'theirs' is the working branch.  In
@@ -360,7 +360,7 @@ See also INCOMPATIBLE OPTIONS below.
 	Use the given merge strategy, instead of the default `ort`.
 	This implies `--merge`.
 +
-Because 'git rebase' replays each commit from the working branch
+Because 'git rebase' replays each cummit from the working branch
 on top of the <upstream> branch using the given strategy, using
 the 'ours' strategy simply empties all patches from the <branch>,
 which makes little sense.
@@ -384,10 +384,10 @@ See also INCOMPATIBLE OPTIONS below.
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
 --no-gpg-sign::
-	GPG-sign commits. The `keyid` argument is optional and
-	defaults to the committer identity; if specified, it must be
+	GPG-sign cummits. The `keyid` argument is optional and
+	defaults to the cummitter identity; if specified, it must be
 	stuck to the option without a space. `--no-gpg-sign` is useful to
-	countermand both `commit.gpgSign` configuration variable, and
+	countermand both `cummit.gpgSign` configuration variable, and
 	earlier `--gpg-sign`.
 
 -q::
@@ -424,12 +424,12 @@ See also INCOMPATIBLE OPTIONS below.
 --no-ff::
 --force-rebase::
 -f::
-	Individually replay all rebased commits instead of fast-forwarding
+	Individually replay all rebased cummits instead of fast-forwarding
 	over the unchanged ones.  This ensures that the entire history of
-	the rebased branch is composed of new commits.
+	the rebased branch is composed of new cummits.
 +
 You may find this helpful after reverting a topic branch merge, as this option
-recreates the topic branch with fresh commits so it can be remerged
+recreates the topic branch with fresh cummits so it can be remerged
 successfully without needing to "revert the reversion" (see the
 link:howto/revert-a-faulty-merge.html[revert-a-faulty-merge How-To] for
 details).
@@ -437,11 +437,11 @@ details).
 --fork-point::
 --no-fork-point::
 	Use reflog to find a better common ancestor between <upstream>
-	and <branch> when calculating which commits have been
+	and <branch> when calculating which cummits have been
 	introduced by <branch>.
 +
 When --fork-point is active, 'fork_point' will be used instead of
-<upstream> to calculate the set of commits to rebase, where
+<upstream> to calculate the set of cummits to rebase, where
 'fork_point' is the result of `git merge-base --fork-point <upstream>
 <branch>` command (see linkgit:git-merge-base[1]).  If 'fork_point'
 ends up being empty, the <upstream> will be used as a fallback.
@@ -451,8 +451,8 @@ If <upstream> is given on the command line, then the default is
 `rebase.forkpoint` in linkgit:git-config[1].
 +
 If your branch was based on <upstream> but <upstream> was rewound and
-your branch contains commits which were dropped, this option can be used
-with `--keep-base` in order to drop those commits from your branch.
+your branch contains cummits which were dropped, this option can be used
+with `--keep-base` in order to drop those cummits from your branch.
 +
 See also INCOMPATIBLE OPTIONS below.
 
@@ -479,33 +479,33 @@ if the other side had no changes that conflicted.
 +
 See also INCOMPATIBLE OPTIONS below.
 
---committer-date-is-author-date::
-	Instead of using the current time as the committer date, use
-	the author date of the commit being rebased as the committer
+--cummitter-date-is-author-date::
+	Instead of using the current time as the cummitter date, use
+	the author date of the cummit being rebased as the cummitter
 	date. This option implies `--force-rebase`.
 
 --ignore-date::
 --reset-author-date::
-	Instead of using the author date of the original commit, use
-	the current time as the	author date of the rebased commit.  This
+	Instead of using the author date of the original cummit, use
+	the current time as the	author date of the rebased cummit.  This
 	option implies `--force-rebase`.
 +
 See also INCOMPATIBLE OPTIONS below.
 
 --signoff::
-	Add a `Signed-off-by` trailer to all the rebased commits. Note
-	that if `--interactive` is given then only commits marked to be
+	Add a `Signed-off-by` trailer to all the rebased cummits. Note
+	that if `--interactive` is given then only cummits marked to be
 	picked, edited or reworded will have the trailer added.
 +
 See also INCOMPATIBLE OPTIONS below.
 
 -i::
 --interactive::
-	Make a list of the commits which are about to be rebased.  Let the
+	Make a list of the cummits which are about to be rebased.  Let the
 	user edit that list before rebasing.  This mode can also be used to
-	split commits (see SPLITTING COMMITS below).
+	split cummits (see SPLITTING cummitS below).
 +
-The commit list format can be changed by setting the configuration option
+The cummit list format can be changed by setting the configuration option
 rebase.instructionFormat.  A customized instruction format will automatically
 have the long commit hash prepended to the format.
 +
@@ -513,22 +513,22 @@ See also INCOMPATIBLE OPTIONS below.
 
 -r::
 --rebase-merges[=(rebase-cousins|no-rebase-cousins)]::
-	By default, a rebase will simply drop merge commits from the todo
-	list, and put the rebased commits into a single, linear branch.
+	By default, a rebase will simply drop merge cummits from the todo
+	list, and put the rebased cummits into a single, linear branch.
 	With `--rebase-merges`, the rebase will instead try to preserve
-	the branching structure within the commits that are to be rebased,
-	by recreating the merge commits. Any resolved merge conflicts or
-	manual amendments in these merge commits will have to be
+	the branching structure within the cummits that are to be rebased,
+	by recreating the merge cummits. Any resolved merge conflicts or
+	manual amendments in these merge cummits will have to be
 	resolved/re-applied manually.
 +
-By default, or when `no-rebase-cousins` was specified, commits which do not
+By default, or when `no-rebase-cousins` was specified, cummits which do not
 have `<upstream>` as direct ancestor will keep their original branch point,
-i.e. commits that would be excluded by linkgit:git-log[1]'s
+i.e. cummits that would be excluded by linkgit:git-log[1]'s
 `--ancestry-path` option will keep their original ancestry by default. If
-the `rebase-cousins` mode is turned on, such commits are instead rebased
+the `rebase-cousins` mode is turned on, such cummits are instead rebased
 onto `<upstream>` (or `<onto>`, if specified).
 +
-It is currently only possible to recreate the merge commits using the
+It is currently only possible to recreate the merge cummits using the
 `ort` merge strategy; different merge strategies can be used only via
 explicit `exec git merge -s <strategy> [...]` commands.
 +
@@ -536,7 +536,7 @@ See also REBASING MERGES and INCOMPATIBLE OPTIONS below.
 
 -x <cmd>::
 --exec <cmd>::
-	Append "exec <cmd>" after each line creating a commit in the
+	Append "exec <cmd>" after each line creating a cummit in the
 	final history. <cmd> will be interpreted as one or more shell
 	commands. Any command that fails will interrupt the rebase,
 	with exit code 1.
@@ -551,7 +551,7 @@ or by giving more than one `--exec`:
 	git rebase -i --exec "cmd1" --exec "cmd2" --exec ...
 +
 If `--autosquash` is used, "exec" lines will not be appended for
-the intermediate commits, and will only appear at the end of each
+the intermediate cummits, and will only appear at the end of each
 squash/fixup series.
 +
 This uses the `--interactive` machinery internally, but it can be run
@@ -560,9 +560,9 @@ without an explicit `--interactive`.
 See also INCOMPATIBLE OPTIONS below.
 
 --root::
-	Rebase all commits reachable from <branch>, instead of
+	Rebase all cummits reachable from <branch>, instead of
 	limiting them with an <upstream>.  This allows you to rebase
-	the root commit(s) on a branch.  When used with --onto, it
+	the root cummit(s) on a branch.  When used with --onto, it
 	will skip changes already contained in <newbase> (instead of
 	<upstream>) whereas without --onto it will operate on every change.
 +
@@ -570,17 +570,17 @@ See also INCOMPATIBLE OPTIONS below.
 
 --autosquash::
 --no-autosquash::
-	When the commit log message begins with "squash! ..." or "fixup! ..."
-	or "amend! ...", and there is already a commit in the todo list that
+	When the cummit log message begins with "squash! ..." or "fixup! ..."
+	or "amend! ...", and there is already a cummit in the todo list that
 	matches the same `...`, automatically modify the todo list of
-	`rebase -i`, so that the commit marked for squashing comes right after
-	the commit to be modified, and change the action of the moved commit
-	from `pick` to `squash` or `fixup` or `fixup -C` respectively. A commit
-	matches the `...` if the commit subject matches, or if the `...` refers
-	to the commit's hash. As a fall-back, partial matches of the commit
+	`rebase -i`, so that the cummit marked for squashing comes right after
+	the cummit to be modified, and change the action of the moved cummit
+	from `pick` to `squash` or `fixup` or `fixup -C` respectively. A cummit
+	matches the `...` if the cummit subject matches, or if the `...` refers
+	to the cummit's hash. As a fall-back, partial matches of the cummit
 	subject work, too. The recommended way to create fixup/amend/squash
-	commits is by using the `--fixup`, `--fixup=amend:` or `--fixup=reword:`
-	and `--squash` options respectively of linkgit:git-commit[1].
+	cummits is by using the `--fixup`, `--fixup=amend:` or `--fixup=reword:`
+	and `--squash` options respectively of linkgit:git-cummit[1].
 +
 If the `--autosquash` option is enabled by default using the
 configuration variable `rebase.autoSquash`, this option can be
@@ -651,23 +651,23 @@ used for non-interactive cases as well.  Both were renamed based on
 lower-level functionality that underpinned each.) There are some
 subtle differences in how these two backends behave:
 
-Empty commits
+Empty cummits
 ~~~~~~~~~~~~~
 
-The apply backend unfortunately drops intentionally empty commits, i.e.
-commits that started empty, though these are rare in practice.  It
-also drops commits that become empty and has no option for controlling
+The apply backend unfortunately drops intentionally empty cummits, i.e.
+cummits that started empty, though these are rare in practice.  It
+also drops cummits that become empty and has no option for controlling
 this behavior.
 
-The merge backend keeps intentionally empty commits by default (though
+The merge backend keeps intentionally empty cummits by default (though
 with -i they are marked as empty in the todo list editor, or they can
 be dropped automatically with --no-keep-empty).
 
 Similar to the apply backend, by default the merge backend drops
-commits that become empty unless -i/--interactive is specified (in
+cummits that become empty unless -i/--interactive is specified (in
 which case it stops and asks the user what to do).  The merge backend
 also has an --empty={drop,keep,ask} option for changing the behavior
-of handling commits that become empty.
+of handling cummits that become empty.
 
 Directory rename detection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -697,7 +697,7 @@ context region is meant to help find how to adjust the line numbers in
 order to apply the changes to the right lines.  However, if multiple
 areas of the code have the same surrounding lines of context, the
 wrong one can be picked.  There are real-world cases where this has
-caused commits to be reapplied incorrectly with no conflicts reported.
+caused cummits to be reapplied incorrectly with no conflicts reported.
 Setting diff.context to a larger value may prevent such types of
 problems, but increases the chance of spurious conflicts (since it
 will require more lines of matching context to apply).
@@ -709,17 +709,17 @@ Labelling of conflicts markers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When there are content conflicts, the merge machinery tries to
-annotate each side's conflict markers with the commits where the
+annotate each side's conflict markers with the cummits where the
 content came from.  Since the apply backend drops the original
-information about the rebased commits and their parents (and instead
-generates new fake commits based off limited information in the
-generated patches), those commits cannot be identified; instead it has
-to fall back to a commit summary.  Also, when merge.conflictStyle is
+information about the rebased cummits and their parents (and instead
+generates new fake cummits based off limited information in the
+generated patches), those cummits cannot be identified; instead it has
+to fall back to a cummit summary.  Also, when merge.conflictStyle is
 set to diff3 or zdiff3, the apply backend will use "constructed merge
 base" to label the content from the merge base, and thus provide no
-information about the merge base commit whatsoever.
+information about the merge base cummit whatsoever.
 
-The merge backend works with the full commits on both sides of history
+The merge backend works with the full cummits on both sides of history
 and thus has no such limitations.
 
 Hooks
@@ -729,11 +729,11 @@ The apply backend has not traditionally called the post-commit hook,
 while the merge backend has.  Both have called the post-checkout hook,
 though the merge backend has squelched its output.  Further, both
 backends only call the post-checkout hook with the starting point
-commit of the rebase, not the intermediate commits nor the final
-commit.  In each case, the calling of these hooks was by accident of
+cummit of the rebase, not the intermediate cummits nor the final
+cummit.  In each case, the calling of these hooks was by accident of
 implementation rather than by design (both backends were originally
 implemented as shell scripts and happened to invoke other commands
-like 'git checkout' or 'git commit' that would call the hooks).  Both
+like 'git checkout' or 'git cummit' that would call the hooks).  Both
 backends should have the same behavior, though it is not entirely
 clear which, if any, is correct.  We will likely make rebase stop
 calling either of these hooks in the future.
@@ -749,15 +749,15 @@ suffer from the same shortcoming.  (See
 https://lore.kernel.org/git/20200207132152.GC2868@szeder.dev/ for
 details.)
 
-Commit Rewording
+cummit Rewording
 ~~~~~~~~~~~~~~~~
 
 When a conflict occurs while rebasing, rebase stops and asks the user
 to resolve.  Since the user may need to make notable changes while
 resolving conflicts, after conflicts are resolved and the user has run
 `git rebase --continue`, the rebase should open an editor and ask the
-user to update the commit message.  The merge backend does this, while
-the apply backend blindly applies the original commit message.
+user to update the cummit message.  The merge backend does this, while
+the apply backend blindly applies the original cummit message.
 
 Miscellaneous differences
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -798,8 +798,8 @@ Upon completion, <branch> will be the current branch.
 INTERACTIVE MODE
 ----------------
 
-Rebasing interactively means that you have a chance to edit the commits
-which are rebased.  You can reorder the commits, and you can
+Rebasing interactively means that you have a chance to edit the cummits
+which are rebased.  You can reorder the cummits, and you can
 remove them (weeding out bad or otherwise unwanted patches).
 
 The interactive mode is meant for this type of workflow:
@@ -813,66 +813,66 @@ where point 2. consists of several instances of
 
 a) regular use
 
- 1. finish something worthy of a commit
- 2. commit
+ 1. finish something worthy of a cummit
+ 2. cummit
 
 b) independent fixup
 
  1. realize that something does not work
  2. fix that
- 3. commit it
+ 3. cummit it
 
 Sometimes the thing fixed in b.2. cannot be amended to the not-quite
-perfect commit it fixes, because that commit is buried deeply in a
+perfect cummit it fixes, because that cummit is buried deeply in a
 patch series.  That is exactly what interactive rebase is for: use it
 after plenty of "a"s and "b"s, by rearranging and editing
-commits, and squashing multiple commits into one.
+cummits, and squashing multiple cummits into one.
 
-Start it with the last commit you want to retain as-is:
+Start it with the last cummit you want to retain as-is:
 
-	git rebase -i <after-this-commit>
+	git rebase -i <after-this-cummit>
 
-An editor will be fired up with all the commits in your current branch
-(ignoring merge commits), which come after the given commit.  You can
-reorder the commits in this list to your heart's content, and you can
+An editor will be fired up with all the cummits in your current branch
+(ignoring merge cummits), which come after the given cummit.  You can
+reorder the cummits in this list to your heart's content, and you can
 remove them.  The list looks more or less like this:
 
 -------------------------------------------
-pick deadbee The oneline of this commit
-pick fa1afe1 The oneline of the next commit
+pick deadbee The oneline of this cummit
+pick fa1afe1 The oneline of the next cummit
 ...
 -------------------------------------------
 
 The oneline descriptions are purely for your pleasure; 'git rebase' will
-not look at them but at the commit names ("deadbee" and "fa1afe1" in this
+not look at them but at the cummit names ("deadbee" and "fa1afe1" in this
 example), so do not delete or edit the names.
 
 By replacing the command "pick" with the command "edit", you can tell
-'git rebase' to stop after applying that commit, so that you can edit
-the files and/or the commit message, amend the commit, and continue
+'git rebase' to stop after applying that cummit, so that you can edit
+the files and/or the cummit message, amend the cummit, and continue
 rebasing.
 
 To interrupt the rebase (just like an "edit" command would do, but without
-cherry-picking any commit first), use the "break" command.
+cherry-picking any cummit first), use the "break" command.
 
-If you just want to edit the commit message for a commit, replace the
+If you just want to edit the cummit message for a cummit, replace the
 command "pick" with the command "reword".
 
-To drop a commit, replace the command "pick" with "drop", or just
+To drop a cummit, replace the command "pick" with "drop", or just
 delete the matching line.
 
-If you want to fold two or more commits into one, replace the command
-"pick" for the second and subsequent commits with "squash" or "fixup".
-If the commits had different authors, the folded commit will be
-attributed to the author of the first commit.  The suggested commit
-message for the folded commit is the concatenation of the first
-commit's message with those identified by "squash" commands, omitting the
-messages of commits identified by "fixup" commands, unless "fixup -c"
-is used.  In that case the suggested commit message is only the message
-of the "fixup -c" commit, and an editor is opened allowing you to edit
-the message.  The contents (patch) of the "fixup -c" commit are still
-incorporated into the folded commit. If there is more than one "fixup -c"
-commit, the message from the final one is used.  You can also use
+If you want to fold two or more cummits into one, replace the command
+"pick" for the second and subsequent cummits with "squash" or "fixup".
+If the cummits had different authors, the folded cummit will be
+attributed to the author of the first cummit.  The suggested cummit
+message for the folded cummit is the concatenation of the first
+cummit's message with those identified by "squash" commands, omitting the
+messages of cummits identified by "fixup" commands, unless "fixup -c"
+is used.  In that case the suggested cummit message is only the message
+of the "fixup -c" cummit, and an editor is opened allowing you to edit
+the message.  The contents (patch) of the "fixup -c" cummit are still
+incorporated into the folded cummit. If there is more than one "fixup -c"
+cummit, the message from the final one is used.  You can also use
 "fixup -C" to get the same behavior as "fixup -c" except without opening
 an editor.
 
@@ -881,7 +881,7 @@ an editor.
 when a command fails due to merge errors. When you are done editing
 and/or resolving conflicts you can continue with `git rebase --continue`.
 
-For example, if you want to reorder the last 5 commits, such that what
+For example, if you want to reorder the last 5 cummits, such that what
 was HEAD~4 becomes the new HEAD. To achieve that, you would call
 'git rebase' like this:
 
@@ -891,7 +891,7 @@ $ git rebase -i HEAD~5
 
 And move the first patch to the end of the list.
 
-You might want to recreate merge commits, e.g. if you have a history
+You might want to recreate merge cummits, e.g. if you have a history
 like this:
 
 ------------------
@@ -909,7 +909,7 @@ sure that the current HEAD is "B", and call
 $ git rebase -i -r --onto Q O
 -----------------------------
 
-Reordering and editing commits usually creates untested intermediate
+Reordering and editing cummits usually creates untested intermediate
 steps.  You may want to check that your history editing did not break
 anything by running a test, or at least recompiling at intermediate
 points in history by using the "exec" command (shortcut "x").  You may
@@ -919,8 +919,8 @@ do so by creating a todo list like this one:
 pick deadbee Implement feature XXX
 fixup f1a5c00 Fix to feature XXX
 exec make
-pick c0ffeee The oneline of the next commit
-edit deadbab The oneline of the commit after
+pick c0ffeee The oneline of the next cummit
+edit deadbab The oneline of the cummit after
 exec cd subdir; make test
 ...
 -------------------------------------------
@@ -938,7 +938,7 @@ the root of the working tree.
 $ git rebase -i --exec "make test"
 ----------------------------------
 
-This command lets you check that intermediate commits are compilable.
+This command lets you check that intermediate cummits are compilable.
 The todo list becomes like that:
 
 --------------------
@@ -952,29 +952,29 @@ pick f4593f9 four
 exec make test
 --------------------
 
-SPLITTING COMMITS
+SPLITTING cummitS
 -----------------
 
-In interactive mode, you can mark commits with the action "edit".  However,
+In interactive mode, you can mark cummits with the action "edit".  However,
 this does not necessarily mean that 'git rebase' expects the result of this
-edit to be exactly one commit.  Indeed, you can undo the commit, or you can
-add other commits.  This can be used to split a commit into two:
+edit to be exactly one cummit.  Indeed, you can undo the cummit, or you can
+add other cummits.  This can be used to split a cummit into two:
 
-- Start an interactive rebase with `git rebase -i <commit>^`, where
-  <commit> is the commit you want to split.  In fact, any commit range
-  will do, as long as it contains that commit.
+- Start an interactive rebase with `git rebase -i <cummit>^`, where
+  <cummit> is the cummit you want to split.  In fact, any cummit range
+  will do, as long as it contains that cummit.
 
-- Mark the commit you want to split with the action "edit".
+- Mark the cummit you want to split with the action "edit".
 
-- When it comes to editing that commit, execute `git reset HEAD^`.  The
+- When it comes to editing that cummit, execute `git reset HEAD^`.  The
   effect is that the HEAD is rewound by one, and the index follows suit.
   However, the working tree stays the same.
 
 - Now add the changes to the index that you want to have in the first
-  commit.  You can use `git add` (possibly interactively) or
+  cummit.  You can use `git add` (possibly interactively) or
   'git gui' (or both) to do that.
 
-- Commit the now-current index with whatever commit message is appropriate
+- cummit the now-current index with whatever cummit message is appropriate
   now.
 
 - Repeat the last two steps until your working tree is clean.
@@ -983,8 +983,8 @@ add other commits.  This can be used to split a commit into two:
 
 If you are not absolutely sure that the intermediate revisions are
 consistent (they compile, pass the testsuite, etc.) you should use
-'git stash' to stash away the not-yet-committed changes
-after each commit, test, and amend the commit if fixes are necessary.
+'git stash' to stash away the not-yet-cummitted changes
+after each cummit, test, and amend the cummit if fixes are necessary.
 
 
 RECOVERING FROM UPSTREAM REBASE
@@ -1020,7 +1020,7 @@ If 'subsystem' is rebased against 'master', the following happens:
 ------------
 
 If you now continue development as usual, and eventually merge 'topic'
-to 'subsystem', the commits from 'subsystem' will remain duplicated forever:
+to 'subsystem', the cummits from 'subsystem' will remain duplicated forever:
 
 ------------
     o---o---o---o---o---o---o---o  master
@@ -1032,7 +1032,7 @@ to 'subsystem', the commits from 'subsystem' will remain duplicated forever:
 
 Such duplicates are generally frowned upon because they clutter up
 history, making it harder to follow.  To clean things up, you need to
-transplant the commits on 'topic' to the new 'subsystem' tip, i.e.,
+transplant the cummits on 'topic' to the new 'subsystem' tip, i.e.,
 rebase 'topic'.  This becomes a ripple effect: anyone downstream from
 'topic' is forced to rebase too, and so on!
 
@@ -1046,8 +1046,8 @@ Easy case: The changes are literally the same.::
 Hard case: The changes are not the same.::
 
 	This happens if the 'subsystem' rebase had conflicts, or used
-	`--interactive` to omit, edit, squash, or fixup commits; or
-	if the upstream used one of `commit --amend`, `reset`, or
+	`--interactive` to omit, edit, squash, or fixup cummits; or
+	if the upstream used one of `cummit --amend`, `reset`, or
 	a full history rewriting command like
 	https://github.com/newren/git-filter-repo[`filter-repo`].
 
@@ -1084,12 +1084,12 @@ correspond to the ones before the rebase.
 
 NOTE: While an "easy case recovery" sometimes appears to be successful
       even in the hard case, it may have unintended consequences.  For
-      example, a commit that was removed via `git rebase
+      example, a cummit that was removed via `git rebase
       --interactive` will be **resurrected**!
 
 The idea is to manually tell 'git rebase' "where the old 'subsystem'
 ended and your 'topic' began", that is, what the old merge base
-between them was.  You will have to find a way to name the last commit
+between them was.  You will have to find a way to name the last cummit
 of the old 'subsystem', for example:
 
 * With the 'subsystem' reflog: after 'git fetch', the old tip of
@@ -1097,7 +1097,7 @@ of the old 'subsystem', for example:
   increase the number.  (See linkgit:git-reflog[1].)
 
 * Relative to the tip of 'topic': knowing that your 'topic' has three
-  commits, the old tip of 'subsystem' must be `topic~3`.
+  cummits, the old tip of 'subsystem' must be `topic~3`.
 
 You can then transplant the old `subsystem..topic` to the new tip by
 saying (for the reflog case, and assuming you are on 'topic' already):
@@ -1114,13 +1114,13 @@ REBASING MERGES
 
 The interactive rebase command was originally designed to handle
 individual patch series. As such, it makes sense to exclude merge
-commits from the todo list, as the developer may have merged the
+cummits from the todo list, as the developer may have merged the
 then-current `master` while working on the branch, only to rebase
-all the commits onto `master` eventually (skipping the merge
-commits).
+all the cummits onto `master` eventually (skipping the merge
+cummits).
 
 However, there are legitimate reasons why a developer may want to
-recreate merge commits: to keep the branch structure (or "commit
+recreate merge cummits: to keep the branch structure (or "cummit
 topology") when working on multiple, inter-related branches.
 
 In the following example, the developer works on a topic branch that
@@ -1139,7 +1139,7 @@ output of `git log --graph --format=%s -5` may look like this:
 | * Extract a generic Button class from the DownloadButton one
 ------------
 
-The developer might want to rebase those commits to a newer `master`
+The developer might want to rebase those cummits to a newer `master`
 while keeping the branch topology, for example when the first topic
 branch is expected to be integrated into `master` much earlier than the
 second one, say, to resolve merge conflicts with changes to the
@@ -1186,8 +1186,8 @@ rescheduled immediately, with a helpful message how to edit the todo list
 list manually and contains a typo).
 
 The `merge` command will merge the specified revision(s) into whatever
-is HEAD at that time. With `-C <original-commit>`, the commit message of
-the specified merge commit will be used. When the `-C` is changed to
+is HEAD at that time. With `-C <original-cummit>`, the cummit message of
+the specified merge cummit will be used. When the `-C` is changed to
 a lower-case `-c`, the message will be opened in an editor after a
 successful merge so that the user can edit the message.
 
@@ -1206,12 +1206,12 @@ correspond to the label `onto`, for example) in order to refer to the
 branches you want to merge.
 
 Note: the first command (`label onto`) labels the revision onto which
-the commits are rebased; The name `onto` is just a convention, as a nod
+the cummits are rebased; The name `onto` is just a convention, as a nod
 to the `--onto` option.
 
-It is also possible to introduce completely new merge commits from scratch
+It is also possible to introduce completely new merge cummits from scratch
 by adding a command of the form `merge <merge-head>`. This form will
-generate a tentative commit message and always open an editor to let the
+generate a tentative cummit message and always open an editor to let the
 user edit it. This can be useful e.g. when a topic branch turns out to
 address more than a single concern and wants to be split into two or
 even more topic branches. Consider this todo list:
@@ -1224,7 +1224,7 @@ pick afbecd http: add support for TLS v1.3
 pick fdbaec Fix detection of cURL in CMake on Windows
 ------------
 
-The one commit in this list that is not related to CMake may very well
+The one cummit in this list that is not related to CMake may very well
 have been motivated by working on fixing all those bugs introduced by
 switching to CMake, but it addresses a different concern. To split this
 branch into two topic branches, the todo list could be edited like this:

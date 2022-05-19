@@ -14,7 +14,7 @@ test_expect_success 'setup' '
 	echo file1 >sub1/file1 &&
 	echo file2 >sub1/sub2/file2 &&
 	git add top sub1/file1 sub1/sub2/file2 &&
-	git commit -m commit
+	git cummit -m cummit
 '
 
 test_expect_success 'empty prefix -- file' '

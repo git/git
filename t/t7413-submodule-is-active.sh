@@ -10,9 +10,9 @@ submodules which are "active" and interesting to the user.
 
 test_expect_success 'setup' '
 	git init sub &&
-	test_commit -C sub initial &&
+	test_cummit -C sub initial &&
 	git init super &&
-	test_commit -C super initial &&
+	test_cummit -C super initial &&
 	git -C super submodule add ../sub sub1 &&
 	git -C super submodule add ../sub sub2 &&
 
@@ -21,7 +21,7 @@ test_expect_success 'setup' '
 	git -C super config --unset submodule.sub1.active &&
 	git -C super config --unset submodule.sub2.active &&
 
-	git -C super commit -a -m "add 2 submodules at sub{1,2}"
+	git -C super cummit -a -m "add 2 submodules at sub{1,2}"
 '
 
 test_expect_success 'is-active works with urls' '
@@ -92,7 +92,7 @@ test_expect_success 'is-active with submodule.active and submodule.<name>.active
 test_expect_success 'is-active, submodule.active and submodule add' '
 	test_when_finished "rm -rf super2" &&
 	git init super2 &&
-	test_commit -C super2 initial &&
+	test_cummit -C super2 initial &&
 	git -C super2 config --add submodule.active "sub*" &&
 
 	# submodule add should only add submodule.<name>.active

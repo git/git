@@ -18,15 +18,15 @@ test_expect_success setup '
 	>A &&
 	>B &&
 	git add A B &&
-	git commit -m "Initial" &&
+	git cummit -m "Initial" &&
 	git tag initial &&
 	git branch side &&
 	echo new line >A &&
-	git commit -m "add line to A" A &&
+	git cummit -m "add line to A" A &&
 	git tag a &&
 	git checkout side &&
 	echo new line >B &&
-	git commit -m "add line to B" B &&
+	git cummit -m "add line to B" B &&
 	git tag b &&
 	git checkout main &&
 	git merge side &&

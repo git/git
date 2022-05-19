@@ -65,7 +65,7 @@ static char diff_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_CYAN,		/* FRAGINFO */
 	GIT_COLOR_RED,		/* OLD */
 	GIT_COLOR_GREEN,	/* NEW */
-	GIT_COLOR_YELLOW,	/* COMMIT */
+	GIT_COLOR_YELLOW,	/* cummit */
 	GIT_COLOR_BG_RED,	/* WHITESPACE */
 	GIT_COLOR_NORMAL,	/* FUNCINFO */
 	GIT_COLOR_BOLD_MAGENTA,	/* OLD_MOVED */
@@ -90,7 +90,7 @@ static const char *color_diff_slots[] = {
 	[DIFF_FRAGINFO]		      = "frag",
 	[DIFF_FILE_OLD]		      = "old",
 	[DIFF_FILE_NEW]		      = "new",
-	[DIFF_COMMIT]		      = "commit",
+	[DIFF_cummit]		      = "cummit",
 	[DIFF_WHITESPACE]	      = "whitespace",
 	[DIFF_FUNCINFO]		      = "func",
 	[DIFF_FILE_OLD_MOVED]	      = "oldMoved",
@@ -3946,7 +3946,7 @@ static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
 	if (s->dirty_submodule)
 		dirty = "-dirty";
 
-	strbuf_addf(&buf, "Subproject commit %s%s\n",
+	strbuf_addf(&buf, "Subproject cummit %s%s\n",
 		    oid_to_hex(&s->oid), dirty);
 	s->size = buf.len;
 	if (size_only) {

@@ -31,23 +31,23 @@ expression E;
 expression F;
 expression G;
 @@
-- parse_commit_internal(
-+ repo_parse_commit_internal(the_repository,
+- parse_cummit_internal(
++ repo_parse_cummit_internal(the_repository,
   E, F, G)
 
 @@
 expression E;
 expression F;
 @@
-- parse_commit_gently(
-+ repo_parse_commit_gently(the_repository,
+- parse_cummit_gently(
++ repo_parse_cummit_gently(the_repository,
   E, F)
 
 @@
 expression E;
 @@
-- parse_commit(
-+ repo_parse_commit(the_repository,
+- parse_cummit(
++ repo_parse_cummit(the_repository,
   E)
 
 @@
@@ -97,16 +97,16 @@ expression G;
 expression E;
 expression F;
 @@
-- get_commit_buffer(
-+ repo_get_commit_buffer(the_repository,
+- get_cummit_buffer(
++ repo_get_cummit_buffer(the_repository,
   E, F);
 
 @@
 expression E;
 expression F;
 @@
-- unuse_commit_buffer(
-+ repo_unuse_commit_buffer(the_repository,
+- unuse_cummit_buffer(
++ repo_unuse_cummit_buffer(the_repository,
   E, F);
 
 @@
@@ -124,6 +124,6 @@ expression F;
 expression G;
 expression H;
 @@
-- format_commit_message(
-+ repo_format_commit_message(the_repository,
+- format_cummit_message(
++ repo_format_cummit_message(the_repository,
   E, F, G, H);

@@ -1,4 +1,4 @@
-/fuzz-commit-graph
+/fuzz-cummit-graph
 /fuzz_corpora
 /fuzz-pack-headers
 /fuzz-pack-idx
@@ -40,16 +40,16 @@
 /git-clean
 /git-clone
 /git-column
-/git-commit
-/git-commit-graph
-/git-commit-tree
+/git-cummit
+/git-cummit-graph
+/git-cummit-tree
 /git-config
 /git-count-objects
 /git-credential
 /git-credential-cache
 /git-credential-cache--daemon
 /git-credential-store
-/git-cvsexportcommit
+/git-cvsexportcummit
 /git-cvsimport
 /git-cvsserver
 /git-daemon
@@ -74,7 +74,7 @@
 /git-fsck-objects
 /git-fsmonitor--daemon
 /git-gc
-/git-get-tar-commit-id
+/git-get-tar-cummit-id
 /git-grep
 /git-hash-object
 /git-help
@@ -177,7 +177,7 @@
 /git-upload-archive
 /git-upload-pack
 /git-var
-/git-verify-commit
+/git-verify-cummit
 /git-verify-pack
 /git-verify-tag
 /git-web--browse

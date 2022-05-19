@@ -7,7 +7,7 @@
 #include "xdiff-interface.h"
 #include "linear-assignment.h"
 #include "diffcore.h"
-#include "commit.h"
+#include "cummit.h"
 #include "pretty.h"
 #include "userdiff.h"
 #include "apply.h"
@@ -53,7 +53,7 @@ static int read_patches(const char *range, struct string_list *list,
 		     "--output-indicator-new=>",
 		     "--output-indicator-old=<",
 		     "--output-indicator-context=#",
-		     "--no-abbrev-commit",
+		     "--no-abbrev-cummit",
 		     "--pretty=medium",
 		     "--notes",
 		     NULL);
@@ -88,14 +88,14 @@ static int read_patches(const char *range, struct string_list *list,
 			len = size;
 		}
 
-		if (skip_prefix(line, "commit ", &p)) {
+		if (skip_prefix(line, "cummit ", &p)) {
 			if (util) {
 				string_list_append(list, buf.buf)->util = util;
 				strbuf_reset(&buf);
 			}
 			CALLOC_ARRAY(util, 1);
 			if (get_oid(p, &util->oid)) {
-				error(_("could not parse commit '%s'"), p);
+				error(_("could not parse cummit '%s'"), p);
 				FREE_AND_NULL(util);
 				string_list_clear(list, 1);
 				goto cleanup;
@@ -107,7 +107,7 @@ static int read_patches(const char *range, struct string_list *list,
 
 		if (!util) {
 			error(_("could not parse first line of `log` output: "
-				"did not start with 'commit ': '%s'"),
+				"did not start with 'cummit ': '%s'"),
 			      line);
 			string_list_clear(list, 1);
 			goto cleanup;
@@ -163,7 +163,7 @@ static int read_patches(const char *range, struct string_list *list,
 				strbuf_addstr(&buf, " ## Metadata ##\n");
 				strbuf_addstr(&buf, line);
 				strbuf_addstr(&buf, "\n\n");
-				strbuf_addstr(&buf, " ## Commit message ##\n");
+				strbuf_addstr(&buf, " ## cummit message ##\n");
 			} else if (starts_with(line, "Notes") &&
 				   line[strlen(line) - 1] == ':') {
 				strbuf_addstr(&buf, "\n\n");
@@ -190,7 +190,7 @@ static int read_patches(const char *range, struct string_list *list,
 			 * A completely blank (not ' \n', which is context)
 			 * line is not valid in a diff.  We skip it
 			 * silently, because this neatly handles the blank
-			 * separator line between commits in git-log
+			 * separator line between cummits in git-log
 			 * output.
 			 */
 			continue;
@@ -370,12 +370,12 @@ static void output_pair_header(struct diff_options *diffopt,
 			       struct patch_util *b_util)
 {
 	struct object_id *oid = a_util ? &a_util->oid : &b_util->oid;
-	struct commit *commit;
+	struct cummit *cummit;
 	char status;
 	const char *color_reset = diff_get_color_opt(diffopt, DIFF_RESET);
 	const char *color_old = diff_get_color_opt(diffopt, DIFF_FILE_OLD);
 	const char *color_new = diff_get_color_opt(diffopt, DIFF_FILE_NEW);
-	const char *color_commit = diff_get_color_opt(diffopt, DIFF_COMMIT);
+	const char *color_cummit = diff_get_color_opt(diffopt, DIFF_cummit);
 	const char *color;
 
 	if (!dashes->len)
@@ -390,10 +390,10 @@ static void output_pair_header(struct diff_options *diffopt,
 		color = color_new;
 		status = '>';
 	} else if (strcmp(a_util->patch, b_util->patch)) {
-		color = color_commit;
+		color = color_cummit;
 		status = '!';
 	} else {
-		color = color_commit;
+		color = color_cummit;
 		status = '=';
 	}
 
@@ -417,13 +417,13 @@ static void output_pair_header(struct diff_options *diffopt,
 		strbuf_addf(buf, " %*d:  %s", patch_no_width, b_util->i + 1,
 			    find_unique_abbrev(&b_util->oid, DEFAULT_ABBREV));
 
-	commit = lookup_commit_reference(the_repository, oid);
-	if (commit) {
+	cummit = lookup_cummit_reference(the_repository, oid);
+	if (cummit) {
 		if (status == '!')
 			strbuf_addf(buf, "%s%s", color_reset, color);
 
 		strbuf_addch(buf, ' ');
-		pp_commit_easy(CMIT_FMT_ONELINE, commit, buf);
+		pp_cummit_easy(CMIT_FMT_ONELINE, cummit, buf);
 	}
 	strbuf_addf(buf, "%s\n", color_reset);
 
@@ -494,7 +494,7 @@ static void output(struct string_list *a, struct string_list *b,
 	 * We assume the user is really more interested in the second argument
 	 * ("newer" version). To that end, we print the output in the order of
 	 * the RHS (the `b` parameter). To put the LHS (the `a` parameter)
-	 * commits that are no longer in the RHS into a good place, we place
+	 * cummits that are no longer in the RHS into a good place, we place
 	 * them once we have shown all of their predecessors in the LHS.
 	 */
 
@@ -503,11 +503,11 @@ static void output(struct string_list *a, struct string_list *b,
 		a_util = i < a->nr ? a->items[i].util : NULL;
 		b_util = j < b->nr ? b->items[j].util : NULL;
 
-		/* Skip all the already-shown commits from the LHS. */
+		/* Skip all the already-shown cummits from the LHS. */
 		while (i < a->nr && a_util->shown)
 			a_util = ++i < a->nr ? a->items[i].util : NULL;
 
-		/* Show unmatched LHS commit whose predecessors were shown. */
+		/* Show unmatched LHS cummit whose predecessors were shown. */
 		if (i < a->nr && a_util->matching < 0) {
 			if (!range_diff_opts->right_only)
 				output_pair_header(&opts, patch_no_width,
@@ -516,7 +516,7 @@ static void output(struct string_list *a, struct string_list *b,
 			continue;
 		}
 
-		/* Show unmatched RHS commits. */
+		/* Show unmatched RHS cummits. */
 		while (j < b->nr && b_util->matching < 0) {
 			if (!range_diff_opts->left_only)
 				output_pair_header(&opts, patch_no_width,
@@ -589,8 +589,8 @@ int is_range_diff_range(const char *arg)
 		for (i = 0; i < revs.pending.nr; i++) {
 			struct object *obj = revs.pending.objects[i].item;
 
-			if (obj->type == OBJ_COMMIT)
-				clear_commit_marks((struct commit *)obj,
+			if (obj->type == OBJ_cummit)
+				clear_cummit_marks((struct cummit *)obj,
 						   ALL_REV_FLAGS);
 		}
 	}

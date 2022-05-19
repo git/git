@@ -27,11 +27,11 @@ test_expect_success 'setup' '
 	EOF
 	sed "/TARGET/d" >x <template &&
 	git update-index --add x &&
-	git commit -m initial &&
+	git cummit -m initial &&
 
 	sed "s/TARGET/ADDED/" >x <template &&
 	git update-index --add x &&
-	git commit -m next &&
+	git cummit -m next &&
 
 	sed "s/TARGET/MODIFIED/" >x <template
 '

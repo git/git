@@ -26,7 +26,7 @@ test_expect_success setup '
 		do
 			echo "$i" >count &&
 			git add count &&
-			git commit -m "$i" || exit
+			git cummit -m "$i" || exit
 			i=$(($i + 1))
 		done
 	) &&
@@ -35,7 +35,7 @@ test_expect_success setup '
 		cd one &&
 		echo Z >count &&
 		git add count &&
-		git commit -m Z &&
+		git cummit -m Z &&
 		count_objects >../one.count
 	) &&
 	A=$(pwd)/original/.git/objects &&

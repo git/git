@@ -15,9 +15,9 @@ Line 3
 '
 
 test_expect_success \
-    'add a file path0 and commit.' \
+    'add a file path0 and cummit.' \
     'git add path0 &&
-     git commit -m "Add path0"'
+     git cummit -m "Add path0"'
 
 echo >path0 'New line 1
 New line 2
@@ -26,13 +26,13 @@ New line 3
 test_expect_success \
     'Change path0.' \
     'git add path0 &&
-     git commit -m "Change path0"'
+     git cummit -m "Change path0"'
 
 cat <path0 >path1
 test_expect_success \
     'copy path0 to path1.' \
     'git add path1 &&
-     git commit -m "Copy path1 from path0"'
+     git cummit -m "Copy path1 from path0"'
 
 test_expect_success \
     'find the copy path0 -> path1 harder' \

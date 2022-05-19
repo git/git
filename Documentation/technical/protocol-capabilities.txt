@@ -37,7 +37,7 @@ multi_ack
 ---------
 
 The 'multi_ack' capability allows the server to return "ACK obj-id
-continue" as soon as it finds a commit that it can use as a common
+continue" as soon as it finds a cummit that it can use as a common
 base, between the client's wants and the client's have set.
 
 By sending this early, the server can potentially head off the client
@@ -52,8 +52,8 @@ have lines that are already known by the server to be common, because
 they overlap in time with another branch that the server hasn't found
 a common base on yet.
 
-For example suppose the client has commits in caps that the server
-doesn't and the server has commits in lower case that the client
+For example suppose the client has cummits in caps that the server
+doesn't and the server has cummits in lower case that the client
 doesn't, as in the following diagram:
 
        +---- u ---------------------- x

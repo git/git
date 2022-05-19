@@ -55,7 +55,7 @@ test_no_cache_tree () {
 }
 
 test_expect_success 'initial commit has cache-tree' '
-	test_commit foo &&
+	test_cummit foo &&
 	test_cache_tree
 '
 
@@ -83,8 +83,8 @@ test_expect_success 'git-add in subdir does not invalidate sibling cache-tree' '
 	git tag no-children &&
 	test_when_finished "git reset --hard no-children; git read-tree HEAD" &&
 	mkdir dir1 dir2 &&
-	test_commit dir1/a &&
-	test_commit dir2/b &&
+	test_cummit dir1/a &&
+	test_cummit dir2/b &&
 	echo "I changed this file" >dir1/a &&
 	test_when_finished "rm before" &&
 	cat >before <<-\EOF &&
@@ -123,11 +123,11 @@ test_expect_success 'test-tool scrap-cache-tree works' '
 '
 
 test_expect_success 'second commit has cache-tree' '
-	test_commit bar &&
+	test_cummit bar &&
 	test_cache_tree
 '
 
-test_expect_success PERL 'commit --interactive gives cache-tree on partial commit' '
+test_expect_success PERL 'cummit --interactive gives cache-tree on partial cummit' '
 	test_when_finished "git reset --hard" &&
 	cat <<-\EOT >foo.c &&
 	int foo()
@@ -141,7 +141,7 @@ test_expect_success PERL 'commit --interactive gives cache-tree on partial commi
 	EOT
 	git add foo.c &&
 	test_invalid_cache_tree &&
-	git commit -m "add a file" &&
+	git cummit -m "add a file" &&
 	test_cache_tree &&
 	cat <<-\EOT >foo.c &&
 	int foo()
@@ -154,22 +154,22 @@ test_expect_success PERL 'commit --interactive gives cache-tree on partial commi
 	}
 	EOT
 	test_write_lines p 1 "" s n y q |
-	git commit --interactive -m foo &&
+	git cummit --interactive -m foo &&
 	cat <<-\EOF >expected.status &&
 	 M foo.c
 	EOF
 	test_cache_tree expected.status
 '
 
-test_expect_success PERL 'commit -p with shrinking cache-tree' '
+test_expect_success PERL 'cummit -p with shrinking cache-tree' '
 	mkdir -p deep/very-long-subdir &&
 	echo content >deep/very-long-subdir/file &&
 	git add deep &&
-	git commit -m add &&
+	git cummit -m add &&
 	git rm -r deep &&
 
 	before=$(wc -c <.git/index) &&
-	git commit -m delete -p &&
+	git cummit -m delete -p &&
 	after=$(wc -c <.git/index) &&
 
 	# double check that the index shrank
@@ -179,11 +179,11 @@ test_expect_success PERL 'commit -p with shrinking cache-tree' '
 	git fsck
 '
 
-test_expect_success 'commit in child dir has cache-tree' '
+test_expect_success 'cummit in child dir has cache-tree' '
 	mkdir dir &&
 	>dir/child.t &&
 	git add dir/child.t &&
-	git commit -m dir/child.t &&
+	git cummit -m dir/child.t &&
 	test_cache_tree
 '
 
@@ -221,8 +221,8 @@ test_expect_success 'checkout -B gives cache-tree' '
 test_expect_success 'merge --ff-only maintains cache-tree' '
 	git checkout current &&
 	git checkout -b changes &&
-	test_commit llamas &&
-	test_commit pachyderm &&
+	test_cummit llamas &&
+	test_cummit pachyderm &&
 	test_cache_tree &&
 	git checkout current &&
 	test_cache_tree &&
@@ -233,23 +233,23 @@ test_expect_success 'merge --ff-only maintains cache-tree' '
 test_expect_success 'merge maintains cache-tree' '
 	git checkout current &&
 	git checkout -b changes2 &&
-	test_commit alpacas &&
+	test_cummit alpacas &&
 	test_cache_tree &&
 	git checkout current &&
-	test_commit struthio &&
+	test_cummit struthio &&
 	test_cache_tree &&
 	git merge changes2 &&
 	test_cache_tree
 '
 
-test_expect_success 'partial commit gives cache-tree' '
+test_expect_success 'partial cummit gives cache-tree' '
 	git checkout -b partial no-children &&
-	test_commit one &&
-	test_commit two &&
+	test_cummit one &&
+	test_cummit two &&
 	echo "some change" >one.t &&
 	git add one.t &&
 	echo "some other change" >two.t &&
-	git commit two.t -m partial &&
+	git cummit two.t -m partial &&
 	cat <<-\EOF >expected.status &&
 	M  one.t
 	EOF
@@ -271,7 +271,7 @@ test_expect_success 'switching trees does not invalidate shared index' '
 		>split &&
 		git add split &&
 		test-tool dump-split-index .git/index | grep -v ^own >before &&
-		git commit -m "as-is" &&
+		git cummit -m "as-is" &&
 		test-tool dump-split-index .git/index | grep -v ^own >after &&
 		test_cmp before after
 	)
