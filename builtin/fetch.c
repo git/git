@@ -2188,6 +2188,10 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		else if (argc > 1)
 			die(_("fetch --all does not make sense with refspecs"));
 		(void) for_each_remote(get_one_remote_for_fetch, &list);
+
+		/* do not do fetch_multiple() of one */
+		if (list.nr == 1)
+			remote = remote_get(list.items[0].string);
 	} else if (argc == 0) {
 		/* No arguments -- use default remote */
 		remote = remote_get(NULL);
@@ -2262,7 +2266,17 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		result = fetch_multiple(&list, max_children);
 	}
 
-	if (!result && (recurse_submodules != RECURSE_SUBMODULES_OFF)) {
+
+	/*
+	 * This is only needed after fetch_one(), which does not fetch
+	 * submodules by itself.
+	 *
+	 * When we fetch from multiple remotes, fetch_multiple() has
+	 * already updated submodules to grab commits necessary for
+	 * the fetched history from each remote, so there is no need
+	 * to fetch submodules from here.
+	 */
+	if (!result && remote && (recurse_submodules != RECURSE_SUBMODULES_OFF)) {
 		struct strvec options = STRVEC_INIT;
 		int max_children = max_jobs;
 
