@@ -1440,6 +1440,7 @@ static void check_not_current_branch(struct ref *ref_map,
 	const struct worktree *wt;
 	for (; ref_map; ref_map = ref_map->next)
 		if (ref_map->peer_ref &&
+		    starts_with(ref_map->peer_ref->name, "refs/heads/") &&
 		    (wt = find_shared_symref(worktrees, "HEAD",
 					     ref_map->peer_ref->name)) &&
 		    !wt->is_bare)
